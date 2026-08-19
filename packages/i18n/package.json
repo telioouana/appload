@@ -1,0 +1,32 @@
+{
+    "name": "@workspace/i18n",
+    "type": "module",
+    "scripts": {
+        "lint": "eslint",
+        "format": "prettier --write \"**/*.{ts,tsx}\"",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "next-intl": "^4.13.2"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "@types/react": "^19",
+        "@workspace/eslint-config": "workspace:*",
+        "@workspace/typescript-config": "workspace:*",
+        "eslint": "^9",
+        "next": "16.3.0",
+        "react": "19.2.4",
+        "typescript": "^5"
+    },
+    "exports": {
+        ".": "./src/index.ts",
+        "./i18n.d.ts": "./src/i18n.d.ts",
+        "./plugin": "./src/plugin.ts",
+        "./messages/*": "./src/messages/*.json",
+        "./middleware": "./src/middleware.ts",
+        "./navigation": "./src/navigation.ts",
+        "./routing": "./src/routing.ts",
+        "./server": "./src/server.ts"
+    }
+}

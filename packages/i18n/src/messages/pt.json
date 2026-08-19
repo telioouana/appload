@@ -1,0 +1,2252 @@
+{
+    "General": {
+        "inputs": {
+            "file": {
+                "delete": {
+                    "label": "Apagar",
+                    "tooltip": "Apagar ficheiro",
+                    "error": "Erro ao apagar o ficheiro, tente novamente"
+                },
+                "upload": {
+                    "label": "Carregar",
+                    "tooltip": "Carregar ficheiro",
+                    "error": "Erro ao carregar o ficheiro, tente novamente"
+                },
+                "remove": {
+                    "label": "Remover",
+                    "tooltip": "Remover campo"
+                },
+                "errors": {
+                    "size": "O ficheiro excede o tamanho máximo permitido",
+                    "format": "O formato do ficheiro não é suportado"
+                }
+            }
+        }
+    },
+    "Admin": {
+        "auth": {
+            "title": "Painel de controle Appload",
+            "description": "Introduza as suas credencias para iniciar a sessão",
+            "username": {
+                "label": "Utilizador",
+                "placeholder": "nome",
+                "description": "Introduza o teu nome de email",
+                "error": "O nome de utilizador é obrigatório"
+            },
+            "password": {
+                "label": "Palavra passe",
+                "placeholder": "••••••••••",
+                "error": "A palavra passe é obrigatória"
+            },
+            "errors": {
+                "unable_to_get_user_info": "Inicie a sessão com a sua conta Google Workspace @apploadafrica.com",
+                "access_denied": "O início de sessão com o Google foi cancelado",
+                "invalid_credentials": "Nome de utilizador ou palavra-passe errados",
+                "too_many_requests": "Demasiadas tentativas. Aguarde um momento e tente novamente",
+                "default": "Falha ao iniciar a sessão. Tente novamente"
+            },
+            "sign-in": "Iniciar sessão",
+            "sign-with": "ou entrar com",
+            "forgot-link": "Esqueceu-se da palavra-passe?",
+            "forgot": {
+                "title": "Recuperar palavra-passe",
+                "description": "Introduza a sua conta e enviaremos um link de redefinição por email",
+                "submit": "Enviar link de redefinição",
+                "sent-title": "Verifique a sua caixa de entrada",
+                "sent-description": "Se essa conta existir, o link de redefinição está a caminho. O link expira ao fim de uma hora",
+                "back": "Voltar ao início de sessão"
+            },
+            "reset": {
+                "title": "Definir nova palavra-passe",
+                "description": "Escolha uma nova palavra-passe para a sua conta",
+                "password": {
+                    "label": "Nova palavra-passe",
+                    "placeholder": "••••••••••",
+                    "error": "A palavra-passe deve ter pelo menos 8 caracteres"
+                },
+                "confirm": {
+                    "label": "Confirmar palavra-passe",
+                    "placeholder": "••••••••••",
+                    "error": "Confirme a nova palavra-passe",
+                    "mismatch": "As palavras-passe não coincidem"
+                },
+                "submit": "Redefinir palavra-passe",
+                "success": "Palavra-passe actualizada. Inicie a sessão com a nova palavra-passe",
+                "request-again": "Pedir um novo link",
+                "errors": {
+                    "invalid_token": "Este link de redefinição é inválido ou expirou",
+                    "invalid_token_hint": "Peça um novo link abaixo e utilize-o no prazo de uma hora"
+                }
+            }
+        },
+        "errors": {
+            "not-found": {
+                "title": "Página não encontrada",
+                "description": "A página que procura não existe ou mudou de lugar",
+                "home": "Ir para os pedidos"
+            },
+            "boundary": {
+                "title": "Algo correu mal",
+                "description": "A página encontrou um erro inesperado. Tente novamente — se persistir, contacte o suporte",
+                "retry": "Tentar novamente"
+            }
+        },
+        "access-denied": {
+            "title": "Acesso restrito",
+            "description": "Esta área é para contas de colaboradores da Appload. Inicie a sessão com a sua conta @apploadafrica.com para continuar",
+            "sign-out": "Terminar sessão"
+        },
+        "sidebar": {
+            "header": {
+                "app-name": "appload",
+                "slogan": "Going the extra mile"
+            },
+            "content": {
+                "ops": {
+                    "order": "Novo pedido",
+                    "orders": {
+                        "orders": "Pedidos",
+                        "all": "Todos",
+                        "prospects": "Prospectivas",
+                        "booked": "Confrimados",
+                        "on-going": "Em andamento",
+                        "delivered": "Completos",
+                        "history": "Histórico"
+                    },
+                    "chats": "Conversas"
+                },
+                "management": {
+                    "shippers": "Clientes",
+                    "carriers": {
+                        "carriers": "Transportadores",
+                        "companies": "Empresas",
+                        "drivers": "Motoristas",
+                        "fleets": "Frotas"
+                    }
+                }
+            },
+            "user": {
+                "settings": "Definições",
+                "language": "Idioma",
+                "theme": {
+                    "label": "Tema",
+                    "light": "Claro",
+                    "dark": "Escuro",
+                    "system": "Sistema"
+                },
+                "sign-out": "Terminar sessão"
+            }
+        },
+        "settings": {
+            "title": "Definições",
+            "description": "Gira o seu perfil e a forma como inicia sessão.",
+            "tabs": {
+                "account": "Conta",
+                "security": "Segurança"
+            },
+            "methods": {
+                "title": "Métodos de início de sessão",
+                "description": "Como entra na Appload. Mantenha pelo menos dois, para que perder um nunca o deixe de fora.",
+                "loadFailed": "Não foi possível carregar os seus métodos de início de sessão",
+                "retry": "Tentar novamente",
+                "added": "Adicionado a {date}",
+                "status": {
+                    "active": "Activo",
+                    "inactive": "Por configurar"
+                },
+                "password": {
+                    "title": "Email e palavra-passe",
+                    "active": "Inicie sessão com {email} e a sua palavra-passe.",
+                    "inactive": "Ainda não tem palavra-passe. Defina uma para poder iniciar sessão sem o Google.",
+                    "add": "Definir uma palavra-passe",
+                    "submit": "Criar palavra-passe",
+                    "cancel": "Cancelar",
+                    "success": "Palavra-passe criada",
+                    "failed": "Não foi possível criar a palavra-passe",
+                    "already": "Esta conta já tem uma palavra-passe",
+                    "new": {
+                        "label": "Nova palavra-passe",
+                        "placeholder": "Escolha uma palavra-passe",
+                        "description": "Pelo menos 8 caracteres.",
+                        "error": "Use pelo menos 8 caracteres"
+                    },
+                    "confirm": {
+                        "label": "Confirmar palavra-passe",
+                        "placeholder": "Repita a palavra-passe",
+                        "error": "Repita a palavra-passe",
+                        "mismatch": "As palavras-passe não coincidem"
+                    }
+                },
+                "google": {
+                    "title": "Google",
+                    "active": "Inicie sessão com a sua conta Google ({email}).",
+                    "inactive": "Não associada. Associe o Google para iniciar sessão com um clique.",
+                    "link": "Associar o Google",
+                    "linked": "Google associado"
+                },
+                "unlink": {
+                    "action": "Remover",
+                    "title": "Remover {method}?",
+                    "description": "Deixará de poder iniciar sessão por essa via. Pode voltar a adicioná-la quando quiser.",
+                    "confirm": "Remover",
+                    "cancel": "Manter",
+                    "success": "{method} removido",
+                    "failed": "Não foi possível remover {method}",
+                    "last": "Esta é a sua única forma de entrar. Adicione outro método antes de remover este.",
+                    "twoFactor": "A autenticação de dois factores precisa da sua palavra-passe. Desactive-a antes de remover a palavra-passe.",
+                    "stale": "Por segurança, isto exige um início de sessão recente. Termine a sessão, volte a entrar e tente de novo."
+                },
+                "errors": {
+                    "untrusted": "O Google não confirmou esse endereço, por isso a conta não foi associada.",
+                    "emailMismatch": "Essa conta Google usa um endereço diferente deste.",
+                    "otherUser": "Essa conta Google já está associada a outro utilizador.",
+                    "expired": "O pedido de associação expirou. Tente novamente.",
+                    "cancelled": "O início de sessão com o Google foi cancelado.",
+                    "default": "Não foi possível associar o Google. Tente novamente."
+                }
+            },
+            "account": {
+                "title": "Perfil",
+                "description": "Como aparece para o resto da equipa.",
+                "save": "Guardar alterações",
+                "success": "Perfil actualizado",
+                "error": "Não foi possível actualizar o perfil",
+                "name": {
+                    "label": "Nome de apresentação",
+                    "placeholder": "O seu nome",
+                    "error": "Introduza um nome de apresentação"
+                },
+                "image": {
+                    "label": "Fotografia",
+                    "description": "JPEG ou PNG, até 2 MB.",
+                    "format": "A fotografia tem de ser JPEG ou PNG",
+                    "size": "A fotografia tem de ter menos de 2 MB"
+                },
+                "email": {
+                    "label": "Email"
+                },
+                "role": {
+                    "label": "Função",
+                    "options": {
+                        "admin": "Administrador",
+                        "manager": "Gestor",
+                        "user": "Colaborador"
+                    }
+                }
+            },
+            "password": {
+                "title": "Palavra-passe",
+                "description": "Altere a palavra-passe que usa para iniciar sessão.",
+                "submit": "Alterar palavra-passe",
+                "success": "Palavra-passe alterada",
+                "current": {
+                    "label": "Palavra-passe actual",
+                    "placeholder": "A sua palavra-passe actual",
+                    "error": "Introduza a palavra-passe actual",
+                    "invalid": "Essa palavra-passe não está correcta"
+                },
+                "new": {
+                    "label": "Nova palavra-passe",
+                    "placeholder": "A sua nova palavra-passe",
+                    "description": "Pelo menos 8 caracteres.",
+                    "error": "Use pelo menos 8 caracteres"
+                },
+                "confirm": {
+                    "label": "Confirmar nova palavra-passe",
+                    "placeholder": "Repita a nova palavra-passe",
+                    "error": "Repita a nova palavra-passe",
+                    "mismatch": "As palavras-passe não coincidem"
+                },
+                "revoke": {
+                    "label": "Terminar sessão nos outros dispositivos",
+                    "description": "Encerra todas as outras sessões abertas com a palavra-passe antiga."
+                }
+            },
+            "twoFactor": {
+                "title": "Autenticação de dois factores",
+                "description": "Exigir um código da aplicação autenticadora ao iniciar sessão.",
+                "enabled": "Autenticação de dois factores activada",
+                "disabled": "Autenticação de dois factores desactivada",
+                "copied": "Copiado",
+                "copyFailed": "Não foi possível copiar",
+                "status": {
+                    "on": "Activa",
+                    "off": "Inactiva"
+                },
+                "actions": {
+                    "enable": "Activar",
+                    "disable": "Desactivar",
+                    "regenerate": "Novos códigos de recuperação",
+                    "cancel": "Cancelar"
+                },
+                "password": {
+                    "label": "Palavra-passe",
+                    "placeholder": "A sua palavra-passe",
+                    "error": "Introduza a palavra-passe",
+                    "invalid": "Essa palavra-passe não está correcta",
+                    "reason": {
+                        "enable": "Confirme a palavra-passe para começar a configurar a autenticação de dois factores.",
+                        "disable": "Confirme a palavra-passe para desactivar a autenticação de dois factores.",
+                        "regenerate": "Confirme a palavra-passe para substituir os códigos de recuperação.",
+                        "idle": ""
+                    }
+                },
+                "setup": {
+                    "title": "Adicione esta conta à sua aplicação autenticadora",
+                    "description": "Introduza o segredo manualmente, ou cole a ligação de configuração numa aplicação que a aceite. Depois confirme com o código de seis dígitos apresentado.",
+                    "secret": "Segredo",
+                    "uri": "Ligação de configuração",
+                    "confirm": "Confirmar e activar"
+                },
+                "code": {
+                    "label": "Código de autenticação",
+                    "description": "O código de seis dígitos da aplicação autenticadora.",
+                    "error": "Introduza o código de seis dígitos",
+                    "invalid": "Esse código não é válido"
+                },
+                "backup": {
+                    "title": "Códigos de recuperação",
+                    "newTitle": "Novos códigos de recuperação",
+                    "description": "Cada código funciona uma vez, caso perca o autenticador. Guarde-os agora — não voltam a ser mostrados.",
+                    "copy": "Copiar todos",
+                    "dismiss": "Concluído"
+                },
+                "active": {
+                    "title": "Autenticação de dois factores activada",
+                    "description": "Ser-lhe-á pedido um código da aplicação autenticadora no próximo início de sessão."
+                },
+                "requiresPassword": {
+                    "title": "Defina primeiro uma palavra-passe",
+                    "description": "A autenticação de dois factores é confirmada com a sua palavra-passe, e esta conta ainda não tem nenhuma. Defina uma em métodos de início de sessão e volte aqui."
+                }
+            },
+            "phone": {
+                "title": "Número de telefone",
+                "description": "Verifique um número para poder ser usado na recuperação da conta.",
+                "send": "Enviar código",
+                "verify": "Verificar",
+                "sent": "Código enviado",
+                "verified": "Número de telefone verificado",
+                "status": {
+                    "verified": "Verificado",
+                    "unverified": "Por verificar"
+                },
+                "number": {
+                    "label": "Número de telefone",
+                    "description": "Apenas o número local — o indicativo do país é escolhido ao lado.",
+                    "error": "Introduza o número em formato internacional, ex. +258840000000",
+                    "failed": "Não foi possível enviar um código para esse número",
+                    "country": "Escolha o país"
+                },
+                "code": {
+                    "label": "Código de verificação",
+                    "description": "O código de seis dígitos enviado para {phone}.",
+                    "error": "Introduza o código de seis dígitos",
+                    "invalid": "Esse código não é válido"
+                },
+                "unavailable": {
+                    "title": "O envio de SMS não está configurado",
+                    "description": "Os códigos não chegarão enquanto não for ligado um fornecedor de SMS, por isso a verificação ainda não pode ser concluída."
+                },
+                "active": {
+                    "title": "Número verificado"
+                }
+            }
+        },
+        "order": {
+            "create": {
+                "title": "Novo Pedido",
+                "description": "Preencha os dados do pedido para registar o novo pedido.",
+                "editTitle": "Editar pedido {orderId}",
+                "editDescription": "Altere o pedido em prospectiva. Confirmar exige os mesmos dados completos que criar um pedido confirmado.",
+                "confirmTitle": "Confirmar pedido {orderId}",
+                "confirmDescription": "Preencha tudo o que ainda falta. O estado já está definido como Confirmado, por isso ao gravar o pedido fica confirmado e todos os campos obrigatórios são validados.",
+                "form": {
+                    "shipper": {
+                        "title": "Informações do Cliente",
+                        "fields": {
+                            "shipper": {
+                                "label": "Nome do cliente (empresa ou individual)",
+                                "placeholder": "Appload",
+                                "description": "Pequise pelo cliente, caso não esteja registado, será prontificado a registar"
+                            }
+                        }
+                    },
+                    "routeDates": {
+                        "title": "Informações sobre localização e datas",
+                        "fields": {
+                            "loadingAddress": {
+                                "label": "Local de carregamento",
+                                "placeholder": "Maputo, Moçambique",
+                                "description": "Pesquise pelo local de carregamento"
+                            },
+                            "offloadingAddress": {
+                                "label": "Local de descarregamento",
+                                "placeholder": "Matola, Moçambique",
+                                "description": "Pesquise pelo local de descarregamento"
+                            },
+                            "expectedloadingDate": {
+                                "label": "Possível data de carregamento",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "expectedoffloadingDate": {
+                                "label": "Possível data de descarregamento",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "routeType": {
+                                "label": "Tipo de rota",
+                                "placeholder": "Tipo de Rota",
+                                "options": {
+                                    "national": "Nacional",
+                                    "regional": "Regional"
+                                }
+                            },
+                            "tripType": {
+                                "label": "Tipo de viagem",
+                                "placeholder": "Tipo de viagem",
+                                "options": {
+                                    "backload": "Retorno",
+                                    "normal": "Viagem de ida"
+                                }
+                            },
+                            "distance": {
+                                "label": "Distância (km)",
+                                "placeholder": "0.00"
+                            },
+                            "deliveries": {
+                                "label": "Nº de entregas",
+                                "placeholder": "1"
+                            }
+                        }
+                    },
+                    "cargo": {
+                        "title": "Informações sobre a carga",
+                        "fields": {
+                            "category": {
+                                "label": "Categoria",
+                                "placeholder": "Escolha a categoria",
+                                "options": {
+                                    "agriculture-inputs": "Insumos agrícolas",
+                                    "agriculture-products": "Produtos agrícolas",
+                                    "construction": "Construção",
+                                    "machinery-equipment": "Máquinas e equipamentos",
+                                    "fmcg": "Bens de consumo (FMCG)",
+                                    "general-cargo": "Carga geral",
+                                    "medicine": "Medicamentos",
+                                    "mining": "Mineração",
+                                    "oil-gas": "Petróleo e gás",
+                                    "vehicles": "Veículos",
+                                    "other": "Outro"
+                                }
+                            },
+                            "description": {
+                                "label": "Descrição",
+                                "placeholder": "Fertilizantes"
+                            },
+                            "weight": {
+                                "label": "Quantidade disponível",
+                                "placeholder": "30.00"
+                            },
+                            "loadType": {
+                                "label": "Tratamento da carga",
+                                "placeholder": "Escolha uma opção",
+                                "options": {
+                                    "dedicated": "Camião dedicado",
+                                    "groupage": "Grupagem"
+                                }
+                            }
+                        }
+                    },
+                    "status": {
+                        "label": "Estado do pedido",
+                        "placeholder": "Escolha o Estado actual do pedido",
+                        "options": {
+                            "prospect": "Prospectiva",
+                            "booked": "Confirmado"
+                        }
+                    },
+                    "carrier": {
+                        "title": "Informacões sobre o tranportador e transporte",
+                        "fields": {
+                            "carrier": {
+                                "label": "Nome do transportador",
+                                "placeholder": "Appload",
+                                "description": "Pequise pelo transportador, caso não esteja registado, será prontificado a registar"
+                            },
+                            "fiscalRegime": {
+                                "label": "Regime fiscal",
+                                "placeholder": "Escolha o regime",
+                                "options": {
+                                    "normal": "Normal (16%)",
+                                    "simplified-5": "Simplificado (5%)",
+                                    "simplified-3": "Simplificado (3%)",
+                                    "n/a": "Não aplicavél"
+                                }
+                            },
+                            "driver": {
+                                "title": "Dados do motorista",
+                                "name": {
+                                    "label": "Nome",
+                                    "placeholder": "João Silva",
+                                    "description": "Pesquise os motoristas do transportador; se não estiverem registados, ser-lhe-á pedido que os registe"
+                                },
+                                "contact": {
+                                    "label": "Contacto",
+                                    "placeholder": "+258 84 000 0000"
+                                },
+                                "passport": {
+                                    "label": "Passaporte",
+                                    "placeholder": "AB1234567"
+                                }
+                            },
+                            "fleet": {
+                                "title": "Dados da frota",
+                                "truck": {
+                                    "label": "Matrícula do camião",
+                                    "placeholder": "AAA 000 MC",
+                                    "description": "Pesquise a frota do transportador; se o camião não estiver registado, ser-lhe-á pedido que o registe"
+                                },
+                                "age": {
+                                    "label": "Fabrico do camião",
+                                    "placeholder": "Fabrico do camião",
+                                    "options": {
+                                        "recent": "Recente",
+                                        "not-recent": "Não recente"
+                                    }
+                                },
+                                "loadingBay": {
+                                    "label": "Tipo de frota",
+                                    "placeholder": "Tipo de frota",
+                                    "options": {
+                                        "flatbed": "Plataforma (flatbed)",
+                                        "dropsides": "Taipais (dropsides)",
+                                        "tautliner": "Tautliner",
+                                        "rigid-body": "Rígido",
+                                        "refrigerated": "Refrigerado",
+                                        "tipper": "Basculante",
+                                        "side-tipper": "Basculante lateral",
+                                        "tanker": "Cisterna",
+                                        "lowbed": "Zorra (lowbed)"
+                                    }
+                                },
+                                "trailer": {
+                                    "label": "Matrícula do atrrelado",
+                                    "placeholder": "AA 000 MC"
+                                },
+                                "link": {
+                                    "label": "Matrícula do link",
+                                    "placeholder": "AA 000 MC"
+                                },
+                                "capacity": {
+                                    "label": "Loading Capacity",
+                                    "placeholder": "0.00"
+                                }
+                            }
+                        }
+                    },
+                    "payment": {
+                        "title": "Informacões sobre pagamento",
+                        "fields": {
+                            "carrier": {
+                                "title": "Pagamento ao Transportador",
+                                "subtotal": {
+                                    "label": "Subtotal",
+                                    "placeholder": "0.00"
+                                },
+                                "vat": {
+                                    "label": "IVA",
+                                    "placeholder": "0.00"
+                                },
+                                "total": {
+                                    "label": "Total a pagar",
+                                    "placeholder": "0.00"
+                                },
+                                "currency": {
+                                    "label": "Moeda",
+                                    "placeholder": "Escolha a moeda",
+                                    "options": {
+                                        "MZN": "MZN",
+                                        "ZAR": "ZAR",
+                                        "USD": "USD"
+                                    }
+                                }
+                            },
+                            "shipper": {
+                                "title": "Pagemnto do Cliente",
+                                "subtotal": {
+                                    "label": "Subtotal",
+                                    "placeholder": "0.00"
+                                },
+                                "vat": {
+                                    "label": "IVA",
+                                    "placeholder": "0.00"
+                                },
+                                "total": {
+                                    "label": "Total a receber",
+                                    "placeholder": "0.00"
+                                },
+                                "currency": {
+                                    "label": "Moeda",
+                                    "placeholder": "Escolha a moeda",
+                                    "options": {
+                                        "MZN": "MZN",
+                                        "ZAR": "ZAR",
+                                        "USD": "USD"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "errors": {
+                        "validation": {
+                            "address": "Campo vazio ou nenhuma localização foi selecionada",
+                            "carrier": "O nome do transportador é obrigatório",
+                            "category": "Escolha a categoria de uma das opções na lista",
+                            "contact": "Contacto do motorista inválido",
+                            "count": "Número inválido",
+                            "currency": "Escolha a moeda de uma das opções na lista",
+                            "date": "Selecionada uma data válida",
+                            "days": "Número de dias inválido",
+                            "deliveries": "Número de entregas não foi introduzido",
+                            "description": "Descrição da carga não foi introduzida",
+                            "driver": "Nome do motorista não foi introduzido",
+                            "field": "Este campo não pode permanecer vazio",
+                            "list": "Escolha uma opção na lista",
+                            "passport": "Passaporte do motorista obrigatório para viagens regionais",
+                            "percentage": "A percentagem deve estar entre 0 e 100",
+                            "plate": "Matricula do Camião obrigatória",
+                            "shipper": "O nome do cliente ou empresa é obrigatório",
+                            "subtotal": "Campo de subtotal é obrigatório",
+                            "total": "Campo de total é obrigatório",
+                            "status": "Escolha o estado de uma da opções na lista",
+                            "value": "O valor introduzido é inválido",
+                            "weight": "O peso introduzido é inválido"
+                        }
+                    }
+                },
+                "actions": {
+                    "save": "Gravar",
+                    "saving": "A gravar...",
+                    "cancel": "Cancelar"
+                },
+                "success": {
+                    "title": "Pedido criado",
+                    "description": "O pedido {orderId} foi criado e adicionado à folha de cálculo.",
+                    "bookedTitle": "Pedido confirmado",
+                    "bookedDescription": "O pedido {orderId} foi confirmado e a folha de cálculo foi atualizada.",
+                    "savedTitle": "Pedido gravado",
+                    "savedDescription": "O pedido {orderId} foi atualizado e sincronizado com a folha de cálculo.",
+                    "preparing": "A preparar os documentos...",
+                    "downloadShipper": "Descarregar confirmação do cliente",
+                    "downloadCarrier": "Descarregar confirmação do transportador",
+                    "close": "Fechar"
+                },
+                "errors": {
+                    "invalid": "Os dados do formulário são inválidos.",
+                    "unauthorized": "Sessão inválida. Inicie a sessão novamente.",
+                    "googleNotLinked": "A sua conta Google não está ligada. Ligue a conta Google para gravar na folha de cálculo.",
+                    "insufficientScope": "A sua conta Google não tem permissão para editar folhas de cálculo. Volte a ligar a conta para conceder o acesso.",
+                    "reconnect": "Ligar conta Google",
+                    "sheetFailed": "O pedido foi gravado, mas a sincronização com a folha de cálculo falhou.",
+                    "headerMismatch": "As colunas da folha \"All orders\" foram alteradas e já não correspondem ao esperado. Contacte a equipa técnica.",
+                    "notFound": "Este pedido já não existe. Atualize a lista e tente novamente.",
+                    "versionConflict": "Outra pessoa atualizou este pedido enquanto editava. Reveja os dados mais recentes e tente novamente.",
+                    "invalidState": "Este pedido já passou da fase de negócio — edite-o a partir da página de detalhes.",
+                    "notAllowed": "O seu perfil não permite esta ação.",
+                    "unknown": "Ocorreu um erro inesperado. Tente novamente.",
+                    "truckNotRegistered": "A matrícula do camião não está na frota registada do transportador. Escolha-a da lista ou registe-a.",
+                    "trailerNotRegistered": "A matrícula do atrelado não está na frota registada do transportador. Escolha-a da lista ou registe-a.",
+                    "linkNotRegistered": "A matrícula do link não está na frota registada do transportador. Escolha-a da lista ou registe-a.",
+                    "driverNotRegistered": "O motorista não está registado para este transportador. Escolha-o da lista ou registe-o.",
+                    "carrierNotVerified": "Nem todos os documentos deste transportador foram aprovados",
+                    "carrierContractMissing": "Este transportador não tem contrato assinado aprovado",
+                    "carrierContractExpired": "O contrato assinado deste transportador expirou",
+                    "carrierSuspended": "Este transportador está suspenso",
+                    "riskAckNotAllowed": "Só um supervisor pode aceitar este risco",
+                    "riskAckNoteRequired": "Explique porque este risco está a ser aceite",
+                    "noteCurrencyLocked": "A moeda não pode ser alterada depois de esta parte ter notas ou comprovativos de pagamento."
+                }
+            },
+            "update": {
+                "title": "Editar pedido",
+                "description": "Actualize qualquer detalhe do pedido. Apenas os campos alterados são gravados.",
+                "form": {
+                    "routeDates": {
+                        "title": "Informações sobre localização e datas",
+                        "fields": {
+                            "loadingAddress": {
+                                "label": "Local de carregamento",
+                                "placeholder": "Maputo, Moçambique"
+                            },
+                            "offloadingAddress": {
+                                "label": "Local de descarregamento",
+                                "placeholder": "Matola, Moçambique"
+                            },
+                            "expectedLoadingDate": {
+                                "label": "Data prevista de carregamento",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "expectedOffloadingDate": {
+                                "label": "Data prevista de descarregamento",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "route": {
+                                "label": "Tipo de rota",
+                                "placeholder": "Tipo de rota",
+                                "options": {
+                                    "national": "Nacional",
+                                    "regional": "Regional"
+                                }
+                            },
+                            "tripType": {
+                                "label": "Tipo de viagem",
+                                "placeholder": "Tipo de viagem",
+                                "options": {
+                                    "backload": "Retorno",
+                                    "normal": "Viagem de ida"
+                                }
+                            },
+                            "distance": {
+                                "label": "Distância (km)",
+                                "placeholder": "0"
+                            },
+                            "deliveries": {
+                                "label": "Entregas",
+                                "placeholder": "1"
+                            },
+                            "expectedTrucks": {
+                                "label": "Camiões previstos",
+                                "placeholder": "1"
+                            }
+                        }
+                    },
+                    "loading": {
+                        "title": "Acompanhamento do carregamento",
+                        "fields": {
+                            "proposedDate": {
+                                "label": "Data proposta de carregamento",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "arrival": {
+                                "label": "Chegada ao carregamento",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "actualDate": {
+                                "label": "Data efectiva de carregamento",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "departure": {
+                                "label": "Partida do carregamento",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "demurrageCharged": {
+                                "label": "Sobrestadia cobrada?"
+                            },
+                            "demurrageChargedDays": {
+                                "label": "Dias de sobrestadia cobrados",
+                                "placeholder": "0"
+                            }
+                        }
+                    },
+                    "offloading": {
+                        "title": "Acompanhamento do descarregamento",
+                        "fields": {
+                            "proposedDate": {
+                                "label": "Data proposta de descarregamento",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "arrival": {
+                                "label": "Chegada ao descarregamento",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "actualDate": {
+                                "label": "Data efectiva de descarregamento",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "departure": {
+                                "label": "Partida do descarregamento",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "demurrageCharged": {
+                                "label": "Sobrestadia cobrada?"
+                            },
+                            "demurrageChargedDays": {
+                                "label": "Dias de sobrestadia cobrados",
+                                "placeholder": "0"
+                            }
+                        }
+                    },
+                    "border": {
+                        "title": "Passagem de fronteira",
+                        "fields": {
+                            "arrival": {
+                                "label": "Chegada à fronteira",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "departure": {
+                                "label": "Partida da fronteira",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "demurrageCharged": {
+                                "label": "Estadia cobrada?"
+                            },
+                            "demurrageChargedDays": {
+                                "label": "Dias de estadia cobrados",
+                                "placeholder": "0"
+                            }
+                        }
+                    },
+                    "cargo": {
+                        "title": "Informações sobre a carga",
+                        "fields": {
+                            "category": {
+                                "label": "Categoria",
+                                "placeholder": "Escolha a categoria",
+                                "options": {
+                                    "agriculture-inputs": "Insumos agrícolas",
+                                    "agriculture-products": "Produtos agrícolas",
+                                    "construction": "Construção",
+                                    "machinery-equipment": "Máquinas e equipamentos",
+                                    "fmcg": "Bens de consumo (FMCG)",
+                                    "general-cargo": "Carga geral",
+                                    "medicine": "Medicamentos",
+                                    "mining": "Mineração",
+                                    "oil-gas": "Petróleo e gás",
+                                    "vehicles": "Veículos",
+                                    "other": "Outro"
+                                }
+                            },
+                            "description": {
+                                "label": "Descrição",
+                                "placeholder": "Fertilizantes"
+                            },
+                            "weight": {
+                                "label": "Peso",
+                                "placeholder": "0.000"
+                            },
+                            "loadedWeight": {
+                                "label": "Peso carregado",
+                                "placeholder": "0.000"
+                            },
+                            "offloadedWeight": {
+                                "label": "Peso descarregado",
+                                "placeholder": "0.000"
+                            },
+                            "weightUnit": {
+                                "label": "Unidade de peso",
+                                "placeholder": "Escolha a unidade",
+                                "options": {
+                                    "ton": "Toneladas",
+                                    "kg": "Quilogramas",
+                                    "liter": "Litros"
+                                }
+                            },
+                            "packing": {
+                                "label": "Embalagem",
+                                "placeholder": "Escolha a embalagem",
+                                "options": {
+                                    "bags-1kg": "Sacos de 1 kg",
+                                    "bags-2kg": "Sacos de 2 kg",
+                                    "bags-5kg": "Sacos de 5 kg",
+                                    "bags-25kg": "Sacos de 25 kg",
+                                    "bags-30kg": "Sacos de 30 kg",
+                                    "bags-50kg": "Sacos de 50 kg",
+                                    "bags-100kg": "Sacos de 100 kg",
+                                    "bags-1ton": "Big bags (1 t)",
+                                    "bottle-1l": "Garrafas de 1 L",
+                                    "bottle-5l": "Garrafões de 5 L",
+                                    "bottle-10l": "Garrafões de 10 L",
+                                    "bottle-20l": "Garrafões de 20 L",
+                                    "bottle-25l": "Garrafões de 25 L",
+                                    "container-20ft": "Contentor de 20 pés",
+                                    "container-40ft": "Contentor de 40 pés",
+                                    "boxes": "Caixas",
+                                    "pallets": "Paletes",
+                                    "noPacking": "A granel / sem embalagem",
+                                    "other": "Outro"
+                                }
+                            },
+                            "isHazardous": {
+                                "label": "Carga perigosa?"
+                            },
+                            "hazchemCode": {
+                                "label": "Código HAZCHEM",
+                                "placeholder": "Ex.: 3YE"
+                            },
+                            "isRefrigerated": {
+                                "label": "Carga refrigerada?"
+                            },
+                            "temperature": {
+                                "label": "Temperatura (°C)",
+                                "placeholder": "-18"
+                            },
+                            "temperatureInstructions": {
+                                "label": "Instruções de temperatura",
+                                "placeholder": "Ex.: Manter abaixo de -18 °C"
+                            },
+                            "loadType": {
+                                "label": "Tratamento da carga",
+                                "placeholder": "Escolha uma opção",
+                                "options": {
+                                    "dedicated": "Camião dedicado",
+                                    "groupage": "Grupagem"
+                                }
+                            }
+                        }
+                    },
+                    "status": {
+                        "title": "Estado do pedido",
+                        "fields": {
+                            "status": {
+                                "label": "Estado do pedido",
+                                "placeholder": "Escolha o estado actual do pedido",
+                                "options": {
+                                    "prospect": "Prospectiva",
+                                    "booked": "Confirmado",
+                                    "to-loading": "A caminho do carregamento",
+                                    "at-loading": "No local de carregamento",
+                                    "loading": "Em carregamento",
+                                    "waiting-documents": "À espera de documentos",
+                                    "on-route": "Em trânsito",
+                                    "stopped": "Parado",
+                                    "issue": "Com problema",
+                                    "at-border": "Na fronteira",
+                                    "at-offloading": "No local de descarregamento",
+                                    "offloading": "Em descarregamento",
+                                    "delivered": "Descarregado",
+                                    "completed": "Concluído",
+                                    "cancelled": "Cancelado",
+                                    "underbid": "Perdido por preço"
+                                }
+                            },
+                            "podStatus": {
+                                "label": "Estado do POD",
+                                "placeholder": "Escolha o estado",
+                                "options": {
+                                    "pending-collection": "Por recolher",
+                                    "pending-delivery": "Por entregar",
+                                    "delivered": "Entregue",
+                                    "verified": "Verificado"
+                                }
+                            }
+                        }
+                    },
+                    "carrier": {
+                        "title": "Informações sobre o transportador e transporte",
+                        "fields": {
+                            "carrier": {
+                                "label": "Nome do transportador",
+                                "placeholder": "Appload"
+                            },
+                            "fiscalRegime": {
+                                "label": "Regime fiscal",
+                                "placeholder": "Escolha o regime",
+                                "options": {
+                                    "normal": "Normal (16%)",
+                                    "simplified-5": "Simplificado (5%)",
+                                    "simplified-3": "Simplificado (3%)",
+                                    "n/a": "Não aplicável"
+                                }
+                            },
+                            "driver": {
+                                "title": "Dados do motorista",
+                                "name": {
+                                    "label": "Nome",
+                                    "placeholder": "João Silva"
+                                },
+                                "contact": {
+                                    "label": "Contacto",
+                                    "placeholder": "+258 84 000 0000"
+                                },
+                                "passport": {
+                                    "label": "Passaporte",
+                                    "placeholder": "AB1234567"
+                                }
+                            },
+                            "fleet": {
+                                "title": "Dados da frota",
+                                "truck": {
+                                    "label": "Matrícula do camião",
+                                    "placeholder": "AAA 000 MC"
+                                },
+                                "age": {
+                                    "label": "Fabrico do camião",
+                                    "placeholder": "Fabrico do camião",
+                                    "options": {
+                                        "recent": "Recente",
+                                        "not-recent": "Não recente"
+                                    }
+                                },
+                                "trailer": {
+                                    "label": "Matrícula do atrelado",
+                                    "placeholder": "AA 000 MC"
+                                },
+                                "link": {
+                                    "label": "Matrícula do link",
+                                    "placeholder": "AA 000 MC"
+                                }
+                            }
+                        }
+                    },
+                    "payment": {
+                        "title": "Informações sobre pagamento",
+                        "fields": {
+                            "carrier": {
+                                "title": "Pagamento ao transportador",
+                                "invoiceNumber": {
+                                    "label": "N.º da factura",
+                                    "placeholder": "FT-0000"
+                                },
+                                "invoiceDate": {
+                                    "label": "Data da factura",
+                                    "placeholder": "dd mmmm yyyy"
+                                },
+                                "subtotal": {
+                                    "label": "Subtotal",
+                                    "placeholder": "0.00"
+                                },
+                                "vat": {
+                                    "label": "IVA",
+                                    "placeholder": "0.00"
+                                },
+                                "total": {
+                                    "label": "Total a pagar",
+                                    "placeholder": "0.00"
+                                },
+                                "currency": {
+                                    "label": "Moeda",
+                                    "placeholder": "Escolha a moeda",
+                                    "options": {
+                                        "MZN": "MZN",
+                                        "ZAR": "ZAR",
+                                        "USD": "USD"
+                                    }
+                                },
+                                "paidAmount": {
+                                    "label": "Valor pago",
+                                    "placeholder": "0.00"
+                                },
+                                "paymentStatus": {
+                                    "label": "Estado do pagamento",
+                                    "placeholder": "Escolha o estado",
+                                    "options": {
+                                        "pending": "Pendente",
+                                        "partially": "Parcialmente pago",
+                                        "completed": "Pago",
+                                        "cancelled": "Cancelado",
+                                        "not-applicable": "Não aplicável"
+                                    }
+                                },
+                                "fullPaymentDate": {
+                                    "label": "Data de liquidação",
+                                    "placeholder": "dd mmmm yyyy"
+                                }
+                            },
+                            "shipper": {
+                                "title": "Pagamento do cliente",
+                                "invoiceNumber": {
+                                    "label": "N.º da factura",
+                                    "placeholder": "FT-0000"
+                                },
+                                "invoiceDate": {
+                                    "label": "Data da factura",
+                                    "placeholder": "dd mmmm yyyy"
+                                },
+                                "subtotal": {
+                                    "label": "Subtotal",
+                                    "placeholder": "0.00"
+                                },
+                                "vat": {
+                                    "label": "IVA",
+                                    "placeholder": "0.00"
+                                },
+                                "total": {
+                                    "label": "Total a receber",
+                                    "placeholder": "0.00"
+                                },
+                                "currency": {
+                                    "label": "Moeda",
+                                    "placeholder": "Escolha a moeda",
+                                    "options": {
+                                        "MZN": "MZN",
+                                        "ZAR": "ZAR",
+                                        "USD": "USD"
+                                    }
+                                },
+                                "paidAmount": {
+                                    "label": "Valor recebido",
+                                    "placeholder": "0.00"
+                                },
+                                "paymentStatus": {
+                                    "label": "Estado do pagamento",
+                                    "placeholder": "Escolha o estado",
+                                    "options": {
+                                        "pending": "Pendente",
+                                        "partially": "Parcialmente recebido",
+                                        "completed": "Recebido",
+                                        "cancelled": "Cancelado",
+                                        "not-applicable": "Não aplicável"
+                                    }
+                                },
+                                "fullPaymentDate": {
+                                    "label": "Data de liquidação",
+                                    "placeholder": "dd mmmm yyyy"
+                                }
+                            },
+                            "commission": {
+                                "title": "Comissão Appload",
+                                "subtotal": {
+                                    "label": "Subtotal",
+                                    "placeholder": "0.00"
+                                },
+                                "vat": {
+                                    "label": "IVA",
+                                    "placeholder": "0.00"
+                                },
+                                "total": {
+                                    "label": "Total",
+                                    "placeholder": "0.00"
+                                }
+                            },
+                            "lockedHint": "Derivado dos comprovativos de pagamento registados — registe ou anule um comprovativo para alterar."
+                        }
+                    },
+                    "insurance": {
+                        "title": "Informações sobre o seguro",
+                        "fields": {
+                            "subscriber": {
+                                "label": "Subscritor do seguro",
+                                "placeholder": "Escolha o subscritor",
+                                "options": {
+                                    "appload": "Appload",
+                                    "shipper": "Cliente"
+                                }
+                            },
+                            "value": {
+                                "label": "Valor do seguro",
+                                "placeholder": "0.00"
+                            },
+                            "currency": {
+                                "label": "Moeda do seguro",
+                                "placeholder": "Escolha a moeda",
+                                "options": {
+                                    "MZN": "MZN",
+                                    "ZAR": "ZAR",
+                                    "USD": "USD"
+                                }
+                            },
+                            "status": {
+                                "label": "Estado do seguro",
+                                "placeholder": "Escolha o estado",
+                                "options": {
+                                    "pending": "Pendente",
+                                    "paid": "Pago",
+                                    "not-applicable": "Não aplicável"
+                                }
+                            }
+                        }
+                    },
+                    "incidents": {
+                        "title": "Incidentes e atrasos",
+                        "fields": {
+                            "mechanicalFailuresStops": {
+                                "label": "Paragens por avaria mecânica",
+                                "placeholder": "0"
+                            },
+                            "mechanicalFailuresDelayedDays": {
+                                "label": "Dias de atraso por avarias mecânicas",
+                                "placeholder": "0"
+                            },
+                            "documentationIssuesStops": {
+                                "label": "Paragens por problemas de documentação",
+                                "placeholder": "0"
+                            },
+                            "documentationIssuesDelayedDays": {
+                                "label": "Dias de atraso por documentação",
+                                "placeholder": "0"
+                            },
+                            "policeStops": {
+                                "label": "Paragens pela polícia",
+                                "placeholder": "0"
+                            },
+                            "policeDelayedDays": {
+                                "label": "Dias de atraso pela polícia",
+                                "placeholder": "0"
+                            },
+                            "accidents": {
+                                "label": "Acidentes",
+                                "placeholder": "0"
+                            },
+                            "cargoDamaged": {
+                                "label": "Carga danificada?"
+                            },
+                            "damagedPercent": {
+                                "label": "Carga danificada (%)",
+                                "placeholder": "0"
+                            },
+                            "claimed": {
+                                "label": "Sinistro participado?"
+                            }
+                        }
+                    },
+                    "costs": {
+                        "title": "Custos e indicadores",
+                        "fields": {
+                            "ageFactor": {
+                                "label": "Factor de idade",
+                                "placeholder": "0.00"
+                            },
+                            "loadFactor": {
+                                "label": "Factor de carga",
+                                "placeholder": "0.00"
+                            },
+                            "defaultCoefficient": {
+                                "label": "Coeficiente padrão",
+                                "placeholder": "0.00"
+                            },
+                            "costPerKm": {
+                                "label": "Custo por km",
+                                "placeholder": "0.00"
+                            },
+                            "costPerUnit": {
+                                "label": "Custo por unidade",
+                                "placeholder": "0.00"
+                            },
+                            "costPerUnitKm": {
+                                "label": "Custo por unidade-km",
+                                "placeholder": "0.00"
+                            },
+                            "totalFuelCost": {
+                                "label": "Custo total de combustível",
+                                "placeholder": "0.00"
+                            }
+                        }
+                    },
+                    "errors": {
+                        "validation": {
+                            "address": "Campo vazio ou nenhuma localização foi selecionada",
+                            "carrier": "O nome do transportador é obrigatório",
+                            "category": "Escolha a categoria de uma das opções na lista",
+                            "contact": "Contacto do motorista inválido",
+                            "count": "Número inválido",
+                            "currency": "Escolha a moeda de uma das opções na lista",
+                            "date": "Selecione uma data válida",
+                            "days": "Número de dias inválido",
+                            "deliveries": "Número de entregas não foi introduzido",
+                            "description": "Descrição da carga não foi introduzida",
+                            "driver": "Nome do motorista não foi introduzido",
+                            "field": "Este campo não pode permanecer vazio",
+                            "list": "Escolha uma opção na lista",
+                            "passport": "Passaporte do motorista obrigatório para viagens regionais",
+                            "percentage": "A percentagem deve estar entre 0 e 100",
+                            "plate": "Matrícula do camião obrigatória",
+                            "shipper": "O nome do cliente ou empresa é obrigatório",
+                            "subtotal": "Campo de subtotal é obrigatório",
+                            "total": "Campo de total é obrigatório",
+                            "status": "Escolha o estado de uma das opções na lista",
+                            "value": "O valor introduzido é inválido",
+                            "weight": "O peso introduzido é inválido"
+                        }
+                    }
+                },
+                "actions": {
+                    "save": "Gravar alterações",
+                    "saving": "A gravar...",
+                    "cancel": "Cancelar"
+                }
+            },
+            "details": {
+                "title": "Detalhes do pedido",
+                "description": "Consulte e edite o pedido {orderId}. Apenas os campos alterados são gravados.",
+                "tabs": {
+                    "order": "Pedido",
+                    "accounting": "Contabilidade",
+                    "trip": "Informação da viagem"
+                },
+                "errors": {
+                    "invalid": "Os dados do formulário são inválidos.",
+                    "unauthorized": "Sessão inválida. Inicie a sessão novamente.",
+                    "googleNotLinked": "A sua conta Google não está ligada. Ligue a conta Google para gravar na folha de cálculo.",
+                    "insufficientScope": "A sua conta Google não tem permissão para editar folhas de cálculo. Volte a ligar a conta para conceder o acesso.",
+                    "reconnect": "Ligar conta Google",
+                    "sheetFailed": "As alterações foram gravadas, mas a sincronização com a folha de cálculo falhou.",
+                    "headerMismatch": "As colunas da folha \"All orders\" foram alteradas e já não correspondem ao esperado. Contacte a equipa técnica.",
+                    "notFound": "Este pedido já não existe. Atualize a lista e tente novamente.",
+                    "versionConflict": "Outra pessoa atualizou este pedido enquanto editava. Reveja os dados mais recentes e tente novamente.",
+                    "notAllowed": "O seu perfil não permite esta ação.",
+                    "unknown": "Ocorreu um erro inesperado. Tente novamente.",
+                    "truckNotRegistered": "A matrícula do camião não está na frota registada do transportador. Escolha-a da lista ou registe-a.",
+                    "trailerNotRegistered": "A matrícula do atrelado não está na frota registada do transportador. Escolha-a da lista ou registe-a.",
+                    "linkNotRegistered": "A matrícula do link não está na frota registada do transportador. Escolha-a da lista ou registe-a.",
+                    "driverNotRegistered": "O motorista não está registado para este transportador. Escolha-o da lista ou registe-o.",
+                    "carrierNotVerified": "Nem todos os documentos deste transportador foram aprovados",
+                    "carrierContractMissing": "Este transportador não tem contrato assinado aprovado",
+                    "carrierContractExpired": "O contrato assinado deste transportador expirou",
+                    "carrierSuspended": "Este transportador está suspenso",
+                    "riskAckNotAllowed": "Só um supervisor pode aceitar este risco",
+                    "riskAckNoteRequired": "Explique porque este risco está a ser aceite",
+                    "paymentLocked": "O valor pago, o estado do pagamento e a data de liquidação desta parte são derivados dos comprovativos de pagamento registados. Registe ou anule um comprovativo em vez disso.",
+                    "noteCurrencyLocked": "A moeda não pode ser alterada depois de esta parte ter notas ou comprovativos de pagamento."
+                },
+                "success": {
+                    "title": "Pedido atualizado",
+                    "description": "O pedido {orderId} foi atualizado. Os documentos de confirmação abaixo refletem os novos detalhes.",
+                    "preparing": "A preparar os documentos...",
+                    "downloadShipper": "Descarregar confirmação do cliente",
+                    "downloadCarrier": "Descarregar confirmação do transportador",
+                    "close": "Fechar"
+                }
+            }
+        },
+        "orders": {
+            "header": {
+                "page": {
+                    "all": {
+                        "title": "Todos os pedidos",
+                        "description": "Lista de todos os pedidos registados na base de dados"
+                    },
+                    "prospect": {
+                        "title": "Pedidos em prospectiva",
+                        "description": "Pedidos em estado de prospectiva"
+                    },
+                    "booked": {
+                        "title": "Pedidos confirmados",
+                        "description": "Pedidos que foram confirmados mas ainda não iniciados"
+                    },
+                    "on-going": {
+                        "title": "Pedidos em curso",
+                        "description": "Pedidos atualmente em trânsito"
+                    },
+                    "delivered": {
+                        "title": "Pedidos entregues",
+                        "description": "Entregas concluídas e à espera de avaliações"
+                    },
+                    "history": {
+                        "title": "Histórico",
+                        "description": "Pedidos concluídos, cancelados ou perdidos por preço"
+                    }
+                },
+                "search": "Pesquisar pedido por ID, cliente, transportador, nº da factura",
+                "view": {
+                    "grid": "Mudar para vista em grelha",
+                    "list": "Mudar para vista em lista"
+                },
+                "year": "Ano",
+                "filters": {
+                    "title": "Filtros",
+                    "clear": "Limpar filtro",
+                    "category": {
+                        "label": "Filter por categoria",
+                        "placeholder": "Selecione uma das opções para filtrar",
+                        "options": {
+                            "agriculture-inputs": "Insumos agrícolas",
+                            "agriculture-products": "Produtos agrícolas",
+                            "construction": "Construção",
+                            "machinery-equipment": "Máquinas e equipamentos",
+                            "fmcg": "Bens de consumo rápido",
+                            "general-cargo": "Carga geral",
+                            "medicine": "Medicamentos",
+                            "mining": "Mineração",
+                            "oil-gas": "Petróleo & Gás",
+                            "vehicles": "Veículos",
+                            "other": "Outro"
+                        }
+                    },
+                    "payment": {
+                        "label": "Filtar estado do pagamento",
+                        "placeholder": "Selecione uma das opções para filtrar",
+                        "by": {
+                            "all": "Todos",
+                            "shipper": "Cliente",
+                            "carrier": "Transportador"
+                        },
+                        "options": {
+                            "not-applicable": "Não aplicavél",
+                            "pending": "Pendente Pagamento",
+                            "partially": "Parcialmente pago",
+                            "completed": "Pago Completamente"
+                        }
+                    },
+                    "period": {
+                        "label": "Filtar por mês ou datas",
+                        "month": {
+                            "label": "Mês",
+                            "placeholder": "Selecionar mês",
+                            "options": {
+                                "jan": "Janeiro",
+                                "feb": "Fevereiro",
+                                "mar": "Março",
+                                "apr": "Abril",
+                                "may": "Maio",
+                                "jun": "Junho",
+                                "jul": "Julho",
+                                "aug": "Agosto",
+                                "sep": "Setembro",
+                                "oct": "Outubro",
+                                "nov": "Novembro",
+                                "dec": "Dezembro"
+                            }
+                        },
+                        "date": {
+                            "placeholder": "Selecionar as data"
+                        }
+                    },
+                    "status": {
+                        "label": "Estado",
+                        "options": {
+                            "all": "Todos",
+                            "prospect": "Prospectiva",
+                            "booked": "Confirmado",
+                            "to-loading": "A caminho do carregamento",
+                            "at-loading": "No local de carregamento",
+                            "loading": "Em carregamento",
+                            "waiting-documents": "À espera de documentos",
+                            "on-route": "Em trânsito",
+                            "stopped": "Parado",
+                            "issue": "Com problema",
+                            "at-border": "Na fronteira",
+                            "at-offloading": "No local de descarregamento",
+                            "offloading": "Em descarregamento",
+                            "delivered": "Completos",
+                            "completed": "Concluído",
+                            "cancelled": "Cancelado",
+                            "underbid": "Perdido por preço"
+                        }
+                    }
+                }
+            },
+            "card": {},
+            "data": {
+                "count": "{count, plural, =0 {Sem pedidos} one {# pedido} other {# pedidos}}",
+                "empty": "Nenhum pedido encontrado com os filtros aplicados",
+                "error": "Não foi possível carregar os pedidos. Tente novamente.",
+                "labels": {
+                    "route": "Rota",
+                    "date": "Data",
+                    "loading": "Carregamento",
+                    "driver": "Motorista",
+                    "vehicle": "Viatura",
+                    "weight": "Peso",
+                    "distance": "Distância",
+                    "amount": "Valor",
+                    "shipper": "Expedidor",
+                    "noShipper": "Sem expedidor",
+                    "carrier": "Transportador",
+                    "noCarrier": "Sem transportador",
+                    "noInvoice": "Sem fatura",
+                    "settled": "Liquidado",
+                    "paid": "Pago",
+                    "received": "Recebido",
+                    "toReceive": "A receber",
+                    "toPay": "A pagar",
+                    "overpaid": "Pago em excesso",
+                    "noDriverAssigned": "Sem motorista atribuído",
+                    "noTruck": "Sem camião"
+                },
+                "paymentStatus": {
+                    "shipper": {
+                        "pending": "Pendente",
+                        "partially": "Parcialmente recebido",
+                        "completed": "Recebido na totalidade",
+                        "not-applicable": "Não aplicável",
+                        "none": "Sem estado de pagamento"
+                    },
+                    "carrier": {
+                        "pending": "Pendente",
+                        "partially": "Parcialmente pago",
+                        "completed": "Pago na totalidade",
+                        "not-applicable": "Não aplicável",
+                        "none": "Sem estado de pagamento"
+                    }
+                },
+                "flags": {
+                    "hazardous": "Carga perigosa",
+                    "refrigerated": "Refrigerado"
+                },
+                "actions": {
+                    "view": "Ver",
+                    "confirm": "Confirmar pedido",
+                    "edit": "Editar",
+                    "more": "Mais",
+                    "changeStatus": "Alterar estado",
+                    "cancel": "Cancelar ordem"
+                }
+            },
+            "transitionDialog": {
+                "title": "Alterar estado",
+                "description": "Mover a ordem {orderId} para o próximo estado.",
+                "targetLabel": "Novo estado",
+                "targetPlaceholder": "Escolha um estado",
+                "noTargets": "Nenhuma alteração de estado disponível para o seu perfil neste momento.",
+                "resumeHint": "retomar",
+                "blockedHint": "falta completar",
+                "noteLabel": "Nota",
+                "notePlaceholder": "Explique esta alteração (mínimo 5 caracteres)...",
+                "documentLabel": {
+                    "pod": "Comprovativo de entrega (obrigatório)",
+                    "evidence": "Documento de suporte (obrigatório)"
+                },
+                "documentHint": "PDF, JPG ou PNG. A alteração de estado fica bloqueada até anexar o documento.",
+                "pickFile": "Escolher ficheiro",
+                "replaceFile": "Substituir ficheiro",
+                "removeFile": "Remover ficheiro",
+                "fileFormatError": "O formato do ficheiro não é suportado",
+                "flagWarning": "Esta alteração sinaliza a ordem para revisão — um gestor terá de a resolver depois.",
+                "sheetWarning": "O estado foi alterado, mas a sincronização com a folha de cálculo falhou. Será repetida automaticamente.",
+                "confirm": "Confirmar",
+                "cancel": "Cancelar",
+                "errors": {
+                    "INVALID_STATE": "Esta alteração de estado já não é válida. A ordem pode ter avançado.",
+                    "NOT_ALLOWED": "O seu perfil não permite esta alteração de estado.",
+                    "VERSION_CONFLICT": "Outra pessoa alterou esta ordem primeiro. As opções foram atualizadas — tente novamente.",
+                    "NOTE_REQUIRED": "É necessária uma nota para esta alteração.",
+                    "EVIDENCE_REQUIRED": "É necessário um documento de suporte para esta alteração.",
+                    "POD_REQUIRED": "É necessário um comprovativo de entrega para concluir a ordem.",
+                    "INCOMPLETE_FOR_BOOKING": "Esta ordem em prospectiva ainda não tem os dados de transportador, motorista, frota ou valores completos. Use \"Confirmar pedido\" para os completar e confirmar.",
+                    "NOT_FOUND": "Esta ordem já não existe.",
+                    "UPLOAD_FAILED": "O carregamento do documento falhou. Tente novamente.",
+                    "UNKNOWN": "Ocorreu um erro inesperado. Tente novamente.",
+                    "CARRIER_NOT_VERIFIED": "Nem todos os documentos deste transportador foram aprovados",
+                    "CARRIER_CONTRACT_MISSING": "Este transportador não tem contrato assinado aprovado",
+                    "CARRIER_CONTRACT_EXPIRED": "O contrato assinado deste transportador expirou",
+                    "CARRIER_SUSPENDED": "Este transportador está suspenso",
+                    "RISK_ACK_NOT_ALLOWED": "Só um supervisor pode aceitar este risco",
+                    "RISK_ACK_NOTE_REQUIRED": "Explique porque este risco está a ser aceite"
+                }
+            },
+            "detailPage": {
+                "error": "Não foi possível carregar esta ordem.",
+                "back": "Voltar às ordens",
+                "more": "Mais ações",
+                "confirm": "Confirmar pedido",
+                "changeStatus": "Alterar estado",
+                "edit": "Editar",
+                "sendPdf": "Enviar PDF",
+                "flagResolved": "Sinalização de revisão resolvida.",
+                "flagResolveFailed": "Falha ao resolver a sinalização. Apenas gestores e administradores podem resolver sinalizações.",
+                "sheetSync": {
+                    "pending": "Sincronização pendente",
+                    "done": "Folha sincronizada",
+                    "failed": "Sincronização falhou"
+                },
+                "flagged": {
+                    "title": "Sinalizada para revisão",
+                    "noReason": "Nenhum motivo registado.",
+                    "resolve": "Resolver sinalização"
+                },
+                "sections": {
+                    "shipment": "Carga",
+                    "description": "Descrição",
+                    "payments": "Partes e pagamentos",
+                    "operations": "Operações",
+                    "history": "Histórico"
+                },
+                "adjustments": {
+                    "title": "Totais efetivos (com notas de débito/crédito)",
+                    "shipperEffective": "Total efetivo do expedidor",
+                    "carrierEffective": "Total efetivo do transportador"
+                },
+                "metrics": {
+                    "distance": "Distância",
+                    "deliveries": "Entregas",
+                    "daysTraveling": "Dias em viagem",
+                    "podStatus": "Estado do POD"
+                },
+                "pod": {
+                    "pending-collection": "Recolha pendente",
+                    "pending-delivery": "Entrega pendente",
+                    "delivered": "Entregue",
+                    "verified": "Verificado"
+                },
+                "payments": {
+                    "proofs": "Comprovativos de pagamento",
+                    "noProofs": "Ainda sem comprovativos de pagamento.",
+                    "recordPayment": "Registar pagamento",
+                    "open": "Abrir comprovativo",
+                    "derivedHint": "Estes valores vêm dos comprovativos registados."
+                }
+            },
+            "history": {
+                "empty": "Ainda sem histórico.",
+                "created": "Ordem criada",
+                "flagged": "Sinalizada",
+                "system": "Sistema",
+                "changedFields": "{count, plural, one {# campo alterado} other {# campos alterados}}",
+                "voided": "Anulado",
+                "replacedManual": "Substituiu o valor introduzido manualmente de {amount} {currency}",
+                "kinds": {
+                    "transition": "Alteração de estado",
+                    "update": "Detalhes atualizados",
+                    "document": "Documento",
+                    "note": "Nota financeira",
+                    "flag": "Sinalização resolvida",
+                    "system": "Evento do sistema",
+                    "payment": "Pagamento"
+                }
+            },
+            "documents": {
+                "title": "Documentos",
+                "add": "Adicionar",
+                "empty": "Ainda sem documentos anexados.",
+                "open": "Abrir documento",
+                "void": "Anular documento",
+                "uploadError": "O carregamento do ficheiro falhou. Tente novamente.",
+                "deleteError": "Não foi possível anular o documento.",
+                "sheetWarning": "A nota foi gravada, mas a sincronização com a folha de cálculo falhou. Será repetida automaticamente.",
+                "paymentSheetWarning": "O pagamento foi registado, mas a sincronização com a folha de cálculo falhou. Será repetida automaticamente.",
+                "invoiceSheetWarning": "A fatura foi gravada, mas a sincronização com a folha de cálculo falhou. Será repetida automaticamente.",
+                "recomputePending": "O documento foi gravado, mas não foi possível atualizar o pedido porque outra pessoa o estava a editar. Os valores pagos serão recalculados automaticamente — verifique os dados da fatura ou da estadia no pedido.",
+                "voidPayment": "Anular comprovativo",
+                "formatError": "O formato do ficheiro não é suportado",
+                "form": {
+                    "type": "Tipo",
+                    "party": "Parte",
+                    "partyPlaceholder": "Escolha a parte",
+                    "total": "Total (IVA incl.)",
+                    "currency": "Moeda",
+                    "reasonCode": "Motivo",
+                    "reasonCodePlaceholder": "Escolha o motivo",
+                    "description": "Descrição",
+                    "descriptionPlaceholder": "O que aconteceu, referências, termos acordados...",
+                    "descriptionRequired": "Este motivo exige uma descrição.",
+                    "demurrageStage": "Onde",
+                    "demurrageStagePlaceholder": "Carga, descarga ou fronteira",
+                    "demurrageDays": "Dias cobrados",
+                    "demurrageHint": "Registado no pedido como estadia cobrada na etapa escolhida — os dias substituem o valor atual.",
+                    "damagedPercent": "Parte danificada (%)",
+                    "claimed": "Reclamação apresentada",
+                    "damageHint": "Marca a carga como danificada no pedido e regista a parte e a reclamação quando indicadas.",
+                    "amount": "Valor pago",
+                    "amountReceived": "Valor recebido",
+                    "amountNeutral": "Valor",
+                    "paidAt": "Data de pagamento",
+                    "reference": "Referência / notas",
+                    "referencePlaceholder": "Referência bancária, n.º da transferência...",
+                    "currencyMissing": "Defina a moeda do {party} no separador de contabilidade antes de registar uma nota ou um pagamento.",
+                    "invoiceNumber": "Número da fatura",
+                    "invoiceNumberPlaceholder": "ex. FT 2026/123",
+                    "invoiceDate": "Data da fatura",
+                    "invoiceHint": "Registado como a fatura do {party} no pedido — deixe como está para manter os valores atuais.",
+                    "pickFile": "Escolher ficheiro",
+                    "replaceFile": "Substituir ficheiro",
+                    "cancel": "Cancelar",
+                    "save": "Gravar"
+                },
+                "confirm": {
+                    "title": "Confirmar pagamento",
+                    "overpaid": "Ao registar este comprovativo o valor pago passa a {paid} {currency}, acima do total efetivo de {total} {currency}. O pagamento ficará marcado como concluído e o valor em falta ficará negativo. Continuar?",
+                    "overpaidReceived": "Ao registar este comprovativo o valor recebido passa a {paid} {currency}, acima do total efetivo de {total} {currency}. O pagamento ficará marcado como concluído e o valor a receber ficará negativo. Continuar?",
+                    "replaceManual": "Este é o primeiro comprovativo de pagamento do {party}. O valor introduzido manualmente ({amount} {currency}) será substituído pela soma dos comprovativos registados e os campos de pagamento passam a ser só de leitura no formulário de edição. Continuar?",
+                    "replaceManualStatus": "Este é o primeiro comprovativo de pagamento do {party}. O estado e a data de pagamento introduzidos manualmente serão substituídos pelo que os comprovativos registados determinam e os campos de pagamento passam a ser só de leitura no formulário de edição. Continuar?",
+                    "cancel": "Cancelar",
+                    "continue": "Registar pagamento"
+                },
+                "errors": {
+                    "POP_FIELDS_REQUIRED": "Escolha a parte, o valor pago e a data de pagamento.",
+                    "POP_CURRENCY_MISMATCH": "O comprovativo tem de estar na moeda da parte.",
+                    "POP_LEG_CURRENCY_MISSING": "Defina a moeda da parte no pedido antes de registar um pagamento.",
+                    "POP_PAID_AT_FUTURE": "A data de pagamento não pode ser futura.",
+                    "POP_ORDER_NOT_BOOKED": "Só é possível registar comprovativos de pagamento depois de o pedido estar confirmado.",
+                    "NOTE_REASON_REQUIRED": "Escolha o motivo da nota.",
+                    "NOTE_DESCRIPTION_REQUIRED": "Descreva a nota — este motivo exige uma descrição.",
+                    "NOTE_DEMURRAGE_FIELDS_REQUIRED": "Indique onde ocorreu a estadia e quantos dias são cobrados.",
+                    "NOTE_FIELDS_REQUIRED": "Escolha a parte e o valor da nota.",
+                    "NOTE_CURRENCY_MISMATCH": "A nota tem de estar na moeda da parte.",
+                    "NOTE_LEG_CURRENCY_MISSING": "Defina a moeda da parte no pedido antes de registar uma nota.",
+                    "NOT_ALLOWED": "O seu perfil não permite esta ação.",
+                    "VERSION_CONFLICT": "Outra pessoa alterou este pedido primeiro. Atualize e tente novamente.",
+                    "UNKNOWN": "Não foi possível gravar o documento. Tente novamente."
+                },
+                "reasons": {
+                    "demurrage": "Estadia (demurrage)",
+                    "damage": "Dano na carga",
+                    "loss-shortage": "Perda ou falta de carga",
+                    "late-delivery": "Penalização por atraso na entrega",
+                    "extra-delivery": "Entrega ou recolha adicional",
+                    "route-deviation": "Quilómetros extra / desvio de rota",
+                    "waiting-time": "Tempo de espera",
+                    "tolls-fees": "Portagens, taxas de fronteira, porto ou licenças",
+                    "fuel-surcharge": "Ajuste de combustível",
+                    "handling": "Mão-de-obra ou equipamento de carga/descarga",
+                    "storage": "Armazenagem",
+                    "cleaning": "Limpeza / descontaminação do reboque",
+                    "escort-security": "Escolta / segurança",
+                    "cancellation": "Cancelamento ou não comparência",
+                    "weight-variance": "Diferença de peso ou volume",
+                    "rate-correction": "Correção de tarifa / erro de preço",
+                    "duplicate-invoice": "Fatura duplicada",
+                    "discount": "Desconto comercial",
+                    "currency-adjustment": "Ajuste cambial",
+                    "tax-adjustment": "Correção de IVA / imposto",
+                    "insurance": "Seguro (prémio ou sinistro)",
+                    "extra-expenses": "Despesas extras",
+                    "other": "Outro"
+                },
+                "stages": {
+                    "loading": "Carga",
+                    "offloading": "Descarga",
+                    "border": "Fronteira"
+                },
+                "types": {
+                    "pod": "POD",
+                    "invoice": "Fatura",
+                    "shipper-invoice": "Fatura do expedidor",
+                    "carrier-invoice": "Fatura do transportador",
+                    "debit-note": "Nota de débito",
+                    "credit-note": "Nota de crédito",
+                    "proof-of-payment": "Comprovativo de pagamento",
+                    "evidence": "Evidência",
+                    "transport-order": "Ordem de transporte",
+                    "other": "Outro"
+                },
+                "parties": {
+                    "shipper": "Expedidor",
+                    "carrier": "Transportador"
+                }
+            },
+            "pdfSend": {
+                "title": "Enviar ordem de transporte",
+                "description": "Gerar e enviar o PDF da ordem {orderId}.",
+                "partyLabel": "Documento",
+                "parties": {
+                    "shipper": "Expedidor — {name}",
+                    "carrier": "Transportador — {name}"
+                },
+                "toLabel": "Para",
+                "toPlaceholder": "destinatario@empresa.com",
+                "ccLabel": "CC",
+                "ccPlaceholder": "cc1@empresa.com, cc2@empresa.com",
+                "ccHint": "Até 5 endereços, separados por vírgulas.",
+                "messageLabel": "Mensagem",
+                "messagePlaceholder": "Mensagem opcional incluída no email ou no texto do WhatsApp...",
+                "download": "Transferir",
+                "whatsapp": "WhatsApp",
+                "email": "Enviar email",
+                "sent": "Email enviado.",
+                "sentSimulated": "Email simulado — configure RESEND_API_KEY para enviar de verdade.",
+                "waDefaultMessage": "Ordem de transporte {orderId} da Appload:",
+                "errors": {
+                    "UPLOAD_FAILED": "O carregamento do PDF falhou. Tente novamente.",
+                    "SEND_FAILED": "O envio falhou. Tente novamente."
+                }
+            },
+            "stats": {}
+        },
+        "chats": {
+            "title": "Conversas",
+            "description": "Converse com os motoristas e acompanhe os pedidos.",
+            "unconfigured": {
+                "title": "As mensagens não estão configuradas",
+                "description": "O fornecedor de WhatsApp/SMS não está ligado, pelo que as mensagens não chegarão aos motoristas. Configure as variáveis de ambiente da Infobip para enviar de verdade"
+            },
+            "list": {
+                "new": "Nova conversa",
+                "emptyTitle": "Sem conversas",
+                "emptyDescription": "Inicie uma conversa com um motorista para começar."
+            },
+            "thread": {
+                "emptyTitle": "Nenhuma conversa selecionada",
+                "emptyDescription": "Escolha uma conversa na lista ou inicie uma nova.",
+                "order": "Pedido",
+                "composer": "Escreva uma mensagem...",
+                "send": "Enviar",
+                "failed": "Falha no envio"
+            },
+            "new": {
+                "title": "Nova conversa",
+                "description": "Introduza os dados do motorista para iniciar a conversa.",
+                "fields": {
+                    "driverName": {
+                        "label": "Nome do motorista",
+                        "placeholder": "Nome completo",
+                        "error": "O nome é obrigatório"
+                    },
+                    "driverPhone": {
+                        "label": "Telefone (WhatsApp)",
+                        "placeholder": "258840000000",
+                        "error": "Telefone inválido"
+                    },
+                    "orderId": {
+                        "label": "Pedido (opcional)",
+                        "placeholder": "APPL001.26",
+                        "error": "Pedido inválido"
+                    }
+                },
+                "actions": {
+                    "start": "Iniciar",
+                    "starting": "A iniciar...",
+                    "cancel": "Cancelar"
+                },
+                "errors": {
+                    "invalid": "Os dados são inválidos.",
+                    "unauthorized": "Sessão inválida. Inicie a sessão novamente.",
+                    "orderNotFound": "O pedido indicado não existe.",
+                    "unknown": "Ocorreu um erro inesperado. Tente novamente."
+                }
+            }
+        },
+        "organization": {
+            "combobox": {
+                "loading": "A procurar...",
+                "empty": "Sem resultados",
+                "register": "Registar \"{name}\""
+            },
+            "register": {
+                "title": {
+                    "shipper": "Registar cliente",
+                    "carrier": "Registar transportador"
+                },
+                "description": "Preencha os dados da empresa para a adicionar ao registo.",
+                "fields": {
+                    "name": {
+                        "label": "Nome da empresa",
+                        "placeholder": "Nome completo da empresa",
+                        "error": "O nome é obrigatório"
+                    },
+                    "nuit": {
+                        "label": "NUIT",
+                        "placeholder": "000000000",
+                        "error": "O NUIT deve ter 9 dígitos"
+                    },
+                    "email": {
+                        "label": "Email",
+                        "placeholder": "empresa@exemplo.com",
+                        "error": "Email inválido"
+                    },
+                    "phone": {
+                        "label": "Telefone",
+                        "placeholder": "(258) 84 000 0000",
+                        "error": "Telefone inválido"
+                    },
+                    "billingAddress": {
+                        "label": "Endereço de faturação",
+                        "placeholder": "Pesquise o endereço",
+                        "error": "O endereço de faturação é obrigatório"
+                    },
+                    "physicalAddress": {
+                        "label": "Endereço físico",
+                        "placeholder": "Pesquise o endereço",
+                        "error": "O endereço físico é obrigatório"
+                    }
+                },
+                "actions": {
+                    "save": "Registar",
+                    "saving": "A registar...",
+                    "cancel": "Cancelar"
+                },
+                "errors": {
+                    "invalid": "Os dados são inválidos.",
+                    "unauthorized": "Sessão inválida. Inicie a sessão novamente.",
+                    "duplicateNuit": "Já existe uma empresa com este NUIT.",
+                    "duplicateEmail": "Já existe uma empresa com este email.",
+                    "duplicatePhone": "Já existe uma empresa com este telefone.",
+                    "unknown": "Ocorreu um erro inesperado. Tente novamente."
+                }
+            }
+        },
+        "fleet": {
+            "combobox": {
+                "loading": "A procurar...",
+                "empty": "Sem resultados",
+                "register": "Registar \"{plate}\""
+            },
+            "register": {
+                "title": {
+                    "truck": "Registar camião",
+                    "trailer": "Registar atrelado",
+                    "link": "Registar link"
+                },
+                "description": "Preencha os dados do veículo para o adicionar à frota do transportador.",
+                "fields": {
+                    "plate": {
+                        "label": "Matrícula",
+                        "placeholder": "AAA 000 MC"
+                    },
+                    "internalId": {
+                        "label": "Id interno",
+                        "placeholder": "Código interno da frota (opcional)"
+                    },
+                    "brand": {
+                        "label": "Marca",
+                        "placeholder": "Volvo"
+                    },
+                    "model": {
+                        "label": "Modelo",
+                        "placeholder": "FH16"
+                    },
+                    "year": {
+                        "label": "Ano",
+                        "placeholder": "Escolha o ano"
+                    },
+                    "vin": {
+                        "label": "VIN",
+                        "placeholder": "Número de chassis (17 caracteres)"
+                    },
+                    "type": {
+                        "label": "Tipo de camião",
+                        "placeholder": "Escolha o tipo",
+                        "description": "Camiões articulados levam a zona de carga no atrelado",
+                        "options": {
+                            "articulated": "Articulado",
+                            "non-articulated": "Não articulado"
+                        }
+                    },
+                    "bay": {
+                        "title": "Zona de carga",
+                        "type": {
+                            "label": "Tipo de carroçaria",
+                            "placeholder": "Escolha o tipo",
+                            "options": {
+                                "flatbed": "Plataforma (flatbed)",
+                                "dropsides": "Taipais (dropsides)",
+                                "tautliner": "Tautliner",
+                                "rigid-body": "Rígido",
+                                "refrigerated": "Refrigerado",
+                                "tipper": "Basculante",
+                                "side-tipper": "Basculante lateral",
+                                "tanker": "Cisterna",
+                                "lowbed": "Zorra (lowbed)"
+                            }
+                        },
+                        "width": {
+                            "label": "Largura (m)",
+                            "placeholder": "2.5"
+                        },
+                        "length": {
+                            "label": "Comprimento (m)",
+                            "placeholder": "13.6"
+                        },
+                        "height": {
+                            "label": "Altura (m)",
+                            "placeholder": "2.7"
+                        },
+                        "volume": {
+                            "label": "Volume (m³)",
+                            "placeholder": "L x C x A"
+                        },
+                        "capacity": {
+                            "label": "Capacidade (toneladas)",
+                            "placeholder": "34"
+                        }
+                    }
+                },
+                "actions": {
+                    "save": "Registar",
+                    "saving": "A registar...",
+                    "cancel": "Cancelar"
+                },
+                "errors": {
+                    "invalid": "Os dados são inválidos.",
+                    "unauthorized": "Sessão inválida. Inicie a sessão novamente.",
+                    "duplicatePlate": "Já existe um veículo registado com esta matrícula.",
+                    "duplicateVin": "Já existe um veículo registado com este VIN.",
+                    "unknown": "Ocorreu um erro inesperado. Tente novamente.",
+                    "validation": {
+                        "plate": "A matrícula é obrigatória",
+                        "brand": "A marca é obrigatória",
+                        "model": "O modelo é obrigatório",
+                        "year": "Escolha o ano",
+                        "vin": "O VIN deve ter 17 caracteres (as letras I, O e Q não são usadas)",
+                        "type": "Escolha o tipo de camião",
+                        "bayValue": "Introduza um número positivo",
+                        "bayType": "Escolha o tipo de carroçaria"
+                    }
+                }
+            }
+        },
+        "driver": {
+            "combobox": {
+                "loading": "A procurar...",
+                "empty": "Sem resultados",
+                "register": "Registar \"{name}\""
+            },
+            "register": {
+                "title": "Registar motorista",
+                "description": "O motorista recebe uma conta na app; define a sua própria senha ao aderir.",
+                "fields": {
+                    "name": {
+                        "label": "Nome",
+                        "placeholder": "João Silva"
+                    },
+                    "email": {
+                        "label": "Email",
+                        "placeholder": "motorista@exemplo.com"
+                    },
+                    "phone": {
+                        "label": "Telefone",
+                        "placeholder": "+258840000000"
+                    },
+                    "passport": {
+                        "label": "Passaporte",
+                        "placeholder": "AB1234567 (opcional)"
+                    }
+                },
+                "actions": {
+                    "save": "Registar",
+                    "saving": "A registar...",
+                    "cancel": "Cancelar"
+                },
+                "errors": {
+                    "invalid": "Os dados são inválidos.",
+                    "unauthorized": "Sessão inválida. Inicie a sessão novamente.",
+                    "duplicateEmail": "Já existe um utilizador com este email.",
+                    "duplicatePhone": "Já existe um utilizador com este telefone.",
+                    "unknown": "Ocorreu um erro inesperado. Tente novamente.",
+                    "validation": {
+                        "name": "O nome é obrigatório",
+                        "email": "Email inválido",
+                        "phone": "Use o formato internacional, ex. +258840000000"
+                    }
+                }
+            }
+        },
+        "partners": {
+            "shippers": {
+                "title": "Clientes",
+                "description": "Faça a gestão das empresas clientes e da sua verificação",
+                "add": "Adicionar cliente"
+            },
+            "carriers": {
+                "title": "Transportadores",
+                "description": "Faça a gestão dos transportadores, contratos e risco",
+                "add": "Adicionar transportador"
+            },
+            "drivers": {
+                "title": "Motoristas",
+                "description": "Faça a gestão dos motoristas de todos os transportadores",
+                "add": "Adicionar motorista"
+            },
+            "fleet": {
+                "title": "Frotas",
+                "description": "Faça a gestão de camiões, reboques e semi-reboques",
+                "add": "Adicionar veículo",
+                "kind": {
+                    "truck": "Camiões",
+                    "trailer": "Reboques",
+                    "link": "Semi-reboques"
+                }
+            },
+            "stats": {
+                "total": "Total",
+                "pending-review": "Por rever",
+                "verified": "Verificados",
+                "expiring": "A expirar ≤{days}d",
+                "flagged": "Sinalizados"
+            },
+            "filters": {
+                "search": {
+                    "organization": "Pesquisar por nome, NUIT ou email...",
+                    "driver": "Pesquisar por nome, email ou telefone...",
+                    "fleet": "Pesquisar por matrícula, marca ou transportador..."
+                },
+                "all": "Todos",
+                "view": {
+                    "grid": "Vista em grelha",
+                    "list": "Vista em lista"
+                },
+                "clear": "Limpar pesquisa"
+            },
+            "fields": {
+                "nuit": "NUIT",
+                "email": "Email",
+                "phone": "Telefone",
+                "carrier": "Transportador",
+                "documents": "Documentos",
+                "status": "Estado",
+                "contract": "Contrato",
+                "risk": "Risco",
+                "ownership": "Propriedade",
+                "location": "Localização",
+                "load": "Carga actual",
+                "driver": "Motorista",
+                "truck": "Camião",
+                "capacity": "Capacidade",
+                "vehicle": "Veículo",
+                "licence": "Carta",
+                "expires": "Expira",
+                "active-orders": "Pedidos activos",
+                "total-orders": "Total de pedidos",
+                "on-time": "Entregas a horas",
+                "payment": "Pagamentos liquidados",
+                "fleet-size": "Dimensão da frota",
+                "drivers": "Motoristas"
+            },
+            "values": {
+                "none": "Nenhum",
+                "idle": "Parado",
+                "unassigned": "Sem atribuição",
+                "empty": "Vazio",
+                "en-route": "A caminho de {city}",
+                "at": "Em {city}",
+                "no-expiry": "Sem validade",
+                "expires-in": "em {days}d",
+                "expired": "Expirado",
+                "progress": "{approved}/{required}",
+                "tons": "{tons} t"
+            },
+            "status": {
+                "draft": "Rascunho",
+                "pending-review": "Por rever",
+                "verified": "Verificado",
+                "rejected": "Rejeitado",
+                "expired": "Expirado",
+                "suspended": "Suspenso"
+            },
+            "risk": {
+                "none": "Sem risco",
+                "watch": "Vigiar",
+                "high": "Risco elevado"
+            },
+            "ownership": {
+                "unverified": "Não verificada",
+                "owner-verified": "Própria",
+                "third-party": "De terceiros"
+            },
+            "documents": {
+                "nuit": "Certidão de NUIT",
+                "id-card": "Bilhete de identidade",
+                "commercial-certificate": "Certidão comercial",
+                "alvara": "Alvará de transporte",
+                "bank-letter": "Carta bancária",
+                "republic-bulletin": "Boletim da República",
+                "commercial-exercise": "Exercício comercial",
+                "signed-contract": "Contrato assinado",
+                "driver-license": "Carta de condução",
+                "vehicle-booklet": "Livrete do veículo",
+                "proof-of-ownership": "Prova de propriedade"
+            },
+            "review": {
+                "title": "Verificação",
+                "description": "Reveja os documentos carregados e decida cada um",
+                "open": "Rever",
+                "details": "Detalhes",
+                "checklist": "Documentos obrigatórios",
+                "missing": "Não carregado",
+                "pages": "{count, plural, one {# página} other {# páginas}}",
+                "uploaded": "Carregado a {date}",
+                "preview": "Pré-visualização",
+                "no-preview": "Este ficheiro não pode ser pré-visualizado aqui",
+                "open-file": "Abrir ficheiro",
+                "approve": "Aprovar",
+                "reject": "Rejeitar",
+                "approved": "Aprovado",
+                "rejected": "Rejeitado",
+                "pending": "Pendente",
+                "expiry": "Data de validade",
+                "expiry-required": "É necessária uma data de validade para aprovar este documento",
+                "issued": "Data de emissão",
+                "number": "Número do documento",
+                "reason": "Motivo da rejeição",
+                "reason-required": "É necessário um motivo para rejeitar um documento",
+                "owner-name": "Nome do proprietário (como consta no documento)",
+                "owner-nuit": "NUIT do proprietário",
+                "owner-hint": "O NUIT do transportador é {nuit}",
+                "owner-mismatch": "Este veículo pertence a terceiros. Ao aprovar, o transportador será sinalizado como subcontratado de risco elevado.",
+                "not-allowed": "O seu perfil não pode rever documentos",
+                "contract-missing": "Sem contrato assinado — este transportador não pode operar",
+                "contract-expired": "O contrato assinado expirou — este transportador não pode operar",
+                "close": "Fechar",
+                "replace": "Substituir documento",
+                "add-pages": "Adicionar páginas",
+                "remove-page": "Remover página",
+                "submit-upload": "Carregar",
+                "errors": {
+                    "LOAD_FAILED": "Não foi possível carregar estes documentos, tente novamente",
+                    "EXPIRY_REQUIRED": "É necessária uma data de validade para aprovar este documento",
+                    "REASON_REQUIRED": "É necessário um motivo para rejeitar um documento",
+                    "OWNER_NUIT_REQUIRED": "Introduza o NUIT do proprietário antes de aprovar",
+                    "CARRIER_UNKNOWN": "Este veículo não tem transportador associado",
+                    "ALREADY_REVIEWED": "Este documento já foi decidido — recarregue para ver o resultado",
+                    "DOCUMENT_NOT_APPLICABLE": "Este tipo de documento não se aplica a este parceiro",
+                    "INVALID_DOCUMENT_URL": "Esse ficheiro não foi aceite, carregue-o novamente",
+                    "UPLOAD_FAILED": "O carregamento não foi concluído, tente novamente",
+                    "FILE_TOO_LARGE": "Cada página deve ter 5 MB ou menos",
+                    "FILE_TYPE": "Só são aceites ficheiros PDF, JPG e PNG",
+                    "NOT_ALLOWED": "O seu perfil não pode executar esta acção",
+                    "INVALID_STATE": "Essa acção não está disponível neste momento",
+                    "NOT_FOUND": "Este registo já não existe",
+                    "UNKNOWN": "Ocorreu um erro, tente novamente"
+                }
+            },
+            "data": {
+                "empty": "Ainda não há nada aqui",
+                "no-results": "Nenhum resultado corresponde aos filtros",
+                "error": "Não foi possível carregar esta lista, tente novamente"
+            },
+            "register": {
+                "carrier": {
+                    "title": "Escolha um transportador",
+                    "description": "Motoristas e veículos são registados sob um transportador",
+                    "label": "Transportador",
+                    "placeholder": "Pesquisar o transportador...",
+                    "cancel": "Cancelar",
+                    "continue": "Continuar"
+                }
+            },
+            "gate": {
+                "blocked": {
+                    "title": "Este transportador não pode ser contratado"
+                },
+                "warning": {
+                    "title": "Verificação incompleta",
+                    "description": "Esta contratação pode avançar, mas a documentação que a suporta não está completa.",
+                    "will-flag": "O pedido será sinalizado para revisão para que esta falha permaneça visível.",
+                    "high-risk": "Um veículo deste pedido pertence a terceiros — aceitar isso é uma decisão de supervisão.",
+                    "needs-manager": "Um supervisor tem de aceitar este risco, com uma nota a justificar."
+                },
+                "codes": {
+                    "CARRIER_NOT_VERIFIED": "Nem todos os documentos deste transportador foram aprovados.",
+                    "CARRIER_CONTRACT_MISSING": "Este transportador não tem contrato assinado aprovado, por isso não pode operar na plataforma.",
+                    "CARRIER_CONTRACT_EXPIRED": "O contrato assinado deste transportador expirou, por isso não pode operar na plataforma.",
+                    "CARRIER_SUSPENDED": "Este transportador está suspenso.",
+                    "UNKNOWN": "Este transportador não pode ser contratado neste momento."
+                }
+            }
+        }
+    },
+    "ActivityLog": {
+        "generic": "Executou {action}",
+        "session": {
+            "resumed": "Retomou a sessão"
+        },
+        "auth": {
+            "sign_in": "Iniciou sessão",
+            "sign_out": "Terminou sessão"
+        },
+        "order": {
+            "create": "Criou a ordem {orderId} para {shipperName}",
+            "update": "Atualizou a ordem {orderId} ({changedFields})",
+            "updateDeal": "Editou o negócio {orderId} ({status})",
+            "transition": "Moveu a ordem {orderId} para {to}",
+            "resolveFlag": "Resolveu a sinalização de revisão da ordem {orderId}"
+        },
+        "documents": {
+            "create": "Adicionou um documento {type} à ordem {orderId}",
+            "softDelete": "Anulou o documento {documentId}"
+        },
+        "fleet": {
+            "registerTruck": "Registou o camião {regPlate}",
+            "registerTrailer": "Registou o atrelado {regPlate}",
+            "registerLink": "Registou o link {regPlate}",
+            "registerDriver": "Registou o motorista {name}"
+        },
+        "organizations": {
+            "register": "Registou a organização {name}"
+        },
+        "chats": {
+            "start": "Iniciou uma conversa com {driverName}",
+            "send": "Enviou uma mensagem"
+        },
+        "kyc": {
+            "upload": "Carregou {documentType} para {subjectType} {subjectId}",
+            "review": "Marcou {documentType} como {decision} ({kycStatus})",
+            "flagRisk": "Sinalizou a organização {organizationId} como risco {level}",
+            "clearRisk": "Removeu a sinalização de risco da organização {organizationId}",
+            "suspend": "Suspendeu {subjectType} {subjectId}",
+            "unsuspend": "Levantou a suspensão de {subjectType} {subjectId} ({kycStatus})"
+        },
+        "settings": {
+            "setPassword": "Criou uma palavra-passe para a sua conta"
+        }
+    }
+}
