@@ -1,0 +1,30 @@
+{
+    "name": "@workspace/edgestore",
+    "type": "module",
+    "scripts": {
+        "lint": "eslint",
+        "format": "prettier --write \"**/*.{ts,tsx}\"",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@edgestore/react": "^0.8.0",
+        "@edgestore/server": "^0.8.0",
+        "@workspace/auth": "workspace:*",
+        "zod": "^4.4.3"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "@types/react": "^19",
+        "@workspace/eslint-config": "workspace:*",
+        "@workspace/typescript-config": "workspace:*",
+        "eslint": "^9",
+        "next": "16.3.0",
+        "react": "19.2.4",
+        "typescript": "^5"
+    },
+    "exports": {
+        "./server": "./src/server.ts",
+        "./client": "./src/client.tsx",
+        "./path": "./src/path.ts"
+    }
+}
