@@ -1,0 +1,2251 @@
+{
+    "General": {
+        "inputs": {
+            "file": {
+                "delete": {
+                    "label": "Delete",
+                    "tooltip": "Delete file",
+                    "error": "Error deleting the file, please try again"
+                },
+                "upload": {
+                    "label": "Upload",
+                    "tooltip": "Upload file",
+                    "error": "Error uploading the file, please try again"
+                },
+                "remove": {
+                    "label": "Remove",
+                    "tooltip": "Remove field"
+                },
+                "errors": {
+                    "size": "The file exceeds the maximum allowed size",
+                    "format": "The file format is not supported"
+                }
+            }
+        }
+    },
+    "Admin": {
+        "auth": {
+            "title": "Appload Dashboard",
+            "description": "Enter your credentials to sign in",
+            "username": {
+                "label": "Username",
+                "placeholder": "name",
+                "description": "Enter your email name",
+                "error": "Username is required"
+            },
+            "password": {
+                "label": "Password",
+                "placeholder": "••••••••••",
+                "error": "Password is required"
+            },
+            "errors": {
+                "unable_to_get_user_info": "Sign in with your @apploadafrica.com Google Workspace account",
+                "access_denied": "Google sign-in was cancelled",
+                "invalid_credentials": "Wrong username or password",
+                "too_many_requests": "Too many attempts. Wait a moment and try again",
+                "default": "Sign-in failed. Please try again"
+            },
+            "sign-in": "Sign in",
+            "sign-with": "or sign with",
+            "forgot-link": "Forgot password?",
+            "forgot": {
+                "title": "Recover password",
+                "description": "Enter your account and we will email you a reset link",
+                "submit": "Send reset link",
+                "sent-title": "Check your inbox",
+                "sent-description": "If that account exists, a reset link is on its way. The link expires after one hour",
+                "back": "Back to sign in"
+            },
+            "reset": {
+                "title": "Set a new password",
+                "description": "Choose a new password for your account",
+                "password": {
+                    "label": "New password",
+                    "placeholder": "••••••••••",
+                    "error": "The password must be at least 8 characters"
+                },
+                "confirm": {
+                    "label": "Confirm password",
+                    "placeholder": "••••••••••",
+                    "error": "Confirm the new password",
+                    "mismatch": "The passwords do not match"
+                },
+                "submit": "Reset password",
+                "success": "Password updated. Sign in with the new password",
+                "request-again": "Request a new link",
+                "errors": {
+                    "invalid_token": "This reset link is invalid or has expired",
+                    "invalid_token_hint": "Request a new link below and use it within one hour"
+                }
+            }
+        },
+        "errors": {
+            "not-found": {
+                "title": "Page not found",
+                "description": "The page you are looking for does not exist or has moved",
+                "home": "Go to orders"
+            },
+            "boundary": {
+                "title": "Something went wrong",
+                "description": "The page hit an unexpected error. Try again — if it keeps happening, contact support",
+                "retry": "Try again"
+            }
+        },
+        "access-denied": {
+            "title": "Access restricted",
+            "description": "This area is for Appload staff accounts. Sign in with your @apploadafrica.com account to continue",
+            "sign-out": "Sign out"
+        },
+        "sidebar": {
+            "header": {
+                "app-name": "appload",
+                "slogan": "Going the extra mile"
+            },
+            "content": {
+                "ops": {
+                    "order": "New order",
+                    "orders": {
+                        "orders": "Orders",
+                        "all": "All",
+                        "prospects": "Prospects",
+                        "booked": "Booked",
+                        "on-going": "On going",
+                        "delivered": "Delivered",
+                        "history": "History"
+                    },
+                    "chats": "Chats"
+                },
+                "management": {
+                    "shippers": "Shippers",
+                    "carriers": {
+                        "carriers": "Carriers",
+                        "companies": "Companies",
+                        "drivers": "Drivers",
+                        "fleets": "Fleet"
+                    }
+                }
+            },
+            "user": {
+                "settings": "Settings",
+                "language": "Language",
+                "theme": {
+                    "label": "Theme",
+                    "light": "Light",
+                    "dark": "Dark",
+                    "system": "System"
+                },
+                "sign-out": "Sign out"
+            }
+        },
+        "settings": {
+            "title": "Settings",
+            "description": "Manage your profile and how you sign in.",
+            "tabs": {
+                "account": "Account",
+                "security": "Security"
+            },
+            "methods": {
+                "title": "Sign-in methods",
+                "description": "How you get into Appload. Keep at least two, so losing one never locks you out.",
+                "loadFailed": "Could not load your sign-in methods",
+                "retry": "Try again",
+                "added": "Added on {date}",
+                "status": {
+                    "active": "Active",
+                    "inactive": "Not set up"
+                },
+                "password": {
+                    "title": "Email and password",
+                    "active": "Sign in with {email} and your password.",
+                    "inactive": "You have no password yet. Add one so you can sign in without Google.",
+                    "add": "Add a password",
+                    "submit": "Create password",
+                    "cancel": "Cancel",
+                    "success": "Password created",
+                    "failed": "Could not create the password",
+                    "already": "This account already has a password",
+                    "new": {
+                        "label": "New password",
+                        "placeholder": "Choose a password",
+                        "description": "At least 8 characters.",
+                        "error": "Use at least 8 characters"
+                    },
+                    "confirm": {
+                        "label": "Confirm password",
+                        "placeholder": "Repeat the password",
+                        "error": "Repeat the password",
+                        "mismatch": "The passwords do not match"
+                    }
+                },
+                "google": {
+                    "title": "Google",
+                    "active": "Sign in with your Google account ({email}).",
+                    "inactive": "Not linked. Link Google to sign in with one click.",
+                    "link": "Link Google",
+                    "linked": "Google linked"
+                },
+                "unlink": {
+                    "action": "Remove",
+                    "title": "Remove {method}?",
+                    "description": "You will no longer be able to sign in with it. You can add it back at any time.",
+                    "confirm": "Remove",
+                    "cancel": "Keep it",
+                    "success": "{method} removed",
+                    "failed": "Could not remove {method}",
+                    "last": "This is your only way in. Add another sign-in method before removing this one.",
+                    "twoFactor": "Two-factor authentication needs your password. Turn it off before removing the password.",
+                    "stale": "For security this needs a recent sign-in. Sign out, sign in again, then try once more."
+                },
+                "errors": {
+                    "untrusted": "Google would not confirm that address, so the account was not linked.",
+                    "emailMismatch": "That Google account uses a different address to this one.",
+                    "otherUser": "That Google account is already linked to someone else.",
+                    "expired": "The link request expired. Try again.",
+                    "cancelled": "The Google sign-in was cancelled.",
+                    "default": "Could not link Google. Try again."
+                }
+            },
+            "account": {
+                "title": "Profile",
+                "description": "How you appear to the rest of the team.",
+                "save": "Save changes",
+                "success": "Profile updated",
+                "error": "Could not update your profile",
+                "name": {
+                    "label": "Display name",
+                    "placeholder": "Your name",
+                    "error": "Enter a display name"
+                },
+                "image": {
+                    "label": "Avatar",
+                    "description": "JPEG or PNG, up to 2 MB.",
+                    "format": "Avatars must be a JPEG or PNG image",
+                    "size": "Avatars must be smaller than 2 MB"
+                },
+                "email": {
+                    "label": "Email"
+                },
+                "role": {
+                    "label": "Role",
+                    "options": {
+                        "admin": "Administrator",
+                        "manager": "Manager",
+                        "user": "Staff"
+                    }
+                }
+            },
+            "password": {
+                "title": "Password",
+                "description": "Change the password you use to sign in.",
+                "submit": "Change password",
+                "success": "Password changed",
+                "current": {
+                    "label": "Current password",
+                    "placeholder": "Your current password",
+                    "error": "Enter your current password",
+                    "invalid": "That password is not correct"
+                },
+                "new": {
+                    "label": "New password",
+                    "placeholder": "Your new password",
+                    "description": "At least 8 characters.",
+                    "error": "Use at least 8 characters"
+                },
+                "confirm": {
+                    "label": "Confirm new password",
+                    "placeholder": "Repeat the new password",
+                    "error": "Repeat the new password",
+                    "mismatch": "The passwords do not match"
+                },
+                "revoke": {
+                    "label": "Sign out other devices",
+                    "description": "Ends every other session using the old password."
+                }
+            },
+            "twoFactor": {
+                "title": "Two-factor authentication",
+                "description": "Require a code from your authenticator app when signing in.",
+                "enabled": "Two-factor authentication is on",
+                "disabled": "Two-factor authentication is off",
+                "copied": "Copied to clipboard",
+                "copyFailed": "Could not copy",
+                "status": {
+                    "on": "On",
+                    "off": "Off"
+                },
+                "actions": {
+                    "enable": "Enable",
+                    "disable": "Disable",
+                    "regenerate": "New backup codes",
+                    "cancel": "Cancel"
+                },
+                "password": {
+                    "label": "Password",
+                    "placeholder": "Your password",
+                    "error": "Enter your password",
+                    "invalid": "That password is not correct",
+                    "reason": {
+                        "enable": "Confirm your password to start setting up two-factor authentication.",
+                        "disable": "Confirm your password to turn two-factor authentication off.",
+                        "regenerate": "Confirm your password to replace your backup codes.",
+                        "idle": ""
+                    }
+                },
+                "setup": {
+                    "title": "Add this account to your authenticator",
+                    "description": "Enter the secret manually, or paste the setup link into an app that accepts one. Then confirm with the six-digit code it shows.",
+                    "secret": "Secret",
+                    "uri": "Setup link",
+                    "confirm": "Confirm and turn on"
+                },
+                "code": {
+                    "label": "Authentication code",
+                    "description": "The six-digit code from your authenticator app.",
+                    "error": "Enter the six-digit code",
+                    "invalid": "That code is not valid"
+                },
+                "backup": {
+                    "title": "Backup codes",
+                    "newTitle": "New backup codes",
+                    "description": "Each code works once, if you lose your authenticator. Save them now — they are not shown again.",
+                    "copy": "Copy all",
+                    "dismiss": "Done"
+                },
+                "active": {
+                    "title": "Two-factor authentication is on",
+                    "description": "You will be asked for a code from your authenticator app the next time you sign in."
+                },
+                "requiresPassword": {
+                    "title": "Add a password first",
+                    "description": "Two-factor authentication is confirmed with your password, and this account does not have one yet. Add a password under sign-in methods, then come back."
+                }
+            },
+            "phone": {
+                "title": "Phone number",
+                "description": "Verify a number so it can be used for account recovery.",
+                "send": "Send code",
+                "verify": "Verify",
+                "sent": "Code sent",
+                "verified": "Phone number verified",
+                "status": {
+                    "verified": "Verified",
+                    "unverified": "Not verified"
+                },
+                "number": {
+                    "label": "Phone number",
+                    "description": "Just the local number — the country code is chosen beside it.",
+                    "error": "Enter the number in international format, e.g. +258840000000",
+                    "failed": "Could not send a code to that number",
+                    "country": "Choose the country"
+                },
+                "code": {
+                    "label": "Verification code",
+                    "description": "The six-digit code sent to {phone}.",
+                    "error": "Enter the six-digit code",
+                    "invalid": "That code is not valid"
+                },
+                "unavailable": {
+                    "title": "SMS delivery is not configured",
+                    "description": "Codes will not arrive until an SMS provider is connected, so verification cannot complete yet."
+                },
+                "active": {
+                    "title": "Verified number"
+                }
+            }
+        },
+        "order": {
+            "create": {
+                "title": "New order",
+                "description": "Fill in the order details to register the new order.",
+                "editTitle": "Edit order {orderId}",
+                "editDescription": "Amend the prospect. Confirming it requires the same complete details as creating a booked order.",
+                "confirmTitle": "Confirm order {orderId}",
+                "confirmDescription": "Fill in everything still missing. The status is already set to Booked, so saving books the order and every required field is validated.",
+                "form": {
+                    "shipper": {
+                        "title": "Shipper information",
+                        "fields": {
+                            "shipper": {
+                                "label": "Shipper name (company or individual)",
+                                "placeholder": "Appload",
+                                "description": "Search for the shipper; if they are not registered, you will be prompted to register them"
+                            }
+                        }
+                    },
+                    "routeDates": {
+                        "title": "Location and dates information",
+                        "fields": {
+                            "loadingAddress": {
+                                "label": "Loading address",
+                                "placeholder": "Maputo, Mozambique",
+                                "description": "Search for the loading location"
+                            },
+                            "offloadingAddress": {
+                                "label": "Offloading address",
+                                "placeholder": "Matola, Mozambique",
+                                "description": "Search for the offloading location"
+                            },
+                            "expectedloadingDate": {
+                                "label": "Expected loading date",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "expectedoffloadingDate": {
+                                "label": "Expected offloading date",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "routeType": {
+                                "label": "Route type",
+                                "placeholder": "Route type",
+                                "options": {
+                                    "national": "National",
+                                    "regional": "Regional"
+                                }
+                            },
+                            "tripType": {
+                                "label": "Trip type",
+                                "placeholder": "Trip type",
+                                "options": {
+                                    "backload": "Backload",
+                                    "normal": "Outbound"
+                                }
+                            },
+                            "distance": {
+                                "label": "Distance (km)",
+                                "placeholder": "0.00"
+                            },
+                            "deliveries": {
+                                "label": "No. of deliveries",
+                                "placeholder": "1"
+                            }
+                        }
+                    },
+                    "cargo": {
+                        "title": "Cargo information",
+                        "fields": {
+                            "category": {
+                                "label": "Category",
+                                "placeholder": "Choose the category",
+                                "options": {
+                                    "agriculture-inputs": "Agriculture inputs",
+                                    "agriculture-products": "Agriculture products",
+                                    "construction": "Construction",
+                                    "machinery-equipment": "Machinery & equipment",
+                                    "fmcg": "FMCG",
+                                    "general-cargo": "General cargo",
+                                    "medicine": "Medicine",
+                                    "mining": "Mining",
+                                    "oil-gas": "Oil & gas",
+                                    "vehicles": "Vehicles",
+                                    "other": "Other"
+                                }
+                            },
+                            "description": {
+                                "label": "Description",
+                                "placeholder": "Fertilizers"
+                            },
+                            "weight": {
+                                "label": "Available quantity",
+                                "placeholder": "30.00"
+                            },
+                            "loadType": {
+                                "label": "Load handling",
+                                "placeholder": "Choose an option",
+                                "options": {
+                                    "dedicated": "Dedicated truck",
+                                    "groupage": "Groupage"
+                                }
+                            }
+                        }
+                    },
+                    "status": {
+                        "label": "Order status",
+                        "placeholder": "Choose the order's current status",
+                        "options": {
+                            "prospect": "Prospect",
+                            "booked": "Booked"
+                        }
+                    },
+                    "carrier": {
+                        "title": "Carrier and transport information",
+                        "fields": {
+                            "carrier": {
+                                "label": "Carrier name",
+                                "placeholder": "Appload",
+                                "description": "Search for the carrier; if they are not registered, you will be prompted to register them"
+                            },
+                            "fiscalRegime": {
+                                "label": "Fiscal regime",
+                                "placeholder": "Choose the regime",
+                                "options": {
+                                    "normal": "Normal (16%)",
+                                    "simplified-5": "Simplified (5%)",
+                                    "simplified-3": "Simplified (3%)",
+                                    "n/a": "Not applicable"
+                                }
+                            },
+                            "driver": {
+                                "title": "Driver details",
+                                "name": {
+                                    "label": "Name",
+                                    "placeholder": "João Silva",
+                                    "description": "Search the carrier's drivers; if they are not registered, you will be prompted to register them"
+                                },
+                                "contact": {
+                                    "label": "Contact",
+                                    "placeholder": "+258 84 000 0000"
+                                },
+                                "passport": {
+                                    "label": "Passport",
+                                    "placeholder": "AB1234567"
+                                }
+                            },
+                            "fleet": {
+                                "title": "Fleet details",
+                                "truck": {
+                                    "label": "Truck plate",
+                                    "placeholder": "AAA 000 MC",
+                                    "description": "Search the carrier's fleet; if the truck is not registered, you will be prompted to register it"
+                                },
+                                "age": {
+                                    "label": "Truck age",
+                                    "placeholder": "Truck age",
+                                    "options": {
+                                        "recent": "Recent",
+                                        "not-recent": "Non recent"
+                                    }
+                                },
+                                "loadingBay": {
+                                    "label": "Fleet type",
+                                    "placeholder": "Fleet type",
+                                    "options": {
+                                        "flatbed": "Flatbed",
+                                        "dropsides": "Dropsides",
+                                        "tautliner": "Tautliner",
+                                        "rigid-body": "Rigid body",
+                                        "refrigerated": "Refrigerated",
+                                        "tipper": "Tipper",
+                                        "side-tipper": "Side tipper",
+                                        "tanker": "Tanker",
+                                        "lowbed": "Lowbed"
+                                    }
+                                },
+                                "trailer": {
+                                    "label": "Trailer plate",
+                                    "placeholder": "AA 000 MC"
+                                },
+                                "link": {
+                                    "label": "Link plate",
+                                    "placeholder": "AA 000 MC"
+                                },
+                                "capacity": {
+                                    "label": "Loading capacity",
+                                    "placeholder": "0.00"
+                                }
+                            }
+                        }
+                    },
+                    "payment": {
+                        "title": "Payment information",
+                        "fields": {
+                            "carrier": {
+                                "title": "Carrier payment",
+                                "subtotal": {
+                                    "label": "Subtotal",
+                                    "placeholder": "0.00"
+                                },
+                                "vat": {
+                                    "label": "VAT",
+                                    "placeholder": "0.00"
+                                },
+                                "total": {
+                                    "label": "Total to pay",
+                                    "placeholder": "0.00"
+                                },
+                                "currency": {
+                                    "label": "Currency",
+                                    "placeholder": "Choose the currency",
+                                    "options": {
+                                        "MZN": "MZN",
+                                        "ZAR": "ZAR",
+                                        "USD": "USD"
+                                    }
+                                }
+                            },
+                            "shipper": {
+                                "title": "Shipper payment",
+                                "subtotal": {
+                                    "label": "Subtotal",
+                                    "placeholder": "0.00"
+                                },
+                                "vat": {
+                                    "label": "VAT",
+                                    "placeholder": "0.00"
+                                },
+                                "total": {
+                                    "label": "Total to receive",
+                                    "placeholder": "0.00"
+                                },
+                                "currency": {
+                                    "label": "Currency",
+                                    "placeholder": "Choose the currency",
+                                    "options": {
+                                        "MZN": "MZN",
+                                        "ZAR": "ZAR",
+                                        "USD": "USD"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "errors": {
+                        "validation": {
+                            "address": "Empty field or no location selected",
+                            "carrier": "Carrier name is required",
+                            "category": "Choose a category from the list",
+                            "contact": "Invalid driver contact",
+                            "count": "Invalid number",
+                            "currency": "Choose a currency from the list",
+                            "date": "Select a valid date",
+                            "days": "Invalid number of days",
+                            "deliveries": "Number of deliveries was not entered",
+                            "description": "Cargo description was not entered",
+                            "driver": "Driver name was not entered",
+                            "field": "This field cannot remain empty",
+                            "list": "Choose an option from the list",
+                            "passport": "Driver passport is required for regional trips",
+                            "percentage": "The percentage must be between 0 and 100",
+                            "plate": "Truck plate is required",
+                            "shipper": "The shipper or company name is required",
+                            "subtotal": "Subtotal field is required",
+                            "total": "Total field is required",
+                            "status": "Choose a status from the list",
+                            "value": "The value entered is invalid",
+                            "weight": "The weight entered is invalid"
+                        }
+                    }
+                },
+                "actions": {
+                    "save": "Save",
+                    "saving": "Saving...",
+                    "cancel": "Cancel"
+                },
+                "success": {
+                    "title": "Order created",
+                    "description": "Order {orderId} was created and added to the spreadsheet.",
+                    "bookedTitle": "Order confirmed",
+                    "bookedDescription": "Order {orderId} was booked and the spreadsheet was updated.",
+                    "savedTitle": "Order saved",
+                    "savedDescription": "Order {orderId} was updated and synced to the spreadsheet.",
+                    "preparing": "Preparing documents...",
+                    "downloadShipper": "Download shipper confirmation",
+                    "downloadCarrier": "Download carrier confirmation",
+                    "close": "Close"
+                },
+                "errors": {
+                    "invalid": "The form data is invalid.",
+                    "unauthorized": "Invalid session. Please sign in again.",
+                    "googleNotLinked": "Your Google account is not linked. Connect it to save to the spreadsheet.",
+                    "insufficientScope": "Your Google account does not have permission to edit spreadsheets. Reconnect it to grant access.",
+                    "reconnect": "Connect Google account",
+                    "sheetFailed": "The order was saved, but syncing to the spreadsheet failed.",
+                    "headerMismatch": "The \"All orders\" sheet columns changed and no longer match what is expected. Contact the tech team.",
+                    "notFound": "This order no longer exists. Refresh the list and try again.",
+                    "versionConflict": "Someone else updated this order while you were editing. Review the latest data and try again.",
+                    "invalidState": "This order has moved past the deal stage — edit it from its details page instead.",
+                    "notAllowed": "Your role does not allow this action.",
+                    "unknown": "An unexpected error occurred. Please try again.",
+                    "truckNotRegistered": "The truck plate is not in the carrier's registered fleet. Pick it from the list or register it.",
+                    "trailerNotRegistered": "The trailer plate is not in the carrier's registered fleet. Pick it from the list or register it.",
+                    "linkNotRegistered": "The link plate is not in the carrier's registered fleet. Pick it from the list or register it.",
+                    "driverNotRegistered": "The driver is not registered for this carrier. Pick them from the list or register them.",
+                    "carrierNotVerified": "This carrier's documents have not all been approved yet",
+                    "carrierContractMissing": "This carrier has no approved signed contract",
+                    "carrierContractExpired": "This carrier's signed contract has expired",
+                    "carrierSuspended": "This carrier is suspended",
+                    "riskAckNotAllowed": "Only a supervisor can accept this risk",
+                    "riskAckNoteRequired": "Explain why this risk is being accepted",
+                    "noteCurrencyLocked": "The currency cannot change once this party has notes or proofs of payment."
+                }
+            },
+            "update": {
+                "title": "Edit order",
+                "description": "Update any of the order's details. Only the fields you change are saved.",
+                "form": {
+                    "routeDates": {
+                        "title": "Location and dates information",
+                        "fields": {
+                            "loadingAddress": {
+                                "label": "Loading address",
+                                "placeholder": "Maputo, Mozambique"
+                            },
+                            "offloadingAddress": {
+                                "label": "Offloading address",
+                                "placeholder": "Matola, Mozambique"
+                            },
+                            "expectedLoadingDate": {
+                                "label": "Expected loading date",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "expectedOffloadingDate": {
+                                "label": "Expected offloading date",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "route": {
+                                "label": "Route type",
+                                "placeholder": "Route type",
+                                "options": {
+                                    "national": "National",
+                                    "regional": "Regional"
+                                }
+                            },
+                            "tripType": {
+                                "label": "Trip type",
+                                "placeholder": "Trip type",
+                                "options": {
+                                    "backload": "Backload",
+                                    "normal": "Outbound"
+                                }
+                            },
+                            "distance": {
+                                "label": "Distance (km)",
+                                "placeholder": "0"
+                            },
+                            "deliveries": {
+                                "label": "Deliveries",
+                                "placeholder": "1"
+                            },
+                            "expectedTrucks": {
+                                "label": "Expected trucks",
+                                "placeholder": "1"
+                            }
+                        }
+                    },
+                    "loading": {
+                        "title": "Loading tracking",
+                        "fields": {
+                            "proposedDate": {
+                                "label": "Proposed loading date",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "arrival": {
+                                "label": "Arrival at loading",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "actualDate": {
+                                "label": "Actual loading date",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "departure": {
+                                "label": "Departure from loading",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "demurrageCharged": {
+                                "label": "Demurrage charged?"
+                            },
+                            "demurrageChargedDays": {
+                                "label": "Demurrage days charged",
+                                "placeholder": "0"
+                            }
+                        }
+                    },
+                    "offloading": {
+                        "title": "Offloading tracking",
+                        "fields": {
+                            "proposedDate": {
+                                "label": "Proposed offloading date",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "arrival": {
+                                "label": "Arrival at offloading",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "actualDate": {
+                                "label": "Actual offloading date",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "departure": {
+                                "label": "Departure from offloading",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "demurrageCharged": {
+                                "label": "Demurrage charged?"
+                            },
+                            "demurrageChargedDays": {
+                                "label": "Demurrage days charged",
+                                "placeholder": "0"
+                            }
+                        }
+                    },
+                    "border": {
+                        "title": "Border crossing",
+                        "fields": {
+                            "arrival": {
+                                "label": "Arrival at border",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "departure": {
+                                "label": "Departure from border",
+                                "placeholder": "dd mmmm yyyy"
+                            },
+                            "demurrageCharged": {
+                                "label": "Detention charged?"
+                            },
+                            "demurrageChargedDays": {
+                                "label": "Detention days charged",
+                                "placeholder": "0"
+                            }
+                        }
+                    },
+                    "cargo": {
+                        "title": "Cargo information",
+                        "fields": {
+                            "category": {
+                                "label": "Category",
+                                "placeholder": "Choose the category",
+                                "options": {
+                                    "agriculture-inputs": "Agriculture inputs",
+                                    "agriculture-products": "Agriculture products",
+                                    "construction": "Construction",
+                                    "machinery-equipment": "Machinery & equipment",
+                                    "fmcg": "FMCG",
+                                    "general-cargo": "General cargo",
+                                    "medicine": "Medicine",
+                                    "mining": "Mining",
+                                    "oil-gas": "Oil & gas",
+                                    "vehicles": "Vehicles",
+                                    "other": "Other"
+                                }
+                            },
+                            "description": {
+                                "label": "Description",
+                                "placeholder": "Fertilizers"
+                            },
+                            "weight": {
+                                "label": "Weight",
+                                "placeholder": "0.000"
+                            },
+                            "loadedWeight": {
+                                "label": "Loaded weight",
+                                "placeholder": "0.000"
+                            },
+                            "offloadedWeight": {
+                                "label": "Offloaded weight",
+                                "placeholder": "0.000"
+                            },
+                            "weightUnit": {
+                                "label": "Weight unit",
+                                "placeholder": "Choose the unit",
+                                "options": {
+                                    "ton": "Tons",
+                                    "kg": "Kilograms",
+                                    "liter": "Liters"
+                                }
+                            },
+                            "packing": {
+                                "label": "Packing",
+                                "placeholder": "Choose the packing",
+                                "options": {
+                                    "bags-1kg": "1 kg bags",
+                                    "bags-2kg": "2 kg bags",
+                                    "bags-5kg": "5 kg bags",
+                                    "bags-25kg": "25 kg bags",
+                                    "bags-30kg": "30 kg bags",
+                                    "bags-50kg": "50 kg bags",
+                                    "bags-100kg": "100 kg bags",
+                                    "bags-1ton": "1 ton bags (big bags)",
+                                    "bottle-1l": "1 L bottles",
+                                    "bottle-5l": "5 L bottles",
+                                    "bottle-10l": "10 L bottles",
+                                    "bottle-20l": "20 L bottles",
+                                    "bottle-25l": "25 L bottles",
+                                    "container-20ft": "20 ft container",
+                                    "container-40ft": "40 ft container",
+                                    "boxes": "Boxes",
+                                    "pallets": "Pallets",
+                                    "noPacking": "In bulk / no packing",
+                                    "other": "Other"
+                                }
+                            },
+                            "isHazardous": {
+                                "label": "Hazardous cargo?"
+                            },
+                            "hazchemCode": {
+                                "label": "HAZCHEM code",
+                                "placeholder": "E.g. 3YE"
+                            },
+                            "isRefrigerated": {
+                                "label": "Refrigerated cargo?"
+                            },
+                            "temperature": {
+                                "label": "Temperature (°C)",
+                                "placeholder": "-18"
+                            },
+                            "temperatureInstructions": {
+                                "label": "Temperature instructions",
+                                "placeholder": "E.g. Keep below -18 °C"
+                            },
+                            "loadType": {
+                                "label": "Load handling",
+                                "placeholder": "Choose an option",
+                                "options": {
+                                    "dedicated": "Dedicated truck",
+                                    "groupage": "Groupage"
+                                }
+                            }
+                        }
+                    },
+                    "status": {
+                        "title": "Order status",
+                        "fields": {
+                            "status": {
+                                "label": "Order status",
+                                "placeholder": "Choose the order's current status",
+                                "options": {
+                                    "prospect": "Prospect",
+                                    "booked": "Booked",
+                                    "to-loading": "To loading",
+                                    "at-loading": "At loading",
+                                    "loading": "Loading",
+                                    "waiting-documents": "Waiting for documents",
+                                    "on-route": "On route",
+                                    "stopped": "Stopped",
+                                    "issue": "Issue",
+                                    "at-border": "At border",
+                                    "at-offloading": "At offloading",
+                                    "offloading": "Offloading",
+                                    "delivered": "Offloaded",
+                                    "completed": "Completed",
+                                    "cancelled": "Cancelled",
+                                    "underbid": "Underbid"
+                                }
+                            },
+                            "podStatus": {
+                                "label": "POD status",
+                                "placeholder": "Choose the status",
+                                "options": {
+                                    "pending-collection": "Pending collection",
+                                    "pending-delivery": "Pending delivery",
+                                    "delivered": "Delivered",
+                                    "verified": "Verified"
+                                }
+                            }
+                        }
+                    },
+                    "carrier": {
+                        "title": "Carrier and transport information",
+                        "fields": {
+                            "carrier": {
+                                "label": "Carrier name",
+                                "placeholder": "Appload"
+                            },
+                            "fiscalRegime": {
+                                "label": "Fiscal regime",
+                                "placeholder": "Choose the regime",
+                                "options": {
+                                    "normal": "Normal (16%)",
+                                    "simplified-5": "Simplified (5%)",
+                                    "simplified-3": "Simplified (3%)",
+                                    "n/a": "Not applicable"
+                                }
+                            },
+                            "driver": {
+                                "title": "Driver details",
+                                "name": {
+                                    "label": "Name",
+                                    "placeholder": "João Silva"
+                                },
+                                "contact": {
+                                    "label": "Contact",
+                                    "placeholder": "+258 84 000 0000"
+                                },
+                                "passport": {
+                                    "label": "Passport",
+                                    "placeholder": "AB1234567"
+                                }
+                            },
+                            "fleet": {
+                                "title": "Fleet details",
+                                "truck": {
+                                    "label": "Truck plate",
+                                    "placeholder": "AAA 000 MC"
+                                },
+                                "age": {
+                                    "label": "Truck age",
+                                    "placeholder": "Truck age",
+                                    "options": {
+                                        "recent": "Recent",
+                                        "not-recent": "Non recent"
+                                    }
+                                },
+                                "trailer": {
+                                    "label": "Trailer plate",
+                                    "placeholder": "AA 000 MC"
+                                },
+                                "link": {
+                                    "label": "Link plate",
+                                    "placeholder": "AA 000 MC"
+                                }
+                            }
+                        }
+                    },
+                    "payment": {
+                        "title": "Payment information",
+                        "fields": {
+                            "carrier": {
+                                "title": "Carrier payment",
+                                "invoiceNumber": {
+                                    "label": "Invoice number",
+                                    "placeholder": "FT-0000"
+                                },
+                                "invoiceDate": {
+                                    "label": "Invoice date",
+                                    "placeholder": "dd mmmm yyyy"
+                                },
+                                "subtotal": {
+                                    "label": "Subtotal",
+                                    "placeholder": "0.00"
+                                },
+                                "vat": {
+                                    "label": "VAT",
+                                    "placeholder": "0.00"
+                                },
+                                "total": {
+                                    "label": "Total to pay",
+                                    "placeholder": "0.00"
+                                },
+                                "currency": {
+                                    "label": "Currency",
+                                    "placeholder": "Choose the currency",
+                                    "options": {
+                                        "MZN": "MZN",
+                                        "ZAR": "ZAR",
+                                        "USD": "USD"
+                                    }
+                                },
+                                "paidAmount": {
+                                    "label": "Amount paid",
+                                    "placeholder": "0.00"
+                                },
+                                "paymentStatus": {
+                                    "label": "Payment status",
+                                    "placeholder": "Choose the status",
+                                    "options": {
+                                        "pending": "Pending",
+                                        "partially": "Partially paid",
+                                        "completed": "Paid",
+                                        "cancelled": "Cancelled",
+                                        "not-applicable": "Not applicable"
+                                    }
+                                },
+                                "fullPaymentDate": {
+                                    "label": "Full payment date",
+                                    "placeholder": "dd mmmm yyyy"
+                                }
+                            },
+                            "shipper": {
+                                "title": "Shipper payment",
+                                "invoiceNumber": {
+                                    "label": "Invoice number",
+                                    "placeholder": "FT-0000"
+                                },
+                                "invoiceDate": {
+                                    "label": "Invoice date",
+                                    "placeholder": "dd mmmm yyyy"
+                                },
+                                "subtotal": {
+                                    "label": "Subtotal",
+                                    "placeholder": "0.00"
+                                },
+                                "vat": {
+                                    "label": "VAT",
+                                    "placeholder": "0.00"
+                                },
+                                "total": {
+                                    "label": "Total to receive",
+                                    "placeholder": "0.00"
+                                },
+                                "currency": {
+                                    "label": "Currency",
+                                    "placeholder": "Choose the currency",
+                                    "options": {
+                                        "MZN": "MZN",
+                                        "ZAR": "ZAR",
+                                        "USD": "USD"
+                                    }
+                                },
+                                "paidAmount": {
+                                    "label": "Amount received",
+                                    "placeholder": "0.00"
+                                },
+                                "paymentStatus": {
+                                    "label": "Payment status",
+                                    "placeholder": "Choose the status",
+                                    "options": {
+                                        "pending": "Pending",
+                                        "partially": "Partially received",
+                                        "completed": "Received",
+                                        "cancelled": "Cancelled",
+                                        "not-applicable": "Not applicable"
+                                    }
+                                },
+                                "fullPaymentDate": {
+                                    "label": "Full payment date",
+                                    "placeholder": "dd mmmm yyyy"
+                                }
+                            },
+                            "commission": {
+                                "title": "Appload commission",
+                                "subtotal": {
+                                    "label": "Subtotal",
+                                    "placeholder": "0.00"
+                                },
+                                "vat": {
+                                    "label": "VAT",
+                                    "placeholder": "0.00"
+                                },
+                                "total": {
+                                    "label": "Total",
+                                    "placeholder": "0.00"
+                                }
+                            },
+                            "lockedHint": "Derived from the recorded proofs of payment — record or void a proof to change it."
+                        }
+                    },
+                    "insurance": {
+                        "title": "Insurance information",
+                        "fields": {
+                            "subscriber": {
+                                "label": "Insurance subscriber",
+                                "placeholder": "Choose the subscriber",
+                                "options": {
+                                    "appload": "Appload",
+                                    "shipper": "Shipper"
+                                }
+                            },
+                            "value": {
+                                "label": "Insurance value",
+                                "placeholder": "0.00"
+                            },
+                            "currency": {
+                                "label": "Insurance currency",
+                                "placeholder": "Choose the currency",
+                                "options": {
+                                    "MZN": "MZN",
+                                    "ZAR": "ZAR",
+                                    "USD": "USD"
+                                }
+                            },
+                            "status": {
+                                "label": "Insurance status",
+                                "placeholder": "Choose the status",
+                                "options": {
+                                    "pending": "Pending",
+                                    "paid": "Paid",
+                                    "not-applicable": "Not applicable"
+                                }
+                            }
+                        }
+                    },
+                    "incidents": {
+                        "title": "Incidents and delays",
+                        "fields": {
+                            "mechanicalFailuresStops": {
+                                "label": "Mechanical failure stops",
+                                "placeholder": "0"
+                            },
+                            "mechanicalFailuresDelayedDays": {
+                                "label": "Days delayed by mechanical failures",
+                                "placeholder": "0"
+                            },
+                            "documentationIssuesStops": {
+                                "label": "Documentation issue stops",
+                                "placeholder": "0"
+                            },
+                            "documentationIssuesDelayedDays": {
+                                "label": "Days delayed by documentation issues",
+                                "placeholder": "0"
+                            },
+                            "policeStops": {
+                                "label": "Police stops",
+                                "placeholder": "0"
+                            },
+                            "policeDelayedDays": {
+                                "label": "Days delayed by police stops",
+                                "placeholder": "0"
+                            },
+                            "accidents": {
+                                "label": "Accidents",
+                                "placeholder": "0"
+                            },
+                            "cargoDamaged": {
+                                "label": "Cargo damaged?"
+                            },
+                            "damagedPercent": {
+                                "label": "Cargo damaged (%)",
+                                "placeholder": "0"
+                            },
+                            "claimed": {
+                                "label": "Insurance claim filed?"
+                            }
+                        }
+                    },
+                    "costs": {
+                        "title": "Costs and indicators",
+                        "fields": {
+                            "ageFactor": {
+                                "label": "Age factor",
+                                "placeholder": "0.00"
+                            },
+                            "loadFactor": {
+                                "label": "Load factor",
+                                "placeholder": "0.00"
+                            },
+                            "defaultCoefficient": {
+                                "label": "Default coefficient",
+                                "placeholder": "0.00"
+                            },
+                            "costPerKm": {
+                                "label": "Cost per km",
+                                "placeholder": "0.00"
+                            },
+                            "costPerUnit": {
+                                "label": "Cost per unit",
+                                "placeholder": "0.00"
+                            },
+                            "costPerUnitKm": {
+                                "label": "Cost per unit-km",
+                                "placeholder": "0.00"
+                            },
+                            "totalFuelCost": {
+                                "label": "Total fuel cost",
+                                "placeholder": "0.00"
+                            }
+                        }
+                    },
+                    "errors": {
+                        "validation": {
+                            "address": "Empty field or no location selected",
+                            "carrier": "Carrier name is required",
+                            "category": "Choose a category from the list",
+                            "contact": "Invalid driver contact",
+                            "count": "Invalid number",
+                            "currency": "Choose a currency from the list",
+                            "date": "Select a valid date",
+                            "days": "Invalid number of days",
+                            "deliveries": "Number of deliveries was not entered",
+                            "description": "Cargo description was not entered",
+                            "driver": "Driver name was not entered",
+                            "field": "This field cannot remain empty",
+                            "list": "Choose an option from the list",
+                            "passport": "Driver passport is required for regional trips",
+                            "percentage": "The percentage must be between 0 and 100",
+                            "plate": "Truck plate is required",
+                            "shipper": "The shipper or company name is required",
+                            "subtotal": "Subtotal field is required",
+                            "total": "Total field is required",
+                            "status": "Choose a status from the list",
+                            "value": "The value entered is invalid",
+                            "weight": "The weight entered is invalid"
+                        }
+                    }
+                },
+                "actions": {
+                    "save": "Save changes",
+                    "saving": "Saving...",
+                    "cancel": "Cancel"
+                }
+            },
+            "details": {
+                "title": "Order details",
+                "description": "Review and edit order {orderId}. Only the fields you change are saved.",
+                "tabs": {
+                    "order": "Order",
+                    "accounting": "Accounting",
+                    "trip": "Trip information"
+                },
+                "errors": {
+                    "invalid": "The form data is invalid.",
+                    "unauthorized": "Invalid session. Please sign in again.",
+                    "googleNotLinked": "Your Google account is not linked. Connect it to save to the spreadsheet.",
+                    "insufficientScope": "Your Google account does not have permission to edit spreadsheets. Reconnect it to grant access.",
+                    "reconnect": "Connect Google account",
+                    "sheetFailed": "The changes were saved, but syncing to the spreadsheet failed.",
+                    "headerMismatch": "The \"All orders\" sheet columns changed and no longer match what is expected. Contact the tech team.",
+                    "notFound": "This order no longer exists. Refresh the list and try again.",
+                    "versionConflict": "Someone else updated this order while you were editing. Review the latest data and try again.",
+                    "notAllowed": "Your role does not allow this action.",
+                    "unknown": "An unexpected error occurred. Please try again.",
+                    "truckNotRegistered": "The truck plate is not in the carrier's registered fleet. Pick it from the list or register it.",
+                    "trailerNotRegistered": "The trailer plate is not in the carrier's registered fleet. Pick it from the list or register it.",
+                    "linkNotRegistered": "The link plate is not in the carrier's registered fleet. Pick it from the list or register it.",
+                    "driverNotRegistered": "The driver is not registered for this carrier. Pick them from the list or register them.",
+                    "carrierNotVerified": "This carrier's documents have not all been approved yet",
+                    "carrierContractMissing": "This carrier has no approved signed contract",
+                    "carrierContractExpired": "This carrier's signed contract has expired",
+                    "carrierSuspended": "This carrier is suspended",
+                    "riskAckNotAllowed": "Only a supervisor can accept this risk",
+                    "riskAckNoteRequired": "Explain why this risk is being accepted",
+                    "paymentLocked": "Paid amount, payment status and full-payment date for this party are derived from the recorded proofs of payment. Record or void a proof instead.",
+                    "noteCurrencyLocked": "The currency cannot change once this party has notes or proofs of payment."
+                },
+                "success": {
+                    "title": "Order updated",
+                    "description": "Order {orderId} was updated. The confirmation documents below reflect the new details.",
+                    "preparing": "Preparing documents...",
+                    "downloadShipper": "Download shipper confirmation",
+                    "downloadCarrier": "Download carrier confirmation",
+                    "close": "Close"
+                }
+            }
+        },
+        "orders": {
+            "header": {
+                "page": {
+                    "all": {
+                        "title": "All orders",
+                        "description": "Every order registered in the database"
+                    },
+                    "prospect": {
+                        "title": "Prospect orders",
+                        "description": "Orders still in the prospect stage"
+                    },
+                    "booked": {
+                        "title": "Booked orders",
+                        "description": "Orders confirmed but not yet started"
+                    },
+                    "on-going": {
+                        "title": "Ongoing orders",
+                        "description": "Orders currently in transit"
+                    },
+                    "delivered": {
+                        "title": "Delivered orders",
+                        "description": "Deliveries completed and awaiting reviews"
+                    },
+                    "history": {
+                        "title": "History",
+                        "description": "Completed, cancelled or underbid orders"
+                    }
+                },
+                "search": "Search order by ID, client, carrier, invoice number",
+                "view": {
+                    "grid": "Switch to grid view",
+                    "list": "Switch to list view"
+                },
+                "year": "Year",
+                "filters": {
+                    "title": "Filters",
+                    "clear": "Clear filter",
+                    "category": {
+                        "label": "Filter by category",
+                        "placeholder": "Select one of the options to filter",
+                        "options": {
+                            "agriculture-inputs": "Agricultural inputs",
+                            "agriculture-products": "Agricultural products",
+                            "construction": "Construction",
+                            "machinery-equipment": "Machinery and equipment",
+                            "fmcg": "Fast-moving consumer goods",
+                            "general-cargo": "General cargo",
+                            "medicine": "Medicine",
+                            "mining": "Mining",
+                            "oil-gas": "Oil & Gas",
+                            "vehicles": "Vehicles",
+                            "other": "Other"
+                        }
+                    },
+                    "payment": {
+                        "label": "Filter by payment status",
+                        "placeholder": "Select one of the options to filter",
+                        "by": {
+                            "all": "All",
+                            "shipper": "Shipper",
+                            "carrier": "Carrier"
+                        },
+                        "options": {
+                            "not-applicable": "Not applicable",
+                            "pending": "Pending",
+                            "partially": "Partially paid",
+                            "completed": "Fully paid"
+                        }
+                    },
+                    "period": {
+                        "label": "Filter by month or dates",
+                        "month": {
+                            "label": "Month",
+                            "placeholder": "Select month",
+                            "options": {
+                                "jan": "January",
+                                "feb": "February",
+                                "mar": "March",
+                                "apr": "April",
+                                "may": "May",
+                                "jun": "June",
+                                "jul": "July",
+                                "aug": "August",
+                                "sep": "September",
+                                "oct": "October",
+                                "nov": "November",
+                                "dec": "December"
+                            }
+                        },
+                        "date": {
+                            "placeholder": "Select the dates"
+                        }
+                    },
+                    "status": {
+                        "label": "Status",
+                        "options": {
+                            "all": "All",
+                            "prospect": "Prospect",
+                            "booked": "Booked",
+                            "to-loading": "On the way to loading",
+                            "at-loading": "At loading site",
+                            "loading": "Loading",
+                            "waiting-documents": "Waiting for documents",
+                            "on-route": "On route",
+                            "stopped": "Stopped",
+                            "issue": "With issue",
+                            "at-border": "At border",
+                            "at-offloading": "At offloading site",
+                            "offloading": "Offloading",
+                            "delivered": "Delivered",
+                            "completed": "Completed",
+                            "cancelled": "Cancelled",
+                            "underbid": "Underbid"
+                        }
+                    }
+                }
+            },
+            "data": {
+                "count": "{count, plural, =0 {No orders} one {# order} other {# orders}}",
+                "empty": "No orders match the applied filters",
+                "error": "Could not load the orders. Please try again.",
+                "labels": {
+                    "route": "Route",
+                    "date": "Date",
+                    "loading": "Loading",
+                    "driver": "Driver",
+                    "vehicle": "Vehicle",
+                    "weight": "Weight",
+                    "distance": "Distance",
+                    "amount": "Amount",
+                    "shipper": "Shipper",
+                    "noShipper": "No shipper",
+                    "carrier": "Carrier",
+                    "noCarrier": "No carrier",
+                    "noInvoice": "No invoice",
+                    "settled": "Settled",
+                    "paid": "Paid",
+                    "received": "Received",
+                    "toReceive": "To receive",
+                    "toPay": "To pay",
+                    "overpaid": "Overpaid",
+                    "noDriverAssigned": "No driver assigned",
+                    "noTruck": "No truck"
+                },
+                "paymentStatus": {
+                    "shipper": {
+                        "pending": "Pending",
+                        "partially": "Partially received",
+                        "completed": "Fully received",
+                        "not-applicable": "Not applicable",
+                        "none": "No payment status"
+                    },
+                    "carrier": {
+                        "pending": "Pending",
+                        "partially": "Partially paid",
+                        "completed": "Fully paid",
+                        "not-applicable": "Not applicable",
+                        "none": "No payment status"
+                    }
+                },
+                "flags": {
+                    "hazardous": "Hazardous",
+                    "refrigerated": "Refrigerated"
+                },
+                "actions": {
+                    "view": "View",
+                    "confirm": "Confirm order",
+                    "edit": "Edit",
+                    "more": "More",
+                    "changeStatus": "Change status",
+                    "cancel": "Cancel order"
+                }
+            },
+            "transitionDialog": {
+                "title": "Change status",
+                "description": "Move order {orderId} to its next status.",
+                "targetLabel": "New status",
+                "targetPlaceholder": "Pick a status",
+                "noTargets": "No status changes are available for your role right now.",
+                "resumeHint": "resume",
+                "blockedHint": "needs completing",
+                "noteLabel": "Note",
+                "notePlaceholder": "Explain this change (at least 5 characters)...",
+                "documentLabel": {
+                    "pod": "Proof of delivery (required)",
+                    "evidence": "Supporting document (required)"
+                },
+                "documentHint": "PDF, JPG or PNG. The status change is blocked until the document is attached.",
+                "pickFile": "Pick file",
+                "replaceFile": "Replace file",
+                "removeFile": "Remove file",
+                "fileFormatError": "The file format is not supported",
+                "flagWarning": "This move flags the order for review — a manager must resolve it afterwards.",
+                "sheetWarning": "The status changed, but syncing to the spreadsheet failed. It will be retried automatically.",
+                "confirm": "Confirm",
+                "cancel": "Cancel",
+                "errors": {
+                    "INVALID_STATE": "This status change is no longer valid. The order may have moved on.",
+                    "NOT_ALLOWED": "Your role does not allow this status change.",
+                    "VERSION_CONFLICT": "Someone else changed this order first. The options were refreshed — try again.",
+                    "NOTE_REQUIRED": "A note is required for this change.",
+                    "EVIDENCE_REQUIRED": "A supporting document is required for this change.",
+                    "POD_REQUIRED": "A proof of delivery is required to complete the order.",
+                    "INCOMPLETE_FOR_BOOKING": "This prospect is still missing carrier, driver, fleet or amount details. Use \"Confirm order\" to complete and book it.",
+                    "NOT_FOUND": "This order no longer exists.",
+                    "UPLOAD_FAILED": "Uploading the document failed. Please try again.",
+                    "UNKNOWN": "An unexpected error occurred. Please try again.",
+                    "CARRIER_NOT_VERIFIED": "This carrier's documents have not all been approved yet",
+                    "CARRIER_CONTRACT_MISSING": "This carrier has no approved signed contract",
+                    "CARRIER_CONTRACT_EXPIRED": "This carrier's signed contract has expired",
+                    "CARRIER_SUSPENDED": "This carrier is suspended",
+                    "RISK_ACK_NOT_ALLOWED": "Only a supervisor can accept this risk",
+                    "RISK_ACK_NOTE_REQUIRED": "Explain why this risk is being accepted"
+                }
+            },
+            "detailPage": {
+                "error": "Failed to load this order.",
+                "back": "Back to orders",
+                "more": "More actions",
+                "confirm": "Confirm order",
+                "changeStatus": "Change status",
+                "edit": "Edit",
+                "sendPdf": "Send PDF",
+                "flagResolved": "Review flag resolved.",
+                "flagResolveFailed": "Resolving the flag failed. Only managers and admins can resolve flags.",
+                "sheetSync": {
+                    "pending": "Sheet sync pending",
+                    "done": "Sheet in sync",
+                    "failed": "Sheet sync failed"
+                },
+                "flagged": {
+                    "title": "Flagged for review",
+                    "noReason": "No reason was recorded.",
+                    "resolve": "Resolve flag"
+                },
+                "sections": {
+                    "shipment": "Shipment",
+                    "description": "Description",
+                    "payments": "Parties & payments",
+                    "operations": "Operations",
+                    "history": "History"
+                },
+                "adjustments": {
+                    "title": "Effective totals (with debit/credit notes)",
+                    "shipperEffective": "Shipper effective total",
+                    "carrierEffective": "Carrier effective total"
+                },
+                "metrics": {
+                    "distance": "Distance",
+                    "deliveries": "Deliveries",
+                    "daysTraveling": "Days traveling",
+                    "podStatus": "POD status"
+                },
+                "pod": {
+                    "pending-collection": "Pending collection",
+                    "pending-delivery": "Pending delivery",
+                    "delivered": "Delivered",
+                    "verified": "Verified"
+                },
+                "payments": {
+                    "proofs": "Proofs of payment",
+                    "noProofs": "No proofs of payment recorded yet.",
+                    "recordPayment": "Record payment",
+                    "open": "Open proof",
+                    "derivedHint": "These figures come from the recorded proofs."
+                }
+            },
+            "history": {
+                "empty": "No history yet.",
+                "created": "Order created",
+                "flagged": "Flagged",
+                "system": "System",
+                "changedFields": "{count, plural, one {# field changed} other {# fields changed}}",
+                "voided": "Voided",
+                "replacedManual": "Replaced the manually entered amount of {amount} {currency}",
+                "kinds": {
+                    "transition": "Status change",
+                    "update": "Details updated",
+                    "document": "Document",
+                    "note": "Financial note",
+                    "flag": "Flag resolved",
+                    "system": "System event",
+                    "payment": "Payment"
+                }
+            },
+            "documents": {
+                "title": "Documents",
+                "add": "Add",
+                "empty": "No documents attached yet.",
+                "open": "Open document",
+                "void": "Void document",
+                "uploadError": "Uploading the file failed. Please try again.",
+                "deleteError": "Voiding the document failed.",
+                "sheetWarning": "The note was saved, but syncing to the spreadsheet failed. It will be retried automatically.",
+                "paymentSheetWarning": "The payment was recorded, but syncing to the spreadsheet failed. It will be retried automatically.",
+                "invoiceSheetWarning": "The invoice was saved, but syncing to the spreadsheet failed. It will be retried automatically.",
+                "recomputePending": "The document was saved, but the order could not be updated because someone else was editing it. The paid figures will be recalculated automatically — please check any invoice or demurrage details on the order.",
+                "voidPayment": "Void proof of payment",
+                "formatError": "The file format is not supported",
+                "form": {
+                    "type": "Type",
+                    "party": "Party",
+                    "partyPlaceholder": "Pick a party",
+                    "total": "Total (VAT incl.)",
+                    "currency": "Currency",
+                    "reasonCode": "Reason",
+                    "reasonCodePlaceholder": "Pick the reason",
+                    "description": "Description",
+                    "descriptionPlaceholder": "What happened, references, agreed terms...",
+                    "descriptionRequired": "A description is required for this reason.",
+                    "demurrageStage": "Where",
+                    "demurrageStagePlaceholder": "Loading, offloading or border",
+                    "demurrageDays": "Days charged",
+                    "demurrageHint": "Recorded on the order as demurrage charged at the chosen stage — the days replace the current value.",
+                    "damagedPercent": "Damaged share (%)",
+                    "claimed": "Claim filed",
+                    "damageHint": "Marks the cargo as damaged on the order and records the share and claim when given.",
+                    "amount": "Amount paid",
+                    "amountReceived": "Amount received",
+                    "amountNeutral": "Amount",
+                    "paidAt": "Payment date",
+                    "reference": "Reference / notes",
+                    "referencePlaceholder": "Bank reference, transfer number...",
+                    "currencyMissing": "Set the {party}'s currency in the accounting tab before recording a note or a payment.",
+                    "invoiceNumber": "Invoice number",
+                    "invoiceNumberPlaceholder": "e.g. FT 2026/123",
+                    "invoiceDate": "Invoice date",
+                    "invoiceHint": "Recorded as the {party}'s invoice on the order — leave as is to keep the current values.",
+                    "pickFile": "Pick file",
+                    "replaceFile": "Replace file",
+                    "cancel": "Cancel",
+                    "save": "Save"
+                },
+                "confirm": {
+                    "title": "Confirm payment",
+                    "overpaid": "Recording this proof takes the amount paid to {paid} {currency}, above the effective total of {total} {currency}. The payment will be marked as completed and the remaining amount will be negative. Continue?",
+                    "overpaidReceived": "Recording this proof takes the amount received to {paid} {currency}, above the effective total of {total} {currency}. The payment will be marked as completed and the amount to receive will be negative. Continue?",
+                    "replaceManual": "This is the first proof of payment for the {party}. The amount entered by hand ({amount} {currency}) will be replaced by the sum of the recorded proofs, and the payment fields become read-only in the edit form. Continue?",
+                    "replaceManualStatus": "This is the first proof of payment for the {party}. The payment status and date entered by hand will be replaced by what the recorded proofs derive, and the payment fields become read-only in the edit form. Continue?",
+                    "cancel": "Cancel",
+                    "continue": "Record payment"
+                },
+                "errors": {
+                    "POP_FIELDS_REQUIRED": "Pick the party, the amount paid and the payment date.",
+                    "POP_CURRENCY_MISMATCH": "The proof must be in the same currency as the party's leg.",
+                    "POP_LEG_CURRENCY_MISSING": "Set the party's currency on the order before recording a payment.",
+                    "POP_PAID_AT_FUTURE": "The payment date cannot be in the future.",
+                    "POP_ORDER_NOT_BOOKED": "Proofs of payment can only be recorded once the order is booked.",
+                    "NOTE_REASON_REQUIRED": "Pick the reason for the note.",
+                    "NOTE_DESCRIPTION_REQUIRED": "Describe the note — this reason needs a description.",
+                    "NOTE_DEMURRAGE_FIELDS_REQUIRED": "Say where the demurrage happened and how many days are charged.",
+                    "NOTE_FIELDS_REQUIRED": "Pick the party and the amount of the note.",
+                    "NOTE_CURRENCY_MISMATCH": "The note must be in the same currency as the party's leg.",
+                    "NOTE_LEG_CURRENCY_MISSING": "Set the party's currency on the order before recording a note.",
+                    "NOT_ALLOWED": "Your role does not allow this action.",
+                    "VERSION_CONFLICT": "Someone else changed this order first. Refresh and try again.",
+                    "UNKNOWN": "Saving the document failed. Please try again."
+                },
+                "reasons": {
+                    "demurrage": "Demurrage",
+                    "damage": "Cargo damage",
+                    "loss-shortage": "Loss or shortage",
+                    "late-delivery": "Late delivery penalty",
+                    "extra-delivery": "Extra delivery / collection point",
+                    "route-deviation": "Extra kilometres / route change",
+                    "waiting-time": "Waiting / detention time",
+                    "tolls-fees": "Tolls, border, port or permit fees",
+                    "fuel-surcharge": "Fuel price adjustment",
+                    "handling": "Loading / unloading labour or equipment",
+                    "storage": "Storage / warehousing",
+                    "cleaning": "Trailer cleaning / decontamination",
+                    "escort-security": "Escort / security",
+                    "cancellation": "Cancellation or no-show",
+                    "weight-variance": "Weight or volume variance",
+                    "rate-correction": "Rate correction / pricing error",
+                    "duplicate-invoice": "Duplicate invoice",
+                    "discount": "Commercial discount / goodwill",
+                    "currency-adjustment": "Currency / FX adjustment",
+                    "tax-adjustment": "VAT / tax correction",
+                    "insurance": "Insurance premium or claim adjustment",
+                    "extra-expenses": "Extra expenses",
+                    "other": "Other"
+                },
+                "stages": {
+                    "loading": "Loading",
+                    "offloading": "Offloading",
+                    "border": "Border"
+                },
+                "types": {
+                    "pod": "POD",
+                    "invoice": "Invoice",
+                    "shipper-invoice": "Shipper invoice",
+                    "carrier-invoice": "Carrier invoice",
+                    "debit-note": "Debit note",
+                    "credit-note": "Credit note",
+                    "proof-of-payment": "Proof of payment",
+                    "evidence": "Evidence",
+                    "transport-order": "Transport order",
+                    "other": "Other"
+                },
+                "parties": {
+                    "shipper": "Shipper",
+                    "carrier": "Carrier"
+                }
+            },
+            "pdfSend": {
+                "title": "Send transport order",
+                "description": "Generate and send the PDF for order {orderId}.",
+                "partyLabel": "Document",
+                "parties": {
+                    "shipper": "Shipper — {name}",
+                    "carrier": "Carrier — {name}"
+                },
+                "toLabel": "To",
+                "toPlaceholder": "recipient@company.com",
+                "ccLabel": "CC",
+                "ccPlaceholder": "cc1@company.com, cc2@company.com",
+                "ccHint": "Up to 5 addresses, separated by commas.",
+                "messageLabel": "Message",
+                "messagePlaceholder": "Optional message included in the email or WhatsApp text...",
+                "download": "Download",
+                "whatsapp": "WhatsApp",
+                "email": "Send email",
+                "sent": "Email sent.",
+                "sentSimulated": "Email simulated — configure RESEND_API_KEY to send for real.",
+                "waDefaultMessage": "Transport order {orderId} from Appload:",
+                "errors": {
+                    "UPLOAD_FAILED": "Uploading the PDF failed. Please try again.",
+                    "SEND_FAILED": "Sending failed. Please try again."
+                }
+            },
+            "stats": {}
+        },
+        "chats": {
+            "title": "Chats",
+            "description": "Chat with drivers and keep orders up to date.",
+            "unconfigured": {
+                "title": "Messaging is not configured",
+                "description": "The WhatsApp/SMS provider is not connected, so messages will not reach drivers. Configure the Infobip environment variables to send for real"
+            },
+            "list": {
+                "new": "New chat",
+                "emptyTitle": "No conversations",
+                "emptyDescription": "Start a conversation with a driver to get going."
+            },
+            "thread": {
+                "emptyTitle": "No conversation selected",
+                "emptyDescription": "Pick a conversation from the list or start a new one.",
+                "order": "Order",
+                "composer": "Type a message...",
+                "send": "Send",
+                "failed": "Failed to send"
+            },
+            "new": {
+                "title": "New chat",
+                "description": "Enter the driver's details to start the conversation.",
+                "fields": {
+                    "driverName": {
+                        "label": "Driver name",
+                        "placeholder": "Full name",
+                        "error": "Name is required"
+                    },
+                    "driverPhone": {
+                        "label": "Phone (WhatsApp)",
+                        "placeholder": "258840000000",
+                        "error": "Invalid phone"
+                    },
+                    "orderId": {
+                        "label": "Order (optional)",
+                        "placeholder": "APPL001.26",
+                        "error": "Invalid order"
+                    }
+                },
+                "actions": {
+                    "start": "Start",
+                    "starting": "Starting...",
+                    "cancel": "Cancel"
+                },
+                "errors": {
+                    "invalid": "The data is invalid.",
+                    "unauthorized": "Invalid session. Please sign in again.",
+                    "orderNotFound": "That order does not exist.",
+                    "unknown": "An unexpected error occurred. Please try again."
+                }
+            }
+        },
+        "organization": {
+            "combobox": {
+                "loading": "Searching...",
+                "empty": "No results",
+                "register": "Register \"{name}\""
+            },
+            "register": {
+                "title": {
+                    "shipper": "Register shipper",
+                    "carrier": "Register carrier"
+                },
+                "description": "Fill in the company details to add it to the registry.",
+                "fields": {
+                    "name": {
+                        "label": "Company name",
+                        "placeholder": "Full company name",
+                        "error": "Name is required"
+                    },
+                    "nuit": {
+                        "label": "NUIT",
+                        "placeholder": "000000000",
+                        "error": "NUIT must have 9 digits"
+                    },
+                    "email": {
+                        "label": "Email",
+                        "placeholder": "company@example.com",
+                        "error": "Invalid email"
+                    },
+                    "phone": {
+                        "label": "Phone",
+                        "placeholder": "(258) 84 000 0000",
+                        "error": "Invalid phone"
+                    },
+                    "billingAddress": {
+                        "label": "Billing address",
+                        "placeholder": "Search the address",
+                        "error": "Billing address is required"
+                    },
+                    "physicalAddress": {
+                        "label": "Physical address",
+                        "placeholder": "Search the address",
+                        "error": "Physical address is required"
+                    }
+                },
+                "actions": {
+                    "save": "Register",
+                    "saving": "Registering...",
+                    "cancel": "Cancel"
+                },
+                "errors": {
+                    "invalid": "The data is invalid.",
+                    "unauthorized": "Invalid session. Please sign in again.",
+                    "duplicateNuit": "A company with this NUIT already exists.",
+                    "duplicateEmail": "A company with this email already exists.",
+                    "duplicatePhone": "A company with this phone already exists.",
+                    "unknown": "An unexpected error occurred. Please try again."
+                }
+            }
+        },
+        "fleet": {
+            "combobox": {
+                "loading": "Searching...",
+                "empty": "No results",
+                "register": "Register \"{plate}\""
+            },
+            "register": {
+                "title": {
+                    "truck": "Register truck",
+                    "trailer": "Register trailer",
+                    "link": "Register link"
+                },
+                "description": "Fill in the vehicle details to add it to the carrier's fleet.",
+                "fields": {
+                    "plate": {
+                        "label": "Registration plate",
+                        "placeholder": "AAA 000 MC"
+                    },
+                    "internalId": {
+                        "label": "Internal id",
+                        "placeholder": "Company fleet code (optional)"
+                    },
+                    "brand": {
+                        "label": "Brand",
+                        "placeholder": "Volvo"
+                    },
+                    "model": {
+                        "label": "Model",
+                        "placeholder": "FH16"
+                    },
+                    "year": {
+                        "label": "Year",
+                        "placeholder": "Choose the year"
+                    },
+                    "vin": {
+                        "label": "VIN",
+                        "placeholder": "17-character chassis number"
+                    },
+                    "type": {
+                        "label": "Truck type",
+                        "placeholder": "Choose the type",
+                        "description": "Articulated trucks tow the loading bay on a trailer",
+                        "options": {
+                            "articulated": "Articulated",
+                            "non-articulated": "Non articulated"
+                        }
+                    },
+                    "bay": {
+                        "title": "Loading bay",
+                        "type": {
+                            "label": "Bay type",
+                            "placeholder": "Choose the bay type",
+                            "options": {
+                                "flatbed": "Flatbed",
+                                "dropsides": "Dropsides",
+                                "tautliner": "Tautliner",
+                                "rigid-body": "Rigid body",
+                                "refrigerated": "Refrigerated",
+                                "tipper": "Tipper",
+                                "side-tipper": "Side tipper",
+                                "tanker": "Tanker",
+                                "lowbed": "Lowbed"
+                            }
+                        },
+                        "width": {
+                            "label": "Width (m)",
+                            "placeholder": "2.5"
+                        },
+                        "length": {
+                            "label": "Length (m)",
+                            "placeholder": "13.6"
+                        },
+                        "height": {
+                            "label": "Height (m)",
+                            "placeholder": "2.7"
+                        },
+                        "volume": {
+                            "label": "Volume (m³)",
+                            "placeholder": "W x L x H"
+                        },
+                        "capacity": {
+                            "label": "Capacity (tons)",
+                            "placeholder": "34"
+                        }
+                    }
+                },
+                "actions": {
+                    "save": "Register",
+                    "saving": "Registering...",
+                    "cancel": "Cancel"
+                },
+                "errors": {
+                    "invalid": "The data is invalid.",
+                    "unauthorized": "Invalid session. Please sign in again.",
+                    "duplicatePlate": "A vehicle with this plate is already registered.",
+                    "duplicateVin": "A vehicle with this VIN is already registered.",
+                    "unknown": "An unexpected error occurred. Please try again.",
+                    "validation": {
+                        "plate": "Plate is required",
+                        "brand": "Brand is required",
+                        "model": "Model is required",
+                        "year": "Choose the year",
+                        "vin": "VIN must have 17 characters (letters I, O and Q are not used)",
+                        "type": "Choose the truck type",
+                        "bayValue": "Enter a positive number",
+                        "bayType": "Choose the bay type"
+                    }
+                }
+            }
+        },
+        "driver": {
+            "combobox": {
+                "loading": "Searching...",
+                "empty": "No results",
+                "register": "Register \"{name}\""
+            },
+            "register": {
+                "title": "Register driver",
+                "description": "The driver gets an app account; they set their own password when onboarding.",
+                "fields": {
+                    "name": {
+                        "label": "Name",
+                        "placeholder": "João Silva"
+                    },
+                    "email": {
+                        "label": "Email",
+                        "placeholder": "driver@example.com"
+                    },
+                    "phone": {
+                        "label": "Phone",
+                        "placeholder": "+258840000000"
+                    },
+                    "passport": {
+                        "label": "Passport",
+                        "placeholder": "AB1234567 (optional)"
+                    }
+                },
+                "actions": {
+                    "save": "Register",
+                    "saving": "Registering...",
+                    "cancel": "Cancel"
+                },
+                "errors": {
+                    "invalid": "The data is invalid.",
+                    "unauthorized": "Invalid session. Please sign in again.",
+                    "duplicateEmail": "A user with this email already exists.",
+                    "duplicatePhone": "A user with this phone already exists.",
+                    "unknown": "An unexpected error occurred. Please try again.",
+                    "validation": {
+                        "name": "Name is required",
+                        "email": "Invalid email",
+                        "phone": "Use the international format, e.g. +258840000000"
+                    }
+                }
+            }
+        },
+        "partners": {
+            "shippers": {
+                "title": "Shippers",
+                "description": "Manage your client companies and their verification",
+                "add": "Add new shipper"
+            },
+            "carriers": {
+                "title": "Carriers",
+                "description": "Manage your transporters, their contracts and risk",
+                "add": "Add new carrier"
+            },
+            "drivers": {
+                "title": "Drivers",
+                "description": "Manage the driver roster across all carriers",
+                "add": "Add new driver"
+            },
+            "fleet": {
+                "title": "Fleet",
+                "description": "Manage trucks, trailers and links across all carriers",
+                "add": "Add new vehicle",
+                "kind": {
+                    "truck": "Trucks",
+                    "trailer": "Trailers",
+                    "link": "Links"
+                }
+            },
+            "stats": {
+                "total": "Total",
+                "pending-review": "Pending review",
+                "verified": "Verified",
+                "expiring": "Expiring ≤{days}d",
+                "flagged": "Flagged"
+            },
+            "filters": {
+                "search": {
+                    "organization": "Search by name, VAT number, or email...",
+                    "driver": "Search by name, email, or phone...",
+                    "fleet": "Search by plate, brand, or carrier..."
+                },
+                "all": "All",
+                "view": {
+                    "grid": "Grid view",
+                    "list": "List view"
+                },
+                "clear": "Clear search"
+            },
+            "fields": {
+                "nuit": "VAT number",
+                "email": "Email",
+                "phone": "Phone",
+                "carrier": "Carrier",
+                "documents": "Documents",
+                "status": "Status",
+                "contract": "Contract",
+                "risk": "Risk",
+                "ownership": "Ownership",
+                "location": "Location",
+                "load": "Current load",
+                "driver": "Driver",
+                "truck": "Truck",
+                "capacity": "Capacity",
+                "vehicle": "Vehicle",
+                "licence": "Licence",
+                "expires": "Expires",
+                "active-orders": "Active orders",
+                "total-orders": "Total orders",
+                "on-time": "On-time delivery",
+                "payment": "Payments settled",
+                "fleet-size": "Fleet size",
+                "drivers": "Drivers"
+            },
+            "values": {
+                "none": "None",
+                "idle": "Idle",
+                "unassigned": "Unassigned",
+                "empty": "Empty",
+                "en-route": "En route to {city}",
+                "at": "At {city}",
+                "no-expiry": "No expiry",
+                "expires-in": "in {days}d",
+                "expired": "Expired",
+                "progress": "{approved}/{required}",
+                "tons": "{tons} t"
+            },
+            "status": {
+                "draft": "Draft",
+                "pending-review": "Pending review",
+                "verified": "Verified",
+                "rejected": "Rejected",
+                "expired": "Expired",
+                "suspended": "Suspended"
+            },
+            "risk": {
+                "none": "No risk",
+                "watch": "Watch",
+                "high": "High risk"
+            },
+            "ownership": {
+                "unverified": "Not verified",
+                "owner-verified": "Owned",
+                "third-party": "Third party"
+            },
+            "documents": {
+                "nuit": "VAT registration (NUIT)",
+                "id-card": "ID card",
+                "commercial-certificate": "Commercial certificate",
+                "alvara": "Transport licence (alvará)",
+                "bank-letter": "Bank letter",
+                "republic-bulletin": "Republic bulletin",
+                "commercial-exercise": "Commercial exercise",
+                "signed-contract": "Signed contract",
+                "driver-license": "Driver's licence",
+                "vehicle-booklet": "Vehicle booklet",
+                "proof-of-ownership": "Proof of ownership"
+            },
+            "review": {
+                "title": "Verification",
+                "description": "Review the uploaded documents and decide each one",
+                "open": "Review",
+                "details": "Details",
+                "checklist": "Required documents",
+                "missing": "Not uploaded",
+                "pages": "{count, plural, one {# page} other {# pages}}",
+                "uploaded": "Uploaded {date}",
+                "preview": "Preview",
+                "no-preview": "This file cannot be previewed here",
+                "open-file": "Open file",
+                "approve": "Approve",
+                "reject": "Reject",
+                "approved": "Approved",
+                "rejected": "Rejected",
+                "pending": "Pending",
+                "expiry": "Expiry date",
+                "expiry-required": "An expiry date is required to approve this document",
+                "issued": "Issue date",
+                "number": "Document number",
+                "reason": "Rejection reason",
+                "reason-required": "A reason is required to reject a document",
+                "owner-name": "Owner name (as on the document)",
+                "owner-nuit": "Owner VAT number",
+                "owner-hint": "Carrier VAT number is {nuit}",
+                "owner-mismatch": "This vehicle belongs to a third party. Approving will flag the carrier as a High-Risk Subcontractor.",
+                "not-allowed": "Your role cannot review documents",
+                "contract-missing": "No signed contract — this carrier cannot operate",
+                "contract-expired": "The signed contract has expired — this carrier cannot operate",
+                "close": "Close",
+                "replace": "Replace document",
+                "add-pages": "Add pages",
+                "remove-page": "Remove page",
+                "submit-upload": "Upload",
+                "errors": {
+                    "LOAD_FAILED": "Could not load these documents, please try again",
+                    "EXPIRY_REQUIRED": "An expiry date is required to approve this document",
+                    "REASON_REQUIRED": "A reason is required to reject a document",
+                    "OWNER_NUIT_REQUIRED": "Enter the owner's VAT number before approving",
+                    "CARRIER_UNKNOWN": "This vehicle has no carrier on record",
+                    "ALREADY_REVIEWED": "This document was already decided — reload to see the outcome",
+                    "DOCUMENT_NOT_APPLICABLE": "This document type does not apply to this partner",
+                    "INVALID_DOCUMENT_URL": "That file was not accepted, please upload it again",
+                    "UPLOAD_FAILED": "The upload did not complete, please try again",
+                    "FILE_TOO_LARGE": "Each page must be 5 MB or smaller",
+                    "FILE_TYPE": "Only PDF, JPG and PNG files are accepted",
+                    "NOT_ALLOWED": "Your role cannot perform this action",
+                    "INVALID_STATE": "That action is not available right now",
+                    "NOT_FOUND": "This record no longer exists",
+                    "UNKNOWN": "Something went wrong, please try again"
+                }
+            },
+            "data": {
+                "empty": "Nothing here yet",
+                "no-results": "No results match your filters",
+                "error": "Could not load this list, please try again"
+            },
+            "register": {
+                "carrier": {
+                    "title": "Choose a carrier",
+                    "description": "Drivers and vehicles are registered under a carrier",
+                    "label": "Carrier",
+                    "placeholder": "Search for the carrier...",
+                    "cancel": "Cancel",
+                    "continue": "Continue"
+                }
+            },
+            "gate": {
+                "blocked": {
+                    "title": "This carrier cannot be booked"
+                },
+                "warning": {
+                    "title": "Verification incomplete",
+                    "description": "This booking can go ahead, but the paperwork behind it is not complete.",
+                    "will-flag": "The order will be flagged for review so this gap stays visible.",
+                    "high-risk": "A vehicle on this order belongs to a third party — accepting that is a supervisor's call.",
+                    "needs-manager": "A supervisor must accept this risk, with a note explaining why."
+                },
+                "codes": {
+                    "CARRIER_NOT_VERIFIED": "This carrier's documents have not all been approved yet.",
+                    "CARRIER_CONTRACT_MISSING": "This carrier has no approved signed contract, so it cannot operate on the platform.",
+                    "CARRIER_CONTRACT_EXPIRED": "This carrier's signed contract has expired, so it cannot operate on the platform.",
+                    "CARRIER_SUSPENDED": "This carrier is suspended.",
+                    "UNKNOWN": "This carrier cannot be booked right now."
+                }
+            }
+        }
+    },
+    "ActivityLog": {
+        "generic": "Performed {action}",
+        "session": {
+            "resumed": "Resumed session"
+        },
+        "auth": {
+            "sign_in": "Signed in",
+            "sign_out": "Signed out"
+        },
+        "order": {
+            "create": "Created order {orderId} for {shipperName}",
+            "update": "Updated order {orderId} ({changedFields})",
+            "updateDeal": "Edited deal {orderId} ({status})",
+            "transition": "Moved order {orderId} to {to}",
+            "resolveFlag": "Resolved the review flag on order {orderId}"
+        },
+        "documents": {
+            "create": "Added a {type} document to order {orderId}",
+            "softDelete": "Voided document {documentId}"
+        },
+        "fleet": {
+            "registerTruck": "Registered truck {regPlate}",
+            "registerTrailer": "Registered trailer {regPlate}",
+            "registerLink": "Registered link {regPlate}",
+            "registerDriver": "Registered driver {name}"
+        },
+        "organizations": {
+            "register": "Registered organization {name}"
+        },
+        "chats": {
+            "start": "Started a conversation with {driverName}",
+            "send": "Sent a message"
+        },
+        "kyc": {
+            "upload": "Uploaded {documentType} for {subjectType} {subjectId}",
+            "review": "Marked {documentType} as {decision} ({kycStatus})",
+            "flagRisk": "Flagged organization {organizationId} as {level} risk",
+            "clearRisk": "Cleared the risk flag on organization {organizationId}",
+            "suspend": "Suspended {subjectType} {subjectId}",
+            "unsuspend": "Lifted the suspension on {subjectType} {subjectId} ({kycStatus})"
+        },
+        "settings": {
+            "setPassword": "Created a password for their account"
+        }
+    }
+}
