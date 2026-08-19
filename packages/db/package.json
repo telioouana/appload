@@ -1,0 +1,38 @@
+{
+    "name": "@workspace/db",
+    "type": "module",
+    "scripts": {
+        "lint": "eslint",
+        "format": "prettier --write \"**/*.{ts,tsx}\"",
+        "typecheck": "tsc --noEmit",
+        "db:push": "drizzle-kit push",
+        "db:studio": "drizzle-kit studio",
+        "db:migrate": "drizzle-kit migrate",
+        "db:generate": "drizzle-kit generate"
+    },
+    "dependencies": {
+        "@neondatabase/serverless": "^1.1.0",
+        "drizzle-orm": "0.45.2",
+        "zod": "^4.4.3"
+    },
+    "devDependencies": {
+        "@types/cryptojs": "^3.1.33",
+        "@types/node": "^20",
+        "@workspace/eslint-config": "workspace:*",
+        "@workspace/typescript-config": "workspace:*",
+        "drizzle-kit": "0.31.10",
+        "eslint": "^9",
+        "typescript": "^5"
+    },
+    "exports": {
+        "./db": "./src/db.ts",
+        "./schema": "./src/schema.ts",
+        "./types": "./src/types/index.ts",
+        "./activity-log": "./src/schemas/activity-log.ts",
+        "./chats": "./src/schemas/chats.ts",
+        "./fleet": "./src/schemas/fleet.ts",
+        "./kyc-documents": "./src/schemas/kyc-documents.ts",
+        "./orders": "./src/schemas/orders.ts",
+        "./users": "./src/schemas/users.ts"
+    }
+}
