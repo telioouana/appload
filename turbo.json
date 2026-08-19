@@ -1,0 +1,75 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "ui": "tui",
+    "globalEnv": [
+        "BETTER_AUTH_URL",
+        "BETTER_AUTH_SECRET",
+        "COOKIE_DOMAIN",
+        "CRON_SECRET",
+        "DATABASE_URL",
+        "EDGE_STORE_ACCESS_KEY",
+        "EDGE_STORE_PROJECT_ID",
+        "EDGE_STORE_PUBLIC_HOST",
+        "EDGE_STORE_SECRET_KEY",
+        "EMAIL_FROM",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_MAPS_API_KEY",
+        "GOOGLE_PRIVATE_KEY",
+        "GOOGLE_SERVICE_ACCOUNT_EMAIL",
+        "GOOGLE_SHEETS_ORDERS_SPREADSHEET_ID",
+        "INFOBIP_API_KEY",
+        "INFOBIP_BASE_URL",
+        "INFOBIP_SENDER",
+        "INFOBIP_SMS_SENDER",
+        "INFOBIP_TRACKING_TEMPLATE",
+        "INFOBIP_TRACKING_TEMPLATE_LANGUAGE",
+        "INFOBIP_WEBHOOK_SECRET",
+        "KYC_ENFORCEMENT",
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_GOOGLE_SHEETS_AUTH_MODE",
+        "NODE_ENV",
+        "QSTASH_CURRENT_SIGNING_KEY",
+        "QSTASH_NEXT_SIGNING_KEY",
+        "QSTASH_TOKEN",
+        "RESEND_API_KEY"
+    ],
+    "globalPassThroughEnv": [
+        "PORT",
+        "VERCEL_URL"
+    ],
+    "tasks": {
+        "build": {
+            "dependsOn": [
+                "^build"
+            ],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                ".env*"
+            ],
+            "outputs": [
+                ".next/**",
+                "!.next/cache/**"
+            ]
+        },
+        "lint": {
+            "dependsOn": [
+                "^lint"
+            ]
+        },
+        "format": {
+            "dependsOn": [
+                "^format"
+            ]
+        },
+        "typecheck": {
+            "dependsOn": [
+                "^typecheck"
+            ]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        }
+    }
+}
