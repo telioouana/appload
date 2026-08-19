@@ -1,8 +1,45 @@
 # Production release checklist (Vercel)
 
 The admin app deploys to Vercel (Hobby plan) with a dedicated Neon
-production database. Everything below is one-time setup for the first
-release; later releases only need step 7's smoke test.
+production database. Sections 1–7 are one-time setup for the first
+release; later releases follow the "Branching & deploys" flow below and
+only need step 7's smoke test.
+
+## 0. Branching & deploys
+
+Two long-lived branches, two Vercel projects, one app (`apps/admin`):
+
+| Branch | Vercel project (Production Branch) | Origin | Database / logbook |
+|---|---|---|---|
+| `dev`  | appload dev — Production Branch = `dev`  | `https://admin.dev.appload.co.mz` | `appload-dev` / DEV DATABASE LOGBOOK |
+| `main` | appload prod — Production Branch = `main` | `https://admin.appload.co.mz`     | `appload-prod` / DATABASE LOGBOOK |
+
+Flow: branch from `dev` (`feat/<thing>`) → pull request into `dev` → CI
+green → merge → Vercel deploys the dev project automatically → test on the
+dev origin → when a release is ready, pull request `dev → main` → CI green →
+merge → Vercel deploys production. Nothing reaches production except a
+merge into `main`.
+
+Why a stable `dev` origin instead of per-PR preview URLs: Better Auth only
+trusts `BETTER_AUTH_URL` (+ localhost) and Google OAuth redirect URIs are
+registered per origin, so sign-in cannot work on ad-hoc preview hosts.
+`apps/admin/vercel.json` therefore carries an `ignoreCommand` that makes
+each Vercel project build **only its own production branch** — feature
+branches never produce preview deployments; CI is their build check.
+
+- **CI** — `.github/workflows/ci.yml` runs `pnpm turbo lint typecheck build`
+  on every pull request and on pushes to `dev`/`main`, with placeholder env
+  vars only (no secrets, no database). The job is named `ci`.
+- **Branch protection** (GitHub → Settings → Rules → Rulesets, target
+  `main` and `dev`): require a pull request before merging (0 approvals is
+  fine for a solo repo), require the `ci` status check, block force pushes.
+- **Vercel (both projects)** — connect the `telioouana/appload` repo, Root
+  Directory `apps/admin`, "Include files outside root" enabled; set the
+  Production Branch per the table; environment variables from
+  `apps/admin/.env.example` with that environment's values.
+- **Migrations** stay manual: when a release contains new files under
+  `packages/db/drizzle/`, run `DATABASE_URL=<prod url> pnpm --filter
+  @workspace/db db:migrate` *before* merging `dev → main` (see §1).
 
 ## 1. Neon — production database
 

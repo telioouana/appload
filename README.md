@@ -33,6 +33,14 @@ Database: apply migrations with `pnpm --filter @workspace/db db:migrate`
 (production) — the shared dev database uses the idempotent scripts under
 `packages/db/scripts/` instead (see `RELEASE.md`).
 
+## Contributing flow
+
+- `dev` is the integration branch (deploys to the dev environment); `main`
+  is production. Both only change through pull requests with a green CI run.
+- Branch from `dev` (`feat/<thing>`), open a PR into `dev`, test on the dev
+  origin after merge, then release with a `dev → main` PR.
+- CI (`.github/workflows/ci.yml`) runs lint, typecheck and a full build.
+
 ## Deployment
 
 Vercel (root directory `apps/admin`) + Neon. The full first-release

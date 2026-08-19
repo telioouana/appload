@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Placeholders only — CI never talks to a real database or service.
+      # BETTER_AUTH_URL is mandatory at build time (packages/auth throws in
+      # production without it); DATABASE_URL just has to be non-empty.
+      # Keep this list in sync with what the build touches at module scope —
+      # a missing one surfaces as "Failed to collect page data" in next build.
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: ci-placeholder-secret-0123456789abcdefghijklmnop
+      DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+      # EdgeStore validates these at module load during page-data collection.
+      EDGE_STORE_ACCESS_KEY: ci-placeholder
+      EDGE_STORE_SECRET_KEY: ci-placeholder
+      NEXT_PUBLIC_GOOGLE_SHEETS_AUTH_MODE: service-account
+      KYC_ENFORCEMENT: warn
+      NEXT_TELEMETRY_DISABLED: "1"
+      TURBO_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        # version is read from "packageManager" in package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint, typecheck, build
+        run: pnpm turbo lint typecheck build
