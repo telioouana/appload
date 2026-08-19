@@ -1,0 +1,29 @@
+{
+    "name": "@workspace/auth",
+    "type": "module",
+    "scripts": {
+        "lint": "eslint",
+        "format": "prettier --write \"**/*.{ts,tsx}\"",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@workspace/db": "workspace:*",
+        "better-auth": "~1.6.23",
+        "drizzle-orm": "0.45.2",
+        "zod": "^4.4.3"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "@workspace/eslint-config": "workspace:*",
+        "@workspace/typescript-config": "workspace:*",
+        "eslint": "^9",
+        "typescript": "^5"
+    },
+    "exports": {
+        "./server": "./src/server.ts",
+        "./client": "./src/client.ts",
+        "./email": "./src/email.ts",
+        "./organization-permissions": "./src/permissions/org.permissions.ts",
+        "./user-permissions": "./src/permissions/user.permissions.ts"
+    }
+}
