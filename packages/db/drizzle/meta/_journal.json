@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1786432844052,
+      "tag": "0000_panoramic_star_brand",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786974718865,
+      "tag": "0001_previous_weapon_omega",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786990481548,
+      "tag": "0002_lively_ezekiel",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786992383750,
+      "tag": "0003_magenta_morgan_stark",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787010345760,
+      "tag": "0004_shipper_received_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787012723691,
+      "tag": "0005_drop_ops_order",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787145957159,
+      "tag": "0006_underbid_status",
+      "breakpoints": true
+    }
+  ]
+}

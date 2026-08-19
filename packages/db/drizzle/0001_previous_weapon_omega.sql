@@ -1,0 +1,3 @@
+ALTER TABLE "order_document" DROP CONSTRAINT "order_document_note_fields_chk";--> statement-breakpoint
+ALTER TABLE "order_document" ADD COLUMN "paid_at" timestamp;--> statement-breakpoint
+ALTER TABLE "order_document" ADD CONSTRAINT "order_document_note_fields_chk" CHECK (("order_document"."type" not in ('debit-note', 'credit-note', 'proof-of-payment') or ("order_document"."party" is not null and "order_document"."total" is not null)) and ("order_document"."type" <> 'proof-of-payment' or "order_document"."paid_at" is not null));

@@ -1,0 +1,2 @@
+ALTER TABLE "order" RENAME COLUMN "shipper_paid_amount" TO "shipper_received_amount";--> statement-breakpoint
+ALTER TABLE "order" RENAME COLUMN "shipper_paid_percentage" TO "shipper_received_percentage";
