@@ -10,7 +10,7 @@ import { activityLog } from "@workspace/db/activity-log";
 import { member as memberSchema } from "@workspace/db/schema";
 import { brandedEmail, sendEmail } from "@workspace/auth/email";
 import { admin as userAdmin, manager, uac, user } from "@workspace/auth/user-permissions";
-import { admin as orgAdmin, oac, owner, member } from "@workspace/auth/organization-permissions";
+import { admin as orgAdmin, driver, oac, owner, member } from "@workspace/auth/organization-permissions";
 
 export const STAFF_EMAIL_DOMAIN = "apploadafrica.com";
 
@@ -19,6 +19,12 @@ export const STAFF_EMAIL_DOMAIN = "apploadafrica.com";
 // ways that only surface at first sign-in.
 if (process.env.NODE_ENV === "production" && !process.env.BETTER_AUTH_URL) {
     throw new Error("BETTER_AUTH_URL must be set in production (the app's public origin)");
+}
+
+// Google OAuth requires client credentials; fail early instead of relying on
+// unsafe `as string` casts that would only error at first OAuth attempt
+if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    throw new Error("GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set for Google OAuth");
 }
 
 // The authoritative test for who may hold a staff account. The Google
@@ -48,10 +54,14 @@ export const auth = betterAuth({
     baseURL: {
         allowedHosts: [
             process.env.BETTER_AUTH_URL,
-            "http://localhost:3000",
-            "http://localhost:3001",
-            "http://localhost:3002",
-            "http://localhost:3003",
+            ...(process.env.NODE_ENV !== "production"
+                ? [
+                    "http://localhost:3000",
+                    "http://localhost:3001",
+                    "http://localhost:3002",
+                    "http://localhost:3003",
+                ]
+                : []),
         ]
             .filter((url): url is string => Boolean(url))
             .map(url => {
@@ -155,20 +165,20 @@ export const auth = betterAuth({
                     let country = "Unknown";
 
                     // Best-effort only: this runs on the login path, so a
-                    // slow or rate-limited ip-api response must never hold
+                    // slow or rate-limited geolocation response must never hold
                     // the sign-in hostage — hence the hard 1.5s abort
                     const controller = new AbortController();
                     const timer = setTimeout(() => controller.abort(), 1_500);
 
                     try {
-                        const geoRes = await fetch(`http://ip-api.com/json/${ip}`, {
+                        const geoRes = await fetch(`https://ipapi.co/${ip}/json/`, {
                             signal: controller.signal
                         });
 
                         if (geoRes.ok) {
                             const geoData = await geoRes.json();
                             city = geoData.city ?? "Unknown";
-                            country = geoData.country ?? "Unknown";
+                            country = geoData.country_name ?? "Unknown";
                         }
                     } catch {
                         // Geolocation lookup failed, continue with defaults
@@ -266,8 +276,8 @@ export const auth = betterAuth({
     },
     socialProviders: {
         google: {
-            clientId: process.env.GOOGLE_CLIENT_ID as string,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
             // The spreadsheets scope is pending Google verification; while
             // Sheets writes go through the shared service account, only
             // request basic scopes so users avoid the unverified-app screen
@@ -279,11 +289,9 @@ export const auth = betterAuth({
             // refresh Sheets access tokens without re-authentication
             accessType: "offline",
             prompt: "select_account consent",
-            // First of two gates on who may hold a staff account. Better Auth
-            // checks this against the *verified* `hd` claim on Google's id
-            // token, not just the account chooser, so it is a real boundary —
-            // but it only covers this one provider, which is why the
-            // user.create.before hook above is what actually decides `type`.
+            // Maps Google OAuth profile to create staff account type. The actual
+            // domain gate is enforced in user.create.before hook which validates
+            // the email domain for all account creation paths.
             mapProfileToUser: () => ({ type: "appload" as const }),
         },
     },
@@ -348,13 +356,13 @@ export const auth = betterAuth({
     },
     plugins: [
         phoneNumber({
-            sendOTP: async ({ phoneNumber }) => {
-                // TODO: Integrate your SMS service provider here
-                console.log(`Send OTP to ${phoneNumber}`);
+            sendOTP: async () => {
+                // TODO: Integrate SMS service provider
+                console.log("[phoneNumber] OTP send requested");
             },
-            verifyOTP: async ({ phoneNumber, code }) => {
-                // TODO: Integrate your SMS service provider here
-                console.log(`Verify OTP ${code} for ${phoneNumber}`);
+            verifyOTP: async () => {
+                // TODO: Integrate SMS service provider for OTP verification
+                console.log("[phoneNumber] OTP verification requested");
                 return false; // Return true if the OTP is valid, false otherwise
             }
         }),
@@ -378,7 +386,8 @@ export const auth = betterAuth({
             roles: {
                 owner,
                 admin: orgAdmin,
-                member
+                member,
+                driver
             },
             schema: {
                 organization: {
@@ -430,7 +439,12 @@ export const auth = betterAuth({
                 }
             },
             sendInvitationEmail: async ({ email, inviter, invitation, organization }) => {
-                const base = process.env.NEXT_PUBLIC_APP_URL ?? "";
+                const base = process.env.NEXT_PUBLIC_APP_URL;
+
+                if (!base) {
+                    throw new Error("NEXT_PUBLIC_APP_URL must be configured to send invitation emails");
+                }
+
                 await sendEmail({
                     to: [email],
                     subject: `Invitation to join ${organization.name}`,

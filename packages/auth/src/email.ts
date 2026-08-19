@@ -42,6 +42,18 @@ function config() {
 export const isEmailConfigured = () => config() !== null;
 
 /**
+ * HTML-escape a string to prevent XSS in email templates
+ */
+function escapeHtml(text: string): string {
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+/**
  * Minimal branded shell for transactional emails: logo, title, body copy,
  * one CTA button, muted disclaimer. Inline styles only — email clients
  * ignore stylesheets. (The richer react-email setup in the conecta app is
@@ -54,8 +66,29 @@ export function brandedEmail(params: {
     ctaUrl: string;
     disclaimer: string;
 }): string {
+    // HTML-escape all user-provided text
+    const escapedTitle = escapeHtml(params.title);
+    const escapedCtaLabel = escapeHtml(params.ctaLabel);
+    const escapedDisclaimer = escapeHtml(params.disclaimer);
+
+    // Validate and sanitize the CTA URL
+    let validatedUrl: string;
+    try {
+        const parsed = new URL(params.ctaUrl);
+        // Only allow http and https schemes
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            throw new Error('Invalid URL scheme');
+        }
+        validatedUrl = parsed.href;
+    } catch {
+        // Fallback to a safe URL if validation fails
+        validatedUrl = 'about:blank';
+    }
+
+    const escapedUrl = escapeHtml(validatedUrl);
+
     const paragraphs = params.lines
-        .map((line) => `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#1f2937;">${line}</p>`)
+        .map((line) => `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#1f2937;">${escapeHtml(line)}</p>`)
         .join("");
 
     return `<!doctype html>
@@ -63,13 +96,13 @@ export function brandedEmail(params: {
   <body style="margin:0;padding:24px;background:#f8fafc;font-family:'Segoe UI',Arial,sans-serif;">
     <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;">
       <a href="https://appload.co.mz/"><img src="https://appload.co.mz/appload.svg" width="72" alt="Appload" /></a>
-      <h1 style="margin:24px 0 16px;font-size:20px;color:#111827;">${params.title}</h1>
+      <h1 style="margin:24px 0 16px;font-size:20px;color:#111827;">${escapedTitle}</h1>
       ${paragraphs}
       <div style="margin:24px 0;">
-        <a href="${params.ctaUrl}" style="display:inline-block;background:#EE7623;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;">${params.ctaLabel}</a>
+        <a href="${escapedUrl}" style="display:inline-block;background:#EE7623;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;">${escapedCtaLabel}</a>
       </div>
-      <p style="margin:0 0 12px;font-size:13px;line-height:1.6;color:#6b7280;">If the button does not work, open this link:<br /><a href="${params.ctaUrl}" style="color:#EE7623;word-break:break-all;">${params.ctaUrl}</a></p>
-      <p style="margin:16px 0 0;font-size:12px;line-height:1.6;color:#9ca3af;">${params.disclaimer}</p>
+      <p style="margin:0 0 12px;font-size:13px;line-height:1.6;color:#6b7280;">If the button does not work, open this link:<br /><a href="${escapedUrl}" style="color:#EE7623;word-break:break-all;">${escapedUrl}</a></p>
+      <p style="margin:16px 0 0;font-size:12px;line-height:1.6;color:#9ca3af;">${escapedDisclaimer}</p>
       <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;">Appload — Going the extra mile</p>
     </div>
   </body>
@@ -89,7 +122,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
             return { ok: false, error: "EMAIL_NOT_CONFIGURED" };
         }
 
-        console.log(`[email:simulated] to=${params.to.join(",")} subject="${params.subject}"`);
+        console.log(`[email:simulated] sent to ${params.to.length} recipient(s)`);
         return { ok: true, id: null, simulated: true };
     }
 
@@ -108,6 +141,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
                 html: params.html,
                 ...(params.attachments?.length ? { attachments: params.attachments } : {}),
             }),
+            signal: AbortSignal.timeout(10_000), // 10 second timeout
         });
 
         if (!response.ok) {
@@ -118,6 +152,9 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
 
         return { ok: true, id: data.id ?? null, simulated: false };
     } catch (error) {
+        if (error instanceof Error && error.name === "TimeoutError") {
+            return { ok: false, error: "RESEND_TIMEOUT" };
+        }
         return { ok: false, error: error instanceof Error ? error.message : "Unknown Resend error" };
     }
 }
