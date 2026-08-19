@@ -1,0 +1,43 @@
+{
+    "extends": "@workspace/typescript-config/nextjs.json",
+    "compilerOptions": {
+        "types": [
+            "@workspace/i18n/i18n.d.ts"
+        ],
+        "paths": {
+            "@/*": [
+                "./src/*"
+            ],
+            "@workspace/auth/*": [
+                "../../packages/auth/src/*"
+            ],
+            "@workspace/i18n/*": [
+                "../../packages/i18n/src/*"
+            ],
+            "@workspace/db/*": [
+                "../../packages/db/src/*"
+            ],
+            "@workspace/trpc/*": [
+                "../../packages/trpc/src/*"
+            ]
+        },
+        "plugins": [
+            {
+                "name": "next"
+            }
+        ]
+    },
+    "include": [
+        "next-env.d.ts",
+        "next.config.ts",
+        "**/*.ts",
+        "**/*.tsx",
+        "**/*.mts",
+        ".next/types/**/*.ts",
+        ".next/dev/types/**/*.ts",
+        "i18n-env.d.ts",
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
