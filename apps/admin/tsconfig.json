@@ -1,9 +1,6 @@
 {
     "extends": "@workspace/typescript-config/nextjs.json",
     "compilerOptions": {
-        "types": [
-            "@workspace/i18n/i18n.d.ts"
-        ],
         "paths": {
             "@/*": [
                 "./src/*"
@@ -19,6 +16,9 @@
             ],
             "@workspace/trpc/*": [
                 "../../packages/trpc/src/*"
+            ],
+            "@workspace/ui/*": [
+                "../../packages/ui/src/*"
             ]
         },
         "plugins": [

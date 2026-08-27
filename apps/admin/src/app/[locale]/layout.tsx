@@ -8,7 +8,7 @@ import "@workspace/ui/globals.css"
 import { cn } from "@workspace/ui/lib/utils"
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
-import { routing } from "@workspace/i18n/routing"
+import { routing } from "@/i18n/routing"
 import { NextIntlClientProvider, hasLocale } from "@workspace/i18n"
 import { EdgeStoreProvider } from "@workspace/edgestore/client"
 import { TRPCReactProvider } from "@/backend/api/client"

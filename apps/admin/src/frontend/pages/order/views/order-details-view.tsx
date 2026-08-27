@@ -6,7 +6,7 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { IconArrowLeft, IconArrowRight, IconCheck, IconCloudX, IconDots, IconEdit, IconFlag, IconFlagCheck, IconSend, } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
-import { Link } from "@workspace/i18n/navigation"
+import { Link } from "@/i18n/navigation"
 import { authClient } from "@workspace/auth/client"
 import { isAuthorized, type StaffRole } from "@workspace/auth/user-permissions"
 

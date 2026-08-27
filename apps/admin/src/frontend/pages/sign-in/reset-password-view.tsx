@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { IconAlertCircle, IconArrowLeft, IconShieldCheck } from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
-import { Link, useRouter } from "@workspace/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { authClient } from "@workspace/auth/client";
 
 import { toast } from "sonner";

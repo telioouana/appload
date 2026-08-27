@@ -2,7 +2,7 @@ import { getSessionCookie } from "better-auth/cookies";
 import { NextRequest, NextResponse } from "next/server";
 
 import { Locale } from "@workspace/i18n";
-import { routing } from "@workspace/i18n/routing";
+import { routing } from "@/i18n/routing";
 import createMiddleware from "@workspace/i18n/middleware";
 
 import { authRoutes, DEFAULT_LOGIN_REDIRECT, publicRoutes } from "@/routes"

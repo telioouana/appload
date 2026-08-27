@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { type Icon, IconBox, IconBuilding, IconBuildingFactory2, IconBuildingWarehouse, IconChecks, IconChevronRight, IconHistory, IconLock, IconLockOpen, IconMessages, IconPackages, IconPlus, IconTruck, IconTruckDelivery, IconUsers } from "@tabler/icons-react";
 
-import { routing } from "@workspace/i18n/routing";
+import { routing } from "@/i18n/routing";
 import { useTranslations } from "@workspace/i18n";
-import { Link, usePathname } from "@workspace/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 
 import { Button } from "@workspace/ui/components/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@workspace/ui/components/collapsible";
