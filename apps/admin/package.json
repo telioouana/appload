@@ -10,7 +10,8 @@
         "lint": "eslint",
         "format": "prettier --write \"**/*.{ts,tsx}\"",
         "typecheck": "tsc --noEmit",
-        "cron:schedules": "node scripts/qstash-schedules.mjs"
+        "cron:schedules": "node scripts/qstash-schedules.mjs",
+        "infobip:templates": "node scripts/infobip-templates.mjs"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.4.0",

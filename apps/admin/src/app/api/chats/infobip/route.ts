@@ -5,7 +5,13 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@workspace/db/db";
 import { chatConversation, chatMessage, trackingRequest } from "@workspace/db/chats";
 
-import { parseDeliveryReports, parseInboundWebhook } from "@/lib/chats/infobip";
+import {
+    locationRequestText,
+    parseDeliveryReports,
+    parseInboundWebhook,
+    sendWhatsAppLocationRequest,
+    SHARE_LOCATION_PAYLOAD,
+} from "@/lib/chats/infobip";
 
 /**
  * Constant-time compare that does not leak the secret's length. timingSafeEqual
@@ -114,15 +120,53 @@ export async function POST(request: NextRequest) {
                 .set({ lastMessageAt: saved.createdAt })
                 .where(eq(chatConversation.id, conversation.id));
 
-            // Any reply from the driver answers every open location request
-            // on their thread — the cron skips further attempts
-            await db
-                .update(trackingRequest)
-                .set({ status: "responded" })
-                .where(and(
-                    eq(trackingRequest.conversationId, conversation.id),
-                    inArray(trackingRequest.status, ["pending", "sent", "delivered"]),
-                ));
+            if (message.kind === "button") {
+                // A tap on the template's "share location" button opens the
+                // 24h session window but carries no location yet — answer
+                // with WhatsApp's native location-request so the picker is
+                // one tap away. The tracking request stays open until the
+                // location (or any typed reply) arrives.
+                if (message.buttonPayload?.startsWith(SHARE_LOCATION_PAYLOAD)) {
+                    const orderId = message.buttonPayload.split(":")[1] || null;
+                    const text = locationRequestText(orderId);
+                    const result = await sendWhatsAppLocationRequest(message.phone, text);
+
+                    if (!result.ok) {
+                        console.error("[infobip] location request send failed:", result.error);
+                    }
+
+                    // Store the follow-up either way so the thread shows what
+                    // happened; failed sends stay visible with their status
+                    const [reply] = await db
+                        .insert(chatMessage)
+                        .values({
+                            conversationId: conversation.id,
+                            direction: "outbound",
+                            body: text,
+                            status: result.ok ? "sent" : "failed",
+                            externalId: result.ok ? result.externalId : null,
+                        })
+                        .returning();
+
+                    if (reply) {
+                        await db
+                            .update(chatConversation)
+                            .set({ lastMessageAt: reply.createdAt })
+                            .where(eq(chatConversation.id, conversation.id));
+                    }
+                }
+            } else {
+                // A real reply (typed text or a location pin) answers every
+                // open location request on the thread — the cron skips
+                // further attempts
+                await db
+                    .update(trackingRequest)
+                    .set({ status: "responded" })
+                    .where(and(
+                        eq(trackingRequest.conversationId, conversation.id),
+                        inArray(trackingRequest.status, ["pending", "sent", "delivered"]),
+                    ));
+            }
         }
     }
 
