@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { IconAlertCircle, IconBrandGoogle, IconLogin } from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
-import { Link } from "@workspace/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { authClient } from "@workspace/auth/client";
 
 import { Button } from "@workspace/ui/components/button";

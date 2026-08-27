@@ -21,9 +21,8 @@
     },
     "exports": {
         ".": "./src/index.ts",
-        "./i18n.d.ts": "./src/i18n.d.ts",
+        "./locales": "./src/locales.ts",
         "./plugin": "./src/plugin.ts",
-        "./messages/*": "./src/messages/*.json",
         "./middleware": "./src/middleware.ts",
         "./navigation": "./src/navigation.ts",
         "./routing": "./src/routing.ts",

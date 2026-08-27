@@ -22,7 +22,7 @@ import {
 } from "@tabler/icons-react";
 
 import { useFormatter, useTranslations } from "@workspace/i18n";
-import { Link } from "@workspace/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 
 import { cn } from "@workspace/ui/lib/utils";
 import { Button } from "@workspace/ui/components/button";

@@ -1,0 +1,170 @@
+/* Website-only brand layer on top of @workspace/ui/globals.css.
+   Brand colors come from the Appload logo gradient (orange → red). */
+
+:root {
+    --brand-red: #e2251d;
+    --brand-red-hover: #c81f18;
+    --brand-orange: #ee7623;
+    --brand-amber: #fac775;
+
+    /* The dark hero/footer canvas — warm near-black, consistent with the
+       amber-leaning ui theme rather than a cold neutral */
+    --canvas: #141210;
+    --canvas-card: #1f1c1a;
+    --canvas-border: #38332f;
+    --canvas-muted: #a8a29e;
+    --canvas-faint: #78716c;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Motion: scroll reveals, staggered entrances, count-ups, marquee.       */
+/* Only transform/opacity animate. Every effect is disabled under         */
+/* prefers-reduced-motion at the bottom of this file.                     */
+/* ---------------------------------------------------------------------- */
+
+@keyframes rise-in {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Page-load entrance (hero) — plays immediately, staggered via style */
+.enter {
+    animation: rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--enter-delay, 0ms);
+}
+
+/* Scroll reveal — starts hidden, .revealed added by the Reveal component
+   when the element enters the viewport */
+.reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+        opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Partner logo marquee */
+@keyframes marquee {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.marquee-track {
+    animation: marquee 36s linear infinite;
+}
+
+.marquee:hover .marquee-track {
+    animation-play-state: paused;
+}
+
+/* Live badge pulse */
+@keyframes pulse-dot {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.55;
+        transform: scale(0.8);
+    }
+}
+
+.pulse-dot {
+    animation: pulse-dot 2.2s ease-in-out infinite;
+}
+
+/* Flat legibility veil over full-strength banner photos */
+.canvas-veil {
+    background: color-mix(in oklab, var(--canvas) 40%, transparent);
+}
+
+/* Blends the banner's bottom edge into the solid canvas the metrics
+   dashboard (and page content) sits on */
+.canvas-bottom-fade {
+    background: linear-gradient(to bottom, transparent, var(--canvas));
+}
+
+/* Warm spotlight glow in the hero corner */
+.canvas-spot {
+    background: radial-gradient(
+        600px circle at 18% 12%,
+        rgb(238 118 35 / 0.16),
+        transparent 65%
+    );
+}
+
+/* forceMounted accordion panels (FAQ, insurance): answers stay in the
+   crawlable server HTML; closed panels collapse via grid-rows instead of
+   Radix's measured-height animation, which can't measure hidden content.
+   !important because Radix leaves inline transition-duration/animation
+   overrides from its measurement cycle. visibility keeps closed answers
+   out of the accessibility tree; the inner padding collapses in step so
+   closed panels reach exactly zero height. */
+[data-slot="accordion-content"] {
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition:
+        grid-template-rows 300ms cubic-bezier(0.22, 1, 0.36, 1),
+        visibility 300ms !important;
+    animation: none !important;
+}
+
+[data-slot="accordion-content"][data-state="open"] {
+    grid-template-rows: 1fr;
+    visibility: visible;
+}
+
+[data-slot="accordion-content"] > div {
+    overflow: hidden;
+    min-height: 0;
+    transition: padding 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-slot="accordion-content"][data-state="closed"] > div {
+    padding-block: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .enter,
+    .marquee-track,
+    .pulse-dot {
+        animation: none;
+    }
+
+    .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    [data-slot="accordion-content"],
+    [data-slot="accordion-content"] > div {
+        transition: none !important;
+    }
+}

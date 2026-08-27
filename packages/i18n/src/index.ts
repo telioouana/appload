@@ -1,5 +1,7 @@
-import {routing} from "@workspace/i18n/routing";
+import { LOCALES } from "@workspace/i18n/locales";
 
-export type Locale = (typeof routing.locales)[number];
+export type Locale = (typeof LOCALES)[number];
+
+export { LOCALES, DEFAULT_LOCALE } from "@workspace/i18n/locales";
 
 export * from 'next-intl';

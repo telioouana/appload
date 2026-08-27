@@ -8,7 +8,7 @@ import type { Locale } from "@workspace/i18n";
 
 import { authClient } from "@workspace/auth/client";
 import { useTranslations } from "@workspace/i18n";
-import { Link, useRouter } from "@workspace/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar";

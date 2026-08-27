@@ -18,9 +18,24 @@ export type OutboundResult =
 
 export type InboundMessage = {
     phone: string;
+    /** Human-readable body to store in the chat thread, whatever the kind */
     text: string;
+    kind: "text" | "button" | "location";
+    /** Quick-reply parameter echoed back when the driver taps a template button */
+    buttonPayload: string | null;
+    location: { latitude: number; longitude: number } | null;
     externalId: string | null;
 };
+
+/**
+ * Quick-reply payload on the tracking template's "share location" button.
+ * The suffix carries the order id, so the webhook knows which load the tap
+ * answers: "share-location:APPL021.26".
+ */
+export const SHARE_LOCATION_PAYLOAD = "share-location";
+
+export const shareLocationPayload = (orderId: string) =>
+    `${SHARE_LOCATION_PAYLOAD}:${orderId}`;
 
 function config() {
     const baseUrl = process.env.INFOBIP_BASE_URL;
@@ -89,10 +104,15 @@ export async function sendWhatsAppText(to: string, text: string): Promise<Outbou
  *   INFOBIP_TRACKING_TEMPLATE_LANGUAGE=pt   (defaults to pt)
  * Simulated when Infobip is unconfigured; fails cleanly when the template
  * name is missing.
+ *
+ * When the registered template carries a quick-reply button, WhatsApp
+ * requires its postback parameter on every send — pass it as buttonPayload
+ * (and omit it for body-only templates, or Infobip rejects the mismatch).
  */
 export async function sendWhatsAppTemplate(
     to: string,
     placeholders: string[],
+    buttonPayload?: string,
 ): Promise<OutboundResult> {
     const infobip = config();
 
@@ -119,7 +139,12 @@ export async function sendWhatsAppTemplate(
                     to: to.replace(/[^\d+]/g, ""),
                     content: {
                         templateName,
-                        templateData: { body: { placeholders } },
+                        templateData: {
+                            body: { placeholders },
+                            ...(buttonPayload
+                                ? { buttons: [{ type: "QUICK_REPLY", parameter: buttonPayload }] }
+                                : {}),
+                        },
                         language: process.env.INFOBIP_TRACKING_TEMPLATE_LANGUAGE ?? "pt",
                     },
                 }],
@@ -176,6 +201,81 @@ export async function sendSmsText(to: string, text: string): Promise<OutboundRes
     }
 }
 
+/** Load context woven into location-request copy when the caller has it. */
+export type RouteDetails = {
+    truckPlate: string | null;
+    origin: string;
+    destination: string;
+};
+
+/**
+ * Body for the location-request message, in the language the tracking
+ * template was registered in. WhatsApp renders the "Send location" button
+ * itself, localized by the driver's device. Route details are optional
+ * because the webhook path only knows the order id from the button payload.
+ */
+export function locationRequestText(orderId: string | null, route?: RouteDetails): string {
+    const pt = (process.env.INFOBIP_TRACKING_TEMPLATE_LANGUAGE ?? "pt").startsWith("pt");
+
+    if (pt) {
+        const load = orderId ? ` para a carga ${orderId}` : "";
+        const detail = route
+            ? ` (${route.truckPlate ? `camião ${route.truckPlate}, ` : ""}de ${route.origin} para ${route.destination})`
+            : "";
+
+        return `Toque em "Enviar localização" abaixo para partilhar a sua localização atual${load}${detail}.`;
+    }
+
+    const load = orderId ? ` for load ${orderId}` : "";
+    const detail = route
+        ? ` (${route.truckPlate ? `truck ${route.truckPlate}, ` : ""}from ${route.origin} to ${route.destination})`
+        : "";
+
+    return `Tap "Send location" below to share your current location${load}${detail}.`;
+}
+
+/**
+ * Sends WhatsApp's native location-request message — the one whose built-in
+ * "Send location" button opens the phone's location picker. Session-only:
+ * WhatsApp accepts it inside the 24h window after the driver's last message.
+ * Two callers: the tracking cron sends it directly when the driver's session
+ * window is still open (one tap for the driver), and the webhook sends it
+ * after a tap on the tracking template's quick-reply button (the tap opens
+ * the window, this follows immediately).
+ */
+export async function sendWhatsAppLocationRequest(to: string, text: string): Promise<OutboundResult> {
+    const infobip = config();
+
+    if (!infobip) {
+        return unconfiguredResult();
+    }
+
+    try {
+        const response = await fetch(`${infobip.baseUrl}/whatsapp/1/message/interactive/location-request`, {
+            method: "POST",
+            headers: {
+                "Authorization": `App ${infobip.apiKey}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                from: infobip.sender,
+                to: to.replace(/[^\d+]/g, ""),
+                content: { body: { text } },
+            }),
+        });
+
+        if (!response.ok) {
+            return { ok: false, error: `Infobip responded ${response.status}: ${await response.text()}` };
+        }
+
+        const data = (await response.json()) as { messageId?: string };
+
+        return { ok: true, externalId: data.messageId ?? null, simulated: false };
+    } catch (error) {
+        return { ok: false, error: error instanceof Error ? error.message : "Unknown Infobip error" };
+    }
+}
+
 export type DeliveryReport = {
     externalId: string;
     // Collapsed from Infobip's status groups: DELIVERED → delivered,
@@ -221,7 +321,10 @@ export function parseDeliveryReports(payload: unknown): DeliveryReport[] {
 
 /**
  * Parses Infobip's inbound-message webhook payload (`results[]`) into
- * transport-agnostic messages. Unknown entries are skipped.
+ * transport-agnostic messages. Recognizes plain text, quick-reply button
+ * taps (type BUTTON, label in `text`, template parameter in `payload`) and
+ * shared locations (type LOCATION, coordinates but usually no text).
+ * Unknown entries are skipped.
  */
 export function parseInboundWebhook(payload: unknown): InboundMessage[] {
     const results = (payload as { results?: unknown[] })?.results;
@@ -236,19 +339,70 @@ export function parseInboundWebhook(payload: unknown): InboundMessage[] {
         const entry = result as {
             from?: string;
             messageId?: string;
-            message?: { text?: string; type?: string };
+            message?: {
+                type?: string;
+                text?: string;
+                payload?: string;
+                latitude?: number;
+                longitude?: number;
+                name?: string;
+                address?: string;
+            };
             content?: { text?: string };
         };
 
-        const text = entry.message?.text ?? entry.content?.text;
+        if (!entry.from) {
+            continue;
+        }
 
-        if (entry.from && text) {
+        const message = entry.message;
+        const type = message?.type?.toUpperCase();
+        const externalId = entry.messageId ?? null;
+
+        if (type === "LOCATION"
+            && typeof message?.latitude === "number"
+            && typeof message?.longitude === "number") {
+            // Location pins carry no text — render a clickable maps link so
+            // the pin survives as a plain chat body
+            const place = [message.name, message.address].filter(Boolean).join(", ");
+
             messages.push({
                 phone: entry.from,
-                text,
-                externalId: entry.messageId ?? null,
+                kind: "location",
+                text: `📍 ${place ? `${place} — ` : ""}https://maps.google.com/?q=${message.latitude},${message.longitude}`,
+                buttonPayload: null,
+                location: { latitude: message.latitude, longitude: message.longitude },
+                externalId,
             });
+            continue;
         }
+
+        const text = message?.text ?? entry.content?.text;
+
+        if (!text) {
+            continue;
+        }
+
+        if (type === "BUTTON" || typeof message?.payload === "string") {
+            messages.push({
+                phone: entry.from,
+                kind: "button",
+                text,
+                buttonPayload: message?.payload ?? null,
+                location: null,
+                externalId,
+            });
+            continue;
+        }
+
+        messages.push({
+            phone: entry.from,
+            kind: "text",
+            text,
+            buttonPayload: null,
+            location: null,
+            externalId,
+        });
     }
 
     return messages;

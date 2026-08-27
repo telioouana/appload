@@ -1,11 +1,17 @@
-import { and, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 
 import { order, type Order } from "@workspace/db/orders";
 import { chatConversation, chatMessage, trackingRequest, type TrackingRequest, type TrackingSlot } from "@workspace/db/chats";
 import type { db as Database } from "@workspace/db/db";
 import type { ORDER_STATUS } from "@workspace/db/types";
 
-import { sendSmsText, sendWhatsAppTemplate } from "@/lib/chats/infobip";
+import {
+    locationRequestText,
+    sendSmsText,
+    sendWhatsAppLocationRequest,
+    sendWhatsAppTemplate,
+    shareLocationPayload,
+} from "@/lib/chats/infobip";
 
 type OrderStatus = (typeof ORDER_STATUS)[number];
 
@@ -76,8 +82,18 @@ export function currentSlotInfo(now: Date = new Date()): SlotInfo | null {
     return null;
 }
 
-const smsText = (driverName: string, orderId: string) =>
-    `Ola ${driverName}, a Appload pede a sua localizacao atual para a carga ${orderId}. Por favor responda a esta mensagem com a sua localizacao.`;
+/**
+ * State-level place name for message copy — mirrors the UI's `place()`
+ * helper (order-item-shared.tsx): province when present, else the first
+ * segment of the formatted address.
+ */
+const place = (location: Order["loadingAddress"]) =>
+    location.state || location.address.split(",")[0]?.trim() || location.address;
+
+// Deliberately unaccented so the hardcoded part stays GSM-7; place names
+// from the database may still carry accents
+const smsText = (driverName: string, row: Order) =>
+    `Ola ${driverName}, a Appload pede a sua localizacao atual para a carga ${row.orderId} (camiao ${row.truckPlate ?? "s/ matricula"}, ${place(row.loadingAddress)} para ${place(row.offloadingAddress)}). Por favor responda a esta mensagem com a sua localizacao.`;
 
 export type SlotRunSummary = {
     slot: SlotInfo;
@@ -137,6 +153,37 @@ export function decideNextAttempt(rows: TrackingRequest[], now: Date): Decision 
 }
 
 const channelFor = (attempt: number) => (attempt >= MAX_ATTEMPTS ? "sms" : "whatsapp");
+
+/**
+ * WhatsApp's customer-service window is 24h from the driver's last inbound
+ * message; one hour of margin keeps a request from racing the window's edge.
+ */
+const SESSION_WINDOW_HOURS = 23;
+
+/**
+ * Whether the driver's 24h session window is still open — true when the
+ * conversation holds an inbound message younger than the (margin-trimmed)
+ * window. Drivers who answer their twice-daily pings keep the window open
+ * continuously, so this is the common case, not the exception.
+ */
+async function hasOpenSession(db: typeof Database, conversationId: string | null): Promise<boolean> {
+    if (!conversationId) {
+        return false;
+    }
+
+    const [lastInbound] = await db
+        .select({ createdAt: chatMessage.createdAt })
+        .from(chatMessage)
+        .where(and(
+            eq(chatMessage.conversationId, conversationId),
+            eq(chatMessage.direction, "inbound"),
+        ))
+        .orderBy(desc(chatMessage.createdAt))
+        .limit(1);
+
+    return lastInbound !== undefined
+        && Date.now() - lastInbound.createdAt.getTime() < SESSION_WINDOW_HOURS * 3_600_000;
+}
 
 /**
  * Runs one tick of one slot. Every order is judged on its own history
@@ -251,11 +298,34 @@ async function send(
 ): Promise<"sent" | "failed"> {
     const phone = row.driverPhoneNumber!;
     const driverName = row.driverName ?? "motorista";
-    const body = smsText(driverName, row.orderId);
+
+    // One step instead of two whenever WhatsApp allows it: an open session
+    // window means the native location request (with its built-in "Send
+    // location" button) can go out directly, no template tap needed. Only
+    // attempt 1 takes the shortcut — a driver who ignored it gets the
+    // template on attempt 2, whose tap re-triggers the request via the
+    // webhook, before attempt 3 escalates to SMS.
+    const direct = claim.channel === "whatsapp"
+        && claim.attempt === 1
+        && await hasOpenSession(db, claim.conversationId);
+
+    const route = {
+        truckPlate: row.truckPlate,
+        origin: place(row.loadingAddress),
+        destination: place(row.offloadingAddress),
+    };
+
+    const body = direct ? locationRequestText(row.orderId, route) : smsText(driverName, row);
 
     const result = claim.channel === "sms"
         ? await sendSmsText(phone, body)
-        : await sendWhatsAppTemplate(phone, [driverName, row.orderId]);
+        : direct
+            ? await sendWhatsAppLocationRequest(phone, body)
+            : await sendWhatsAppTemplate(
+                phone,
+                [driverName, row.orderId, row.truckPlate ?? "—", route.origin, route.destination],
+                shareLocationPayload(row.orderId),
+            );
 
     await db
         .update(trackingRequest)

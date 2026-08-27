@@ -1,7 +1,7 @@
 import { IconMapQuestion } from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
-import { Link } from "@workspace/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 
 import { Button } from "@workspace/ui/components/button";
 

@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { IconCheck, IconLanguage } from "@tabler/icons-react";
 
 import { useLocale, type Locale } from "@workspace/i18n";
-import { usePathname, useRouter } from "@workspace/i18n/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 
 import { cn } from "@workspace/ui/lib/utils";
 import { Button } from "@workspace/ui/components/button";
