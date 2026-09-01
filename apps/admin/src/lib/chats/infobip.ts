@@ -235,6 +235,26 @@ export function locationRequestText(orderId: string | null, route?: RouteDetails
 }
 
 /**
+ * Rendered body of the registered tracking template (source of truth:
+ * scripts/infobip-templates.mjs — keep the copy in sync), so the chat thread
+ * mirror shows what the driver actually received. Same language switch as
+ * locationRequestText.
+ */
+export function trackingTemplateText(
+    driverName: string,
+    orderId: string,
+    truckPlate: string,
+    origin: string,
+    destination: string,
+): string {
+    const pt = (process.env.INFOBIP_TRACKING_TEMPLATE_LANGUAGE ?? "pt").startsWith("pt");
+
+    return pt
+        ? `Olá ${driverName}, a Appload precisa que partilhe a sua localização atual para a carga ${orderId} — camião ${truckPlate}, de ${origin} para ${destination}. Envie a localização como anexo (📎 → Localização) ou toque no botão abaixo.`
+        : `Hello ${driverName}, Appload needs you to share your current location for load ${orderId} — truck ${truckPlate}, from ${origin} to ${destination}. Send your location as an attachment (📎 → Location) or tap the button below.`;
+}
+
+/**
  * Sends WhatsApp's native location-request message — the one whose built-in
  * "Send location" button opens the phone's location picker. Session-only:
  * WhatsApp accepts it inside the 24h window after the driver's last message.

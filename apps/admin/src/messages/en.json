@@ -1741,7 +1741,17 @@
             "list": {
                 "new": "New chat",
                 "emptyTitle": "No conversations",
-                "emptyDescription": "Start a conversation with a driver to get going."
+                "emptyDescription": "Start a conversation with a driver to get going.",
+                "startFirst": "Start a chat",
+                "search": "Search name, phone or order",
+                "filters": {
+                    "all": "All",
+                    "unread": "Unread",
+                    "active": "Active orders"
+                },
+                "unreadCount": "{count} unread",
+                "noMatchesTitle": "No matches",
+                "noMatchesDescription": "Try a different search or filter."
             },
             "thread": {
                 "emptyTitle": "No conversation selected",
@@ -1749,7 +1759,44 @@
                 "order": "Order",
                 "composer": "Type a message...",
                 "send": "Send",
-                "failed": "Failed to send"
+                "failed": "Failed to send",
+                "info": "Order details",
+                "openMap": "Open location",
+                "dividers": {
+                    "today": "Today",
+                    "yesterday": "Yesterday"
+                },
+                "session": {
+                    "open": "Session open",
+                    "closed": "Template required",
+                    "openHint": "The driver replied within the last 24 hours — messages are delivered directly.",
+                    "closedHint": "Over 24 hours since the driver's last reply — WhatsApp only delivers pre-approved templates."
+                },
+                "location": {
+                    "request": "Request location",
+                    "sentNative": "Location request sent to the driver.",
+                    "sentTemplate": "Request sent via template — the driver must tap the button before sharing.",
+                    "errors": {
+                        "noActiveOrder": "This driver has no active load to track.",
+                        "sendFailed": "The request could not be sent. Try again.",
+                        "unknown": "An unexpected error occurred. Please try again."
+                    }
+                },
+                "status": {
+                    "changed": "Order status: {from} → {to}",
+                    "created": "Order created — {to}"
+                }
+            },
+            "panel": {
+                "title": "Linked order",
+                "close": "Close",
+                "truck": "Truck",
+                "driver": "Driver",
+                "loading": "Loading",
+                "offloading": "Offloading",
+                "viewOrder": "View order",
+                "noOrderTitle": "No linked order",
+                "noOrderDescription": "This conversation is not linked to an order yet."
             },
             "new": {
                 "title": "New chat",

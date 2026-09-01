@@ -1742,7 +1742,17 @@
             "list": {
                 "new": "Nova conversa",
                 "emptyTitle": "Sem conversas",
-                "emptyDescription": "Inicie uma conversa com um motorista para começar."
+                "emptyDescription": "Inicie uma conversa com um motorista para começar.",
+                "startFirst": "Iniciar conversa",
+                "search": "Pesquisar por nome, telefone ou pedido",
+                "filters": {
+                    "all": "Todas",
+                    "unread": "Não lidas",
+                    "active": "Pedidos ativos"
+                },
+                "unreadCount": "{count} por ler",
+                "noMatchesTitle": "Sem resultados",
+                "noMatchesDescription": "Tente outra pesquisa ou filtro."
             },
             "thread": {
                 "emptyTitle": "Nenhuma conversa selecionada",
@@ -1750,7 +1760,44 @@
                 "order": "Pedido",
                 "composer": "Escreva uma mensagem...",
                 "send": "Enviar",
-                "failed": "Falha no envio"
+                "failed": "Falha no envio",
+                "info": "Detalhes do pedido",
+                "openMap": "Abrir localização",
+                "dividers": {
+                    "today": "Hoje",
+                    "yesterday": "Ontem"
+                },
+                "session": {
+                    "open": "Sessão aberta",
+                    "closed": "Modelo necessário",
+                    "openHint": "O motorista respondeu nas últimas 24 horas — as mensagens são entregues diretamente.",
+                    "closedHint": "Mais de 24 horas desde a última resposta do motorista — o WhatsApp só entrega modelos pré-aprovados."
+                },
+                "location": {
+                    "request": "Pedir localização",
+                    "sentNative": "Pedido de localização enviado ao motorista.",
+                    "sentTemplate": "Pedido enviado por modelo — o motorista tem de tocar no botão antes de partilhar.",
+                    "errors": {
+                        "noActiveOrder": "Este motorista não tem nenhuma carga ativa para seguir.",
+                        "sendFailed": "Não foi possível enviar o pedido. Tente novamente.",
+                        "unknown": "Ocorreu um erro inesperado. Tente novamente."
+                    }
+                },
+                "status": {
+                    "changed": "Estado do pedido: {from} → {to}",
+                    "created": "Pedido criado — {to}"
+                }
+            },
+            "panel": {
+                "title": "Pedido associado",
+                "close": "Fechar",
+                "truck": "Camião",
+                "driver": "Motorista",
+                "loading": "Carregamento",
+                "offloading": "Descarga",
+                "viewOrder": "Ver pedido",
+                "noOrderTitle": "Sem pedido associado",
+                "noOrderDescription": "Esta conversa ainda não está associada a um pedido."
             },
             "new": {
                 "title": "Nova conversa",

@@ -16,7 +16,7 @@ import { CreateOrderSchemaServer, UpdateOrderSchemaServer, type CreateOrderForm 
 
 import { OrderError } from "@/lib/orders/errors";
 import { guardOrderGate } from "@/lib/kyc/order-gate";
-import { startConversation } from "@/lib/chats/conversations";
+import { FOLLOW_UP_STATUSES, startConversation } from "@/lib/chats/conversations";
 import { foreignKeyViolationConstraint, uniqueViolationConstraint } from "@/lib/db-errors";
 import { deriveOrderFields, derivePaymentStatus } from "@/lib/orders/derive";
 import { allowedTransitions, transitionRequirements, validateTransition, type OrderStatus } from "@/lib/orders/transitions";
@@ -239,12 +239,22 @@ function transitionStamps(current: Order, to: OrderStatus): TransitionStamps {
 }
 
 /**
- * Booked side effect: open (or relink) the driver's follow-up conversation.
- * Skips silently when the order has no driver phone yet — the skip lands in
- * the history metadata so it is visible on the timeline.
+ * Booked/tracked side effect: open (or relink) the driver's follow-up
+ * conversation. Skips silently when the order has no driver phone yet —
+ * the skip lands in the history metadata only when logSkip (the booked
+ * transition), so routine tracked transitions don't spam the timeline.
  */
-async function startFollowUpChat(db: typeof Database, updated: Order, orderPk: string): Promise<void> {
+async function startFollowUpChat(
+    db: typeof Database,
+    updated: Order,
+    orderPk: string,
+    options?: { logSkip?: boolean },
+): Promise<void> {
     if (!updated.driverPhoneNumber) {
+        if (options?.logSkip === false) {
+            return;
+        }
+
         await db.insert(orderHistory).values({
             orderId: orderPk,
             actorUserId: null,
@@ -254,17 +264,23 @@ async function startFollowUpChat(db: typeof Database, updated: Order, orderPk: s
         return;
     }
 
-    const { conversation, existing } = await startConversation(db, {
+    const { conversation, existing, relinked } = await startConversation(db, {
         driverName: updated.driverName ?? updated.driverPhoneNumber,
         driverPhone: updated.driverPhoneNumber,
         orderId: updated.orderId,
     });
 
+    // Only real changes land in history — the hook now fires on every
+    // tracked transition, and an untouched thread is not worth a row
+    if (existing && !relinked) {
+        return;
+    }
+
     await db.insert(orderHistory).values({
         orderId: orderPk,
         actorUserId: null,
         kind: "system",
-        metadata: { followUpChat: existing ? "relinked" : "created", conversationId: conversation.id },
+        metadata: { followUpChat: relinked ? "relinked" : "created", conversationId: conversation.id },
     });
 }
 
@@ -595,6 +611,20 @@ export const orderRouter = createTRPCRouter({
                         kind: "update",
                         changedFields,
                     });
+                }
+
+                // A driver phone landing on an already booked/tracked order
+                // opens the follow-up thread the booked transition skipped
+                // (or reroutes it to the corrected number). Best-effort,
+                // like the transition hook.
+                const phoneAdded = updated.driverPhoneNumber !== null
+                    && updated.driverPhoneNumber !== current.driverPhoneNumber;
+
+                if (phoneAdded && FOLLOW_UP_STATUSES.includes(updated.status)) {
+                    const followUp = startFollowUpChat(ctx.db, updated, current.id)
+                        .catch((error: unknown) => console.error(`follow-up chat failed for ${input.orderId}`, error));
+
+                    if (ctx.waitUntil) ctx.waitUntil(followUp); else await followUp;
                 }
 
                 // Resolved after the write so plate changes in this same
@@ -928,11 +958,12 @@ export const orderRouter = createTRPCRouter({
                     });
                 }
 
-                // Booked orders get a follow-up chat with the driver. Post-
-                // response and best-effort: a chat/Infobip failure must never
-                // fail the booking.
-                if (input.to === "booked") {
-                    const followUp = startFollowUpChat(ctx.db, updated, current.id)
+                // Booked and tracked orders get a follow-up chat with the
+                // driver. Post-response and best-effort: a chat/Infobip
+                // failure must never fail the transition. Only booked logs
+                // the no-phone skip — once per order, not per status.
+                if (FOLLOW_UP_STATUSES.includes(input.to)) {
+                    const followUp = startFollowUpChat(ctx.db, updated, current.id, { logSkip: input.to === "booked" })
                         .catch((error: unknown) => console.error(`follow-up chat failed for ${input.orderId}`, error));
 
                     if (ctx.waitUntil) ctx.waitUntil(followUp); else await followUp;

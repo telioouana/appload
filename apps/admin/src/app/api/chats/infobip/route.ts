@@ -12,6 +12,7 @@ import {
     sendWhatsAppLocationRequest,
     SHARE_LOCATION_PAYLOAD,
 } from "@/lib/chats/infobip";
+import { normalizePhone } from "@/lib/chats/phone";
 
 /**
  * Constant-time compare that does not leak the secret's length. timingSafeEqual
@@ -83,11 +84,19 @@ export async function POST(request: NextRequest) {
     let stored = 0;
 
     for (const message of inbound) {
-        // Find (or create) the conversation for this phone number
+        // Find (or create) the conversation for this phone number — matched
+        // on the normalized bare-digit form so it lands in the same thread
+        // the order-side hooks create from E.164 numbers
+        const phone = normalizePhone(message.phone);
+
+        if (!phone) {
+            continue;
+        }
+
         let [conversation] = await db
             .select()
             .from(chatConversation)
-            .where(eq(chatConversation.driverPhone, message.phone))
+            .where(eq(chatConversation.driverPhone, phone))
             .limit(1);
 
         if (!conversation) {
@@ -95,7 +104,7 @@ export async function POST(request: NextRequest) {
             // the message is never lost; ops can rename/link it later
             [conversation] = await db
                 .insert(chatConversation)
-                .values({ driverName: message.phone, driverPhone: message.phone })
+                .values({ driverName: phone, driverPhone: phone })
                 .returning();
         }
 
@@ -129,7 +138,7 @@ export async function POST(request: NextRequest) {
                 if (message.buttonPayload?.startsWith(SHARE_LOCATION_PAYLOAD)) {
                     const orderId = message.buttonPayload.split(":")[1] || null;
                     const text = locationRequestText(orderId);
-                    const result = await sendWhatsAppLocationRequest(message.phone, text);
+                    const result = await sendWhatsAppLocationRequest(phone, text);
 
                     if (!result.ok) {
                         console.error("[infobip] location request send failed:", result.error);

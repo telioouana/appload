@@ -3,7 +3,6 @@ import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { order, type Order } from "@workspace/db/orders";
 import { chatConversation, chatMessage, trackingRequest, type TrackingRequest, type TrackingSlot } from "@workspace/db/chats";
 import type { db as Database } from "@workspace/db/db";
-import type { ORDER_STATUS } from "@workspace/db/types";
 
 import {
     locationRequestText,
@@ -11,16 +10,12 @@ import {
     sendWhatsAppLocationRequest,
     sendWhatsAppTemplate,
     shareLocationPayload,
+    trackingTemplateText,
 } from "@/lib/chats/infobip";
+import { startConversation } from "@/lib/chats/conversations";
+import { TRACKED_STATUSES } from "@/lib/tracking/statuses";
 
-type OrderStatus = (typeof ORDER_STATUS)[number];
-
-// Any order with a truck committed gets pinged twice daily — the full
-// active set, including interrupts and the border
-export const TRACKED_STATUSES: OrderStatus[] = [
-    "to-loading", "at-loading", "loading", "waiting-documents",
-    "on-route", "stopped", "issue", "at-border", "at-offloading", "offloading",
-];
+export { TRACKED_STATUSES };
 
 // Maputo is fixed UTC+2 (no DST): schedules and slots are static
 const MAPUTO_OFFSET_MS = 2 * 3_600_000;
@@ -87,7 +82,7 @@ export function currentSlotInfo(now: Date = new Date()): SlotInfo | null {
  * helper (order-item-shared.tsx): province when present, else the first
  * segment of the formatted address.
  */
-const place = (location: Order["loadingAddress"]) =>
+export const place = (location: Order["loadingAddress"]) =>
     location.state || location.address.split(",")[0]?.trim() || location.address;
 
 // Deliberately unaccented so the hardcoded part stays GSM-7; place names
@@ -158,7 +153,7 @@ const channelFor = (attempt: number) => (attempt >= MAX_ATTEMPTS ? "sms" : "what
  * WhatsApp's customer-service window is 24h from the driver's last inbound
  * message; one hour of margin keeps a request from racing the window's edge.
  */
-const SESSION_WINDOW_HOURS = 23;
+export const SESSION_WINDOW_HOURS = 23;
 
 /**
  * Whether the driver's 24h session window is still open — true when the
@@ -166,7 +161,7 @@ const SESSION_WINDOW_HOURS = 23;
  * window. Drivers who answer their twice-daily pings keep the window open
  * continuously, so this is the common case, not the exception.
  */
-async function hasOpenSession(db: typeof Database, conversationId: string | null): Promise<boolean> {
+export async function hasOpenSession(db: typeof Database, conversationId: string | null): Promise<boolean> {
     if (!conversationId) {
         return false;
     }
@@ -263,17 +258,27 @@ async function claimAndSend(
     info: SlotInfo,
     attempt: number,
 ): Promise<"sent" | "failed" | "skipped"> {
-    const [conversation] = await db
-        .select({ id: chatConversation.id })
-        .from(chatConversation)
-        .where(eq(chatConversation.driverPhone, row.driverPhoneNumber!))
-        .limit(1);
+    // Ensure the thread exists (idempotent) so the ping is always mirrored
+    // into chat — but a chat failure must never block the ping itself
+    let conversationId: string | null = null;
+
+    try {
+        const { conversation } = await startConversation(db, {
+            driverName: row.driverName ?? row.driverPhoneNumber!,
+            driverPhone: row.driverPhoneNumber!,
+            orderId: row.orderId,
+        });
+
+        conversationId = conversation.id;
+    } catch (error) {
+        console.error(`tracking: ensure conversation failed for ${row.orderId}`, error);
+    }
 
     const [claim] = await db
         .insert(trackingRequest)
         .values({
             orderId: row.id,
-            conversationId: conversation?.id ?? null,
+            conversationId,
             slotDate: info.slotDate,
             slot: info.slot,
             attempt,
@@ -315,7 +320,11 @@ async function send(
         destination: place(row.offloadingAddress),
     };
 
-    const body = direct ? locationRequestText(row.orderId, route) : smsText(driverName, row);
+    const body = claim.channel === "sms"
+        ? smsText(driverName, row)
+        : direct
+            ? locationRequestText(row.orderId, route)
+            : trackingTemplateText(driverName, row.orderId, row.truckPlate ?? "—", route.origin, route.destination);
 
     const result = claim.channel === "sms"
         ? await sendSmsText(phone, body)

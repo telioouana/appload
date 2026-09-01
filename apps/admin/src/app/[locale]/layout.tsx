@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 
 import "@workspace/ui/globals.css"
 import { cn } from "@workspace/ui/lib/utils"
+import { Toaster } from "@workspace/ui/components/sonner"
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
 import { routing } from "@/i18n/routing"
@@ -46,6 +47,7 @@ export default async function RootLayout({
                             <TRPCReactProvider>
                                 <EdgeStoreProvider>
                                     <Analytics />
+                                    <Toaster />
                                     {children}
                                 </EdgeStoreProvider>
                             </TRPCReactProvider>

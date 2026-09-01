@@ -18,6 +18,9 @@ export const chatConversation = pgTable(
         // e.g. "APPL021.26"), so chat updates can be applied to the order
         orderId: text("order_id").references(() => order.orderId),
         lastMessageAt: timestamp("last_message_at").defaultNow().notNull(),
+        // Watermark for the admin UI's unread badges: inbound messages newer
+        // than this are unread. Global per conversation (ops shares one inbox)
+        lastReadAt: timestamp("last_read_at"),
         createdAt: timestamp("created_at").defaultNow().notNull(),
         updatedAt: timestamp("updated_at")
             .defaultNow()

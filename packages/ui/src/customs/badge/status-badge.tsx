@@ -1,6 +1,7 @@
 import { IconAlertTriangle, IconBan, IconCancel, IconCircleCheck, IconClock, IconCoinOff, IconContract, IconEyeExclamation, IconFileTime, IconForklift, IconHelpCircle, IconInvoice, IconNavigationPause, IconPencilMinus, IconRosetteDiscountCheck, IconRoute, IconSearch, IconShieldCheck, IconTruckDelivery, IconTruckLoading, IconUrgent, IconUserExclamation, IconX, } from "@tabler/icons-react";
 
 import { Badge } from "@workspace/ui/components/badge";
+import { cn } from "@workspace/ui/lib/utils";
 
 export type OrderStatusKey = "drafted" | "prospect" | "open" | "booked" | "to-loading" | "at-loading" | "loading" | "on-route" | "at-border" | "stopped" | "issue" | "at-offloading" | "offloading" | "delivered" | "completed" | "cancelled" | "underbid" | "waiting-documents";
 
@@ -50,13 +51,14 @@ const statusIcons: Record<StatusKey, React.ReactNode> = {
 interface Props {
     label: string
     status: StatusKey
+    className?: string
 }
 
-export function StatusBadge({ label, status }: Props) {
+export function StatusBadge({ label, status, className }: Props) {
     return (
         <Badge
             variant="secondary"
-            className="status px-2 py-1 gap-1.5 inline-flex items-center rounded-full text-sm border-none"
+            className={cn("status px-2 py-1 gap-1.5 inline-flex items-center rounded-full text-sm border-none", className)}
             style={{
                 ["--status-text" as string]: `var(--status-${status}-text)`,
                 ["--status-bg" as string]: `var(--status-${status}-bg)`,
