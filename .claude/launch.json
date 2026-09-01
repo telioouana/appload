@@ -10,8 +10,9 @@
     {
       "name": "website",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "website", "dev", "--port", "3100"],
-      "port": 3100
+      "runtimeArgs": ["--filter", "website", "dev"],
+      "port": 3100,
+      "autoPort": true
     }
   ]
 }

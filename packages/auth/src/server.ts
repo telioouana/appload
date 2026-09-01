@@ -56,7 +56,11 @@ export const auth = betterAuth({
             .filter((url): url is string => Boolean(url))
             .map(url => {
                 try {
-                    return new URL(url).hostname; // Strips https:// and paths, leaving just the host
+                    // .host keeps the port — Better Auth matches against the
+                    // request's Host header ("localhost:3000"), so .hostname
+                    // ("localhost") would never match and every dev request
+                    // would fall through to the deployed fallback URL
+                    return new URL(url).host;
                 } catch {
                     return url; // Fallback if it's already a plain host
                 }
@@ -65,8 +69,19 @@ export const auth = betterAuth({
         // above (a request's own host wins when it matches one of them).
         fallback: process.env.BETTER_AUTH_URL || "http://localhost:3000",
     },
+    // Outside production the localhost dev ports are trusted too — matching
+    // allowedHosts above, so local sign-in works even when BETTER_AUTH_URL
+    // points at a deployed origin
     trustedOrigins: [
         process.env.BETTER_AUTH_URL,
+        ...(process.env.NODE_ENV !== "production"
+            ? [
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://localhost:3002",
+                "http://localhost:3003",
+            ]
+            : []),
     ].filter((url): url is string => !!url),
     trustHost: true,
     // The default limiter stores counters in memory, which on serverless is
