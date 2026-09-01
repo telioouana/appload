@@ -26,7 +26,7 @@ export function PartnersMarquee() {
                                         alt={partner.name}
                                         width={112}
                                         height={48}
-                                        className="max-h-10 w-auto object-contain opacity-60 grayscale transition-[opacity,filter] duration-300 hover:opacity-100 hover:grayscale-0 dark:opacity-70 dark:invert dark:hover:opacity-100 dark:hover:grayscale"
+                                        className="max-h-10 w-auto object-contain opacity-60 grayscale transition-[opacity,filter] duration-300 hover:opacity-100 hover:grayscale-0 dark:opacity-70 dark:invert dark:hover:opacity-100 dark:hover:invert-0"
                                     />
                                 </div>
                             ))}

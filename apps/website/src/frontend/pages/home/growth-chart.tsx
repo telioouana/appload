@@ -3,26 +3,22 @@
 import { Bar, BarChart, XAxis } from "recharts"
 
 import { useTranslations } from "@workspace/i18n"
-import {
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-    type ChartConfig,
-} from "@workspace/ui/components/chart"
+import { ChartContainer, type ChartConfig } from "@workspace/ui/components/chart"
 
 import type { QuarterPoint } from "@/lib/metrics"
 
+/**
+ * A growth silhouette, not a data chart: bars are relative (indexed in
+ * metrics.ts) and there's deliberately no tooltip or axis — absolute
+ * volumes never reach the page.
+ */
 export function GrowthChart({ data }: { data: QuarterPoint[] }) {
     const t = useTranslations("metrics")
 
     const config = {
-        tons: {
-            label: t("chart_tons"),
+        index: {
+            label: t("chart_title"),
             color: "var(--chart-2)",
-        },
-        loads: {
-            label: t("chart_loads"),
-            color: "var(--chart-4)",
         },
     } satisfies ChartConfig
 
@@ -41,8 +37,7 @@ export function GrowthChart({ data }: { data: QuarterPoint[] }) {
                     tick={{ fill: "var(--canvas-faint)", fontSize: 11 }}
                     tickMargin={8}
                 />
-                <ChartTooltip cursor={{ fill: "rgb(255 255 255 / 0.04)" }} content={<ChartTooltipContent />} />
-                <Bar dataKey="tons" fill="var(--color-tons)" radius={[5, 5, 0, 0]} maxBarSize={42} />
+                <Bar dataKey="index" fill="var(--color-index)" radius={[5, 5, 0, 0]} maxBarSize={42} />
             </BarChart>
         </ChartContainer>
     )

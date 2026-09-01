@@ -1086,21 +1086,24 @@
         "scroll": "Deslize"
     },
     "metrics": {
-        "title": "Appload em números",
-        "updated": "Atualizado a cada hora a partir da nossa base de dados operacional",
-        "gtv_label": "de valor de frete gerido até hoje",
+        "title": "A Appload está a crescer",
+        "updated": "Da nossa base de dados operacional, atualizado a cada hora",
+        "headline_tons_yoy": "o volume de carga de há um ano",
+        "headline_tons_qoq": "o volume de carga do trimestre anterior",
+        "headline_loads_yoy": "as cargas de há um ano",
+        "headline_loads_qoq": "as cargas do trimestre anterior",
         "tiles": {
-            "loads": "Cargas entregues",
-            "tons": "Toneladas movidas",
-            "km": "Km percorridos",
-            "carriers": "Transportadores na plataforma",
-            "trucks": "Camiões registados",
-            "shippers": "Carregadores servidos"
+            "years": "Anos de atividade",
+            "repeat_shippers": "Carregadores que voltam a enviar",
+            "corridors": "Corredores de transporte servidos",
+            "provinces": "das 10 províncias de Moçambique servidas"
         },
-        "chart_title": "Toneladas movidas por trimestre",
-        "chart_note": "Últimos 8 trimestres",
-        "chart_loads": "Cargas",
-        "chart_tons": "Toneladas"
+        "quality": {
+            "tracked": "Todas as cargas acompanhadas",
+            "insurance": "Seguro disponível para todas as cargas"
+        },
+        "chart_title": "Carga movida por trimestre",
+        "chart_note": "Escala relativa"
     },
     "not_found": {
         "title": "Página não encontrada",

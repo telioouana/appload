@@ -1085,21 +1085,24 @@
         "scroll": "Scroll"
     },
     "metrics": {
-        "title": "Appload in numbers",
-        "updated": "Updated hourly from our operations database",
-        "gtv_label": "freight value handled to date",
+        "title": "Appload is growing",
+        "updated": "From our operations database, updated hourly",
+        "headline_tons_yoy": "the cargo volume of a year ago",
+        "headline_tons_qoq": "the cargo volume of the previous quarter",
+        "headline_loads_yoy": "the loads of a year ago",
+        "headline_loads_qoq": "the loads of the previous quarter",
         "tiles": {
-            "loads": "Loads delivered",
-            "tons": "Tons moved",
-            "km": "Km covered",
-            "carriers": "Carriers on platform",
-            "trucks": "Trucks registered",
-            "shippers": "Shippers served"
+            "years": "Years in operation",
+            "repeat_shippers": "Shippers who ship again",
+            "corridors": "Transport corridors served",
+            "provinces": "of Mozambique's 10 provinces served"
         },
-        "chart_title": "Tons moved per quarter",
-        "chart_note": "Last 8 quarters",
-        "chart_loads": "Loads",
-        "chart_tons": "Tons"
+        "quality": {
+            "tracked": "Every load tracked",
+            "insurance": "Insurance available on every load"
+        },
+        "chart_title": "Cargo moved per quarter",
+        "chart_note": "Relative scale"
     },
     "not_found": {
         "title": "Page not found",
