@@ -5,6 +5,7 @@ import { useTranslations } from "@workspace/i18n"
 import { Button } from "@workspace/ui/components/button"
 
 import { Link } from "@/i18n/navigation"
+import { SHOW_METRICS } from "@/content/site"
 import { MetricsDashboard } from "@/frontend/pages/home/metrics-dashboard"
 import type { PublicMetrics } from "@/lib/metrics"
 
@@ -39,13 +40,15 @@ export function Hero({ metrics }: { metrics: PublicMetrics | null }) {
                 <div className="canvas-spot pointer-events-none absolute inset-0" aria-hidden />
 
                 <div className="relative flex flex-1 flex-col items-center justify-center px-4 pt-16 text-center">
-                    <p
-                        className="enter inline-flex items-center gap-2 rounded-3xl border border-white/20 px-3.5 py-1.5 text-xs font-medium text-emerald-400"
-                        style={{ "--enter-delay": "0ms" } as React.CSSProperties}
-                    >
-                        <span className="pulse-dot size-1.5 rounded-full bg-emerald-400" aria-hidden />
-                        {tHero("badge")}
-                    </p>
+                    {SHOW_METRICS && (
+                        <p
+                            className="enter inline-flex items-center gap-2 rounded-3xl border border-white/20 px-3.5 py-1.5 text-xs font-medium text-emerald-400"
+                            style={{ "--enter-delay": "0ms" } as React.CSSProperties}
+                        >
+                            <span className="pulse-dot size-1.5 rounded-full bg-emerald-400" aria-hidden />
+                            {tHero("badge")}
+                        </p>
+                    )}
 
                     {/* The slogan is display text; the descriptive subtitle
                         carries the h1 so the page's main heading says what
@@ -86,18 +89,22 @@ export function Hero({ metrics }: { metrics: PublicMetrics | null }) {
                     </div>
                 </div>
 
-                <div className="relative flex items-center justify-between gap-4 px-5 pb-6 text-xs text-white/60 sm:px-8">
-                    <a href="#numbers" className="inline-flex items-center gap-1.5 transition-colors hover:text-white">
-                        <IconArrowDown className="size-3.5" aria-hidden />
-                        {tHero("scroll")} — {tMetrics("title")}
-                    </a>
-                    <span className="hidden sm:block">{tMetrics("updated")}</span>
-                </div>
+                {SHOW_METRICS && (
+                    <div className="relative flex items-center justify-between gap-4 px-5 pb-6 text-xs text-white/60 sm:px-8">
+                        <a href="#numbers" className="inline-flex items-center gap-1.5 transition-colors hover:text-white">
+                            <IconArrowDown className="size-3.5" aria-hidden />
+                            {tHero("scroll")} — {tMetrics("title")}
+                        </a>
+                        <span className="hidden sm:block">{tMetrics("updated")}</span>
+                    </div>
+                )}
             </div>
 
-            <div className="relative pt-6 sm:pt-10">
-                <MetricsDashboard metrics={metrics} />
-            </div>
+            {SHOW_METRICS && (
+                <div className="relative pt-6 sm:pt-10">
+                    <MetricsDashboard metrics={metrics} />
+                </div>
+            )}
         </section>
     )
 }
