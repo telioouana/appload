@@ -2,6 +2,12 @@
 // Translated copy lives in src/messages/*; this file holds what never
 // translates (names, URLs, file paths).
 
+// Temporary kill switch (2026-09-02): the live metrics card is hidden
+// while the team decides which metrics fit the Mozambique market. Flip to
+// true to restore the whole section (hero badge, scroll cue, dashboard,
+// hourly DB fetch) — no other change needed.
+export const SHOW_METRICS: boolean = false;
+
 export const SOCIALS = {
     linkedin: "https://www.linkedin.com/company/apploadafrica/",
     facebook: "https://www.facebook.com/profile.php?id=100064477002754",

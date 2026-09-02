@@ -1,3 +1,4 @@
+import { SHOW_METRICS } from "@/content/site"
 import { getPublicMetrics } from "@/lib/metrics"
 import { pageMetadata } from "@/lib/seo"
 import { Hero } from "@/frontend/pages/home/hero"
@@ -20,7 +21,9 @@ export async function generateMetadata({
 }
 
 export default async function HomePage() {
-    const metrics = await getPublicMetrics()
+    // While the metrics section is off, skip the database entirely — the
+    // home page then prerenders with no runtime dependency on Neon.
+    const metrics = SHOW_METRICS ? await getPublicMetrics() : null
 
     return (
         <>
