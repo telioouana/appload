@@ -1,45 +1,75 @@
 # Production release checklist (Vercel)
 
-The admin app deploys to Vercel (Hobby plan) with a dedicated Neon
-production database. Sections 1–7 are one-time setup for the first
+The apps deploy to Vercel (Hobby plan); the admin app has a dedicated Neon
+production database. Sections 1–7 are one-time setup for the first admin
 release; later releases follow the "Branching & deploys" flow below and
 only need step 7's smoke test.
 
 ## 0. Branching & deploys
 
-Two long-lived branches, two Vercel projects, one app (`apps/admin`):
+One integration branch, one production branch **per app**, three Vercel
+projects, two apps (`apps/admin`, `apps/website`). Each `prod/*` branch
+carries the whole monorepo, but only its own app's Vercel project deploys
+from it — so the apps release independently, no cherry-picking:
 
-| Branch | Vercel project (Production Branch) | Origin | Database / logbook |
-|---|---|---|---|
-| `dev`  | appload dev — Production Branch = `dev`  | `https://admin.dev.appload.co.mz` | `appload-dev` / DEV DATABASE LOGBOOK |
-| `main` | appload prod — Production Branch = `main` | `https://admin.appload.co.mz`     | `appload-prod` / DATABASE LOGBOOK |
+| Branch | App | Vercel project (Production Branch) | Origin | Database / logbook |
+|---|---|---|---|---|
+| `dev` | admin | appload dev — Production Branch = `dev` | `https://admin.dev.appload.co.mz` | `appload-dev` / DEV DATABASE LOGBOOK |
+| `prod/admin` | admin | appload-admin-prod — Production Branch = `prod/admin` | `https://admin.appload.co.mz` | `appload-prod` / DATABASE LOGBOOK |
+| `prod/website` | website | appload-website — Production Branch = `prod/website` | `https://appload-website.vercel.app` (custom domain pending) | production DB, read-only aggregates (unused while the home metrics section is behind its flag) |
 
-Flow: branch from `dev` (`feat/<thing>`) → pull request into `dev` → CI
-green → merge → Vercel deploys the dev project automatically → test on the
-dev origin → when a release is ready, pull request `dev → main` → CI green →
-merge → Vercel deploys production. Nothing reaches production except a
-merge into `main`.
+`main` is retired as a release branch (kept for history; nothing deploys
+from it since 2026-09-02).
+
+Flow: branch from `dev` (`stage/NN-<topic>`) → pull request into `dev` →
+CI green → merge → the admin dev project deploys automatically → test on
+the dev origin → release each app on its own schedule by merging `dev`
+into its `prod/<app>` branch and pushing. **Every push to a tracked
+`prod/*` branch is a production deployment of that app** — the push is
+the release:
+
+```bash
+# Release the website
+git checkout prod/website && git merge dev && git push
+
+# Release the admin (run new migrations first — see below)
+git checkout prod/admin && git merge dev && git push
+```
+
+`prod/admin` carries one bootstrap commit that `dev` doesn't have (the
+`vercel.json` ignoreCommand tweak below), so admin releases are true
+merges rather than fast-forwards — or reset the branch onto `dev` once
+and fast-forward from then on.
 
 Why a stable `dev` origin instead of per-PR preview URLs: Better Auth only
 trusts `BETTER_AUTH_URL` (+ localhost) and Google OAuth redirect URIs are
 registered per origin, so sign-in cannot work on ad-hoc preview hosts.
-`apps/admin/vercel.json` therefore carries an `ignoreCommand` that makes
-each Vercel project build **only its own production branch** — feature
-branches never produce preview deployments; CI is their build check.
+`apps/admin/vercel.json` therefore carries an `ignoreCommand` that builds
+**only production deployments plus the `prod/admin` ref** — feature
+branches never produce admin preview deployments; CI is their build check.
+(The `prod/admin` ref clause exists because Vercel refuses to save a
+Production Branch that has never deployed, and without it the branch's
+first deployment could never happen.) The website app has no
+`ignoreCommand`: its project builds previews normally.
 
 - **CI** — `.github/workflows/ci.yml` runs `pnpm turbo lint typecheck build`
   on every pull request and on pushes to `dev`/`main`, with placeholder env
-  vars only (no secrets, no database). The job is named `ci`.
-- **Branch protection** (GitHub → Settings → Rules → Rulesets, target
-  `main` and `dev`): require a pull request before merging (0 approvals is
-  fine for a solo repo), require the `ci` status check, block force pushes.
-- **Vercel (both projects)** — connect the `telioouana/appload` repo, Root
+  vars only (no secrets, no database). The job is named `ci`. The vetting
+  point for a release is the PR into `dev`; pushes to `prod/*` are covered
+  by the Vercel build itself.
+- **Branch protection** (GitHub → Settings → Rules → Rulesets): target
+  `dev` — require a pull request before merging (0 approvals is fine for a
+  solo repo), require the `ci` status check, block force pushes. Leave
+  `prod/*` open to direct pushes: the push *is* the release.
+- **Vercel (admin projects)** — connect the `telioouana/appload` repo, Root
   Directory `apps/admin`, "Include files outside root" enabled; set the
   Production Branch per the table; environment variables from
-  `apps/admin/.env.example` with that environment's values.
+  `apps/admin/.env.example` with that environment's values. The website
+  project is the same shape with Root Directory `apps/website`.
 - **Migrations** stay manual: when a release contains new files under
   `packages/db/drizzle/`, run `DATABASE_URL=<prod url> pnpm --filter
-  @workspace/db db:migrate` *before* merging `dev → main` (see §1).
+  @workspace/db db:migrate` *before* pushing the release merge to
+  `prod/admin` (see §1).
 
 ## 1. Neon — production database
 
