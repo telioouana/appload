@@ -1451,7 +1451,8 @@
                     "CARRIER_CONTRACT_EXPIRED": "O contrato assinado deste transportador expirou",
                     "CARRIER_SUSPENDED": "Este transportador está suspenso",
                     "RISK_ACK_NOT_ALLOWED": "Só um supervisor pode aceitar este risco",
-                    "RISK_ACK_NOTE_REQUIRED": "Explique porque este risco está a ser aceite"
+                    "RISK_ACK_NOTE_REQUIRED": "Explique porque este risco está a ser aceite",
+                    "DISPUTE_OPEN": "O pedido não pode ser concluído com uma disputa aberta. Resolva-a primeiro."
                 }
             },
             "detailPage": {
@@ -1479,7 +1480,10 @@
                     "description": "Descrição",
                     "payments": "Partes e pagamentos",
                     "operations": "Operações",
-                    "history": "Histórico"
+                    "history": "Histórico",
+                    "route": "Rota e carga",
+                    "tracking": "Rastreio em direto",
+                    "activity": "Atividade"
                 },
                 "adjustments": {
                     "title": "Totais efetivos (com notas de débito/crédito)",
@@ -1503,7 +1507,44 @@
                     "noProofs": "Ainda sem comprovativos de pagamento.",
                     "recordPayment": "Registar pagamento",
                     "open": "Abrir comprovativo",
-                    "derivedHint": "Estes valores vêm dos comprovativos registados."
+                    "derivedHint": "Estes valores vêm dos comprovativos registados.",
+                    "prospectHint": "Os pagamentos abrem depois de o pedido ser confirmado.",
+                    "heldHint": "Uma disputa está a reter estes pagamentos."
+                },
+                "resume": "Retomar",
+                "openChat": "Abrir conversa",
+                "chatFailed": "Não foi possível abrir a conversa, tente novamente.",
+                "openMap": "Abrir no Mapa",
+                "trip": {
+                    "label": "Progresso da viagem",
+                    "dealDate": "Data do negócio",
+                    "loading": "Carga",
+                    "offloading": "Descarga",
+                    "lastLocation": "Última localização do motorista",
+                    "noPings": "Ainda sem atualizações"
+                },
+                "route": {
+                    "googleDistance": "Distância rodoviária (Google)",
+                    "weightBooked": "reservado",
+                    "weightLoaded": "carregado"
+                },
+                "money": {
+                    "vat": "Valores com IVA incluído",
+                    "shipperTotal": "Total do carregador",
+                    "carrierTotal": "Total do transportador",
+                    "commission": "Comissão",
+                    "insurance": "Seguro",
+                    "in": "entrada",
+                    "out": "saída",
+                    "share": "{percent}% do total do carregador",
+                    "effective": "efetivo",
+                    "debit": "+{amount} de nota de débito",
+                    "credit": "−{amount} de nota de crédito",
+                    "ownCover": "cobertura do próprio carregador"
+                },
+                "footer": {
+                    "created": "Criado a {date} por {actor}",
+                    "createdUnknown": "Criado a {date}"
                 }
             },
             "history": {
@@ -1521,7 +1562,8 @@
                     "note": "Nota financeira",
                     "flag": "Sinalização resolvida",
                     "system": "Evento do sistema",
-                    "payment": "Pagamento"
+                    "payment": "Pagamento",
+                    "dispute": "Disputa"
                 }
             },
             "documents": {
@@ -1595,7 +1637,8 @@
                     "NOTE_LEG_CURRENCY_MISSING": "Defina a moeda da parte no pedido antes de registar uma nota.",
                     "NOT_ALLOWED": "O seu perfil não permite esta ação.",
                     "VERSION_CONFLICT": "Outra pessoa alterou este pedido primeiro. Atualize e tente novamente.",
-                    "UNKNOWN": "Não foi possível gravar o documento. Tente novamente."
+                    "UNKNOWN": "Não foi possível gravar o documento. Tente novamente.",
+                    "DISPUTE_HOLD": "Os pagamentos desta parte estão retidos enquanto a disputa estiver aberta."
                 },
                 "reasons": {
                     "demurrage": "Estadia (demurrage)",
@@ -1642,6 +1685,10 @@
                 "parties": {
                     "shipper": "Expedidor",
                     "carrier": "Transportador"
+                },
+                "dialog": {
+                    "title": "Adicionar documento",
+                    "subtitle": "Anexe um ficheiro a este pedido e registe do que se trata."
                 }
             },
             "pdfSend": {
@@ -1945,7 +1992,6 @@
             "thread": {
                 "emptyTitle": "Nenhuma conversa selecionada",
                 "emptyDescription": "Escolha uma conversa na lista ou inicie uma nova.",
-                "order": "Pedido",
                 "composer": "Escreva uma mensagem...",
                 "send": "Enviar",
                 "failed": "Falha no envio",

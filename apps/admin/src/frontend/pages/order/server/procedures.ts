@@ -1,15 +1,16 @@
 import { z } from "zod";
-import { and, desc, eq, isNull, max, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, max, notInArray, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
-import { order, orderDocument, orderHistory, sheetSync, type CreateOrder, type Order } from "@workspace/db/orders";
+import { order, orderDispute, orderDocument, orderHistory, sheetSync, type CreateOrder, type Order } from "@workspace/db/orders";
 import { user } from "@workspace/db/users";
 import { trailer, truck } from "@workspace/db/fleet";
 import type { db as Database } from "@workspace/db/db";
-import { ORDER_STATUS, type LoadingBay } from "@workspace/db/types";
+import { ACTIVE_DISPUTE_STATUSES, isActiveDispute, ORDER_STATUS, type LoadingBay } from "@workspace/db/types";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
-import { isAuthorized } from "@workspace/auth/user-permissions";
+import { isAuthorized, type StaffRole } from "@workspace/auth/user-permissions";
+import type { Auth } from "@workspace/auth/server";
 import { sendEmail } from "@workspace/auth/email";
 
 import { CreateOrderSchemaServer, UpdateOrderSchemaServer, type CreateOrderForm } from "@/backend/schemas/order";
@@ -285,10 +286,32 @@ async function startFollowUpChat(
 }
 
 /**
- * The chain status an interrupted (stopped/issue) order returns to: the
- * last transition target outside the interrupt pair. Derived from history
- * instead of a denormalized column so it can never drift.
+ * The one rule for where an interrupted (stopped/issue) order goes back to:
+ * the last transition target outside the interrupt pair. Two callers
+ * evaluate it — this module against the database, and `resumeFromHistory`
+ * against rows already in memory — so the pair lives here together. A drift
+ * between them would offer the operator a resume target the server refuses.
  */
+const RESUME_EXCLUDED: OrderStatus[] = ["stopped", "issue"];
+
+/**
+ * The resume target read off an already-fetched timeline, newest first.
+ * `toStatus` is null on rows that are not transitions, and SQL's NOT IN
+ * drops those on its own — the explicit null check here is what keeps this
+ * branch in step with the query below.
+ */
+export function resumeFromHistory(
+    history: { kind: string; toStatus: string | null }[],
+): OrderStatus | null {
+    const found = history.find((entry) =>
+        entry.kind === "transition"
+        && entry.toStatus !== null
+        && !RESUME_EXCLUDED.includes(entry.toStatus as OrderStatus));
+
+    return (found?.toStatus as OrderStatus | undefined) ?? null;
+}
+
+/** The same rule against the database, for callers without the timeline. */
 async function deriveResumeStatus(db: typeof Database, orderPk: string): Promise<OrderStatus | null> {
     const [row] = await db
         .select({ toStatus: orderHistory.toStatus })
@@ -296,7 +319,7 @@ async function deriveResumeStatus(db: typeof Database, orderPk: string): Promise
         .where(and(
             eq(orderHistory.orderId, orderPk),
             eq(orderHistory.kind, "transition"),
-            notInArray(orderHistory.toStatus, ["stopped", "issue"]),
+            notInArray(orderHistory.toStatus, RESUME_EXCLUDED),
         ))
         .orderBy(desc(orderHistory.createdAt))
         .limit(1);
@@ -345,6 +368,226 @@ export type TransitionOrderOutput = {
     order: Order;
     warning?: "SHEET_FAILED";
 };
+
+export const TransitionSchema = z.object({
+    orderId: z.string(),
+    to: z.enum(ORDER_STATUS),
+    expectedVersion: z.number().int().min(1),
+    note: z.string().trim().min(5).max(2000).optional(),
+    // Evidence/POD upload backing the move (EdgeStore URL). The
+    // document row itself is created by the documents router;
+    // here it also lands in the history metadata.
+    document: z.object({
+        url: z.url(),
+        name: z.string().max(200).optional(),
+        size: z.number().int().optional(),
+        mimeType: z.string().max(100).optional(),
+    }).optional(),
+});
+
+export type TransitionInput = z.infer<typeof TransitionSchema>;
+
+// What a transition needs from the request: the caller's session and role,
+// the database, and the auth handles the Sheets token is minted from
+export type TransitionContext = {
+    db: typeof Database;
+    session: { user: { id: string } };
+    staff: { role: StaffRole };
+    authApi: Auth["api"];
+    headers: Headers;
+    waitUntil?: (promise: Promise<unknown>) => void;
+};
+
+/**
+ * The one door for status changes, shared by the single-order mutation and
+ * the bulk one. Validates the move against the declarative state machine
+ * (current status + route + actor role), enforces the payload the move
+ * demands (note / evidence / POD), refuses to close a disputed order,
+ * stamps implied milestone dates, applies the derived side effects (booked
+ * payment scaffolding, dealDate, podStatus...), raises the review flag on
+ * risky moves, and appends the history row. Throws TRPCErrors with domain
+ * codes; the callers map anything else through toTRPCError.
+ *
+ * `options.accessToken` lets a batch mint the Sheets token once; `null`
+ * means the caller already failed to get one.
+ */
+export async function transitionOrder(
+    ctx: TransitionContext,
+    input: TransitionInput,
+    options: { accessToken?: string | null } = {},
+): Promise<TransitionOrderOutput> {
+    const [current] = await ctx.db
+        .select()
+        .from(order)
+        .where(eq(order.orderId, input.orderId));
+
+    if (!current) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+    }
+
+    // Closing an order as lost (cancelled or underbid) is its own
+    // permission on top of transition
+    if ((input.to === "cancelled" || input.to === "underbid") && !isAuthorized(ctx.staff.role, "order", ["cancel"])) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
+    }
+
+    // Booking a prospect demands the full carrier/driver/fleet/
+    // amount block. Same stored-row bar the deal form reaches
+    // through its refines, minus the fleet-derived loading bay no
+    // column carries — incomplete prospects go through that form
+    // (order.updateDeal, "Confirm order"), never this door.
+    if (input.to === "booked" && current.status === "prospect" && !isReadyToBook(current)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "INCOMPLETE_FOR_BOOKING" });
+    }
+
+    // The cargo cannot be closed while a dispute over it is open; the
+    // dispute is settled or closed first, which lifts this
+    if (input.to === "completed" && isActiveDispute(current.disputeStatus)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "DISPUTE_OPEN" });
+    }
+
+    // Verification is checked once, at the moment the cargo is
+    // committed to this carrier and rig. Later transitions move
+    // an order that was already gated.
+    const { flagPatch: gateFlag } = input.to === "booked" && current.carrierId
+        ? await guardOrderGate(
+            ctx.db,
+            {
+                carrierId: current.carrierId,
+                driverId: current.driverId,
+                truckPlate: current.truckPlate,
+                trailerPlate: current.trailerPlate,
+                linkPlate: current.linkPlate,
+            },
+            { role: ctx.staff.role, actorId: ctx.session.user.id, note: input.note },
+        )
+        : { flagPatch: null };
+
+    const resumeStatus =
+        current.status === "stopped" || current.status === "issue"
+            ? await deriveResumeStatus(ctx.db, current.id)
+            : null;
+
+    const verdict = validateTransition(
+        { status: current.status, route: current.route, role: ctx.staff.role, resumeStatus },
+        input.to,
+    );
+
+    if (!verdict.ok) {
+        throw new TRPCError({
+            code: verdict.code === "NOT_ALLOWED" ? "FORBIDDEN" : "BAD_REQUEST",
+            message: verdict.code,
+        });
+    }
+
+    if (verdict.requirements.includes("note") && !input.note) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "NOTE_REQUIRED" });
+    }
+    if (verdict.requirements.includes("evidence") && !input.document) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "EVIDENCE_REQUIRED" });
+    }
+    if (verdict.requirements.includes("pod") && !input.document) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "POD_REQUIRED" });
+    }
+
+    const flag = verdict.requirements.includes("flag");
+    const stamps = transitionStamps(current, input.to);
+    const payments = await paymentSums(ctx.db, current.id);
+
+    const [updated] = await ctx.db
+        .update(order)
+        .set({
+            ...stamps,
+            status: input.to,
+            ...(input.to === "delivered" && current.podStatus === null && {
+                podStatus: "pending-collection" as const,
+            }),
+            // A verification flag outranks a transition one: its
+            // reason names the specific gap, where the transition
+            // flag only carries the operator's note
+            ...gateFlag,
+            ...(flag && !gateFlag && {
+                flaggedForReview: true,
+                flagReason: input.note ?? null,
+                flaggedAt: new Date(),
+                flaggedBy: ctx.session.user.id,
+            }),
+            // Derived columns (dealDate, payment scaffolding,
+            // loaded/offloaded weight, day counters) win last
+            ...deriveOrderFields(current, { status: input.to, ...stamps }),
+            // ...except on POP-governed legs, where the recorded
+            // proofs beat the booked "pending" scaffold and the
+            // prospect/cancelled rules apply to the NEW status
+            ...proofPaymentPatch({ ...current, status: input.to }, payments),
+            version: sql`${order.version} + 1`,
+        })
+        .where(and(
+            eq(order.id, current.id),
+            eq(order.version, input.expectedVersion),
+        ))
+        .returning();
+
+    if (!updated) {
+        throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
+    }
+
+    await ctx.db.insert(orderHistory).values({
+        orderId: current.id,
+        actorUserId: ctx.session.user.id,
+        kind: "transition",
+        fromStatus: current.status,
+        toStatus: input.to,
+        metadata: {
+            ...(input.note && { note: input.note }),
+            ...(flag && { flagged: true }),
+            ...(input.document && { document: input.document }),
+        },
+    });
+
+    // The upload that backed the move becomes a first-class
+    // document on the order (POD for completion, evidence for
+    // cancels), so it shows up in the documents section
+    if (input.document && (verdict.requirements.includes("pod") || verdict.requirements.includes("evidence"))) {
+        await ctx.db.insert(orderDocument).values({
+            orderId: current.id,
+            type: verdict.requirements.includes("pod") ? "pod" : "evidence",
+            title: input.document.name ?? null,
+            url: input.document.url,
+            size: input.document.size ?? null,
+            mimeType: input.document.mimeType ?? null,
+            reason: input.note ?? null,
+            uploadedBy: ctx.session.user.id,
+        });
+    }
+
+    // Booked and tracked orders get a follow-up chat with the
+    // driver. Post-response and best-effort: a chat/Infobip
+    // failure must never fail the transition. Only booked logs
+    // the no-phone skip — once per order, not per status.
+    if (FOLLOW_UP_STATUSES.includes(input.to)) {
+        const followUp = startFollowUpChat(ctx.db, updated, current.id, { logSkip: input.to === "booked" })
+            .catch((error: unknown) => console.error(`follow-up chat failed for ${input.orderId}`, error));
+
+        if (ctx.waitUntil) ctx.waitUntil(followUp); else await followUp;
+    }
+
+    try {
+        const accessToken = options.accessToken === undefined
+            ? await getSheetsAccessToken(ctx.authApi, ctx.headers, ctx.session.user.id)
+            : options.accessToken;
+
+        if (accessToken === null || !await syncSheetsAndRecord(ctx.db, accessToken, updated)) {
+            return { orderId: input.orderId, order: updated, warning: "SHEET_FAILED" };
+        }
+    } catch (error) {
+        // Token acquisition failed — the outbox cron retries with
+        // the service account
+        console.error(`sheet sync failed on transition for ${input.orderId}`, error);
+        return { orderId: input.orderId, order: updated, warning: "SHEET_FAILED" };
+    }
+
+    return { orderId: input.orderId, order: updated };
+}
 
 export const orderRouter = createTRPCRouter({
     create: authorizedProcedure("order", ["create"])
@@ -792,197 +1035,12 @@ export const orderRouter = createTRPCRouter({
             }
         }),
 
-    /**
-     * The one door for status changes. Validates the move against the
-     * declarative state machine (current status + route + actor role),
-     * enforces the payload the move demands (note / evidence / POD),
-     * stamps implied milestone dates, applies the derived side effects
-     * (booked payment scaffolding, dealDate, podStatus...), raises the
-     * review flag on risky moves, and appends the history row.
-     */
+    /** One status change; see transitionOrder for the rules it enforces. */
     transition: authorizedProcedure("order", ["transition"])
-        .input(
-            z.object({
-                orderId: z.string(),
-                to: z.enum(ORDER_STATUS),
-                expectedVersion: z.number().int().min(1),
-                note: z.string().trim().min(5).max(2000).optional(),
-                // Evidence/POD upload backing the move (EdgeStore URL). The
-                // document row itself is created by the documents router;
-                // here it also lands in the history metadata.
-                document: z.object({
-                    url: z.url(),
-                    name: z.string().max(200).optional(),
-                    size: z.number().int().optional(),
-                    mimeType: z.string().max(100).optional(),
-                }).optional(),
-            }),
-        )
+        .input(TransitionSchema)
         .mutation(async ({ ctx, input }): Promise<TransitionOrderOutput> => {
             try {
-                const [current] = await ctx.db
-                    .select()
-                    .from(order)
-                    .where(eq(order.orderId, input.orderId));
-
-                if (!current) {
-                    throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
-                }
-
-                // Closing an order as lost (cancelled or underbid) is its own
-                // permission on top of transition
-                if ((input.to === "cancelled" || input.to === "underbid") && !isAuthorized(ctx.staff.role, "order", ["cancel"])) {
-                    throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
-                }
-
-                // Booking a prospect demands the full carrier/driver/fleet/
-                // amount block. Same stored-row bar the deal form reaches
-                // through its refines, minus the fleet-derived loading bay no
-                // column carries — incomplete prospects go through that form
-                // (order.updateDeal, "Confirm order"), never this door.
-                if (input.to === "booked" && current.status === "prospect" && !isReadyToBook(current)) {
-                    throw new TRPCError({ code: "BAD_REQUEST", message: "INCOMPLETE_FOR_BOOKING" });
-                }
-
-                // Verification is checked once, at the moment the cargo is
-                // committed to this carrier and rig. Later transitions move
-                // an order that was already gated.
-                const { flagPatch: gateFlag } = input.to === "booked" && current.carrierId
-                    ? await guardOrderGate(
-                        ctx.db,
-                        {
-                            carrierId: current.carrierId,
-                            driverId: current.driverId,
-                            truckPlate: current.truckPlate,
-                            trailerPlate: current.trailerPlate,
-                            linkPlate: current.linkPlate,
-                        },
-                        { role: ctx.staff.role, actorId: ctx.session.user.id, note: input.note },
-                    )
-                    : { flagPatch: null };
-
-                const resumeStatus =
-                    current.status === "stopped" || current.status === "issue"
-                        ? await deriveResumeStatus(ctx.db, current.id)
-                        : null;
-
-                const verdict = validateTransition(
-                    { status: current.status, route: current.route, role: ctx.staff.role, resumeStatus },
-                    input.to,
-                );
-
-                if (!verdict.ok) {
-                    throw new TRPCError({
-                        code: verdict.code === "NOT_ALLOWED" ? "FORBIDDEN" : "BAD_REQUEST",
-                        message: verdict.code,
-                    });
-                }
-
-                if (verdict.requirements.includes("note") && !input.note) {
-                    throw new TRPCError({ code: "BAD_REQUEST", message: "NOTE_REQUIRED" });
-                }
-                if (verdict.requirements.includes("evidence") && !input.document) {
-                    throw new TRPCError({ code: "BAD_REQUEST", message: "EVIDENCE_REQUIRED" });
-                }
-                if (verdict.requirements.includes("pod") && !input.document) {
-                    throw new TRPCError({ code: "BAD_REQUEST", message: "POD_REQUIRED" });
-                }
-
-                const flag = verdict.requirements.includes("flag");
-                const stamps = transitionStamps(current, input.to);
-                const payments = await paymentSums(ctx.db, current.id);
-
-                const [updated] = await ctx.db
-                    .update(order)
-                    .set({
-                        ...stamps,
-                        status: input.to,
-                        ...(input.to === "delivered" && current.podStatus === null && {
-                            podStatus: "pending-collection" as const,
-                        }),
-                        // A verification flag outranks a transition one: its
-                        // reason names the specific gap, where the transition
-                        // flag only carries the operator's note
-                        ...gateFlag,
-                        ...(flag && !gateFlag && {
-                            flaggedForReview: true,
-                            flagReason: input.note ?? null,
-                            flaggedAt: new Date(),
-                            flaggedBy: ctx.session.user.id,
-                        }),
-                        // Derived columns (dealDate, payment scaffolding,
-                        // loaded/offloaded weight, day counters) win last
-                        ...deriveOrderFields(current, { status: input.to, ...stamps }),
-                        // ...except on POP-governed legs, where the recorded
-                        // proofs beat the booked "pending" scaffold and the
-                        // prospect/cancelled rules apply to the NEW status
-                        ...proofPaymentPatch({ ...current, status: input.to }, payments),
-                        version: sql`${order.version} + 1`,
-                    })
-                    .where(and(
-                        eq(order.id, current.id),
-                        eq(order.version, input.expectedVersion),
-                    ))
-                    .returning();
-
-                if (!updated) {
-                    throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
-                }
-
-                await ctx.db.insert(orderHistory).values({
-                    orderId: current.id,
-                    actorUserId: ctx.session.user.id,
-                    kind: "transition",
-                    fromStatus: current.status,
-                    toStatus: input.to,
-                    metadata: {
-                        ...(input.note && { note: input.note }),
-                        ...(flag && { flagged: true }),
-                        ...(input.document && { document: input.document }),
-                    },
-                });
-
-                // The upload that backed the move becomes a first-class
-                // document on the order (POD for completion, evidence for
-                // cancels), so it shows up in the documents section
-                if (input.document && (verdict.requirements.includes("pod") || verdict.requirements.includes("evidence"))) {
-                    await ctx.db.insert(orderDocument).values({
-                        orderId: current.id,
-                        type: verdict.requirements.includes("pod") ? "pod" : "evidence",
-                        title: input.document.name ?? null,
-                        url: input.document.url,
-                        size: input.document.size ?? null,
-                        mimeType: input.document.mimeType ?? null,
-                        reason: input.note ?? null,
-                        uploadedBy: ctx.session.user.id,
-                    });
-                }
-
-                // Booked and tracked orders get a follow-up chat with the
-                // driver. Post-response and best-effort: a chat/Infobip
-                // failure must never fail the transition. Only booked logs
-                // the no-phone skip — once per order, not per status.
-                if (FOLLOW_UP_STATUSES.includes(input.to)) {
-                    const followUp = startFollowUpChat(ctx.db, updated, current.id, { logSkip: input.to === "booked" })
-                        .catch((error: unknown) => console.error(`follow-up chat failed for ${input.orderId}`, error));
-
-                    if (ctx.waitUntil) ctx.waitUntil(followUp); else await followUp;
-                }
-
-                try {
-                    const accessToken = await getSheetsAccessToken(ctx.authApi, ctx.headers, ctx.session.user.id);
-
-                    if (!await syncSheetsAndRecord(ctx.db, accessToken, updated)) {
-                        return { orderId: input.orderId, order: updated, warning: "SHEET_FAILED" };
-                    }
-                } catch (error) {
-                    // Token acquisition failed — the outbox cron retries with
-                    // the service account
-                    console.error(`sheet sync failed on transition for ${input.orderId}`, error);
-                    return { orderId: input.orderId, order: updated, warning: "SHEET_FAILED" };
-                }
-
-                return { orderId: input.orderId, order: updated };
+                return await transitionOrder(ctx, input);
             } catch (error) {
                 throw toTRPCError(error);
             }
@@ -1150,7 +1208,7 @@ export const orderRouter = createTRPCRouter({
                 throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
             }
 
-            const [documents, history, [sync]] = await Promise.all([
+            const [documents, history, [sync], [dispute]] = await Promise.all([
                 ctx.db
                     .select()
                     .from(orderDocument)
@@ -1175,9 +1233,29 @@ export const orderRouter = createTRPCRouter({
                     .select()
                     .from(sheetSync)
                     .where(eq(sheetSync.orderId, row.id)),
+                // The active dispute, if any: the banner, the payment holds
+                // and the closure block all read it from here
+                ctx.db
+                    .select({
+                        id: orderDispute.id,
+                        status: orderDispute.status,
+                        reason: orderDispute.reason,
+                        holdShipperPayments: orderDispute.holdShipperPayments,
+                        holdCarrierPayments: orderDispute.holdCarrierPayments,
+                        openedAt: orderDispute.openedAt,
+                    })
+                    .from(orderDispute)
+                    .where(and(eq(orderDispute.orderId, row.id), inArray(orderDispute.status, [...ACTIVE_DISPUTE_STATUSES])))
+                    .limit(1),
             ]);
 
-            return { order: row, documents, history, sheetSync: sync ?? null };
+            // Free: the timeline above already holds every row the rule reads,
+            // so the header can name the resume step without a second query
+            const resumeStatus = row.status === "stopped" || row.status === "issue"
+                ? resumeFromHistory(history)
+                : null;
+
+            return { order: row, documents, history, sheetSync: sync ?? null, dispute: dispute ?? null, resumeStatus };
         }),
 
     /**
@@ -1213,6 +1291,7 @@ export const orderRouter = createTRPCRouter({
                     carrierTotal: order.carrierTotal,
                     carrierCurrency: order.carrierCurrency,
                     shipperCurrency: order.shipperCurrency,
+                    disputeStatus: order.disputeStatus,
                 })
                 .from(order)
                 .where(eq(order.orderId, input.orderId));
@@ -1229,15 +1308,25 @@ export const orderRouter = createTRPCRouter({
             const context = { status: row.status, route: row.route, role: ctx.staff.role, resumeStatus };
 
             // Advertised but not takeable: the deal form is the way to the
-            // rest of the data. Always a boolean — a conditional spread would
+            // rest of the data, and a dispute must be settled before the
+            // cargo closes. Always a boolean — a conditional spread would
             // infer a union and break `entry.blocked` in the dialog.
             const bookingBlocked = row.status === "prospect" && !isReadyToBook(row);
+            const disputeBlocked = isActiveDispute(row.disputeStatus);
 
-            const targets = allowedTransitions(context).map((to) => ({
-                to,
-                requirements: transitionRequirements(row.status, to, { resumeStatus }) ?? [],
-                blocked: to === "booked" && bookingBlocked,
-            }));
+            const targets = allowedTransitions(context).map((to) => {
+                const blockedReason: "INCOMPLETE_FOR_BOOKING" | "DISPUTE_OPEN" | null =
+                    to === "booked" && bookingBlocked ? "INCOMPLETE_FOR_BOOKING"
+                        : to === "completed" && disputeBlocked ? "DISPUTE_OPEN"
+                            : null;
+
+                return {
+                    to,
+                    requirements: transitionRequirements(row.status, to, { resumeStatus }) ?? [],
+                    blocked: blockedReason !== null,
+                    blockedReason,
+                };
+            });
 
             return {
                 status: row.status,

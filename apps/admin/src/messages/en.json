@@ -1451,7 +1451,8 @@
                     "CARRIER_CONTRACT_EXPIRED": "This carrier's signed contract has expired",
                     "CARRIER_SUSPENDED": "This carrier is suspended",
                     "RISK_ACK_NOT_ALLOWED": "Only a supervisor can accept this risk",
-                    "RISK_ACK_NOTE_REQUIRED": "Explain why this risk is being accepted"
+                    "RISK_ACK_NOTE_REQUIRED": "Explain why this risk is being accepted",
+                    "DISPUTE_OPEN": "The order cannot be completed while a dispute is open. Settle or close it first."
                 }
             },
             "detailPage": {
@@ -1479,7 +1480,10 @@
                     "description": "Description",
                     "payments": "Parties & payments",
                     "operations": "Operations",
-                    "history": "History"
+                    "history": "History",
+                    "route": "Route & cargo",
+                    "tracking": "Live tracking",
+                    "activity": "Activity"
                 },
                 "adjustments": {
                     "title": "Effective totals (with debit/credit notes)",
@@ -1503,7 +1507,44 @@
                     "noProofs": "No proofs of payment recorded yet.",
                     "recordPayment": "Record payment",
                     "open": "Open proof",
-                    "derivedHint": "These figures come from the recorded proofs."
+                    "derivedHint": "These figures come from the recorded proofs.",
+                    "prospectHint": "Payments open once the order is booked.",
+                    "heldHint": "A dispute is holding these payments."
+                },
+                "resume": "Resume",
+                "openChat": "Open chat",
+                "chatFailed": "Could not open the chat, please try again.",
+                "openMap": "Open in Map",
+                "trip": {
+                    "label": "Trip progress",
+                    "dealDate": "Deal date",
+                    "loading": "Loading",
+                    "offloading": "Offloading",
+                    "lastLocation": "Last driver location",
+                    "noPings": "No updates yet"
+                },
+                "route": {
+                    "googleDistance": "Google road distance",
+                    "weightBooked": "booked",
+                    "weightLoaded": "loaded"
+                },
+                "money": {
+                    "vat": "Amounts include VAT",
+                    "shipperTotal": "Shipper total",
+                    "carrierTotal": "Carrier total",
+                    "commission": "Commission",
+                    "insurance": "Insurance",
+                    "in": "money in",
+                    "out": "money out",
+                    "share": "{percent}% of the shipper total",
+                    "effective": "effective",
+                    "debit": "+{amount} debit note",
+                    "credit": "−{amount} credit note",
+                    "ownCover": "shipper's own cover"
+                },
+                "footer": {
+                    "created": "Created {date} by {actor}",
+                    "createdUnknown": "Created {date}"
                 }
             },
             "history": {
@@ -1521,7 +1562,8 @@
                     "note": "Financial note",
                     "flag": "Flag resolved",
                     "system": "System event",
-                    "payment": "Payment"
+                    "payment": "Payment",
+                    "dispute": "Dispute"
                 }
             },
             "documents": {
@@ -1595,7 +1637,8 @@
                     "NOTE_LEG_CURRENCY_MISSING": "Set the party's currency on the order before recording a note.",
                     "NOT_ALLOWED": "Your role does not allow this action.",
                     "VERSION_CONFLICT": "Someone else changed this order first. Refresh and try again.",
-                    "UNKNOWN": "Saving the document failed. Please try again."
+                    "UNKNOWN": "Saving the document failed. Please try again.",
+                    "DISPUTE_HOLD": "This party's payments are on hold while the dispute is open."
                 },
                 "reasons": {
                     "demurrage": "Demurrage",
@@ -1642,6 +1685,10 @@
                 "parties": {
                     "shipper": "Shipper",
                     "carrier": "Carrier"
+                },
+                "dialog": {
+                    "title": "Add a document",
+                    "subtitle": "Attach a file to this order and record what it is."
                 }
             },
             "pdfSend": {
@@ -1945,7 +1992,6 @@
             "thread": {
                 "emptyTitle": "No conversation selected",
                 "emptyDescription": "Pick a conversation from the list or start a new one.",
-                "order": "Order",
                 "composer": "Type a message...",
                 "send": "Send",
                 "failed": "Failed to send",

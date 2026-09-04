@@ -274,7 +274,7 @@ export function UpdateOrderView() {
                 // Only the submitted form resets; the other tabs keep any
                 // unsaved edits (their stale clean values never get sent)
                 form.reset(orderToUpdateDefaults(result.order))
-                queryClient.invalidateQueries(trpc.orders.list.queryFilter())
+                queryClient.invalidateQueries(trpc.orders.pathFilter())
                 // A total change re-derives the paid figures on governed
                 // legs, so the details page and the lock state must refetch
                 queryClient.invalidateQueries(trpc.order.get.queryFilter({ orderId: order.orderId }))

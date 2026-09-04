@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 import {
     DOCUMENT_PARTY,
     NOTE_REASON,
     ORDER_DOCUMENT_TYPE,
+    orderDispute,
     orderDocument,
     orderHistory,
     order,
@@ -14,6 +15,7 @@ import {
     type OrderDocument,
     type OrderHistoryKind,
 } from "@workspace/db/orders";
+import { ACTIVE_DISPUTE_STATUSES, isActiveDispute } from "@workspace/db/types";
 import type { db as Database } from "@workspace/db/db";
 import type { Auth } from "@workspace/auth/server";
 import { createTRPCRouter } from "@workspace/trpc/init";
@@ -50,6 +52,23 @@ async function loadOrder(db: typeof Database, orderId: string): Promise<Order> {
     }
 
     return row;
+}
+
+/**
+ * Whether the order's active dispute holds this party's payments. The
+ * mirror column on the row says whether to look; the dispute row says
+ * which side is held.
+ */
+async function paymentsHeld(db: typeof Database, row: Order, party: DocumentParty): Promise<boolean> {
+    if (!isActiveDispute(row.disputeStatus)) return false;
+
+    const [dispute] = await db
+        .select({ shipper: orderDispute.holdShipperPayments, carrier: orderDispute.holdCarrierPayments })
+        .from(orderDispute)
+        .where(and(eq(orderDispute.orderId, row.id), inArray(orderDispute.status, [...ACTIVE_DISPUTE_STATUSES])))
+        .limit(1);
+
+    return dispute ? (party === "shipper" ? dispute.shipper : dispute.carrier) : false;
 }
 
 /**
@@ -333,6 +352,11 @@ export const documentsRouter = createTRPCRouter({
                     // leg's payment status is not-applicable until booked
                     if (pop && row.status === "prospect") {
                         throw new TRPCError({ code: "BAD_REQUEST", message: "POP_ORDER_NOT_BOOKED" });
+                    }
+                    // An active dispute can hold either party's money; the
+                    // hold is lifted when the dispute is settled or closed
+                    if (pop && input.party && await paymentsHeld(ctx.db, row, input.party)) {
+                        throw new TRPCError({ code: "BAD_REQUEST", message: "DISPUTE_HOLD" });
                     }
                     if (!partyCurrency) {
                         throw new TRPCError({ code: "BAD_REQUEST", message: pop ? "POP_LEG_CURRENCY_MISSING" : "NOTE_LEG_CURRENCY_MISSING" });
