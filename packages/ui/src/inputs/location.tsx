@@ -7,6 +7,8 @@ import { IconMapPin } from "@tabler/icons-react";
 
 import type { PlaceAutocompleteResult } from "@googlemaps/google-maps-services-js";
 
+import { useLocale } from "@workspace/i18n";
+
 import { Base } from "@workspace/ui/inputs/base";
 import { ControlFunc } from "@workspace/ui/inputs/types";
 import { Command, CommandItem, CommandList } from "@workspace/ui/components/command";
@@ -28,6 +30,8 @@ export const LocationInput: ControlFunc<{
         const [places, setPlaces] = useState<PlaceAutocompleteResult[] | []>([])
         const [place, setPlace] = useState<string>("")
 
+        // Passed to the server action: it can't read the request locale itself
+        const locale = useLocale()
         const debouncedPlace = useDebouncedValue(place, 500)
 
         useEffect(() => {
@@ -37,7 +41,7 @@ export const LocationInput: ControlFunc<{
 
             let cancelled = false
 
-            autoComplete(debouncedPlace).then((suggestions) => {
+            autoComplete(debouncedPlace, locale).then((suggestions) => {
                 // A newer query superseded this request while it was in flight
                 if (!cancelled) {
                     setPlaces(suggestions ?? [])
@@ -45,7 +49,7 @@ export const LocationInput: ControlFunc<{
             })
 
             return () => { cancelled = true }
-        }, [debouncedPlace])
+        }, [debouncedPlace, locale])
 
         const ref = useOnclickOutside(() => {
             setPlaces([]);

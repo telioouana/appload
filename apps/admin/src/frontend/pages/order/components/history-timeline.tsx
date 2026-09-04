@@ -7,6 +7,7 @@ import {
     IconChevronDown,
     IconFileText,
     IconFlag,
+    IconGavel,
     IconPencil,
     IconReceipt,
     IconRobot,
@@ -36,7 +37,21 @@ const KIND_ICON: Record<OrderHistoryKind, typeof IconArrowRight> = {
     "note": IconReceipt,
     "payment": IconCash,
     "flag": IconFlag,
+    "dispute": IconGavel,
     "system": IconRobot,
+}
+
+/** A dispute row's metadata: the action, the cause and the state, all enum codes. */
+function readDispute(metadata: Record<string, unknown>) {
+    const text = (value: unknown) => (typeof value === "string" ? value : null)
+    return {
+        action: text(metadata.action),
+        reason: text(metadata.reason),
+        status: text(metadata.status),
+        resolution: text(metadata.resolution),
+        holdShipper: metadata.holdShipperPayments === true,
+        holdCarrier: metadata.holdCarrierPayments === true,
+    }
 }
 
 const display = (value: unknown) =>
@@ -114,6 +129,7 @@ export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
     const tType = useTranslations("Admin.orders.documents.types")
     const tReason = useTranslations("Admin.orders.documents.reasons")
     const tStage = useTranslations("Admin.orders.documents.stages")
+    const tDispute = useTranslations("Admin.disputes.values")
     const f = useFormatter()
 
     const [expanded, setExpanded] = useState<Set<string>>(new Set())
@@ -190,12 +206,34 @@ export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
                                         {payment?.noteType && <Badge variant="outline">{tType(payment.noteType)}</Badge>}
                                         {payment?.voided && <Badge variant="destructive">{t("voided")}</Badge>}
                                     </span>
+                                ) : entry.kind === "dispute" ? (
+                                    (() => {
+                                        const dispute = readDispute(entry.metadata)
+                                        return (
+                                            <span className="flex flex-wrap items-center gap-1.5">
+                                                <span className="font-medium">
+                                                    {dispute.action ? tDispute(`actions.${dispute.action}` as never) : t("kinds.dispute")}
+                                                </span>
+                                                {dispute.reason && <Badge variant="outline">{tDispute(`reasons.${dispute.reason}` as never)}</Badge>}
+                                                {dispute.status && <Badge variant={dispute.status === "open" || dispute.status === "under-review" ? "destructive" : "secondary"}>{tDispute(`statuses.${dispute.status}` as never)}</Badge>}
+                                                {dispute.action !== "resolved" && (dispute.holdShipper || dispute.holdCarrier) && (
+                                                    <span className="text-muted-foreground text-xs">
+                                                        {[dispute.holdShipper && tDispute("hold-shipper"), dispute.holdCarrier && tDispute("hold-carrier")].filter(Boolean).join(" · ")}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        )
+                                    })()
                                 ) : (
                                     <span className="font-medium">{t(`kinds.${entry.kind}`)}</span>
                                 )}
                             </div>
 
                             {note && <p className="text-sm text-muted-foreground">{note}</p>}
+
+                            {entry.kind === "dispute" && typeof entry.metadata.resolution === "string" && (
+                                <p className="text-sm text-muted-foreground">{entry.metadata.resolution}</p>
+                            )}
 
                             {paymentSummary && <p className="text-sm text-muted-foreground">{paymentSummary}</p>}
 

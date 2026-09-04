@@ -1,5 +1,7 @@
 {
     "General": {
+        "app-name": "appload",
+        "slogan": "Going the extra mile",
         "inputs": {
             "file": {
                 "delete": {
@@ -97,10 +99,6 @@
             "sign-out": "Terminar sessão"
         },
         "sidebar": {
-            "header": {
-                "app-name": "appload",
-                "slogan": "Going the extra mile"
-            },
             "content": {
                 "ops": {
                     "order": "Novo pedido",
@@ -108,12 +106,14 @@
                         "orders": "Pedidos",
                         "all": "Todos",
                         "prospects": "Prospectivas",
-                        "booked": "Confrimados",
+                        "booked": "Confirmados",
                         "on-going": "Em andamento",
-                        "delivered": "Completos",
-                        "history": "Histórico"
+                        "delivered": "Entregues",
+                        "history": "Histórico",
+                        "disputes": "Disputas"
                     },
-                    "chats": "Conversas"
+                    "chats": "Conversas",
+                    "map": "Mapa"
                 },
                 "management": {
                     "shippers": "Clientes",
@@ -1300,44 +1300,9 @@
         },
         "orders": {
             "header": {
-                "page": {
-                    "all": {
-                        "title": "Todos os pedidos",
-                        "description": "Lista de todos os pedidos registados na base de dados"
-                    },
-                    "prospect": {
-                        "title": "Pedidos em prospectiva",
-                        "description": "Pedidos em estado de prospectiva"
-                    },
-                    "booked": {
-                        "title": "Pedidos confirmados",
-                        "description": "Pedidos que foram confirmados mas ainda não iniciados"
-                    },
-                    "on-going": {
-                        "title": "Pedidos em curso",
-                        "description": "Pedidos atualmente em trânsito"
-                    },
-                    "delivered": {
-                        "title": "Pedidos entregues",
-                        "description": "Entregas concluídas e à espera de avaliações"
-                    },
-                    "history": {
-                        "title": "Histórico",
-                        "description": "Pedidos concluídos, cancelados ou perdidos por preço"
-                    }
-                },
                 "search": "Pesquisar pedido por ID, cliente, transportador, nº da factura",
-                "view": {
-                    "grid": "Mudar para vista em grelha",
-                    "list": "Mudar para vista em lista"
-                },
-                "year": "Ano",
                 "filters": {
-                    "title": "Filtros",
-                    "clear": "Limpar filtro",
                     "category": {
-                        "label": "Filter por categoria",
-                        "placeholder": "Selecione uma das opções para filtrar",
                         "options": {
                             "agriculture-inputs": "Insumos agrícolas",
                             "agriculture-products": "Produtos agrícolas",
@@ -1353,8 +1318,6 @@
                         }
                     },
                     "payment": {
-                        "label": "Filtar estado do pagamento",
-                        "placeholder": "Selecione uma das opções para filtrar",
                         "by": {
                             "all": "Todos",
                             "shipper": "Cliente",
@@ -1364,14 +1327,12 @@
                             "not-applicable": "Não aplicavél",
                             "pending": "Pendente Pagamento",
                             "partially": "Parcialmente pago",
-                            "completed": "Pago Completamente"
+                            "completed": "Pago Completamente",
+                            "outstanding": "Em aberto"
                         }
                     },
                     "period": {
-                        "label": "Filtar por mês ou datas",
                         "month": {
-                            "label": "Mês",
-                            "placeholder": "Selecionar mês",
                             "options": {
                                 "jan": "Janeiro",
                                 "feb": "Fevereiro",
@@ -1386,13 +1347,9 @@
                                 "nov": "Novembro",
                                 "dec": "Dezembro"
                             }
-                        },
-                        "date": {
-                            "placeholder": "Selecionar as data"
                         }
                     },
                     "status": {
-                        "label": "Estado",
                         "options": {
                             "all": "Todos",
                             "prospect": "Prospectiva",
@@ -1415,20 +1372,11 @@
                     }
                 }
             },
-            "card": {},
             "data": {
-                "count": "{count, plural, =0 {Sem pedidos} one {# pedido} other {# pedidos}}",
-                "empty": "Nenhum pedido encontrado com os filtros aplicados",
-                "error": "Não foi possível carregar os pedidos. Tente novamente.",
                 "labels": {
                     "route": "Rota",
-                    "date": "Data",
                     "loading": "Carregamento",
-                    "driver": "Motorista",
-                    "vehicle": "Viatura",
                     "weight": "Peso",
-                    "distance": "Distância",
-                    "amount": "Valor",
                     "shipper": "Expedidor",
                     "noShipper": "Sem expedidor",
                     "carrier": "Transportador",
@@ -1462,14 +1410,6 @@
                 "flags": {
                     "hazardous": "Carga perigosa",
                     "refrigerated": "Refrigerado"
-                },
-                "actions": {
-                    "view": "Ver",
-                    "confirm": "Confirmar pedido",
-                    "edit": "Editar",
-                    "more": "Mais",
-                    "changeStatus": "Alterar estado",
-                    "cancel": "Cancelar ordem"
                 }
             },
             "transitionDialog": {
@@ -1511,7 +1451,8 @@
                     "CARRIER_CONTRACT_EXPIRED": "O contrato assinado deste transportador expirou",
                     "CARRIER_SUSPENDED": "Este transportador está suspenso",
                     "RISK_ACK_NOT_ALLOWED": "Só um supervisor pode aceitar este risco",
-                    "RISK_ACK_NOTE_REQUIRED": "Explique porque este risco está a ser aceite"
+                    "RISK_ACK_NOTE_REQUIRED": "Explique porque este risco está a ser aceite",
+                    "DISPUTE_OPEN": "O pedido não pode ser concluído com uma disputa aberta. Resolva-a primeiro."
                 }
             },
             "detailPage": {
@@ -1539,7 +1480,10 @@
                     "description": "Descrição",
                     "payments": "Partes e pagamentos",
                     "operations": "Operações",
-                    "history": "Histórico"
+                    "history": "Histórico",
+                    "route": "Rota e carga",
+                    "tracking": "Rastreio em direto",
+                    "activity": "Atividade"
                 },
                 "adjustments": {
                     "title": "Totais efetivos (com notas de débito/crédito)",
@@ -1563,7 +1507,44 @@
                     "noProofs": "Ainda sem comprovativos de pagamento.",
                     "recordPayment": "Registar pagamento",
                     "open": "Abrir comprovativo",
-                    "derivedHint": "Estes valores vêm dos comprovativos registados."
+                    "derivedHint": "Estes valores vêm dos comprovativos registados.",
+                    "prospectHint": "Os pagamentos abrem depois de o pedido ser confirmado.",
+                    "heldHint": "Uma disputa está a reter estes pagamentos."
+                },
+                "resume": "Retomar",
+                "openChat": "Abrir conversa",
+                "chatFailed": "Não foi possível abrir a conversa, tente novamente.",
+                "openMap": "Abrir no Mapa",
+                "trip": {
+                    "label": "Progresso da viagem",
+                    "dealDate": "Data do negócio",
+                    "loading": "Carga",
+                    "offloading": "Descarga",
+                    "lastLocation": "Última localização do motorista",
+                    "noPings": "Ainda sem atualizações"
+                },
+                "route": {
+                    "googleDistance": "Distância rodoviária (Google)",
+                    "weightBooked": "reservado",
+                    "weightLoaded": "carregado"
+                },
+                "money": {
+                    "vat": "Valores com IVA incluído",
+                    "shipperTotal": "Total do carregador",
+                    "carrierTotal": "Total do transportador",
+                    "commission": "Comissão",
+                    "insurance": "Seguro",
+                    "in": "entrada",
+                    "out": "saída",
+                    "share": "{percent}% do total do carregador",
+                    "effective": "efetivo",
+                    "debit": "+{amount} de nota de débito",
+                    "credit": "−{amount} de nota de crédito",
+                    "ownCover": "cobertura do próprio carregador"
+                },
+                "footer": {
+                    "created": "Criado a {date} por {actor}",
+                    "createdUnknown": "Criado a {date}"
                 }
             },
             "history": {
@@ -1581,7 +1562,8 @@
                     "note": "Nota financeira",
                     "flag": "Sinalização resolvida",
                     "system": "Evento do sistema",
-                    "payment": "Pagamento"
+                    "payment": "Pagamento",
+                    "dispute": "Disputa"
                 }
             },
             "documents": {
@@ -1655,7 +1637,8 @@
                     "NOTE_LEG_CURRENCY_MISSING": "Defina a moeda da parte no pedido antes de registar uma nota.",
                     "NOT_ALLOWED": "O seu perfil não permite esta ação.",
                     "VERSION_CONFLICT": "Outra pessoa alterou este pedido primeiro. Atualize e tente novamente.",
-                    "UNKNOWN": "Não foi possível gravar o documento. Tente novamente."
+                    "UNKNOWN": "Não foi possível gravar o documento. Tente novamente.",
+                    "DISPUTE_HOLD": "Os pagamentos desta parte estão retidos enquanto a disputa estiver aberta."
                 },
                 "reasons": {
                     "demurrage": "Estadia (demurrage)",
@@ -1702,6 +1685,10 @@
                 "parties": {
                     "shipper": "Expedidor",
                     "carrier": "Transportador"
+                },
+                "dialog": {
+                    "title": "Adicionar documento",
+                    "subtitle": "Anexe um ficheiro a este pedido e registe do que se trata."
                 }
             },
             "pdfSend": {
@@ -1730,7 +1717,255 @@
                     "SEND_FAILED": "O envio falhou. Tente novamente."
                 }
             },
-            "stats": {}
+            "list": {
+                "title": "Pedidos",
+                "eyebrow": "Operações",
+                "new": "Novo pedido",
+                "clear-search": "Limpar pesquisa",
+                "columns": {
+                    "order": "Pedido",
+                    "route": "Rota",
+                    "loading": "Carregamento",
+                    "shipper": "Cliente",
+                    "carrier": "Transportador",
+                    "total": "Total",
+                    "payment": "Pagamento",
+                    "actions": "Ações"
+                },
+                "sort": {
+                    "seq": "Mais recentes",
+                    "loading": "Data de carregamento",
+                    "total": "Total do cliente",
+                    "status": "Estado",
+                    "updated": "Última atualização"
+                },
+                "filters": {
+                    "status": "Estado",
+                    "category": "Categoria",
+                    "payment": "Pagamento",
+                    "payment-by": "Lado do pagamento",
+                    "either": "Qualquer lado",
+                    "period": "Período de carregamento",
+                    "from": "De",
+                    "to": "Até",
+                    "year": "Ano",
+                    "shipper": "Cliente",
+                    "carrier": "Transportador",
+                    "any": "Qualquer",
+                    "flags": "Sinalizações",
+                    "cargo": "Carga",
+                    "loading": "Carregamento",
+                    "loading-due": "previsto em {days} dias",
+                    "interrupted": "Parado ou com problema",
+                    "interrupted-hint": "Viagens paradas na estrada",
+                    "flagged": "Sinalizado para revisão",
+                    "flagged-hint": "À espera de um gestor",
+                    "pod": "À espera de POD",
+                    "pod-hint": "Entregue sem prova de entrega",
+                    "hazardous": "Carga perigosa",
+                    "refrigerated": "Carga refrigerada",
+                    "regional": "Rota regional",
+                    "regional-hint": "Atravessa uma fronteira",
+                    "selected": "Selecionado",
+                    "insurance": "Seguro a pagar",
+                    "insurance-hint": "Subscrito pela Appload e ainda pendente",
+                    "disputed": "Em disputa",
+                    "disputed-hint": "Roubo, perda, dano ou outra disputa aberta"
+                },
+                "values": {
+                    "national": "Nacional",
+                    "regional": "Regional",
+                    "backload": "Retorno",
+                    "late": "{days, plural, one {# dia de atraso} other {# dias de atraso}}",
+                    "no-carrier": "Ainda sem transportador",
+                    "no-driver": "Sem motorista atribuído",
+                    "no-invoice": "Sem fatura",
+                    "no-total": "Ainda sem preço",
+                    "shipper-short": "C",
+                    "carrier-short": "T"
+                },
+                "data": {
+                    "empty": "Ainda não há pedidos",
+                    "empty-description": "Os pedidos aparecem aqui assim que um for criado.",
+                    "no-results": "Nenhum pedido corresponde aos filtros",
+                    "error": "Não foi possível carregar os pedidos, tente novamente"
+                },
+                "bulk": {
+                    "export": "Exportar",
+                    "copy-ids": "Copiar IDs",
+                    "copied": "{count, plural, one {# ID copiado} other {# IDs copiados}}",
+                    "change-status": "Alterar estado",
+                    "send-pdfs": "Enviar PDFs"
+                },
+                "actions": {
+                    "menu": "Mais ações",
+                    "open": "Abrir",
+                    "full-page": "Abrir página completa",
+                    "edit": "Editar",
+                    "confirm": "Confirmar pedido",
+                    "change-status": "Alterar estado",
+                    "cancel": "Cancelar pedido",
+                    "send-pdf": "Enviar PDF",
+                    "copy-id": "Copiar ID do pedido",
+                    "open-dispute": "Abrir disputa"
+                },
+                "errors": {
+                    "load": "Não foi possível carregar este pedido, tente novamente"
+                },
+                "sheet": {
+                    "title": "Pedido",
+                    "description": "Rota, partes, pagamentos, documentos e histórico",
+                    "close": "Fechar",
+                    "tabs": {
+                        "overview": "Resumo",
+                        "payments": "Pagamentos",
+                        "documents": "Documentos",
+                        "history": "Histórico"
+                    },
+                    "milestones": "Etapas",
+                    "route": "Rota",
+                    "parties": "Partes",
+                    "operations": "Operações",
+                    "expected": "Previsto {date}",
+                    "since": "Desde {date}",
+                    "on-time": "a tempo",
+                    "late": "atrasado",
+                    "loaded": "Carregado {date}",
+                    "offloaded": "Descarregado {date}",
+                    "departed": "partiu {date}",
+                    "trucks": "{count, plural, one {# camião} other {# camiões}}",
+                    "deliveries": "{count, plural, one {# entrega} other {# entregas}}",
+                    "updated": "Atualizado {date}",
+                    "load-failed": "Não foi possível carregar este pedido, tente novamente",
+                    "flagged": "Sinalizado para revisão",
+                    "disputed": "Em disputa"
+                },
+                "tabs": {
+                    "all": "Todos"
+                },
+                "pages": {
+                    "all": {
+                        "title": "Todos os pedidos",
+                        "description": "Lista de todos os pedidos registados na base de dados"
+                    },
+                    "prospect": {
+                        "title": "Pedidos em prospectiva",
+                        "description": "Pedidos em estado de prospectiva"
+                    },
+                    "booked": {
+                        "title": "Pedidos confirmados",
+                        "description": "Pedidos que foram confirmados mas ainda não iniciados"
+                    },
+                    "on-going": {
+                        "title": "Pedidos em curso",
+                        "description": "Pedidos atualmente em trânsito"
+                    },
+                    "delivered": {
+                        "title": "Pedidos entregues",
+                        "description": "Entregas concluídas e à espera de avaliações"
+                    },
+                    "history": {
+                        "title": "Histórico",
+                        "description": "Pedidos concluídos, cancelados ou perdidos por preço"
+                    }
+                },
+                "suggest": {
+                    "shippers": "Clientes",
+                    "carriers": "Transportadores",
+                    "orders": "{count, plural, one {# pedido} other {# pedidos}}",
+                    "search": "Pesquisar “{query}” nos pedidos"
+                },
+                "cashflow": {
+                    "title": "Fluxo de caixa {year}",
+                    "including": "Incluindo viagens confirmadas",
+                    "excluding": "Excluindo viagens confirmadas",
+                    "pending-carrier": "Pagamentos a transportadores pendentes",
+                    "pending-shipper": "Pagamentos de clientes pendentes",
+                    "payables": "A pagar a transportadores",
+                    "receivables": "A receber de clientes",
+                    "insurance": "Seguro a pagar",
+                    "cashflow": "Fluxo de caixa por vir",
+                    "empty": "Nada em aberto este ano."
+                }
+            },
+            "bulkTransition": {
+                "title": "Alterar estado",
+                "description": "{count, plural, one {# pedido selecionado} other {# pedidos selecionados}}",
+                "target": "Mover para",
+                "target-placeholder": "Escolha um estado",
+                "applies-to": "{count} de {total}",
+                "flag-warning": "Esta mudança sinaliza os pedidos para revisão.",
+                "note": "Nota",
+                "note-placeholder": "Porque é que estes pedidos avançam juntos (pelo menos 5 caracteres)",
+                "skipped": "{count, plural, one {# pedido será ignorado} other {# pedidos serão ignorados}}",
+                "skipped-interrupted": "parado ou com problema, retome-o a partir da sua ficha",
+                "skipped-no-move": "não pode passar para aí a partir de {status}",
+                "no-targets": "Nenhum dos pedidos selecionados pode avançar em conjunto. Confirmar, evidências, prova de entrega e reversões de administrador fazem-se um pedido de cada vez.",
+                "apply": "{count, plural, one {Mover # pedido} other {Mover # pedidos}}",
+                "cancel": "Cancelar",
+                "close": "Fechar",
+                "done": "{ok} movidos, {failed} falharam",
+                "sheet-warning": "sincronização da folha pendente"
+            },
+            "bulkPdf": {
+                "title": "Enviar PDFs",
+                "description": "{count, plural, one {A ordem de transporte de # pedido} other {As ordens de transporte de # pedidos}}, um email cada",
+                "party": "Enviar a",
+                "parties": {
+                    "shipper": "Clientes",
+                    "carrier": "Transportadores"
+                },
+                "cc": "CC",
+                "cc-placeholder": "Até cinco endereços, separados por vírgulas",
+                "message": "Mensagem",
+                "message-placeholder": "A mesma mensagem em todos os emails",
+                "order": "Pedido",
+                "to": "Para",
+                "state": "Estado",
+                "no-carrier": "Sem transportador",
+                "no-email": "Sem endereço registado",
+                "states": {
+                    "idle": "Pronto",
+                    "skipped": "Ignorado",
+                    "generating": "A gerar",
+                    "uploading": "A carregar",
+                    "sending": "A enviar",
+                    "sent": "Enviado",
+                    "failed": "Falhou"
+                },
+                "progress": "{done} de {total}",
+                "send": "{count, plural, =0 {Nada para enviar} one {Enviar #} other {Enviar #}}",
+                "cancel": "Cancelar",
+                "close": "Fechar"
+            },
+            "dispute": {
+                "open-title": "Abrir uma disputa",
+                "open-description": "Pedido {orderId}. Os pagamentos podem ficar retidos de qualquer dos lados até à resolução.",
+                "reason": "Causa",
+                "liable": "Parte responsável",
+                "liable-none": "Por decidir",
+                "description": "O que aconteceu",
+                "description-placeholder": "Onde, quando, o que se perdeu ou danificou e quem reportou (pelo menos 10 caracteres)",
+                "claimed": "Valor reclamado",
+                "claimed-currency": "Moeda",
+                "hold-shipper": "Reter os pagamentos do cliente",
+                "hold-shipper-hint": "Não é possível registar comprovativos de pagamento do lado do cliente",
+                "hold-carrier": "Reter os pagamentos do transportador",
+                "hold-carrier-hint": "Não é possível registar comprovativos de pagamento do lado do transportador",
+                "open": "Abrir disputa",
+                "cancel": "Cancelar",
+                "opened": "Disputa aberta no pedido {orderId}",
+                "banner-title": "Em disputa: {reason} · {status}",
+                "banner-no-holds": "Sem retenção de pagamentos",
+                "banner-link": "Abrir a disputa",
+                "errors": {
+                    "DISPUTE_INVALID_ORDER": "Uma prospectiva ou um pedido perdido não pode ser disputado.",
+                    "DISPUTE_EXISTS": "Este pedido já tem uma disputa ativa.",
+                    "NOT_ALLOWED": "Não tem permissão para abrir disputas.",
+                    "NOT_FOUND": "O pedido não foi encontrado.",
+                    "UNKNOWN": "Algo correu mal. Tente novamente."
+                }
+            }
         },
         "chats": {
             "title": "Conversas",
@@ -1757,7 +1992,6 @@
             "thread": {
                 "emptyTitle": "Nenhuma conversa selecionada",
                 "emptyDescription": "Escolha uma conversa na lista ou inicie uma nova.",
-                "order": "Pedido",
                 "composer": "Escreva uma mensagem...",
                 "send": "Enviar",
                 "failed": "Falha no envio",
@@ -2073,63 +2307,65 @@
                     "link": "Semi-reboques"
                 }
             },
-            "stats": {
-                "total": "Total",
-                "pending-review": "Por rever",
-                "verified": "Verificados",
-                "expiring": "A expirar ≤{days}d",
-                "flagged": "Sinalizados"
-            },
             "filters": {
                 "search": {
-                    "organization": "Pesquisar por nome, NUIT ou email...",
-                    "driver": "Pesquisar por nome, email ou telefone...",
-                    "fleet": "Pesquisar por matrícula, marca ou transportador..."
+                    "organization": "Pesquisar nome, NUIT, telefone ou email",
+                    "driver": "Pesquisar nome, telefone, passaporte ou matrícula",
+                    "fleet": "Pesquisar matrícula, VIN, marca ou transportador"
                 },
                 "all": "Todos",
-                "view": {
-                    "grid": "Vista em grelha",
-                    "list": "Vista em lista"
+                "clear": "Limpar pesquisa",
+                "issues": "Problemas",
+                "any": "Qualquer",
+                "expiring": "A expirar em breve",
+                "within-days": "nos próximos {days} dias",
+                "profile": "Perfil",
+                "incomplete": "Perfil incompleto",
+                "incomplete-hint": "NUIT, telefone ou email ainda em falta",
+                "contract-options": {
+                    "valid": "Válido",
+                    "missing": "Em falta ou expirado"
                 },
-                "clear": "Limpar pesquisa"
-            },
-            "fields": {
-                "nuit": "NUIT",
-                "email": "Email",
-                "phone": "Telefone",
-                "carrier": "Transportador",
-                "documents": "Documentos",
-                "status": "Estado",
-                "contract": "Contrato",
-                "risk": "Risco",
-                "ownership": "Propriedade",
-                "location": "Localização",
-                "load": "Carga actual",
-                "driver": "Motorista",
-                "truck": "Camião",
-                "capacity": "Capacidade",
-                "vehicle": "Veículo",
-                "licence": "Carta",
-                "expires": "Expira",
-                "active-orders": "Pedidos activos",
-                "total-orders": "Total de pedidos",
-                "on-time": "Entregas a horas",
-                "payment": "Pagamentos liquidados",
-                "fleet-size": "Dimensão da frota",
-                "drivers": "Motoristas"
+                "risk-options": {
+                    "flagged": "Qualquer sinalização",
+                    "watch": "Em observação",
+                    "high": "Alto risco"
+                },
+                "province": "Localização",
+                "assignment": "Atribuição",
+                "selected": "Seleccionado",
+                "no-phone": "Sem número de telefone",
+                "no-phone-hint": "Não recebe actualizações por WhatsApp",
+                "no-truck": "Sem camião",
+                "no-truck-hint": "Não está atribuído a nenhum veículo",
+                "unassigned-truck": "Sem motorista",
+                "unassigned-truck-hint": "Ninguém está atribuído ao camião",
+                "unassigned-trailer": "Não engatado",
+                "unassigned-trailer-hint": "Nenhum camião puxa este reboque",
+                "unassigned-link": "Não engatado",
+                "unassigned-link-hint": "Nenhum reboque leva este link"
             },
             "values": {
                 "none": "Nenhum",
                 "idle": "Parado",
                 "unassigned": "Sem atribuição",
-                "empty": "Vazio",
                 "en-route": "A caminho de {city}",
                 "at": "Em {city}",
-                "no-expiry": "Sem validade",
                 "expires-in": "em {days}d",
                 "expired": "Expirado",
                 "progress": "{approved}/{required}",
-                "tons": "{tons} t"
+                "tons": "{tons} t",
+                "trucks": "{count, plural, one {# camião} other {# camiões}}",
+                "drivers": "{count, plural, one {# motorista} other {# motoristas}}",
+                "active": "{count} activas",
+                "total": "{count} no total",
+                "none-yet": "Ainda nenhuma",
+                "missing": "Em falta",
+                "passport": "Passaporte {number}",
+                "truck-type": {
+                    "articulated": "Articulado",
+                    "non-articulated": "Rígido"
+                }
             },
             "status": {
                 "draft": "Rascunho",
@@ -2218,7 +2454,13 @@
             "data": {
                 "empty": "Ainda não há nada aqui",
                 "no-results": "Nenhum resultado corresponde aos filtros",
-                "error": "Não foi possível carregar esta lista, tente novamente"
+                "error": "Não foi possível carregar esta lista, tente novamente",
+                "empty-shipper": "Os clientes aparecem aqui assim que forem registados.",
+                "empty-carrier": "Os transportadores aparecem aqui assim que forem registados.",
+                "empty-driver": "Os motoristas aparecem aqui assim que um transportador os registar.",
+                "empty-truck": "Os camiões aparecem aqui assim que um transportador os registar.",
+                "empty-trailer": "Os reboques aparecem aqui assim que um transportador os registar.",
+                "empty-link": "Os links aparecem aqui assim que um transportador os registar."
             },
             "register": {
                 "carrier": {
@@ -2248,6 +2490,550 @@
                     "CARRIER_SUSPENDED": "Este transportador está suspenso.",
                     "UNKNOWN": "Este transportador não pode ser contratado neste momento."
                 }
+            },
+            "eyebrow": {
+                "management": "Gestão"
+            },
+            "tiles": {
+                "pending-review": "Por rever",
+                "pending-review-hint": {
+                    "organization": "documentos à sua espera",
+                    "driver": "cartas de condução à sua espera",
+                    "vehicle": "papéis de veículos por verificar"
+                },
+                "expiring": "A expirar em {days} dias",
+                "expiring-hint": {
+                    "organization": "contratos e alvarás",
+                    "driver": "cartas e bilhetes de identidade",
+                    "vehicle": "livretes e propriedade"
+                },
+                "incomplete": "Perfis incompletos",
+                "incomplete-hint": "sem NUIT, telefone ou email",
+                "risk": "Risco sinalizado",
+                "risk-hint": "em observação ou de alto risco",
+                "contract": "Sem contrato assinado",
+                "contract-hint": "ainda não pode receber ordens",
+                "phone": "Sem número de telefone",
+                "phone-hint": "não recebe actualizações por WhatsApp",
+                "unassigned-driver": "Sem camião",
+                "unassigned-driver-hint": "não está atribuído a nenhum veículo",
+                "ownership": "Propriedade por verificar",
+                "ownership-hint": "ainda sem prova de propriedade",
+                "unassigned-truck": "Sem motorista",
+                "unassigned-truck-hint": "camiões sem ninguém atribuído",
+                "unassigned-trailer": "Não engatado",
+                "unassigned-trailer-hint": "reboques sem camião",
+                "unassigned-link": "Não engatado",
+                "unassigned-link-hint": "links sem reboque"
+            },
+            "columns": {
+                "company": "Empresa",
+                "nuit": "NUIT",
+                "contact": "Contacto",
+                "verification": "Verificação",
+                "documents": "Documentos",
+                "fleet": "Frota",
+                "orders": "Ordens",
+                "on-time": "Pontualidade",
+                "payment": "Liquidado",
+                "actions": "Acções",
+                "driver": "Motorista",
+                "phone": "Telefone",
+                "carrier": "Transportador",
+                "truck": "Camião",
+                "location": "Localização",
+                "status": "Estado",
+                "licence": "Carta",
+                "vehicle": "Veículo",
+                "ownership": "Propriedade",
+                "capacity": "Capacidade",
+                "year": "Ano",
+                "contract": "Contrato",
+                "risk": "Risco"
+            },
+            "sort": {
+                "name": "Nome",
+                "status": "Estado",
+                "orders": "Ordens",
+                "created": "Data de registo",
+                "carrier": "Transportador",
+                "plate": "Matrícula",
+                "year": "Ano"
+            },
+            "missing": {
+                "add": {
+                    "nuit": "Adicionar NUIT",
+                    "email": "Adicionar email",
+                    "phone": "Adicionar telefone",
+                    "passport": "Adicionar passaporte"
+                },
+                "hint": {
+                    "nuit": "9 dígitos, sem espaços",
+                    "email": "O endereço a partir do qual a empresa responde",
+                    "phone": "Números moçambicanos podem ser escritos sem +258",
+                    "passport": "Tal como impresso no documento"
+                },
+                "placeholder": {
+                    "nuit": "400123456",
+                    "email": "geral@empresa.co.mz",
+                    "phone": "+258 84 000 0000",
+                    "passport": "GN123456"
+                },
+                "invalid": {
+                    "nuit": "Um NUIT tem exactamente 9 dígitos",
+                    "email": "Isso não parece um endereço de email",
+                    "phone": "Isso não parece um número de telefone",
+                    "passport": "Escreva pelo menos 3 caracteres"
+                },
+                "cancel": "Cancelar",
+                "save": "Guardar",
+                "errors": {
+                    "DUPLICATE_NUIT": "Outra empresa já tem este NUIT",
+                    "DUPLICATE_EMAIL": "Outro registo já usa este email",
+                    "DUPLICATE_PHONE": "Outro registo já usa este número de telefone",
+                    "NOT_ALLOWED": "O seu perfil não pode editar parceiros",
+                    "NOT_FOUND": "Este registo já não existe",
+                    "UNKNOWN": "Não foi possível guardar, tente novamente"
+                }
+            },
+            "actions": {
+                "menu": "Mais acções",
+                "open": "Abrir perfil",
+                "review": "Rever documentos",
+                "copy-nuit": "Copiar NUIT",
+                "copy-phone": "Copiar telefone",
+                "copy-email": "Copiar email",
+                "copy-plate": "Copiar matrícula",
+                "copy-vin": "Copiar VIN"
+            },
+            "bulk": {
+                "export": "Exportar"
+            },
+            "profile": {
+                "title": "Perfil do parceiro",
+                "description": "Contactos, verificação, frota e ordens",
+                "close": "Fechar",
+                "edit": "Editar",
+                "review": "Rever documentos",
+                "tabs": {
+                    "overview": "Resumo",
+                    "documents": "Documentos",
+                    "fleet": "Frota",
+                    "drivers": "Motoristas",
+                    "orders": "Ordens",
+                    "activity": "Actividade"
+                },
+                "type": {
+                    "shipper": "Cliente",
+                    "carrier": "Transportador",
+                    "driver": "Motorista"
+                },
+                "completeness": "Perfil preenchido",
+                "fields-filled": "{filled} de {total} campos",
+                "add": "Adicionar {field}",
+                "none": "Nenhum",
+                "open-map": "Abrir no Google Maps",
+                "verification": "Verificação",
+                "kyc": "Estado KYC",
+                "until": "até",
+                "next-expiry": "Próxima expiração",
+                "registered": "Registado",
+                "contact": "Contacto",
+                "same-as-billing": "Igual à de facturação",
+                "performance": "Desempenho",
+                "orders": "ordens",
+                "active-now": "activas agora",
+                "trucks-drivers": "camiões · {drivers} motoristas",
+                "fleet-line": "{trucks} camiões, {trailers} reboques e {links} links registados",
+                "recent-orders": "Ordens recentes",
+                "view-all": "Ver todas ({count})",
+                "no-orders": "Ainda sem ordens",
+                "load-failed": "Não foi possível carregar este perfil, tente novamente",
+                "no-fleet": "Nenhum veículo registado neste transportador",
+                "no-drivers": "Nenhum motorista registado neste transportador",
+                "no-activity": "Ainda não aconteceu nada",
+                "activity": {
+                    "uploaded": "Carregou {document}",
+                    "approved": "Aprovou {document}",
+                    "rejected": "Rejeitou {document}",
+                    "risk": "Sinalização de risco alterada"
+                },
+                "valid-until": "Válida até",
+                "assignment": "Atribuição",
+                "loading-bay": "Caixa de carga",
+                "owner": "Proprietário registado",
+                "details": "Detalhes",
+                "make": "Marca e modelo",
+                "bay-on-trailer": "No reboque",
+                "operation": "Operação",
+                "vehicle-type": "Tipo"
+            },
+            "edit": {
+                "title": {
+                    "organization": "Editar empresa",
+                    "driver": "Editar motorista",
+                    "truck": "Editar camião",
+                    "trailer": "Editar reboque",
+                    "link": "Editar link"
+                },
+                "description": "Só os campos que alterar são guardados.",
+                "save": "Guardar alterações",
+                "saving": "A guardar…",
+                "cancel": "Cancelar",
+                "fields": {
+                    "name": "Nome",
+                    "nuit": "NUIT",
+                    "representee": "Representante",
+                    "email": "Email",
+                    "phone": "Telefone",
+                    "billing-address": "Endereço de facturação",
+                    "physical-address": "Endereço físico",
+                    "passport": "Passaporte",
+                    "plate": "Matrícula",
+                    "internal-id": "Número interno",
+                    "brand": "Marca",
+                    "model": "Modelo",
+                    "year": "Ano",
+                    "vin": "VIN"
+                },
+                "placeholders": {
+                    "name": "Nome da empresa",
+                    "nuit": "400123456",
+                    "representee": "Quem fala pela empresa",
+                    "email": "geral@empresa.co.mz",
+                    "phone": "+258 84 000 0000",
+                    "address": "Pesquisar o endereço…",
+                    "driver-name": "Nome completo",
+                    "passport": "GN123456",
+                    "plate": "AAA 000 MC",
+                    "internal-id": "Número de frota",
+                    "brand": "Scania",
+                    "model": "R450",
+                    "year": "2019",
+                    "vin": "17 caracteres"
+                },
+                "errors": {
+                    "name": "Escreva um nome",
+                    "nuit": "Um NUIT tem exactamente 9 dígitos",
+                    "email": "Escreva um email válido",
+                    "phone": "Escreva um número de telefone válido",
+                    "plate": "Escreva a matrícula",
+                    "brand": "Escreva a marca",
+                    "model": "Escreva o modelo",
+                    "year": "Escreva um ano com quatro dígitos",
+                    "vin": "Um VIN tem 17 caracteres sem I, O ou Q"
+                },
+                "server": {
+                    "DUPLICATE_NUIT": "Outra empresa já tem este NUIT",
+                    "DUPLICATE_EMAIL": "Outro registo já usa este email",
+                    "DUPLICATE_PHONE": "Outro registo já usa este número de telefone",
+                    "DUPLICATE_PLATE": "Outro veículo já tem esta matrícula",
+                    "DUPLICATE_VIN": "Outro veículo já tem este VIN",
+                    "NOT_ALLOWED": "O seu perfil não pode editar parceiros",
+                    "NOT_FOUND": "Este registo já não existe",
+                    "UNKNOWN": "Não foi possível guardar, tente novamente"
+                }
+            },
+            "assign": {
+                "change-truck": "Mudar de camião",
+                "assign-truck": "Atribuir camião",
+                "search-truck": "Pesquisar os camiões do transportador…",
+                "no-trucks": "Nenhum camião corresponde",
+                "unassign": "Retirar do camião",
+                "assign-driver": "Atribuir motorista",
+                "search-driver": "Pesquisar os motoristas do transportador…",
+                "no-drivers": "Nenhum motorista corresponde"
+            },
+            "standing": {
+                "menu": "Mais acções",
+                "flag-risk": "Sinalizar risco",
+                "change-risk": "Alterar nível de risco",
+                "clear-risk": "Retirar sinalização",
+                "suspend": "Suspender",
+                "unsuspend": "Levantar suspensão",
+                "note-required": "É obrigatória uma nota",
+                "cancel": "Cancelar",
+                "level": {
+                    "watch": "Em observação",
+                    "watch-hint": "Continua a operar, as reservas recebem um aviso",
+                    "high": "Alto risco",
+                    "high-hint": "As reservas exigem um gestor e uma nota"
+                },
+                "errors": {
+                    "NOT_ALLOWED": "O seu perfil não pode executar esta acção",
+                    "INVALID_STATE": "Essa acção não está disponível neste momento",
+                    "NOT_FOUND": "Este registo já não existe",
+                    "UNKNOWN": "Algo correu mal, tente novamente"
+                },
+                "dialog": {
+                    "flag-risk": {
+                        "title": "Sinalizar esta empresa",
+                        "description": "A sinalização aparece em todas as listas e reservas até ser retirada.",
+                        "placeholder": "O que foi encontrado, e onde",
+                        "confirm": "Sinalizar"
+                    },
+                    "clear-risk": {
+                        "title": "Retirar a sinalização de risco",
+                        "description": "Diga o que resolveu a situação. A nota substitui o motivo original.",
+                        "placeholder": "O que mudou",
+                        "confirm": "Retirar sinalização"
+                    },
+                    "suspend": {
+                        "title": "Suspender este parceiro",
+                        "description": "Um parceiro suspenso não pode ser reservado até a suspensão ser levantada.",
+                        "placeholder": "Porque é que o parceiro está a ser suspenso",
+                        "confirm": "Suspender"
+                    },
+                    "unsuspend": {
+                        "title": "Levantar a suspensão",
+                        "description": "O estado de verificação é recalculado a partir dos documentos registados.",
+                        "placeholder": "Porque é que a suspensão está a ser levantada",
+                        "confirm": "Levantar suspensão"
+                    }
+                }
+            },
+            "whatsapp": {
+                "confirmed": "Tem WhatsApp — abrir conversa",
+                "unreachable": "Não contactável por WhatsApp: a última mensagem falhou",
+                "start": "Iniciar conversa no WhatsApp"
+            }
+        },
+        "list": {
+            "breadcrumb": "Está aqui",
+            "command": "Pesquisar em todo o lado (⌘K)",
+            "empty": {
+                "adjust": "Tente outra pesquisa ou retire um filtro."
+            },
+            "select-all": "Seleccionar todas as linhas desta página",
+            "select-row": "Seleccionar linha",
+            "filters": "Filtros",
+            "status": "Estado",
+            "sort": "Ordenar",
+            "sort-by": "Ordenar por",
+            "ascending": "Ascendente",
+            "descending": "Descendente",
+            "columns": "Colunas",
+            "export": "Exportar CSV",
+            "remove-filter": "Retirar o filtro {filter}",
+            "clear-all": "Limpar tudo",
+            "showing": "A mostrar {from}–{to} de {total}",
+            "pagination": "Páginas",
+            "previous": "Página anterior",
+            "next": "Página seguinte",
+            "per-page": "{count} por página",
+            "selected": "{count, plural, one {# seleccionado} other {# seleccionados}}",
+            "clear-selection": "Limpar selecção",
+            "copied": "Copiado",
+            "suggestions": "Sugestões"
+        },
+        "command": {
+            "title": "Pesquisar",
+            "description": "Encontre um pedido, uma empresa, um motorista ou uma matrícula",
+            "placeholder": "Pesquisar pedidos, empresas, motoristas, matrículas…",
+            "empty": "Nada corresponde",
+            "typing": "Escreva pelo menos dois caracteres",
+            "groups": {
+                "organizations": "Empresas",
+                "drivers": "Motoristas",
+                "vehicles": "Veículos",
+                "actions": "Acções",
+                "orders": "Pedidos"
+            },
+            "hints": {
+                "move": "mover",
+                "open": "abrir",
+                "close": "fechar"
+            },
+            "shipper": "Cliente",
+            "carrier": "Transportador",
+            "search-in": "Pesquisar “{query}” em {page}",
+            "pages": {
+                "shippers": "Clientes",
+                "carriers": "Transportadores",
+                "drivers": "Motoristas",
+                "fleet": "Frota",
+                "orders": "Pedidos",
+                "map": "Mapa"
+            }
+        },
+        "disputes": {
+            "title": "Disputas",
+            "description": "Roubo, perda, dano e outros eventos que põem em causa o fecho de uma carga",
+            "search": "Pesquisar pedido, cliente, transportador ou descrição",
+            "clear-search": "Limpar pesquisa",
+            "tabs": {
+                "all": "Todas"
+            },
+            "columns": {
+                "order": "Pedido",
+                "reason": "Causa",
+                "parties": "Cliente · transportador",
+                "claimed": "Reclamado",
+                "holds": "Retenções",
+                "liable": "Responsável",
+                "opened": "Aberta",
+                "status": "Estado"
+            },
+            "sort": {
+                "opened": "Abertura",
+                "claimed": "Valor reclamado",
+                "status": "Estado",
+                "updated": "Última atualização"
+            },
+            "filters": {
+                "reason": "Causa",
+                "liable": "Parte responsável",
+                "hold": "Pagamentos retidos",
+                "any": "Qualquer"
+            },
+            "values": {
+                "reasons": {
+                    "theft": "Roubo",
+                    "loss": "Perda",
+                    "damage": "Dano",
+                    "other": "Outro"
+                },
+                "statuses": {
+                    "open": "Aberta",
+                    "under-review": "Em análise",
+                    "settled": "Resolvida",
+                    "closed": "Encerrada"
+                },
+                "liable": {
+                    "carrier": "Transportador",
+                    "shipper": "Cliente",
+                    "appload": "Appload",
+                    "third-party": "Terceiro",
+                    "unknown": "Desconhecido"
+                },
+                "actions": {
+                    "opened": "Disputa aberta",
+                    "updated": "Disputa atualizada",
+                    "resolved": "Disputa resolvida"
+                },
+                "hold-shipper": "Pagamentos do cliente retidos",
+                "hold-carrier": "Pagamentos do transportador retidos",
+                "no-holds": "Sem retenções",
+                "no-carrier": "Sem transportador",
+                "system": "Sistema"
+            },
+            "data": {
+                "empty": "Sem disputas",
+                "empty-description": "As disputas abrem-se a partir do menu de um pedido quando uma carga é roubada, perdida ou danificada.",
+                "no-results": "Nenhuma disputa corresponde aos filtros",
+                "error": "Não foi possível carregar as disputas, tente novamente"
+            },
+            "bulk": {
+                "export": "Exportar"
+            },
+            "stats": {
+                "title": "{open, plural, =0 {Nenhuma disputa aberta} one {# disputa aberta} other {# disputas abertas}} · {review} em análise",
+                "count": "Disputas ativas",
+                "claimed": "Reclamado",
+                "empty": "Nada reclamado em disputas ativas."
+            },
+            "sheet": {
+                "title": "Disputa",
+                "description": "Causa, retenções, reclamação e histórico",
+                "close": "Fechar",
+                "load-failed": "Não foi possível carregar esta disputa, tente novamente",
+                "opened-by": "aberta a {date} por {name}",
+                "mark-review": "Marcar em análise",
+                "moved-review": "Disputa marcada em análise",
+                "resolve": "Resolver",
+                "open-order": "Abrir pedido",
+                "full-order": "Página completa",
+                "holds": "Retenção de pagamentos",
+                "holds-hint": "Uma parte retida não pode ter comprovativos de pagamento registados até a disputa ser resolvida ou encerrada.",
+                "holds-lifted": "Levantada: a disputa já não está ativa.",
+                "details": "Detalhes",
+                "edit": "Editar",
+                "saved": "Disputa guardada",
+                "resolution": "Resolução",
+                "order": "Pedido",
+                "order-status": "Estado do pedido",
+                "route": "Rota",
+                "shipper-total": "Total do cliente",
+                "carrier-total": "Total do transportador",
+                "terms": "Dívida do transportador e termos",
+                "terms-next": "Próxima fase: a dívida a recuperar em envios seguintes será definida aqui na resolução.",
+                "terms-none": "Sem dívida registada.",
+                "history": "Histórico",
+                "no-history": "Ainda sem histórico",
+                "updated": "Atualizada {date}"
+            },
+            "form": {
+                "description": "O que aconteceu",
+                "liable": "Parte responsável",
+                "liable-none": "Por decidir",
+                "claimed": "Valor reclamado",
+                "currency": "Moeda",
+                "cancel": "Cancelar",
+                "save": "Guardar"
+            },
+            "resolve": {
+                "title": "Resolver a disputa",
+                "description": "Pedido {orderId}. Resolver ou encerrar levanta as retenções e permite concluir o pedido.",
+                "status": "Desfecho",
+                "settled": "Resolvida: chegou-se a um acordo",
+                "closed": "Encerrada: abandonada sem acordo",
+                "resolution": "Resolução",
+                "placeholder": "O que foi acordado, ou porque foi abandonada (pelo menos 5 caracteres)",
+                "confirm": "Resolver",
+                "cancel": "Cancelar",
+                "done": "Disputa resolvida",
+                "errors": {
+                    "VERSION_CONFLICT": "Alguém alterou esta disputa entretanto. Recarregue e tente novamente.",
+                    "DISPUTE_CLOSED": "Esta disputa já não está ativa.",
+                    "NOT_ALLOWED": "Só um gestor pode resolver uma disputa.",
+                    "NOT_FOUND": "A disputa não foi encontrada.",
+                    "UNKNOWN": "Algo correu mal. Tente novamente."
+                }
+            },
+            "errors": {
+                "VERSION_CONFLICT": "Alguém alterou esta disputa entretanto. Recarregue e tente novamente.",
+                "DISPUTE_CLOSED": "Esta disputa já não está ativa.",
+                "NOT_ALLOWED": "Não tem permissão para alterar disputas.",
+                "NOT_FOUND": "A disputa não foi encontrada.",
+                "UNKNOWN": "Algo correu mal. Tente novamente."
+            }
+        },
+        "map": {
+            "title": "Mapa",
+            "description": "Última localização conhecida de cada carga em andamento",
+            "search": "Pesquisar pedido, cliente, transportador, motorista ou matrícula",
+            "clear-search": "Limpar pesquisa",
+            "count": "{count, plural, =1 {# carga em andamento} other {# cargas em andamento}}",
+            "matches": "{count, plural, =0 {Sem resultados} =1 {# resultado} other {# resultados}}",
+            "show-all": "Mostrar todas",
+            "error": "Não foi possível carregar o mapa",
+            "empty": {
+                "title": "Sem cargas em andamento",
+                "description": "As cargas aparecem aqui assim que estiverem em trânsito"
+            },
+            "list": {
+                "no-location": "Ainda sem localização",
+                "last-seen": "Vista {ago}",
+                "pings": "{count, plural, =1 {# atualização} other {# atualizações}}",
+                "toggle": "Cargas"
+            },
+            "selected": {
+                "open": "Abrir pedido",
+                "full-page": "Página completa",
+                "request-location": "Pedir localização",
+                "requested": "Localização pedida",
+                "close": "Fechar",
+                "last-seen": "Última localização {ago}",
+                "no-pings": "Ainda sem atualizações de localização"
+            },
+            "detail": {
+                "no-pings": "Ainda sem atualizações de localização",
+                "unavailable": "Rota indisponível",
+                "missing-key": "Mapa não configurado (falta a chave do browser)",
+                "last-seen": "Última localização {date}",
+                "legend-route": "Rota planeada",
+                "legend-covered": "Percorrido",
+                "loading": "A carregar o mapa…"
             }
         }
     },
@@ -2275,10 +3061,14 @@
             "registerTruck": "Registou o camião {regPlate}",
             "registerTrailer": "Registou o atrelado {regPlate}",
             "registerLink": "Registou o link {regPlate}",
-            "registerDriver": "Registou o motorista {name}"
+            "registerDriver": "Registou o motorista {name}",
+            "updateDriver": "Actualizou o motorista {driverId} ({changedFields})",
+            "updateVehicle": "Actualizou o {kind} {regPlate} ({changedFields})",
+            "assignDriver": "Alterou o camião do motorista {driverId}"
         },
         "organizations": {
-            "register": "Registou a organização {name}"
+            "register": "Registou a organização {name}",
+            "update": "Actualizou {name} ({changedFields})"
         },
         "chats": {
             "start": "Iniciou uma conversa com {driverName}",
@@ -2294,6 +3084,14 @@
         },
         "settings": {
             "setPassword": "Criou uma palavra-passe para a sua conta"
+        },
+        "orders": {
+            "bulkTransition": "Moveu {count} pedidos para {to} ({failed} falharam)"
+        },
+        "disputes": {
+            "open": "Abriu uma disputa por {reason} no pedido {orderId}",
+            "update": "Atualizou a disputa do pedido {orderId} ({changedFields})",
+            "resolve": "Resolveu a disputa do pedido {orderId} como {status}"
         }
     }
 }

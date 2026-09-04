@@ -2,59 +2,95 @@
 
 import { useSearchParams } from "next/navigation"
 import { useSuspenseQuery } from "@tanstack/react-query"
+import { IconClockExclamation, IconEyeExclamation, IconFileOff, IconHelpCircle, IconPhoneOff, IconSearch, IconSteeringWheel, IconUserQuestion } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
-import { StatCards } from "@/components/list/stat-cards"
-import { currentKind, EXPIRY_WINDOW_DAYS, FILTER_KEYS } from "@/frontend/pages/partners/types"
-import type { StatsBucket } from "@/frontend/pages/partners/types"
+import { AttentionTiles, type AttentionTile } from "@/components/list/attention-tiles"
+import { currentKind, EXPIRY_WINDOW_DAYS } from "@/frontend/pages/partners/types"
+import type { StatsBucket, VehicleKind } from "@/frontend/pages/partners/types"
 
 /**
- * The stat strip is the page's primary filter, so each number is the count
- * of exactly the rows its card opens — the card carries the filter, not just
- * a label, so the two cannot drift apart.
+ * The work queue for each page: the two tiles every partner shares (review
+ * and expiry) plus two that name that page's own gaps. Each tile counts
+ * exactly the rows its filter opens, so a number is never a surprise.
  */
-function Cards({ stats }: { stats: StatsBucket }) {
-    const t = useTranslations("Admin.partners.stats")
+function useTiles(stats: StatsBucket, page: "shipper" | "carrier" | "driver" | VehicleKind): AttentionTile[] {
+    const t = useTranslations("Admin.partners.tiles")
 
-    return (
-        <StatCards
-            filterKeys={FILTER_KEYS}
-            cards={[
-                { label: t("total"), value: stats.total },
-                {
-                    label: t("pending-review"),
-                    value: stats.pendingReview,
-                    filter: { key: "status", value: "pending-review" },
-                },
-                {
-                    label: t("verified"),
-                    value: stats.verified,
-                    filter: { key: "status", value: "verified" },
-                },
-                {
-                    label: t("expiring", { days: EXPIRY_WINDOW_DAYS }),
-                    value: stats.expiring,
-                    filter: { key: "expiring", value: String(EXPIRY_WINDOW_DAYS) },
-                },
-            ]}
-        />
-    )
+    const shared: AttentionTile[] = [
+        {
+            filter: { key: "status", value: "pending-review" },
+            label: t("pending-review"),
+            value: stats.byStatus["pending-review"],
+            hint: t(`pending-review-hint.${page === "shipper" || page === "carrier" ? "organization" : page === "driver" ? "driver" : "vehicle"}`),
+            Icon: IconSearch,
+        },
+        {
+            filter: { key: "expiring", value: String(EXPIRY_WINDOW_DAYS) },
+            label: t("expiring", { days: EXPIRY_WINDOW_DAYS }),
+            value: stats.expiring,
+            hint: t(`expiring-hint.${page === "shipper" || page === "carrier" ? "organization" : page === "driver" ? "driver" : "vehicle"}`),
+            Icon: IconClockExclamation,
+        },
+    ]
+
+    if (page === "shipper") {
+        return [
+            ...shared,
+            { filter: { key: "incomplete", value: "1" }, label: t("incomplete"), value: stats.attention.incomplete ?? 0, hint: t("incomplete-hint"), Icon: IconUserQuestion },
+            { filter: { key: "risk", value: "flagged" }, label: t("risk"), value: stats.attention.risk ?? 0, hint: t("risk-hint"), Icon: IconEyeExclamation },
+        ]
+    }
+
+    if (page === "carrier") {
+        return [
+            ...shared,
+            { filter: { key: "incomplete", value: "1" }, label: t("incomplete"), value: stats.attention.incomplete ?? 0, hint: t("incomplete-hint"), Icon: IconUserQuestion },
+            { filter: { key: "contract", value: "missing" }, label: t("contract"), value: stats.attention.contract ?? 0, hint: t("contract-hint"), Icon: IconFileOff },
+        ]
+    }
+
+    if (page === "driver") {
+        return [
+            ...shared,
+            { filter: { key: "phone", value: "missing" }, label: t("phone"), value: stats.attention.phone ?? 0, hint: t("phone-hint"), Icon: IconPhoneOff },
+            { filter: { key: "unassigned", value: "1" }, label: t("unassigned-driver"), value: stats.attention.unassigned ?? 0, hint: t("unassigned-driver-hint"), Icon: IconSteeringWheel },
+        ]
+    }
+
+    return [
+        ...shared,
+        { filter: { key: "ownership", value: "unverified" }, label: t("ownership"), value: stats.attention.ownership ?? 0, hint: t("ownership-hint"), Icon: IconHelpCircle },
+        {
+            filter: { key: "unassigned", value: "1" },
+            label: t(`unassigned-${page}`),
+            value: stats.attention.unassigned ?? 0,
+            hint: t(`unassigned-${page}-hint`),
+            Icon: IconSteeringWheel,
+        },
+    ]
+}
+
+function Tiles({ stats, page }: { stats: StatsBucket; page: "shipper" | "carrier" | "driver" | VehicleKind }) {
+    const tiles = useTiles(stats, page)
+
+    return <AttentionTiles tiles={tiles} />
 }
 
 export function OrganizationStatsView({ type }: { type: "shipper" | "carrier" }) {
     const trpc = useTRPC()
     const { data } = useSuspenseQuery(trpc.partners.organizationStats.queryOptions({ type }))
 
-    return <Cards stats={data} />
+    return <Tiles stats={data} page={type} />
 }
 
 export function DriverStatsView() {
     const trpc = useTRPC()
     const { data } = useSuspenseQuery(trpc.partners.driverStats.queryOptions())
 
-    return <Cards stats={data} />
+    return <Tiles stats={data} page="driver" />
 }
 
 export function VehicleStatsView() {
@@ -64,5 +100,5 @@ export function VehicleStatsView() {
 
     const { data } = useSuspenseQuery(trpc.partners.vehicleStats.queryOptions({ kind }))
 
-    return <Cards stats={data} />
+    return <Tiles stats={data} page={kind} />
 }

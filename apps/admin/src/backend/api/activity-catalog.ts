@@ -69,6 +69,41 @@ export const activityCatalog: ActivityCatalog = {
             orderId: input?.orderId ?? "",
         }),
     },
+    // One row for the batch: the target and how many rows made it, never
+    // the note (it is a free text the transition rows keep per order)
+    "orders.bulkTransition": {
+        params: (input, output?: { results: { ok: boolean }[] }) => ({
+            to: input?.to ?? "",
+            count: Array.isArray(input?.orders) ? input.orders.length : 0,
+            failed: output?.results.filter((result) => !result.ok).length ?? 0,
+        }),
+    },
+    // Disputes log the order, the cause and the state — never the
+    // description or the amounts claimed
+    "disputes.open": {
+        entity: (input) =>
+            input?.orderId ? { type: "order", id: String(input.orderId) } : null,
+        params: (input) => ({
+            orderId: input?.orderId ?? "",
+            reason: input?.reason ?? "",
+        }),
+    },
+    "disputes.update": {
+        entity: (_input, output?: { orderId: string }) =>
+            output ? { type: "order", id: output.orderId } : null,
+        params: (input, output?: { orderId: string }) => ({
+            orderId: output?.orderId ?? "",
+            changedFields: Object.keys(input?.patch ?? {}).join(", "),
+        }),
+    },
+    "disputes.resolve": {
+        entity: (_input, output?: { orderId: string }) =>
+            output ? { type: "order", id: output.orderId } : null,
+        params: (input, output?: { orderId: string }) => ({
+            orderId: output?.orderId ?? "",
+            status: input?.status ?? "",
+        }),
+    },
     "documents.create": {
         entity: (input) =>
             input?.orderId ? { type: "order", id: String(input.orderId) } : null,
@@ -184,6 +219,41 @@ export const activityCatalog: ActivityCatalog = {
         params: (input) => ({
             name: input?.name ?? "",
             type: input?.type ?? "",
+        }),
+    },
+    // Partner edits log which fields changed, never the values (contact
+    // details and addresses are personal data)
+    "organizations.update": {
+        entity: (input) =>
+            input?.id ? { type: "organization", id: String(input.id) } : null,
+        params: (input, output?: OrgOption) => ({
+            name: output?.name ?? "",
+            changedFields: Object.keys(input?.patch ?? {}).join(", "),
+        }),
+    },
+    "fleet.updateDriver": {
+        entity: (input) =>
+            input?.id ? { type: "driver", id: String(input.id) } : null,
+        params: (input) => ({
+            driverId: input?.id ?? "",
+            changedFields: Object.keys(input?.patch ?? {}).join(", "),
+        }),
+    },
+    "fleet.updateVehicle": {
+        entity: (input) =>
+            input?.id ? { type: String(input.kind ?? "truck"), id: String(input.id) } : null,
+        params: (input, output?: { regPlate: string }) => ({
+            kind: input?.kind ?? "",
+            regPlate: output?.regPlate ?? "",
+            changedFields: Object.keys(input?.patch ?? {}).join(", "),
+        }),
+    },
+    "fleet.assignDriver": {
+        entity: (input) =>
+            input?.driverId ? { type: "driver", id: String(input.driverId) } : null,
+        params: (input) => ({
+            driverId: input?.driverId ?? "",
+            truckId: input?.truckId ?? "",
         }),
     },
     "chats.start": {

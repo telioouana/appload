@@ -23,8 +23,11 @@ export type InboundMessage = {
     kind: "text" | "button" | "location";
     /** Quick-reply parameter echoed back when the driver taps a template button */
     buttonPayload: string | null;
-    location: { latitude: number; longitude: number } | null;
+    /** Coordinates of a shared pin; `name` is WhatsApp's place label when the driver picked one */
+    location: { latitude: number; longitude: number; name: string | null } | null;
     externalId: string | null;
+    /** When the platform received it from the driver; null when Infobip did not say */
+    receivedAt: Date | null;
 };
 
 /**
@@ -339,12 +342,39 @@ export function parseDeliveryReports(payload: unknown): DeliveryReport[] {
     return reports;
 }
 
+/** Infobip stamps inbound entries with an ISO `receivedAt`; anything else is no answer. */
+function receivedAt(raw: string | undefined): Date | null {
+    if (!raw) return null;
+
+    const date = new Date(raw);
+
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * A pin only counts as a position when it could be one. A phone with no GPS
+ * fix reports 0,0, a swapped pair reports a latitude no planet has, and both
+ * are written to a table nothing deletes and read back as "where the truck
+ * is" — one such row reframes the whole ops map around it.
+ */
+function usableCoordinates(latitude: number, longitude: number): boolean {
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return false;
+    if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return false;
+
+    // The null island is the "no fix" answer, never a load
+    return latitude !== 0 || longitude !== 0;
+}
+
 /**
  * Parses Infobip's inbound-message webhook payload (`results[]`) into
  * transport-agnostic messages. Recognizes plain text, quick-reply button
  * taps (type BUTTON, label in `text`, template parameter in `payload`) and
  * shared locations (type LOCATION, coordinates but usually no text).
  * Unknown entries are skipped.
+ *
+ * A location whose coordinates cannot be real stays a chat message — the
+ * operator still sees what the driver sent — but carries no `location`, so
+ * it never becomes a tracking point.
  */
 export function parseInboundWebhook(payload: unknown): InboundMessage[] {
     const results = (payload as { results?: unknown[] })?.results;
@@ -359,6 +389,7 @@ export function parseInboundWebhook(payload: unknown): InboundMessage[] {
         const entry = result as {
             from?: string;
             messageId?: string;
+            receivedAt?: string;
             message?: {
                 type?: string;
                 text?: string;
@@ -378,6 +409,7 @@ export function parseInboundWebhook(payload: unknown): InboundMessage[] {
         const message = entry.message;
         const type = message?.type?.toUpperCase();
         const externalId = entry.messageId ?? null;
+        const sentAt = receivedAt(entry.receivedAt);
 
         if (type === "LOCATION"
             && typeof message?.latitude === "number"
@@ -385,14 +417,18 @@ export function parseInboundWebhook(payload: unknown): InboundMessage[] {
             // Location pins carry no text — render a clickable maps link so
             // the pin survives as a plain chat body
             const place = [message.name, message.address].filter(Boolean).join(", ");
+            const { latitude, longitude } = message;
 
             messages.push({
                 phone: entry.from,
                 kind: "location",
-                text: `📍 ${place ? `${place} — ` : ""}https://maps.google.com/?q=${message.latitude},${message.longitude}`,
+                text: `📍 ${place ? `${place} — ` : ""}https://maps.google.com/?q=${latitude},${longitude}`,
                 buttonPayload: null,
-                location: { latitude: message.latitude, longitude: message.longitude },
+                location: usableCoordinates(latitude, longitude)
+                    ? { latitude, longitude, name: place || null }
+                    : null,
                 externalId,
+                receivedAt: sentAt,
             });
             continue;
         }
@@ -411,6 +447,7 @@ export function parseInboundWebhook(payload: unknown): InboundMessage[] {
                 buttonPayload: message?.payload ?? null,
                 location: null,
                 externalId,
+                receivedAt: sentAt,
             });
             continue;
         }
@@ -422,6 +459,7 @@ export function parseInboundWebhook(payload: unknown): InboundMessage[] {
             buttonPayload: null,
             location: null,
             externalId,
+            receivedAt: sentAt,
         });
     }
 

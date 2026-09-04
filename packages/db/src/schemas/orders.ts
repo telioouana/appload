@@ -5,7 +5,7 @@ import { sql } from "drizzle-orm";
 // in modules that depend on this one and crash at runtime (TDZ)
 import { user, organization } from "@workspace/db/users";
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
-import { CATEGORIES, CURRENCY, FISCAL_REGIME, INSURANCE_PAYMENT_STATUS, LOAD_TYPE, LOADING_BAY, ORDER_STATUS, PACKING, PAYMENT_STATUS, POD_STATUS, ROUTE_TYPE, TRIP_TYPE, TRUCK_AGE, WEIGHT_UNIT, } from "@workspace/db/types";
+import { CATEGORIES, CURRENCY, DISPUTE_LIABLE_PARTY, DISPUTE_REASON, DISPUTE_STATUS, FISCAL_REGIME, INSURANCE_PAYMENT_STATUS, LOAD_TYPE, LOADING_BAY, ORDER_STATUS, PACKING, PAYMENT_STATUS, POD_STATUS, ROUTE_TYPE, TRIP_TYPE, TRUCK_AGE, WEIGHT_UNIT, } from "@workspace/db/types";
 
 export const packingEnum = pgEnum("packing_enum", PACKING)
 export const currencyEnum = pgEnum("currency_enum", CURRENCY)
@@ -200,6 +200,13 @@ export const order = pgTable(
         flaggedAt: timestamp("flagged_at"),
         flaggedBy: text("flagged_by").references(() => user.id, { onDelete: "set null" }),
 
+        // Mirror of the order's active dispute (see order_dispute below):
+        // null when none is open, so the list can filter and the payment
+        // and completion gates can check without a join. Maintained by the
+        // dispute mutations only; never bumps `version`, since ops forms
+        // never edit it
+        disputeStatus: text("dispute_status", { enum: DISPUTE_STATUS }),
+
         createdBy: text("created_by").references(() => user.id),
         createdAt: timestamp("created_at").defaultNow().notNull(),
         updatedAt: timestamp("updated_at")
@@ -224,6 +231,7 @@ export const ORDER_HISTORY_KIND = [
     "note",
     "payment",
     "flag",
+    "dispute",
     "system",
 ] as const;
 
@@ -420,3 +428,66 @@ export const sheetSync = pgTable("sheet_sync", {
 
 export type SheetSync = typeof sheetSync.$inferSelect;
 export type CreateSheetSync = typeof sheetSync.$inferInsert;
+
+/**
+ * Terms under which a carrier's debt from a settled dispute is recovered.
+ * Next stage: nothing writes it yet; the column exists so settled disputes
+ * can carry terms without another migration.
+ */
+export type DisputeDeductionTerms = {
+    mode?: "credit-note-on-later-orders" | "invoice" | "write-off";
+    installments?: number;
+    startAfter?: string;
+    note?: string;
+};
+
+/**
+ * A dispute on an order — theft, loss, damage or another event that puts
+ * the closure of the cargo in question. Not a status: the trip keeps its
+ * own status while the dispute is active, but the parties' payments can be
+ * held and the order cannot be completed until it is settled or closed.
+ * At most one active dispute per order (partial unique index); settled and
+ * closed ones stay as the record.
+ */
+export const orderDispute = pgTable(
+    "order_dispute",
+    {
+        id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+        orderId: text("order_id").notNull().references(() => order.id, { onDelete: "restrict" }),
+        reason: text("reason", { enum: DISPUTE_REASON }).notNull(),
+        status: text("status", { enum: DISPUTE_STATUS }).default("open").notNull(),
+        description: text("description").notNull(),
+        claimedAmount: numeric("claimed_amount", { precision: 14, scale: 2 }),
+        claimedCurrency: currencyEnum("claimed_currency"),
+        liableParty: text("liable_party", { enum: DISPUTE_LIABLE_PARTY }),
+        // Holds default on: a dispute is opened precisely to stop money
+        // moving until someone decides otherwise
+        holdShipperPayments: boolean("hold_shipper_payments").default(true).notNull(),
+        holdCarrierPayments: boolean("hold_carrier_payments").default(true).notNull(),
+        // Next stage — carrier debt recovered from later shipments; columns
+        // only, no writers yet
+        carrierDebtAmount: numeric("carrier_debt_amount", { precision: 14, scale: 2 }),
+        carrierDebtCurrency: currencyEnum("carrier_debt_currency"),
+        deductionTerms: jsonb("deduction_terms").$type<DisputeDeductionTerms>(),
+        resolution: text("resolution"),
+        openedBy: text("opened_by").references(() => user.id, { onDelete: "set null" }),
+        openedAt: timestamp("opened_at").defaultNow().notNull(),
+        resolvedBy: text("resolved_by").references(() => user.id, { onDelete: "set null" }),
+        resolvedAt: timestamp("resolved_at"),
+        // Optimistic lock, same handshake as the order row
+        version: integer("version").default(1).notNull(),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+        updatedAt: timestamp("updated_at")
+            .defaultNow()
+            .$onUpdate(() => /* @__PURE__ */ new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("order_dispute_order_idx").on(table.orderId),
+        index("order_dispute_status_idx").on(table.status),
+        uniqueIndex("order_dispute_active_uidx").on(table.orderId).where(sql`${table.status} in ('open', 'under-review')`),
+    ],
+);
+
+export type OrderDispute = typeof orderDispute.$inferSelect;
+export type CreateOrderDispute = typeof orderDispute.$inferInsert;

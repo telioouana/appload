@@ -1,19 +1,41 @@
-export default function PrivateOrdersLayout({
+import { notFound } from "next/navigation"
+
+import { getTranslations } from "@workspace/i18n/server"
+
+import { ListPageShell } from "@/components/list/list-page-shell"
+import { isSection } from "@/frontend/pages/orders/types"
+
+type Params = Promise<{ filter: string }>
+
+export async function generateMetadata({ params }: { params: Params }) {
+    const { filter } = await params
+
+    if (!isSection(filter)) return {}
+
+    const t = await getTranslations("Admin.orders.list")
+    return { title: t(`pages.${filter}.title`) }
+}
+
+/**
+ * One page per section (all, prospect, booked…). The static `details` and
+ * `disputes` segments win over this one in Next's routing; anything else
+ * that is not a section is a 404, checked here and in every slot before
+ * a query is prefetched.
+ */
+export default async function Layout({
+    params,
     header,
+    stats,
     data,
 }: {
-    header: React.ReactNode,
-    data: React.ReactNode,
+    params: Params
+    header: React.ReactNode
+    stats: React.ReactNode
+    data: React.ReactNode
 }) {
-    return (
-        // Pinned to the viewport: the header stays put, only the data
-        // slot scrolls (the sentinel-based infinite scroll keeps working —
-        // the observer tracks viewport visibility after clipping)
-        <div className="flex flex-col gap-6 w-full h-full min-h-0 overflow-hidden pb-4">
-            {header}
-            <div className="flex-1 min-h-0 overflow-y-auto rounded-4xl container-snap">
-                {data}
-            </div>
-        </div>
-    )
+    const { filter } = await params
+
+    if (!isSection(filter)) notFound()
+
+    return <ListPageShell header={header} stats={stats} data={data} />
 }

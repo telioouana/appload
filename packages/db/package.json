@@ -33,6 +33,7 @@
         "./fleet": "./src/schemas/fleet.ts",
         "./kyc-documents": "./src/schemas/kyc-documents.ts",
         "./orders": "./src/schemas/orders.ts",
+        "./tracking": "./src/schemas/tracking.ts",
         "./users": "./src/schemas/users.ts"
     }
 }

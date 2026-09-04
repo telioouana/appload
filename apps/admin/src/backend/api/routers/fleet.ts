@@ -4,7 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, eq, ilike, sql } from "drizzle-orm";
 
 import { user } from "@workspace/db/schema";
-import type { KycStatus, LoadingBay, OwnershipStatus } from "@workspace/db/types";
+import { LoadingBaySchema, TRUCK_TYPE, type KycStatus, type LoadingBay, type OwnershipStatus } from "@workspace/db/types";
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import { createTRPCRouter, protectedProcedure } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
@@ -71,6 +71,30 @@ const toOption = (row: {
     loadingBay: row.loadingBay,
     kycStatus: row.kycStatus,
     ownershipStatus: row.ownershipStatus,
+});
+
+const DriverPatch = z.object({
+    name: z.string().trim().nonempty().optional(),
+    email: z.email().optional(),
+    phoneNumber: z.e164().nullable().optional(),
+    passport: z.string().trim().max(40).nullable().optional(),
+    carrierId: z.string().nonempty().optional(),
+    truckId: z.string().nonempty().nullable().optional(),
+});
+
+// ISO 3779: 17 chars, excludes I, O and Q (same rule as registration)
+const VIN_PATTERN = /^[A-HJ-NPR-Z0-9]{17}$/;
+
+const VehiclePatch = z.object({
+    regPlate: z.string().trim().nonempty().optional(),
+    internalId: z.string().trim().max(60).nullable().optional(),
+    brand: z.string().trim().nonempty().optional(),
+    model: z.string().trim().nonempty().optional(),
+    year: z.number().int().min(1950).max(2100).optional(),
+    vin: z.string().trim().regex(VIN_PATTERN).optional(),
+    type: z.enum(TRUCK_TYPE).optional(),
+    loadingBay: LoadingBaySchema.nullable().optional(),
+    carrierId: z.string().nonempty().optional(),
 });
 
 export const fleetRouter = createTRPCRouter({
@@ -261,9 +285,137 @@ export const fleetRouter = createTRPCRouter({
                 throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN", cause: error });
             }
         }),
+
+    /**
+     * Partial edit of a driver. Identity fields live on the user account
+     * and the rest on the driver row; the two writes run back to back
+     * (neon-http has no transactions), account first, so a failed driver
+     * write leaves an account edit that is still correct on its own.
+     */
+    updateDriver: authorizedProcedure("organizations", ["update"])
+        .input(z.object({ id: z.string().nonempty(), patch: DriverPatch }))
+        .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
+            const [current] = await ctx.db
+                .select({ id: driver.id, userId: driver.userId, carrierId: driver.carrierId })
+                .from(driver)
+                .where(eq(driver.id, input.id));
+
+            if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+
+            const { name, email, phoneNumber, ...rest } = input.patch;
+            const carrierId = rest.carrierId ?? current.carrierId;
+
+            if (rest.truckId) await assertSameCarrier(ctx.db, rest.truckId, carrierId);
+
+            const account: Partial<typeof user.$inferInsert> = {};
+            if (name !== undefined) account.name = name;
+            if (email !== undefined) account.email = email;
+            if (phoneNumber !== undefined) account.phoneNumber = phoneNumber;
+
+            const row: Partial<typeof driver.$inferInsert> = {};
+            if (rest.passport !== undefined) row.passport = rest.passport || null;
+            if (rest.truckId !== undefined) row.truckId = rest.truckId;
+            if (rest.carrierId !== undefined) {
+                row.carrierId = rest.carrierId;
+                // A driver moving to another carrier cannot keep the old one's truck
+                if (rest.truckId === undefined) row.truckId = null;
+            }
+
+            try {
+                if (Object.keys(account).length > 0) {
+                    await ctx.db.update(user).set(account).where(eq(user.id, current.userId));
+                }
+                if (Object.keys(row).length > 0) {
+                    await ctx.db.update(driver).set(row).where(eq(driver.id, input.id));
+                }
+            } catch (error) {
+                const constraint = uniqueViolationConstraint(error);
+
+                if (constraint === null) throw error;
+                if (constraint.includes("email")) throw new TRPCError({ code: "CONFLICT", message: "DUPLICATE_EMAIL" });
+                if (constraint.includes("phone")) throw new TRPCError({ code: "CONFLICT", message: "DUPLICATE_PHONE" });
+
+                throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
+            }
+
+            return { id: input.id };
+        }),
+
+    /** Partial edit of a truck, trailer or link. */
+    updateVehicle: authorizedProcedure("organizations", ["update"])
+        .input(z.object({ kind: vehicleKind, id: z.string().nonempty(), patch: VehiclePatch }))
+        .mutation(async ({ ctx, input }): Promise<{ id: string; regPlate: string }> => {
+            const table = vehicleTable[input.kind];
+            const { patch } = input;
+
+            // Trailers and links carry the bay themselves; the column is NOT NULL
+            if (input.kind !== "truck" && patch.loadingBay === null) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "BAY_REQUIRED" });
+            }
+
+            const values: Record<string, unknown> = {};
+            if (patch.regPlate !== undefined) values.regPlate = normalizePlate(patch.regPlate);
+            if (patch.internalId !== undefined) values.internalId = patch.internalId || null;
+            if (patch.brand !== undefined) values.brand = patch.brand;
+            if (patch.model !== undefined) values.model = patch.model;
+            if (patch.year !== undefined) values.year = patch.year;
+            if (patch.vin !== undefined) values.vin = patch.vin.toUpperCase();
+            if (patch.loadingBay !== undefined) values.loadingBay = patch.loadingBay;
+            if (patch.carrierId !== undefined) values.carrierId = patch.carrierId;
+            if (input.kind === "truck" && patch.type !== undefined) {
+                values.type = patch.type;
+                // An articulated truck tows the bay on its trailer
+                if (patch.type === "articulated") values.loadingBay = null;
+            }
+
+            if (Object.keys(values).length === 0) {
+                const [row] = await ctx.db.select({ id: table.id, regPlate: table.regPlate }).from(table).where(eq(table.id, input.id));
+                if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+                return row;
+            }
+
+            try {
+                const [updated] = await ctx.db
+                    .update(table)
+                    .set(values)
+                    .where(eq(table.id, input.id))
+                    .returning({ id: table.id, regPlate: table.regPlate });
+
+                if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+
+                return updated;
+            } catch (error) {
+                mapVehicleUniqueViolation(error);
+            }
+        }),
+
+    /** Sets, moves or clears a driver's home truck. */
+    assignDriver: authorizedProcedure("organizations", ["update"])
+        .input(z.object({ driverId: z.string().nonempty(), truckId: z.string().nonempty().nullable() }))
+        .mutation(async ({ ctx, input }): Promise<{ id: string; truckId: string | null }> => {
+            const [current] = await ctx.db
+                .select({ id: driver.id, carrierId: driver.carrierId })
+                .from(driver)
+                .where(eq(driver.id, input.driverId));
+
+            if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+            if (input.truckId) await assertSameCarrier(ctx.db, input.truckId, current.carrierId);
+
+            await ctx.db.update(driver).set({ truckId: input.truckId }).where(eq(driver.id, input.driverId));
+
+            return { id: input.driverId, truckId: input.truckId };
+        }),
 });
 
 type Db = Parameters<Parameters<typeof protectedProcedure.mutation>[0]>[0]["ctx"]["db"];
+
+/** A driver may only be put on a truck of their own carrier. */
+async function assertSameCarrier(db: Db, truckId: string, carrierId: string) {
+    const [home] = await db.select({ carrierId: truck.carrierId }).from(truck).where(eq(truck.id, truckId));
+
+    if (!home) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+    if (home.carrierId !== carrierId) throw new TRPCError({ code: "CONFLICT", message: "TRUCK_OTHER_CARRIER" });
+}
 
 type TowedInput = z.infer<typeof RegisterTrailerBaseSchema> & { carrierId: string };
 

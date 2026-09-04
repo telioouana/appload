@@ -92,7 +92,16 @@ export function RegisterDriverDialog({
                     <DialogDescription>{t("register.description")}</DialogDescription>
                 </DialogHeader>
 
-                <form id="register-driver-form" onSubmit={form.handleSubmit(onSubmit)}>
+                <form
+                    id="register-driver-form"
+                    onSubmit={(event) => {
+                        // The dialog renders in a portal, so React bubbles this
+                        // submit to the order form that opened it and submits
+                        // that one too
+                        event.stopPropagation();
+                        void form.handleSubmit(onSubmit)(event);
+                    }}
+                >
                     <FieldGroup className="gap-4">
                         <TextInput
                             name="name"

@@ -1,5 +1,7 @@
 {
     "General": {
+        "app-name": "appload",
+        "slogan": "Going the extra mile",
         "inputs": {
             "file": {
                 "delete": {
@@ -97,10 +99,6 @@
             "sign-out": "Sign out"
         },
         "sidebar": {
-            "header": {
-                "app-name": "appload",
-                "slogan": "Going the extra mile"
-            },
             "content": {
                 "ops": {
                     "order": "New order",
@@ -111,9 +109,11 @@
                         "booked": "Booked",
                         "on-going": "On going",
                         "delivered": "Delivered",
-                        "history": "History"
+                        "history": "History",
+                        "disputes": "Disputes"
                     },
-                    "chats": "Chats"
+                    "chats": "Chats",
+                    "map": "Map"
                 },
                 "management": {
                     "shippers": "Shippers",
@@ -1300,44 +1300,9 @@
         },
         "orders": {
             "header": {
-                "page": {
-                    "all": {
-                        "title": "All orders",
-                        "description": "Every order registered in the database"
-                    },
-                    "prospect": {
-                        "title": "Prospect orders",
-                        "description": "Orders still in the prospect stage"
-                    },
-                    "booked": {
-                        "title": "Booked orders",
-                        "description": "Orders confirmed but not yet started"
-                    },
-                    "on-going": {
-                        "title": "Ongoing orders",
-                        "description": "Orders currently in transit"
-                    },
-                    "delivered": {
-                        "title": "Delivered orders",
-                        "description": "Deliveries completed and awaiting reviews"
-                    },
-                    "history": {
-                        "title": "History",
-                        "description": "Completed, cancelled or underbid orders"
-                    }
-                },
-                "search": "Search order by ID, client, carrier, invoice number",
-                "view": {
-                    "grid": "Switch to grid view",
-                    "list": "Switch to list view"
-                },
-                "year": "Year",
+                "search": "Search order by ID, shipper, carrier, invoice number",
                 "filters": {
-                    "title": "Filters",
-                    "clear": "Clear filter",
                     "category": {
-                        "label": "Filter by category",
-                        "placeholder": "Select one of the options to filter",
                         "options": {
                             "agriculture-inputs": "Agricultural inputs",
                             "agriculture-products": "Agricultural products",
@@ -1353,8 +1318,6 @@
                         }
                     },
                     "payment": {
-                        "label": "Filter by payment status",
-                        "placeholder": "Select one of the options to filter",
                         "by": {
                             "all": "All",
                             "shipper": "Shipper",
@@ -1364,14 +1327,12 @@
                             "not-applicable": "Not applicable",
                             "pending": "Pending",
                             "partially": "Partially paid",
-                            "completed": "Fully paid"
+                            "completed": "Fully paid",
+                            "outstanding": "Outstanding"
                         }
                     },
                     "period": {
-                        "label": "Filter by month or dates",
                         "month": {
-                            "label": "Month",
-                            "placeholder": "Select month",
                             "options": {
                                 "jan": "January",
                                 "feb": "February",
@@ -1386,13 +1347,9 @@
                                 "nov": "November",
                                 "dec": "December"
                             }
-                        },
-                        "date": {
-                            "placeholder": "Select the dates"
                         }
                     },
                     "status": {
-                        "label": "Status",
                         "options": {
                             "all": "All",
                             "prospect": "Prospect",
@@ -1416,18 +1373,10 @@
                 }
             },
             "data": {
-                "count": "{count, plural, =0 {No orders} one {# order} other {# orders}}",
-                "empty": "No orders match the applied filters",
-                "error": "Could not load the orders. Please try again.",
                 "labels": {
                     "route": "Route",
-                    "date": "Date",
                     "loading": "Loading",
-                    "driver": "Driver",
-                    "vehicle": "Vehicle",
                     "weight": "Weight",
-                    "distance": "Distance",
-                    "amount": "Amount",
                     "shipper": "Shipper",
                     "noShipper": "No shipper",
                     "carrier": "Carrier",
@@ -1461,14 +1410,6 @@
                 "flags": {
                     "hazardous": "Hazardous",
                     "refrigerated": "Refrigerated"
-                },
-                "actions": {
-                    "view": "View",
-                    "confirm": "Confirm order",
-                    "edit": "Edit",
-                    "more": "More",
-                    "changeStatus": "Change status",
-                    "cancel": "Cancel order"
                 }
             },
             "transitionDialog": {
@@ -1510,7 +1451,8 @@
                     "CARRIER_CONTRACT_EXPIRED": "This carrier's signed contract has expired",
                     "CARRIER_SUSPENDED": "This carrier is suspended",
                     "RISK_ACK_NOT_ALLOWED": "Only a supervisor can accept this risk",
-                    "RISK_ACK_NOTE_REQUIRED": "Explain why this risk is being accepted"
+                    "RISK_ACK_NOTE_REQUIRED": "Explain why this risk is being accepted",
+                    "DISPUTE_OPEN": "The order cannot be completed while a dispute is open. Settle or close it first."
                 }
             },
             "detailPage": {
@@ -1538,7 +1480,10 @@
                     "description": "Description",
                     "payments": "Parties & payments",
                     "operations": "Operations",
-                    "history": "History"
+                    "history": "History",
+                    "route": "Route & cargo",
+                    "tracking": "Live tracking",
+                    "activity": "Activity"
                 },
                 "adjustments": {
                     "title": "Effective totals (with debit/credit notes)",
@@ -1562,7 +1507,44 @@
                     "noProofs": "No proofs of payment recorded yet.",
                     "recordPayment": "Record payment",
                     "open": "Open proof",
-                    "derivedHint": "These figures come from the recorded proofs."
+                    "derivedHint": "These figures come from the recorded proofs.",
+                    "prospectHint": "Payments open once the order is booked.",
+                    "heldHint": "A dispute is holding these payments."
+                },
+                "resume": "Resume",
+                "openChat": "Open chat",
+                "chatFailed": "Could not open the chat, please try again.",
+                "openMap": "Open in Map",
+                "trip": {
+                    "label": "Trip progress",
+                    "dealDate": "Deal date",
+                    "loading": "Loading",
+                    "offloading": "Offloading",
+                    "lastLocation": "Last driver location",
+                    "noPings": "No updates yet"
+                },
+                "route": {
+                    "googleDistance": "Google road distance",
+                    "weightBooked": "booked",
+                    "weightLoaded": "loaded"
+                },
+                "money": {
+                    "vat": "Amounts include VAT",
+                    "shipperTotal": "Shipper total",
+                    "carrierTotal": "Carrier total",
+                    "commission": "Commission",
+                    "insurance": "Insurance",
+                    "in": "money in",
+                    "out": "money out",
+                    "share": "{percent}% of the shipper total",
+                    "effective": "effective",
+                    "debit": "+{amount} debit note",
+                    "credit": "−{amount} credit note",
+                    "ownCover": "shipper's own cover"
+                },
+                "footer": {
+                    "created": "Created {date} by {actor}",
+                    "createdUnknown": "Created {date}"
                 }
             },
             "history": {
@@ -1580,7 +1562,8 @@
                     "note": "Financial note",
                     "flag": "Flag resolved",
                     "system": "System event",
-                    "payment": "Payment"
+                    "payment": "Payment",
+                    "dispute": "Dispute"
                 }
             },
             "documents": {
@@ -1654,7 +1637,8 @@
                     "NOTE_LEG_CURRENCY_MISSING": "Set the party's currency on the order before recording a note.",
                     "NOT_ALLOWED": "Your role does not allow this action.",
                     "VERSION_CONFLICT": "Someone else changed this order first. Refresh and try again.",
-                    "UNKNOWN": "Saving the document failed. Please try again."
+                    "UNKNOWN": "Saving the document failed. Please try again.",
+                    "DISPUTE_HOLD": "This party's payments are on hold while the dispute is open."
                 },
                 "reasons": {
                     "demurrage": "Demurrage",
@@ -1701,6 +1685,10 @@
                 "parties": {
                     "shipper": "Shipper",
                     "carrier": "Carrier"
+                },
+                "dialog": {
+                    "title": "Add a document",
+                    "subtitle": "Attach a file to this order and record what it is."
                 }
             },
             "pdfSend": {
@@ -1729,7 +1717,255 @@
                     "SEND_FAILED": "Sending failed. Please try again."
                 }
             },
-            "stats": {}
+            "list": {
+                "title": "Orders",
+                "eyebrow": "Operations",
+                "new": "New order",
+                "clear-search": "Clear search",
+                "columns": {
+                    "order": "Order",
+                    "route": "Route",
+                    "loading": "Loading",
+                    "shipper": "Shipper",
+                    "carrier": "Carrier",
+                    "total": "Total",
+                    "payment": "Payment",
+                    "actions": "Actions"
+                },
+                "sort": {
+                    "seq": "Newest",
+                    "loading": "Loading date",
+                    "total": "Shipper total",
+                    "status": "Status",
+                    "updated": "Last update"
+                },
+                "filters": {
+                    "status": "Status",
+                    "category": "Category",
+                    "payment": "Payment",
+                    "payment-by": "Payment side",
+                    "either": "Either side",
+                    "period": "Loading period",
+                    "from": "From",
+                    "to": "To",
+                    "year": "Year",
+                    "shipper": "Shipper",
+                    "carrier": "Carrier",
+                    "any": "Any",
+                    "flags": "Flags",
+                    "cargo": "Cargo",
+                    "loading": "Loading",
+                    "loading-due": "due within {days} days",
+                    "interrupted": "Stopped or with issue",
+                    "interrupted-hint": "Trips parked on the road",
+                    "flagged": "Flagged for review",
+                    "flagged-hint": "Waiting on a manager",
+                    "pod": "Awaiting POD",
+                    "pod-hint": "Delivered without proof of delivery",
+                    "hazardous": "Hazardous cargo",
+                    "refrigerated": "Refrigerated cargo",
+                    "regional": "Regional route",
+                    "regional-hint": "Crosses a border",
+                    "selected": "Selected",
+                    "insurance": "Insurance to pay",
+                    "insurance-hint": "Appload-subscribed and still pending",
+                    "disputed": "In dispute",
+                    "disputed-hint": "Theft, loss, damage or another open dispute"
+                },
+                "values": {
+                    "national": "National",
+                    "regional": "Regional",
+                    "backload": "Backload",
+                    "late": "{days, plural, one {# day late} other {# days late}}",
+                    "no-carrier": "No carrier yet",
+                    "no-driver": "No driver assigned",
+                    "no-invoice": "No invoice",
+                    "no-total": "No price yet",
+                    "shipper-short": "S",
+                    "carrier-short": "C"
+                },
+                "data": {
+                    "empty": "No orders yet",
+                    "empty-description": "Orders appear here as soon as one is created.",
+                    "no-results": "No orders match your filters",
+                    "error": "Could not load the orders, please try again"
+                },
+                "bulk": {
+                    "export": "Export",
+                    "copy-ids": "Copy IDs",
+                    "copied": "{count, plural, one {# order ID copied} other {# order IDs copied}}",
+                    "change-status": "Change status",
+                    "send-pdfs": "Send PDFs"
+                },
+                "actions": {
+                    "menu": "More actions",
+                    "open": "Open",
+                    "full-page": "Open full page",
+                    "edit": "Edit",
+                    "confirm": "Confirm order",
+                    "change-status": "Change status",
+                    "cancel": "Cancel order",
+                    "send-pdf": "Send PDF",
+                    "copy-id": "Copy order ID",
+                    "open-dispute": "Open dispute"
+                },
+                "errors": {
+                    "load": "Could not load this order, please try again"
+                },
+                "sheet": {
+                    "title": "Order",
+                    "description": "Route, parties, payments, documents and history",
+                    "close": "Close",
+                    "tabs": {
+                        "overview": "Overview",
+                        "payments": "Payments",
+                        "documents": "Documents",
+                        "history": "History"
+                    },
+                    "milestones": "Milestones",
+                    "route": "Route",
+                    "parties": "Parties",
+                    "operations": "Operations",
+                    "expected": "Expected {date}",
+                    "since": "Since {date}",
+                    "on-time": "on time",
+                    "late": "late",
+                    "loaded": "Loaded {date}",
+                    "offloaded": "Offloaded {date}",
+                    "departed": "departed {date}",
+                    "trucks": "{count, plural, one {# truck} other {# trucks}}",
+                    "deliveries": "{count, plural, one {# delivery} other {# deliveries}}",
+                    "updated": "Updated {date}",
+                    "load-failed": "Could not load this order, please try again",
+                    "flagged": "Flagged for review",
+                    "disputed": "In dispute"
+                },
+                "tabs": {
+                    "all": "All"
+                },
+                "pages": {
+                    "all": {
+                        "title": "All orders",
+                        "description": "Every order registered in the database"
+                    },
+                    "prospect": {
+                        "title": "Prospect orders",
+                        "description": "Orders still in the prospect stage"
+                    },
+                    "booked": {
+                        "title": "Booked orders",
+                        "description": "Orders confirmed but not yet started"
+                    },
+                    "on-going": {
+                        "title": "Ongoing orders",
+                        "description": "Orders currently in transit"
+                    },
+                    "delivered": {
+                        "title": "Delivered orders",
+                        "description": "Deliveries completed and awaiting reviews"
+                    },
+                    "history": {
+                        "title": "History",
+                        "description": "Completed, cancelled or underbid orders"
+                    }
+                },
+                "suggest": {
+                    "shippers": "Shippers",
+                    "carriers": "Carriers",
+                    "orders": "{count, plural, one {# order} other {# orders}}",
+                    "search": "Search “{query}” in orders"
+                },
+                "cashflow": {
+                    "title": "Cashflow {year}",
+                    "including": "Including booked trips",
+                    "excluding": "Excluding booked trips",
+                    "pending-carrier": "Pending carrier payments",
+                    "pending-shipper": "Pending shipper payments",
+                    "payables": "Payables to carriers",
+                    "receivables": "Receivables from shippers",
+                    "insurance": "Insurance to pay",
+                    "cashflow": "Cashflow to come",
+                    "empty": "Nothing outstanding this year."
+                }
+            },
+            "bulkTransition": {
+                "title": "Change status",
+                "description": "{count, plural, one {# order selected} other {# orders selected}}",
+                "target": "Move to",
+                "target-placeholder": "Choose a status",
+                "applies-to": "{count} of {total}",
+                "flag-warning": "This move flags the orders for review.",
+                "note": "Note",
+                "note-placeholder": "Why these orders move together (at least 5 characters)",
+                "skipped": "{count, plural, one {# order will be skipped} other {# orders will be skipped}}",
+                "skipped-interrupted": "stopped or with issue, resume it from its own sheet",
+                "skipped-no-move": "cannot move there from {status}",
+                "no-targets": "None of the selected orders can move together. Booking, evidence, proof of delivery and admin reversals are done one order at a time.",
+                "apply": "{count, plural, one {Move # order} other {Move # orders}}",
+                "cancel": "Cancel",
+                "close": "Close",
+                "done": "{ok} moved, {failed} failed",
+                "sheet-warning": "sheet sync pending"
+            },
+            "bulkPdf": {
+                "title": "Send PDFs",
+                "description": "{count, plural, one {The transport order of # order} other {The transport orders of # orders}}, one email each",
+                "party": "Send to",
+                "parties": {
+                    "shipper": "Shippers",
+                    "carrier": "Carriers"
+                },
+                "cc": "CC",
+                "cc-placeholder": "Up to five addresses, comma-separated",
+                "message": "Message",
+                "message-placeholder": "Same message on every email",
+                "order": "Order",
+                "to": "To",
+                "state": "State",
+                "no-carrier": "No carrier",
+                "no-email": "No address on file",
+                "states": {
+                    "idle": "Ready",
+                    "skipped": "Skipped",
+                    "generating": "Generating",
+                    "uploading": "Uploading",
+                    "sending": "Sending",
+                    "sent": "Sent",
+                    "failed": "Failed"
+                },
+                "progress": "{done} of {total}",
+                "send": "{count, plural, =0 {Nothing to send} one {Send #} other {Send #}}",
+                "cancel": "Cancel",
+                "close": "Close"
+            },
+            "dispute": {
+                "open-title": "Open a dispute",
+                "open-description": "Order {orderId}. Payments can be held on either side until it is settled.",
+                "reason": "Cause",
+                "liable": "Liable party",
+                "liable-none": "Not decided",
+                "description": "What happened",
+                "description-placeholder": "Where, when, what was lost or damaged and who reported it (at least 10 characters)",
+                "claimed": "Amount claimed",
+                "claimed-currency": "Currency",
+                "hold-shipper": "Hold the shipper's payments",
+                "hold-shipper-hint": "No proof of payment can be recorded on the shipper leg",
+                "hold-carrier": "Hold the carrier's payments",
+                "hold-carrier-hint": "No proof of payment can be recorded on the carrier leg",
+                "open": "Open dispute",
+                "cancel": "Cancel",
+                "opened": "Dispute opened on {orderId}",
+                "banner-title": "In dispute: {reason} · {status}",
+                "banner-no-holds": "No payment holds",
+                "banner-link": "Open the dispute",
+                "errors": {
+                    "DISPUTE_INVALID_ORDER": "A quote or a lost order cannot be disputed.",
+                    "DISPUTE_EXISTS": "This order already has an active dispute.",
+                    "NOT_ALLOWED": "You are not allowed to open disputes.",
+                    "NOT_FOUND": "The order could not be found.",
+                    "UNKNOWN": "Something went wrong. Try again."
+                }
+            }
         },
         "chats": {
             "title": "Chats",
@@ -1756,7 +1992,6 @@
             "thread": {
                 "emptyTitle": "No conversation selected",
                 "emptyDescription": "Pick a conversation from the list or start a new one.",
-                "order": "Order",
                 "composer": "Type a message...",
                 "send": "Send",
                 "failed": "Failed to send",
@@ -2050,85 +2285,87 @@
             "shippers": {
                 "title": "Shippers",
                 "description": "Manage your client companies and their verification",
-                "add": "Add new shipper"
+                "add": "Add shipper"
             },
             "carriers": {
                 "title": "Carriers",
                 "description": "Manage your transporters, their contracts and risk",
-                "add": "Add new carrier"
+                "add": "Add carrier"
             },
             "drivers": {
                 "title": "Drivers",
                 "description": "Manage the driver roster across all carriers",
-                "add": "Add new driver"
+                "add": "Add driver"
             },
             "fleet": {
                 "title": "Fleet",
                 "description": "Manage trucks, trailers and links across all carriers",
-                "add": "Add new vehicle",
+                "add": "Add vehicle",
                 "kind": {
                     "truck": "Trucks",
                     "trailer": "Trailers",
                     "link": "Links"
                 }
             },
-            "stats": {
-                "total": "Total",
-                "pending-review": "Pending review",
-                "verified": "Verified",
-                "expiring": "Expiring ≤{days}d",
-                "flagged": "Flagged"
-            },
             "filters": {
                 "search": {
-                    "organization": "Search by name, VAT number, or email...",
-                    "driver": "Search by name, email, or phone...",
-                    "fleet": "Search by plate, brand, or carrier..."
+                    "organization": "Search name, NUIT, phone or email",
+                    "driver": "Search name, phone, passport or plate",
+                    "fleet": "Search plate, VIN, brand or carrier"
                 },
                 "all": "All",
-                "view": {
-                    "grid": "Grid view",
-                    "list": "List view"
+                "clear": "Clear search",
+                "issues": "Issues",
+                "any": "Any",
+                "expiring": "Expiring soon",
+                "within-days": "within {days} days",
+                "profile": "Profile",
+                "incomplete": "Incomplete profile",
+                "incomplete-hint": "NUIT, phone or email still missing",
+                "contract-options": {
+                    "valid": "Valid",
+                    "missing": "Missing or expired"
                 },
-                "clear": "Clear search"
-            },
-            "fields": {
-                "nuit": "VAT number",
-                "email": "Email",
-                "phone": "Phone",
-                "carrier": "Carrier",
-                "documents": "Documents",
-                "status": "Status",
-                "contract": "Contract",
-                "risk": "Risk",
-                "ownership": "Ownership",
-                "location": "Location",
-                "load": "Current load",
-                "driver": "Driver",
-                "truck": "Truck",
-                "capacity": "Capacity",
-                "vehicle": "Vehicle",
-                "licence": "Licence",
-                "expires": "Expires",
-                "active-orders": "Active orders",
-                "total-orders": "Total orders",
-                "on-time": "On-time delivery",
-                "payment": "Payments settled",
-                "fleet-size": "Fleet size",
-                "drivers": "Drivers"
+                "risk-options": {
+                    "flagged": "Any flag",
+                    "watch": "Watch",
+                    "high": "High risk"
+                },
+                "province": "Location",
+                "assignment": "Assignment",
+                "selected": "Selected",
+                "no-phone": "No phone number",
+                "no-phone-hint": "Cannot receive WhatsApp updates",
+                "no-truck": "Without a truck",
+                "no-truck-hint": "Not assigned to any vehicle",
+                "unassigned-truck": "Without a driver",
+                "unassigned-truck-hint": "Nobody is assigned to the truck",
+                "unassigned-trailer": "Not hitched",
+                "unassigned-trailer-hint": "No truck tows this trailer",
+                "unassigned-link": "Not hitched",
+                "unassigned-link-hint": "No trailer carries this link"
             },
             "values": {
                 "none": "None",
                 "idle": "Idle",
                 "unassigned": "Unassigned",
-                "empty": "Empty",
                 "en-route": "En route to {city}",
                 "at": "At {city}",
-                "no-expiry": "No expiry",
                 "expires-in": "in {days}d",
                 "expired": "Expired",
                 "progress": "{approved}/{required}",
-                "tons": "{tons} t"
+                "tons": "{tons} t",
+                "trucks": "{count, plural, one {# truck} other {# trucks}}",
+                "drivers": "{count, plural, one {# driver} other {# drivers}}",
+                "active": "{count} active",
+                "total": "{count} total",
+                "none-yet": "None yet",
+                "missing": "Missing",
+                "passport": "Passport {number}",
+                "truck-type": {
+                    "articulated": "Articulated",
+                    "non-articulated": "Rigid"
+                }
             },
             "status": {
                 "draft": "Draft",
@@ -2217,7 +2454,13 @@
             "data": {
                 "empty": "Nothing here yet",
                 "no-results": "No results match your filters",
-                "error": "Could not load this list, please try again"
+                "error": "Could not load this list, please try again",
+                "empty-shipper": "Shippers appear here once they are registered.",
+                "empty-carrier": "Carriers appear here once they are registered.",
+                "empty-driver": "Drivers appear here once a carrier registers them.",
+                "empty-truck": "Trucks appear here once a carrier registers them.",
+                "empty-trailer": "Trailers appear here once a carrier registers them.",
+                "empty-link": "Links appear here once a carrier registers them."
             },
             "register": {
                 "carrier": {
@@ -2247,6 +2490,550 @@
                     "CARRIER_SUSPENDED": "This carrier is suspended.",
                     "UNKNOWN": "This carrier cannot be booked right now."
                 }
+            },
+            "eyebrow": {
+                "management": "Management"
+            },
+            "tiles": {
+                "pending-review": "Pending review",
+                "pending-review-hint": {
+                    "organization": "documents waiting for you",
+                    "driver": "licences waiting for you",
+                    "vehicle": "vehicle papers to check"
+                },
+                "expiring": "Expiring in {days} days",
+                "expiring-hint": {
+                    "organization": "contracts and licences",
+                    "driver": "licences and ID cards",
+                    "vehicle": "booklets and ownership"
+                },
+                "incomplete": "Incomplete profiles",
+                "incomplete-hint": "missing NUIT, phone or email",
+                "risk": "Flagged risk",
+                "risk-hint": "under watch or high risk",
+                "contract": "No signed contract",
+                "contract-hint": "cannot take orders yet",
+                "phone": "No phone number",
+                "phone-hint": "cannot receive WhatsApp updates",
+                "unassigned-driver": "Without a truck",
+                "unassigned-driver-hint": "not assigned to any vehicle",
+                "ownership": "Ownership unverified",
+                "ownership-hint": "no proof of ownership yet",
+                "unassigned-truck": "Without a driver",
+                "unassigned-truck-hint": "trucks nobody is assigned to",
+                "unassigned-trailer": "Not hitched",
+                "unassigned-trailer-hint": "trailers without a truck",
+                "unassigned-link": "Not hitched",
+                "unassigned-link-hint": "links without a trailer"
+            },
+            "columns": {
+                "company": "Company",
+                "nuit": "NUIT",
+                "contact": "Contact",
+                "verification": "Verification",
+                "documents": "Documents",
+                "fleet": "Fleet",
+                "orders": "Orders",
+                "on-time": "On-time",
+                "payment": "Settled",
+                "actions": "Actions",
+                "driver": "Driver",
+                "phone": "Phone",
+                "carrier": "Carrier",
+                "truck": "Truck",
+                "location": "Location",
+                "status": "Status",
+                "licence": "Licence",
+                "vehicle": "Vehicle",
+                "ownership": "Ownership",
+                "capacity": "Capacity",
+                "year": "Year",
+                "contract": "Contract",
+                "risk": "Risk"
+            },
+            "sort": {
+                "name": "Name",
+                "status": "Status",
+                "orders": "Orders",
+                "created": "Date added",
+                "carrier": "Carrier",
+                "plate": "Plate",
+                "year": "Year"
+            },
+            "missing": {
+                "add": {
+                    "nuit": "Add NUIT",
+                    "email": "Add email",
+                    "phone": "Add phone",
+                    "passport": "Add passport"
+                },
+                "hint": {
+                    "nuit": "9 digits, no spaces",
+                    "email": "The address the company answers from",
+                    "phone": "Mozambican numbers can be typed without +258",
+                    "passport": "As printed on the document"
+                },
+                "placeholder": {
+                    "nuit": "400123456",
+                    "email": "geral@empresa.co.mz",
+                    "phone": "+258 84 000 0000",
+                    "passport": "GN123456"
+                },
+                "invalid": {
+                    "nuit": "A NUIT has exactly 9 digits",
+                    "email": "That does not look like an email address",
+                    "phone": "That does not look like a phone number",
+                    "passport": "Enter at least 3 characters"
+                },
+                "cancel": "Cancel",
+                "save": "Save",
+                "errors": {
+                    "DUPLICATE_NUIT": "Another company already has this NUIT",
+                    "DUPLICATE_EMAIL": "Another record already uses this email",
+                    "DUPLICATE_PHONE": "Another record already uses this phone number",
+                    "NOT_ALLOWED": "Your role cannot edit partners",
+                    "NOT_FOUND": "This record no longer exists",
+                    "UNKNOWN": "Could not save, please try again"
+                }
+            },
+            "actions": {
+                "menu": "More actions",
+                "open": "Open profile",
+                "review": "Review documents",
+                "copy-nuit": "Copy NUIT",
+                "copy-phone": "Copy phone",
+                "copy-email": "Copy email",
+                "copy-plate": "Copy plate",
+                "copy-vin": "Copy VIN"
+            },
+            "bulk": {
+                "export": "Export"
+            },
+            "profile": {
+                "title": "Partner profile",
+                "description": "Contact details, verification, fleet and orders",
+                "close": "Close",
+                "edit": "Edit",
+                "review": "Review documents",
+                "tabs": {
+                    "overview": "Overview",
+                    "documents": "Documents",
+                    "fleet": "Fleet",
+                    "drivers": "Drivers",
+                    "orders": "Orders",
+                    "activity": "Activity"
+                },
+                "type": {
+                    "shipper": "Shipper",
+                    "carrier": "Carrier",
+                    "driver": "Driver"
+                },
+                "completeness": "Profile completeness",
+                "fields-filled": "{filled} of {total} fields",
+                "add": "Add {field}",
+                "none": "None",
+                "open-map": "Open in Google Maps",
+                "verification": "Verification",
+                "kyc": "KYC status",
+                "until": "until",
+                "next-expiry": "Next expiry",
+                "registered": "Registered",
+                "contact": "Contact",
+                "same-as-billing": "Same as billing",
+                "performance": "Performance",
+                "orders": "orders",
+                "active-now": "active now",
+                "trucks-drivers": "trucks · {drivers} drivers",
+                "fleet-line": "{trucks} trucks, {trailers} trailers and {links} links on file",
+                "recent-orders": "Recent orders",
+                "view-all": "View all {count}",
+                "no-orders": "No orders yet",
+                "load-failed": "Could not load this profile, please try again",
+                "no-fleet": "No vehicles registered under this carrier",
+                "no-drivers": "No drivers registered under this carrier",
+                "no-activity": "Nothing has happened yet",
+                "activity": {
+                    "uploaded": "Uploaded {document}",
+                    "approved": "Approved {document}",
+                    "rejected": "Rejected {document}",
+                    "risk": "Risk flag changed"
+                },
+                "valid-until": "Valid until",
+                "assignment": "Assignment",
+                "loading-bay": "Loading bay",
+                "owner": "Owner on record",
+                "details": "Details",
+                "make": "Make and model",
+                "bay-on-trailer": "On the trailer",
+                "operation": "Operation",
+                "vehicle-type": "Type"
+            },
+            "edit": {
+                "title": {
+                    "organization": "Edit company",
+                    "driver": "Edit driver",
+                    "truck": "Edit truck",
+                    "trailer": "Edit trailer",
+                    "link": "Edit link"
+                },
+                "description": "Only the fields you change are saved.",
+                "save": "Save changes",
+                "saving": "Saving…",
+                "cancel": "Cancel",
+                "fields": {
+                    "name": "Name",
+                    "nuit": "NUIT",
+                    "representee": "Representative",
+                    "email": "Email",
+                    "phone": "Phone",
+                    "billing-address": "Billing address",
+                    "physical-address": "Physical address",
+                    "passport": "Passport",
+                    "plate": "Registration plate",
+                    "internal-id": "Internal ID",
+                    "brand": "Brand",
+                    "model": "Model",
+                    "year": "Year",
+                    "vin": "VIN"
+                },
+                "placeholders": {
+                    "name": "Company name",
+                    "nuit": "400123456",
+                    "representee": "Who speaks for the company",
+                    "email": "geral@empresa.co.mz",
+                    "phone": "+258 84 000 0000",
+                    "address": "Search for the address…",
+                    "driver-name": "Full name",
+                    "passport": "GN123456",
+                    "plate": "AAA 000 MC",
+                    "internal-id": "Fleet number",
+                    "brand": "Scania",
+                    "model": "R450",
+                    "year": "2019",
+                    "vin": "17 characters"
+                },
+                "errors": {
+                    "name": "Enter a name",
+                    "nuit": "A NUIT has exactly 9 digits",
+                    "email": "Enter a valid email address",
+                    "phone": "Enter a valid phone number",
+                    "plate": "Enter the registration plate",
+                    "brand": "Enter the brand",
+                    "model": "Enter the model",
+                    "year": "Enter a four-digit year",
+                    "vin": "A VIN has 17 characters without I, O or Q"
+                },
+                "server": {
+                    "DUPLICATE_NUIT": "Another company already has this NUIT",
+                    "DUPLICATE_EMAIL": "Another record already uses this email",
+                    "DUPLICATE_PHONE": "Another record already uses this phone number",
+                    "DUPLICATE_PLATE": "Another vehicle already has this plate",
+                    "DUPLICATE_VIN": "Another vehicle already has this VIN",
+                    "NOT_ALLOWED": "Your role cannot edit partners",
+                    "NOT_FOUND": "This record no longer exists",
+                    "UNKNOWN": "Could not save, please try again"
+                }
+            },
+            "assign": {
+                "change-truck": "Change truck",
+                "assign-truck": "Assign truck",
+                "search-truck": "Search the carrier's trucks…",
+                "no-trucks": "No trucks match",
+                "unassign": "Take off the truck",
+                "assign-driver": "Assign driver",
+                "search-driver": "Search the carrier's drivers…",
+                "no-drivers": "No drivers match"
+            },
+            "standing": {
+                "menu": "More actions",
+                "flag-risk": "Flag risk",
+                "change-risk": "Change risk level",
+                "clear-risk": "Clear risk flag",
+                "suspend": "Suspend",
+                "unsuspend": "Lift suspension",
+                "note-required": "A note is required",
+                "cancel": "Cancel",
+                "level": {
+                    "watch": "Watch",
+                    "watch-hint": "Keeps operating, bookings get a warning",
+                    "high": "High risk",
+                    "high-hint": "Bookings need a manager and a note"
+                },
+                "errors": {
+                    "NOT_ALLOWED": "Your role cannot perform this action",
+                    "INVALID_STATE": "That action is not available right now",
+                    "NOT_FOUND": "This record no longer exists",
+                    "UNKNOWN": "Something went wrong, please try again"
+                },
+                "dialog": {
+                    "flag-risk": {
+                        "title": "Flag this company",
+                        "description": "The flag shows on every list and every booking until it is cleared.",
+                        "placeholder": "What was found, and where",
+                        "confirm": "Flag"
+                    },
+                    "clear-risk": {
+                        "title": "Clear the risk flag",
+                        "description": "Say what resolved the finding. The note replaces the original reason.",
+                        "placeholder": "What changed",
+                        "confirm": "Clear flag"
+                    },
+                    "suspend": {
+                        "title": "Suspend this partner",
+                        "description": "A suspended partner cannot be booked until the suspension is lifted.",
+                        "placeholder": "Why the partner is being suspended",
+                        "confirm": "Suspend"
+                    },
+                    "unsuspend": {
+                        "title": "Lift the suspension",
+                        "description": "The verification status is recalculated from the documents on file.",
+                        "placeholder": "Why the suspension is being lifted",
+                        "confirm": "Lift suspension"
+                    }
+                }
+            },
+            "whatsapp": {
+                "confirmed": "On WhatsApp — open a chat",
+                "unreachable": "Not reachable on WhatsApp: the last message failed",
+                "start": "Start WhatsApp chat"
+            }
+        },
+        "list": {
+            "breadcrumb": "You are here",
+            "command": "Search anywhere (⌘K)",
+            "empty": {
+                "adjust": "Try a different search or clear a filter."
+            },
+            "select-all": "Select all rows on this page",
+            "select-row": "Select row",
+            "filters": "Filters",
+            "status": "Status",
+            "sort": "Sort",
+            "sort-by": "Sort by",
+            "ascending": "Ascending",
+            "descending": "Descending",
+            "columns": "Columns",
+            "export": "Export CSV",
+            "remove-filter": "Remove {filter} filter",
+            "clear-all": "Clear all",
+            "showing": "Showing {from}–{to} of {total}",
+            "pagination": "Pages",
+            "previous": "Previous page",
+            "next": "Next page",
+            "per-page": "{count} per page",
+            "selected": "{count, plural, one {# selected} other {# selected}}",
+            "clear-selection": "Clear selection",
+            "copied": "Copied",
+            "suggestions": "Suggestions"
+        },
+        "command": {
+            "title": "Search",
+            "description": "Find an order, a company, a driver or a plate",
+            "placeholder": "Search orders, companies, drivers, plates…",
+            "empty": "Nothing matches",
+            "typing": "Type at least two characters",
+            "groups": {
+                "organizations": "Companies",
+                "drivers": "Drivers",
+                "vehicles": "Vehicles",
+                "actions": "Actions",
+                "orders": "Orders"
+            },
+            "hints": {
+                "move": "move",
+                "open": "open",
+                "close": "close"
+            },
+            "shipper": "Shipper",
+            "carrier": "Carrier",
+            "search-in": "Search “{query}” in {page}",
+            "pages": {
+                "shippers": "Shippers",
+                "carriers": "Carriers",
+                "drivers": "Drivers",
+                "fleet": "Fleet",
+                "orders": "Orders",
+                "map": "Map"
+            }
+        },
+        "disputes": {
+            "title": "Disputes",
+            "description": "Theft, loss, damage and other events that put the closure of a cargo in question",
+            "search": "Search order, shipper, carrier or description",
+            "clear-search": "Clear search",
+            "tabs": {
+                "all": "All"
+            },
+            "columns": {
+                "order": "Order",
+                "reason": "Cause",
+                "parties": "Shipper · carrier",
+                "claimed": "Claimed",
+                "holds": "Holds",
+                "liable": "Liable",
+                "opened": "Opened",
+                "status": "Status"
+            },
+            "sort": {
+                "opened": "Opened",
+                "claimed": "Amount claimed",
+                "status": "Status",
+                "updated": "Last update"
+            },
+            "filters": {
+                "reason": "Cause",
+                "liable": "Liable party",
+                "hold": "Payments held",
+                "any": "Any"
+            },
+            "values": {
+                "reasons": {
+                    "theft": "Theft",
+                    "loss": "Loss",
+                    "damage": "Damage",
+                    "other": "Other"
+                },
+                "statuses": {
+                    "open": "Open",
+                    "under-review": "Under review",
+                    "settled": "Settled",
+                    "closed": "Closed"
+                },
+                "liable": {
+                    "carrier": "Carrier",
+                    "shipper": "Shipper",
+                    "appload": "Appload",
+                    "third-party": "Third party",
+                    "unknown": "Unknown"
+                },
+                "actions": {
+                    "opened": "Dispute opened",
+                    "updated": "Dispute updated",
+                    "resolved": "Dispute resolved"
+                },
+                "hold-shipper": "Shipper payments held",
+                "hold-carrier": "Carrier payments held",
+                "no-holds": "No holds",
+                "no-carrier": "No carrier",
+                "system": "System"
+            },
+            "data": {
+                "empty": "No disputes",
+                "empty-description": "Disputes are opened from an order's menu when a cargo is stolen, lost or damaged.",
+                "no-results": "No disputes match your filters",
+                "error": "Could not load the disputes, please try again"
+            },
+            "bulk": {
+                "export": "Export"
+            },
+            "stats": {
+                "title": "{open, plural, =0 {No open dispute} one {# open dispute} other {# open disputes}} · {review} under review",
+                "count": "Active disputes",
+                "claimed": "Claimed",
+                "empty": "Nothing claimed on active disputes."
+            },
+            "sheet": {
+                "title": "Dispute",
+                "description": "Cause, holds, claim and history",
+                "close": "Close",
+                "load-failed": "Could not load this dispute, please try again",
+                "opened-by": "opened {date} by {name}",
+                "mark-review": "Mark under review",
+                "moved-review": "Dispute marked under review",
+                "resolve": "Resolve",
+                "open-order": "Open order",
+                "full-order": "Full page",
+                "holds": "Payment holds",
+                "holds-hint": "A held party cannot have a proof of payment recorded until the dispute is settled or closed.",
+                "holds-lifted": "Lifted: the dispute is no longer active.",
+                "details": "Details",
+                "edit": "Edit",
+                "saved": "Dispute saved",
+                "resolution": "Resolution",
+                "order": "Order",
+                "order-status": "Order status",
+                "route": "Route",
+                "shipper-total": "Shipper total",
+                "carrier-total": "Carrier total",
+                "terms": "Carrier debt and terms",
+                "terms-next": "Next stage: the debt recovered from later shipments will be set here at settlement.",
+                "terms-none": "No debt recorded.",
+                "history": "History",
+                "no-history": "No history yet",
+                "updated": "Updated {date}"
+            },
+            "form": {
+                "description": "What happened",
+                "liable": "Liable party",
+                "liable-none": "Not decided",
+                "claimed": "Amount claimed",
+                "currency": "Currency",
+                "cancel": "Cancel",
+                "save": "Save"
+            },
+            "resolve": {
+                "title": "Resolve the dispute",
+                "description": "Order {orderId}. Settling or closing lifts the payment holds and lets the order complete.",
+                "status": "Outcome",
+                "settled": "Settled: an outcome was agreed",
+                "closed": "Closed: dropped without settlement",
+                "resolution": "Resolution",
+                "placeholder": "What was agreed, or why it was dropped (at least 5 characters)",
+                "confirm": "Resolve",
+                "cancel": "Cancel",
+                "done": "Dispute resolved",
+                "errors": {
+                    "VERSION_CONFLICT": "Someone changed this dispute meanwhile. Reload and try again.",
+                    "DISPUTE_CLOSED": "This dispute is no longer active.",
+                    "NOT_ALLOWED": "Only a manager can resolve a dispute.",
+                    "NOT_FOUND": "The dispute could not be found.",
+                    "UNKNOWN": "Something went wrong. Try again."
+                }
+            },
+            "errors": {
+                "VERSION_CONFLICT": "Someone changed this dispute meanwhile. Reload and try again.",
+                "DISPUTE_CLOSED": "This dispute is no longer active.",
+                "NOT_ALLOWED": "You are not allowed to change disputes.",
+                "NOT_FOUND": "The dispute could not be found.",
+                "UNKNOWN": "Something went wrong. Try again."
+            }
+        },
+        "map": {
+            "title": "Map",
+            "description": "Last known location of every on-going load",
+            "search": "Search order, shipper, carrier, driver or plate",
+            "clear-search": "Clear search",
+            "count": "{count, plural, =1 {# on-going load} other {# on-going loads}}",
+            "matches": "{count, plural, =0 {No matches} =1 {# match} other {# matches}}",
+            "show-all": "Show all",
+            "error": "The map could not be loaded",
+            "empty": {
+                "title": "No on-going loads",
+                "description": "Loads appear here once they are on the road"
+            },
+            "list": {
+                "no-location": "No location yet",
+                "last-seen": "Seen {ago}",
+                "pings": "{count, plural, =1 {# update} other {# updates}}",
+                "toggle": "Loads"
+            },
+            "selected": {
+                "open": "Open order",
+                "full-page": "Full page",
+                "request-location": "Request location",
+                "requested": "Location requested",
+                "close": "Close",
+                "last-seen": "Last seen {ago}",
+                "no-pings": "No location updates yet"
+            },
+            "detail": {
+                "no-pings": "No location updates yet",
+                "unavailable": "Route unavailable",
+                "missing-key": "Map not configured (missing browser key)",
+                "last-seen": "Last seen {date}",
+                "legend-route": "Planned route",
+                "legend-covered": "Covered",
+                "loading": "Loading map…"
             }
         }
     },
@@ -2274,10 +3061,14 @@
             "registerTruck": "Registered truck {regPlate}",
             "registerTrailer": "Registered trailer {regPlate}",
             "registerLink": "Registered link {regPlate}",
-            "registerDriver": "Registered driver {name}"
+            "registerDriver": "Registered driver {name}",
+            "updateDriver": "Updated driver {driverId} ({changedFields})",
+            "updateVehicle": "Updated {kind} {regPlate} ({changedFields})",
+            "assignDriver": "Changed the truck of driver {driverId}"
         },
         "organizations": {
-            "register": "Registered organization {name}"
+            "register": "Registered organization {name}",
+            "update": "Updated {name} ({changedFields})"
         },
         "chats": {
             "start": "Started a conversation with {driverName}",
@@ -2293,6 +3084,14 @@
         },
         "settings": {
             "setPassword": "Created a password for their account"
+        },
+        "orders": {
+            "bulkTransition": "Moved {count} orders to {to} ({failed} failed)"
+        },
+        "disputes": {
+            "open": "Opened a {reason} dispute on order {orderId}",
+            "update": "Updated the dispute on order {orderId} ({changedFields})",
+            "resolve": "Resolved the dispute on order {orderId} as {status}"
         }
     }
 }

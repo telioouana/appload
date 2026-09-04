@@ -6,7 +6,7 @@ import { FormProvider, useForm } from "react-hook-form"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { IconCancel, IconCheck, IconX } from "@tabler/icons-react"
 
-import { useTranslations } from "@workspace/i18n"
+import { useLocale, useTranslations } from "@workspace/i18n"
 import { authClient } from "@workspace/auth/client"
 
 import { Button } from "@workspace/ui/components/button"
@@ -112,6 +112,8 @@ export function CreateOrderView() {
     // prospect → booked move runs the exact validation creation runs
     const { isOpen, order, intent, onClose } = useCreateOrder()
     const t = useTranslations("Admin.order.create")
+    // Passed to the distance server action: it can't read the request locale itself
+    const locale = useLocale()
 
     const FormSchema = useMemo(() => CreateOrderSchema(t), [t])
 
@@ -147,7 +149,7 @@ export function CreateOrderView() {
             const token = ++routeToken.current
 
             const [rows, trip] = await Promise.all([
-                distanceCalculator(origin, destination),
+                distanceCalculator(origin, destination, locale),
                 getLogisticsTripType(origin, destination),
             ])
             // A newer address pick superseded this request while it was in flight
@@ -235,7 +237,7 @@ export function CreateOrderView() {
         })
 
         return unsubscribe
-    }, [form])
+    }, [form, locale])
 
     function handleClose() {
         form.reset()
@@ -252,7 +254,7 @@ export function CreateOrderView() {
                     onSuccess: (result) => {
                         form.reset()
                         onClose()
-                        queryClient.invalidateQueries(trpc.orders.list.queryFilter())
+                        queryClient.invalidateQueries(trpc.orders.pathFilter())
                         queryClient.invalidateQueries(trpc.order.get.queryFilter({ orderId: result.orderId }))
                         setCreated({
                             orderId: result.orderId,
@@ -273,7 +275,7 @@ export function CreateOrderView() {
                         // moved on; refresh it so "try again" reopens on the
                         // current data
                         if (code === "VERSION_CONFLICT") {
-                            queryClient.invalidateQueries(trpc.orders.list.queryFilter())
+                            queryClient.invalidateQueries(trpc.orders.pathFilter())
                             queryClient.invalidateQueries(trpc.order.get.queryFilter({ orderId: order.orderId }))
                         }
                     },
@@ -286,7 +288,7 @@ export function CreateOrderView() {
             onSuccess: (result) => {
                 form.reset()
                 onClose()
-                queryClient.invalidateQueries(trpc.orders.list.queryFilter())
+                queryClient.invalidateQueries(trpc.orders.pathFilter())
                 setCreated({
                     orderId: result.orderId,
                     status: result.status as ["prospect", "booked"][number],

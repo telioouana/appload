@@ -107,7 +107,7 @@ first deployment could never happen.) The website app has no
    - `KYC_ENFORCEMENT`: `warn` to launch, `block` once partners' documents
      are loaded.
 
-## 3. Google — OAuth + service account + logbook spreadsheet
+## 3. Google — OAuth + service account + logbook spreadsheet + Maps
 
 1. In the Google Cloud console OAuth client, add the redirect URI:
    `https://<prod origin>/api/auth/callback/google`.
@@ -127,6 +127,17 @@ first deployment could never happen.) The website app has no
    `Status` needs: Prospects, Booked, To Loading, At Loading, Loading,
    Waiting Documents, In Transit, Stopped, Issue, At Border, At Offloading,
    Offloading, Delivered, Completed, Cancelled, Underbid.
+4. **Maps (live tracking map).** Enable the **Routes API** on the server key
+   behind `GOOGLE_MAPS_API_KEY` — it already carries Places and Geocoding;
+   without Routes every order draws a straight line between geocoded
+   endpoints instead of the road. Then create a second, *browser* key with
+   the **Maps JavaScript API** enabled and an HTTP-referrer restriction for
+   the production origin, and set it in Vercel as
+   `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`, optionally with
+   `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` (a cloud-styled vector Map ID; unset
+   falls back to Google's demo style). Both are `NEXT_PUBLIC_*` and are
+   baked into the bundle at build time, so changing either needs a
+   **rebuild**, not just a redeploy.
 
 ## 4. Resend — email
 

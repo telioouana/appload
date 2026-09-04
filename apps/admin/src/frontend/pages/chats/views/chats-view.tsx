@@ -12,6 +12,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@w
 import { Separator } from "@workspace/ui/components/separator";
 
 import { useTRPC } from "@/backend/api/client";
+import { useListParams } from "@/components/list/use-list-params";
 import type { ConversationSummary } from "@/backend/api/routers/chats";
 import { domainErrorCode } from "@/lib/trpc-error";
 import { TRACKED_STATUSES } from "@/lib/tracking/statuses";
@@ -42,7 +43,16 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
     const trpc = useTRPC();
     const queryClient = useQueryClient();
 
-    const [activeId, setActiveId] = useState<string | null>(null);
+    // The open conversation lives in the URL so the order page, the partner
+    // profile and a shared link can all point at one. Written shallowly:
+    // the server reads nothing from it, and this page polls
+    const params = useListParams()
+    const [activeId, setActiveId] = useState<string | null>(params.get("c"))
+
+    const selectConversation = (id: string) => {
+        setActiveId(id)
+        params.shallow({ key: "c", value: id })
+    };
     const [draft, setDraft] = useState("");
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState<ConversationFilter>("all");
@@ -206,7 +216,7 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
                     onSearchChange={setSearch}
                     filter={filter}
                     onFilterChange={setFilter}
-                    onSelect={setActiveId}
+                    onSelect={selectConversation}
                     onNewChat={() => setNewChatOpen(true)}
                 />
 
@@ -256,7 +266,7 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
                     onOpenChange={setNewChatOpen}
                     onStarted={(conversation) => {
                         setNewChatOpen(false);
-                        setActiveId(conversation.id);
+                        selectConversation(conversation.id);
                         queryClient.invalidateQueries(trpc.chats.list.queryFilter());
                     }}
                 />
