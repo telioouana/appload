@@ -71,6 +71,13 @@
       "when": 1788423381905,
       "tag": "0009_order_dispute",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788469850899,
+      "tag": "0010_order_tracking_map",
+      "breakpoints": true
     }
   ]
 }

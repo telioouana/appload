@@ -24,6 +24,7 @@
         "@trpc/tanstack-react-query": "^11.18.0",
         "@upstash/qstash": "^2.8.4",
         "@vercel/analytics": "^2.0.1",
+        "@vis.gl/react-google-maps": "1.9.0",
         "@workspace/auth": "workspace:*",
         "@workspace/db": "workspace:*",
         "@workspace/edgestore": "workspace:*",

@@ -2997,6 +2997,44 @@
                 "NOT_FOUND": "A disputa não foi encontrada.",
                 "UNKNOWN": "Algo correu mal. Tente novamente."
             }
+        },
+        "map": {
+            "title": "Mapa",
+            "description": "Última localização conhecida de cada carga em andamento",
+            "search": "Pesquisar pedido, cliente, transportador, motorista ou matrícula",
+            "clear-search": "Limpar pesquisa",
+            "count": "{count, plural, =1 {# carga em andamento} other {# cargas em andamento}}",
+            "matches": "{count, plural, =0 {Sem resultados} =1 {# resultado} other {# resultados}}",
+            "show-all": "Mostrar todas",
+            "error": "Não foi possível carregar o mapa",
+            "empty": {
+                "title": "Sem cargas em andamento",
+                "description": "As cargas aparecem aqui assim que estiverem em trânsito"
+            },
+            "list": {
+                "no-location": "Ainda sem localização",
+                "last-seen": "Vista {ago}",
+                "pings": "{count, plural, =1 {# atualização} other {# atualizações}}",
+                "toggle": "Cargas"
+            },
+            "selected": {
+                "open": "Abrir pedido",
+                "full-page": "Página completa",
+                "request-location": "Pedir localização",
+                "requested": "Localização pedida",
+                "close": "Fechar",
+                "last-seen": "Última localização {ago}",
+                "no-pings": "Ainda sem atualizações de localização"
+            },
+            "detail": {
+                "no-pings": "Ainda sem atualizações de localização",
+                "unavailable": "Rota indisponível",
+                "missing-key": "Mapa não configurado (falta a chave do browser)",
+                "last-seen": "Última localização {date}",
+                "legend-route": "Rota planeada",
+                "legend-covered": "Percorrido",
+                "loading": "A carregar o mapa…"
+            }
         }
     },
     "ActivityLog": {

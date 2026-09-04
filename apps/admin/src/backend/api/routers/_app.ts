@@ -6,6 +6,7 @@ import { fleetRouter } from "./fleet"
 import { kycRouter } from "./kyc"
 import { organizationsRouter } from "./organizations"
 import { activityCatalog } from "../activity-catalog"
+import { mapRouter } from "@/frontend/pages/map/server/procedures";
 import { orderRouter } from "@/frontend/pages/order/server/procedures";
 import { ordersRouter } from "@/frontend/pages/orders/server/procedures";
 import { partnersRouter } from "@/frontend/pages/partners/server/procedures";
@@ -23,6 +24,7 @@ export const appRouter = createTRPCRouter({
     documents: documentsRouter,
     fleet: fleetRouter,
     kyc: kycRouter,
+    map: mapRouter,
     order: orderRouter,
     orders: ordersRouter,
     organizations: organizationsRouter,

@@ -13,6 +13,7 @@ import {
     SHARE_LOCATION_PAYLOAD,
 } from "@/lib/chats/infobip";
 import { normalizePhone } from "@/lib/chats/phone";
+import { recordOrderLocation, resolveOrderForConversation } from "@/lib/tracking/locations";
 
 /**
  * Constant-time compare that does not leak the secret's length. timingSafeEqual
@@ -32,6 +33,10 @@ function secretMatches(provided: string | null, expected: string): boolean {
  * Infobip webhook: inbound WhatsApp/SMS messages AND delivery reports both
  * land here (point both Infobip configurations at POST /api/chats/infobip).
  * Requests must carry INFOBIP_WEBHOOK_SECRET in the "x-webhook-secret" header.
+ *
+ * Inbound location pins are also recorded as tracking points against the
+ * driver's load (lib/tracking/locations.ts), which is what puts the truck on
+ * the map — best effort, after the message itself is safely stored.
  *
  * This fails closed, matching lib/cron/verify.ts: an unset secret rejects
  * every request rather than disabling the check. Writes here mark tracking
@@ -112,6 +117,28 @@ export async function POST(request: NextRequest) {
             continue;
         }
 
+        // Infobip retries a webhook it did not see acknowledged, and
+        // chat_message.external_id carries no unique constraint — so the
+        // replay is caught here. Without it the retry inserts a second row
+        // with a fresh id, which walks past the ping's one-row-per-chat-message
+        // uniqueness and writes the same position onto the trail twice (and
+        // re-sends the location request a button tap already answered).
+        if (message.externalId) {
+            const [replay] = await db
+                .select({ id: chatMessage.id })
+                .from(chatMessage)
+                .where(and(
+                    eq(chatMessage.conversationId, conversation.id),
+                    eq(chatMessage.direction, "inbound"),
+                    eq(chatMessage.externalId, message.externalId),
+                ))
+                .limit(1);
+
+            if (replay) {
+                continue;
+            }
+        }
+
         const [saved] = await db
             .insert(chatMessage)
             .values({
@@ -175,6 +202,44 @@ export async function POST(request: NextRequest) {
                         eq(trackingRequest.conversationId, conversation.id),
                         inArray(trackingRequest.status, ["pending", "sent", "delivered"]),
                     ));
+
+                // A pin is the payload we actually asked for: attribute it to
+                // the driver's load so it joins the map trail. Deliberately
+                // best-effort — the message is already stored, and throwing
+                // here would make Infobip retry the whole batch and duplicate
+                // the thread. An unattributed pin stays readable in the chat.
+                if (message.kind === "location" && message.location) {
+                    try {
+                        const active = await resolveOrderForConversation(db, {
+                            orderId: conversation.orderId,
+                            driverPhone: conversation.driverPhone,
+                        });
+
+                        if (active) {
+                            await recordOrderLocation(db, {
+                                orderId: active.id,
+                                conversationId: conversation.id,
+                                chatMessageId: saved.id,
+                                latitude: message.location.latitude,
+                                longitude: message.location.longitude,
+                                placeName: message.location.name,
+                                // When the driver sent it, not when we got
+                                // round to storing it: a backlog of queued
+                                // webhooks would otherwise land the whole
+                                // batch on the recovery minute and report
+                                // hours-old positions as fresh. Our own row's
+                                // timestamp is the fallback.
+                                recordedAt: message.receivedAt ?? saved.createdAt,
+                            });
+                        } else {
+                            console.warn("[infobip] location pin without an order", {
+                                conversationId: conversation.id,
+                            });
+                        }
+                    } catch (error) {
+                        console.error("[infobip] location record failed", error);
+                    }
+                }
             }
         }
     }

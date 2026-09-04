@@ -2997,6 +2997,44 @@
                 "NOT_FOUND": "The dispute could not be found.",
                 "UNKNOWN": "Something went wrong. Try again."
             }
+        },
+        "map": {
+            "title": "Map",
+            "description": "Last known location of every on-going load",
+            "search": "Search order, shipper, carrier, driver or plate",
+            "clear-search": "Clear search",
+            "count": "{count, plural, =1 {# on-going load} other {# on-going loads}}",
+            "matches": "{count, plural, =0 {No matches} =1 {# match} other {# matches}}",
+            "show-all": "Show all",
+            "error": "The map could not be loaded",
+            "empty": {
+                "title": "No on-going loads",
+                "description": "Loads appear here once they are on the road"
+            },
+            "list": {
+                "no-location": "No location yet",
+                "last-seen": "Seen {ago}",
+                "pings": "{count, plural, =1 {# update} other {# updates}}",
+                "toggle": "Loads"
+            },
+            "selected": {
+                "open": "Open order",
+                "full-page": "Full page",
+                "request-location": "Request location",
+                "requested": "Location requested",
+                "close": "Close",
+                "last-seen": "Last seen {ago}",
+                "no-pings": "No location updates yet"
+            },
+            "detail": {
+                "no-pings": "No location updates yet",
+                "unavailable": "Route unavailable",
+                "missing-key": "Map not configured (missing browser key)",
+                "last-seen": "Last seen {date}",
+                "legend-route": "Planned route",
+                "legend-covered": "Covered",
+                "loading": "Loading map…"
+            }
         }
     },
     "ActivityLog": {
