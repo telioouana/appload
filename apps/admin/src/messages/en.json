@@ -2050,85 +2050,87 @@
             "shippers": {
                 "title": "Shippers",
                 "description": "Manage your client companies and their verification",
-                "add": "Add new shipper"
+                "add": "Add shipper"
             },
             "carriers": {
                 "title": "Carriers",
                 "description": "Manage your transporters, their contracts and risk",
-                "add": "Add new carrier"
+                "add": "Add carrier"
             },
             "drivers": {
                 "title": "Drivers",
                 "description": "Manage the driver roster across all carriers",
-                "add": "Add new driver"
+                "add": "Add driver"
             },
             "fleet": {
                 "title": "Fleet",
                 "description": "Manage trucks, trailers and links across all carriers",
-                "add": "Add new vehicle",
+                "add": "Add vehicle",
                 "kind": {
                     "truck": "Trucks",
                     "trailer": "Trailers",
                     "link": "Links"
                 }
             },
-            "stats": {
-                "total": "Total",
-                "pending-review": "Pending review",
-                "verified": "Verified",
-                "expiring": "Expiring ≤{days}d",
-                "flagged": "Flagged"
-            },
             "filters": {
                 "search": {
-                    "organization": "Search by name, VAT number, or email...",
-                    "driver": "Search by name, email, or phone...",
-                    "fleet": "Search by plate, brand, or carrier..."
+                    "organization": "Search name, NUIT, phone or email",
+                    "driver": "Search name, phone, passport or plate",
+                    "fleet": "Search plate, VIN, brand or carrier"
                 },
                 "all": "All",
-                "view": {
-                    "grid": "Grid view",
-                    "list": "List view"
+                "clear": "Clear search",
+                "issues": "Issues",
+                "any": "Any",
+                "expiring": "Expiring soon",
+                "within-days": "within {days} days",
+                "profile": "Profile",
+                "incomplete": "Incomplete profile",
+                "incomplete-hint": "NUIT, phone or email still missing",
+                "contract-options": {
+                    "valid": "Valid",
+                    "missing": "Missing or expired"
                 },
-                "clear": "Clear search"
-            },
-            "fields": {
-                "nuit": "VAT number",
-                "email": "Email",
-                "phone": "Phone",
-                "carrier": "Carrier",
-                "documents": "Documents",
-                "status": "Status",
-                "contract": "Contract",
-                "risk": "Risk",
-                "ownership": "Ownership",
-                "location": "Location",
-                "load": "Current load",
-                "driver": "Driver",
-                "truck": "Truck",
-                "capacity": "Capacity",
-                "vehicle": "Vehicle",
-                "licence": "Licence",
-                "expires": "Expires",
-                "active-orders": "Active orders",
-                "total-orders": "Total orders",
-                "on-time": "On-time delivery",
-                "payment": "Payments settled",
-                "fleet-size": "Fleet size",
-                "drivers": "Drivers"
+                "risk-options": {
+                    "flagged": "Any flag",
+                    "watch": "Watch",
+                    "high": "High risk"
+                },
+                "province": "Location",
+                "assignment": "Assignment",
+                "selected": "Selected",
+                "no-phone": "No phone number",
+                "no-phone-hint": "Cannot receive WhatsApp updates",
+                "no-truck": "Without a truck",
+                "no-truck-hint": "Not assigned to any vehicle",
+                "unassigned-truck": "Without a driver",
+                "unassigned-truck-hint": "Nobody is assigned to the truck",
+                "unassigned-trailer": "Not hitched",
+                "unassigned-trailer-hint": "No truck tows this trailer",
+                "unassigned-link": "Not hitched",
+                "unassigned-link-hint": "No trailer carries this link"
             },
             "values": {
                 "none": "None",
                 "idle": "Idle",
                 "unassigned": "Unassigned",
-                "empty": "Empty",
                 "en-route": "En route to {city}",
                 "at": "At {city}",
-                "no-expiry": "No expiry",
                 "expires-in": "in {days}d",
                 "expired": "Expired",
                 "progress": "{approved}/{required}",
-                "tons": "{tons} t"
+                "tons": "{tons} t",
+                "trucks": "{count, plural, one {# truck} other {# trucks}}",
+                "drivers": "{count, plural, one {# driver} other {# drivers}}",
+                "active": "{count} active",
+                "total": "{count} total",
+                "none-yet": "None yet",
+                "missing": "Missing",
+                "passport": "Passport {number}",
+                "truck-type": {
+                    "articulated": "Articulated",
+                    "non-articulated": "Rigid"
+                }
             },
             "status": {
                 "draft": "Draft",
@@ -2217,7 +2219,13 @@
             "data": {
                 "empty": "Nothing here yet",
                 "no-results": "No results match your filters",
-                "error": "Could not load this list, please try again"
+                "error": "Could not load this list, please try again",
+                "empty-shipper": "Shippers appear here once they are registered.",
+                "empty-carrier": "Carriers appear here once they are registered.",
+                "empty-driver": "Drivers appear here once a carrier registers them.",
+                "empty-truck": "Trucks appear here once a carrier registers them.",
+                "empty-trailer": "Trailers appear here once a carrier registers them.",
+                "empty-link": "Links appear here once a carrier registers them."
             },
             "register": {
                 "carrier": {
@@ -2247,6 +2255,312 @@
                     "CARRIER_SUSPENDED": "This carrier is suspended.",
                     "UNKNOWN": "This carrier cannot be booked right now."
                 }
+            },
+            "eyebrow": {
+                "management": "Management"
+            },
+            "tiles": {
+                "pending-review": "Pending review",
+                "pending-review-hint": {
+                    "organization": "documents waiting for you",
+                    "driver": "licences waiting for you",
+                    "vehicle": "vehicle papers to check"
+                },
+                "expiring": "Expiring in {days} days",
+                "expiring-hint": {
+                    "organization": "contracts and licences",
+                    "driver": "licences and ID cards",
+                    "vehicle": "booklets and ownership"
+                },
+                "incomplete": "Incomplete profiles",
+                "incomplete-hint": "missing NUIT, phone or email",
+                "risk": "Flagged risk",
+                "risk-hint": "under watch or high risk",
+                "contract": "No signed contract",
+                "contract-hint": "cannot take orders yet",
+                "phone": "No phone number",
+                "phone-hint": "cannot receive WhatsApp updates",
+                "unassigned-driver": "Without a truck",
+                "unassigned-driver-hint": "not assigned to any vehicle",
+                "ownership": "Ownership unverified",
+                "ownership-hint": "no proof of ownership yet",
+                "unassigned-truck": "Without a driver",
+                "unassigned-truck-hint": "trucks nobody is assigned to",
+                "unassigned-trailer": "Not hitched",
+                "unassigned-trailer-hint": "trailers without a truck",
+                "unassigned-link": "Not hitched",
+                "unassigned-link-hint": "links without a trailer"
+            },
+            "columns": {
+                "company": "Company",
+                "nuit": "NUIT",
+                "contact": "Contact",
+                "verification": "Verification",
+                "documents": "Documents",
+                "fleet": "Fleet",
+                "orders": "Orders",
+                "on-time": "On-time",
+                "payment": "Settled",
+                "actions": "Actions",
+                "driver": "Driver",
+                "phone": "Phone",
+                "carrier": "Carrier",
+                "truck": "Truck",
+                "location": "Location",
+                "status": "Status",
+                "licence": "Licence",
+                "vehicle": "Vehicle",
+                "ownership": "Ownership",
+                "capacity": "Capacity",
+                "year": "Year",
+                "contract": "Contract",
+                "risk": "Risk"
+            },
+            "sort": {
+                "name": "Name",
+                "status": "Status",
+                "orders": "Orders",
+                "created": "Date added",
+                "carrier": "Carrier",
+                "plate": "Plate",
+                "year": "Year"
+            },
+            "missing": {
+                "add": {
+                    "nuit": "Add NUIT",
+                    "email": "Add email",
+                    "phone": "Add phone",
+                    "passport": "Add passport"
+                },
+                "hint": {
+                    "nuit": "9 digits, no spaces",
+                    "email": "The address the company answers from",
+                    "phone": "Mozambican numbers can be typed without +258",
+                    "passport": "As printed on the document"
+                },
+                "placeholder": {
+                    "nuit": "400123456",
+                    "email": "geral@empresa.co.mz",
+                    "phone": "+258 84 000 0000",
+                    "passport": "GN123456"
+                },
+                "invalid": {
+                    "nuit": "A NUIT has exactly 9 digits",
+                    "email": "That does not look like an email address",
+                    "phone": "That does not look like a phone number",
+                    "passport": "Enter at least 3 characters"
+                },
+                "cancel": "Cancel",
+                "save": "Save",
+                "errors": {
+                    "DUPLICATE_NUIT": "Another company already has this NUIT",
+                    "DUPLICATE_EMAIL": "Another record already uses this email",
+                    "DUPLICATE_PHONE": "Another record already uses this phone number",
+                    "NOT_ALLOWED": "Your role cannot edit partners",
+                    "NOT_FOUND": "This record no longer exists",
+                    "UNKNOWN": "Could not save, please try again"
+                }
+            },
+            "actions": {
+                "menu": "More actions",
+                "open": "Open profile",
+                "review": "Review documents",
+                "copy-nuit": "Copy NUIT",
+                "copy-phone": "Copy phone",
+                "copy-email": "Copy email",
+                "copy-plate": "Copy plate",
+                "copy-vin": "Copy VIN"
+            },
+            "bulk": {
+                "export": "Export"
+            },
+            "profile": {
+                "title": "Partner profile",
+                "description": "Contact details, verification, fleet and orders",
+                "close": "Close",
+                "edit": "Edit",
+                "review": "Review documents",
+                "tabs": {
+                    "overview": "Overview",
+                    "documents": "Documents",
+                    "fleet": "Fleet",
+                    "drivers": "Drivers",
+                    "orders": "Orders",
+                    "activity": "Activity"
+                },
+                "type": {
+                    "shipper": "Shipper",
+                    "carrier": "Carrier",
+                    "driver": "Driver"
+                },
+                "completeness": "Profile completeness",
+                "fields-filled": "{filled} of {total} fields",
+                "add": "Add {field}",
+                "none": "None",
+                "open-map": "Open in Google Maps",
+                "verification": "Verification",
+                "kyc": "KYC status",
+                "until": "until",
+                "next-expiry": "Next expiry",
+                "registered": "Registered",
+                "contact": "Contact",
+                "same-as-billing": "Same as billing",
+                "performance": "Performance",
+                "orders": "orders",
+                "active-now": "active now",
+                "trucks-drivers": "trucks · {drivers} drivers",
+                "fleet-line": "{trucks} trucks, {trailers} trailers and {links} links on file",
+                "recent-orders": "Recent orders",
+                "view-all": "View all {count}",
+                "no-orders": "No orders yet",
+                "load-failed": "Could not load this profile, please try again",
+                "no-fleet": "No vehicles registered under this carrier",
+                "no-drivers": "No drivers registered under this carrier",
+                "no-activity": "Nothing has happened yet",
+                "activity": {
+                    "uploaded": "Uploaded {document}",
+                    "approved": "Approved {document}",
+                    "rejected": "Rejected {document}",
+                    "risk": "Risk flag changed"
+                },
+                "valid-until": "Valid until",
+                "assignment": "Assignment",
+                "loading-bay": "Loading bay",
+                "owner": "Owner on record",
+                "details": "Details",
+                "make": "Make and model",
+                "bay-on-trailer": "On the trailer",
+                "operation": "Operation",
+                "vehicle-type": "Type"
+            },
+            "edit": {
+                "title": {
+                    "organization": "Edit company",
+                    "driver": "Edit driver",
+                    "truck": "Edit truck",
+                    "trailer": "Edit trailer",
+                    "link": "Edit link"
+                },
+                "description": "Only the fields you change are saved.",
+                "save": "Save changes",
+                "saving": "Saving…",
+                "cancel": "Cancel",
+                "fields": {
+                    "name": "Name",
+                    "nuit": "NUIT",
+                    "representee": "Representative",
+                    "email": "Email",
+                    "phone": "Phone",
+                    "billing-address": "Billing address",
+                    "physical-address": "Physical address",
+                    "passport": "Passport",
+                    "plate": "Registration plate",
+                    "internal-id": "Internal ID",
+                    "brand": "Brand",
+                    "model": "Model",
+                    "year": "Year",
+                    "vin": "VIN"
+                },
+                "placeholders": {
+                    "name": "Company name",
+                    "nuit": "400123456",
+                    "representee": "Who speaks for the company",
+                    "email": "geral@empresa.co.mz",
+                    "phone": "+258 84 000 0000",
+                    "address": "Search for the address…",
+                    "driver-name": "Full name",
+                    "passport": "GN123456",
+                    "plate": "AAA 000 MC",
+                    "internal-id": "Fleet number",
+                    "brand": "Scania",
+                    "model": "R450",
+                    "year": "2019",
+                    "vin": "17 characters"
+                },
+                "errors": {
+                    "name": "Enter a name",
+                    "nuit": "A NUIT has exactly 9 digits",
+                    "email": "Enter a valid email address",
+                    "phone": "Enter a valid phone number",
+                    "plate": "Enter the registration plate",
+                    "brand": "Enter the brand",
+                    "model": "Enter the model",
+                    "year": "Enter a four-digit year",
+                    "vin": "A VIN has 17 characters without I, O or Q"
+                },
+                "server": {
+                    "DUPLICATE_NUIT": "Another company already has this NUIT",
+                    "DUPLICATE_EMAIL": "Another record already uses this email",
+                    "DUPLICATE_PHONE": "Another record already uses this phone number",
+                    "DUPLICATE_PLATE": "Another vehicle already has this plate",
+                    "DUPLICATE_VIN": "Another vehicle already has this VIN",
+                    "NOT_ALLOWED": "Your role cannot edit partners",
+                    "NOT_FOUND": "This record no longer exists",
+                    "UNKNOWN": "Could not save, please try again"
+                }
+            },
+            "assign": {
+                "change-truck": "Change truck",
+                "assign-truck": "Assign truck",
+                "search-truck": "Search the carrier's trucks…",
+                "no-trucks": "No trucks match",
+                "unassign": "Take off the truck",
+                "assign-driver": "Assign driver",
+                "search-driver": "Search the carrier's drivers…",
+                "no-drivers": "No drivers match"
+            },
+            "standing": {
+                "menu": "More actions",
+                "flag-risk": "Flag risk",
+                "change-risk": "Change risk level",
+                "clear-risk": "Clear risk flag",
+                "suspend": "Suspend",
+                "unsuspend": "Lift suspension",
+                "note-required": "A note is required",
+                "cancel": "Cancel",
+                "level": {
+                    "watch": "Watch",
+                    "watch-hint": "Keeps operating, bookings get a warning",
+                    "high": "High risk",
+                    "high-hint": "Bookings need a manager and a note"
+                },
+                "errors": {
+                    "NOT_ALLOWED": "Your role cannot perform this action",
+                    "INVALID_STATE": "That action is not available right now",
+                    "NOT_FOUND": "This record no longer exists",
+                    "UNKNOWN": "Something went wrong, please try again"
+                },
+                "dialog": {
+                    "flag-risk": {
+                        "title": "Flag this company",
+                        "description": "The flag shows on every list and every booking until it is cleared.",
+                        "placeholder": "What was found, and where",
+                        "confirm": "Flag"
+                    },
+                    "clear-risk": {
+                        "title": "Clear the risk flag",
+                        "description": "Say what resolved the finding. The note replaces the original reason.",
+                        "placeholder": "What changed",
+                        "confirm": "Clear flag"
+                    },
+                    "suspend": {
+                        "title": "Suspend this partner",
+                        "description": "A suspended partner cannot be booked until the suspension is lifted.",
+                        "placeholder": "Why the partner is being suspended",
+                        "confirm": "Suspend"
+                    },
+                    "unsuspend": {
+                        "title": "Lift the suspension",
+                        "description": "The verification status is recalculated from the documents on file.",
+                        "placeholder": "Why the suspension is being lifted",
+                        "confirm": "Lift suspension"
+                    }
+                }
+            },
+            "whatsapp": {
+                "confirmed": "On WhatsApp — open a chat",
+                "unreachable": "Not reachable on WhatsApp: the last message failed",
+                "start": "Start WhatsApp chat"
             }
         },
         "list": {
@@ -2332,10 +2646,14 @@
             "registerTruck": "Registered truck {regPlate}",
             "registerTrailer": "Registered trailer {regPlate}",
             "registerLink": "Registered link {regPlate}",
-            "registerDriver": "Registered driver {name}"
+            "registerDriver": "Registered driver {name}",
+            "updateDriver": "Updated driver {driverId} ({changedFields})",
+            "updateVehicle": "Updated {kind} {regPlate} ({changedFields})",
+            "assignDriver": "Changed the truck of driver {driverId}"
         },
         "organizations": {
-            "register": "Registered organization {name}"
+            "register": "Registered organization {name}",
+            "update": "Updated {name} ({changedFields})"
         },
         "chats": {
             "start": "Started a conversation with {driverName}",

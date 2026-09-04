@@ -33,6 +33,24 @@ export const RegisterOrganizationBaseSchema = buildSchema(() => undefined);
 
 export type RegisterOrganizationForm = z.infer<typeof RegisterOrganizationBaseSchema>;
 
+/**
+ * A partial edit: every registration field is optional, plus the
+ * representee that lives in the organization's metadata. Shared by the
+ * one-field "Add NUIT" popover on a list row and the full edit form.
+ */
+export const UpdateOrganizationBaseSchema = RegisterOrganizationBaseSchema.partial().extend({
+    representee: z.string().trim().max(120).nullable().optional(),
+});
+
+export type UpdateOrganizationPatch = z.infer<typeof UpdateOrganizationBaseSchema>;
+
+// Client-side variant with translated error messages
+export function UpdateOrganizationSchema(t: OrganizationTranslator) {
+    return buildSchema((field) => ({ error: t(`register.fields.${field}.error`) })).partial().extend({
+        representee: z.string().trim().max(120).nullable().optional(),
+    });
+}
+
 // Client-side variant with translated error messages
 export function RegisterOrganizationSchema(t: OrganizationTranslator) {
     return buildSchema((field) => ({ error: t(`register.fields.${field}.error`) }));

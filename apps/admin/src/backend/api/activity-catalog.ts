@@ -186,6 +186,41 @@ export const activityCatalog: ActivityCatalog = {
             type: input?.type ?? "",
         }),
     },
+    // Partner edits log which fields changed, never the values (contact
+    // details and addresses are personal data)
+    "organizations.update": {
+        entity: (input) =>
+            input?.id ? { type: "organization", id: String(input.id) } : null,
+        params: (input, output?: OrgOption) => ({
+            name: output?.name ?? "",
+            changedFields: Object.keys(input?.patch ?? {}).join(", "),
+        }),
+    },
+    "fleet.updateDriver": {
+        entity: (input) =>
+            input?.id ? { type: "driver", id: String(input.id) } : null,
+        params: (input) => ({
+            driverId: input?.id ?? "",
+            changedFields: Object.keys(input?.patch ?? {}).join(", "),
+        }),
+    },
+    "fleet.updateVehicle": {
+        entity: (input) =>
+            input?.id ? { type: String(input.kind ?? "truck"), id: String(input.id) } : null,
+        params: (input, output?: { regPlate: string }) => ({
+            kind: input?.kind ?? "",
+            regPlate: output?.regPlate ?? "",
+            changedFields: Object.keys(input?.patch ?? {}).join(", "),
+        }),
+    },
+    "fleet.assignDriver": {
+        entity: (input) =>
+            input?.driverId ? { type: "driver", id: String(input.driverId) } : null,
+        params: (input) => ({
+            driverId: input?.driverId ?? "",
+            truckId: input?.truckId ?? "",
+        }),
+    },
     "chats.start": {
         entity: (_input, output?: { conversation: ChatConversation; existing: boolean }) =>
             output ? { type: "conversation", id: output.conversation.id } : null,

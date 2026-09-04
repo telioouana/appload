@@ -1,49 +1,136 @@
 "use client"
 
-import { useSearchParams } from "next/navigation"
-import { useSuspenseInfiniteQuery } from "@tanstack/react-query"
+import { useCallback, useState } from "react"
+import { useIsFetching, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
 
-import { useIsMobile } from "@workspace/ui/hooks/use-mobile"
+import { useTranslations } from "@workspace/i18n"
+
+import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
 import { today } from "@/lib/kyc/derive"
-import { KycReviewSheet } from "@/frontend/pages/kyc/views/kyc-review-sheet"
-import { DriverRow } from "@/frontend/pages/partners/cards/driver-row"
-import { PartnersList } from "@/frontend/pages/partners/views/partners-list"
-import { currentView, partnersListInput } from "@/frontend/pages/partners/types"
+import { ListCard } from "@/components/list/list-card"
+import { ListFooter } from "@/components/list/list-footer"
+import { ListToolbar } from "@/components/list/list-toolbar"
+import { BulkAction, BulkBar } from "@/components/list/bulk-bar"
+import { DataTable, useDataTable } from "@/components/list/data-table"
+import { FilterToggle } from "@/components/list/filter-controls"
+import { downloadCsv, stamp } from "@/components/list/csv"
+import { useDriverColumns } from "@/frontend/pages/partners/columns/driver-columns"
+import { isFilteredList, usePartnerList, withoutPaging } from "@/frontend/pages/partners/hooks/use-partner-list"
+import { usePartnerProfile, type ProfileTab } from "@/frontend/pages/partners/hooks/use-partner-profile"
+import { PartnerProfileSheet } from "@/frontend/pages/partners/views/partner-profile-sheet"
+import {
+    DRIVER_SORTS,
+    driversListInput,
+    EXPIRY_WINDOW_DAYS,
+    PAGE_SIZES,
+    type DriverRow,
+} from "@/frontend/pages/partners/types"
 
 export function DriversDataView() {
+    const t = useTranslations("Admin.partners")
     const trpc = useTRPC()
-    const searchParams = useSearchParams()
-    const isMobile = useIsMobile()
+    const queryClient = useQueryClient()
 
-    const view = isMobile ? "grid" : currentView((key) => searchParams.get(key))
-    const input = partnersListInput((key) => searchParams.get(key))
+    const { get, sort, onSort, statusTabs, activeFilters } = usePartnerList("name")
+    const profile = usePartnerProfile()
 
-    const query = useSuspenseInfiniteQuery(
-        trpc.partners.drivers.infiniteQueryOptions(input, {
-            getNextPageParam: (lastPage) => lastPage.nextCursor,
-        }),
-    )
+    const input = driversListInput(get)
 
-    const items = query.data.pages.flatMap((page) => page.items)
+    const { data } = useSuspenseQuery(trpc.partners.drivers.queryOptions(input))
+    const { data: stats } = useSuspenseQuery(trpc.partners.driverStats.queryOptions())
+    const isRefreshing = useIsFetching({ queryKey: trpc.partners.drivers.pathKey() }) > 0
+
     const on = today()
+
+    const { open } = profile
+    const onOpen = useCallback((row: DriverRow, tab?: ProfileTab) => open(row.id, tab), [open])
+
+    const columns = useDriverColumns({ today: on, onOpen })
+    const table = useDataTable({
+        columns,
+        data: data.items,
+        getRowId: (row) => row.id,
+        storageKey: "appload.partners.drivers.columns",
+    })
+
+    const [isExporting, setExporting] = useState(false)
+
+    const exportRows = async (selected?: DriverRow[]) => {
+        setExporting(true)
+        try {
+            const rows = selected ?? await queryClient.fetchQuery(trpc.partners.exportDrivers.queryOptions(withoutPaging(input)))
+
+            downloadCsv(
+                `drivers-${stamp()}.csv`,
+                ["Name", "Passport", "Phone", "Email", "Carrier", "Truck", "Status", "Documents approved", "Documents required", "Next expiry"],
+                rows.map((row) => [
+                    row.name, row.passport ?? "", row.phoneNumber ?? "", row.email, row.carrierName ?? "", row.plate ?? "",
+                    row.kycStatus, row.progress.approved, row.progress.required, row.nextExpiry ?? "",
+                ]),
+            )
+        } finally {
+            setExporting(false)
+        }
+    }
+
+    const chips = activeFilters()
 
     return (
         <>
-            <PartnersList
-                items={items}
-                view={view}
-                hasNextPage={query.hasNextPage}
-                isFetchingNextPage={query.isFetchingNextPage}
-                fetchNextPage={query.fetchNextPage}
-                isFiltered={Boolean(input.search || input.status)}
-                getKey={(item) => item.id}
-            >
-                {(item) => <DriverRow driver={item} view={view} today={on} />}
-            </PartnersList>
+            <ListCard>
+                <ListToolbar
+                    table={table}
+                    tabs={{ param: "status", items: statusTabs(stats) }}
+                    filterCount={chips.length}
+                    activeFilters={chips}
+                    sort={{
+                        defaultValue: "name",
+                        options: DRIVER_SORTS.map((value) => ({ value, label: t(`sort.${value}`) })),
+                    }}
+                    onExport={() => exportRows()}
+                    isExporting={isExporting}
+                    filters={
+                        <div className="flex flex-col gap-1">
+                            <FilterToggle
+                                label={t("filters.expiring")}
+                                hint={t("filters.within-days", { days: EXPIRY_WINDOW_DAYS })}
+                                param="expiring"
+                                value={String(EXPIRY_WINDOW_DAYS)}
+                            />
+                            <FilterToggle label={t("filters.no-phone")} hint={t("filters.no-phone-hint")} param="phone" value="missing" />
+                            <FilterToggle label={t("filters.no-truck")} hint={t("filters.no-truck-hint")} param="unassigned" value="1" />
+                        </div>
+                    }
+                />
 
-            <KycReviewSheet />
+                <div className={cn("flex min-h-0 flex-1 flex-col transition-opacity", isRefreshing && "opacity-60")}>
+                    <DataTable
+                        table={table}
+                        sort={sort}
+                        onSort={onSort}
+                        onRowClick={(row) => onOpen(row)}
+                        isFiltered={isFilteredList(get)}
+                        activeRowId={profile.id}
+                        empty={{
+                            title: t("data.empty"),
+                            description: t("data.empty-driver"),
+                            filtered: t("data.no-results"),
+                        }}
+                    />
+                </div>
+
+                <ListFooter page={data.page} pageSize={data.pageSize} total={data.total} pageSizes={PAGE_SIZES} />
+
+                <BulkBar table={table}>
+                    <BulkAction onClick={() => exportRows(table.getSelectedRowModel().rows.map((row) => row.original))}>
+                        {t("bulk.export")}
+                    </BulkAction>
+                </BulkBar>
+            </ListCard>
+
+            <PartnerProfileSheet subjectType="driver" />
         </>
     )
 }

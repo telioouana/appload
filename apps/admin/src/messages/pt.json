@@ -2073,63 +2073,65 @@
                     "link": "Semi-reboques"
                 }
             },
-            "stats": {
-                "total": "Total",
-                "pending-review": "Por rever",
-                "verified": "Verificados",
-                "expiring": "A expirar ≤{days}d",
-                "flagged": "Sinalizados"
-            },
             "filters": {
                 "search": {
-                    "organization": "Pesquisar por nome, NUIT ou email...",
-                    "driver": "Pesquisar por nome, email ou telefone...",
-                    "fleet": "Pesquisar por matrícula, marca ou transportador..."
+                    "organization": "Pesquisar nome, NUIT, telefone ou email",
+                    "driver": "Pesquisar nome, telefone, passaporte ou matrícula",
+                    "fleet": "Pesquisar matrícula, VIN, marca ou transportador"
                 },
                 "all": "Todos",
-                "view": {
-                    "grid": "Vista em grelha",
-                    "list": "Vista em lista"
+                "clear": "Limpar pesquisa",
+                "issues": "Problemas",
+                "any": "Qualquer",
+                "expiring": "A expirar em breve",
+                "within-days": "nos próximos {days} dias",
+                "profile": "Perfil",
+                "incomplete": "Perfil incompleto",
+                "incomplete-hint": "NUIT, telefone ou email ainda em falta",
+                "contract-options": {
+                    "valid": "Válido",
+                    "missing": "Em falta ou expirado"
                 },
-                "clear": "Limpar pesquisa"
-            },
-            "fields": {
-                "nuit": "NUIT",
-                "email": "Email",
-                "phone": "Telefone",
-                "carrier": "Transportador",
-                "documents": "Documentos",
-                "status": "Estado",
-                "contract": "Contrato",
-                "risk": "Risco",
-                "ownership": "Propriedade",
-                "location": "Localização",
-                "load": "Carga actual",
-                "driver": "Motorista",
-                "truck": "Camião",
-                "capacity": "Capacidade",
-                "vehicle": "Veículo",
-                "licence": "Carta",
-                "expires": "Expira",
-                "active-orders": "Pedidos activos",
-                "total-orders": "Total de pedidos",
-                "on-time": "Entregas a horas",
-                "payment": "Pagamentos liquidados",
-                "fleet-size": "Dimensão da frota",
-                "drivers": "Motoristas"
+                "risk-options": {
+                    "flagged": "Qualquer sinalização",
+                    "watch": "Em observação",
+                    "high": "Alto risco"
+                },
+                "province": "Localização",
+                "assignment": "Atribuição",
+                "selected": "Seleccionado",
+                "no-phone": "Sem número de telefone",
+                "no-phone-hint": "Não recebe actualizações por WhatsApp",
+                "no-truck": "Sem camião",
+                "no-truck-hint": "Não está atribuído a nenhum veículo",
+                "unassigned-truck": "Sem motorista",
+                "unassigned-truck-hint": "Ninguém está atribuído ao camião",
+                "unassigned-trailer": "Não engatado",
+                "unassigned-trailer-hint": "Nenhum camião puxa este reboque",
+                "unassigned-link": "Não engatado",
+                "unassigned-link-hint": "Nenhum reboque leva este link"
             },
             "values": {
                 "none": "Nenhum",
                 "idle": "Parado",
                 "unassigned": "Sem atribuição",
-                "empty": "Vazio",
                 "en-route": "A caminho de {city}",
                 "at": "Em {city}",
-                "no-expiry": "Sem validade",
                 "expires-in": "em {days}d",
                 "expired": "Expirado",
                 "progress": "{approved}/{required}",
-                "tons": "{tons} t"
+                "tons": "{tons} t",
+                "trucks": "{count, plural, one {# camião} other {# camiões}}",
+                "drivers": "{count, plural, one {# motorista} other {# motoristas}}",
+                "active": "{count} activas",
+                "total": "{count} no total",
+                "none-yet": "Ainda nenhuma",
+                "missing": "Em falta",
+                "passport": "Passaporte {number}",
+                "truck-type": {
+                    "articulated": "Articulado",
+                    "non-articulated": "Rígido"
+                }
             },
             "status": {
                 "draft": "Rascunho",
@@ -2218,7 +2220,13 @@
             "data": {
                 "empty": "Ainda não há nada aqui",
                 "no-results": "Nenhum resultado corresponde aos filtros",
-                "error": "Não foi possível carregar esta lista, tente novamente"
+                "error": "Não foi possível carregar esta lista, tente novamente",
+                "empty-shipper": "Os clientes aparecem aqui assim que forem registados.",
+                "empty-carrier": "Os transportadores aparecem aqui assim que forem registados.",
+                "empty-driver": "Os motoristas aparecem aqui assim que um transportador os registar.",
+                "empty-truck": "Os camiões aparecem aqui assim que um transportador os registar.",
+                "empty-trailer": "Os reboques aparecem aqui assim que um transportador os registar.",
+                "empty-link": "Os links aparecem aqui assim que um transportador os registar."
             },
             "register": {
                 "carrier": {
@@ -2248,6 +2256,312 @@
                     "CARRIER_SUSPENDED": "Este transportador está suspenso.",
                     "UNKNOWN": "Este transportador não pode ser contratado neste momento."
                 }
+            },
+            "eyebrow": {
+                "management": "Gestão"
+            },
+            "tiles": {
+                "pending-review": "Por rever",
+                "pending-review-hint": {
+                    "organization": "documentos à sua espera",
+                    "driver": "cartas de condução à sua espera",
+                    "vehicle": "papéis de veículos por verificar"
+                },
+                "expiring": "A expirar em {days} dias",
+                "expiring-hint": {
+                    "organization": "contratos e alvarás",
+                    "driver": "cartas e bilhetes de identidade",
+                    "vehicle": "livretes e propriedade"
+                },
+                "incomplete": "Perfis incompletos",
+                "incomplete-hint": "sem NUIT, telefone ou email",
+                "risk": "Risco sinalizado",
+                "risk-hint": "em observação ou de alto risco",
+                "contract": "Sem contrato assinado",
+                "contract-hint": "ainda não pode receber ordens",
+                "phone": "Sem número de telefone",
+                "phone-hint": "não recebe actualizações por WhatsApp",
+                "unassigned-driver": "Sem camião",
+                "unassigned-driver-hint": "não está atribuído a nenhum veículo",
+                "ownership": "Propriedade por verificar",
+                "ownership-hint": "ainda sem prova de propriedade",
+                "unassigned-truck": "Sem motorista",
+                "unassigned-truck-hint": "camiões sem ninguém atribuído",
+                "unassigned-trailer": "Não engatado",
+                "unassigned-trailer-hint": "reboques sem camião",
+                "unassigned-link": "Não engatado",
+                "unassigned-link-hint": "links sem reboque"
+            },
+            "columns": {
+                "company": "Empresa",
+                "nuit": "NUIT",
+                "contact": "Contacto",
+                "verification": "Verificação",
+                "documents": "Documentos",
+                "fleet": "Frota",
+                "orders": "Ordens",
+                "on-time": "Pontualidade",
+                "payment": "Liquidado",
+                "actions": "Acções",
+                "driver": "Motorista",
+                "phone": "Telefone",
+                "carrier": "Transportador",
+                "truck": "Camião",
+                "location": "Localização",
+                "status": "Estado",
+                "licence": "Carta",
+                "vehicle": "Veículo",
+                "ownership": "Propriedade",
+                "capacity": "Capacidade",
+                "year": "Ano",
+                "contract": "Contrato",
+                "risk": "Risco"
+            },
+            "sort": {
+                "name": "Nome",
+                "status": "Estado",
+                "orders": "Ordens",
+                "created": "Data de registo",
+                "carrier": "Transportador",
+                "plate": "Matrícula",
+                "year": "Ano"
+            },
+            "missing": {
+                "add": {
+                    "nuit": "Adicionar NUIT",
+                    "email": "Adicionar email",
+                    "phone": "Adicionar telefone",
+                    "passport": "Adicionar passaporte"
+                },
+                "hint": {
+                    "nuit": "9 dígitos, sem espaços",
+                    "email": "O endereço a partir do qual a empresa responde",
+                    "phone": "Números moçambicanos podem ser escritos sem +258",
+                    "passport": "Tal como impresso no documento"
+                },
+                "placeholder": {
+                    "nuit": "400123456",
+                    "email": "geral@empresa.co.mz",
+                    "phone": "+258 84 000 0000",
+                    "passport": "GN123456"
+                },
+                "invalid": {
+                    "nuit": "Um NUIT tem exactamente 9 dígitos",
+                    "email": "Isso não parece um endereço de email",
+                    "phone": "Isso não parece um número de telefone",
+                    "passport": "Escreva pelo menos 3 caracteres"
+                },
+                "cancel": "Cancelar",
+                "save": "Guardar",
+                "errors": {
+                    "DUPLICATE_NUIT": "Outra empresa já tem este NUIT",
+                    "DUPLICATE_EMAIL": "Outro registo já usa este email",
+                    "DUPLICATE_PHONE": "Outro registo já usa este número de telefone",
+                    "NOT_ALLOWED": "O seu perfil não pode editar parceiros",
+                    "NOT_FOUND": "Este registo já não existe",
+                    "UNKNOWN": "Não foi possível guardar, tente novamente"
+                }
+            },
+            "actions": {
+                "menu": "Mais acções",
+                "open": "Abrir perfil",
+                "review": "Rever documentos",
+                "copy-nuit": "Copiar NUIT",
+                "copy-phone": "Copiar telefone",
+                "copy-email": "Copiar email",
+                "copy-plate": "Copiar matrícula",
+                "copy-vin": "Copiar VIN"
+            },
+            "bulk": {
+                "export": "Exportar"
+            },
+            "profile": {
+                "title": "Perfil do parceiro",
+                "description": "Contactos, verificação, frota e ordens",
+                "close": "Fechar",
+                "edit": "Editar",
+                "review": "Rever documentos",
+                "tabs": {
+                    "overview": "Resumo",
+                    "documents": "Documentos",
+                    "fleet": "Frota",
+                    "drivers": "Motoristas",
+                    "orders": "Ordens",
+                    "activity": "Actividade"
+                },
+                "type": {
+                    "shipper": "Cliente",
+                    "carrier": "Transportador",
+                    "driver": "Motorista"
+                },
+                "completeness": "Perfil preenchido",
+                "fields-filled": "{filled} de {total} campos",
+                "add": "Adicionar {field}",
+                "none": "Nenhum",
+                "open-map": "Abrir no Google Maps",
+                "verification": "Verificação",
+                "kyc": "Estado KYC",
+                "until": "até",
+                "next-expiry": "Próxima expiração",
+                "registered": "Registado",
+                "contact": "Contacto",
+                "same-as-billing": "Igual à de facturação",
+                "performance": "Desempenho",
+                "orders": "ordens",
+                "active-now": "activas agora",
+                "trucks-drivers": "camiões · {drivers} motoristas",
+                "fleet-line": "{trucks} camiões, {trailers} reboques e {links} links registados",
+                "recent-orders": "Ordens recentes",
+                "view-all": "Ver todas ({count})",
+                "no-orders": "Ainda sem ordens",
+                "load-failed": "Não foi possível carregar este perfil, tente novamente",
+                "no-fleet": "Nenhum veículo registado neste transportador",
+                "no-drivers": "Nenhum motorista registado neste transportador",
+                "no-activity": "Ainda não aconteceu nada",
+                "activity": {
+                    "uploaded": "Carregou {document}",
+                    "approved": "Aprovou {document}",
+                    "rejected": "Rejeitou {document}",
+                    "risk": "Sinalização de risco alterada"
+                },
+                "valid-until": "Válida até",
+                "assignment": "Atribuição",
+                "loading-bay": "Caixa de carga",
+                "owner": "Proprietário registado",
+                "details": "Detalhes",
+                "make": "Marca e modelo",
+                "bay-on-trailer": "No reboque",
+                "operation": "Operação",
+                "vehicle-type": "Tipo"
+            },
+            "edit": {
+                "title": {
+                    "organization": "Editar empresa",
+                    "driver": "Editar motorista",
+                    "truck": "Editar camião",
+                    "trailer": "Editar reboque",
+                    "link": "Editar link"
+                },
+                "description": "Só os campos que alterar são guardados.",
+                "save": "Guardar alterações",
+                "saving": "A guardar…",
+                "cancel": "Cancelar",
+                "fields": {
+                    "name": "Nome",
+                    "nuit": "NUIT",
+                    "representee": "Representante",
+                    "email": "Email",
+                    "phone": "Telefone",
+                    "billing-address": "Endereço de facturação",
+                    "physical-address": "Endereço físico",
+                    "passport": "Passaporte",
+                    "plate": "Matrícula",
+                    "internal-id": "Número interno",
+                    "brand": "Marca",
+                    "model": "Modelo",
+                    "year": "Ano",
+                    "vin": "VIN"
+                },
+                "placeholders": {
+                    "name": "Nome da empresa",
+                    "nuit": "400123456",
+                    "representee": "Quem fala pela empresa",
+                    "email": "geral@empresa.co.mz",
+                    "phone": "+258 84 000 0000",
+                    "address": "Pesquisar o endereço…",
+                    "driver-name": "Nome completo",
+                    "passport": "GN123456",
+                    "plate": "AAA 000 MC",
+                    "internal-id": "Número de frota",
+                    "brand": "Scania",
+                    "model": "R450",
+                    "year": "2019",
+                    "vin": "17 caracteres"
+                },
+                "errors": {
+                    "name": "Escreva um nome",
+                    "nuit": "Um NUIT tem exactamente 9 dígitos",
+                    "email": "Escreva um email válido",
+                    "phone": "Escreva um número de telefone válido",
+                    "plate": "Escreva a matrícula",
+                    "brand": "Escreva a marca",
+                    "model": "Escreva o modelo",
+                    "year": "Escreva um ano com quatro dígitos",
+                    "vin": "Um VIN tem 17 caracteres sem I, O ou Q"
+                },
+                "server": {
+                    "DUPLICATE_NUIT": "Outra empresa já tem este NUIT",
+                    "DUPLICATE_EMAIL": "Outro registo já usa este email",
+                    "DUPLICATE_PHONE": "Outro registo já usa este número de telefone",
+                    "DUPLICATE_PLATE": "Outro veículo já tem esta matrícula",
+                    "DUPLICATE_VIN": "Outro veículo já tem este VIN",
+                    "NOT_ALLOWED": "O seu perfil não pode editar parceiros",
+                    "NOT_FOUND": "Este registo já não existe",
+                    "UNKNOWN": "Não foi possível guardar, tente novamente"
+                }
+            },
+            "assign": {
+                "change-truck": "Mudar de camião",
+                "assign-truck": "Atribuir camião",
+                "search-truck": "Pesquisar os camiões do transportador…",
+                "no-trucks": "Nenhum camião corresponde",
+                "unassign": "Retirar do camião",
+                "assign-driver": "Atribuir motorista",
+                "search-driver": "Pesquisar os motoristas do transportador…",
+                "no-drivers": "Nenhum motorista corresponde"
+            },
+            "standing": {
+                "menu": "Mais acções",
+                "flag-risk": "Sinalizar risco",
+                "change-risk": "Alterar nível de risco",
+                "clear-risk": "Retirar sinalização",
+                "suspend": "Suspender",
+                "unsuspend": "Levantar suspensão",
+                "note-required": "É obrigatória uma nota",
+                "cancel": "Cancelar",
+                "level": {
+                    "watch": "Em observação",
+                    "watch-hint": "Continua a operar, as reservas recebem um aviso",
+                    "high": "Alto risco",
+                    "high-hint": "As reservas exigem um gestor e uma nota"
+                },
+                "errors": {
+                    "NOT_ALLOWED": "O seu perfil não pode executar esta acção",
+                    "INVALID_STATE": "Essa acção não está disponível neste momento",
+                    "NOT_FOUND": "Este registo já não existe",
+                    "UNKNOWN": "Algo correu mal, tente novamente"
+                },
+                "dialog": {
+                    "flag-risk": {
+                        "title": "Sinalizar esta empresa",
+                        "description": "A sinalização aparece em todas as listas e reservas até ser retirada.",
+                        "placeholder": "O que foi encontrado, e onde",
+                        "confirm": "Sinalizar"
+                    },
+                    "clear-risk": {
+                        "title": "Retirar a sinalização de risco",
+                        "description": "Diga o que resolveu a situação. A nota substitui o motivo original.",
+                        "placeholder": "O que mudou",
+                        "confirm": "Retirar sinalização"
+                    },
+                    "suspend": {
+                        "title": "Suspender este parceiro",
+                        "description": "Um parceiro suspenso não pode ser reservado até a suspensão ser levantada.",
+                        "placeholder": "Porque é que o parceiro está a ser suspenso",
+                        "confirm": "Suspender"
+                    },
+                    "unsuspend": {
+                        "title": "Levantar a suspensão",
+                        "description": "O estado de verificação é recalculado a partir dos documentos registados.",
+                        "placeholder": "Porque é que a suspensão está a ser levantada",
+                        "confirm": "Levantar suspensão"
+                    }
+                }
+            },
+            "whatsapp": {
+                "confirmed": "Tem WhatsApp — abrir conversa",
+                "unreachable": "Não contactável por WhatsApp: a última mensagem falhou",
+                "start": "Iniciar conversa no WhatsApp"
             }
         },
         "list": {
@@ -2333,10 +2647,14 @@
             "registerTruck": "Registou o camião {regPlate}",
             "registerTrailer": "Registou o atrelado {regPlate}",
             "registerLink": "Registou o link {regPlate}",
-            "registerDriver": "Registou o motorista {name}"
+            "registerDriver": "Registou o motorista {name}",
+            "updateDriver": "Actualizou o motorista {driverId} ({changedFields})",
+            "updateVehicle": "Actualizou o {kind} {regPlate} ({changedFields})",
+            "assignDriver": "Alterou o camião do motorista {driverId}"
         },
         "organizations": {
-            "register": "Registou a organização {name}"
+            "register": "Registou a organização {name}",
+            "update": "Actualizou {name} ({changedFields})"
         },
         "chats": {
             "start": "Iniciou uma conversa com {driverName}",
