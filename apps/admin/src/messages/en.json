@@ -1729,6 +1729,34 @@
                     "SEND_FAILED": "Sending failed. Please try again."
                 }
             },
+            "dispute": {
+                "open-title": "Open a dispute",
+                "open-description": "Order {orderId}. Payments can be held on either side until it is settled.",
+                "reason": "Cause",
+                "liable": "Liable party",
+                "liable-none": "Not decided",
+                "description": "What happened",
+                "description-placeholder": "Where, when, what was lost or damaged and who reported it (at least 10 characters)",
+                "claimed": "Amount claimed",
+                "claimed-currency": "Currency",
+                "hold-shipper": "Hold the shipper's payments",
+                "hold-shipper-hint": "No proof of payment can be recorded on the shipper leg",
+                "hold-carrier": "Hold the carrier's payments",
+                "hold-carrier-hint": "No proof of payment can be recorded on the carrier leg",
+                "open": "Open dispute",
+                "cancel": "Cancel",
+                "opened": "Dispute opened on {orderId}",
+                "banner-title": "In dispute: {reason} · {status}",
+                "banner-no-holds": "No payment holds",
+                "banner-link": "Open the dispute",
+                "errors": {
+                    "DISPUTE_INVALID_ORDER": "A quote or a lost order cannot be disputed.",
+                    "DISPUTE_EXISTS": "This order already has an active dispute.",
+                    "NOT_ALLOWED": "You are not allowed to open disputes.",
+                    "NOT_FOUND": "The order could not be found.",
+                    "UNKNOWN": "Something went wrong. Try again."
+                }
+            },
             "stats": {}
         },
         "chats": {
@@ -2620,6 +2648,148 @@
                 "orders": "Orders",
                 "map": "Map"
             }
+        },
+        "disputes": {
+            "title": "Disputes",
+            "description": "Theft, loss, damage and other events that put the closure of a cargo in question",
+            "search": "Search order, shipper, carrier or description",
+            "clear-search": "Clear search",
+            "tabs": {
+                "all": "All"
+            },
+            "columns": {
+                "order": "Order",
+                "reason": "Cause",
+                "parties": "Shipper · carrier",
+                "claimed": "Claimed",
+                "holds": "Holds",
+                "liable": "Liable",
+                "opened": "Opened",
+                "status": "Status"
+            },
+            "sort": {
+                "opened": "Opened",
+                "claimed": "Amount claimed",
+                "status": "Status",
+                "updated": "Last update"
+            },
+            "filters": {
+                "reason": "Cause",
+                "liable": "Liable party",
+                "hold": "Payments held",
+                "any": "Any"
+            },
+            "values": {
+                "reasons": {
+                    "theft": "Theft",
+                    "loss": "Loss",
+                    "damage": "Damage",
+                    "other": "Other"
+                },
+                "statuses": {
+                    "open": "Open",
+                    "under-review": "Under review",
+                    "settled": "Settled",
+                    "closed": "Closed"
+                },
+                "liable": {
+                    "carrier": "Carrier",
+                    "shipper": "Shipper",
+                    "appload": "Appload",
+                    "third-party": "Third party",
+                    "unknown": "Unknown"
+                },
+                "actions": {
+                    "opened": "Dispute opened",
+                    "updated": "Dispute updated",
+                    "resolved": "Dispute resolved"
+                },
+                "hold-shipper": "Shipper payments held",
+                "hold-carrier": "Carrier payments held",
+                "no-holds": "No holds",
+                "no-carrier": "No carrier",
+                "system": "System"
+            },
+            "data": {
+                "empty": "No disputes",
+                "empty-description": "Disputes are opened from an order's menu when a cargo is stolen, lost or damaged.",
+                "no-results": "No disputes match your filters",
+                "error": "Could not load the disputes, please try again"
+            },
+            "bulk": {
+                "export": "Export"
+            },
+            "stats": {
+                "title": "{open, plural, =0 {No open dispute} one {# open dispute} other {# open disputes}} · {review} under review",
+                "count": "Active disputes",
+                "claimed": "Claimed",
+                "empty": "Nothing claimed on active disputes."
+            },
+            "sheet": {
+                "title": "Dispute",
+                "description": "Cause, holds, claim and history",
+                "close": "Close",
+                "load-failed": "Could not load this dispute, please try again",
+                "opened-by": "opened {date} by {name}",
+                "mark-review": "Mark under review",
+                "moved-review": "Dispute marked under review",
+                "resolve": "Resolve",
+                "open-order": "Open order",
+                "full-order": "Full page",
+                "holds": "Payment holds",
+                "holds-hint": "A held party cannot have a proof of payment recorded until the dispute is settled or closed.",
+                "holds-lifted": "Lifted: the dispute is no longer active.",
+                "details": "Details",
+                "edit": "Edit",
+                "saved": "Dispute saved",
+                "resolution": "Resolution",
+                "order": "Order",
+                "order-status": "Order status",
+                "route": "Route",
+                "shipper-total": "Shipper total",
+                "carrier-total": "Carrier total",
+                "terms": "Carrier debt and terms",
+                "terms-next": "Next stage: the debt recovered from later shipments will be set here at settlement.",
+                "terms-none": "No debt recorded.",
+                "history": "History",
+                "no-history": "No history yet",
+                "updated": "Updated {date}"
+            },
+            "form": {
+                "description": "What happened",
+                "liable": "Liable party",
+                "liable-none": "Not decided",
+                "claimed": "Amount claimed",
+                "currency": "Currency",
+                "cancel": "Cancel",
+                "save": "Save"
+            },
+            "resolve": {
+                "title": "Resolve the dispute",
+                "description": "Order {orderId}. Settling or closing lifts the payment holds and lets the order complete.",
+                "status": "Outcome",
+                "settled": "Settled: an outcome was agreed",
+                "closed": "Closed: dropped without settlement",
+                "resolution": "Resolution",
+                "placeholder": "What was agreed, or why it was dropped (at least 5 characters)",
+                "confirm": "Resolve",
+                "cancel": "Cancel",
+                "done": "Dispute resolved",
+                "errors": {
+                    "VERSION_CONFLICT": "Someone changed this dispute meanwhile. Reload and try again.",
+                    "DISPUTE_CLOSED": "This dispute is no longer active.",
+                    "NOT_ALLOWED": "Only a manager can resolve a dispute.",
+                    "NOT_FOUND": "The dispute could not be found.",
+                    "UNKNOWN": "Something went wrong. Try again."
+                }
+            },
+            "errors": {
+                "VERSION_CONFLICT": "Someone changed this dispute meanwhile. Reload and try again.",
+                "DISPUTE_CLOSED": "This dispute is no longer active.",
+                "NOT_ALLOWED": "You are not allowed to change disputes.",
+                "NOT_FOUND": "The dispute could not be found.",
+                "UNKNOWN": "Something went wrong. Try again."
+            }
         }
     },
     "ActivityLog": {
@@ -2669,6 +2839,11 @@
         },
         "settings": {
             "setPassword": "Created a password for their account"
+        },
+        "disputes": {
+            "open": "Opened a {reason} dispute on order {orderId}",
+            "update": "Updated the dispute on order {orderId} ({changedFields})",
+            "resolve": "Resolved the dispute on order {orderId} as {status}"
         }
     }
 }

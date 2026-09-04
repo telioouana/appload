@@ -9,6 +9,7 @@ import { activityCatalog } from "../activity-catalog"
 import { orderRouter } from "@/frontend/pages/order/server/procedures";
 import { ordersRouter } from "@/frontend/pages/orders/server/procedures";
 import { partnersRouter } from "@/frontend/pages/partners/server/procedures";
+import { disputesRouter } from "@/frontend/pages/disputes/server/procedures";
 import { settingsRouter } from "@/frontend/pages/settings/server/procedures";
 import { documentsRouter } from "@/frontend/pages/order/server/documents-procedures";
 
@@ -18,6 +19,7 @@ registerActivityCatalog(activityCatalog);
 
 export const appRouter = createTRPCRouter({
     chats: chatsRouter,
+    disputes: disputesRouter,
     documents: documentsRouter,
     fleet: fleetRouter,
     kyc: kycRouter,

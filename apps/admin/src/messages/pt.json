@@ -1729,6 +1729,34 @@
                     "SEND_FAILED": "O envio falhou. Tente novamente."
                 }
             },
+            "dispute": {
+                "open-title": "Abrir uma disputa",
+                "open-description": "Pedido {orderId}. Os pagamentos podem ficar retidos de qualquer dos lados até à resolução.",
+                "reason": "Causa",
+                "liable": "Parte responsável",
+                "liable-none": "Por decidir",
+                "description": "O que aconteceu",
+                "description-placeholder": "Onde, quando, o que se perdeu ou danificou e quem reportou (pelo menos 10 caracteres)",
+                "claimed": "Valor reclamado",
+                "claimed-currency": "Moeda",
+                "hold-shipper": "Reter os pagamentos do cliente",
+                "hold-shipper-hint": "Não é possível registar comprovativos de pagamento do lado do cliente",
+                "hold-carrier": "Reter os pagamentos do transportador",
+                "hold-carrier-hint": "Não é possível registar comprovativos de pagamento do lado do transportador",
+                "open": "Abrir disputa",
+                "cancel": "Cancelar",
+                "opened": "Disputa aberta no pedido {orderId}",
+                "banner-title": "Em disputa: {reason} · {status}",
+                "banner-no-holds": "Sem retenção de pagamentos",
+                "banner-link": "Abrir a disputa",
+                "errors": {
+                    "DISPUTE_INVALID_ORDER": "Uma prospectiva ou um pedido perdido não pode ser disputado.",
+                    "DISPUTE_EXISTS": "Este pedido já tem uma disputa ativa.",
+                    "NOT_ALLOWED": "Não tem permissão para abrir disputas.",
+                    "NOT_FOUND": "O pedido não foi encontrado.",
+                    "UNKNOWN": "Algo correu mal. Tente novamente."
+                }
+            },
             "stats": {},
             "card": {}
         },
@@ -2621,6 +2649,148 @@
                 "orders": "Pedidos",
                 "map": "Mapa"
             }
+        },
+        "disputes": {
+            "title": "Disputas",
+            "description": "Roubo, perda, dano e outros eventos que põem em causa o fecho de uma carga",
+            "search": "Pesquisar pedido, cliente, transportador ou descrição",
+            "clear-search": "Limpar pesquisa",
+            "tabs": {
+                "all": "Todas"
+            },
+            "columns": {
+                "order": "Pedido",
+                "reason": "Causa",
+                "parties": "Cliente · transportador",
+                "claimed": "Reclamado",
+                "holds": "Retenções",
+                "liable": "Responsável",
+                "opened": "Aberta",
+                "status": "Estado"
+            },
+            "sort": {
+                "opened": "Abertura",
+                "claimed": "Valor reclamado",
+                "status": "Estado",
+                "updated": "Última atualização"
+            },
+            "filters": {
+                "reason": "Causa",
+                "liable": "Parte responsável",
+                "hold": "Pagamentos retidos",
+                "any": "Qualquer"
+            },
+            "values": {
+                "reasons": {
+                    "theft": "Roubo",
+                    "loss": "Perda",
+                    "damage": "Dano",
+                    "other": "Outro"
+                },
+                "statuses": {
+                    "open": "Aberta",
+                    "under-review": "Em análise",
+                    "settled": "Resolvida",
+                    "closed": "Encerrada"
+                },
+                "liable": {
+                    "carrier": "Transportador",
+                    "shipper": "Cliente",
+                    "appload": "Appload",
+                    "third-party": "Terceiro",
+                    "unknown": "Desconhecido"
+                },
+                "actions": {
+                    "opened": "Disputa aberta",
+                    "updated": "Disputa atualizada",
+                    "resolved": "Disputa resolvida"
+                },
+                "hold-shipper": "Pagamentos do cliente retidos",
+                "hold-carrier": "Pagamentos do transportador retidos",
+                "no-holds": "Sem retenções",
+                "no-carrier": "Sem transportador",
+                "system": "Sistema"
+            },
+            "data": {
+                "empty": "Sem disputas",
+                "empty-description": "As disputas abrem-se a partir do menu de um pedido quando uma carga é roubada, perdida ou danificada.",
+                "no-results": "Nenhuma disputa corresponde aos filtros",
+                "error": "Não foi possível carregar as disputas, tente novamente"
+            },
+            "bulk": {
+                "export": "Exportar"
+            },
+            "stats": {
+                "title": "{open, plural, =0 {Nenhuma disputa aberta} one {# disputa aberta} other {# disputas abertas}} · {review} em análise",
+                "count": "Disputas ativas",
+                "claimed": "Reclamado",
+                "empty": "Nada reclamado em disputas ativas."
+            },
+            "sheet": {
+                "title": "Disputa",
+                "description": "Causa, retenções, reclamação e histórico",
+                "close": "Fechar",
+                "load-failed": "Não foi possível carregar esta disputa, tente novamente",
+                "opened-by": "aberta a {date} por {name}",
+                "mark-review": "Marcar em análise",
+                "moved-review": "Disputa marcada em análise",
+                "resolve": "Resolver",
+                "open-order": "Abrir pedido",
+                "full-order": "Página completa",
+                "holds": "Retenção de pagamentos",
+                "holds-hint": "Uma parte retida não pode ter comprovativos de pagamento registados até a disputa ser resolvida ou encerrada.",
+                "holds-lifted": "Levantada: a disputa já não está ativa.",
+                "details": "Detalhes",
+                "edit": "Editar",
+                "saved": "Disputa guardada",
+                "resolution": "Resolução",
+                "order": "Pedido",
+                "order-status": "Estado do pedido",
+                "route": "Rota",
+                "shipper-total": "Total do cliente",
+                "carrier-total": "Total do transportador",
+                "terms": "Dívida do transportador e termos",
+                "terms-next": "Próxima fase: a dívida a recuperar em envios seguintes será definida aqui na resolução.",
+                "terms-none": "Sem dívida registada.",
+                "history": "Histórico",
+                "no-history": "Ainda sem histórico",
+                "updated": "Atualizada {date}"
+            },
+            "form": {
+                "description": "O que aconteceu",
+                "liable": "Parte responsável",
+                "liable-none": "Por decidir",
+                "claimed": "Valor reclamado",
+                "currency": "Moeda",
+                "cancel": "Cancelar",
+                "save": "Guardar"
+            },
+            "resolve": {
+                "title": "Resolver a disputa",
+                "description": "Pedido {orderId}. Resolver ou encerrar levanta as retenções e permite concluir o pedido.",
+                "status": "Desfecho",
+                "settled": "Resolvida: chegou-se a um acordo",
+                "closed": "Encerrada: abandonada sem acordo",
+                "resolution": "Resolução",
+                "placeholder": "O que foi acordado, ou porque foi abandonada (pelo menos 5 caracteres)",
+                "confirm": "Resolver",
+                "cancel": "Cancelar",
+                "done": "Disputa resolvida",
+                "errors": {
+                    "VERSION_CONFLICT": "Alguém alterou esta disputa entretanto. Recarregue e tente novamente.",
+                    "DISPUTE_CLOSED": "Esta disputa já não está ativa.",
+                    "NOT_ALLOWED": "Só um gestor pode resolver uma disputa.",
+                    "NOT_FOUND": "A disputa não foi encontrada.",
+                    "UNKNOWN": "Algo correu mal. Tente novamente."
+                }
+            },
+            "errors": {
+                "VERSION_CONFLICT": "Alguém alterou esta disputa entretanto. Recarregue e tente novamente.",
+                "DISPUTE_CLOSED": "Esta disputa já não está ativa.",
+                "NOT_ALLOWED": "Não tem permissão para alterar disputas.",
+                "NOT_FOUND": "A disputa não foi encontrada.",
+                "UNKNOWN": "Algo correu mal. Tente novamente."
+            }
         }
     },
     "ActivityLog": {
@@ -2670,6 +2840,11 @@
         },
         "settings": {
             "setPassword": "Criou uma palavra-passe para a sua conta"
+        },
+        "disputes": {
+            "open": "Abriu uma disputa por {reason} no pedido {orderId}",
+            "update": "Atualizou a disputa do pedido {orderId} ({changedFields})",
+            "resolve": "Resolveu a disputa do pedido {orderId} como {status}"
         }
     }
 }

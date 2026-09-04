@@ -22,6 +22,10 @@ export const uac = createAccessControl({
     // Driver comms. `send` and `start` put messages on the company's WhatsApp
     // sender, so they are separated from reading the threads
     chat: ["read", "list", "send", "start"],
+    // Cargo disputes. Ops open and keep them up to date; settling or closing
+    // one lifts the payment holds, and `terms` (the carrier debt recovered
+    // from later shipments) is reserved for the next stage — both supervisory
+    dispute: ["read", "list", "open", "update", "resolve", "terms"],
 })
 
 // Ops staff: full day-to-day order work, but resolving review flags,
@@ -36,6 +40,7 @@ export const user = uac.newRole({
     kyc: ["read", "list", "upload"],
     risk: ["read"],
     chat: ["read", "list", "send", "start"],
+    dispute: ["read", "list", "open", "update"],
 })
 export const manager = uac.newRole({
     ...userAc.statements,
@@ -48,6 +53,7 @@ export const manager = uac.newRole({
     kyc: ["read", "list", "upload", "review"],
     risk: ["read", "flag", "clear"],
     chat: ["read", "list", "send", "start"],
+    dispute: ["read", "list", "open", "update", "resolve", "terms"],
 })
 // Admin additionally owns the terminal reversals (completed → delivered,
 // cancelled reinstate) — those are gated on the role itself, not a statement
@@ -61,6 +67,7 @@ export const admin = uac.newRole({
     kyc: ["read", "list", "upload", "review", "override"],
     risk: ["read", "flag", "clear"],
     chat: ["read", "list", "send", "start"],
+    dispute: ["read", "list", "open", "update", "resolve", "terms"],
 })
 
 export const STAFF_ROLES = { user, manager, admin } as const;

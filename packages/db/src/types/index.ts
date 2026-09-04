@@ -22,6 +22,11 @@ export const ORDER_STATUS = ["prospect", "booked", "to-loading", "at-loading", "
 export const PACKING = ["bags-1kg", "bags-2kg", "bags-5kg", "bags-25kg", "bags-30kg", "bags-50kg", "bags-100kg", "bags-1ton", "bottle-1l", "bottle-5l", "bottle-10l", "bottle-20l", "bottle-25l", "container-20ft", "container-40ft", "boxes", "pallets", "noPacking", "other"] as const
 export const YEARS = ["1981", "1982", "1983", "1984", "1985", "1986", "1987", "1988", "1989", "1990", "1991", "1992", "1993", "1994", "1995", "1996", "1997", "1998", "1999", "2000", "2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"] as const
 
+// The order lifecycle as a union. The tuple above stays the single source of
+// truth; consumers that only need the type (map contract, tracking helpers)
+// import this instead of re-deriving it.
+export type OrderStatus = (typeof ORDER_STATUS)[number]
+
 // Partner verification. Every KYC vocabulary is text + TS const, never a pg
 // enum: adding a document type or status must not require an ALTER TYPE on
 // the shared database (same rule as ORDER_DOCUMENT_TYPE).
@@ -92,3 +97,19 @@ export const AddressSchema = z.object({
 export type Urls = z.infer<typeof URLSchema>
 export type Address = z.infer<typeof AddressSchema>
 export type LoadingBay = z.infer<typeof LoadingBaySchema>
+// Cargo disputes (theft, loss, damage…). Text + TS const like the KYC
+// vocabularies: the dispute table and the order's mirror column store them
+// as text, so growing the lists never needs an ALTER TYPE.
+export const DISPUTE_REASON = ["theft", "loss", "damage", "other"] as const
+export const DISPUTE_STATUS = ["open", "under-review", "settled", "closed"] as const
+// open and under-review are "active": they hold payments and block closure
+export const ACTIVE_DISPUTE_STATUSES = ["open", "under-review"] as const
+export const DISPUTE_LIABLE_PARTY = ["carrier", "shipper", "appload", "third-party", "unknown"] as const
+
+export type DisputeReason = (typeof DISPUTE_REASON)[number]
+export type DisputeStatus = (typeof DISPUTE_STATUS)[number]
+export type DisputeLiableParty = (typeof DISPUTE_LIABLE_PARTY)[number]
+
+/** Whether a dispute in this state still holds the order: payments on hold, no completion. */
+export const isActiveDispute = (status: DisputeStatus | string | null | undefined): boolean =>
+    status !== null && status !== undefined && (ACTIVE_DISPUTE_STATUSES as readonly string[]).includes(status)
