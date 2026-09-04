@@ -48,7 +48,7 @@ Database: apply migrations with `pnpm --filter @workspace/db db:migrate`
 
 ## Deployment
 
-Vercel (one project per app + the admin dev project) + Neon. The branch →
-project mapping and the full first-release checklist — Neon, Vercel env
-vars, Google OAuth/Sheets, Resend, Infobip, QStash cron schedules, first
-admin — live in [RELEASE.md](RELEASE.md).
+Vercel (a dev and a production project for each app, four in all) + Neon.
+The branch → project mapping and the full first-release checklist — Neon,
+Vercel env vars, Google OAuth/Sheets, Resend, Infobip, QStash cron
+schedules, first admin — live in [RELEASE.md](RELEASE.md).

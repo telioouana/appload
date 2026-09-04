@@ -7,16 +7,29 @@ only need step 7's smoke test.
 
 ## 0. Branching & deploys
 
-One integration branch, one production branch **per app**, three Vercel
+One integration branch, one production branch **per app**, four Vercel
 projects, two apps (`apps/admin`, `apps/website`). Each `prod/*` branch
 carries the whole monorepo, but only its own app's Vercel project deploys
 from it — so the apps release independently, no cherry-picking:
 
 | Branch | App | Vercel project (Production Branch) | Origin | Database / logbook |
 |---|---|---|---|---|
-| `dev` | admin | appload dev — Production Branch = `dev` | `https://admin.dev.appload.co.mz` | `appload-dev` / DEV DATABASE LOGBOOK |
-| `prod/admin` | admin | appload-admin-prod — Production Branch = `prod/admin` | `https://admin.appload.co.mz` | `appload-prod` / DATABASE LOGBOOK |
-| `prod/website` | website | appload-website — Production Branch = `prod/website` | `https://appload-website.vercel.app` (custom domain pending) | production DB, read-only aggregates (unused while the home metrics section is behind its flag) |
+| `dev` | admin | `appload-admin-dev` — Production Branch = `dev` | `https://admin.dev.appload.co.mz` | `appload-dev` / DEV DATABASE LOGBOOK |
+| `dev` | website | `appload-dev-website` — Production Branch = `dev` | Vercel-assigned; see the project's Domains tab | whichever `DATABASE_URL` the project sets, read-only aggregates |
+| `prod/admin` | admin | `appload-admin-prod` — Production Branch = `prod/admin` | `https://admin.appload.co.mz` | `appload-prod` / DATABASE LOGBOOK |
+| `prod/website` | website | `appload-website` — Production Branch = `prod/website` | Vercel-assigned, custom domain pending | production DB, read-only aggregates (unused while the home metrics section is behind its flag) |
+
+Both admin origins answer. The `*.vercel.app` aliases the website projects
+were documented under (`appload-website.vercel.app`,
+`appload-dev-website.vercel.app`) returned 404 on 2026-09-04, so take the
+current URL from each project's Domains tab rather than trusting one quoted
+here.
+
+A fifth project named plain **`appload`** predates the per-app split. It
+deploys nothing, but it still builds every pull request and fails, which is
+the permanent red `Vercel` check on PRs (#15, #17, #18 and #19 all carry
+it). Disconnecting its Git repository (Settings → Git) stops the noise;
+deleting the project removes it for good.
 
 `main` is retired as a release branch (kept for history; nothing deploys
 from it since 2026-09-02).
