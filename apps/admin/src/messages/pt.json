@@ -1,5 +1,7 @@
 {
     "General": {
+        "app-name": "appload",
+        "slogan": "Going the extra mile",
         "inputs": {
             "file": {
                 "delete": {
@@ -97,10 +99,6 @@
             "sign-out": "Terminar sessão"
         },
         "sidebar": {
-            "header": {
-                "app-name": "appload",
-                "slogan": "Going the extra mile"
-            },
             "content": {
                 "ops": {
                     "order": "Novo pedido",
@@ -108,12 +106,14 @@
                         "orders": "Pedidos",
                         "all": "Todos",
                         "prospects": "Prospectivas",
-                        "booked": "Confrimados",
+                        "booked": "Confirmados",
                         "on-going": "Em andamento",
-                        "delivered": "Completos",
-                        "history": "Histórico"
+                        "delivered": "Entregues",
+                        "history": "Histórico",
+                        "disputes": "Disputas"
                     },
-                    "chats": "Conversas"
+                    "chats": "Conversas",
+                    "map": "Mapa"
                 },
                 "management": {
                     "shippers": "Clientes",
@@ -1415,7 +1415,6 @@
                     }
                 }
             },
-            "card": {},
             "data": {
                 "count": "{count, plural, =0 {Sem pedidos} one {# pedido} other {# pedidos}}",
                 "empty": "Nenhum pedido encontrado com os filtros aplicados",
@@ -1730,7 +1729,8 @@
                     "SEND_FAILED": "O envio falhou. Tente novamente."
                 }
             },
-            "stats": {}
+            "stats": {},
+            "card": {}
         },
         "chats": {
             "title": "Conversas",
@@ -2248,6 +2248,64 @@
                     "CARRIER_SUSPENDED": "Este transportador está suspenso.",
                     "UNKNOWN": "Este transportador não pode ser contratado neste momento."
                 }
+            }
+        },
+        "list": {
+            "breadcrumb": "Está aqui",
+            "command": "Pesquisar em todo o lado (⌘K)",
+            "empty": {
+                "adjust": "Tente outra pesquisa ou retire um filtro."
+            },
+            "select-all": "Seleccionar todas as linhas desta página",
+            "select-row": "Seleccionar linha",
+            "filters": "Filtros",
+            "status": "Estado",
+            "sort": "Ordenar",
+            "sort-by": "Ordenar por",
+            "ascending": "Ascendente",
+            "descending": "Descendente",
+            "columns": "Colunas",
+            "export": "Exportar CSV",
+            "remove-filter": "Retirar o filtro {filter}",
+            "clear-all": "Limpar tudo",
+            "showing": "A mostrar {from}–{to} de {total}",
+            "pagination": "Páginas",
+            "previous": "Página anterior",
+            "next": "Página seguinte",
+            "per-page": "{count} por página",
+            "selected": "{count, plural, one {# seleccionado} other {# seleccionados}}",
+            "clear-selection": "Limpar selecção",
+            "copied": "Copiado",
+            "suggestions": "Sugestões"
+        },
+        "command": {
+            "title": "Pesquisar",
+            "description": "Encontre um pedido, uma empresa, um motorista ou uma matrícula",
+            "placeholder": "Pesquisar pedidos, empresas, motoristas, matrículas…",
+            "empty": "Nada corresponde",
+            "typing": "Escreva pelo menos dois caracteres",
+            "groups": {
+                "organizations": "Empresas",
+                "drivers": "Motoristas",
+                "vehicles": "Veículos",
+                "actions": "Acções",
+                "orders": "Pedidos"
+            },
+            "hints": {
+                "move": "mover",
+                "open": "abrir",
+                "close": "fechar"
+            },
+            "shipper": "Cliente",
+            "carrier": "Transportador",
+            "search-in": "Pesquisar “{query}” em {page}",
+            "pages": {
+                "shippers": "Clientes",
+                "carriers": "Transportadores",
+                "drivers": "Motoristas",
+                "fleet": "Frota",
+                "orders": "Pedidos",
+                "map": "Mapa"
             }
         }
     },

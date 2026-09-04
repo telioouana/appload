@@ -37,6 +37,9 @@ export default async function RootLayout({
                 fontMono.variable,
                 "font-sans",
                 montserratSans.variable,
+                // The UI kit's headings read --font-heading; the admin has
+                // no display face, so headings use the body face
+                "[--font-heading:var(--font-sans)]",
             )}
         >
             {/* The app is viewport-locked: pages scroll internally, never the body */}

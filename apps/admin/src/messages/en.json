@@ -1,5 +1,7 @@
 {
     "General": {
+        "app-name": "appload",
+        "slogan": "Going the extra mile",
         "inputs": {
             "file": {
                 "delete": {
@@ -97,10 +99,6 @@
             "sign-out": "Sign out"
         },
         "sidebar": {
-            "header": {
-                "app-name": "appload",
-                "slogan": "Going the extra mile"
-            },
             "content": {
                 "ops": {
                     "order": "New order",
@@ -111,9 +109,11 @@
                         "booked": "Booked",
                         "on-going": "On going",
                         "delivered": "Delivered",
-                        "history": "History"
+                        "history": "History",
+                        "disputes": "Disputes"
                     },
-                    "chats": "Chats"
+                    "chats": "Chats",
+                    "map": "Map"
                 },
                 "management": {
                     "shippers": "Shippers",
@@ -2247,6 +2247,64 @@
                     "CARRIER_SUSPENDED": "This carrier is suspended.",
                     "UNKNOWN": "This carrier cannot be booked right now."
                 }
+            }
+        },
+        "list": {
+            "breadcrumb": "You are here",
+            "command": "Search anywhere (⌘K)",
+            "empty": {
+                "adjust": "Try a different search or clear a filter."
+            },
+            "select-all": "Select all rows on this page",
+            "select-row": "Select row",
+            "filters": "Filters",
+            "status": "Status",
+            "sort": "Sort",
+            "sort-by": "Sort by",
+            "ascending": "Ascending",
+            "descending": "Descending",
+            "columns": "Columns",
+            "export": "Export CSV",
+            "remove-filter": "Remove {filter} filter",
+            "clear-all": "Clear all",
+            "showing": "Showing {from}–{to} of {total}",
+            "pagination": "Pages",
+            "previous": "Previous page",
+            "next": "Next page",
+            "per-page": "{count} per page",
+            "selected": "{count, plural, one {# selected} other {# selected}}",
+            "clear-selection": "Clear selection",
+            "copied": "Copied",
+            "suggestions": "Suggestions"
+        },
+        "command": {
+            "title": "Search",
+            "description": "Find an order, a company, a driver or a plate",
+            "placeholder": "Search orders, companies, drivers, plates…",
+            "empty": "Nothing matches",
+            "typing": "Type at least two characters",
+            "groups": {
+                "organizations": "Companies",
+                "drivers": "Drivers",
+                "vehicles": "Vehicles",
+                "actions": "Actions",
+                "orders": "Orders"
+            },
+            "hints": {
+                "move": "move",
+                "open": "open",
+                "close": "close"
+            },
+            "shipper": "Shipper",
+            "carrier": "Carrier",
+            "search-in": "Search “{query}” in {page}",
+            "pages": {
+                "shippers": "Shippers",
+                "carriers": "Carriers",
+                "drivers": "Drivers",
+                "fleet": "Fleet",
+                "orders": "Orders",
+                "map": "Map"
             }
         }
     },

@@ -22,6 +22,9 @@ export const routing = defineRouting({
         "/reset-password": {
             pt: "/redefinir-palavra-passe"
         },
+        "/orders": {
+            pt: "/pedidos"
+        },
         "/orders/all": {
             pt: "/pedidos/todos"
         },
@@ -40,11 +43,17 @@ export const routing = defineRouting({
         "/orders/history": {
             pt: "/pedidos/historico"
         },
+        "/orders/disputes": {
+            pt: "/pedidos/disputas"
+        },
         "/orders/details/[orderId]": {
             pt: "/pedidos/detalhes/[orderId]"
         },
         "/chats": {
             pt: "/conversas"
+        },
+        "/map": {
+            pt: "/mapa"
         },
         "/shippers": {
             pt: "/clientes"

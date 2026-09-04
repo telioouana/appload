@@ -42,12 +42,8 @@
     --sidebar-ring: oklch(0.705 0.015 286.067);
 
     /* Neutral */
-    --status-drafted-text: oklch(0.59 0.02 257);
-    --status-drafted-bg: oklch(0.97 0.01 264);
     --status-prospect-text: oklch(0.66 0.02 257);
     --status-prospect-bg: oklch(0.97 0.01 264);
-    --status-open-text: oklch(0.49 0.04 257);
-    --status-open-bg: oklch(0.97 0.01 264);
     /* Info / Progress */
     --status-booked-text: oklch(0.57 0.15 259);
     --status-booked-bg: oklch(0.94 0.04 254);
@@ -142,12 +138,8 @@
     --sidebar-ring: oklch(0.552 0.016 285.938);
 
     /* Neutral */
-    --status-drafted-text: oklch(0.74 0.02 258);
-    --status-drafted-bg: oklch(0.27 0.02 260);
     --status-prospect-text: oklch(0.68 0.03 258);
     --status-prospect-bg: oklch(0.27 0.02 260);
-    --status-open-text: oklch(0.83 0.02 259);
-    --status-open-bg: oklch(0.27 0.02 260);
     /* Info / Progress */
     --status-booked-text: oklch(0.78 0.12 254);
     --status-booked-bg: oklch(0.32 0.05 255);
