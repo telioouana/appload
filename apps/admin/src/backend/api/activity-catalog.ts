@@ -69,6 +69,41 @@ export const activityCatalog: ActivityCatalog = {
             orderId: input?.orderId ?? "",
         }),
     },
+    // One row for the batch: the target and how many rows made it, never
+    // the note (it is a free text the transition rows keep per order)
+    "orders.bulkTransition": {
+        params: (input, output?: { results: { ok: boolean }[] }) => ({
+            to: input?.to ?? "",
+            count: Array.isArray(input?.orders) ? input.orders.length : 0,
+            failed: output?.results.filter((result) => !result.ok).length ?? 0,
+        }),
+    },
+    // Disputes log the order, the cause and the state — never the
+    // description or the amounts claimed
+    "disputes.open": {
+        entity: (input) =>
+            input?.orderId ? { type: "order", id: String(input.orderId) } : null,
+        params: (input) => ({
+            orderId: input?.orderId ?? "",
+            reason: input?.reason ?? "",
+        }),
+    },
+    "disputes.update": {
+        entity: (_input, output?: { orderId: string }) =>
+            output ? { type: "order", id: output.orderId } : null,
+        params: (input, output?: { orderId: string }) => ({
+            orderId: output?.orderId ?? "",
+            changedFields: Object.keys(input?.patch ?? {}).join(", "),
+        }),
+    },
+    "disputes.resolve": {
+        entity: (_input, output?: { orderId: string }) =>
+            output ? { type: "order", id: output.orderId } : null,
+        params: (input, output?: { orderId: string }) => ({
+            orderId: output?.orderId ?? "",
+            status: input?.status ?? "",
+        }),
+    },
     "documents.create": {
         entity: (input) =>
             input?.orderId ? { type: "order", id: String(input.orderId) } : null,

@@ -34,7 +34,7 @@ import type { OrderStatus } from "@/lib/orders/transitions"
 const DIALOG_ERROR_CODES = [
     "INVALID_STATE", "NOT_ALLOWED", "VERSION_CONFLICT",
     "NOTE_REQUIRED", "EVIDENCE_REQUIRED", "POD_REQUIRED",
-    "INCOMPLETE_FOR_BOOKING", "NOT_FOUND", "UPLOAD_FAILED", "UNKNOWN",
+    "INCOMPLETE_FOR_BOOKING", "DISPUTE_OPEN", "NOT_FOUND", "UPLOAD_FAILED", "UNKNOWN",
     // Verification gate, raised when booking commits cargo to a carrier
     "CARRIER_NOT_VERIFIED", "CARRIER_CONTRACT_MISSING", "CARRIER_CONTRACT_EXPIRED",
     "CARRIER_SUSPENDED", "RISK_ACK_NOT_ALLOWED", "RISK_ACK_NOTE_REQUIRED",
@@ -145,7 +145,7 @@ export function TransitionDialog({
                 document,
             })
 
-            queryClient.invalidateQueries(trpc.orders.list.queryFilter())
+            queryClient.invalidateQueries(trpc.orders.pathFilter())
             queryClient.invalidateQueries(trpc.order.get.queryFilter({ orderId }))
             queryClient.invalidateQueries(trpc.order.transitionOptions.queryFilter({ orderId }))
 
@@ -205,7 +205,7 @@ export function TransitionDialog({
 
                         {blocked && (
                             <Alert variant="destructive">
-                                <AlertDescription>{t("errors.INCOMPLETE_FOR_BOOKING")}</AlertDescription>
+                                <AlertDescription>{t(`errors.${selected?.blockedReason ?? "INCOMPLETE_FOR_BOOKING"}`)}</AlertDescription>
                             </Alert>
                         )}
 

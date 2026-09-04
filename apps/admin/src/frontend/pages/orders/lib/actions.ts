@@ -13,14 +13,20 @@ export type OrderPrimaryAction =
     | { kind: "confirm" };
 
 /**
- * The single most relevant next step for an order — shared by the grid
- * card, the list row and the details page so every surface always agrees.
+ * The single most relevant next step for an order — shared by the table
+ * row actions, the order sheet and the details page so every surface
+ * always agrees.
  * Role-agnostic on purpose: forward steps never need special roles, and
- * the server re-guards regardless. Interrupted orders return null here
- * (their resume target lives server-side) — the transition dialog covers
- * them.
+ * the server re-guards regardless. An interrupted order's next step is
+ * wherever it resumes, which only a caller holding the order's history can
+ * know — pass `resumeStatus` (it rides on `order.get`) and the button names
+ * that stage; omit it, as the table rows do, and interrupts return null so
+ * the transition dialog covers them.
  */
-export function primaryOrderAction(order: Pick<Order, "status" | "route">): OrderPrimaryAction | null {
+export function primaryOrderAction(
+    order: Pick<Order, "status" | "route">,
+    resumeStatus: OrderStatus | null = null,
+): OrderPrimaryAction | null {
     if (order.status === "prospect") {
         return { kind: "confirm" };
     }
@@ -29,7 +35,7 @@ export function primaryOrderAction(order: Pick<Order, "status" | "route">): Orde
         status: order.status,
         route: order.route,
         role: "user",
-        resumeStatus: null,
+        resumeStatus,
     });
 
     return to === null ? null : { kind: "transition", to };

@@ -1300,44 +1300,9 @@
         },
         "orders": {
             "header": {
-                "page": {
-                    "all": {
-                        "title": "Todos os pedidos",
-                        "description": "Lista de todos os pedidos registados na base de dados"
-                    },
-                    "prospect": {
-                        "title": "Pedidos em prospectiva",
-                        "description": "Pedidos em estado de prospectiva"
-                    },
-                    "booked": {
-                        "title": "Pedidos confirmados",
-                        "description": "Pedidos que foram confirmados mas ainda não iniciados"
-                    },
-                    "on-going": {
-                        "title": "Pedidos em curso",
-                        "description": "Pedidos atualmente em trânsito"
-                    },
-                    "delivered": {
-                        "title": "Pedidos entregues",
-                        "description": "Entregas concluídas e à espera de avaliações"
-                    },
-                    "history": {
-                        "title": "Histórico",
-                        "description": "Pedidos concluídos, cancelados ou perdidos por preço"
-                    }
-                },
                 "search": "Pesquisar pedido por ID, cliente, transportador, nº da factura",
-                "view": {
-                    "grid": "Mudar para vista em grelha",
-                    "list": "Mudar para vista em lista"
-                },
-                "year": "Ano",
                 "filters": {
-                    "title": "Filtros",
-                    "clear": "Limpar filtro",
                     "category": {
-                        "label": "Filter por categoria",
-                        "placeholder": "Selecione uma das opções para filtrar",
                         "options": {
                             "agriculture-inputs": "Insumos agrícolas",
                             "agriculture-products": "Produtos agrícolas",
@@ -1353,8 +1318,6 @@
                         }
                     },
                     "payment": {
-                        "label": "Filtar estado do pagamento",
-                        "placeholder": "Selecione uma das opções para filtrar",
                         "by": {
                             "all": "Todos",
                             "shipper": "Cliente",
@@ -1364,14 +1327,12 @@
                             "not-applicable": "Não aplicavél",
                             "pending": "Pendente Pagamento",
                             "partially": "Parcialmente pago",
-                            "completed": "Pago Completamente"
+                            "completed": "Pago Completamente",
+                            "outstanding": "Em aberto"
                         }
                     },
                     "period": {
-                        "label": "Filtar por mês ou datas",
                         "month": {
-                            "label": "Mês",
-                            "placeholder": "Selecionar mês",
                             "options": {
                                 "jan": "Janeiro",
                                 "feb": "Fevereiro",
@@ -1386,13 +1347,9 @@
                                 "nov": "Novembro",
                                 "dec": "Dezembro"
                             }
-                        },
-                        "date": {
-                            "placeholder": "Selecionar as data"
                         }
                     },
                     "status": {
-                        "label": "Estado",
                         "options": {
                             "all": "Todos",
                             "prospect": "Prospectiva",
@@ -1416,18 +1373,10 @@
                 }
             },
             "data": {
-                "count": "{count, plural, =0 {Sem pedidos} one {# pedido} other {# pedidos}}",
-                "empty": "Nenhum pedido encontrado com os filtros aplicados",
-                "error": "Não foi possível carregar os pedidos. Tente novamente.",
                 "labels": {
                     "route": "Rota",
-                    "date": "Data",
                     "loading": "Carregamento",
-                    "driver": "Motorista",
-                    "vehicle": "Viatura",
                     "weight": "Peso",
-                    "distance": "Distância",
-                    "amount": "Valor",
                     "shipper": "Expedidor",
                     "noShipper": "Sem expedidor",
                     "carrier": "Transportador",
@@ -1461,14 +1410,6 @@
                 "flags": {
                     "hazardous": "Carga perigosa",
                     "refrigerated": "Refrigerado"
-                },
-                "actions": {
-                    "view": "Ver",
-                    "confirm": "Confirmar pedido",
-                    "edit": "Editar",
-                    "more": "Mais",
-                    "changeStatus": "Alterar estado",
-                    "cancel": "Cancelar ordem"
                 }
             },
             "transitionDialog": {
@@ -1729,6 +1670,227 @@
                     "SEND_FAILED": "O envio falhou. Tente novamente."
                 }
             },
+            "list": {
+                "title": "Pedidos",
+                "eyebrow": "Operações",
+                "new": "Novo pedido",
+                "clear-search": "Limpar pesquisa",
+                "columns": {
+                    "order": "Pedido",
+                    "route": "Rota",
+                    "loading": "Carregamento",
+                    "shipper": "Cliente",
+                    "carrier": "Transportador",
+                    "total": "Total",
+                    "payment": "Pagamento",
+                    "actions": "Ações"
+                },
+                "sort": {
+                    "seq": "Mais recentes",
+                    "loading": "Data de carregamento",
+                    "total": "Total do cliente",
+                    "status": "Estado",
+                    "updated": "Última atualização"
+                },
+                "filters": {
+                    "status": "Estado",
+                    "category": "Categoria",
+                    "payment": "Pagamento",
+                    "payment-by": "Lado do pagamento",
+                    "either": "Qualquer lado",
+                    "period": "Período de carregamento",
+                    "from": "De",
+                    "to": "Até",
+                    "year": "Ano",
+                    "shipper": "Cliente",
+                    "carrier": "Transportador",
+                    "any": "Qualquer",
+                    "flags": "Sinalizações",
+                    "cargo": "Carga",
+                    "loading": "Carregamento",
+                    "loading-due": "previsto em {days} dias",
+                    "interrupted": "Parado ou com problema",
+                    "interrupted-hint": "Viagens paradas na estrada",
+                    "flagged": "Sinalizado para revisão",
+                    "flagged-hint": "À espera de um gestor",
+                    "pod": "À espera de POD",
+                    "pod-hint": "Entregue sem prova de entrega",
+                    "hazardous": "Carga perigosa",
+                    "refrigerated": "Carga refrigerada",
+                    "regional": "Rota regional",
+                    "regional-hint": "Atravessa uma fronteira",
+                    "selected": "Selecionado",
+                    "insurance": "Seguro a pagar",
+                    "insurance-hint": "Subscrito pela Appload e ainda pendente",
+                    "disputed": "Em disputa",
+                    "disputed-hint": "Roubo, perda, dano ou outra disputa aberta"
+                },
+                "values": {
+                    "national": "Nacional",
+                    "regional": "Regional",
+                    "backload": "Retorno",
+                    "late": "{days, plural, one {# dia de atraso} other {# dias de atraso}}",
+                    "no-carrier": "Ainda sem transportador",
+                    "no-driver": "Sem motorista atribuído",
+                    "no-invoice": "Sem fatura",
+                    "no-total": "Ainda sem preço",
+                    "shipper-short": "C",
+                    "carrier-short": "T"
+                },
+                "data": {
+                    "empty": "Ainda não há pedidos",
+                    "empty-description": "Os pedidos aparecem aqui assim que um for criado.",
+                    "no-results": "Nenhum pedido corresponde aos filtros",
+                    "error": "Não foi possível carregar os pedidos, tente novamente"
+                },
+                "bulk": {
+                    "export": "Exportar",
+                    "copy-ids": "Copiar IDs",
+                    "copied": "{count, plural, one {# ID copiado} other {# IDs copiados}}",
+                    "change-status": "Alterar estado",
+                    "send-pdfs": "Enviar PDFs"
+                },
+                "actions": {
+                    "menu": "Mais ações",
+                    "open": "Abrir",
+                    "full-page": "Abrir página completa",
+                    "edit": "Editar",
+                    "confirm": "Confirmar pedido",
+                    "change-status": "Alterar estado",
+                    "cancel": "Cancelar pedido",
+                    "send-pdf": "Enviar PDF",
+                    "copy-id": "Copiar ID do pedido",
+                    "open-dispute": "Abrir disputa"
+                },
+                "errors": {
+                    "load": "Não foi possível carregar este pedido, tente novamente"
+                },
+                "sheet": {
+                    "title": "Pedido",
+                    "description": "Rota, partes, pagamentos, documentos e histórico",
+                    "close": "Fechar",
+                    "tabs": {
+                        "overview": "Resumo",
+                        "payments": "Pagamentos",
+                        "documents": "Documentos",
+                        "history": "Histórico"
+                    },
+                    "milestones": "Etapas",
+                    "route": "Rota",
+                    "parties": "Partes",
+                    "operations": "Operações",
+                    "expected": "Previsto {date}",
+                    "since": "Desde {date}",
+                    "on-time": "a tempo",
+                    "late": "atrasado",
+                    "loaded": "Carregado {date}",
+                    "offloaded": "Descarregado {date}",
+                    "departed": "partiu {date}",
+                    "trucks": "{count, plural, one {# camião} other {# camiões}}",
+                    "deliveries": "{count, plural, one {# entrega} other {# entregas}}",
+                    "updated": "Atualizado {date}",
+                    "load-failed": "Não foi possível carregar este pedido, tente novamente",
+                    "flagged": "Sinalizado para revisão",
+                    "disputed": "Em disputa"
+                },
+                "tabs": {
+                    "all": "Todos"
+                },
+                "pages": {
+                    "all": {
+                        "title": "Todos os pedidos",
+                        "description": "Lista de todos os pedidos registados na base de dados"
+                    },
+                    "prospect": {
+                        "title": "Pedidos em prospectiva",
+                        "description": "Pedidos em estado de prospectiva"
+                    },
+                    "booked": {
+                        "title": "Pedidos confirmados",
+                        "description": "Pedidos que foram confirmados mas ainda não iniciados"
+                    },
+                    "on-going": {
+                        "title": "Pedidos em curso",
+                        "description": "Pedidos atualmente em trânsito"
+                    },
+                    "delivered": {
+                        "title": "Pedidos entregues",
+                        "description": "Entregas concluídas e à espera de avaliações"
+                    },
+                    "history": {
+                        "title": "Histórico",
+                        "description": "Pedidos concluídos, cancelados ou perdidos por preço"
+                    }
+                },
+                "suggest": {
+                    "shippers": "Clientes",
+                    "carriers": "Transportadores",
+                    "orders": "{count, plural, one {# pedido} other {# pedidos}}",
+                    "search": "Pesquisar “{query}” nos pedidos"
+                },
+                "cashflow": {
+                    "title": "Fluxo de caixa {year}",
+                    "including": "Incluindo viagens confirmadas",
+                    "excluding": "Excluindo viagens confirmadas",
+                    "pending-carrier": "Pagamentos a transportadores pendentes",
+                    "pending-shipper": "Pagamentos de clientes pendentes",
+                    "payables": "A pagar a transportadores",
+                    "receivables": "A receber de clientes",
+                    "insurance": "Seguro a pagar",
+                    "cashflow": "Fluxo de caixa por vir",
+                    "empty": "Nada em aberto este ano."
+                }
+            },
+            "bulkTransition": {
+                "title": "Alterar estado",
+                "description": "{count, plural, one {# pedido selecionado} other {# pedidos selecionados}}",
+                "target": "Mover para",
+                "target-placeholder": "Escolha um estado",
+                "applies-to": "{count} de {total}",
+                "flag-warning": "Esta mudança sinaliza os pedidos para revisão.",
+                "note": "Nota",
+                "note-placeholder": "Porque é que estes pedidos avançam juntos (pelo menos 5 caracteres)",
+                "skipped": "{count, plural, one {# pedido será ignorado} other {# pedidos serão ignorados}}",
+                "skipped-interrupted": "parado ou com problema, retome-o a partir da sua ficha",
+                "skipped-no-move": "não pode passar para aí a partir de {status}",
+                "no-targets": "Nenhum dos pedidos selecionados pode avançar em conjunto. Confirmar, evidências, prova de entrega e reversões de administrador fazem-se um pedido de cada vez.",
+                "apply": "{count, plural, one {Mover # pedido} other {Mover # pedidos}}",
+                "cancel": "Cancelar",
+                "close": "Fechar",
+                "done": "{ok} movidos, {failed} falharam",
+                "sheet-warning": "sincronização da folha pendente"
+            },
+            "bulkPdf": {
+                "title": "Enviar PDFs",
+                "description": "{count, plural, one {A ordem de transporte de # pedido} other {As ordens de transporte de # pedidos}}, um email cada",
+                "party": "Enviar a",
+                "parties": {
+                    "shipper": "Clientes",
+                    "carrier": "Transportadores"
+                },
+                "cc": "CC",
+                "cc-placeholder": "Até cinco endereços, separados por vírgulas",
+                "message": "Mensagem",
+                "message-placeholder": "A mesma mensagem em todos os emails",
+                "order": "Pedido",
+                "to": "Para",
+                "state": "Estado",
+                "no-carrier": "Sem transportador",
+                "no-email": "Sem endereço registado",
+                "states": {
+                    "idle": "Pronto",
+                    "skipped": "Ignorado",
+                    "generating": "A gerar",
+                    "uploading": "A carregar",
+                    "sending": "A enviar",
+                    "sent": "Enviado",
+                    "failed": "Falhou"
+                },
+                "progress": "{done} de {total}",
+                "send": "{count, plural, =0 {Nada para enviar} one {Enviar #} other {Enviar #}}",
+                "cancel": "Cancelar",
+                "close": "Fechar"
+            },
             "dispute": {
                 "open-title": "Abrir uma disputa",
                 "open-description": "Pedido {orderId}. Os pagamentos podem ficar retidos de qualquer dos lados até à resolução.",
@@ -1756,9 +1918,7 @@
                     "NOT_FOUND": "O pedido não foi encontrado.",
                     "UNKNOWN": "Algo correu mal. Tente novamente."
                 }
-            },
-            "stats": {},
-            "card": {}
+            }
         },
         "chats": {
             "title": "Conversas",
@@ -2840,6 +3000,9 @@
         },
         "settings": {
             "setPassword": "Criou uma palavra-passe para a sua conta"
+        },
+        "orders": {
+            "bulkTransition": "Moveu {count} pedidos para {to} ({failed} falharam)"
         },
         "disputes": {
             "open": "Abriu uma disputa por {reason} no pedido {orderId}",

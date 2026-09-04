@@ -1300,44 +1300,9 @@
         },
         "orders": {
             "header": {
-                "page": {
-                    "all": {
-                        "title": "All orders",
-                        "description": "Every order registered in the database"
-                    },
-                    "prospect": {
-                        "title": "Prospect orders",
-                        "description": "Orders still in the prospect stage"
-                    },
-                    "booked": {
-                        "title": "Booked orders",
-                        "description": "Orders confirmed but not yet started"
-                    },
-                    "on-going": {
-                        "title": "Ongoing orders",
-                        "description": "Orders currently in transit"
-                    },
-                    "delivered": {
-                        "title": "Delivered orders",
-                        "description": "Deliveries completed and awaiting reviews"
-                    },
-                    "history": {
-                        "title": "History",
-                        "description": "Completed, cancelled or underbid orders"
-                    }
-                },
-                "search": "Search order by ID, client, carrier, invoice number",
-                "view": {
-                    "grid": "Switch to grid view",
-                    "list": "Switch to list view"
-                },
-                "year": "Year",
+                "search": "Search order by ID, shipper, carrier, invoice number",
                 "filters": {
-                    "title": "Filters",
-                    "clear": "Clear filter",
                     "category": {
-                        "label": "Filter by category",
-                        "placeholder": "Select one of the options to filter",
                         "options": {
                             "agriculture-inputs": "Agricultural inputs",
                             "agriculture-products": "Agricultural products",
@@ -1353,8 +1318,6 @@
                         }
                     },
                     "payment": {
-                        "label": "Filter by payment status",
-                        "placeholder": "Select one of the options to filter",
                         "by": {
                             "all": "All",
                             "shipper": "Shipper",
@@ -1364,14 +1327,12 @@
                             "not-applicable": "Not applicable",
                             "pending": "Pending",
                             "partially": "Partially paid",
-                            "completed": "Fully paid"
+                            "completed": "Fully paid",
+                            "outstanding": "Outstanding"
                         }
                     },
                     "period": {
-                        "label": "Filter by month or dates",
                         "month": {
-                            "label": "Month",
-                            "placeholder": "Select month",
                             "options": {
                                 "jan": "January",
                                 "feb": "February",
@@ -1386,13 +1347,9 @@
                                 "nov": "November",
                                 "dec": "December"
                             }
-                        },
-                        "date": {
-                            "placeholder": "Select the dates"
                         }
                     },
                     "status": {
-                        "label": "Status",
                         "options": {
                             "all": "All",
                             "prospect": "Prospect",
@@ -1416,18 +1373,10 @@
                 }
             },
             "data": {
-                "count": "{count, plural, =0 {No orders} one {# order} other {# orders}}",
-                "empty": "No orders match the applied filters",
-                "error": "Could not load the orders. Please try again.",
                 "labels": {
                     "route": "Route",
-                    "date": "Date",
                     "loading": "Loading",
-                    "driver": "Driver",
-                    "vehicle": "Vehicle",
                     "weight": "Weight",
-                    "distance": "Distance",
-                    "amount": "Amount",
                     "shipper": "Shipper",
                     "noShipper": "No shipper",
                     "carrier": "Carrier",
@@ -1461,14 +1410,6 @@
                 "flags": {
                     "hazardous": "Hazardous",
                     "refrigerated": "Refrigerated"
-                },
-                "actions": {
-                    "view": "View",
-                    "confirm": "Confirm order",
-                    "edit": "Edit",
-                    "more": "More",
-                    "changeStatus": "Change status",
-                    "cancel": "Cancel order"
                 }
             },
             "transitionDialog": {
@@ -1729,6 +1670,227 @@
                     "SEND_FAILED": "Sending failed. Please try again."
                 }
             },
+            "list": {
+                "title": "Orders",
+                "eyebrow": "Operations",
+                "new": "New order",
+                "clear-search": "Clear search",
+                "columns": {
+                    "order": "Order",
+                    "route": "Route",
+                    "loading": "Loading",
+                    "shipper": "Shipper",
+                    "carrier": "Carrier",
+                    "total": "Total",
+                    "payment": "Payment",
+                    "actions": "Actions"
+                },
+                "sort": {
+                    "seq": "Newest",
+                    "loading": "Loading date",
+                    "total": "Shipper total",
+                    "status": "Status",
+                    "updated": "Last update"
+                },
+                "filters": {
+                    "status": "Status",
+                    "category": "Category",
+                    "payment": "Payment",
+                    "payment-by": "Payment side",
+                    "either": "Either side",
+                    "period": "Loading period",
+                    "from": "From",
+                    "to": "To",
+                    "year": "Year",
+                    "shipper": "Shipper",
+                    "carrier": "Carrier",
+                    "any": "Any",
+                    "flags": "Flags",
+                    "cargo": "Cargo",
+                    "loading": "Loading",
+                    "loading-due": "due within {days} days",
+                    "interrupted": "Stopped or with issue",
+                    "interrupted-hint": "Trips parked on the road",
+                    "flagged": "Flagged for review",
+                    "flagged-hint": "Waiting on a manager",
+                    "pod": "Awaiting POD",
+                    "pod-hint": "Delivered without proof of delivery",
+                    "hazardous": "Hazardous cargo",
+                    "refrigerated": "Refrigerated cargo",
+                    "regional": "Regional route",
+                    "regional-hint": "Crosses a border",
+                    "selected": "Selected",
+                    "insurance": "Insurance to pay",
+                    "insurance-hint": "Appload-subscribed and still pending",
+                    "disputed": "In dispute",
+                    "disputed-hint": "Theft, loss, damage or another open dispute"
+                },
+                "values": {
+                    "national": "National",
+                    "regional": "Regional",
+                    "backload": "Backload",
+                    "late": "{days, plural, one {# day late} other {# days late}}",
+                    "no-carrier": "No carrier yet",
+                    "no-driver": "No driver assigned",
+                    "no-invoice": "No invoice",
+                    "no-total": "No price yet",
+                    "shipper-short": "S",
+                    "carrier-short": "C"
+                },
+                "data": {
+                    "empty": "No orders yet",
+                    "empty-description": "Orders appear here as soon as one is created.",
+                    "no-results": "No orders match your filters",
+                    "error": "Could not load the orders, please try again"
+                },
+                "bulk": {
+                    "export": "Export",
+                    "copy-ids": "Copy IDs",
+                    "copied": "{count, plural, one {# order ID copied} other {# order IDs copied}}",
+                    "change-status": "Change status",
+                    "send-pdfs": "Send PDFs"
+                },
+                "actions": {
+                    "menu": "More actions",
+                    "open": "Open",
+                    "full-page": "Open full page",
+                    "edit": "Edit",
+                    "confirm": "Confirm order",
+                    "change-status": "Change status",
+                    "cancel": "Cancel order",
+                    "send-pdf": "Send PDF",
+                    "copy-id": "Copy order ID",
+                    "open-dispute": "Open dispute"
+                },
+                "errors": {
+                    "load": "Could not load this order, please try again"
+                },
+                "sheet": {
+                    "title": "Order",
+                    "description": "Route, parties, payments, documents and history",
+                    "close": "Close",
+                    "tabs": {
+                        "overview": "Overview",
+                        "payments": "Payments",
+                        "documents": "Documents",
+                        "history": "History"
+                    },
+                    "milestones": "Milestones",
+                    "route": "Route",
+                    "parties": "Parties",
+                    "operations": "Operations",
+                    "expected": "Expected {date}",
+                    "since": "Since {date}",
+                    "on-time": "on time",
+                    "late": "late",
+                    "loaded": "Loaded {date}",
+                    "offloaded": "Offloaded {date}",
+                    "departed": "departed {date}",
+                    "trucks": "{count, plural, one {# truck} other {# trucks}}",
+                    "deliveries": "{count, plural, one {# delivery} other {# deliveries}}",
+                    "updated": "Updated {date}",
+                    "load-failed": "Could not load this order, please try again",
+                    "flagged": "Flagged for review",
+                    "disputed": "In dispute"
+                },
+                "tabs": {
+                    "all": "All"
+                },
+                "pages": {
+                    "all": {
+                        "title": "All orders",
+                        "description": "Every order registered in the database"
+                    },
+                    "prospect": {
+                        "title": "Prospect orders",
+                        "description": "Orders still in the prospect stage"
+                    },
+                    "booked": {
+                        "title": "Booked orders",
+                        "description": "Orders confirmed but not yet started"
+                    },
+                    "on-going": {
+                        "title": "Ongoing orders",
+                        "description": "Orders currently in transit"
+                    },
+                    "delivered": {
+                        "title": "Delivered orders",
+                        "description": "Deliveries completed and awaiting reviews"
+                    },
+                    "history": {
+                        "title": "History",
+                        "description": "Completed, cancelled or underbid orders"
+                    }
+                },
+                "suggest": {
+                    "shippers": "Shippers",
+                    "carriers": "Carriers",
+                    "orders": "{count, plural, one {# order} other {# orders}}",
+                    "search": "Search “{query}” in orders"
+                },
+                "cashflow": {
+                    "title": "Cashflow {year}",
+                    "including": "Including booked trips",
+                    "excluding": "Excluding booked trips",
+                    "pending-carrier": "Pending carrier payments",
+                    "pending-shipper": "Pending shipper payments",
+                    "payables": "Payables to carriers",
+                    "receivables": "Receivables from shippers",
+                    "insurance": "Insurance to pay",
+                    "cashflow": "Cashflow to come",
+                    "empty": "Nothing outstanding this year."
+                }
+            },
+            "bulkTransition": {
+                "title": "Change status",
+                "description": "{count, plural, one {# order selected} other {# orders selected}}",
+                "target": "Move to",
+                "target-placeholder": "Choose a status",
+                "applies-to": "{count} of {total}",
+                "flag-warning": "This move flags the orders for review.",
+                "note": "Note",
+                "note-placeholder": "Why these orders move together (at least 5 characters)",
+                "skipped": "{count, plural, one {# order will be skipped} other {# orders will be skipped}}",
+                "skipped-interrupted": "stopped or with issue, resume it from its own sheet",
+                "skipped-no-move": "cannot move there from {status}",
+                "no-targets": "None of the selected orders can move together. Booking, evidence, proof of delivery and admin reversals are done one order at a time.",
+                "apply": "{count, plural, one {Move # order} other {Move # orders}}",
+                "cancel": "Cancel",
+                "close": "Close",
+                "done": "{ok} moved, {failed} failed",
+                "sheet-warning": "sheet sync pending"
+            },
+            "bulkPdf": {
+                "title": "Send PDFs",
+                "description": "{count, plural, one {The transport order of # order} other {The transport orders of # orders}}, one email each",
+                "party": "Send to",
+                "parties": {
+                    "shipper": "Shippers",
+                    "carrier": "Carriers"
+                },
+                "cc": "CC",
+                "cc-placeholder": "Up to five addresses, comma-separated",
+                "message": "Message",
+                "message-placeholder": "Same message on every email",
+                "order": "Order",
+                "to": "To",
+                "state": "State",
+                "no-carrier": "No carrier",
+                "no-email": "No address on file",
+                "states": {
+                    "idle": "Ready",
+                    "skipped": "Skipped",
+                    "generating": "Generating",
+                    "uploading": "Uploading",
+                    "sending": "Sending",
+                    "sent": "Sent",
+                    "failed": "Failed"
+                },
+                "progress": "{done} of {total}",
+                "send": "{count, plural, =0 {Nothing to send} one {Send #} other {Send #}}",
+                "cancel": "Cancel",
+                "close": "Close"
+            },
             "dispute": {
                 "open-title": "Open a dispute",
                 "open-description": "Order {orderId}. Payments can be held on either side until it is settled.",
@@ -1756,8 +1918,7 @@
                     "NOT_FOUND": "The order could not be found.",
                     "UNKNOWN": "Something went wrong. Try again."
                 }
-            },
-            "stats": {}
+            }
         },
         "chats": {
             "title": "Chats",
@@ -2839,6 +3000,9 @@
         },
         "settings": {
             "setPassword": "Created a password for their account"
+        },
+        "orders": {
+            "bulkTransition": "Moved {count} orders to {to} ({failed} failed)"
         },
         "disputes": {
             "open": "Opened a {reason} dispute on order {orderId}",
