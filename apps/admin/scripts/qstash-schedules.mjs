@@ -127,8 +127,10 @@ for (const schedule of SCHEDULES) {
         continue;
     }
 
-    // Publishing with the same schedule id replaces the previous definition
-    await qstash("POST", `/schedules/${encodeURIComponent(destination)}`, {
+    // Publishing with the same schedule id replaces the previous definition.
+    // The destination goes into the path raw — QStash reads the scheme from
+    // it and rejects a percent-encoded URL as "invalid scheme".
+    await qstash("POST", `/schedules/${destination}`, {
         headers: {
             "Upstash-Cron": schedule.cron,
             "Upstash-Schedule-Id": schedule.id,
