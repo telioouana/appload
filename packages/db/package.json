@@ -31,6 +31,7 @@
         "./activity-log": "./src/schemas/activity-log.ts",
         "./chats": "./src/schemas/chats.ts",
         "./fleet": "./src/schemas/fleet.ts",
+        "./fx": "./src/schemas/fx.ts",
         "./kyc-documents": "./src/schemas/kyc-documents.ts",
         "./orders": "./src/schemas/orders.ts",
         "./tracking": "./src/schemas/tracking.ts",

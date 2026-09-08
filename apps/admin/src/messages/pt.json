@@ -26,6 +26,409 @@
         }
     },
     "Admin": {
+        "metadata": {
+            "title": "Appload Admin",
+            "description": "Área de operações da Appload para pedidos, parceiros e mensagens aos motoristas."
+        },
+        "dashboard": {
+            "title": "Painel",
+            "description": "{date} · o que precisa de atenção hoje",
+            "year": "Ano",
+            "open-map": "Abrir mapa",
+            "view-all": "Ver todos",
+            "error": "Não foi possível carregar esta parte do painel.",
+            "tiles": {
+                "prospects": "Propostas por confirmar",
+                "prospects-hint": "{count, plural, =0 {nenhuma para carregar em {days} dias} one {# para carregar em {days} dias} other {# para carregar em {days} dias}}",
+                "loading": "Carregamentos esta semana",
+                "loading-hint": "{count, plural, =0 {nenhum em atraso} one {# em atraso} other {# em atraso}}",
+                "on-road": "Na estrada",
+                "on-road-hint": "{count, plural, =0 {todos os camiões deram sinal hoje} one {# em silêncio há mais de 24 h} other {# em silêncio há mais de 24 h}}",
+                "pod": "A aguardar POD",
+                "pod-hint": "entregues, ainda sem prova"
+            },
+            "fleet": {
+                "title": "Na estrada agora",
+                "empty-title": "Sem camiões na estrada",
+                "empty-description": "Os camiões aparecem aqui assim que uma carga for confirmada",
+                "last-seen": "Visto {ago}",
+                "silent": "Em silêncio {ago}",
+                "no-location": "Ainda sem localização"
+            },
+            "queue": {
+                "title": "Precisa de atenção",
+                "interrupted": "Parado ou com problema",
+                "flagged": "Sinalizado para revisão",
+                "overdue": "Carregamento em atraso",
+                "disputes": "Disputas ativas",
+                "unread": "Mensagens por ler",
+                "silent": "Camiões em silêncio",
+                "review": "Documentos por rever",
+                "shippers": "Clientes",
+                "carriers": "Transportadores",
+                "drivers": "Motoristas",
+                "trucks": "Camiões",
+                "trailers": "Reboques",
+                "links": "Semi-reboques",
+                "clear-title": "Tudo em ordem",
+                "clear-description": "Não há nada à sua espera neste momento"
+            },
+            "chart": {
+                "title": "Pedidos por mês",
+                "total": "{count, plural, =0 {Sem pedidos em {year}} one {# pedido em {year}} other {# pedidos em {year}}}",
+                "series": {
+                    "completed": "Concluídos",
+                    "delivered": "Entregues",
+                    "active": "Em curso",
+                    "prospect": "Prospectivas",
+                    "lost": "Perdidos"
+                },
+                "empty": "Nada previsto para carregar em {year}"
+            },
+            "money": {
+                "title": "Dinheiro {year}",
+                "receivables": "A receber",
+                "payables": "A pagar",
+                "insurance": "Seguro",
+                "cashflow": "Fluxo de caixa líquido",
+                "open": "Abrir fluxo de caixa",
+                "empty": "Nada em aberto em {year}"
+            },
+            "latest": {
+                "title": "Últimos pedidos",
+                "columns": {
+                    "order": "Pedido",
+                    "parties": "Cliente → Transportador",
+                    "route": "Rota",
+                    "loading": "Carregamento",
+                    "status": "Estado",
+                    "total": "Total do cliente"
+                },
+                "empty": "Ainda não há pedidos"
+            }
+        },
+        "metrics": {
+            "title": "Estatísticas",
+            "description": "Desde março de 2022 · {currency} à taxa de abertura de cada mês",
+            "open-sheet": "Abrir folha",
+            "error": "Não foi possível carregar esta parte das estatísticas.",
+            "currency": "Moeda",
+            "to-date": "até à data",
+            "year-to-date": "{year} até à data",
+            "stale": "A mostrar a última leitura bem-sucedida de {time}",
+            "tiles": {
+                "sales": "Vendas ({currency})",
+                "commission": "Comissão ({currency})",
+                "net": "Receita líquida ({currency})",
+                "trips": "Viagens",
+                "vs-last-year": "vs {period}: {change}",
+                "no-comparison": "sem período anterior para comparar"
+            },
+            "revenue": {
+                "title": "Receita por ano ({currency})",
+                "series": {
+                    "sales": "Vendas",
+                    "commission": "Comissão",
+                    "net": "Líquida"
+                },
+                "empty": "Ainda sem receita registada"
+            },
+            "margin": {
+                "title": "Margem por ano",
+                "margin": "Margem",
+                "commission-per-trip": "Comissão por viagem",
+                "sales-per-trip": "Vendas por viagem",
+                "note": "A margem é a comissão com IVA sobre as vendas; os valores por viagem dividem pelas viagens, não pelas entregas.",
+                "empty": "Ainda sem viagens registadas"
+            },
+            "trend": {
+                "title": "Mês a mês ({currency})",
+                "toggle": "Métrica",
+                "metric": {
+                    "commission": "Comissão",
+                    "sales": "Vendas",
+                    "net": "Líquida"
+                },
+                "average": "Média de 3 meses",
+                "empty": "Ainda sem meses para mostrar"
+            },
+            "trips": {
+                "title": "Viagens por mês",
+                "series": {
+                    "national": "Nacionais",
+                    "regional": "Regionais"
+                },
+                "deliveries": "Entregas",
+                "empty": "Ainda sem viagens registadas"
+            },
+            "partners": {
+                "title": "Parceiros por mês",
+                "series": {
+                    "shippers": "Clientes",
+                    "carriers": "Transportadores"
+                },
+                "note": "Clientes e transportadores são contados uma vez por mês, por mais cargas que tenham movido — os meses não se somam.",
+                "empty": "Ainda sem parceiros registados"
+            },
+            "mix": {
+                "title": "Distribuição por moeda",
+                "note": "Percentagem das vendas pela moeda em que foram faturadas",
+                "empty": "Ainda sem vendas registadas"
+            },
+            "rates": {
+                "title": "Taxa de câmbio",
+                "usd-mzn": "USD → MZN",
+                "usd-zar": "USD → ZAR",
+                "this-month": "Este mês",
+                "pinned": "Fixada a {date} · {source}",
+                "source": {
+                    "feed": "feed diário",
+                    "yahoo": "Yahoo Finance",
+                    "manual": "definida manualmente"
+                },
+                "zar-trend": "USD → ZAR por mês",
+                "provisional": "≈ taxa provisória, retirada de um mês próximo",
+                "provisional-months": "{count, plural, one {# mês usa a taxa de um mês próximo} other {# meses usam a taxa de um mês próximo}}",
+                "note": "Cada mês converte à taxa do seu primeiro dia, fixada uma vez no separador MONTHLY RATES da folha. Edite a linha aí para a alterar.",
+                "empty": "Ainda não há taxa fixada para este mês"
+            },
+            "table": {
+                "years": "Ano a ano",
+                "months": "Meses",
+                "lifetime": "Desde o início",
+                "yoy": "vs {year}",
+                "empty": "Nada registado em {year}",
+                "empty-years": "Ainda nada registado",
+                "parties-note": "Clientes e transportadores contam-se uma única vez nos pedidos do ano.",
+                "empty-description": "Escolha outro ano ou verifique o separador STATS na folha",
+                "columns": {
+                    "year": "Ano",
+                    "month": "Mês",
+                    "trips": "Viagens",
+                    "deliveries": "Entregas",
+                    "distance": "Distância (km)",
+                    "shippers": "Clientes",
+                    "carriers": "Transportadores",
+                    "sales": "Vendas ({currency})",
+                    "commission": "Comissão c/ IVA ({currency})",
+                    "vat": "IVA ({currency})",
+                    "net": "Receita líquida ({currency})",
+                    "insurance": "Seguro ({currency})",
+                    "prospects": "Propostas ({currency})",
+                    "margin": "Margem",
+                    "sales-per-trip": "Vendas / viagem",
+                    "commission-per-trip": "Comissão / viagem"
+                }
+            }
+        },
+        "kpis": {
+            "title": "Indicadores de Desempenho",
+            "description": "{period} · USD à taxa de cada dia de carga",
+            "error": "Não foi possível carregar esta parte dos indicadores.",
+            "back": "Voltar aos indicadores",
+            "search": "Pesquisar parceiros",
+            "clear": "Limpar pesquisa",
+            "type": {
+                "shipper": "Clientes",
+                "carrier": "Transportadores"
+            },
+            "period": {
+                "label": "Período",
+                "month": "Mês",
+                "quarter": "Trimestre",
+                "year": "Ano",
+                "custom": "Personalizado",
+                "month-select": "Escolher mês",
+                "quarter-select": "Escolher trimestre",
+                "year-select": "Escolher ano",
+                "quarter-name": "{quarter}.º trim.",
+                "quarter-label": "{quarter}.º trimestre de {year}",
+                "range": "{from} – {to}",
+                "pick-range": "Escolher intervalo",
+                "apply": "Aplicar"
+            },
+            "sort": {
+                "transports": "Transportes",
+                "name": "Nome",
+                "on-time": "Pontual na descarga",
+                "price": "Preço / transporte",
+                "cost-per-km": "Custo / km",
+                "deliveries": "Entregas",
+                "tons": "Toneladas"
+            },
+            "stats": {
+                "partners": "Parceiros ativos",
+                "transports": "Transportes",
+                "total": "Preço total (USD)",
+                "on-time": "Pontual na descarga",
+                "partners-hint": "em {period}",
+                "transports-hint": "{deliveries, plural, one {# entrega} other {# entregas}}",
+                "total-hint": "{km} km",
+                "on-time-hint": "{loading} na carga"
+            },
+            "columns": {
+                "sub": "{deliveries, plural, one {# entrega} other {# entregas}} · {tons} t"
+            },
+            "empty": {
+                "title": "Sem parceiros neste período",
+                "description": "Escolha outro período ou outro tipo de parceiro",
+                "filtered": "Nenhum parceiro corresponde a esta pesquisa"
+            },
+            "export": {
+                "filename": "indicadores-{type}-{period}"
+            },
+            "party": {
+                "search": "Pesquisar por nome",
+                "none": "Nenhum parceiro encontrado",
+                "clear": "Ver todos"
+            },
+            "download": {
+                "label": "Descarregar relatório",
+                "en": "English",
+                "pt": "Português",
+                "failed": "Não foi possível gerar o relatório, tente novamente"
+            },
+            "landing": {
+                "columns": {
+                    "name": "Nome",
+                    "transports": "Transportes",
+                    "on-time": "Pontual na descarga",
+                    "price-per-transport": "Preço / transporte (USD)",
+                    "cost-per-km": "Custo / km (USD)",
+                    "deliveries": "Entregas",
+                    "tons": "Toneladas"
+                }
+            },
+            "tiles": {
+                "transports": "Transportes",
+                "total": "Preço total (USD)",
+                "price-per-transport": "Preço por transporte (USD)",
+                "on-time": "Pontual na descarga",
+                "transports-hint": "{deliveries, plural, one {# entrega} other {# entregas}} · {tons} t",
+                "total-hint": "{km} km percorridos",
+                "price-hint": "{costPerKm} USD por km",
+                "on-time-hint": "{loading} na carga"
+            },
+            "conversion": {
+                "note": "Convertido para USD à taxa de cada dia de carga",
+                "by-currency": "{count, plural, one {# transporte} other {# transportes}} em {currency}",
+                "provisional": "{count, plural, one {# transporte usa} other {# transportes usam}} a taxa anterior mais próxima",
+                "unrated": "{count, plural, one {# transporte não pôde ser convertido} other {# transportes não puderam ser convertidos}}"
+            },
+            "charts": {
+                "transports": {
+                    "title": "Transportes e pontualidade",
+                    "transports": "Transportes",
+                    "on-time-loading": "Pontual na carga",
+                    "on-time-offloading": "Pontual na descarga",
+                    "empty": "Sem transportes neste período"
+                },
+                "price": {
+                    "title": "Preço por transporte (USD)",
+                    "price": "Preço por transporte",
+                    "cost-per-km": "Custo por km",
+                    "empty": "Sem transportes neste período"
+                },
+                "days": {
+                    "title": "Onde ficam os dias",
+                    "loading": "Na carga",
+                    "travelling": "Em viagem",
+                    "border": "Na fronteira",
+                    "offloading": "Na descarga",
+                    "days": "Dias",
+                    "sample": "{count} de {total} transportes têm este valor registado",
+                    "regional": "Apenas transportes regionais",
+                    "empty": "Sem durações registadas neste período"
+                },
+                "incidents": {
+                    "title": "Incidentes",
+                    "accidents": "Acidentes",
+                    "mechanical": "Avarias mecânicas",
+                    "documentation": "Problemas de documentação",
+                    "police": "Paragens policiais",
+                    "count": "Ocorrências",
+                    "delay": "{days, plural, one {# dia de atraso} other {# dias de atraso}}",
+                    "empty": "Sem incidentes registados neste período"
+                }
+            },
+            "backload": {
+                "title": "Cargas de retorno",
+                "share": "Percentagem de cargas de retorno",
+                "co2": "Redução de CO₂",
+                "co2-unit": "kg / tonelada transportada",
+                "savings": "Poupança com cargas de retorno (USD)",
+                "margin": "Margem sobre o combustível nas cargas de retorno",
+                "fuel-note": "Combustível estimado em {litres} L/km e {price} MZN/L, como na folha de indicadores, convertido à taxa do dia de carga"
+            },
+            "table": {
+                "title": "Relatório completo",
+                "columns": {
+                    "indicator": "Indicador",
+                    "unit": "Unidade",
+                    "value": "Valor"
+                },
+                "not-tracked": "Ainda não registado",
+                "none": "—",
+                "sample": "{unit} · {count} de {total}",
+                "groups": {
+                    "summary": "Resumo",
+                    "operational": "Operacional",
+                    "incidents": "Incidentes",
+                    "cost": "Custo",
+                    "backload": "Cargas de retorno",
+                    "communication": "Comunicação"
+                },
+                "rows": {
+                    "transports": "Transportes analisados",
+                    "total": "Preço total",
+                    "price-per-transport": "Preço por transporte",
+                    "deliveries": "Entregas",
+                    "tons": "Peso carregado",
+                    "km": "Distância total",
+                    "tons-per-transport": "Tonelagem por transporte",
+                    "km-per-transport": "Distância por transporte",
+                    "on-time-loading": "Chegada pontual à carga",
+                    "loading-days": "Duração média da carga",
+                    "travel-days": "Duração média do transporte",
+                    "km-per-day": "Distância média por dia",
+                    "on-time-offloading": "Chegada pontual à descarga",
+                    "offloading-days": "Duração média da descarga",
+                    "border-days": "Média de dias na fronteira",
+                    "demurrage-rate": "Transportes com sobrestadia",
+                    "demurrage-days": "Dias de sobrestadia cobrados",
+                    "accidents": "Acidentes",
+                    "mechanical": "Paragens por avaria mecânica",
+                    "documentation": "Paragens por problemas de documentação",
+                    "police": "Paragens policiais",
+                    "delay-days": "Total de dias de atraso",
+                    "damage-rate": "Transportes com danos na carga",
+                    "claim-rate": "Transportes com reclamações",
+                    "cost-per-km": "Custo por km",
+                    "cost-per-ton": "Custo por tonelada",
+                    "cost-per-ton-km": "Custo por tonelada-km",
+                    "backload-share": "Percentagem de cargas de retorno",
+                    "co2": "Redução de CO₂",
+                    "savings": "Poupança total com cargas de retorno",
+                    "fuel-margin": "Margem sobre o combustível nas cargas de retorno",
+                    "communication": "Avaliação geral das atualizações fornecidas pelo transportador e condutor",
+                    "responsiveness": "Avaliação geral do feedback e capacidade de resposta do cliente",
+                    "satisfaction": "O cliente pretende voltar a trabalhar com este transportador? (% de “sim” sobre todos os transportes analisados)"
+                },
+                "units": {
+                    "number": "número",
+                    "t": "t",
+                    "km": "km",
+                    "days": "dias",
+                    "km-per-day": "km/dia",
+                    "percent": "%",
+                    "usd": "USD",
+                    "per-km": "USD/km",
+                    "per-ton": "USD/t",
+                    "per-ton-km": "USD/t·km",
+                    "co2": "kg/t"
+                }
+            }
+        },
         "auth": {
             "title": "Painel de controle Appload",
             "description": "Introduza as suas credencias para iniciar a sessão",
@@ -85,7 +488,7 @@
             "not-found": {
                 "title": "Página não encontrada",
                 "description": "A página que procura não existe ou mudou de lugar",
-                "home": "Ir para os pedidos"
+                "home": "Ir para o painel"
             },
             "boundary": {
                 "title": "Algo correu mal",
@@ -100,7 +503,13 @@
         },
         "sidebar": {
             "content": {
+                "report": {
+                    "dashboard": "Dashboard",
+                    "metrics": "Estatísticas",
+                    "kpis": "Indicadores"
+                },
                 "ops": {
+                    "label": "Operações",
                     "order": "Novo pedido",
                     "orders": {
                         "orders": "Pedidos",
@@ -112,10 +521,11 @@
                         "history": "Histórico",
                         "disputes": "Disputas"
                     },
-                    "chats": "Conversas",
+                    "messages": "Mensagens",
                     "map": "Mapa"
                 },
                 "management": {
+                    "label": "Gestão",
                     "shippers": "Clientes",
                     "carriers": {
                         "carriers": "Transportadores",
@@ -359,8 +769,6 @@
                 "description": "Preencha os dados do pedido para registar o novo pedido.",
                 "editTitle": "Editar pedido {orderId}",
                 "editDescription": "Altere o pedido em prospectiva. Confirmar exige os mesmos dados completos que criar um pedido confirmado.",
-                "confirmTitle": "Confirmar pedido {orderId}",
-                "confirmDescription": "Preencha tudo o que ainda falta. O estado já está definido como Confirmado, por isso ao gravar o pedido fica confirmado e todos os campos obrigatórios são validados.",
                 "form": {
                     "shipper": {
                         "title": "Informações do Cliente",
@@ -468,21 +876,6 @@
                     "carrier": {
                         "title": "Informacões sobre o tranportador e transporte",
                         "fields": {
-                            "carrier": {
-                                "label": "Nome do transportador",
-                                "placeholder": "Appload",
-                                "description": "Pequise pelo transportador, caso não esteja registado, será prontificado a registar"
-                            },
-                            "fiscalRegime": {
-                                "label": "Regime fiscal",
-                                "placeholder": "Escolha o regime",
-                                "options": {
-                                    "normal": "Normal (16%)",
-                                    "simplified-5": "Simplificado (5%)",
-                                    "simplified-3": "Simplificado (3%)",
-                                    "n/a": "Não aplicavél"
-                                }
-                            },
                             "driver": {
                                 "title": "Dados do motorista",
                                 "name": {
@@ -547,30 +940,6 @@
                     "payment": {
                         "title": "Informacões sobre pagamento",
                         "fields": {
-                            "carrier": {
-                                "title": "Pagamento ao Transportador",
-                                "subtotal": {
-                                    "label": "Subtotal",
-                                    "placeholder": "0.00"
-                                },
-                                "vat": {
-                                    "label": "IVA",
-                                    "placeholder": "0.00"
-                                },
-                                "total": {
-                                    "label": "Total a pagar",
-                                    "placeholder": "0.00"
-                                },
-                                "currency": {
-                                    "label": "Moeda",
-                                    "placeholder": "Escolha a moeda",
-                                    "options": {
-                                        "MZN": "MZN",
-                                        "ZAR": "ZAR",
-                                        "USD": "USD"
-                                    }
-                                }
-                            },
                             "shipper": {
                                 "title": "Pagemnto do Cliente",
                                 "subtotal": {
@@ -594,6 +963,9 @@
                                         "USD": "USD"
                                     }
                                 }
+                            },
+                            "commission": {
+                                "label": "Comissão Appload"
                             }
                         }
                     },
@@ -620,8 +992,24 @@
                             "total": "Campo de total é obrigatório",
                             "status": "Escolha o estado de uma da opções na lista",
                             "value": "O valor introduzido é inválido",
-                            "weight": "O peso introduzido é inválido"
+                            "weight": "O peso introduzido é inválido",
+                            "offers": "Registe uma oferta de transportador para confirmar este pedido",
+                            "accepted": "Marque a oferta com que este pedido é confirmado"
                         }
+                    },
+                    "offers": {
+                        "title": "Ofertas de transportadores",
+                        "description": "Registe todas as cotações que recebeu. A confirmação escolhe uma delas.",
+                        "empty": "Ainda sem ofertas. Adicione-as aqui ou mais tarde na página do pedido.",
+                        "add": "Adicionar oferta",
+                        "remove": "Remover oferta",
+                        "accepted": "Confirmar com esta oferta",
+                        "offerN": "Oferta {number}"
+                    },
+                    "bookingDetails": {
+                        "title": "Dados da confirmação",
+                        "description": "Opcionais agora; necessários antes de o pedido passar a \"A caminho do carregamento\".",
+                        "noOffer": "Marque a oferta com que este pedido é confirmado para atribuir motorista e camião."
                     }
                 },
                 "actions": {
@@ -664,7 +1052,8 @@
                     "carrierSuspended": "Este transportador está suspenso",
                     "riskAckNotAllowed": "Só um supervisor pode aceitar este risco",
                     "riskAckNoteRequired": "Explique porque este risco está a ser aceite",
-                    "noteCurrencyLocked": "A moeda não pode ser alterada depois de esta parte ter notas ou comprovativos de pagamento."
+                    "noteCurrencyLocked": "A moeda não pode ser alterada depois de esta parte ter notas ou comprovativos de pagamento.",
+                    "offerNotPending": "A oferta com que este pedido seria confirmado já foi decidida noutro lado. Recarregue o pedido e escolha outra."
                 }
             },
             "update": {
@@ -934,20 +1323,6 @@
                     "carrier": {
                         "title": "Informações sobre o transportador e transporte",
                         "fields": {
-                            "carrier": {
-                                "label": "Nome do transportador",
-                                "placeholder": "Appload"
-                            },
-                            "fiscalRegime": {
-                                "label": "Regime fiscal",
-                                "placeholder": "Escolha o regime",
-                                "options": {
-                                    "normal": "Normal (16%)",
-                                    "simplified-5": "Simplificado (5%)",
-                                    "simplified-3": "Simplificado (3%)",
-                                    "n/a": "Não aplicável"
-                                }
-                            },
                             "driver": {
                                 "title": "Dados do motorista",
                                 "name": {
@@ -986,7 +1361,9 @@
                                     "placeholder": "AA 000 MC"
                                 }
                             }
-                        }
+                        },
+                        "fromOffer": "Transportador · da oferta aceite",
+                        "fromOfferHint": "Para mudar de transportador, mova o pedido de volta para prospectiva e aceite outra oferta."
                     },
                     "payment": {
                         "title": "Informações sobre pagamento",
@@ -1286,7 +1663,8 @@
                     "riskAckNotAllowed": "Só um supervisor pode aceitar este risco",
                     "riskAckNoteRequired": "Explique porque este risco está a ser aceite",
                     "paymentLocked": "O valor pago, o estado do pagamento e a data de liquidação desta parte são derivados dos comprovativos de pagamento registados. Registe ou anule um comprovativo em vez disso.",
-                    "noteCurrencyLocked": "A moeda não pode ser alterada depois de esta parte ter notas ou comprovativos de pagamento."
+                    "noteCurrencyLocked": "A moeda não pode ser alterada depois de esta parte ter notas ou comprovativos de pagamento.",
+                    "pdfFailed": "Não foi possível preparar os documentos de confirmação. Use \"Enviar PDF\" no pedido para os gerar de novo."
                 },
                 "success": {
                     "title": "Pedido atualizado",
@@ -1442,7 +1820,6 @@
                     "NOTE_REQUIRED": "É necessária uma nota para esta alteração.",
                     "EVIDENCE_REQUIRED": "É necessário um documento de suporte para esta alteração.",
                     "POD_REQUIRED": "É necessário um comprovativo de entrega para concluir a ordem.",
-                    "INCOMPLETE_FOR_BOOKING": "Esta ordem em prospectiva ainda não tem os dados de transportador, motorista, frota ou valores completos. Use \"Confirmar pedido\" para os completar e confirmar.",
                     "NOT_FOUND": "Esta ordem já não existe.",
                     "UPLOAD_FAILED": "O carregamento do documento falhou. Tente novamente.",
                     "UNKNOWN": "Ocorreu um erro inesperado. Tente novamente.",
@@ -1452,14 +1829,20 @@
                     "CARRIER_SUSPENDED": "Este transportador está suspenso",
                     "RISK_ACK_NOT_ALLOWED": "Só um supervisor pode aceitar este risco",
                     "RISK_ACK_NOTE_REQUIRED": "Explique porque este risco está a ser aceite",
-                    "DISPUTE_OPEN": "O pedido não pode ser concluído com uma disputa aberta. Resolva-a primeiro."
-                }
+                    "DISPUTE_OPEN": "O pedido não pode ser concluído com uma disputa aberta. Resolva-a primeiro.",
+                    "OFFER_REQUIRED": "Escolha a oferta com que confirmar este pedido.",
+                    "OFFER_NOT_PENDING": "Esta oferta já foi decidida.",
+                    "NO_OFFERS": "Este pedido em prospectiva não tem ofertas pendentes. Adicione uma primeiro.",
+                    "INCOMPLETE_FOR_DISPATCH": "Atribua o motorista, o contacto dele e o camião antes de mover para \"A caminho do carregamento\".",
+                    "OFFER_UNPRICED": "Esta oferta ainda não tem a comissão da Appload. Edite-a e defina a comissão antes de confirmar com ela."
+                },
+                "book": "Confirmar pedido"
             },
             "detailPage": {
+                "metaTitle": "Pedido {reference}",
                 "error": "Não foi possível carregar esta ordem.",
                 "back": "Voltar às ordens",
                 "more": "Mais ações",
-                "confirm": "Confirmar pedido",
                 "changeStatus": "Alterar estado",
                 "edit": "Editar",
                 "sendPdf": "Enviar PDF",
@@ -1536,7 +1919,7 @@
                     "insurance": "Seguro",
                     "in": "entrada",
                     "out": "saída",
-                    "share": "{percent}% do total do carregador",
+                    "share": "{percent} de comissão",
                     "effective": "efetivo",
                     "debit": "+{amount} de nota de débito",
                     "credit": "−{amount} de nota de crédito",
@@ -1545,6 +1928,9 @@
                 "footer": {
                     "created": "Criado a {date} por {actor}",
                     "createdUnknown": "Criado a {date}"
+                },
+                "operations": {
+                    "assign": "Atribuir motorista e camião"
                 }
             },
             "history": {
@@ -1563,7 +1949,16 @@
                     "flag": "Sinalização resolvida",
                     "system": "Evento do sistema",
                     "payment": "Pagamento",
-                    "dispute": "Disputa"
+                    "dispute": "Disputa",
+                    "offer": "Oferta de transportador"
+                },
+                "offer": {
+                    "created": "Oferta de {carrier} · {amount} adicionada",
+                    "updated": "Oferta de {carrier} · {amount} atualizada",
+                    "declined": "Oferta de {carrier} · {amount} recusada",
+                    "withdrawn": "Oferta de {carrier} · {amount} retirada",
+                    "removed": "Oferta de {carrier} · {amount} eliminada",
+                    "booked": "Confirmado com {carrier} · {amount}"
                 }
             },
             "documents": {
@@ -1782,7 +2177,9 @@
                     "no-invoice": "Sem fatura",
                     "no-total": "Ainda sem preço",
                     "shipper-short": "C",
-                    "carrier-short": "T"
+                    "carrier-short": "T",
+                    "offers": "{count, plural, one {# oferta} other {# ofertas}}",
+                    "no-offers": "Ainda sem ofertas"
                 },
                 "data": {
                     "empty": "Ainda não há pedidos",
@@ -1802,12 +2199,13 @@
                     "open": "Abrir",
                     "full-page": "Abrir página completa",
                     "edit": "Editar",
-                    "confirm": "Confirmar pedido",
                     "change-status": "Alterar estado",
                     "cancel": "Cancelar pedido",
                     "send-pdf": "Enviar PDF",
                     "copy-id": "Copiar ID do pedido",
-                    "open-dispute": "Abrir disputa"
+                    "open-dispute": "Abrir disputa",
+                    "accept-offer": "Aceitar oferta",
+                    "add-offer": "Adicionar oferta"
                 },
                 "errors": {
                     "load": "Não foi possível carregar este pedido, tente novamente"
@@ -1820,7 +2218,8 @@
                         "overview": "Resumo",
                         "payments": "Pagamentos",
                         "documents": "Documentos",
-                        "history": "Histórico"
+                        "history": "Histórico",
+                        "offers": "Ofertas"
                     },
                     "milestones": "Etapas",
                     "route": "Rota",
@@ -1965,17 +2364,155 @@
                     "NOT_FOUND": "O pedido não foi encontrado.",
                     "UNKNOWN": "Algo correu mal. Tente novamente."
                 }
+            },
+            "offers": {
+                "card": {
+                    "title": "Ofertas de transportadores",
+                    "empty": "Ainda sem ofertas. Adicione uma para ter um preço em cima da mesa.",
+                    "recordedHint": "As ofertas registadas num pedido já confirmado servem apenas para o registo da Appload.",
+                    "bookedWith": "Confirmado com",
+                    "bookedWithCarrier": "Confirmado com {carrier} · {price}"
+                },
+                "status": {
+                    "pending": "Pendente",
+                    "accepted": "Aceite",
+                    "declined": "Recusada",
+                    "withdrawn": "Retirada",
+                    "lost": "Perdida",
+                    "recorded": "Registada"
+                },
+                "includes": {
+                    "git": "Seguro GIT",
+                    "gps": "Rastreio GPS"
+                },
+                "snapshot": "Com a Appload desde {date} · {trips, plural, one {# viagem} other {# viagens}}",
+                "snapshotUnknown": "Ainda sem histórico com a Appload",
+                "cancel": "Cancelar",
+                "actions": {
+                    "add": "Adicionar oferta",
+                    "accept": "Aceitar",
+                    "edit": "Editar oferta",
+                    "decline": "Recusar",
+                    "withdraw": "Retirar",
+                    "remove": "Eliminar oferta"
+                },
+                "fields": {
+                    "carrier": "Transportador",
+                    "fiscalRegime": "Regime fiscal",
+                    "currency": "Moeda",
+                    "total": "Total cotado",
+                    "vat": "IVA",
+                    "subtotal": "Subtotal",
+                    "includes": "O que a oferta inclui",
+                    "notes": "Notas",
+                    "accepted": "Aceite",
+                    "commissionTotal": "Comissão Appload (com IVA)"
+                },
+                "form": {
+                    "carrier": {
+                        "placeholder": "Appload",
+                        "description": "Pesquise pelo transportador; caso não esteja registado, será prontificado a registá-lo"
+                    },
+                    "fiscalRegime": {
+                        "placeholder": "Escolha o regime",
+                        "options": {
+                            "normal": "Normal (16%)",
+                            "simplified-5": "Simplificado (5%)",
+                            "simplified-3": "Simplificado (3%)",
+                            "n/a": "Não aplicavél"
+                        }
+                    },
+                    "currency": {
+                        "placeholder": "Escolha a moeda",
+                        "options": {
+                            "MZN": "MZN",
+                            "ZAR": "ZAR",
+                            "USD": "USD"
+                        }
+                    },
+                    "total": {
+                        "placeholder": "0.00"
+                    },
+                    "vat": {
+                        "placeholder": "0.00"
+                    },
+                    "subtotal": {
+                        "placeholder": "0.00"
+                    },
+                    "notes": {
+                        "placeholder": "Escolta incluída, preço válido por 7 dias..."
+                    },
+                    "includes": {
+                        "gitHint": "O transportador cobre a carga em trânsito",
+                        "gpsHint": "O camião é rastreado durante toda a viagem"
+                    },
+                    "commissionTotal": {
+                        "placeholder": "0.00",
+                        "description": "O que a Appload acrescenta à cotação. O preço para o cliente é a cotação mais este valor."
+                    }
+                },
+                "dialog": {
+                    "createTitle": "Adicionar oferta de transportador",
+                    "editTitle": "Editar oferta de transportador",
+                    "description": "Registe uma cotação recebida para este pedido. A confirmação do pedido aceita uma delas.",
+                    "recordedDescription": "Este pedido já está confirmado, por isso a oferta fica apenas para o registo da Appload. Não pode ser aceite nem é mostrada ao expedidor.",
+                    "save": "Guardar oferta"
+                },
+                "decide": {
+                    "declinedTitle": "Recusar oferta",
+                    "withdrawnTitle": "Retirar oferta",
+                    "description": "A oferta de {carrier} permanece no pedido como parte de como foi cotado.",
+                    "note": "Porquê (opcional)...",
+                    "confirm": "Confirmar"
+                },
+                "remove": {
+                    "title": "Eliminar oferta",
+                    "description": "A oferta de {carrier} é eliminada definitivamente. Recuse-a ou retire-a para a manter no registo.",
+                    "confirm": "Eliminar"
+                },
+                "picker": {
+                    "title": "Oferta com que confirmar",
+                    "description": "Escolha a oferta com que este pedido é confirmado. O transportador, o preço e a comissão vêm dela.",
+                    "empty": "Este pedido em prospectiva não tem ofertas pendentes. Adicione uma primeiro na página do pedido.",
+                    "hint": "As restantes ofertas ficam marcadas como perdidas. O motorista e o camião podem ser atribuídos a qualquer momento antes de \"A caminho do carregamento\".",
+                    "summary": {
+                        "shipper": "O expedidor paga",
+                        "carrier": "O transportador recebe",
+                        "commission": "Comissão Appload",
+                        "share": "{percent} do preço do expedidor"
+                    },
+                    "unpriced": "Esta oferta ainda não tem comissão. Edite-a para a preçar antes de confirmar com ela."
+                },
+                "errors": {
+                    "CARRIER_NOT_FOUND": "Este transportador já não está disponível. Escolha outro.",
+                    "OFFER_NOT_EDITABLE": "Esta oferta já foi decidida e não pode ser alterada.",
+                    "OFFER_NOT_PENDING": "Esta oferta já foi decidida.",
+                    "NOT_ALLOWED": "O seu perfil não permite alterar ofertas.",
+                    "NOT_FOUND": "Esta oferta já não existe.",
+                    "UNKNOWN": "Ocorreu um erro inesperado. Tente novamente."
+                },
+                "commission": {
+                    "title": "Comissão Appload",
+                    "short": "Comissão",
+                    "client": "Preço para o cliente",
+                    "carrier": "Transportador",
+                    "subtotal": "Subtotal",
+                    "vat": "IVA",
+                    "total": "Total",
+                    "unpriced": "Ainda sem comissão definida",
+                    "empty": "Escolha o regime e introduza o total cotado e a comissão para ver o preço para o cliente."
+                }
             }
         },
-        "chats": {
-            "title": "Conversas",
-            "description": "Converse com os motoristas e acompanhe os pedidos.",
+        "messages": {
+            "title": "Mensagens",
+            "description": "Envie mensagens aos motoristas e acompanhe os pedidos.",
             "unconfigured": {
                 "title": "As mensagens não estão configuradas",
                 "description": "O fornecedor de WhatsApp/SMS não está ligado, pelo que as mensagens não chegarão aos motoristas. Configure as variáveis de ambiente da Infobip para enviar de verdade"
             },
             "list": {
-                "new": "Nova conversa",
+                "new": "Nova mensagem",
                 "emptyTitle": "Sem conversas",
                 "emptyDescription": "Inicie uma conversa com um motorista para começar.",
                 "startFirst": "Iniciar conversa",
@@ -2034,7 +2571,7 @@
                 "noOrderDescription": "Esta conversa ainda não está associada a um pedido."
             },
             "new": {
-                "title": "Nova conversa",
+                "title": "Nova mensagem",
                 "description": "Introduza os dados do motorista para iniciar a conversa.",
                 "fields": {
                     "driverName": {
@@ -3092,6 +3629,12 @@
             "open": "Abriu uma disputa por {reason} no pedido {orderId}",
             "update": "Atualizou a disputa do pedido {orderId} ({changedFields})",
             "resolve": "Resolveu a disputa do pedido {orderId} como {status}"
+        },
+        "offers": {
+            "create": "Adicionou uma oferta de {total} {currency} de {carrierName} ao pedido {orderId}",
+            "update": "Atualizou a oferta {offerId} de {carrierName} ({total} {currency})",
+            "decide": "Marcou a oferta {offerId} de {carrierName} como {status}",
+            "remove": "Eliminou a oferta {offerId}"
         }
     }
 }
