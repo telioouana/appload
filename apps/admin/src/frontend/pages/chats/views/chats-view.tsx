@@ -38,7 +38,7 @@ const LOCATION_ERROR_KEYS = {
 const LOCATION_ERROR_CODES = Object.keys(LOCATION_ERROR_KEYS) as (keyof typeof LOCATION_ERROR_KEYS)[];
 
 export function ChatsView({ configured = true }: { configured?: boolean }) {
-    const t = useTranslations("Admin.chats");
+    const t = useTranslations("Admin.messages");
 
     const trpc = useTRPC();
     const queryClient = useQueryClient();
@@ -121,6 +121,12 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
                         : conversation,
                 ),
             );
+
+            // The sidebar counts threads, not messages: this one just went
+            // quiet, so recount now rather than at its next poll. A recount,
+            // not a decrement — the badge may not have counted this thread
+            // yet when the read is a fresh inbound on the open one
+            void queryClient.invalidateQueries(trpc.chats.unread.queryFilter());
         },
     }));
 

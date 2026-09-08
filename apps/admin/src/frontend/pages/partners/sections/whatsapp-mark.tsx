@@ -77,7 +77,7 @@ export function StartChatButton({ driverName, phone }: { driverName: string; pho
     const router = useRouter()
 
     const start = useMutation(trpc.chats.start.mutationOptions({
-        onSuccess: ({ conversation }) => router.push({ pathname: "/chats", query: { c: conversation.id } }),
+        onSuccess: ({ conversation }) => router.push({ pathname: "/messages", query: { c: conversation.id } }),
     }))
 
     return (

@@ -5,6 +5,14 @@ import { getRequestConfig } from "@workspace/i18n/server";
 
 import { routing } from "@/i18n/routing";
 
+// Appload runs on Mozambican time and the timestamps are read against the
+// trip's day, not the reader's — a slot programmed for 17:00 has to read
+// 17:00 whether the page renders on a laptop here or on Vercel (UTC).
+// Without this, next-intl formats in the runtime's own zone, which is how
+// the afternoon tracking slot came out two hours early in production.
+// Maputo is fixed UTC+2 with no DST, so this never shifts.
+const TIME_ZONE = "Africa/Maputo";
+
 export default getRequestConfig(async function createRequestConfig({
     locale: explicitLocale,
 }) {
@@ -27,5 +35,6 @@ export default getRequestConfig(async function createRequestConfig({
     return {
         locale,
         messages,
+        timeZone: TIME_ZONE,
     };
 });

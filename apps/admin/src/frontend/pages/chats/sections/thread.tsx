@@ -59,7 +59,7 @@ function MessageBody({ message }: { message: ChatMessage }) {
     // Inbound location shares arrive as "📍 place — <maps url>" bodies —
     // surface them as a tappable pin instead of a raw link
     const location = message.direction === "inbound" ? parseLocation(message.body) : null;
-    const t = useTranslations("Admin.chats");
+    const t = useTranslations("Admin.messages");
 
     if (!location) {
         return <BubbleContent>{message.body}</BubbleContent>;
@@ -96,7 +96,7 @@ export function Thread({
     panelOpen: boolean;
     onTogglePanel: () => void;
 }) {
-    const t = useTranslations("Admin.chats");
+    const t = useTranslations("Admin.messages");
     const statusLabels = useTranslations("Admin.orders.header.filters.status.options");
     const f = useFormatter();
 

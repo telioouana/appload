@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, or } from "drizzle-orm";
+import { and, asc, count, countDistinct, desc, eq, gt, inArray, isNotNull, isNull, or } from "drizzle-orm";
 
 import { order, orderHistory, type Order } from "@workspace/db/orders";
 import { chatConversation, chatMessage, type ChatConversation, type ChatMessage } from "@workspace/db/chats";
@@ -48,6 +48,19 @@ export type ThreadItem =
     | { kind: "message"; message: ChatMessage }
     | { kind: "status"; event: ThreadStatusEvent };
 
+/**
+ * Inbound messages newer than their conversation's read watermark — the
+ * one definition the per-thread counts and the sidebar badge both read,
+ * so the two can never disagree. Joins chatConversation.
+ */
+const unreadInbound = () => and(
+    eq(chatMessage.direction, "inbound"),
+    or(
+        isNull(chatConversation.lastReadAt),
+        gt(chatMessage.createdAt, chatConversation.lastReadAt),
+    ),
+);
+
 export const chatsRouter = createTRPCRouter({
     list: authorizedProcedure("chat", ["list"]).query(async ({ ctx }): Promise<ConversationSummary[]> => {
         const [conversations, previews, unreadRows, lastInbound] = await Promise.all([
@@ -65,18 +78,12 @@ export const chatsRouter = createTRPCRouter({
                 })
                 .from(chatMessage)
                 .orderBy(chatMessage.conversationId, desc(chatMessage.createdAt)),
-            // Inbound messages newer than the conversation's read watermark
+            // How many are waiting, per conversation
             ctx.db
                 .select({ conversationId: chatMessage.conversationId, unread: count() })
                 .from(chatMessage)
                 .innerJoin(chatConversation, eq(chatConversation.id, chatMessage.conversationId))
-                .where(and(
-                    eq(chatMessage.direction, "inbound"),
-                    or(
-                        isNull(chatConversation.lastReadAt),
-                        gt(chatMessage.createdAt, chatConversation.lastReadAt),
-                    ),
-                ))
+                .where(unreadInbound())
                 .groupBy(chatMessage.conversationId),
             // Latest inbound per conversation drives the session-window flag
             ctx.db
@@ -107,6 +114,22 @@ export const chatsRouter = createTRPCRouter({
             };
         });
     }),
+
+    /**
+     * Threads waiting on a reply, for the sidebar badge: one per
+     * conversation however many messages have stacked up inside it, so the
+     * number names rows on the list it opens rather than messages.
+     */
+    unread: authorizedProcedure("chat", ["list"])
+        .query(async ({ ctx }): Promise<number> => {
+            const [row] = await ctx.db
+                .select({ value: countDistinct(chatMessage.conversationId) })
+                .from(chatMessage)
+                .innerJoin(chatConversation, eq(chatConversation.id, chatMessage.conversationId))
+                .where(unreadInbound());
+
+            return row?.value ?? 0;
+        }),
 
     markRead: authorizedProcedure("chat", ["read"])
         .input(z.object({ conversationId: z.string() }))

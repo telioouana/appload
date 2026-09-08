@@ -6,6 +6,7 @@ import { db } from "@workspace/db/db";
 import { Auth } from "@workspace/auth/server";
 
 import { recordRequestActivity } from "@workspace/trpc/activity-log";
+import { getStaffGates, type StaffGates } from "@workspace/trpc/staff-gate";
 
 /**
  * 1. CONTEXT
@@ -30,6 +31,11 @@ export const createTRPCContext = async (opts: {
     const authApi = opts.auth.api
     const session = await authApi.getSession({ headers: opts.headers })
 
+    // The staff gate reads the database, not the cookie — but once per
+    // request is enough: every gated procedure in this context (an RSC
+    // render's prefetches, one batched HTTP call) awaits the same lookup
+    let staff: Promise<StaffGates> | undefined
+
     return {
         authApi,
         session,
@@ -38,6 +44,7 @@ export const createTRPCContext = async (opts: {
         // (e.g. authApi.getAccessToken)
         headers: opts.headers,
         waitUntil: opts.waitUntil,
+        staffGates: (userId: string) => (staff ??= getStaffGates(db, { userId })),
     };
 };
 
@@ -80,19 +87,10 @@ const t = initTRPC
 export const createTRPCRouter = t.router;
 
 /**
- * Middleware for timing procedure execution and adding an articifial delay in development.
- *
- * You can remove this if you don't like it, but it can help catch unwanted waterfalls by simulating
- * network latency that would occur in production but not in local development.
+ * Middleware for timing procedure execution in development.
  */
 const timingMiddleware = t.middleware(async ({ next, path }) => {
     const start = Date.now();
-
-    if (t._config.isDev) {
-        // artificial delay in dev 100-500ms
-        const waitMs = Math.floor(Math.random() * 400) + 100;
-        await new Promise((resolve) => setTimeout(resolve, waitMs));
-    }
 
     const result = await next();
 
