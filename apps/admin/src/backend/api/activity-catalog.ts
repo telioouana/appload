@@ -5,6 +5,7 @@ import type { DriverOption, VehicleOption } from "./routers/fleet";
 import type { ChatConversation } from "@workspace/db/chats";
 import type { KycDocument } from "@workspace/db/kyc-documents";
 import type { CreateOrderOutput } from "@/frontend/pages/order/server/procedures";
+import type { OfferRow } from "@/frontend/pages/order/server/offers-procedures";
 
 // (transition/resolveFlag rows carry ids and statuses only — never notes
 // or document URLs, which may be sensitive)
@@ -31,7 +32,9 @@ export const activityCatalog: ActivityCatalog = {
         params: (input, output?: CreateOrderOutput) => ({
             orderId: output?.orderId ?? "",
             shipperName: input?.shipperName ?? "",
-            carrierName: input?.carrierName ?? "",
+            // An order carries no carrier of its own any more: the one it is
+            // created with is the carrier of the offer the payload accepts
+            carrierName: input?.offers?.find((offer: { accepted?: boolean }) => offer?.accepted)?.carrierName ?? "",
             truckPlate: input?.truckPlate ?? "",
             status: output?.status ?? input?.status ?? "",
         }),
@@ -76,6 +79,49 @@ export const activityCatalog: ActivityCatalog = {
             to: input?.to ?? "",
             count: Array.isArray(input?.orders) ? input.orders.length : 0,
             failed: output?.results.filter((result) => !result.ok).length ?? 0,
+        }),
+    },
+    // Carrier offers: who quoted, for how much, and where the offer ended
+    // up. The price is the one figure that is deliberately logged — it is
+    // the whole point of the record and it is Appload's own commercial
+    // data, not partner PII. The free-text notes and decision reasons stay
+    // out. Only `create` names an order: the other three are addressed by
+    // the offer's uuid, and the row's `order_id` is a primary key, not the
+    // human "APPL021.26" the log links on.
+    "offers.create": {
+        entity: (input) =>
+            input?.orderId ? { type: "order", id: String(input.orderId) } : null,
+        params: (input, output?: OfferRow) => ({
+            orderId: input?.orderId ?? "",
+            carrierName: output?.carrierName ?? input?.values?.carrierName ?? "",
+            total: output?.total ?? "",
+            currency: output?.currency ?? input?.values?.currency ?? "",
+            status: output?.status ?? "",
+        }),
+    },
+    "offers.update": {
+        params: (input, output?: OfferRow) => ({
+            offerId: input?.offerId ?? "",
+            carrierName: output?.carrierName ?? "",
+            total: output?.total ?? "",
+            currency: output?.currency ?? "",
+            status: output?.status ?? "",
+        }),
+    },
+    "offers.decide": {
+        params: (input, output?: OfferRow) => ({
+            offerId: input?.offerId ?? "",
+            carrierName: output?.carrierName ?? "",
+            total: output?.total ?? "",
+            currency: output?.currency ?? "",
+            status: output?.status ?? input?.status ?? "",
+        }),
+    },
+    // A removed offer leaves nothing to report but its id — the mutation
+    // returns only that, and the row it described is gone
+    "offers.remove": {
+        params: (input) => ({
+            offerId: input?.offerId ?? "",
         }),
     },
     // Disputes log the order, the cause and the state — never the

@@ -48,7 +48,7 @@ export function OrdersDataView({ section }: { section: Section }) {
 
     const { get, sort, onSort, statusTabs, activeFilters } = useOrderList()
     const sheet = useOrderSheet()
-    const { edit, confirm } = useOrderActions()
+    const { edit } = useOrderActions()
 
     const input = ordersListInput(section, get)
     const year = input.year ?? currentYear()
@@ -68,10 +68,13 @@ export function OrdersDataView({ section }: { section: Section }) {
     const { open } = sheet
     const onOpen = useCallback((row: OrderRow) => open(row.orderId), [open])
     const onEdit = useCallback((row: OrderRow) => { void edit(row.orderId, row.status) }, [edit])
-    const onConfirm = useCallback((row: OrderRow) => { void confirm(row.orderId) }, [confirm])
+    // Booking is the transition dialog aimed at booked, where the offer is
+    // picked; a prospect with nothing to accept goes to its offers instead
+    const onAccept = useCallback((row: OrderRow) => setDialog({ orderId: row.orderId, to: "booked" }), [])
+    const onAddOffer = useCallback((row: OrderRow) => open(row.orderId, "offers"), [open])
     const onTransition = useCallback((row: OrderRow, to?: OrderStatus) => setDialog({ orderId: row.orderId, to }), [])
 
-    const columns = useOrderColumns({ today: on, onOpen, onEdit, onConfirm, onTransition })
+    const columns = useOrderColumns({ today: on, onOpen, onEdit, onAccept, onAddOffer, onTransition })
     const table = useDataTable({
         columns,
         data: data.items,

@@ -1,31 +1,41 @@
 import { z } from "zod";
-import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, lt, lte, ne, notInArray, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, lt, lte, ne, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { order } from "@workspace/db/orders";
 import { organization } from "@workspace/db/users";
-import { ACTIVE_DISPUTE_STATUSES, CATEGORIES, CURRENCY, ORDER_STATUS, ROUTE_TYPE } from "@workspace/db/types";
+import { CATEGORIES, CURRENCY, ORDER_STATUS, ROUTE_TYPE } from "@workspace/db/types";
 import type { db as Database } from "@workspace/db/db";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
 
 import { getSheetsAccessToken } from "@/lib/orders/google-token";
+import {
+    awaitingPod,
+    billable,
+    conditionCount,
+    disputed,
+    flagged,
+    insuranceToPay,
+    interrupted,
+    loadingDue,
+    loadingOverdue,
+    prospectDueSoon,
+    statusCount,
+    thisYear,
+} from "@/lib/orders/predicates";
 import { isPlaceholder } from "@/frontend/pages/partners/types";
-import { toTRPCError, transitionOrder } from "@/frontend/pages/order/server/procedures";
+import { pendingOfferCount, toTRPCError, transitionOrder } from "@/frontend/pages/order/server/procedures";
 import {
     BOOKED_MODES,
-    INTERRUPTED_STATUSES,
     LOADING_WINDOW_DAYS,
     ORDER_SORTS,
     ORDER_STATUS_SECTION,
     OUTSTANDING_STATUSES,
     PAYMENT_FILTERS,
     PAYMENT_PARTIES,
-    PENDING_POD_STATUSES,
-    PRE_LOADING_STATUSES,
     SECTIONS,
     statusFilter,
-    UNBILLABLE_STATUSES,
 } from "@/frontend/pages/orders/types";
 import type {
     Cashflow,
@@ -94,7 +104,9 @@ const OrdersInput = z.object({
     pageSize: z.number().int().min(1).max(100).default(25),
 });
 
-type OrdersInput = z.infer<typeof OrdersInput>;
+// Exported as a type only (the schema stays server-side): the dashboard's
+// shared input builders `satisfies` it, so a change here breaks them here
+export type OrdersInput = z.infer<typeof OrdersInput>;
 type Scope = Omit<OrdersInput, "page" | "pageSize" | "sort" | "dir">;
 type Paging = { page?: number; pageSize: number };
 
@@ -102,14 +114,8 @@ const YearInput = z.object({ year: year.optional() });
 
 const CashflowInput = z.object({ year: year.optional(), booked: z.enum(BOOKED_MODES).default("include") });
 
-const thisYear = () => new Date().getFullYear();
-
 const startOfDay = (value: string) => new Date(`${value}T00:00:00`);
 const endOfDay = (value: string) => new Date(`${value}T23:59:59.999`);
-const daysFromNow = (days: number) => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate() + days);
-};
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
 
@@ -178,37 +184,8 @@ const ROW = {
     disputeStatus: order.disputeStatus,
     version: order.version,
     updatedAt: order.updatedAt,
-} satisfies Record<keyof OrderRow, AnyColumn>;
-
-// ---------------------------------------------------------------------------
-// Conditions the toggles, the filters and the stats all share, so a count
-// is always the count its filter opens
-// ---------------------------------------------------------------------------
-
-/** Due at the loading site within `days` — or already overdue — and not loaded yet. */
-const loadingDue = (days: number) =>
-    and(inArray(order.status, PRE_LOADING_STATUSES), lt(order.expectedLoadingDate, daysFromNow(days + 1)))!;
-
-const interrupted = () => inArray(order.status, INTERRUPTED_STATUSES);
-
-const flagged = () => eq(order.flaggedForReview, true);
-
-const awaitingPod = () =>
-    and(eq(order.status, "delivered"), or(isNull(order.podStatus), inArray(order.podStatus, [...PENDING_POD_STATUSES])))!;
-
-/** Insurance Appload took out on the shipper's behalf and has not paid yet. */
-const insuranceToPay = () =>
-    and(eq(order.insuranceSubscriber, "appload"), eq(order.insuranceStatus, "pending"))!;
-
-const billable = () => notInArray(order.status, UNBILLABLE_STATUSES);
-
-const disputed = () => inArray(order.disputeStatus, [...ACTIVE_DISPUTE_STATUSES]);
-
-const conditionCount = (condition: SQL) =>
-    sql<number>`count(*) filter (where ${condition})`.mapWith(Number);
-
-const statusCount = (status: OrderStatus) =>
-    sql<number>`count(*) filter (where ${order.status} = ${status})`.mapWith(Number);
+    offerCount: pendingOfferCount,
+} satisfies Record<keyof OrderRow, AnyColumn | SQL>;
 
 /** Every condition the list input asks for, as one WHERE clause. */
 function scope(input: Scope): SQL | undefined {
@@ -391,6 +368,9 @@ export const ordersRouter = createTRPCRouter({
                     dueFlagged: conditionCount(flagged()),
                     duePod: conditionCount(awaitingPod()),
                     dueDisputed: conditionCount(disputed()),
+                    // The dashboard's tile hints: the same scan, one fewer round trip
+                    dueProspectSoon: conditionCount(prospectDueSoon(LOADING_WINDOW_DAYS)),
+                    dueLoadingOverdue: conditionCount(loadingOverdue()),
                 })
                 .from(order)
                 .where(eq(order.year, year));
@@ -417,6 +397,10 @@ export const ordersRouter = createTRPCRouter({
                     flagged: row?.dueFlagged ?? 0,
                     pod: row?.duePod ?? 0,
                     disputed: row?.dueDisputed ?? 0,
+                },
+                pipeline: {
+                    prospectsDueSoon: row?.dueProspectSoon ?? 0,
+                    loadingOverdue: row?.dueLoadingOverdue ?? 0,
                 },
             };
         }),
@@ -562,23 +546,34 @@ export const ordersRouter = createTRPCRouter({
 
     /**
      * Orders needing a hand right now, for the sidebar badges: interrupted
-     * or flagged this year, and the active disputes (any year) separately
-     * so the Disputes entry can carry its own share.
+     * or flagged this year, counted per section so the badge sits on the
+     * page that can do something about it, and the active disputes (any
+     * year) apart, since they have a page of their own.
      */
     attention: authorizedProcedure("order", ["list"])
         .query(async ({ ctx }) => {
-            const [[row], [disputes]] = await Promise.all([
+            const [rows, [disputes]] = await Promise.all([
                 ctx.db
-                    .select({ value: count() })
+                    .select({ status: order.status, value: count() })
                     .from(order)
-                    .where(and(eq(order.year, thisYear()), or(interrupted(), flagged()))),
+                    .where(and(eq(order.year, thisYear()), or(interrupted(), flagged())))
+                    .groupBy(order.status),
                 ctx.db
                     .select({ value: count() })
                     .from(order)
                     .where(disputed()),
             ]);
 
-            return { total: row?.value ?? 0, disputes: disputes?.value ?? 0 };
+            // Statuses fold into the six pages the same way the lists do
+            const sections = rows.reduce(
+                (totals, row) => {
+                    totals[ORDER_STATUS_SECTION[row.status]] += row.value;
+                    return totals;
+                },
+                { "prospect": 0, "booked": 0, "on-going": 0, "delivered": 0, "history": 0 } as Record<OrderSection, number>,
+            );
+
+            return { sections, disputes: disputes?.value ?? 0 };
         }),
 
     /**

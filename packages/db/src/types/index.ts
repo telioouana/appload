@@ -110,6 +110,13 @@ export type DisputeReason = (typeof DISPUTE_REASON)[number]
 export type DisputeStatus = (typeof DISPUTE_STATUS)[number]
 export type DisputeLiableParty = (typeof DISPUTE_LIABLE_PARTY)[number]
 
+// Carrier offers on an order. Text + TS const like the dispute vocabularies,
+// so the list can grow without an ALTER TYPE. See orderOffer in
+// packages/db/src/schemas/orders.ts for what each status means.
+export const OFFER_STATUS = ["pending", "accepted", "declined", "withdrawn", "lost", "recorded"] as const
+
+export type OfferStatus = (typeof OFFER_STATUS)[number]
+
 /** Whether a dispute in this state still holds the order: payments on hold, no completion. */
 export const isActiveDispute = (status: DisputeStatus | string | null | undefined): boolean =>
     status !== null && status !== undefined && (ACTIVE_DISPUTE_STATUSES as readonly string[]).includes(status)

@@ -5,6 +5,7 @@ import {
     IconArrowRight,
     IconCash,
     IconChevronDown,
+    IconFileDollar,
     IconFileText,
     IconFlag,
     IconGavel,
@@ -38,6 +39,7 @@ const KIND_ICON: Record<OrderHistoryKind, typeof IconArrowRight> = {
     "payment": IconCash,
     "flag": IconFlag,
     "dispute": IconGavel,
+    "offer": IconFileDollar,
     "system": IconRobot,
 }
 
@@ -53,6 +55,30 @@ function readDispute(metadata: Record<string, unknown>) {
         holdCarrier: metadata.holdCarrierPayments === true,
     }
 }
+
+/**
+ * Carrier offers reach the timeline twice: an `offer` row carries the facts
+ * at the top of its metadata (with the action it describes), and the
+ * transition row that books an order carries the same facts nested under
+ * `metadata.offer`. Both are read through here, defensively — the jsonb
+ * column is untyped, so a legacy or malformed row degrades to a bare title.
+ */
+function readOffer(source: Record<string, unknown> | null) {
+    if (!source) return null
+
+    const text = (value: unknown) => (typeof value === "string" && value.trim() !== "" ? value : null)
+    const total = typeof source.total === "number" || typeof source.total === "string" ? Number(source.total) : null
+
+    return {
+        action: text(source.action),
+        carrierName: text(source.carrierName),
+        total: total !== null && Number.isFinite(total) ? total : null,
+        currency: text(source.currency),
+    }
+}
+
+const record = (value: unknown) =>
+    typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null
 
 const display = (value: unknown) =>
     value === null || value === undefined || value === "" ? "—" : String(value)
@@ -130,6 +156,9 @@ export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
     const tReason = useTranslations("Admin.orders.documents.reasons")
     const tStage = useTranslations("Admin.orders.documents.stages")
     const tDispute = useTranslations("Admin.disputes.values")
+    // An offer row names its own message through its action, and the typed
+    // signature only takes literal keys — checked with t.has before use
+    const tOffer = t as unknown as (key: string, values: Record<string, string>) => string
     const f = useFormatter()
 
     const [expanded, setExpanded] = useState<Set<string>>(new Set())
@@ -155,6 +184,23 @@ export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
                 const note = typeof entry.metadata.note === "string" ? entry.metadata.note : null
                 // Payments and financial notes share the metadata shape
                 const payment = entry.kind === "payment" || entry.kind === "note" ? readPayment(entry.metadata) : null
+
+                const offer = entry.kind === "offer"
+                    ? readOffer(entry.metadata)
+                    : entry.kind === "transition" ? readOffer(record(entry.metadata.offer)) : null
+                // "Offer from Transportes Tembe · 120,000 MZN declined", or
+                // on the booking transition "Booked with … · …". The action
+                // comes from the row, so an unknown one is skipped rather
+                // than rendered as a missing key
+                const offerKey = entry.kind === "transition" ? "offer.booked" : `offer.${offer?.action}`
+                const offerLine = offer && offer.carrierName && (entry.kind === "transition" || offer.action) && t.has(offerKey)
+                    ? tOffer(offerKey, {
+                        carrier: offer.carrierName,
+                        amount: offer.total !== null
+                            ? [f.number(offer.total, { maximumFractionDigits: 0 }), offer.currency].filter(Boolean).join(" ")
+                            : "",
+                    })
+                    : null
 
                 // Payment: party · amount currency · payment date (· reference).
                 // Note: party · amount currency · reason (· stage · days) ·
@@ -228,6 +274,8 @@ export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
                                     <span className="font-medium">{t(`kinds.${entry.kind}`)}</span>
                                 )}
                             </div>
+
+                            {offerLine && <p className="text-sm text-muted-foreground">{offerLine}</p>}
 
                             {note && <p className="text-sm text-muted-foreground">{note}</p>}
 

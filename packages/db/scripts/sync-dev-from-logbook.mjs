@@ -783,7 +783,7 @@ if (!ASSUME_YES) {
 console.log("\nwiping...");
 await q(`
     TRUNCATE TABLE
-        order_document, order_history, sheet_sync, tracking_request,
+        order_document, order_history, order_offer, sheet_sync, tracking_request,
         chat_message, chat_conversation, "order",
         network, ops_order, kyc, member, invitation,
         driver, link, trailer, truck, organization

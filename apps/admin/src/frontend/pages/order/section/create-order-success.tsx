@@ -2,23 +2,27 @@ import { useEffect, useState } from "react";
 import { IconDownload } from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
+import type { Order } from "@workspace/db/orders";
+import type { LoadingBay } from "@workspace/db/types";
 
 import { Button } from "@workspace/ui/components/button";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import { Spinner } from "@workspace/ui/components/spinner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog";
 
-import { fillOrderTemplate, pdfFileName } from "@/lib/orders/pdf";
-import type { CreateOrderForm } from "@/backend/schemas/order";
+import { fillOrderTemplate, orderToTemplateValues, pdfFileName } from "@/lib/orders/pdf";
 
 export type CreatedOrder = {
     orderId: string;
-    status: CreateOrderForm["status"];
     // Which sheet action produced this — the copy differs, and "created"
     // must not show after an edit
     mode: "created" | "booked" | "saved";
     warning?: "SHEET_FAILED";
-    values: CreateOrderForm;
+    // The stored row, not what was submitted: the carrier leg the documents
+    // print is copied from the accepted offer server side, so only the row
+    // that came back carries it
+    order: Order;
+    loadingBay: LoadingBay["type"] | null;
 };
 
 const SUCCESS_KEYS = {
@@ -33,19 +37,19 @@ type DocumentUrls = {
 };
 
 export function CreateOrderSuccess({
-    order,
+    result,
     onClose,
 }: {
-    order: CreatedOrder | null;
+    result: CreatedOrder | null;
     onClose: () => void;
 }) {
     const t = useTranslations("Admin.order.create");
     const [documents, setDocuments] = useState<DocumentUrls | null>(null);
 
-    const isBooked = order?.status === "booked";
+    const isBooked = result?.order.status === "booked";
 
     useEffect(() => {
-        if (!order || order.status !== "booked") {
+        if (!result || result.order.status !== "booked") {
             return;
         }
 
@@ -53,9 +57,11 @@ export function CreateOrderSuccess({
         let urls: DocumentUrls | null = null;
 
         (async () => {
+            const values = orderToTemplateValues(result.order, result.loadingBay);
+
             const [shipper, carrier] = await Promise.all([
-                fillOrderTemplate("shipper", order.orderId, order.values),
-                fillOrderTemplate("carrier", order.orderId, order.values),
+                fillOrderTemplate("shipper", result.orderId, values),
+                fillOrderTemplate("carrier", result.orderId, values),
             ]);
 
             urls = {
@@ -81,19 +87,19 @@ export function CreateOrderSuccess({
 
             setDocuments(null);
         };
-    }, [order]);
+    }, [result]);
 
     return (
-        <Dialog open={!!order} onOpenChange={(open) => !open && onClose()}>
+        <Dialog open={!!result} onOpenChange={(open) => !open && onClose()}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{t(order ? SUCCESS_KEYS[order.mode].title : "success.title")}</DialogTitle>
+                    <DialogTitle>{t(result ? SUCCESS_KEYS[result.mode].title : "success.title")}</DialogTitle>
                     <DialogDescription>
-                        {order && t(SUCCESS_KEYS[order.mode].description, { orderId: order.orderId })}
+                        {result && t(SUCCESS_KEYS[result.mode].description, { orderId: result.orderId })}
                     </DialogDescription>
                 </DialogHeader>
 
-                {order?.warning === "SHEET_FAILED" && (
+                {result?.warning === "SHEET_FAILED" && (
                     <Alert variant="destructive">
                         <AlertDescription>{t("errors.sheetFailed")}</AlertDescription>
                     </Alert>
@@ -104,13 +110,13 @@ export function CreateOrderSuccess({
                         {documents ? (
                             <>
                                 <Button asChild variant="outline">
-                                    <a href={documents.shipper} download={pdfFileName("shipper", order.orderId, order.values.shipperName)}>
+                                    <a href={documents.shipper} download={pdfFileName("shipper", result.orderId, result.order.shipperName)}>
                                         <IconDownload />
                                         {t("success.downloadShipper")}
                                     </a>
                                 </Button>
                                 <Button asChild variant="outline">
-                                    <a href={documents.carrier} download={pdfFileName("carrier", order.orderId, order.values.carrierName)}>
+                                    <a href={documents.carrier} download={pdfFileName("carrier", result.orderId, result.order.carrierName)}>
                                         <IconDownload />
                                         {t("success.downloadCarrier")}
                                     </a>

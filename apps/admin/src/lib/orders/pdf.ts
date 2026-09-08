@@ -81,12 +81,17 @@ const TEMPLATE_PATHS: Record<TemplateKind, string> = {
     carrier: "/templates/carrier-template-pt.pdf",
 };
 
+/** Drops the characters a filesystem refuses and collapses the leftover spacing. */
+export function safeFileName(text: string): string {
+    return text.trim().replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ");
+}
+
 /**
  * Canonical download/attachment name: the party's own name is part of the
  * filename so recipients can tell the documents apart.
  */
 export function pdfFileName(kind: TemplateKind, orderId: string, partyName?: string | null): string {
-    const party = partyName?.trim().replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ");
+    const party = safeFileName(partyName ?? "");
     return party ? `${orderId} - ${party} - ${kind}.pdf` : `${orderId} - ${kind}.pdf`;
 }
 
@@ -108,13 +113,13 @@ const pdfDate = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-dig
 const normalize = (name: string) => name.trim().replace(/\s+/g, " ").toLowerCase();
 
 /** Finds a form field by name, tolerating spacing/casing variants. */
-function findField(form: PDFForm, name: string) {
+export function findField(form: PDFForm, name: string) {
     const wanted = normalize(name);
 
     return form.getFields().find((field) => normalize(field.getName()) === wanted);
 }
 
-function setText(form: PDFForm, name: string, value: string) {
+export function setText(form: PDFForm, name: string, value: string) {
     const field = findField(form, name);
 
     if (field instanceof PDFTextField) {
@@ -124,7 +129,7 @@ function setText(form: PDFForm, name: string, value: string) {
     }
 }
 
-function setDropdown(form: PDFForm, name: string, value: string) {
+export function setDropdown(form: PDFForm, name: string, value: string) {
     const field = findField(form, name);
 
     if (field instanceof PDFDropdown) {
@@ -193,10 +198,13 @@ export async function fillOrderTemplate(
 
     setText(form, "Provedor de serviço de transporte", values.carrierName!);
     setText(form, "Matricula do Caminhão", values.truckPlate!);
+    // Either half can be missing: booking commits a carrier, and the driver
+    // is only owed at dispatch, so a document printed in between must not
+    // read "undefined - +258…"
     setText(
         form,
         "Detalhes do condutor",
-        values.driverContact ? `${values.driverName!} - ${values.driverContact}` : values.driverName!,
+        [values.driverName, values.driverContact].filter(Boolean).join(" - "),
     );
     if (values.loadingBay !== undefined) {
         setDropdown(form, "Tipo", LOAD_TYPE_PDF_LABELS[values.loadingBay]);

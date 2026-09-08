@@ -21,12 +21,17 @@ export type RouteType = (typeof ROUTE_TYPE)[number];
  *   admin and always flagged for review. underbid is the prospect/booked
  *   order the shipper gave to a cheaper competitor — lost on price, not
  *   because the trip went away (that is cancelled)
+ *
+ * Booking is not a bare status change: prospect → booked is the acceptance
+ * of a carrier offer, and the carrier, the fiscal regime and the carrier
+ * price are copied onto the order from that offer.
  */
 
-// What a transition demands before it may commit. "note" and the documents
-// are payload requirements; "flag" marks the order for review as a side
-// effect; "admin" restricts the move to the admin platform role.
-export type TransitionRequirement = "note" | "evidence" | "pod" | "flag" | "admin";
+// What a transition demands before it may commit. "note", the documents and
+// "offer" are payload requirements — the offer is to booking what a POD is
+// to completing; "flag" marks the order for review as a side effect;
+// "admin" restricts the move to the admin platform role.
+export type TransitionRequirement = "note" | "evidence" | "pod" | "flag" | "admin" | "offer";
 
 export type TransitionContext = {
     status: OrderStatus;
@@ -140,6 +145,9 @@ export function transitionRequirements(
     if (!isChain(from) || !isChain(to)) return null;
 
     if (FORWARD[from]?.includes(to)) {
+        // prospect is the only status booked steps forward from, so this
+        // is exactly the acceptance edge
+        if (to === "booked") return ["offer"];
         return to === "completed" ? ["pod"] : [];
     }
 

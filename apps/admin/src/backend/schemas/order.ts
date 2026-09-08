@@ -1,14 +1,18 @@
 import { z } from "zod"
 
 import { useTranslations } from "@workspace/i18n";
-import type { Order } from "@workspace/db/orders";
+import type { Order, OrderOffer } from "@workspace/db/orders";
 import { CATEGORIES, CURRENCY, FISCAL_REGIME, INSURANCE_PAYMENT_STATUS, INSURANCE_SUBSCRIBER, LOAD_TYPE, LOADING_BAY, ORDER_STATUS, PACKING, PAYMENT_STATUS, POD_STATUS, ROUTE_TYPE, TRIP_TYPE, TRUCK_AGE, WEIGHT_UNIT, } from "@workspace/db/types";
+
+import { priceOffer } from "@/lib/orders/commission";
+
+import { offerInput } from "./offer";
 
 type CreateTranslations = ReturnType<typeof useTranslations<"Admin.order.create">>
 type UpdateTranslations = ReturnType<typeof useTranslations<"Admin.order.update">>
 
 type ErrorParam = { error: string } | undefined;
-type ErrorMessage = "address" | "carrier" | "category" | "contact" | "count" | "currency" | "date" | "days" | "deliveries" | "description" | "driver" | "field" | "list" | "passport" | "percentage" | "plate" | "shipper" | "subtotal" | "total" | "status" | "value" | "weight"
+type ErrorMessage = "address" | "carrier" | "category" | "contact" | "count" | "currency" | "date" | "days" | "deliveries" | "description" | "driver" | "field" | "list" | "passport" | "percentage" | "plate" | "shipper" | "subtotal" | "total" | "status" | "value" | "weight" | "offers" | "accepted"
 
 // DecimalInput keeps amounts as strings while typing ("12.5"); convert to
 // numbers before validation and treat empty strings as missing
@@ -38,24 +42,20 @@ const location = (error?: ErrorParam) => z.object({
     state: z.string().nonempty(),
 });
 
-// Mozambican VAT extracted from a VAT-inclusive total: total * (0.16/1.16)
-const VAT_RATE = 0.16 / 1.16;
-const round2 = (n: number) => Math.round(n * 100) / 100;
-
-// The carrier section becomes required once @status = "booked" (see the
-// .refine chain below). @truckAge is auto-filled from the truck profile (via
-// @truckPlate) and @driverId/@driverContact from the driver profile; requiring
-// them is a safety net for incomplete profiles. @driverPassport also comes from
-// the driver profile but is only mandatory for regional trips
-//
-// The same bar over a STORED row lives in @/lib/orders/booking-readiness,
-// which order.transition guards with. These refines add exactly one field:
-// @loadingBay, which no order column carries — it is fleet-derived and only
-// exists once a vehicle is picked here. Keep the two in step; they are not
-// generated from one list because these run on form keys (@driverContact,
-// @routeType) and each carries its own path and translated message.
 const isMissing = (value: unknown) => value === undefined || value === null || value === "";
 
+/**
+ * The create-shaped payload, shared by creation and by the full edit of a
+ * prospect (order.updateDeal).
+ *
+ * An order carries no carrier of its own: it carries carrier OFFERS, and
+ * booking one copies its carrier, fiscal regime and price onto the order.
+ * So the only thing @status = "booked" demands here is an offer marked
+ * accepted (see the superRefine below) — the driver and the truck are the
+ * dispatch gate's business (@/lib/orders/dispatch-readiness) and stay
+ * optional at every status, because a trip is often booked weeks before
+ * the rig that will run it is known.
+ */
 function create(message: (field: ErrorMessage) => ErrorParam) {
     return (
         z.object({
@@ -95,9 +95,9 @@ function create(message: (field: ErrorMessage) => ErrorParam) {
              * @shipperVAT = if @routeType = "national" then @shipperTotal * (0.16/1.16) else 0
              * @shipperSubtotal = @shipperTotal - @shipperVAT
              */
-            shipperSubtotal: requiredAmount(message("subtotal")),
-            shipperVAT: requiredAmount(message("value")),
-            shipperTotal: requiredAmount(message("total")),
+            shipperSubtotal: optionalAmount(message("subtotal")),
+            shipperVAT: optionalAmount(message("value")),
+            shipperTotal: optionalAmount(message("total")),
             shipperCurrency: z.enum(CURRENCY, message("currency")),
 
             /**
@@ -109,14 +109,21 @@ function create(message: (field: ErrorMessage) => ErrorParam) {
             insuranceStatus: z.enum(INSURANCE_PAYMENT_STATUS, message("status")).optional(),
 
             /**
-             * Validation rules for this section (enforced in the superRefine below):
-             * If @status = "prospect" they are optional -> are not required to save the order
-             * If @status = "booked" they are not optional -> are required to save the order
+             * The carrier quotes that exist for this order. A prospect may
+             * carry none, some or many, all awaiting a decision; @accepted
+             * marks the one this payload books with, which is legal only
+             * when @status = "booked" (enforced in the superRefine below).
+             * Rows carrying an @id already exist in the database — the form
+             * only ever holds pending offers, so a decided one never
+             * travels back here.
              */
-            carrierId: z.uuid().optional(),
-            carrierName: z.string().optional(),
-            fiscalRegime: z.enum(FISCAL_REGIME).optional(),
+            offers: z.array(offerInput(message)).default([]),
 
+            /**
+             * Booking details. Optional at every status: they are required
+             * before "to-loading", not before booking, and the order page
+             * assigns them later.
+             */
             driverId: z.uuid().optional(),
             driverName: z.string().optional(),
             driverContact: z.e164().optional(),
@@ -130,23 +137,13 @@ function create(message: (field: ErrorMessage) => ErrorParam) {
             loadingCapacity: z.preprocess(toNumber, z.number(message("value")).positive(message("value")).optional()),
 
             /**
-             * @carrierSubtotal, @carrierVAT and @carrierTotal are kept in sync live
-             * by the create-order view (watch subscription); the schema only validates them
-             * Business rule applied there:
-             * @carrierVAT = if @fiscalRegime = "normal" then @carrierTotal * (0.16/1.16) else 0
-             * @carrierSubtotal = @carrierTotal - @carrierVAT
-             */
-            carrierSubtotal: optionalAmount(),
-            carrierVAT: optionalAmount(),
-            carrierTotal: optionalAmount(message("value")),
-            carrierCurrency: z.enum(CURRENCY, message("currency")).optional(),
-
-            /**
              * Always hidden fields that will show on summary already filled in if order is booked
-             * Commission fields are derived in the transform below (only when @carrierTotal is present):
-             * @commissionTotal = @shipperTotal - @carrierTotal
-             * @commissionVAT = if @fiscalRegime = "n/a" then 0 else if @fiscalRegime = "normal" then @commissionTotal * (0.16/1.16) else @shipperVAT
-             * @commissionSubtotal = @commissionTotal - @commissionVAT (implied by the pattern)
+             * Commission fields are derived in the transform below from the ACCEPTED offer
+             * (@/lib/orders/commission), so a booking made here and one made later by
+             * accepting an offer on the order page produce the same numbers:
+             * @commissionTotal = @shipperTotal - the offer's total
+             * @commissionVAT = if the offer's regime is "n/a" then 0 else if "normal" then @commissionTotal * (0.16/1.16) else @shipperVAT
+             * @commissionSubtotal = @commissionTotal - @commissionVAT
              * @dealDate is auto-set to now when @status = "booked" and it is missing
              */
             dealDate: z.date().optional(),
@@ -154,47 +151,66 @@ function create(message: (field: ErrorMessage) => ErrorParam) {
             commissionVAT: optionalAmount(),
             commissionTotal: optionalAmount(),
         })
-            .refine((data) => data?.status !== "booked" || !isMissing(data?.carrierId), { path: ["carrierId"], error: message("carrier")?.error, when: () => true })
-            .refine((data) => data?.status !== "booked" || !isMissing(data?.carrierName), { path: ["carrierName"], error: message("carrier")?.error, when: () => true })
-            .refine((data) => data?.status !== "booked" || !isMissing(data?.fiscalRegime), { path: ["fiscalRegime"], error: message("list")?.error, when: () => true })
-            .refine((data) => data?.status !== "booked" || !isMissing(data?.truckPlate), { path: ["truckPlate"], error: message("plate")?.error, when: () => true })
-            .refine((data) => data?.status !== "booked" || !isMissing(data?.truckAge), { path: ["truckAge"], error: message("list")?.error, when: () => true })
-            .refine((data) => data?.status !== "booked" || !isMissing(data?.loadingBay), { path: ["loadingBay"], error: message("list")?.error, when: () => true })
-            .refine((data) => data?.status !== "booked" || !isMissing(data?.driverId), { path: ["driverId"], error: message("driver")?.error, when: () => true })
-            .refine((data) => data?.status !== "booked" || !isMissing(data?.driverName), { path: ["driverName"], error: message("driver")?.error, when: () => true })
-            .refine((data) => data?.status !== "booked" || !isMissing(data?.driverContact), { path: ["driverContact"], error: message("contact")?.error, when: () => true })
-            .refine((data) => data?.status !== "booked" || !isMissing(data?.carrierSubtotal), { path: ["carrierSubtotal"], error: message("subtotal")?.error, when: () => true })
-            .refine((data) => data?.status !== "booked" || !isMissing(data?.carrierTotal), { path: ["carrierTotal"], error: message("total")?.error, when: () => true })
-            .refine((data) => data?.status !== "booked" || !isMissing(data?.carrierCurrency), { path: ["carrierCurrency"], error: message("currency")?.error, when: () => true })
-            // Passport only crosses a border on regional trips
-            .refine((data) => !(data?.status === "booked" && data?.routeType === "regional" && isMissing(data?.driverPassport)), { path: ["driverPassport"], error: message("passport")?.error, when: () => true })
-            // Commission = shipperTotal - carrierTotal only makes sense in one currency
-            .refine((data) => !(data?.carrierTotal != null && data?.carrierCurrency != null && data.carrierCurrency !== data.shipperCurrency), { path: ["carrierCurrency"], error: message("currency")?.error, when: () => true })
+            /**
+             * The offer rules, in one block because the currency one has to
+             * name the offending row (`offers.<i>.currency`) and only a
+             * superRefine knows the index. `when` keeps it running even when
+             * another field is invalid, exactly like the refines above it.
+             */
+            .superRefine((data, ctx) => {
+                const offers = data?.offers ?? [];
+                const accepted = offers.flatMap((offer, index) => (offer.accepted ? [{ offer, index }] : []));
+
+                if (data?.status === "booked") {
+                    // Booking IS the acceptance of an offer, so a booked
+                    // payload without exactly one accepted offer has no
+                    // carrier, no price and no commission to write
+                    if (accepted.length !== 1) {
+                        ctx.addIssue({
+                            code: "custom",
+                            path: ["offers"],
+                            message: message(offers.length === 0 ? "offers" : "accepted")?.error,
+                        });
+                    }
+                } else if (accepted.length > 0) {
+                    // A prospect that already picked a winner is a booked
+                    // order the payload forgot to promote
+                    ctx.addIssue({ code: "custom", path: ["offers"], message: message("status")?.error });
+                }
+
+            }, { when: () => true })
             .transform((data) => {
                 // Runs only after field parsing and the refinements above pass.
-                // Shipper/carrier amounts arrive already computed by the UI and pass
-                // through untouched; only commission and dealDate are derived here
-                let commissionTotal: number | undefined;
-                let commissionVAT: number | undefined;
-                let commissionSubtotal: number | undefined;
+                // Shipper amounts arrive already computed by the UI and pass
+                // through untouched; only commission and dealDate are derived
+                // here, from the offer this payload books with
+                const accepted = data.status === "booked"
+                    ? data.offers.find((offer) => offer.accepted)
+                    : undefined;
 
-                // A missing fiscalRegime (only possible for prospects) falls to the
-                // else branch: commissionVAT = shipperVAT
-                const { carrierTotal, fiscalRegime } = data;
-                if (carrierTotal != null) {
-                    commissionTotal = round2(data.shipperTotal - carrierTotal);
-                    commissionVAT =
-                        fiscalRegime === "n/a" ? 0
-                            : fiscalRegime === "normal" ? round2(commissionTotal * VAT_RATE)
-                                : data.shipperVAT;
-                    commissionSubtotal = round2(commissionTotal - commissionVAT);
-                }
+                const pricing = accepted
+                    ? priceOffer({
+                        carrierTotal: accepted.total,
+                        fiscalRegime: accepted.fiscalRegime,
+                        commissionTotal: accepted.commissionTotal,
+                        route: data.routeType,
+                    })
+                    : undefined;
 
                 return {
                     ...data,
-                    commissionTotal,
-                    commissionVAT,
-                    commissionSubtotal,
+                    // The accepted offer prices the order: the client price it
+                    // quotes becomes the shipper leg, in the offer's currency,
+                    // whatever the form carried for it before
+                    ...(pricing && accepted && {
+                        shipperSubtotal: pricing.clientSubtotal,
+                        shipperVAT: pricing.clientVAT,
+                        shipperTotal: pricing.clientTotal,
+                        shipperCurrency: accepted.currency,
+                    }),
+                    commissionTotal: pricing?.commissionTotal,
+                    commissionVAT: pricing?.commissionVAT,
+                    commissionSubtotal: pricing?.commissionSubtotal,
                     dealDate: data.status === "booked" ? (data.dealDate ?? new Date()) : data.dealDate,
                 };
             })
@@ -548,8 +564,12 @@ export type CreateOrderForm = z.infer<typeof CreateOrderSchemaServer>
  * Numeric columns stay as the strings DecimalInput edits; null collapses
  * to undefined. `loadingBay` is fleet-derived and refills when the truck
  * is picked in the form.
+ *
+ * Only the order's PENDING offers come back into the form — a decided one
+ * is the record of what happened and is not editable — and none of them
+ * arrives accepted: accepting is what saving the form as booked does.
  */
-export function orderToCreateDefaults(row: Order): CreateOrderFormInput {
+export function orderToCreateDefaults(row: Order, offers: OrderOffer[]): CreateOrderFormInput {
     return {
         shipperId: row.shipperId,
         shipperName: row.shipperName,
@@ -581,9 +601,23 @@ export function orderToCreateDefaults(row: Order): CreateOrderFormInput {
         insuranceCurrency: row.insuranceCurrency ?? undefined,
         insuranceStatus: row.insuranceStatus ?? undefined,
 
-        carrierId: row.carrierId ?? undefined,
-        carrierName: row.carrierName ?? undefined,
-        fiscalRegime: row.fiscalRegime ?? undefined,
+        offers: offers
+            .filter((offer) => offer.status === "pending")
+            .map((offer) => ({
+                id: offer.id,
+                carrierId: offer.carrierId,
+                carrierName: offer.carrierName,
+                fiscalRegime: offer.fiscalRegime,
+                subtotal: offer.subtotal ?? undefined,
+                vat: offer.vat ?? undefined,
+                total: offer.total,
+                currency: offer.currency,
+                commissionTotal: offer.commissionTotal ?? undefined,
+                includesGit: offer.includesGit,
+                includesGps: offer.includesGps,
+                notes: offer.notes ?? undefined,
+                accepted: false,
+            })),
 
         driverId: row.driverId ?? undefined,
         driverName: row.driverName ?? undefined,
@@ -596,11 +630,6 @@ export function orderToCreateDefaults(row: Order): CreateOrderFormInput {
         truckAge: row.truckAge ?? undefined,
         loadingBay: undefined,
         loadingCapacity: undefined,
-
-        carrierSubtotal: row.carrierSubtotal ?? undefined,
-        carrierVAT: row.carrierVAT ?? undefined,
-        carrierTotal: row.carrierTotal ?? undefined,
-        carrierCurrency: row.carrierCurrency ?? undefined,
 
         dealDate: row.dealDate ?? undefined,
         commissionSubtotal: row.apploadCommissionSubtotal ?? undefined,

@@ -18,7 +18,7 @@ import { daysLate, PRE_LOADING_STATUSES, type OrderRow } from "@/frontend/pages/
  * instance is not rebuilt on every render (a rebuilt column array remounts
  * every cell).
  */
-export function useOrderColumns({ today, onOpen, onConfirm, onEdit, onTransition }: { today: string } & RowCallbacks) {
+export function useOrderColumns({ today, onOpen, onAccept, onAddOffer, onEdit, onTransition }: { today: string } & RowCallbacks) {
     const t = useTranslations("Admin.orders")
     const f = useFormatter()
     const money = useMoney()
@@ -136,10 +136,15 @@ export function useOrderColumns({ today, onOpen, onConfirm, onEdit, onTransition
                 cell: ({ row }) => {
                     const item = row.original
                     const rig = item.driverName || item.truckPlate
+                    // A prospect has no carrier — it has offers, and one of
+                    // them will become the carrier when it is accepted
+                    const carrier = item.status === "prospect"
+                        ? muted(item.offerCount > 0 ? t("list.values.offers", { count: item.offerCount }) : t("list.values.no-offers"))
+                        : item.carrierName ? <span className="truncate">{item.carrierName}</span> : muted(t("list.values.no-carrier"))
 
                     return (
                         <StackCell
-                            primary={item.carrierName ? <span className="truncate">{item.carrierName}</span> : muted(t("list.values.no-carrier"))}
+                            primary={carrier}
                             secondary={rig ? (
                                 <span className="flex min-w-0 items-center gap-1.5">
                                     {item.driverName && <span className="truncate">{item.driverName}</span>}
@@ -198,9 +203,9 @@ export function useOrderColumns({ today, onOpen, onConfirm, onEdit, onTransition
                 size: 72,
                 meta: { label: t("list.columns.actions"), align: "right", className: "pr-2" },
                 cell: ({ row }) => (
-                    <OrderRowActions row={row.original} onOpen={onOpen} onConfirm={onConfirm} onEdit={onEdit} onTransition={onTransition} />
+                    <OrderRowActions row={row.original} onOpen={onOpen} onAccept={onAccept} onAddOffer={onAddOffer} onEdit={onEdit} onTransition={onTransition} />
                 ),
             },
         ]
-    }, [t, f, money, today, onOpen, onConfirm, onEdit, onTransition])
+    }, [t, f, money, today, onOpen, onAccept, onAddOffer, onEdit, onTransition])
 }
