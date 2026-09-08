@@ -88,6 +88,16 @@ export async function setValues(token, spreadsheetId, sheet, a1, values, valueIn
     });
 }
 
+/**
+ * Adds rows after the last used row of a range, RAW like setValues.
+ * INSERT_ROWS rather than OVERWRITE: the tab may sit above other content.
+ */
+export async function appendValues(token, spreadsheetId, sheet, a1, values, valueInputOption = "RAW") {
+    const range = encodeURIComponent(`'${sheet}'!${a1}`);
+    const query = `?valueInputOption=${valueInputOption}&insertDataOption=INSERT_ROWS`;
+    return sheetsSend(token, spreadsheetId, `/values/${range}:append${query}`, "POST", { values });
+}
+
 export async function batchUpdate(token, spreadsheetId, requests) {
     return sheetsSend(token, spreadsheetId, ":batchUpdate", "POST", { requests });
 }
