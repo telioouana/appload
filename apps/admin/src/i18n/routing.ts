@@ -13,6 +13,12 @@ export const routing = defineRouting({
 
     pathnames: {
         "/": "/",
+        "/dashboard": "/dashboard",
+        "/kpis": "/kpis",
+        "/kpis/[party]": "/kpis/[party]",
+        "/metrics": {
+            pt: "/estatisticas"
+        },
         "/sign-in": {
             pt: "/iniciar-sessao"
         },
@@ -49,8 +55,8 @@ export const routing = defineRouting({
         "/orders/details/[orderId]": {
             pt: "/pedidos/detalhes/[orderId]"
         },
-        "/chats": {
-            pt: "/conversas"
+        "/messages": {
+            pt: "/mensagens"
         },
         "/map": {
             pt: "/mapa"

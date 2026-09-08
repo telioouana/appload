@@ -41,7 +41,7 @@ export function MapSelectedCard({
     className?: string
 }) {
     const t = useTranslations("Admin.map.selected")
-    const c = useTranslations("Admin.chats.thread.location")
+    const c = useTranslations("Admin.messages.thread.location")
     const f = useFormatter()
     const now = useNow({ updateInterval: 60_000 })
 

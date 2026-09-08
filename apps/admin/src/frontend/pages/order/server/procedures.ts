@@ -2,7 +2,7 @@ import { z } from "zod";
 import { and, desc, eq, inArray, isNull, max, notInArray, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
-import { order, orderDispute, orderDocument, orderHistory, sheetSync, type CreateOrder, type Order } from "@workspace/db/orders";
+import { order, orderDispute, orderDocument, orderHistory, orderOffer, sheetSync, type CreateOrder, type Order, type OrderOffer } from "@workspace/db/orders";
 import { user } from "@workspace/db/users";
 import { trailer, truck } from "@workspace/db/fleet";
 import type { db as Database } from "@workspace/db/db";
@@ -21,7 +21,10 @@ import { FOLLOW_UP_STATUSES, startConversation } from "@/lib/chats/conversations
 import { foreignKeyViolationConstraint, uniqueViolationConstraint } from "@/lib/db-errors";
 import { deriveOrderFields, derivePaymentStatus } from "@/lib/orders/derive";
 import { allowedTransitions, transitionRequirements, validateTransition, type OrderStatus } from "@/lib/orders/transitions";
-import { isReadyToBook } from "@/lib/orders/booking-readiness";
+import { offerAcceptable } from "@/lib/orders/booking-readiness";
+import { isReadyToDispatch } from "@/lib/orders/dispatch-readiness";
+import { carrierSnapshot } from "@/lib/orders/carrier-snapshot";
+import { offerPricingColumns, priceOffer } from "@/lib/orders/commission";
 import { getSheetsAccessToken } from "@/lib/orders/google-token";
 import { currentOrderYear, maxSheetSeq, nextOrderId } from "@/lib/orders/order-id";
 import { getRange } from "@/lib/orders/sheets-client";
@@ -31,6 +34,8 @@ import { changedCurrencyParties, partiesWithMoneyDocuments } from "@/lib/orders/
 import { changedPaymentParties, proofPaymentPatch, type PaymentSums } from "@/lib/orders/payments";
 import { paymentSums } from "@/lib/orders/payment-sums";
 import { diffChangedFields } from "@/lib/orders/order-facts";
+
+import { listOffers } from "./offers-procedures";
 
 /**
  * A leg's currency is what gives the stored note totals and proof-of-payment
@@ -114,11 +119,42 @@ export function toTRPCError(error: unknown): TRPCError {
 
 const decimal = (value: number | undefined) => (value === undefined ? null : String(value));
 
+/** The offer a create-shaped payload books with, or none for a prospect. */
+const acceptedOfferOf = (input: CreateOrderForm) =>
+    (input.status === "booked" ? input.offers.find((offer) => offer.accepted) : undefined);
+
+/**
+ * What a booking writes into its transition history row, so the timeline
+ * can say WHICH offer booked the order and on what terms without joining
+ * back to a row that may since have been re-priced.
+ */
+export type BookedOfferMetadata = {
+    id: string;
+    carrierName: string;
+    total: number;
+    currency: string;
+    includesGit: boolean;
+    includesGps: boolean;
+};
+
+const offerMetadata = (offer: OrderOffer): BookedOfferMetadata => ({
+    id: offer.id,
+    carrierName: offer.carrierName,
+    total: Number(offer.total),
+    currency: offer.currency,
+    includesGit: offer.includesGit,
+    includesGps: offer.includesGps,
+});
+
 function toInsertValues(
     input: CreateOrderForm,
     id: { orderId: string; seq: number; year: number },
     userId: string,
 ): CreateOrder {
+    // The carrier leg is a copy of the accepted offer, never typed onto the
+    // order: a prospect has none at all
+    const accepted = acceptedOfferOf(input);
+
     return {
         orderId: id.orderId,
         seq: id.seq,
@@ -149,8 +185,8 @@ function toInsertValues(
         loadType: input.loadType,
         deliveries: input.deliveries,
 
-        carrierName: input.carrierName,
-        carrierId: input.carrierId ?? null,
+        carrierName: accepted?.carrierName ?? null,
+        carrierId: accepted?.carrierId ?? null,
 
         driverName: input.driverName ?? null,
         driverId: input.driverId ?? null,
@@ -162,11 +198,13 @@ function toInsertValues(
         linkPlate: input.linkPlate || null,
         trailerPlate: input.trailerPlate || null,
 
-        fiscalRegime: input.fiscalRegime ?? null,
-        carrierSubtotal: decimal(input.carrierSubtotal),
-        carrierVAT: decimal(input.carrierVAT),
-        carrierTotal: decimal(input.carrierTotal),
-        carrierCurrency: input.carrierCurrency,
+        fiscalRegime: accepted?.fiscalRegime ?? null,
+        carrierSubtotal: decimal(accepted?.subtotal),
+        carrierVAT: decimal(accepted?.vat),
+        carrierTotal: decimal(accepted?.total),
+        // Left undefined (not null) without an offer so the column keeps its
+        // "MZN" default, exactly as it did when the form typed the carrier
+        carrierCurrency: accepted?.currency,
 
         shipperSubtotal: decimal(input.shipperSubtotal),
         shipperVAT: decimal(input.shipperVAT),
@@ -242,26 +280,11 @@ function transitionStamps(current: Order, to: OrderStatus): TransitionStamps {
 /**
  * Booked/tracked side effect: open (or relink) the driver's follow-up
  * conversation. Skips silently when the order has no driver phone yet —
- * the skip lands in the history metadata only when logSkip (the booked
- * transition), so routine tracked transitions don't spam the timeline.
+ * a booking rarely names a driver, and order.update opens the thread
+ * when the phone arrives.
  */
-async function startFollowUpChat(
-    db: typeof Database,
-    updated: Order,
-    orderPk: string,
-    options?: { logSkip?: boolean },
-): Promise<void> {
+async function startFollowUpChat(db: typeof Database, updated: Order, orderPk: string): Promise<void> {
     if (!updated.driverPhoneNumber) {
-        if (options?.logSkip === false) {
-            return;
-        }
-
-        await db.insert(orderHistory).values({
-            orderId: orderPk,
-            actorUserId: null,
-            kind: "system",
-            metadata: { followUpChat: "skipped-no-phone" },
-        });
         return;
     }
 
@@ -350,9 +373,220 @@ async function lookupLoadingBay(db: typeof Database, row: Order): Promise<Loadin
     return vehicle?.loadingBay?.type ?? null;
 }
 
+/**
+ * How many offers on a row are still awaiting a decision, as a correlated
+ * subquery — the orders list and the transition options both need it next
+ * to the order's own columns.
+ *
+ * The conditions go in as drizzle expressions rather than as bare columns:
+ * a `PgColumn` interpolated directly into a selection-field template loses
+ * its table prefix when the query has no joins, which would bind
+ * `order_id`/`status` to the wrong table. A nested SQL object is left
+ * alone and renders fully qualified.
+ */
+export const pendingOfferCount = sql<number>`(
+    select count(*) from ${orderOffer}
+    where ${and(eq(orderOffer.orderId, order.id), eq(orderOffer.status, "pending"))}
+)`.mapWith(Number);
+
+/**
+ * Books an order on one of its carrier offers: the single door every
+ * booking goes through (creation with an accepted offer, the deal form,
+ * and the prospect → booked transition), so the carrier leg and the
+ * commission can never depend on which one was used.
+ *
+ * Returns the columns to fold into the order's own update, the metadata
+ * the history row carries, and `settle` — the offer-side writes. They are
+ * split because neon-http has no interactive transaction: the caller
+ * writes the order row first and settles the offers only once it landed,
+ * so a failure leaves a prospect with its offers still pending rather than
+ * an accepted offer nothing booked.
+ */
+export async function acceptOffer(
+    db: typeof Database,
+    current: Order,
+    offer: OrderOffer,
+    actor: { userId: string },
+    opts?: { note?: string },
+): Promise<{ patch: Partial<CreateOrder>; historyOffer: BookedOfferMetadata; settle: () => Promise<void> }> {
+    // An offer id from another order would book a carrier that never
+    // quoted for this cargo
+    if (offer.orderId !== current.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "OFFER_NOT_PENDING" });
+    }
+
+    if (offerAcceptable(offer) !== "ok") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "OFFER_NOT_PENDING" });
+    }
+
+    // The offer was priced when it was written — its commission and the
+    // client price it quotes are what the order is booked at. A row from
+    // before pricing existed is priced through the offer dialog first.
+    if (offer.commissionTotal === null || offer.clientTotal === null) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "OFFER_UNPRICED" });
+    }
+
+    const patch: Partial<CreateOrder> = {
+        carrierId: offer.carrierId,
+        carrierName: offer.carrierName,
+        fiscalRegime: offer.fiscalRegime,
+        carrierSubtotal: offer.subtotal,
+        carrierVAT: offer.vat,
+        carrierTotal: offer.total,
+        carrierCurrency: offer.currency,
+        // The client price the offer quotes becomes the shipper leg, in the
+        // offer's currency: the price the shipper was shown is the price the
+        // order is booked at, whatever the row carried before
+        shipperSubtotal: offer.clientSubtotal,
+        shipperVAT: offer.clientVAT,
+        shipperTotal: offer.clientTotal,
+        shipperCurrency: offer.currency,
+        apploadCommissionSubtotal: offer.commissionSubtotal,
+        apploadCommissionVAT: offer.commissionVAT,
+        apploadCommissionTotal: offer.commissionTotal,
+        // A driver and a rig belong to the carrier that named them, so a
+        // re-booking with someone else starts from an empty cab
+        ...(current.carrierId && current.carrierId !== offer.carrierId && {
+            driverId: null,
+            driverName: null,
+            driverPhoneNumber: null,
+            driverPassport: null,
+            truckPlate: null,
+            trailerPlate: null,
+            linkPlate: null,
+            truckAge: null,
+        }),
+    };
+
+    const settle = async () => {
+        const now = new Date();
+
+        // One batch, so the winner and the losers are decided together.
+        // The second statement sees the first's write, which is why it
+        // does not have to exclude the accepted row by id.
+        await db.batch([
+            db
+                .update(orderOffer)
+                .set({
+                    status: "accepted",
+                    decidedAt: now,
+                    decidedBy: actor.userId,
+                    decisionNote: opts?.note ?? null,
+                })
+                .where(eq(orderOffer.id, offer.id)),
+            db
+                .update(orderOffer)
+                .set({ status: "lost", decidedAt: now })
+                .where(and(eq(orderOffer.orderId, current.id), eq(orderOffer.status, "pending"))),
+        ]);
+    };
+
+    return { patch, historyOffer: offerMetadata(offer), settle };
+}
+
+/**
+ * Brings a prospect's PENDING offers in line with a deal-form payload:
+ * rows carrying an id are re-priced, rows without one are added with a
+ * fresh carrier snapshot, and pending rows the payload dropped are
+ * deleted. The `status = pending` guard is what protects the record — a
+ * decided offer never travels with the form, and one decided between load
+ * and save is silently left alone rather than resurrected.
+ *
+ * Returns the id of the offer the payload marked accepted (its own, or
+ * the one just inserted for it), which is what the booking then accepts.
+ */
+async function syncDealOffers(
+    db: typeof Database,
+    orderPk: string,
+    offers: CreateOrderForm["offers"],
+    userId: string,
+    route: CreateOrderForm["routeType"],
+): Promise<string | null> {
+    const keptIds = offers.map((offer) => offer.id).filter((id): id is string => id !== undefined);
+
+    await db
+        .delete(orderOffer)
+        .where(and(
+            eq(orderOffer.orderId, orderPk),
+            eq(orderOffer.status, "pending"),
+            keptIds.length > 0 ? notInArray(orderOffer.id, keptIds) : undefined,
+        ));
+
+    let acceptedId: string | null = null;
+
+    for (const offer of offers) {
+        const values = {
+            carrierId: offer.carrierId,
+            carrierName: offer.carrierName,
+            fiscalRegime: offer.fiscalRegime,
+            subtotal: decimal(offer.subtotal),
+            vat: decimal(offer.vat),
+            total: String(offer.total),
+            currency: offer.currency,
+            includesGit: offer.includesGit,
+            includesGps: offer.includesGps,
+            notes: offer.notes || null,
+            // Priced against the route the same save carries, like the
+            // offers router prices against the stored one
+            ...offerPricingColumns(priceOffer({
+                carrierTotal: offer.total,
+                fiscalRegime: offer.fiscalRegime,
+                commissionTotal: offer.commissionTotal,
+                route,
+            })),
+        };
+
+        if (offer.id !== undefined) {
+            // Scoped to this order like the delete above: an id is client
+            // data, and one belonging to another order would be re-priced
+            // here long before the booking's ownership check sees it
+            const [stored] = await db
+                .select({ carrierId: orderOffer.carrierId })
+                .from(orderOffer)
+                .where(and(eq(orderOffer.id, offer.id), eq(orderOffer.orderId, orderPk)));
+
+            // A different carrier is a different track record, so the frozen
+            // snapshot follows it — the rule offers.update already applies
+            const moved = stored !== undefined && stored.carrierId !== offer.carrierId
+                ? await carrierSnapshot(db, offer.carrierId)
+                : null;
+
+            await db
+                .update(orderOffer)
+                .set({ ...values, ...(moved && { carrierSince: moved.since, carrierTrips: moved.trips }) })
+                .where(and(
+                    eq(orderOffer.orderId, orderPk),
+                    eq(orderOffer.id, offer.id),
+                    eq(orderOffer.status, "pending"),
+                ));
+
+            if (offer.accepted) acceptedId = offer.id;
+            continue;
+        }
+
+        const snapshot = await carrierSnapshot(db, offer.carrierId);
+
+        const [inserted] = await db
+            .insert(orderOffer)
+            .values({
+                orderId: orderPk,
+                ...values,
+                carrierSince: snapshot.since,
+                carrierTrips: snapshot.trips,
+                createdBy: userId,
+            })
+            .returning({ id: orderOffer.id });
+
+        if (offer.accepted && inserted) acceptedId = inserted.id;
+    }
+
+    return acceptedId;
+}
+
 export type CreateOrderOutput = {
     orderId: string;
     status: Order["status"];
+    order: Order;
     warning?: "SHEET_FAILED";
 };
 
@@ -374,6 +608,9 @@ export const TransitionSchema = z.object({
     to: z.enum(ORDER_STATUS),
     expectedVersion: z.number().int().min(1),
     note: z.string().trim().min(5).max(2000).optional(),
+    // The carrier offer prospect → booked accepts; ignored by every other
+    // move, since booking is the only one that commits a carrier
+    offerId: z.string().optional(),
     // Evidence/POD upload backing the move (EdgeStore URL). The
     // document row itself is created by the documents router;
     // here it also lands in the history metadata.
@@ -431,13 +668,49 @@ export async function transitionOrder(
         throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
     }
 
-    // Booking a prospect demands the full carrier/driver/fleet/
-    // amount block. Same stored-row bar the deal form reaches
-    // through its refines, minus the fleet-derived loading bay no
-    // column carries — incomplete prospects go through that form
-    // (order.updateDeal, "Confirm order"), never this door.
-    if (input.to === "booked" && current.status === "prospect" && !isReadyToBook(current)) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "INCOMPLETE_FOR_BOOKING" });
+    // Booking a prospect is the acceptance of one of its carrier
+    // offers, and nothing else: the carrier, the fiscal regime, the
+    // carrier price and the commission are all copied from that offer
+    // onto the order. Nothing is written yet — the offers are settled
+    // once the row itself has landed.
+    let booked: { offer: OrderOffer; accepted: Awaited<ReturnType<typeof acceptOffer>> } | null = null;
+
+    if (input.to === "booked" && current.status === "prospect") {
+        if (!input.offerId) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "OFFER_REQUIRED" });
+        }
+
+        const [offer] = await ctx.db
+            .select()
+            .from(orderOffer)
+            .where(eq(orderOffer.id, input.offerId));
+
+        // A deleted offer reads the same as a decided one: it is no
+        // longer awaiting a decision, so it cannot book anything
+        if (!offer) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "OFFER_NOT_PENDING" });
+        }
+
+        // The offer repoints both legs' currencies; a leg that already
+        // carries notes or proofs (a reverted booking) cannot be
+        // silently reinterpreted
+        await assertCurrencyUnlocked(
+            ctx.db,
+            { shipperCurrency: offer.currency, carrierCurrency: offer.currency },
+            current,
+        );
+
+        booked = {
+            offer,
+            accepted: await acceptOffer(ctx.db, current, offer, { userId: ctx.session.user.id }, { note: input.note }),
+        };
+    }
+
+    // Driver and truck are optional at booking — a trip is committed
+    // weeks before the rig that will run it is known — and mandatory
+    // the moment it is dispatched to the loading site
+    if (input.to === "to-loading" && !isReadyToDispatch(current)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "INCOMPLETE_FOR_DISPATCH" });
     }
 
     // The cargo cannot be closed while a dispute over it is open; the
@@ -446,22 +719,30 @@ export async function transitionOrder(
         throw new TRPCError({ code: "BAD_REQUEST", message: "DISPUTE_OPEN" });
     }
 
-    // Verification is checked once, at the moment the cargo is
-    // committed to this carrier and rig. Later transitions move
-    // an order that was already gated.
-    const { flagPatch: gateFlag } = input.to === "booked" && current.carrierId
+    // Verification is checked once per thing committed: the carrier at
+    // booking, where it comes off the offer because the row does not
+    // carry one yet, and the driver and the rig at dispatch, which is
+    // the first moment they exist. Later transitions move an order
+    // that was already gated on both.
+    const { flagPatch: gateFlag } = booked
         ? await guardOrderGate(
             ctx.db,
-            {
-                carrierId: current.carrierId,
-                driverId: current.driverId,
-                truckPlate: current.truckPlate,
-                trailerPlate: current.trailerPlate,
-                linkPlate: current.linkPlate,
-            },
+            { carrierId: booked.offer.carrierId },
             { role: ctx.staff.role, actorId: ctx.session.user.id, note: input.note },
         )
-        : { flagPatch: null };
+        : input.to === "to-loading" && current.carrierId
+            ? await guardOrderGate(
+                ctx.db,
+                {
+                    carrierId: current.carrierId,
+                    driverId: current.driverId,
+                    truckPlate: current.truckPlate,
+                    trailerPlate: current.trailerPlate,
+                    linkPlate: current.linkPlate,
+                },
+                { role: ctx.staff.role, actorId: ctx.session.user.id, note: input.note },
+            )
+            : { flagPatch: null };
 
     const resumeStatus =
         current.status === "stopped" || current.status === "issue"
@@ -494,6 +775,20 @@ export async function transitionOrder(
     const stamps = transitionStamps(current, input.to);
     const payments = await paymentSums(ctx.db, current.id);
 
+    // The carrier leg arrives WITH the offer, in this very update, so both
+    // derivations have to be told about it rather than read it off the row:
+    // `current` is the prospect that had no carrier total — or, on a
+    // re-booking, still carries the PREVIOUS carrier's. They price that leg
+    // (the booked payment scaffold and the proof block), and the deal-form
+    // booking door passes exactly the same pair.
+    const bookedCarrier = booked
+        ? {
+            fiscalRegime: booked.offer.fiscalRegime,
+            carrierTotal: Number(booked.offer.total),
+            ...(booked.offer.clientTotal !== null && { shipperTotal: Number(booked.offer.clientTotal) }),
+        }
+        : undefined;
+
     const [updated] = await ctx.db
         .update(order)
         .set({
@@ -502,6 +797,11 @@ export async function transitionOrder(
             ...(input.to === "delivered" && current.podStatus === null && {
                 podStatus: "pending-collection" as const,
             }),
+            // The accepted offer's carrier leg and commission. The derived
+            // columns below re-split the same total under the same rule, so
+            // they land on identical numbers; what only this patch carries
+            // is the carrier identity and the empty cab of a carrier change.
+            ...booked?.accepted.patch,
             // A verification flag outranks a transition one: its
             // reason names the specific gap, where the transition
             // flag only carries the operator's note
@@ -514,11 +814,14 @@ export async function transitionOrder(
             }),
             // Derived columns (dealDate, payment scaffolding,
             // loaded/offloaded weight, day counters) win last
-            ...deriveOrderFields(current, { status: input.to, ...stamps }),
+            ...deriveOrderFields(current, { status: input.to, ...stamps, ...bookedCarrier }),
             // ...except on POP-governed legs, where the recorded
             // proofs beat the booked "pending" scaffold and the
             // prospect/cancelled rules apply to the NEW status
-            ...proofPaymentPatch({ ...current, status: input.to }, payments),
+            ...proofPaymentPatch(
+                { ...current, status: input.to, ...(booked && { carrierTotal: booked.offer.total, shipperTotal: booked.offer.clientTotal }) },
+                payments,
+            ),
             version: sql`${order.version} + 1`,
         })
         .where(and(
@@ -531,6 +834,34 @@ export async function transitionOrder(
         throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
     }
 
+    // The offer side of the move, written only now that the row itself
+    // landed: a failure here leaves a correct order with stale offer
+    // bookkeeping, never a carrier no offer accounts for
+    if (booked) {
+        await booked.accepted.settle();
+    } else if (current.status === "booked" && input.to === "prospect") {
+        // Un-booking releases the carrier: its offer is withdrawn, and
+        // booking again means accepting a new one. The quotes registered
+        // while the order was booked stay `recorded`: they are Appload's
+        // data, never candidates, so a replacement carrier is entered as a
+        // fresh pending offer on the prospect.
+        await ctx.db
+            .update(orderOffer)
+            .set({
+                status: "withdrawn",
+                decidedAt: new Date(),
+                decidedBy: ctx.session.user.id,
+                decisionNote: input.note ?? null,
+            })
+            .where(and(eq(orderOffer.orderId, current.id), eq(orderOffer.status, "accepted")));
+    } else if (current.status === "prospect" && (input.to === "cancelled" || input.to === "underbid")) {
+        // The quote died; nobody won it
+        await ctx.db
+            .update(orderOffer)
+            .set({ status: "lost", decidedAt: new Date() })
+            .where(and(eq(orderOffer.orderId, current.id), eq(orderOffer.status, "pending")));
+    }
+
     await ctx.db.insert(orderHistory).values({
         orderId: current.id,
         actorUserId: ctx.session.user.id,
@@ -541,6 +872,7 @@ export async function transitionOrder(
             ...(input.note && { note: input.note }),
             ...(flag && { flagged: true }),
             ...(input.document && { document: input.document }),
+            ...(booked && { offer: booked.accepted.historyOffer }),
         },
     });
 
@@ -562,10 +894,12 @@ export async function transitionOrder(
 
     // Booked and tracked orders get a follow-up chat with the
     // driver. Post-response and best-effort: a chat/Infobip
-    // failure must never fail the transition. Only booked logs
-    // the no-phone skip — once per order, not per status.
+    // failure must never fail the transition. Nothing logs the
+    // no-phone skip any more — a booking has no driver yet by
+    // design, so the row would land on every single one; the
+    // thread opens from order.update when the phone arrives.
     if (FOLLOW_UP_STATUSES.includes(input.to)) {
-        const followUp = startFollowUpChat(ctx.db, updated, current.id, { logSkip: input.to === "booked" })
+        const followUp = startFollowUpChat(ctx.db, updated, current.id)
             .catch((error: unknown) => console.error(`follow-up chat failed for ${input.orderId}`, error));
 
         if (ctx.waitUntil) ctx.waitUntil(followUp); else await followUp;
@@ -595,15 +929,18 @@ export const orderRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<CreateOrderOutput> => {
             try {
                 const userId = ctx.session.user.id;
+                const accepted = acceptedOfferOf(input);
 
                 // Verification only bites once a carrier is actually
                 // committed: a prospect is still a quote, and quoting an
-                // unverified carrier is how the backlog gets discovered
-                const { flagPatch } = input.status === "booked" && input.carrierId
+                // unverified carrier is how the backlog gets discovered.
+                // The carrier is the accepted offer's; the driver and rig
+                // are usually still empty here and are gated at dispatch.
+                const { flagPatch } = accepted
                     ? await guardOrderGate(
                         ctx.db,
                         {
-                            carrierId: input.carrierId,
+                            carrierId: accepted.carrierId,
                             driverId: input.driverId,
                             truckPlate: input.truckPlate,
                             trailerPlate: input.trailerPlate,
@@ -657,6 +994,52 @@ export const orderRouter = createTRPCRouter({
                     throw new OrderError("UNKNOWN");
                 }
 
+                // The offers the order was created with, after the row they
+                // hang off. A booked payload settles them in the same
+                // insert — its accepted offer booked the order, so the
+                // others lost it at that same moment, all on one clock —
+                // which is what acceptOffer writes when a prospect is
+                // booked later.
+                const decidedAt = new Date();
+                const savedOffers = input.offers.length > 0
+                    ? await ctx.db
+                        .insert(orderOffer)
+                        .values(await Promise.all(input.offers.map(async (offer) => {
+                            const snapshot = await carrierSnapshot(ctx.db, offer.carrierId);
+
+                            return {
+                                ...offerPricingColumns(priceOffer({
+                                    carrierTotal: offer.total,
+                                    fiscalRegime: offer.fiscalRegime,
+                                    commissionTotal: offer.commissionTotal,
+                                    route: input.routeType,
+                                })),
+                                orderId: saved.id,
+                                carrierId: offer.carrierId,
+                                carrierName: offer.carrierName,
+                                fiscalRegime: offer.fiscalRegime,
+                                subtotal: decimal(offer.subtotal),
+                                vat: decimal(offer.vat),
+                                total: String(offer.total),
+                                currency: offer.currency,
+                                includesGit: offer.includesGit,
+                                includesGps: offer.includesGps,
+                                notes: offer.notes || null,
+                                status: accepted === undefined ? "pending" as const
+                                    : offer === accepted ? "accepted" as const
+                                        : "lost" as const,
+                                carrierSince: snapshot.since,
+                                carrierTrips: snapshot.trips,
+                                ...(accepted !== undefined && { decidedAt }),
+                                ...(offer === accepted && { decidedBy: userId }),
+                                createdBy: userId,
+                            };
+                        })))
+                        .returning()
+                    : [];
+
+                const acceptedOffer = savedOffers.find((offer) => offer.status === "accepted");
+
                 // Birth certificate: fromStatus null marks creation
                 await ctx.db.insert(orderHistory).values({
                     orderId: saved.id,
@@ -664,15 +1047,16 @@ export const orderRouter = createTRPCRouter({
                     kind: "transition",
                     fromStatus: null,
                     toStatus: saved.status,
+                    ...(acceptedOffer && { metadata: { offer: offerMetadata(acceptedOffer) } }),
                 });
 
                 // The order is stored either way; failures land in the
                 // sheet_sync outbox and the retry cron heals them
                 if (!await syncSheetsAndRecord(ctx.db, accessToken, saved)) {
-                    return { orderId: saved.orderId, status: saved.status, warning: "SHEET_FAILED" };
+                    return { orderId: saved.orderId, status: saved.status, order: saved, warning: "SHEET_FAILED" };
                 }
 
-                return { orderId: saved.orderId, status: saved.status };
+                return { orderId: saved.orderId, status: saved.status, order: saved };
             } catch (error) {
                 throw toTRPCError(error);
             }
@@ -695,6 +1079,15 @@ export const orderRouter = createTRPCRouter({
                 // where the state machine guards them
                 if (input.patch.status !== undefined) {
                     throw new TRPCError({ code: "BAD_REQUEST", message: "USE_TRANSITION" });
+                }
+
+                // The carrier is not typed onto an order either: it is
+                // copied from the offer the order books with, so changing
+                // it means moving back to prospect and accepting another
+                // one. Carrier MONEY stays editable here — invoices,
+                // notes and payments are their own reality.
+                if (input.patch.carrierId !== undefined || input.patch.carrierName !== undefined) {
+                    throw new TRPCError({ code: "BAD_REQUEST", message: "USE_OFFER" });
                 }
 
                 const accessToken = await getSheetsAccessToken(
@@ -766,8 +1159,6 @@ export const orderRouter = createTRPCRouter({
                         ...(data.temperatureInstructions !== undefined && { temperatureInstructions: data.temperatureInstructions || null }),
                         ...(data.loadType !== undefined && { loadType: data.loadType }),
                         ...(data.podStatus !== undefined && { podStatus: data.podStatus }),
-                        ...(data.carrierName !== undefined && { carrierName: data.carrierName }),
-                        ...(data.carrierId !== undefined && { carrierId: data.carrierId || null }),
                         ...(data.fiscalRegime !== undefined && { fiscalRegime: data.fiscalRegime }),
                         ...(data.truckPlate !== undefined && { truckPlate: data.truckPlate }),
                         ...(data.trailerPlate !== undefined && { trailerPlate: data.trailerPlate || null }),
@@ -887,10 +1278,11 @@ export const orderRouter = createTRPCRouter({
 
     /**
      * Full edit of a PROSPECT through the create-shaped payload — the same
-     * schema (and booked-completeness refines) creation runs, so confirming
-     * a prospect can never dodge the validation creation applies. When the
-     * payload books it, the transition (history row, payment scaffolding,
-     * follow-up chat) rides in the same write.
+     * schema (and the same offer refines) creation runs, so booking from
+     * here can never dodge the validation creation applies. The payload
+     * also owns the prospect's pending offers; when it marks one accepted,
+     * the booking (history row, payment scaffolding, follow-up chat) rides
+     * in the same write.
      *
      * A booked order is past this door: it edits through order.update's
      * tabbed patch form, and its status moves only via order.transition.
@@ -918,21 +1310,35 @@ export const orderRouter = createTRPCRouter({
                 if (current.status !== "prospect") {
                     throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATE" });
                 }
-
-                await assertCurrencyUnlocked(ctx.db, input.values, current);
+                // The offers are written before the row's own optimistic
+                // lock is taken (the booking has to accept a stored row),
+                // so a stale form is refused here rather than after its
+                // offer edits landed. The lock on the update still stands.
+                if (current.version !== input.expectedVersion) {
+                    throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
+                }
 
                 const booking = input.values.status === "booked";
+                const acceptedInput = acceptedOfferOf(input.values);
+
+                // The carrier leg's currency arrives with the offer this
+                // payload books with, not as a field of its own
+                await assertCurrencyUnlocked(
+                    ctx.db,
+                    { shipperCurrency: input.values.shipperCurrency, carrierCurrency: acceptedInput?.currency },
+                    current,
+                );
 
                 if (booking && !isAuthorized(ctx.staff.role, "order", ["transition"])) {
                     throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
                 }
 
                 // Same gate as create, at the moment the deal is committed
-                const { flagPatch } = booking && input.values.carrierId
+                const { flagPatch } = acceptedInput
                     ? await guardOrderGate(
                         ctx.db,
                         {
-                            carrierId: input.values.carrierId,
+                            carrierId: acceptedInput.carrierId,
                             driverId: input.values.driverId,
                             truckPlate: input.values.truckPlate,
                             trailerPlate: input.values.trailerPlate,
@@ -941,6 +1347,40 @@ export const orderRouter = createTRPCRouter({
                         { role: ctx.staff.role, actorId: ctx.session.user.id },
                     )
                     : { flagPatch: null };
+
+                // The form owns the prospect's pending offers, so they are
+                // brought in line first — the booking below has to accept a
+                // STORED row, including one this payload just added
+                const acceptedId = await syncDealOffers(ctx.db, current.id, input.values.offers, ctx.session.user.id, input.values.routeType);
+
+                let accepted: Awaited<ReturnType<typeof acceptOffer>> | null = null;
+
+                if (booking) {
+                    if (acceptedId === null) {
+                        throw new TRPCError({ code: "BAD_REQUEST", message: "OFFER_REQUIRED" });
+                    }
+
+                    const [offer] = await ctx.db
+                        .select()
+                        .from(orderOffer)
+                        .where(eq(orderOffer.id, acceptedId));
+
+                    if (!offer) {
+                        throw new TRPCError({ code: "BAD_REQUEST", message: "OFFER_NOT_PENDING" });
+                    }
+
+                    // Only its verdict, its settlement and its history
+                    // metadata are used here: the payload is a full form
+                    // snapshot, so the carrier leg and the commission below
+                    // already come from this same offer through the
+                    // schema's transform.
+                    accepted = await acceptOffer(
+                        ctx.db,
+                        current,
+                        offer,
+                        { userId: ctx.session.user.id },
+                    );
+                }
 
                 const accessToken = await getSheetsAccessToken(ctx.authApi, ctx.headers, ctx.session.user.id);
 
@@ -968,15 +1408,21 @@ export const orderRouter = createTRPCRouter({
                     .update(order)
                     .set({
                         ...fields,
+                        // The booking patch on top of the same offer's money
+                        // the transform already mapped: what it adds is the
+                        // empty cab of a carrier change, since the driver and
+                        // the rig prefilled from the previous booking belong
+                        // to the carrier that named them, not to this one.
+                        ...accepted?.patch,
                         // Booked payment scaffolding, dealDate, counters —
                         // derived columns win last, exactly like update
                         ...deriveOrderFields(current, {
                             status: input.values.status,
                             route: input.values.routeType,
-                            fiscalRegime: input.values.fiscalRegime,
+                            fiscalRegime: acceptedInput?.fiscalRegime,
                             weight: input.values.weight,
                             shipperTotal: input.values.shipperTotal,
-                            carrierTotal: input.values.carrierTotal,
+                            carrierTotal: acceptedInput?.total,
                         }),
                         ...proofPaymentPatch({
                             ...current,
@@ -997,6 +1443,12 @@ export const orderRouter = createTRPCRouter({
                     throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
                 }
 
+                // Same ordering as the transition door: the offers are
+                // settled only once the order row itself has landed
+                if (accepted) {
+                    await accepted.settle();
+                }
+
                 const { status: _status, ...changed } = diffChangedFields(current, fields);
 
                 if (Object.keys(changed).length > 0) {
@@ -1015,8 +1467,11 @@ export const orderRouter = createTRPCRouter({
                         kind: "transition",
                         fromStatus: "prospect",
                         toStatus: "booked",
+                        ...(accepted && { metadata: { offer: accepted.historyOffer } }),
                     });
 
+                    // No skip row: a booking rarely names a driver now, and
+                    // order.update opens the thread when the phone arrives
                     const followUp = startFollowUpChat(ctx.db, updated, current.id)
                         .catch((error: unknown) => console.error(`follow-up chat failed for ${input.orderId}`, error));
 
@@ -1193,8 +1648,8 @@ export const orderRouter = createTRPCRouter({
 
     /**
      * The details page in one round: the full row, its live documents, the
-     * history timeline (with actor names snapshot-joined) and the sheet
-     * sync state for the badge.
+     * history timeline (with actor names snapshot-joined), the sheet sync
+     * state for the badge and the carrier offers.
      */
     get: authorizedProcedure("order", ["read"])
         .input(z.object({ orderId: z.string() }))
@@ -1208,7 +1663,7 @@ export const orderRouter = createTRPCRouter({
                 throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
             }
 
-            const [documents, history, [sync], [dispute]] = await Promise.all([
+            const [documents, history, [sync], [dispute], offers] = await Promise.all([
                 ctx.db
                     .select()
                     .from(orderDocument)
@@ -1247,6 +1702,9 @@ export const orderRouter = createTRPCRouter({
                     .from(orderDispute)
                     .where(and(eq(orderDispute.orderId, row.id), inArray(orderDispute.status, [...ACTIVE_DISPUTE_STATUSES])))
                     .limit(1),
+                // The same read the offers router serves, so the card the
+                // page renders and the list its dialogs fetch never differ
+                listOffers(ctx.db, row.id),
             ]);
 
             // Free: the timeline above already holds every row the rule reads,
@@ -1255,7 +1713,7 @@ export const orderRouter = createTRPCRouter({
                 ? resumeFromHistory(history)
                 : null;
 
-            return { order: row, documents, history, sheetSync: sync ?? null, dispute: dispute ?? null, resumeStatus };
+            return { order: row, documents, history, sheetSync: sync ?? null, dispute: dispute ?? null, resumeStatus, offers };
         }),
 
     /**
@@ -1275,21 +1733,21 @@ export const orderRouter = createTRPCRouter({
                     version: order.version,
                     flaggedForReview: order.flaggedForReview,
                     flagReason: order.flagReason,
-                    // Booking readiness is decided on the stored row, so a
-                    // prospect is never advertised as bookable when the
-                    // mutation would refuse it
-                    carrierId: order.carrierId,
-                    carrierName: order.carrierName,
-                    fiscalRegime: order.fiscalRegime,
+                    // Both gates are decided on the stored row, so a move is
+                    // never advertised as takeable when the mutation would
+                    // refuse it: booking needs an offer still awaiting a
+                    // decision, dispatch needs the driver and the truck
                     truckPlate: order.truckPlate,
                     truckAge: order.truckAge,
                     driverId: order.driverId,
                     driverName: order.driverName,
                     driverPhoneNumber: order.driverPhoneNumber,
                     driverPassport: order.driverPassport,
-                    carrierSubtotal: order.carrierSubtotal,
-                    carrierTotal: order.carrierTotal,
-                    carrierCurrency: order.carrierCurrency,
+                    pendingOffers: pendingOfferCount,
+                    // The offer picker prices the commission against the
+                    // shipper's leg while the operator is still choosing
+                    shipperTotal: order.shipperTotal,
+                    shipperVAT: order.shipperVAT,
                     shipperCurrency: order.shipperCurrency,
                     disputeStatus: order.disputeStatus,
                 })
@@ -1307,22 +1765,28 @@ export const orderRouter = createTRPCRouter({
 
             const context = { status: row.status, route: row.route, role: ctx.staff.role, resumeStatus };
 
-            // Advertised but not takeable: the deal form is the way to the
-            // rest of the data, and a dispute must be settled before the
-            // cargo closes. Always a boolean — a conditional spread would
-            // infer a union and break `entry.blocked` in the dialog.
-            const bookingBlocked = row.status === "prospect" && !isReadyToBook(row);
+            // Advertised but not takeable: nothing to accept, no rig to
+            // dispatch, or a dispute that must be settled before the cargo
+            // closes. Always a boolean — a conditional spread would infer a
+            // union and break `entry.blocked` in the dialog.
+            const dispatchBlocked = !isReadyToDispatch(row);
             const disputeBlocked = isActiveDispute(row.disputeStatus);
 
             const targets = allowedTransitions(context).map((to) => {
-                const blockedReason: "INCOMPLETE_FOR_BOOKING" | "DISPUTE_OPEN" | null =
-                    to === "booked" && bookingBlocked ? "INCOMPLETE_FOR_BOOKING"
-                        : to === "completed" && disputeBlocked ? "DISPUTE_OPEN"
-                            : null;
+                const requirements = transitionRequirements(row.status, to, { resumeStatus }) ?? [];
+
+                // Keyed on the requirement, not on the target: an admin
+                // reversal back to booked does not accept an offer, and
+                // must not be blocked for lacking one
+                const blockedReason: "NO_OFFERS" | "INCOMPLETE_FOR_DISPATCH" | "DISPUTE_OPEN" | null =
+                    requirements.includes("offer") && row.pendingOffers === 0 ? "NO_OFFERS"
+                        : to === "to-loading" && dispatchBlocked ? "INCOMPLETE_FOR_DISPATCH"
+                            : to === "completed" && disputeBlocked ? "DISPUTE_OPEN"
+                                : null;
 
                 return {
                     to,
-                    requirements: transitionRequirements(row.status, to, { resumeStatus }) ?? [],
+                    requirements,
                     blocked: blockedReason !== null,
                     blockedReason,
                 };
@@ -1336,6 +1800,12 @@ export const orderRouter = createTRPCRouter({
                 resumeStatus,
                 canResolveFlag: isAuthorized(ctx.staff.role, "order", ["flag-resolve"]),
                 targets,
+                pendingOffers: row.pendingOffers,
+                shipper: {
+                    total: row.shipperTotal === null ? null : Number(row.shipperTotal),
+                    vat: row.shipperVAT === null ? null : Number(row.shipperVAT),
+                    currency: row.shipperCurrency ?? "MZN",
+                },
             };
         }),
 });

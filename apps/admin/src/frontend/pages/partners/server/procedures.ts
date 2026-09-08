@@ -1462,6 +1462,13 @@ export const partnersRouter = createTRPCRouter({
                 carriers: carriers?.value ?? 0,
                 drivers: drivers?.value ?? 0,
                 fleet: (trucks?.value ?? 0) + (trailers?.value ?? 0) + (links?.value ?? 0),
+                // /carriers/fleets shows one kind at a time, so the summed row
+                // above could not open exactly the rows it counts
+                fleetByKind: {
+                    truck: trucks?.value ?? 0,
+                    trailer: trailers?.value ?? 0,
+                    link: links?.value ?? 0,
+                },
             };
         }),
 });

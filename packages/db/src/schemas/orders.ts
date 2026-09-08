@@ -5,7 +5,7 @@ import { sql } from "drizzle-orm";
 // in modules that depend on this one and crash at runtime (TDZ)
 import { user, organization } from "@workspace/db/users";
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
-import { CATEGORIES, CURRENCY, DISPUTE_LIABLE_PARTY, DISPUTE_REASON, DISPUTE_STATUS, FISCAL_REGIME, INSURANCE_PAYMENT_STATUS, LOAD_TYPE, LOADING_BAY, ORDER_STATUS, PACKING, PAYMENT_STATUS, POD_STATUS, ROUTE_TYPE, TRIP_TYPE, TRUCK_AGE, WEIGHT_UNIT, } from "@workspace/db/types";
+import { CATEGORIES, CURRENCY, DISPUTE_LIABLE_PARTY, DISPUTE_REASON, DISPUTE_STATUS, FISCAL_REGIME, INSURANCE_PAYMENT_STATUS, LOAD_TYPE, LOADING_BAY, OFFER_STATUS, ORDER_STATUS, PACKING, PAYMENT_STATUS, POD_STATUS, ROUTE_TYPE, TRIP_TYPE, TRUCK_AGE, WEIGHT_UNIT, } from "@workspace/db/types";
 
 export const packingEnum = pgEnum("packing_enum", PACKING)
 export const currencyEnum = pgEnum("currency_enum", CURRENCY)
@@ -232,6 +232,7 @@ export const ORDER_HISTORY_KIND = [
     "payment",
     "flag",
     "dispute",
+    "offer",
     "system",
 ] as const;
 
@@ -491,3 +492,78 @@ export const orderDispute = pgTable(
 
 export type OrderDispute = typeof orderDispute.$inferSelect;
 export type CreateOrderDispute = typeof orderDispute.$inferInsert;
+
+/**
+ * A carrier's quote for an order. Every order collects offers; a prospect
+ * becomes booked only by accepting one, and the accepted offer is what the
+ * order's carrier identity, fiscal regime, carrier price and Appload
+ * commission are copied from. What the quote includes (GIT, GPS) and the
+ * carrier's track record at the moment it was made are recorded here, so a
+ * later reader sees what Appload knew when it chose.
+ *
+ * Statuses:
+ *   pending    awaiting a decision — only ever on a prospect
+ *   accepted   booked the order; at most one per order (partial unique index)
+ *   declined   Appload or the shipper said no
+ *   withdrawn  the carrier pulled out, or the booking was reverted
+ *   lost       another offer was accepted, or the prospect was lost
+ *   recorded   registered on a booked-or-later order for Appload's data only:
+ *              never acceptable, never changes the order, never client-visible
+ *
+ * The accepted offer is the row under the partial unique index, not a column
+ * on `order`: an `accepted_offer_id` there would be a circular foreign key.
+ */
+export const orderOffer = pgTable(
+    "order_offer",
+    {
+        id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+        // Offers only exist for their order and carry no money of their own,
+        // so unlike the financial records they follow the order out
+        orderId: text("order_id").notNull().references(() => order.id, { onDelete: "cascade" }),
+        carrierId: text("carrier_id").notNull().references(() => organization.id),
+        // Snapshot of the carrier's name as quoted, mirroring order.carrierName
+        carrierName: text("carrier_name").notNull(),
+        fiscalRegime: fiscalRegimeEnum("fiscal_regime").notNull(),
+        subtotal: numeric("subtotal", { precision: 14, scale: 2 }),
+        vat: numeric("vat", { precision: 14, scale: 2 }),
+        total: numeric("total", { precision: 14, scale: 2 }).notNull(),
+        currency: currencyEnum("currency").notNull(),
+        // Appload's cut on top of the quote, and the price the client is
+        // asked for (quote + commission, VAT split by the route). Saved with
+        // the offer so what the shipper is shown is what gets booked, never
+        // a later recomputation. Null on rows written before pricing existed.
+        commissionSubtotal: numeric("commission_subtotal", { precision: 14, scale: 2 }),
+        commissionVAT: numeric("commission_vat", { precision: 14, scale: 2 }),
+        commissionTotal: numeric("commission_total", { precision: 14, scale: 2 }),
+        clientSubtotal: numeric("client_subtotal", { precision: 14, scale: 2 }),
+        clientVAT: numeric("client_vat", { precision: 14, scale: 2 }),
+        clientTotal: numeric("client_total", { precision: 14, scale: 2 }),
+        // What the quoted price covers
+        includesGit: boolean("includes_git").default(false).notNull(),
+        includesGps: boolean("includes_gps").default(false).notNull(),
+        notes: text("notes"),
+        status: text("status", { enum: OFFER_STATUS }).default("pending").notNull(),
+        // The carrier's track record as of this offer, frozen at creation:
+        // recomputing it later would rewrite what the decision was based on
+        carrierSince: timestamp("carrier_since"),
+        carrierTrips: integer("carrier_trips"),
+        decidedAt: timestamp("decided_at"),
+        // Null once the shipper decides for itself — that step is not built yet
+        decidedBy: text("decided_by").references(() => user.id, { onDelete: "set null" }),
+        decisionNote: text("decision_note"),
+        createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+        updatedAt: timestamp("updated_at")
+            .defaultNow()
+            .$onUpdate(() => /* @__PURE__ */ new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("order_offer_order_idx").on(table.orderId),
+        // One accepted offer per order: the booking itself
+        uniqueIndex("order_offer_accepted_uidx").on(table.orderId).where(sql`${table.status} = 'accepted'`),
+    ],
+);
+
+export type OrderOffer = typeof orderOffer.$inferSelect;
+export type CreateOrderOffer = typeof orderOffer.$inferInsert;

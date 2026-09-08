@@ -1,6 +1,7 @@
 import type { CreateOrder, Order } from "@workspace/db/orders";
 
 import type { UpdateOrderForm } from "@/backend/schemas/order";
+import { computeCommission, round2, VAT_RATE } from "@/lib/orders/commission";
 
 /**
  * Derived order columns, computed on every update from the merged state
@@ -30,15 +31,11 @@ import type { UpdateOrderForm } from "@/backend/schemas/order";
 const DAY_MS = 86_400_000;
 const DEMURRAGE_FREE_DAYS = 2;
 
-// Mozambican VAT extracted from a VAT-inclusive total: total * (0.16/1.16)
-const VAT_RATE = 0.16 / 1.16;
-
 // Calendar-day math: compare dates by day, ignoring the time of day
 const dayStart = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
 const daysBetween = (from: Date, to: Date) => Math.max(0, Math.round((dayStart(to) - dayStart(from)) / DAY_MS));
 const onOrBefore = (arrival: Date, reference: Date) => dayStart(arrival) <= dayStart(reference);
 
-const round2 = (n: number) => Math.round(n * 100) / 100;
 const decimal = (n: number) => String(n);
 const toNumber = (value: string | null) => (value === null ? null : Number(value));
 
@@ -291,18 +288,19 @@ export function deriveOrderFields(current: Order, patch: UpdateOrderForm): Parti
         derived.carrierSubtotal = decimal(round2(carrierTotal - carrierVAT));
     }
 
-    // Same commission rules as the create schema's transform: a missing
-    // regime falls to the else branch (commissionVAT = shipperVAT)
+    // The one commission rule, shared with the create schema's transform
+    // and offer acceptance (@/lib/orders/commission)
     if ((touchesShipperAmounts || touchesCarrierAmounts) && shipperTotal !== null && carrierTotal !== null) {
-        const commissionTotal = round2(shipperTotal - carrierTotal);
-        const commissionVAT =
-            fiscalRegime === "n/a" ? 0
-                : fiscalRegime === "normal" ? round2(commissionTotal * VAT_RATE)
-                    : (shipperVAT ?? 0);
+        const commission = computeCommission({
+            shipperTotal,
+            shipperVAT: shipperVAT ?? 0,
+            carrierTotal,
+            fiscalRegime,
+        });
 
-        derived.apploadCommissionTotal = decimal(commissionTotal);
-        derived.apploadCommissionVAT = decimal(commissionVAT);
-        derived.apploadCommissionSubtotal = decimal(round2(commissionTotal - commissionVAT));
+        derived.apploadCommissionTotal = decimal(commission.commissionTotal);
+        derived.apploadCommissionVAT = decimal(commission.commissionVAT);
+        derived.apploadCommissionSubtotal = decimal(commission.commissionSubtotal);
     }
 
     return derived;

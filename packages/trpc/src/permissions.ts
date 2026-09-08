@@ -3,7 +3,6 @@ import { TRPCError } from "@trpc/server";
 import { isAuthorized, type Action, type Resource } from "@workspace/auth/user-permissions";
 
 import { protectedProcedure } from "@workspace/trpc/init";
-import { getStaffGates } from "@workspace/trpc/staff-gate";
 
 /**
  * Staff-gated, permission-checked procedure. Extends `protectedProcedure`
@@ -18,7 +17,7 @@ export const authorizedProcedure = <R extends Resource>(
     actions: Action<R>[],
 ) =>
     protectedProcedure.use(async ({ ctx, next }) => {
-        const staff = await getStaffGates(ctx.db, { userId: ctx.session.user.id });
+        const staff = await ctx.staffGates(ctx.session.user.id);
 
         if (!staff.isStaff || !isAuthorized(staff.role, resource, actions)) {
             throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });

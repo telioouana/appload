@@ -3,37 +3,23 @@ import { ErrorBoundary } from "react-error-boundary";
 
 import { getTranslations } from "@workspace/i18n/server";
 
-import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server";
+import { DetailsSkeleton } from "@/frontend/pages/order/views/details-fallbacks";
 import { OrderDetailsView } from "@/frontend/pages/order/views/order-details-view";
 
-// Mirrors the real page — header, trip strip, then the main column and its
-// rail — so nothing jumps when the order arrives
-function DetailsSkeleton() {
-    return (
-        <>
-            <div className="flex flex-col gap-2 px-2">
-                <Skeleton className="h-3 w-48" />
-                <Skeleton className="h-8 w-64" />
-                <Skeleton className="h-4 w-96" />
-            </div>
+// The URL segment is the order's own reference (order.orderId), so the tab
+// can be named without waiting on the query the page prefetches
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ orderId: string }>
+}) {
+    const { orderId } = await params;
+    const t = await getTranslations("Admin.orders.detailPage");
 
-            <div className="px-2">
-                <Skeleton className="h-40 w-full rounded-2xl" />
-            </div>
-
-            <div className="grid gap-4 px-2 pb-2 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,700px)_minmax(320px,1fr)]">
-                <div className="flex min-h-0 flex-col gap-4 overflow-hidden">
-                    <Skeleton className="h-56 w-full shrink-0 rounded-2xl" />
-                    <Skeleton className="h-80 w-full shrink-0 rounded-2xl" />
-                    <Skeleton className="h-44 w-full shrink-0 rounded-2xl" />
-                </div>
-                <Skeleton className="h-96 w-full rounded-2xl lg:h-full" />
-            </div>
-        </>
-    )
+    return { title: t("metaTitle", { reference: decodeURIComponent(orderId) }) };
 }
 
 export default async function OrderDetailPage({

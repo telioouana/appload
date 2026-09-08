@@ -85,14 +85,15 @@ const hasDirt = (value: unknown): boolean =>
  * the activity log's `changedFields` stays meaningful. A nested dirty flag
  * (e.g. loadingAddress.country) sends the whole jsonb object. Status never
  * travels in a patch — the server rejects it; transitions have their own
- * guarded mutation.
+ * guarded mutation. Neither does the carrier's identity, which is copied
+ * from the offer the order books with (the server rejects that too).
  */
 function buildPatch(values: UpdateOrderForm, dirty: Partial<Record<keyof UpdateOrderFormInput, unknown>>): Partial<UpdateOrderForm> {
     const patch: Record<string, unknown> = {};
 
     for (const key of Object.keys(dirty) as (keyof UpdateOrderForm)[]) {
         if (!hasDirt(dirty[key])) continue;
-        if (key === "status") continue;
+        if (key === "status" || key === "carrierId" || key === "carrierName") continue;
         patch[key] = values[key];
     }
 

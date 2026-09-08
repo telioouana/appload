@@ -21,6 +21,11 @@ export const LOCALE_NAMES: Record<Locale, string> = {
  * Re-enters the current route under another locale. With localized
  * pathnames, `usePathname` returns the route template and `params` fills it
  * back in, so dynamic routes (e.g. order details) survive the switch.
+ *
+ * The query string (list filters, `?id=` profile sheets, `?c=` threads) is
+ * carried over too. It is read from `window.location` at click time rather
+ * than via `useSearchParams()`, which would force a Suspense boundary on
+ * the prerendered auth layout that also mounts this switcher.
  */
 export function useLocaleSwitch() {
     const locale = useLocale();
@@ -31,11 +36,15 @@ export function useLocaleSwitch() {
     function switchTo(next: Locale) {
         if (next === locale) return;
 
+        const search = new URLSearchParams(window.location.search);
+        // next-intl serializes an empty query as a bare trailing "?"
+        const query = search.size > 0 ? Object.fromEntries(search) : undefined;
+
         router.replace(
             // @ts-expect-error -- the pathname/params pair is validated by
             // the runtime; TypeScript cannot narrow the union here (the
             // pattern from the next-intl locale-switcher docs)
-            { pathname, params },
+            { pathname, params, query },
             { locale: next },
         );
     }

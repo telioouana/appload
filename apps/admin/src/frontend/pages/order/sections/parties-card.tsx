@@ -10,7 +10,9 @@ import type { Order, OrderDocument } from "@workspace/db/orders"
 import { PaymentLedger } from "@/frontend/pages/order/components/payment-ledger"
 import { PartyBlock } from "@/frontend/pages/orders/sections/order-item-parts"
 import { effectiveCommission, effectiveTotals } from "@/lib/orders/totals"
+import type { OfferRow } from "@/frontend/pages/order/server/offers-procedures"
 
+import { IncludesChips } from "./offers-card"
 import { Cell, CellRow, SectionCard } from "./section-card"
 
 /**
@@ -23,17 +25,21 @@ import { Cell, CellRow, SectionCard } from "./section-card"
 export function PartiesCard({
     order,
     documents,
+    acceptedOffer,
     canRecordFor,
     heldFor,
     onRecord,
 }: {
     order: Order
     documents: OrderDocument[]
+    /** The offer that booked the order — what the carrier's price covers */
+    acceptedOffer?: OfferRow | null
     canRecordFor: (party: "shipper" | "carrier") => boolean
     heldFor: (party: "shipper" | "carrier") => boolean
     onRecord: (party: "shipper" | "carrier") => void
 }) {
     const t = useTranslations("Admin.orders.detailPage")
+    const tInsurance = useTranslations("Admin.order.update.form.insurance.fields")
     const f = useFormatter()
 
     const effective = effectiveTotals(order)
@@ -45,9 +51,19 @@ export function PartiesCard({
     const money = (value: number | null, currency: string | null) =>
         value === null ? null : `${f.number(value, { maximumFractionDigits: 0 })} ${currency ?? "MZN"}`
 
-    const share = commission !== null && Number(order.shipperTotal) > 0
-        ? Math.round((commission / Number(order.shipperTotal)) * 1000) / 10
+    // A ratio, not a percentage figure: the formatter writes the decimal
+    // comma and the sign the locale asks for, which "8.3%" spelled out by
+    // hand does not — it stayed English under a Portuguese page. It is taken
+    // against the effective total, the one the cell to the left shows, so a
+    // debit note moves the figure and its share together; and a commission
+    // too small to reach a tenth of a percent reads 0%, never −0%.
+    const shipperEffective = effective.shipperTotal
+    const ratio = commission !== null && shipperEffective !== null && shipperEffective > 0
+        ? commission / shipperEffective
         : null
+    const share = ratio !== null && Math.abs(ratio) < 0.0005 ? 0 : ratio
+
+    const insured = order.insuranceValue !== null && order.insuranceSubscriber === "appload"
 
     return (
         <SectionCard title={t("sections.payments")} aside={t("money.vat")}>
@@ -69,6 +85,7 @@ export function PartiesCard({
                     order={order}
                     party="carrier"
                     documents={documents}
+                    includes={acceptedOffer ? { git: acceptedOffer.includesGit, gps: acceptedOffer.includesGps } : null}
                     canRecord={canRecordFor("carrier")}
                     held={heldFor("carrier")}
                     onRecord={() => onRecord("carrier")}
@@ -76,37 +93,46 @@ export function PartiesCard({
             </div>
 
             <CellRow>
-                <Cell label={t("money.shipperTotal")}>
-                    <Total
-                        value={money(effective.shipperTotal, order.shipperCurrency)}
-                        base={shipperAdjusted ? money(Number(order.shipperTotal), order.shipperCurrency) : null}
-                        adjustment={adjustment(order.shipperDebitTotal, order.shipperCreditTotal, f, t)}
-                        caption={t("money.in")}
-                        tone="in"
-                    />
+                <Cell
+                    label={t("money.shipperTotal")}
+                    caption={
+                        <Note
+                            base={shipperAdjusted ? money(Number(order.shipperTotal), order.shipperCurrency) : null}
+                            adjustment={adjustment(order.shipperDebitTotal, order.shipperCreditTotal, f, t)}
+                            fallback={t("money.in")}
+                        />
+                    }
+                >
+                    <Total value={money(effective.shipperTotal, order.shipperCurrency)} tone="in" />
                 </Cell>
 
-                <Cell label={t("money.carrierTotal")}>
-                    <Total
-                        value={money(effective.carrierTotal, order.carrierCurrency)}
-                        base={carrierAdjusted ? money(Number(order.carrierTotal), order.carrierCurrency) : null}
-                        adjustment={adjustment(order.carrierDebitTotal, order.carrierCreditTotal, f, t)}
-                        caption={t("money.out")}
-                        tone="out"
-                    />
+                <Cell
+                    label={t("money.carrierTotal")}
+                    caption={
+                        <Note
+                            base={carrierAdjusted ? money(Number(order.carrierTotal), order.carrierCurrency) : null}
+                            adjustment={adjustment(order.carrierDebitTotal, order.carrierCreditTotal, f, t)}
+                            fallback={t("money.out")}
+                        />
+                    }
+                >
+                    <Total value={money(effective.carrierTotal, order.carrierCurrency)} tone="out" />
                 </Cell>
 
-                <Cell label={t("money.commission")}>
-                    <Total
-                        value={money(commission, order.shipperCurrency)}
-                        base={null}
-                        adjustment={null}
-                        caption={share !== null ? t("money.share", { percent: share }) : undefined}
-                    />
+                <Cell
+                    label={t("money.commission")}
+                    caption={share === null ? null : t("money.share", {
+                        percent: f.number(share, { style: "percent", maximumFractionDigits: 1 }),
+                    })}
+                >
+                    <Total value={money(commission, order.shipperCurrency)} />
                 </Cell>
 
-                <Cell label={t("money.insurance")}>
-                    <Insurance order={order} money={money} />
+                <Cell
+                    label={t("money.insurance")}
+                    caption={insured ? insuranceNote(order, tInsurance) : t("money.ownCover")}
+                >
+                    <Total value={insured ? money(Number(order.insuranceValue), order.insuranceCurrency) : null} />
                 </Cell>
             </CellRow>
         </SectionCard>
@@ -117,6 +143,7 @@ function Party({
     order,
     party,
     documents,
+    includes,
     canRecord,
     held,
     onRecord,
@@ -125,6 +152,7 @@ function Party({
     order: Order
     party: "shipper" | "carrier"
     documents: OrderDocument[]
+    includes?: { git: boolean; gps: boolean } | null
     canRecord: boolean
     held: boolean
     onRecord: () => void
@@ -136,6 +164,10 @@ function Party({
     return (
         <div className={cn("flex h-full flex-col gap-3", className)}>
             <PartyBlock order={order} party={party} layout="stacked" showPaid={!prospect} />
+
+            {/* What the accepted quote covers sits with the carrier's price,
+                because that is what the price is for */}
+            {includes && <IncludesChips git={includes.git} gps={includes.gps} />}
 
             {/* Pushed to the foot of the column so the two proof boxes line
                 up even when one party's block above them runs a line longer */}
@@ -165,70 +197,52 @@ function Party({
     )
 }
 
-function Total({
-    value,
+/** The figure itself, in the colour of the direction the money moves. */
+function Total({ value, tone }: { value: string | null; tone?: "in" | "out" }) {
+    if (value === null) return <span className="text-muted-foreground/60 font-normal">—</span>
+
+    return (
+        <span className={
+            tone === "in" ? "text-emerald-600 dark:text-emerald-400"
+                : tone === "out" ? "text-destructive"
+                    : undefined
+        }>
+            {value}
+        </span>
+    )
+}
+
+/**
+ * The line under a figure: the base struck through once notes have moved it
+ * and the note that moved it, or — when neither applies — what the figure is.
+ */
+function Note({
     base,
     adjustment,
-    caption,
-    tone,
+    fallback,
 }: {
-    value: string | null
     base: string | null
     adjustment: string | null
-    caption?: string
-    tone?: "in" | "out"
+    fallback: string
 }) {
+    if (!base && !adjustment) return <>{fallback}</>
+
     return (
         <>
-            <span className={
-                tone === "in" ? "text-emerald-600 dark:text-emerald-400"
-                    : tone === "out" ? "text-destructive"
-                        : undefined
-            }>
-                {value ?? <span className="text-muted-foreground/60 font-normal">—</span>}
-            </span>
-
-            {(base || caption || adjustment) && (
-                <span className="text-muted-foreground mt-0.5 block text-[11px] font-normal">
-                    {base && <span className="line-through">{base}</span>}
-                    {base && adjustment && " · "}
-                    {adjustment ?? (base ? null : caption)}
-                </span>
-            )}
+            {base && <span className="line-through">{base}</span>}
+            {base && adjustment && " · "}
+            {adjustment}
         </>
     )
 }
 
-function Insurance({
-    order,
-    money,
-}: {
-    order: Order
-    money: (value: number | null, currency: string | null) => string | null
-}) {
-    const t = useTranslations("Admin.orders.detailPage")
-    const tInsurance = useTranslations("Admin.order.update.form.insurance.fields")
+/** Who wrote the cover and where it stands, when Appload wrote it. */
+function insuranceNote(order: Order, t: ReturnType<typeof useTranslations<"Admin.order.update.form.insurance.fields">>) {
+    const subscriber = t("subscriber.options.appload")
 
-    if (order.insuranceValue === null || order.insuranceSubscriber !== "appload") {
-        return (
-            <>
-                <span className="text-muted-foreground/60 font-normal">—</span>
-                <span className="text-muted-foreground mt-0.5 block text-[11px] font-normal">
-                    {t("money.ownCover")}
-                </span>
-            </>
-        )
-    }
-
-    return (
-        <>
-            {money(Number(order.insuranceValue), order.insuranceCurrency)}
-            <span className="text-muted-foreground mt-0.5 block text-[11px] font-normal">
-                {tInsurance("subscriber.options.appload")}
-                {order.insuranceStatus && ` · ${tInsurance(`status.options.${order.insuranceStatus}` as never)}`}
-            </span>
-        </>
-    )
+    return order.insuranceStatus
+        ? `${subscriber} · ${t(`status.options.${order.insuranceStatus}` as never)}`
+        : subscriber
 }
 
 /** "+25,000 debit note" / "−8,000 credit note", whichever applies. */

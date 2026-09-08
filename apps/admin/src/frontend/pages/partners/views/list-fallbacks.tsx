@@ -52,6 +52,23 @@ export function StripSkeleton() {
     )
 }
 
+/**
+ * The page header's footprint — eyebrow, title and description on the left,
+ * the search box on the right — until the slot's own view mounts.
+ */
+export function HeaderSkeleton() {
+    return (
+        <div className="flex flex-col gap-4 px-2 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex flex-col gap-2">
+                <Skeleton className="h-3 w-40 rounded-md" />
+                <Skeleton className="h-8 w-48 rounded-lg" />
+                <Skeleton className="h-4 w-72 rounded-md" />
+            </div>
+            <Skeleton className="h-9 w-full rounded-md sm:w-80" />
+        </div>
+    )
+}
+
 export function ListError({ message }: { message: string }) {
     return (
         <ListCard>

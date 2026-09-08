@@ -14,7 +14,7 @@ import { Link } from "@/i18n/navigation";
 import { OrderStatusBadge, place } from "@/frontend/pages/orders/sections/order-item-shared";
 
 export function OrderPanel({ orderId, onClose }: { orderId: string | null; onClose: () => void }) {
-    const t = useTranslations("Admin.chats.panel");
+    const t = useTranslations("Admin.messages.panel");
     const f = useFormatter();
 
     const trpc = useTRPC();

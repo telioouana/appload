@@ -11,6 +11,7 @@ import {
     IconFlag,
     IconGavel,
     IconPlayerPlay,
+    IconPlus,
     IconSend,
 } from "@tabler/icons-react"
 
@@ -50,11 +51,13 @@ export function OrderDetailHeader({
     dispute,
     sheetSync,
     resumeStatus,
+    pendingOffers,
     isAdmin,
     canOpenDispute,
     onTransition,
     onEdit,
-    onConfirm,
+    onAcceptOffer,
+    onAddOffer,
     onSendPdf,
     onOpenDispute,
 }: {
@@ -62,11 +65,14 @@ export function OrderDetailHeader({
     dispute: { id: string } | null
     sheetSync: SheetSync | null
     resumeStatus: OrderStatus | null
+    /** How many quotes are still awaiting a decision — what a prospect's button offers */
+    pendingOffers: number
     isAdmin: boolean
     canOpenDispute: boolean
     onTransition: (to?: OrderStatus) => void
     onEdit: () => void
-    onConfirm: () => void
+    onAcceptOffer: () => void
+    onAddOffer: () => void
     onSendPdf: () => void
     onOpenDispute: () => void
 }) {
@@ -79,7 +85,7 @@ export function OrderDetailHeader({
     const f = useFormatter()
 
     const section = ORDER_STATUS_SECTION[order.status]
-    const primary = primaryOrderAction(order, resumeStatus)
+    const primary = primaryOrderAction(order, resumeStatus, pendingOffers)
     const interrupted = order.status === "stopped" || order.status === "issue"
     const closed = CLOSED.includes(order.status)
 
@@ -160,10 +166,15 @@ export function OrderDetailHeader({
                     <span className="hidden sm:inline">{tActions("edit")}</span>
                 </Button>
 
-                {primary?.kind === "confirm" ? (
-                    <Button size="sm" onClick={onConfirm}>
+                {primary?.kind === "accept-offer" ? (
+                    <Button size="sm" onClick={onAcceptOffer}>
                         <IconCheck />
-                        <span className="truncate">{tActions("confirm")}</span>
+                        <span className="truncate">{tActions("accept-offer")}</span>
+                    </Button>
+                ) : primary?.kind === "add-offer" ? (
+                    <Button size="sm" onClick={onAddOffer}>
+                        <IconPlus />
+                        <span className="truncate">{tActions("add-offer")}</span>
                     </Button>
                 ) : primary ? (
                     <Button size="sm" onClick={() => onTransition(primary.to)}>

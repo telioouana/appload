@@ -38,18 +38,30 @@ export function PaymentLedger({
         .sort((a, b) => (b.paidAt ?? b.createdAt).getTime() - (a.paidAt ?? a.createdAt).getTime())
 
     return (
-        <div className="flex flex-col gap-2 rounded-xl border bg-muted/30 p-3">
-            <div className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-1.5 text-xs font-medium">
+        <div className="@container/ledger flex flex-col gap-2 rounded-xl border bg-muted/30 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
+                <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium">
                     <IconCashBanknote className="size-4 text-muted-foreground" />
                     {t("payments.proofs")}
                     <span className="tabular-nums text-muted-foreground">({proofs.length})</span>
                 </span>
 
+                {/* The button cannot give way — a nowrap label on a shrink-0
+                    box — so it wraps under the heading when the two no longer
+                    fit, and once the column is narrower than the button itself
+                    it keeps only its plus. Two parties side by side inside a
+                    700px page column leaves about 150px each at a 1024px
+                    window, which is where it used to hang over the border */}
                 {canRecord && (
-                    <Button size="sm" variant="outline" onClick={onRecord}>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        aria-label={t("payments.recordPayment")}
+                        className="ml-auto @max-[200px]/ledger:size-8 @max-[200px]/ledger:px-0"
+                        onClick={onRecord}
+                    >
                         <IconPlus />
-                        {t("payments.recordPayment")}
+                        <span className="@max-[200px]/ledger:hidden">{t("payments.recordPayment")}</span>
                     </Button>
                 )}
             </div>

@@ -38,6 +38,7 @@ export function OrderUpdatedSuccess({
 }) {
     const t = useTranslations("Admin.order.details");
     const [documents, setDocuments] = useState<DocumentUrls | null>(null);
+    const [failed, setFailed] = useState(false);
 
     useEffect(() => {
         if (!result) {
@@ -48,23 +49,31 @@ export function OrderUpdatedSuccess({
         let urls: DocumentUrls | null = null;
 
         (async () => {
-            const values = orderToTemplateValues(result.order, result.loadingBay);
+            try {
+                const values = orderToTemplateValues(result.order, result.loadingBay);
 
-            const [shipper, carrier] = await Promise.all([
-                fillOrderTemplate("shipper", result.orderId, values),
-                fillOrderTemplate("carrier", result.orderId, values),
-            ]);
+                const [shipper, carrier] = await Promise.all([
+                    fillOrderTemplate("shipper", result.orderId, values),
+                    fillOrderTemplate("carrier", result.orderId, values),
+                ]);
 
-            urls = {
-                shipper: URL.createObjectURL(shipper),
-                carrier: URL.createObjectURL(carrier),
-            };
+                urls = {
+                    shipper: URL.createObjectURL(shipper),
+                    carrier: URL.createObjectURL(carrier),
+                };
 
-            if (cancelled) {
-                URL.revokeObjectURL(urls.shipper);
-                URL.revokeObjectURL(urls.carrier);
-            } else {
-                setDocuments(urls);
+                if (cancelled) {
+                    URL.revokeObjectURL(urls.shipper);
+                    URL.revokeObjectURL(urls.carrier);
+                } else {
+                    setDocuments(urls);
+                }
+            } catch (error) {
+                // A row booked straight from the transition dialog was never
+                // validated by the deal form, so a template can still refuse
+                // it; the dialog must say so rather than spin forever
+                console.error("[pdf] preparing the confirmation documents failed", error);
+                if (!cancelled) setFailed(true);
             }
         })();
 
@@ -77,6 +86,7 @@ export function OrderUpdatedSuccess({
             }
 
             setDocuments(null);
+            setFailed(false);
         };
     }, [result]);
 
@@ -112,6 +122,10 @@ export function OrderUpdatedSuccess({
                                 </a>
                             </Button>
                         </>
+                    ) : failed ? (
+                        <Alert variant="destructive">
+                            <AlertDescription>{t("errors.pdfFailed")}</AlertDescription>
+                        </Alert>
                     ) : (
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Spinner />

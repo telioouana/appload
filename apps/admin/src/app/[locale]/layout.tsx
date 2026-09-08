@@ -11,8 +11,30 @@ import { TooltipProvider } from "@workspace/ui/components/tooltip"
 
 import { routing } from "@/i18n/routing"
 import { NextIntlClientProvider, hasLocale } from "@workspace/i18n"
+import { getTranslations } from "@workspace/i18n/server"
 import { EdgeStoreProvider } from "@workspace/edgestore/client"
 import { TRPCReactProvider } from "@/backend/api/client"
+
+// Every page title flows through this template, so a tab reads
+// "Orders — Appload Admin"; pages that set no title of their own fall back
+// to the default. The admin is behind a login, so there is no SEO here —
+// the titles are for the operator's tab strip and history.
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ locale: string }>;
+}) {
+    const { locale } = await params
+    const t = await getTranslations({ locale, namespace: "Admin.metadata" })
+
+    return {
+        title: {
+            template: `%s — ${t("title")}`,
+            default: t("title"),
+        },
+        description: t("description"),
+    }
+}
 
 const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", })
 const montserratSans = Montserrat({ subsets: ["latin"], variable: "--font-sans" })

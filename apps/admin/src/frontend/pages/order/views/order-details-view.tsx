@@ -23,13 +23,17 @@ import { TransitionDialog } from "@/frontend/pages/orders/components/transition-
 import { DocumentsCard } from "../components/documents-card"
 import { SendPdfDialog } from "../components/send-pdf-dialog"
 import { AddDocumentDialog, type DocumentPreset } from "../components/add-document-dialog"
+import { OfferDecisionDialog, OfferDialog, RemoveOfferDialog } from "../components/offer-dialog"
+import { OrderUpdatedSuccess, type UpdatedOrder } from "../section/order-updated-success"
 import { OrderDetailHeader } from "../sections/detail-header"
 import { DisputeBanner, FlagBanner } from "../sections/exception-banners"
+import { OffersCard } from "../sections/offers-card"
 import { OperationsCard } from "../sections/operations-card"
 import { PartiesCard } from "../sections/parties-card"
 import { RouteCard } from "../sections/route-card"
 import { TrackingCard } from "../sections/tracking-card"
 import { TripStrip } from "../sections/trip-strip"
+import type { OfferRow } from "../server/offers-procedures"
 
 /**
  * Everything about one order on one page: where the trip is, where it is
@@ -42,10 +46,14 @@ export function OrderDetailsView({ orderId }: { orderId: string }) {
     const tSheet = useTranslations("Admin.orders.list.sheet")
     const f = useFormatter()
 
-    const [transition, setTransition] = useState<{ open: boolean; to?: OrderStatus }>({ open: false })
+    const [transition, setTransition] = useState<{ open: boolean; to?: OrderStatus; offerId?: string }>({ open: false })
     const [pdfOpen, setPdfOpen] = useState(false)
     const [disputeOpen, setDisputeOpen] = useState(false)
     const [adding, setAdding] = useState<DocumentPreset | null>(null)
+    const [offerForm, setOfferForm] = useState<{ open: boolean; offer: OfferRow | null }>({ open: false, offer: null })
+    const [deciding, setDeciding] = useState<{ offer: OfferRow; status: "declined" | "withdrawn" } | null>(null)
+    const [removing, setRemoving] = useState<OfferRow | null>(null)
+    const [updated, setUpdated] = useState<UpdatedOrder | null>(null)
 
     const trpc = useTRPC()
     const queryClient = useQueryClient()
@@ -56,7 +64,7 @@ export function OrderDetailsView({ orderId }: { orderId: string }) {
     const { mutate: resolveFlag, isPending: resolving } = useMutation(trpc.order.resolveFlag.mutationOptions())
 
     const { onOpen } = useUpdateOrder()
-    const { onEdit, onConfirm } = useCreateOrder()
+    const { onEdit } = useCreateOrder()
 
     // Button states only — the server re-checks every permission
     const { data: session } = authClient.useSession()
@@ -66,6 +74,12 @@ export function OrderDetailsView({ orderId }: { orderId: string }) {
 
     const order = data.order
     const dispute = data.dispute
+
+    // A prospect is booked by accepting one of these; from booked onward
+    // they are Appload's record of what the market offered
+    const offers = data.offers
+    const pendingOffers = offers.filter((offer) => offer.status === "pending").length
+    const acceptedOffer = offers.find((offer) => offer.status === "accepted") ?? null
 
     // Mirrors both server gates: proofs are refused on prospects (payment
     // status is not-applicable before booking), and voiding one needs the
@@ -79,6 +93,9 @@ export function OrderDetailsView({ orderId }: { orderId: string }) {
         isAuthorized(role, "document", ["delete"]) && isAuthorized(role, "payment", ["void"])
     const canOpenDispute =
         !dispute && !UNBILLABLE_STATUSES.includes(order.status) && isAuthorized(role, "dispute", ["open"])
+    // Offers are order data: registering, correcting or deciding one is the
+    // same grant that edits the order
+    const canUpdateOrder = isAuthorized(role, "order", ["update"])
 
     // One reading of "today" for the whole page, so the trip strip and its
     // date row can never disagree about what is overdue
@@ -108,11 +125,13 @@ export function OrderDetailsView({ orderId }: { orderId: string }) {
                 dispute={dispute}
                 sheetSync={data.sheetSync}
                 resumeStatus={data.resumeStatus}
+                pendingOffers={pendingOffers}
                 isAdmin={role === "admin"}
                 canOpenDispute={canOpenDispute}
                 onTransition={(to) => setTransition({ open: true, to })}
-                onEdit={() => (order.status === "prospect" ? onEdit(order) : onOpen(order))}
-                onConfirm={() => onConfirm(order)}
+                onEdit={() => (order.status === "prospect" ? onEdit(order, offers) : onOpen(order))}
+                onAcceptOffer={() => setTransition({ open: true, to: "booked" })}
+                onAddOffer={() => setOfferForm({ open: true, offer: null })}
                 onSendPdf={() => setPdfOpen(true)}
                 onOpenDispute={() => setDisputeOpen(true)}
             />
@@ -149,15 +168,27 @@ export function OrderDetailsView({ orderId }: { orderId: string }) {
                 <div className="container-snap flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pb-2">
                     <RouteCard order={order} />
 
+                    <OffersCard
+                        order={order}
+                        offers={offers}
+                        readOnly={!canUpdateOrder}
+                        onAdd={() => setOfferForm({ open: true, offer: null })}
+                        onAccept={(offer) => setTransition({ open: true, to: "booked", offerId: offer.id })}
+                        onEdit={(offer) => setOfferForm({ open: true, offer })}
+                        onDecide={(offer, status) => setDeciding({ offer, status })}
+                        onRemove={(offer) => setRemoving(offer)}
+                    />
+
                     <PartiesCard
                         order={order}
                         documents={data.documents}
+                        acceptedOffer={acceptedOffer}
                         canRecordFor={canRecordFor}
                         heldFor={heldFor}
                         onRecord={(party) => setAdding({ type: PROOF_OF_PAYMENT, party })}
                     />
 
-                    <OperationsCard order={order} />
+                    <OperationsCard order={order} onAssign={canUpdateOrder ? () => onOpen(order) : undefined} />
 
                     <DocumentsCard
                         orderId={orderId}
@@ -189,6 +220,19 @@ export function OrderDetailsView({ orderId }: { orderId: string }) {
                     orderId={orderId}
                     open={transition.open}
                     initialTarget={transition.to}
+                    initialOfferId={transition.offerId}
+                    // Booking is what the two confirmation PDFs are printed
+                    // from, so the download dialog follows the move that
+                    // produced them
+                    onSuccess={(booked) => {
+                        // On the carrier leg the move actually committed, not
+                        // on the status alone: an admin reversal back to
+                        // booked accepts no offer, and there is no carrier
+                        // price for the transport order to be printed from
+                        if (booked.status === "booked" && booked.carrierTotal !== null) {
+                            setUpdated({ orderId, order: booked, loadingBay: null })
+                        }
+                    }}
                     onClose={() => setTransition({ open: false })}
                 />
             )}
@@ -229,6 +273,32 @@ export function OrderDetailsView({ orderId }: { orderId: string }) {
                     onClose={() => setAdding(null)}
                 />
             )}
+
+            {offerForm.open && (
+                <OfferDialog
+                    orderId={orderId}
+                    orderStatus={order.status}
+                    route={order.route}
+                    offer={offerForm.offer}
+                    open={offerForm.open}
+                    onClose={() => setOfferForm({ open: false, offer: null })}
+                />
+            )}
+
+            {deciding && (
+                <OfferDecisionDialog
+                    orderId={orderId}
+                    offer={deciding.offer}
+                    status={deciding.status}
+                    onClose={() => setDeciding(null)}
+                />
+            )}
+
+            {removing && (
+                <RemoveOfferDialog orderId={orderId} offer={removing} onClose={() => setRemoving(null)} />
+            )}
+
+            <OrderUpdatedSuccess result={updated} onClose={() => setUpdated(null)} />
 
             {/* quick-edit sheet, shared with the list page */}
             <UpdateOrderView />

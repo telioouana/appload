@@ -16,7 +16,9 @@ import {
     IconGavel,
     IconMapPin,
     IconPackage,
+    IconPlus,
     IconSend,
+    IconShieldCheck,
     IconX,
 } from "@tabler/icons-react"
 
@@ -45,12 +47,15 @@ import { PaymentLedger } from "@/frontend/pages/order/components/payment-ledger"
 import { SendPdfDialog } from "@/frontend/pages/order/components/send-pdf-dialog"
 import { HistoryTimeline } from "@/frontend/pages/order/components/history-timeline"
 import { DocumentsCard } from "@/frontend/pages/order/components/documents-card"
+import { OffersList } from "@/frontend/pages/order/sections/offers-card"
+import { OfferDecisionDialog, OfferDialog, RemoveOfferDialog } from "@/frontend/pages/order/components/offer-dialog"
+import type { OfferRow } from "@/frontend/pages/order/server/offers-procedures"
 import { AddDocumentDialog, type DocumentPreset } from "@/frontend/pages/order/components/add-document-dialog"
 import { OpenDisputeDialog } from "@/frontend/pages/orders/components/open-dispute-dialog"
 import { TransitionDialog } from "@/frontend/pages/orders/components/transition-dialog"
 import { DisputeBanner, FlagBanner } from "@/frontend/pages/order/sections/exception-banners"
 import { Milestones } from "@/frontend/pages/orders/sections/milestones"
-import { OperationsStrip, PartyBlock } from "@/frontend/pages/orders/sections/order-item-parts"
+import { OperationsStrip, PartyBlock, useMoney } from "@/frontend/pages/orders/sections/order-item-parts"
 import { CargoFlags, OrderStatusBadge, place } from "@/frontend/pages/orders/sections/order-item-shared"
 import { useOrderSheet, type OrderTab } from "@/frontend/pages/orders/hooks/use-order-sheet"
 import { UNBILLABLE_STATUSES, type OrderStatus } from "@/frontend/pages/orders/types"
@@ -89,6 +94,7 @@ type PanelProps = { orderId: string; tab: OrderTab; onTab: (tab: OrderTab) => vo
 function OrderPanel({ orderId, tab, onTab, onClose }: PanelProps) {
     const t = useTranslations("Admin.orders")
     const f = useFormatter()
+    const money = useMoney()
     const trpc = useTRPC()
     const queryClient = useQueryClient()
 
@@ -96,7 +102,7 @@ function OrderPanel({ orderId, tab, onTab, onClose }: PanelProps) {
     const { mutate: resolveFlag, isPending: resolving } = useMutation(trpc.order.resolveFlag.mutationOptions())
 
     const { onOpen } = useUpdateOrder()
-    const { onEdit, onConfirm } = useCreateOrder()
+    const { onEdit } = useCreateOrder()
 
     // Button states only — the server re-checks every permission
     const { data: session } = authClient.useSession()
@@ -104,20 +110,28 @@ function OrderPanel({ orderId, tab, onTab, onClose }: PanelProps) {
         session?.user.role === "admin" ? "admin" :
             session?.user.role === "manager" ? "manager" : "user"
 
-    const [dialog, setDialog] = useState<{ open: boolean; to?: OrderStatus }>({ open: false })
+    const [dialog, setDialog] = useState<{ open: boolean; to?: OrderStatus; offerId?: string }>({ open: false })
     const [pdfOpen, setPdfOpen] = useState(false)
     const [disputeOpen, setDisputeOpen] = useState(false)
     // "Record payment" opens the add-document dialog on a proof for that
     // leg; the dialog is mounted per open, so no nonce is needed to tell two
     // clicks apart
     const [adding, setAdding] = useState<DocumentPreset | null>(null)
+    // Offers are written from here too: the list is where ops lives, and a
+    // quote that arrives has to land without a detour to the full page
+    const [offerForm, setOfferForm] = useState<{ open: boolean; offer: OfferRow | null }>({ open: false, offer: null })
+    const [deciding, setDeciding] = useState<{ offer: OfferRow; status: "declined" | "withdrawn" } | null>(null)
+    const [removing, setRemoving] = useState<OfferRow | null>(null)
 
     if (isPending) return <PanelSkeleton />
     if (isError || !data) return <PanelError onClose={onClose} />
 
     const order = data.order
     const dispute = data.dispute
-    const primary = primaryOrderAction(order, data.resumeStatus)
+    const offers = data.offers
+    const pendingOffers = offers.filter((offer) => offer.status === "pending").length
+    const acceptedOffer = offers.find((offer) => offer.status === "accepted") ?? null
+    const primary = primaryOrderAction(order, data.resumeStatus, pendingOffers)
     const isProspect = order.status === "prospect"
 
     const canRecordPayment = isAuthorized(role, "payment", ["record"]) && !isProspect
@@ -126,6 +140,8 @@ function OrderPanel({ orderId, tab, onTab, onClose }: PanelProps) {
         canRecordPayment && !(party === "shipper" ? dispute?.holdShipperPayments : dispute?.holdCarrierPayments)
     const canVoidPayment = isAuthorized(role, "document", ["delete"]) && isAuthorized(role, "payment", ["void"])
     const canOpenDispute = !dispute && !UNBILLABLE_STATUSES.includes(order.status) && isAuthorized(role, "dispute", ["open"])
+    // Registering, correcting or deciding an offer is editing the order
+    const canUpdateOrder = isAuthorized(role, "order", ["update"])
 
     const recordPayment = (party: "shipper" | "carrier") =>
         setAdding({ type: PROOF_OF_PAYMENT, party })
@@ -147,6 +163,7 @@ function OrderPanel({ orderId, tab, onTab, onClose }: PanelProps) {
 
     const tabs: { value: OrderTab; label: string; count?: number }[] = [
         { value: "overview", label: t("list.sheet.tabs.overview") },
+        { value: "offers", label: t("list.sheet.tabs.offers"), count: offers.length },
         { value: "payments", label: t("list.sheet.tabs.payments") },
         { value: "documents", label: t("list.sheet.tabs.documents"), count: data.documents.length },
         { value: "history", label: t("list.sheet.tabs.history"), count: data.history.length },
@@ -207,10 +224,15 @@ function OrderPanel({ orderId, tab, onTab, onClose }: PanelProps) {
 
                 {/* One primary button — the single next step — then edit and PDF; the rest in the menu */}
                 <div className="flex flex-wrap items-center gap-2">
-                    {primary?.kind === "confirm" ? (
-                        <Button size="sm" onClick={() => onConfirm(order)}>
+                    {primary?.kind === "accept-offer" ? (
+                        <Button size="sm" onClick={() => setDialog({ open: true, to: "booked" })}>
                             <IconCheck />
-                            {t("list.actions.confirm")}
+                            {t("list.actions.accept-offer")}
+                        </Button>
+                    ) : primary?.kind === "add-offer" ? (
+                        <Button size="sm" onClick={() => setOfferForm({ open: true, offer: null })}>
+                            <IconPlus />
+                            {t("list.actions.add-offer")}
                         </Button>
                     ) : primary ? (
                         <Button size="sm" onClick={() => setDialog({ open: true, to: primary.to })}>
@@ -224,7 +246,7 @@ function OrderPanel({ orderId, tab, onTab, onClose }: PanelProps) {
                         </Button>
                     )}
 
-                    <Button size="sm" variant="outline" onClick={() => (isProspect ? onEdit(order) : onOpen(order))}>
+                    <Button size="sm" variant="outline" onClick={() => (isProspect ? onEdit(order, offers) : onOpen(order))}>
                         <IconEdit />
                         {t("list.actions.edit")}
                     </Button>
@@ -282,7 +304,7 @@ function OrderPanel({ orderId, tab, onTab, onClose }: PanelProps) {
                 )}
             </div>
 
-            <div role="tablist" className="flex gap-4 overflow-x-auto border-b px-5 md:px-6">
+            <div role="tablist" className="flex gap-4 overflow-x-auto border-b px-5 md:px-6 container-snap">
                 {tabs.map((item) => {
                     const active = item.value === tab
 
@@ -312,7 +334,7 @@ function OrderPanel({ orderId, tab, onTab, onClose }: PanelProps) {
                 })}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6">
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6 container-snap">
                 {tab === "overview" && (
                     <div className="grid gap-6 md:grid-cols-[180px_minmax(0,1fr)]">
                         <section>
@@ -355,6 +377,29 @@ function OrderPanel({ orderId, tab, onTab, onClose }: PanelProps) {
 
                             <Block title={t("list.sheet.parties")}>
                                 <div className="flex flex-col gap-4">
+                                    {/* Where the carrier leg came from — the offer that booked it */}
+                                    {acceptedOffer && (
+                                        <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
+                                            <span>
+                                                {t("offers.card.bookedWithCarrier", {
+                                                    carrier: acceptedOffer.carrierName,
+                                                    price: money(acceptedOffer.total, acceptedOffer.currency),
+                                                })}
+                                            </span>
+                                            {acceptedOffer.includesGit && (
+                                                <Badge variant="outline" className="gap-1">
+                                                    <IconShieldCheck className="size-3" />
+                                                    {t("offers.includes.git")}
+                                                </Badge>
+                                            )}
+                                            {acceptedOffer.includesGps && (
+                                                <Badge variant="outline" className="gap-1">
+                                                    <IconMapPin className="size-3" />
+                                                    {t("offers.includes.gps")}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    )}
                                     <PartyBlock order={order} party="shipper" layout="stacked" showPaid />
                                     <Separator />
                                     <PartyBlock order={order} party="carrier" layout="stacked" showPaid />
@@ -372,6 +417,29 @@ function OrderPanel({ orderId, tab, onTab, onClose }: PanelProps) {
                                 </div>
                             </Block>
                         </div>
+                    </div>
+                )}
+
+                {tab === "offers" && (
+                    <div className="flex flex-col gap-3">
+                        {canUpdateOrder && offers.length > 0 && (
+                            <div className="flex justify-end">
+                                <Button size="sm" variant="outline" onClick={() => setOfferForm({ open: true, offer: null })}>
+                                    <IconPlus />
+                                    {t("offers.actions.add")}
+                                </Button>
+                            </div>
+                        )}
+                        <OffersList
+                            order={order}
+                            offers={offers}
+                            readOnly={!canUpdateOrder}
+                            onAdd={() => setOfferForm({ open: true, offer: null })}
+                            onAccept={(offer) => setDialog({ open: true, to: "booked", offerId: offer.id })}
+                            onEdit={(offer) => setOfferForm({ open: true, offer })}
+                            onDecide={(offer, status) => setDeciding({ offer, status })}
+                            onRemove={(offer) => setRemoving(offer)}
+                        />
                     </div>
                 )}
 
@@ -454,9 +522,27 @@ function OrderPanel({ orderId, tab, onTab, onClose }: PanelProps) {
                     orderId={orderId}
                     open={dialog.open}
                     initialTarget={dialog.to}
+                    initialOfferId={dialog.offerId}
                     onClose={() => setDialog({ open: false })}
                 />
             )}
+
+            {offerForm.open && (
+                <OfferDialog
+                    orderId={orderId}
+                    orderStatus={order.status}
+                    route={order.route}
+                    offer={offerForm.offer}
+                    open={offerForm.open}
+                    onClose={() => setOfferForm({ open: false, offer: null })}
+                />
+            )}
+
+            {deciding && (
+                <OfferDecisionDialog orderId={orderId} offer={deciding.offer} status={deciding.status} onClose={() => setDeciding(null)} />
+            )}
+
+            {removing && <RemoveOfferDialog orderId={orderId} offer={removing} onClose={() => setRemoving(null)} />}
 
             {pdfOpen && <SendPdfDialog order={order} open={pdfOpen} onClose={() => setPdfOpen(false)} />}
 

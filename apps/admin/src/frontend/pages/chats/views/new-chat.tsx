@@ -41,7 +41,7 @@ export function NewChatDialog({
     onOpenChange: (open: boolean) => void;
     onStarted: (conversation: ChatConversation) => void;
 }) {
-    const t = useTranslations("Admin.chats");
+    const t = useTranslations("Admin.messages");
 
     const FormSchema = useMemo(() => StartChatSchema(t), [t]);
 

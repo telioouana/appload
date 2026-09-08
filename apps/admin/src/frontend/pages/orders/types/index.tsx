@@ -134,7 +134,15 @@ export type OrderRow = Pick<
     | "carrierPaymentStatus" | "carrierRemainingAmount" | "carrierRemainingPercentage"
     | "driverName" | "driverPhoneNumber" | "truckPlate" | "trailerPlate"
     | "podStatus" | "flaggedForReview" | "disputeStatus" | "version" | "updatedAt"
->
+> & {
+    /**
+     * Carrier offers still awaiting a decision. A prospect's carrier
+     * column shows the count instead of a name — it has no carrier until
+     * one of them is accepted — and the row's primary action reads it to
+     * choose between "Add offer" and "Accept offer".
+     */
+    offerCount: number
+}
 
 export type OrderStats = {
     total: number
@@ -147,6 +155,11 @@ export type OrderStats = {
         flagged: number
         pod: number
         disputed: number
+    }
+    /** What the pipeline needs a hand with today — the dashboard tiles' sub-lines */
+    pipeline: {
+        prospectsDueSoon: number
+        loadingOverdue: number
     }
 }
 

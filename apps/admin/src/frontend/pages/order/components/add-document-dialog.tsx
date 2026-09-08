@@ -728,7 +728,7 @@ export function AddDocumentDialog({
             {/* Not dismissable mid-upload: the file is already on its way to
                 storage, and the row it belongs to is not written yet */}
             <Dialog open onOpenChange={(next) => { if (!next && !submitting) onClose() }}>
-                <DialogContent className="max-h-[90vh] w-full overflow-y-auto sm:max-w-lg">
+                <DialogContent className="max-h-[90vh] w-full overflow-y-auto sm:max-w-lg container-snap">
                     <DialogHeader>
                         <DialogTitle>{t("dialog.title")}</DialogTitle>
                         <DialogDescription>{t("dialog.subtitle")}</DialogDescription>

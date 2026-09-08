@@ -49,6 +49,7 @@ export function PageHeader({
     search,
     actions,
     below,
+    leading,
 }: {
     eyebrow?: string[]
     title: string
@@ -69,6 +70,8 @@ export function PageHeader({
     actions?: React.ReactNode
     /** A second row under the title, e.g. the fleet's kind switch */
     below?: React.ReactNode
+    /** Sits before the title column, e.g. a detail page's back button */
+    leading?: React.ReactNode
 }) {
     const t = useTranslations("Admin.list")
     const { get, set, sync, cancel, isPending } = useListParams()
@@ -162,30 +165,34 @@ export function PageHeader({
 
     return (
         <header className="flex flex-col gap-4 px-2 lg:flex-row lg:items-start lg:justify-between">
-            <div className="flex min-w-0 flex-col gap-1">
-                {eyebrow && eyebrow.length > 0 && (
-                    <nav aria-label={t("breadcrumb")} className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                        {eyebrow.map((crumb, index) => (
-                            <span key={`${crumb}-${index}`} className="flex items-center gap-1.5">
-                                {index > 0 && <span aria-hidden>/</span>}
-                                <span className={index === eyebrow.length - 1 ? "text-foreground/70" : undefined}>{crumb}</span>
-                            </span>
-                        ))}
-                    </nav>
-                )}
+            <div className="flex min-w-0 items-start gap-3">
+                {leading}
 
-                <div className="flex items-center gap-2.5">
-                    <h1 className="font-heading truncate text-2xl font-semibold tracking-tight">{title}</h1>
-                    {count !== undefined && (
-                        <span className="bg-muted text-muted-foreground rounded-full px-2.5 py-0.5 text-xs font-medium tabular-nums">
-                            {count.toLocaleString()}
-                        </span>
+                <div className="flex min-w-0 flex-col gap-1">
+                    {eyebrow && eyebrow.length > 0 && (
+                        <nav aria-label={t("breadcrumb")} className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                            {eyebrow.map((crumb, index) => (
+                                <span key={`${crumb}-${index}`} className="flex items-center gap-1.5">
+                                    {index > 0 && <span aria-hidden>/</span>}
+                                    <span className={index === eyebrow.length - 1 ? "text-foreground/70" : undefined}>{crumb}</span>
+                                </span>
+                            ))}
+                        </nav>
                     )}
+
+                    <div className="flex items-center gap-2.5">
+                        <h1 className="font-heading truncate text-2xl font-semibold tracking-tight">{title}</h1>
+                        {count !== undefined && (
+                            <span className="bg-muted text-muted-foreground rounded-full px-2.5 py-0.5 text-xs font-medium tabular-nums">
+                                {count.toLocaleString()}
+                            </span>
+                        )}
+                    </div>
+
+                    {description && <p className="text-muted-foreground text-sm">{description}</p>}
+
+                    {below}
                 </div>
-
-                {description && <p className="text-muted-foreground text-sm">{description}</p>}
-
-                {below}
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center lg:shrink-0">

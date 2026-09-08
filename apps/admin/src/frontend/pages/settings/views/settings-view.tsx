@@ -5,13 +5,13 @@ import { IconShieldLock, IconUser } from "@tabler/icons-react"
 import { useTranslations } from "@workspace/i18n"
 import { authClient } from "@workspace/auth/client"
 
-import { Skeleton } from "@workspace/ui/components/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
 
 import { AccountCard } from "../components/account-card"
 import { PasswordCard } from "../components/password-card"
 import { useSignInMethods } from "../hooks/use-sign-in-methods"
 import { SignInMethodsCard } from "../components/sign-in-methods-card"
+import { SettingsSkeleton } from "./settings-fallbacks"
 
 /**
  * The signed-in user's own settings — not user administration, which lives
@@ -76,17 +76,6 @@ export function SettingsView() {
                         them here once those gaps close. */}
                 </TabsContent>
             </Tabs>
-        </div>
-    )
-}
-
-// Mirrors the real layout so the page does not jump once the session lands
-function SettingsSkeleton() {
-    return (
-        <div className="flex flex-col gap-4">
-            <Skeleton className="h-9 w-48 rounded-2xl" />
-            <Skeleton className="h-10 w-64 rounded-2xl" />
-            <Skeleton className="h-72 w-full rounded-2xl" />
         </div>
     )
 }

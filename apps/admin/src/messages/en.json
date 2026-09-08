@@ -26,6 +26,409 @@
         }
     },
     "Admin": {
+        "metadata": {
+            "title": "Appload Admin",
+            "description": "Operations workspace for Appload orders, partners and driver messaging."
+        },
+        "dashboard": {
+            "title": "Dashboard",
+            "description": "{date} · what needs a hand today",
+            "year": "Year",
+            "open-map": "Open map",
+            "view-all": "View all",
+            "error": "This part of the dashboard could not load.",
+            "tiles": {
+                "prospects": "Prospects to confirm",
+                "prospects-hint": "{count, plural, =0 {none due to load within {days} days} one {# due to load within {days} days} other {# due to load within {days} days}}",
+                "loading": "Loading this week",
+                "loading-hint": "{count, plural, =0 {none overdue} one {# overdue} other {# overdue}}",
+                "on-road": "On the road",
+                "on-road-hint": "{count, plural, =0 {every truck heard from today} one {# silent for over 24 h} other {# silent for over 24 h}}",
+                "pod": "Awaiting POD",
+                "pod-hint": "delivered, no proof yet"
+            },
+            "fleet": {
+                "title": "On the road now",
+                "empty-title": "No trucks on the road",
+                "empty-description": "Trucks appear here once a load is committed",
+                "last-seen": "Seen {ago}",
+                "silent": "Silent {ago}",
+                "no-location": "No location yet"
+            },
+            "queue": {
+                "title": "Needs a hand",
+                "interrupted": "Stopped or with issue",
+                "flagged": "Flagged for review",
+                "overdue": "Loading overdue",
+                "disputes": "Active disputes",
+                "unread": "Unread messages",
+                "silent": "Silent trucks",
+                "review": "Documents to review",
+                "shippers": "Shippers",
+                "carriers": "Carriers",
+                "drivers": "Drivers",
+                "trucks": "Trucks",
+                "trailers": "Trailers",
+                "links": "Links",
+                "clear-title": "All clear",
+                "clear-description": "Nothing is waiting on you right now"
+            },
+            "chart": {
+                "title": "Orders by month",
+                "total": "{count, plural, =0 {No orders in {year}} one {# order in {year}} other {# orders in {year}}}",
+                "series": {
+                    "completed": "Completed",
+                    "delivered": "Delivered",
+                    "active": "In progress",
+                    "prospect": "Prospect",
+                    "lost": "Lost"
+                },
+                "empty": "Nothing scheduled to load in {year}"
+            },
+            "money": {
+                "title": "Money {year}",
+                "receivables": "Receivables",
+                "payables": "Payables",
+                "insurance": "Insurance",
+                "cashflow": "Net cashflow",
+                "open": "Open cashflow",
+                "empty": "Nothing outstanding in {year}"
+            },
+            "latest": {
+                "title": "Latest orders",
+                "columns": {
+                    "order": "Order",
+                    "parties": "Shipper → Carrier",
+                    "route": "Route",
+                    "loading": "Loading",
+                    "status": "Status",
+                    "total": "Shipper total"
+                },
+                "empty": "No orders yet"
+            }
+        },
+        "metrics": {
+            "title": "Metrics",
+            "description": "Since March 2022 · {currency} at each month's opening rate",
+            "open-sheet": "Open sheet",
+            "error": "This part of the metrics page could not load.",
+            "currency": "Currency",
+            "to-date": "to date",
+            "year-to-date": "{year} to date",
+            "stale": "Showing the last successful read from {time}",
+            "tiles": {
+                "sales": "Sales ({currency})",
+                "commission": "Commission ({currency})",
+                "net": "Net revenue ({currency})",
+                "trips": "Trips",
+                "vs-last-year": "vs {period}: {change}",
+                "no-comparison": "no earlier period to compare"
+            },
+            "revenue": {
+                "title": "Revenue by year ({currency})",
+                "series": {
+                    "sales": "Sales",
+                    "commission": "Commission",
+                    "net": "Net"
+                },
+                "empty": "No revenue recorded yet"
+            },
+            "margin": {
+                "title": "Margin by year",
+                "margin": "Margin",
+                "commission-per-trip": "Commission per trip",
+                "sales-per-trip": "Sales per trip",
+                "note": "Margin is commission including VAT over sales; both per-trip figures divide by trips, not deliveries.",
+                "empty": "No trips recorded yet"
+            },
+            "trend": {
+                "title": "Month by month ({currency})",
+                "toggle": "Metric",
+                "metric": {
+                    "commission": "Commission",
+                    "sales": "Sales",
+                    "net": "Net"
+                },
+                "average": "3-month average",
+                "empty": "No months to plot yet"
+            },
+            "trips": {
+                "title": "Trips by month",
+                "series": {
+                    "national": "National",
+                    "regional": "Regional"
+                },
+                "deliveries": "Deliveries",
+                "empty": "No trips recorded yet"
+            },
+            "partners": {
+                "title": "Partners by month",
+                "series": {
+                    "shippers": "Shippers",
+                    "carriers": "Carriers"
+                },
+                "note": "Shippers and carriers are counted once per month, however many loads they sent — the months do not add up.",
+                "empty": "No partners recorded yet"
+            },
+            "mix": {
+                "title": "Currency mix",
+                "note": "Share of sales by the currency they were invoiced in",
+                "empty": "No sales recorded yet"
+            },
+            "rates": {
+                "title": "Exchange rate",
+                "usd-mzn": "USD → MZN",
+                "usd-zar": "USD → ZAR",
+                "this-month": "This month",
+                "pinned": "Pinned {date} · {source}",
+                "source": {
+                    "feed": "daily feed",
+                    "yahoo": "Yahoo Finance",
+                    "manual": "set by hand"
+                },
+                "zar-trend": "USD → ZAR by month",
+                "provisional": "≈ provisional rate, taken from a nearby month",
+                "provisional-months": "{count, plural, one {# month is using a nearby month's rate} other {# months are using a nearby month's rate}}",
+                "note": "Each month converts at the rate of its first day, pinned once in the MONTHLY RATES tab of the sheet. Edit a row there to override it.",
+                "empty": "No rate pinned for this month yet"
+            },
+            "table": {
+                "years": "Year by year",
+                "months": "Months",
+                "lifetime": "Lifetime",
+                "yoy": "vs {year}",
+                "empty": "Nothing recorded in {year}",
+                "empty-years": "Nothing recorded yet",
+                "parties-note": "Shippers and carriers are counted once across the year's orders.",
+                "empty-description": "Pick another year, or check the STATS tab in the sheet",
+                "columns": {
+                    "year": "Year",
+                    "month": "Month",
+                    "trips": "Trips",
+                    "deliveries": "Deliveries",
+                    "distance": "Distance (km)",
+                    "shippers": "Shippers",
+                    "carriers": "Carriers",
+                    "sales": "Sales ({currency})",
+                    "commission": "Commission incl. VAT ({currency})",
+                    "vat": "VAT ({currency})",
+                    "net": "Net revenue ({currency})",
+                    "insurance": "Insurance ({currency})",
+                    "prospects": "Prospects ({currency})",
+                    "margin": "Margin",
+                    "sales-per-trip": "Sales / trip",
+                    "commission-per-trip": "Commission / trip"
+                }
+            }
+        },
+        "kpis": {
+            "title": "KPIs",
+            "description": "{period} · USD at each loading day’s rate",
+            "error": "This part of the KPIs page could not load.",
+            "back": "Back to KPIs",
+            "search": "Search partners",
+            "clear": "Clear search",
+            "type": {
+                "shipper": "Shippers",
+                "carrier": "Carriers"
+            },
+            "period": {
+                "label": "Period",
+                "month": "Month",
+                "quarter": "Quarter",
+                "year": "Year",
+                "custom": "Custom",
+                "month-select": "Select month",
+                "quarter-select": "Select quarter",
+                "year-select": "Select year",
+                "quarter-name": "Q{quarter}",
+                "quarter-label": "Q{quarter} {year}",
+                "range": "{from} – {to}",
+                "pick-range": "Pick a range",
+                "apply": "Apply"
+            },
+            "sort": {
+                "transports": "Transports",
+                "name": "Name",
+                "on-time": "On time at offloading",
+                "price": "Price / transport",
+                "cost-per-km": "Cost / km",
+                "deliveries": "Deliveries",
+                "tons": "Tons"
+            },
+            "stats": {
+                "partners": "Partners active",
+                "transports": "Transports",
+                "total": "Total price (USD)",
+                "on-time": "On time at offloading",
+                "partners-hint": "in {period}",
+                "transports-hint": "{deliveries, plural, one {# delivery} other {# deliveries}}",
+                "total-hint": "{km} km",
+                "on-time-hint": "{loading} at loading"
+            },
+            "columns": {
+                "sub": "{deliveries, plural, one {# delivery} other {# deliveries}} · {tons} t"
+            },
+            "empty": {
+                "title": "No partners in this period",
+                "description": "Pick another period or partner type",
+                "filtered": "No partner matches this search"
+            },
+            "export": {
+                "filename": "kpis-{type}-{period}"
+            },
+            "party": {
+                "search": "Search by name",
+                "none": "No partner found",
+                "clear": "Show all"
+            },
+            "download": {
+                "label": "Download report",
+                "en": "English",
+                "pt": "Português",
+                "failed": "The report could not be generated, please try again"
+            },
+            "landing": {
+                "columns": {
+                    "name": "Name",
+                    "transports": "Transports",
+                    "on-time": "On time at offloading",
+                    "price-per-transport": "Price / transport (USD)",
+                    "cost-per-km": "Cost / km (USD)",
+                    "deliveries": "Deliveries",
+                    "tons": "Tons"
+                }
+            },
+            "tiles": {
+                "transports": "Transports",
+                "total": "Total price (USD)",
+                "price-per-transport": "Price per transport (USD)",
+                "on-time": "On time at offloading",
+                "transports-hint": "{deliveries, plural, one {# delivery} other {# deliveries}} · {tons} t",
+                "total-hint": "{km} km travelled",
+                "price-hint": "{costPerKm} USD per km",
+                "on-time-hint": "{loading} at loading"
+            },
+            "conversion": {
+                "note": "Converted to USD at each loading day’s rate",
+                "by-currency": "{count, plural, one {# transport} other {# transports}} in {currency}",
+                "provisional": "{count, plural, one {# transport uses} other {# transports use}} the nearest earlier rate",
+                "unrated": "{count, plural, one {# transport} other {# transports}} could not be converted"
+            },
+            "charts": {
+                "transports": {
+                    "title": "Transports and punctuality",
+                    "transports": "Transports",
+                    "on-time-loading": "On time at loading",
+                    "on-time-offloading": "On time at offloading",
+                    "empty": "No transports in this period"
+                },
+                "price": {
+                    "title": "Price per transport (USD)",
+                    "price": "Price per transport",
+                    "cost-per-km": "Cost per km",
+                    "empty": "No transports in this period"
+                },
+                "days": {
+                    "title": "Where the days go",
+                    "loading": "At loading",
+                    "travelling": "Travelling",
+                    "border": "At the border",
+                    "offloading": "At offloading",
+                    "days": "Days",
+                    "sample": "{count} of {total} transports had this recorded",
+                    "regional": "Regional transports only",
+                    "empty": "No durations recorded in this period"
+                },
+                "incidents": {
+                    "title": "Incidents",
+                    "accidents": "Accidents",
+                    "mechanical": "Mechanical failures",
+                    "documentation": "Documentation issues",
+                    "police": "Police stops",
+                    "count": "Occurrences",
+                    "delay": "{days, plural, one {# delay day} other {# delay days}}",
+                    "empty": "No incidents recorded in this period"
+                }
+            },
+            "backload": {
+                "title": "Backload",
+                "share": "Backload share",
+                "co2": "CO₂ reductions",
+                "co2-unit": "kg / ton transported",
+                "savings": "Cost savings from backload (USD)",
+                "margin": "Margin over fuel cost on backload transports",
+                "fuel-note": "Fuel estimated at {litres} L/km and {price} MZN/L as in the KPI sheet, converted at the loading day’s rate"
+            },
+            "table": {
+                "title": "Full report",
+                "columns": {
+                    "indicator": "Indicator",
+                    "unit": "Unit",
+                    "value": "Value"
+                },
+                "not-tracked": "Not tracked yet",
+                "none": "—",
+                "sample": "{unit} · {count} of {total}",
+                "groups": {
+                    "summary": "Summary",
+                    "operational": "Operational",
+                    "incidents": "Incidents",
+                    "cost": "Cost",
+                    "backload": "Backload",
+                    "communication": "Communication"
+                },
+                "rows": {
+                    "transports": "Transports analysed",
+                    "total": "Total price",
+                    "price-per-transport": "Price per transport",
+                    "deliveries": "Deliveries",
+                    "tons": "Loaded weight",
+                    "km": "Total distance",
+                    "tons-per-transport": "Tonnage per transport",
+                    "km-per-transport": "Distance per transport",
+                    "on-time-loading": "On-time arrival at loading",
+                    "loading-days": "Average loading duration",
+                    "travel-days": "Average transport duration",
+                    "km-per-day": "Average distance per day",
+                    "on-time-offloading": "On-time arrival at offloading",
+                    "offloading-days": "Average offloading duration",
+                    "border-days": "Average days at the border",
+                    "demurrage-rate": "Transports with demurrage",
+                    "demurrage-days": "Demurrage days charged",
+                    "accidents": "Accidents",
+                    "mechanical": "Mechanical failure stops",
+                    "documentation": "Documentation issue stops",
+                    "police": "Police stops",
+                    "delay-days": "Total delay days",
+                    "damage-rate": "Transports with cargo damage",
+                    "claim-rate": "Transports with complaints",
+                    "cost-per-km": "Cost per km",
+                    "cost-per-ton": "Cost per ton",
+                    "cost-per-ton-km": "Cost per ton-km",
+                    "backload-share": "Backload share",
+                    "co2": "CO₂ reductions",
+                    "savings": "Total cost savings from backload",
+                    "fuel-margin": "Margin over fuel cost on backload transports",
+                    "communication": "Overall assessment of updates from transporter and driver",
+                    "responsiveness": "Overall assessment of client’s feedback and responsiveness",
+                    "satisfaction": "Client wants to use the transporter again? (% of yes over all analyzed trips)"
+                },
+                "units": {
+                    "number": "number",
+                    "t": "t",
+                    "km": "km",
+                    "days": "days",
+                    "km-per-day": "km/day",
+                    "percent": "%",
+                    "usd": "USD",
+                    "per-km": "USD/km",
+                    "per-ton": "USD/t",
+                    "per-ton-km": "USD/t·km",
+                    "co2": "kg/t"
+                }
+            }
+        },
         "auth": {
             "title": "Appload Dashboard",
             "description": "Enter your credentials to sign in",
@@ -85,7 +488,7 @@
             "not-found": {
                 "title": "Page not found",
                 "description": "The page you are looking for does not exist or has moved",
-                "home": "Go to orders"
+                "home": "Go to the dashboard"
             },
             "boundary": {
                 "title": "Something went wrong",
@@ -100,7 +503,13 @@
         },
         "sidebar": {
             "content": {
+                "report": {
+                    "dashboard": "Dashboard",
+                    "metrics": "Metrics",
+                    "kpis": "KPIs"
+                },
                 "ops": {
+                    "label": "Operations",
                     "order": "New order",
                     "orders": {
                         "orders": "Orders",
@@ -112,10 +521,11 @@
                         "history": "History",
                         "disputes": "Disputes"
                     },
-                    "chats": "Chats",
+                    "messages": "Messages",
                     "map": "Map"
                 },
                 "management": {
+                    "label": "Management",
                     "shippers": "Shippers",
                     "carriers": {
                         "carriers": "Carriers",
@@ -359,8 +769,6 @@
                 "description": "Fill in the order details to register the new order.",
                 "editTitle": "Edit order {orderId}",
                 "editDescription": "Amend the prospect. Confirming it requires the same complete details as creating a booked order.",
-                "confirmTitle": "Confirm order {orderId}",
-                "confirmDescription": "Fill in everything still missing. The status is already set to Booked, so saving books the order and every required field is validated.",
                 "form": {
                     "shipper": {
                         "title": "Shipper information",
@@ -468,21 +876,6 @@
                     "carrier": {
                         "title": "Carrier and transport information",
                         "fields": {
-                            "carrier": {
-                                "label": "Carrier name",
-                                "placeholder": "Appload",
-                                "description": "Search for the carrier; if they are not registered, you will be prompted to register them"
-                            },
-                            "fiscalRegime": {
-                                "label": "Fiscal regime",
-                                "placeholder": "Choose the regime",
-                                "options": {
-                                    "normal": "Normal (16%)",
-                                    "simplified-5": "Simplified (5%)",
-                                    "simplified-3": "Simplified (3%)",
-                                    "n/a": "Not applicable"
-                                }
-                            },
                             "driver": {
                                 "title": "Driver details",
                                 "name": {
@@ -547,30 +940,6 @@
                     "payment": {
                         "title": "Payment information",
                         "fields": {
-                            "carrier": {
-                                "title": "Carrier payment",
-                                "subtotal": {
-                                    "label": "Subtotal",
-                                    "placeholder": "0.00"
-                                },
-                                "vat": {
-                                    "label": "VAT",
-                                    "placeholder": "0.00"
-                                },
-                                "total": {
-                                    "label": "Total to pay",
-                                    "placeholder": "0.00"
-                                },
-                                "currency": {
-                                    "label": "Currency",
-                                    "placeholder": "Choose the currency",
-                                    "options": {
-                                        "MZN": "MZN",
-                                        "ZAR": "ZAR",
-                                        "USD": "USD"
-                                    }
-                                }
-                            },
                             "shipper": {
                                 "title": "Shipper payment",
                                 "subtotal": {
@@ -594,6 +963,9 @@
                                         "USD": "USD"
                                     }
                                 }
+                            },
+                            "commission": {
+                                "label": "Appload commission"
                             }
                         }
                     },
@@ -620,8 +992,24 @@
                             "total": "Total field is required",
                             "status": "Choose a status from the list",
                             "value": "The value entered is invalid",
-                            "weight": "The weight entered is invalid"
+                            "weight": "The weight entered is invalid",
+                            "offers": "Register a carrier offer to book this order",
+                            "accepted": "Mark the offer this order is booked with"
                         }
+                    },
+                    "offers": {
+                        "title": "Carrier offers",
+                        "description": "Register every quote you received. Booking picks one of them.",
+                        "empty": "No offers yet. Add them here or later on the order page.",
+                        "add": "Add offer",
+                        "remove": "Remove offer",
+                        "accepted": "Book with this offer",
+                        "offerN": "Offer {number}"
+                    },
+                    "bookingDetails": {
+                        "title": "Booking details",
+                        "description": "Optional now; needed before the order moves to To loading.",
+                        "noOffer": "Mark the offer this order is booked with to assign a driver and a truck."
                     }
                 },
                 "actions": {
@@ -664,7 +1052,8 @@
                     "carrierSuspended": "This carrier is suspended",
                     "riskAckNotAllowed": "Only a supervisor can accept this risk",
                     "riskAckNoteRequired": "Explain why this risk is being accepted",
-                    "noteCurrencyLocked": "The currency cannot change once this party has notes or proofs of payment."
+                    "noteCurrencyLocked": "The currency cannot change once this party has notes or proofs of payment.",
+                    "offerNotPending": "The offer this order books with was already decided somewhere else. Reload the order and pick another one."
                 }
             },
             "update": {
@@ -934,20 +1323,6 @@
                     "carrier": {
                         "title": "Carrier and transport information",
                         "fields": {
-                            "carrier": {
-                                "label": "Carrier name",
-                                "placeholder": "Appload"
-                            },
-                            "fiscalRegime": {
-                                "label": "Fiscal regime",
-                                "placeholder": "Choose the regime",
-                                "options": {
-                                    "normal": "Normal (16%)",
-                                    "simplified-5": "Simplified (5%)",
-                                    "simplified-3": "Simplified (3%)",
-                                    "n/a": "Not applicable"
-                                }
-                            },
                             "driver": {
                                 "title": "Driver details",
                                 "name": {
@@ -986,7 +1361,9 @@
                                     "placeholder": "AA 000 MC"
                                 }
                             }
-                        }
+                        },
+                        "fromOffer": "Carrier · from the accepted offer",
+                        "fromOfferHint": "To change the carrier, move the order back to Prospect and accept another offer."
                     },
                     "payment": {
                         "title": "Payment information",
@@ -1286,7 +1663,8 @@
                     "riskAckNotAllowed": "Only a supervisor can accept this risk",
                     "riskAckNoteRequired": "Explain why this risk is being accepted",
                     "paymentLocked": "Paid amount, payment status and full-payment date for this party are derived from the recorded proofs of payment. Record or void a proof instead.",
-                    "noteCurrencyLocked": "The currency cannot change once this party has notes or proofs of payment."
+                    "noteCurrencyLocked": "The currency cannot change once this party has notes or proofs of payment.",
+                    "pdfFailed": "The confirmation documents could not be prepared. Use \"Send PDF\" on the order to generate them again."
                 },
                 "success": {
                     "title": "Order updated",
@@ -1442,7 +1820,6 @@
                     "NOTE_REQUIRED": "A note is required for this change.",
                     "EVIDENCE_REQUIRED": "A supporting document is required for this change.",
                     "POD_REQUIRED": "A proof of delivery is required to complete the order.",
-                    "INCOMPLETE_FOR_BOOKING": "This prospect is still missing carrier, driver, fleet or amount details. Use \"Confirm order\" to complete and book it.",
                     "NOT_FOUND": "This order no longer exists.",
                     "UPLOAD_FAILED": "Uploading the document failed. Please try again.",
                     "UNKNOWN": "An unexpected error occurred. Please try again.",
@@ -1452,14 +1829,20 @@
                     "CARRIER_SUSPENDED": "This carrier is suspended",
                     "RISK_ACK_NOT_ALLOWED": "Only a supervisor can accept this risk",
                     "RISK_ACK_NOTE_REQUIRED": "Explain why this risk is being accepted",
-                    "DISPUTE_OPEN": "The order cannot be completed while a dispute is open. Settle or close it first."
-                }
+                    "DISPUTE_OPEN": "The order cannot be completed while a dispute is open. Settle or close it first.",
+                    "OFFER_REQUIRED": "Pick an offer to book this order with.",
+                    "OFFER_NOT_PENDING": "This offer was already decided.",
+                    "NO_OFFERS": "This prospect has no pending offers. Add one first.",
+                    "INCOMPLETE_FOR_DISPATCH": "Assign the driver, their phone and the truck before moving to To loading.",
+                    "OFFER_UNPRICED": "This offer has no Appload commission yet. Edit it and set the commission before booking with it."
+                },
+                "book": "Book order"
             },
             "detailPage": {
+                "metaTitle": "Order {reference}",
                 "error": "Failed to load this order.",
                 "back": "Back to orders",
                 "more": "More actions",
-                "confirm": "Confirm order",
                 "changeStatus": "Change status",
                 "edit": "Edit",
                 "sendPdf": "Send PDF",
@@ -1512,8 +1895,8 @@
                     "heldHint": "A dispute is holding these payments."
                 },
                 "resume": "Resume",
-                "openChat": "Open chat",
-                "chatFailed": "Could not open the chat, please try again.",
+                "openChat": "Open conversation",
+                "chatFailed": "Could not open the conversation, please try again.",
                 "openMap": "Open in Map",
                 "trip": {
                     "label": "Trip progress",
@@ -1536,7 +1919,7 @@
                     "insurance": "Insurance",
                     "in": "money in",
                     "out": "money out",
-                    "share": "{percent}% of the shipper total",
+                    "share": "{percent} of commission",
                     "effective": "effective",
                     "debit": "+{amount} debit note",
                     "credit": "−{amount} credit note",
@@ -1545,6 +1928,9 @@
                 "footer": {
                     "created": "Created {date} by {actor}",
                     "createdUnknown": "Created {date}"
+                },
+                "operations": {
+                    "assign": "Assign driver and truck"
                 }
             },
             "history": {
@@ -1563,7 +1949,16 @@
                     "flag": "Flag resolved",
                     "system": "System event",
                     "payment": "Payment",
-                    "dispute": "Dispute"
+                    "dispute": "Dispute",
+                    "offer": "Carrier offer"
+                },
+                "offer": {
+                    "created": "Offer from {carrier} · {amount} added",
+                    "updated": "Offer from {carrier} · {amount} updated",
+                    "declined": "Offer from {carrier} · {amount} declined",
+                    "withdrawn": "Offer from {carrier} · {amount} withdrawn",
+                    "removed": "Offer from {carrier} · {amount} deleted",
+                    "booked": "Booked with {carrier} · {amount}"
                 }
             },
             "documents": {
@@ -1782,7 +2177,9 @@
                     "no-invoice": "No invoice",
                     "no-total": "No price yet",
                     "shipper-short": "S",
-                    "carrier-short": "C"
+                    "carrier-short": "C",
+                    "offers": "{count, plural, one {# offer} other {# offers}}",
+                    "no-offers": "No offers yet"
                 },
                 "data": {
                     "empty": "No orders yet",
@@ -1802,12 +2199,13 @@
                     "open": "Open",
                     "full-page": "Open full page",
                     "edit": "Edit",
-                    "confirm": "Confirm order",
                     "change-status": "Change status",
                     "cancel": "Cancel order",
                     "send-pdf": "Send PDF",
                     "copy-id": "Copy order ID",
-                    "open-dispute": "Open dispute"
+                    "open-dispute": "Open dispute",
+                    "accept-offer": "Accept offer",
+                    "add-offer": "Add offer"
                 },
                 "errors": {
                     "load": "Could not load this order, please try again"
@@ -1820,7 +2218,8 @@
                         "overview": "Overview",
                         "payments": "Payments",
                         "documents": "Documents",
-                        "history": "History"
+                        "history": "History",
+                        "offers": "Offers"
                     },
                     "milestones": "Milestones",
                     "route": "Route",
@@ -1965,20 +2364,158 @@
                     "NOT_FOUND": "The order could not be found.",
                     "UNKNOWN": "Something went wrong. Try again."
                 }
+            },
+            "offers": {
+                "card": {
+                    "title": "Carrier offers",
+                    "empty": "No offers yet. Add one to get a price on the table.",
+                    "recordedHint": "Offers on a booked order are kept for Appload's records only.",
+                    "bookedWith": "Booked with",
+                    "bookedWithCarrier": "Booked with {carrier} · {price}"
+                },
+                "status": {
+                    "pending": "Pending",
+                    "accepted": "Accepted",
+                    "declined": "Declined",
+                    "withdrawn": "Withdrawn",
+                    "lost": "Lost",
+                    "recorded": "Recorded"
+                },
+                "includes": {
+                    "git": "GIT insurance",
+                    "gps": "GPS tracking"
+                },
+                "snapshot": "With Appload since {date} · {trips, plural, one {# trip} other {# trips}}",
+                "snapshotUnknown": "No history with Appload yet",
+                "cancel": "Cancel",
+                "actions": {
+                    "add": "Add offer",
+                    "accept": "Accept",
+                    "edit": "Edit offer",
+                    "decline": "Decline",
+                    "withdraw": "Withdraw",
+                    "remove": "Delete offer"
+                },
+                "fields": {
+                    "carrier": "Carrier",
+                    "fiscalRegime": "Fiscal regime",
+                    "currency": "Currency",
+                    "total": "Total quoted",
+                    "vat": "VAT",
+                    "subtotal": "Subtotal",
+                    "includes": "What the offer includes",
+                    "notes": "Notes",
+                    "accepted": "Accepted",
+                    "commissionTotal": "Appload commission (VAT incl.)"
+                },
+                "form": {
+                    "carrier": {
+                        "placeholder": "Appload",
+                        "description": "Search for the carrier; if they are not registered, you will be prompted to register them"
+                    },
+                    "fiscalRegime": {
+                        "placeholder": "Choose the regime",
+                        "options": {
+                            "normal": "Normal (16%)",
+                            "simplified-5": "Simplified (5%)",
+                            "simplified-3": "Simplified (3%)",
+                            "n/a": "Not applicable"
+                        }
+                    },
+                    "currency": {
+                        "placeholder": "Choose the currency",
+                        "options": {
+                            "MZN": "MZN",
+                            "ZAR": "ZAR",
+                            "USD": "USD"
+                        }
+                    },
+                    "total": {
+                        "placeholder": "0.00"
+                    },
+                    "vat": {
+                        "placeholder": "0.00"
+                    },
+                    "subtotal": {
+                        "placeholder": "0.00"
+                    },
+                    "notes": {
+                        "placeholder": "Escort included, price valid for 7 days..."
+                    },
+                    "includes": {
+                        "gitHint": "The carrier covers the cargo in transit",
+                        "gpsHint": "The truck is tracked for the whole trip"
+                    },
+                    "commissionTotal": {
+                        "placeholder": "0.00",
+                        "description": "What Appload adds on top of the quote. The client price is the quote plus this."
+                    }
+                },
+                "dialog": {
+                    "createTitle": "Add carrier offer",
+                    "editTitle": "Edit carrier offer",
+                    "description": "Register a quote received for this order. Booking the order accepts one of them.",
+                    "recordedDescription": "This order is already booked, so the offer is kept for Appload's records only. It cannot be accepted and is never shown to the shipper.",
+                    "save": "Save offer"
+                },
+                "decide": {
+                    "declinedTitle": "Decline offer",
+                    "withdrawnTitle": "Withdraw offer",
+                    "description": "The offer from {carrier} stays on the order as part of how it was priced.",
+                    "note": "Why (optional)...",
+                    "confirm": "Confirm"
+                },
+                "remove": {
+                    "title": "Delete offer",
+                    "description": "The offer from {carrier} is deleted for good. Decline or withdraw it instead to keep it on the record.",
+                    "confirm": "Delete"
+                },
+                "picker": {
+                    "title": "Offer to book with",
+                    "description": "Pick the offer this order is booked with. Carrier, price and commission are taken from it.",
+                    "empty": "This prospect has no pending offers. Add one on the order page first.",
+                    "hint": "The other offers are marked lost. Driver and truck can be assigned any time before To loading.",
+                    "summary": {
+                        "shipper": "Shipper pays",
+                        "carrier": "Carrier gets",
+                        "commission": "Appload commission",
+                        "share": "{percent} of the shipper's price"
+                    },
+                    "unpriced": "This offer has no commission yet. Edit it to price it before booking with it."
+                },
+                "errors": {
+                    "CARRIER_NOT_FOUND": "This carrier is no longer available. Pick another one.",
+                    "OFFER_NOT_EDITABLE": "This offer was already decided and can no longer be changed.",
+                    "OFFER_NOT_PENDING": "This offer was already decided.",
+                    "NOT_ALLOWED": "Your role does not allow changing offers.",
+                    "NOT_FOUND": "This offer no longer exists.",
+                    "UNKNOWN": "An unexpected error occurred. Please try again."
+                },
+                "commission": {
+                    "title": "Appload commission",
+                    "short": "Commission",
+                    "client": "Client price",
+                    "carrier": "Carrier",
+                    "subtotal": "Subtotal",
+                    "vat": "VAT",
+                    "total": "Total",
+                    "unpriced": "No commission set yet",
+                    "empty": "Choose the regime, then type the quoted total and the commission to see the client price."
+                }
             }
         },
-        "chats": {
-            "title": "Chats",
-            "description": "Chat with drivers and keep orders up to date.",
+        "messages": {
+            "title": "Messages",
+            "description": "Message drivers and keep orders up to date.",
             "unconfigured": {
                 "title": "Messaging is not configured",
                 "description": "The WhatsApp/SMS provider is not connected, so messages will not reach drivers. Configure the Infobip environment variables to send for real"
             },
             "list": {
-                "new": "New chat",
+                "new": "New message",
                 "emptyTitle": "No conversations",
                 "emptyDescription": "Start a conversation with a driver to get going.",
-                "startFirst": "Start a chat",
+                "startFirst": "Start a conversation",
                 "search": "Search name, phone or order",
                 "filters": {
                     "all": "All",
@@ -2034,7 +2571,7 @@
                 "noOrderDescription": "This conversation is not linked to an order yet."
             },
             "new": {
-                "title": "New chat",
+                "title": "New message",
                 "description": "Enter the driver's details to start the conversation.",
                 "fields": {
                     "driverName": {
@@ -2793,9 +3330,9 @@
                 }
             },
             "whatsapp": {
-                "confirmed": "On WhatsApp — open a chat",
+                "confirmed": "On WhatsApp — open a conversation",
                 "unreachable": "Not reachable on WhatsApp: the last message failed",
-                "start": "Start WhatsApp chat"
+                "start": "Start WhatsApp conversation"
             }
         },
         "list": {
@@ -3092,6 +3629,12 @@
             "open": "Opened a {reason} dispute on order {orderId}",
             "update": "Updated the dispute on order {orderId} ({changedFields})",
             "resolve": "Resolved the dispute on order {orderId} as {status}"
+        },
+        "offers": {
+            "create": "Added a {total} {currency} offer from {carrierName} to order {orderId}",
+            "update": "Updated offer {offerId} from {carrierName} ({total} {currency})",
+            "decide": "Marked offer {offerId} from {carrierName} as {status}",
+            "remove": "Deleted offer {offerId}"
         }
     }
 }

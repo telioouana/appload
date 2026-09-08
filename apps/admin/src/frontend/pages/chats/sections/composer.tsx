@@ -27,7 +27,7 @@ export function Composer({
     isRequestingLocation: boolean;
     draftRef: RefObject<HTMLTextAreaElement | null>;
 }) {
-    const t = useTranslations("Admin.chats");
+    const t = useTranslations("Admin.messages");
 
     return (
         <form

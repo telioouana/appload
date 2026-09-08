@@ -1,60 +1,25 @@
-import type { Order } from "@workspace/db/orders";
+import type { OfferStatus } from "@workspace/db/types";
 
 /**
- * Whether a STORED prospect row already carries everything booking demands,
- * and what is still missing. Pure and isomorphic like ./transitions: the
- * transition mutation guards with it and transitionOptions advertises with
- * it, so the dialog can never offer a move the mutation would refuse.
+ * Whether one carrier offer may be accepted — the payload check behind
+ * prospect -> booked. Booking no longer reads a filled carrier block off
+ * the order row: the carrier, the fiscal regime, the carrier price and the
+ * client price all arrive with the offer, and driver and truck are the
+ * dispatch gate's business (./dispatch-readiness).
  *
- * This is the *stored-row* bar. The deal form (CreateOrderSchema in
- * @/backend/schemas/order) enforces one field more — `loadingBay` — and the
- * gap is deliberate: no order column carries a bay type. It lives on the
- * fleet registry, the form refills it when the truck or trailer is picked,
- * and the server re-derives it (lookupLoadingBay) whenever a PDF needs one.
- * Checking it here would mark every stored prospect permanently incomplete.
- * The form's extra refine is a document requirement at the moment it
- * generates the transport orders, not a data requirement of the deal.
+ * The one rule left is that the offer must still be awaiting a decision: a
+ * declined, withdrawn, lost or already accepted one is history, and a
+ * `recorded` one was registered on a booked order for the data only. The
+ * currency needs no check any more — the accepted offer prices both legs of
+ * the order in its own currency.
+ *
+ * Pure and isomorphic like ./transitions: the transition mutation guards
+ * with it and the booking dialog gates its button with it, so the dialog can
+ * never offer an acceptance the mutation would refuse.
  */
 
-export type BookingField =
-    | "carrierId" | "carrierName" | "fiscalRegime"
-    | "truckPlate" | "truckAge"
-    | "driverId" | "driverName" | "driverPhoneNumber" | "driverPassport"
-    | "carrierSubtotal" | "carrierTotal" | "carrierCurrency";
+export type OfferAcceptability = "ok" | "NOT_PENDING";
 
-// The fields themselves, plus the two columns the conditional rules read
-export type BookingRow = Pick<Order, BookingField | "route" | "shipperCurrency">;
-
-// Always required once the cargo is committed to a carrier
-const REQUIRED: BookingField[] = [
-    "carrierId", "carrierName", "fiscalRegime",
-    "truckPlate", "truckAge",
-    "driverId", "driverName", "driverPhoneNumber",
-    "carrierSubtotal", "carrierTotal", "carrierCurrency",
-];
-
-const isMissing = (value: unknown) => value === undefined || value === null || value === "";
-
-/** The still-missing fields, in form order — empty means ready to book. */
-export function missingForBooking(row: BookingRow): BookingField[] {
-    const missing = REQUIRED.filter((field) => isMissing(row[field]));
-
-    // The passport only crosses a border on regional trips
-    if (row.route === "regional" && isMissing(row.driverPassport)) {
-        missing.push("driverPassport");
-    }
-
-    // Commission = shipperTotal - carrierTotal only makes sense in one
-    // currency. carrier_currency is DB-defaulted to MZN, so the presence
-    // check above rarely bites — this one does.
-    if (!isMissing(row.carrierCurrency) && row.carrierCurrency !== row.shipperCurrency) {
-        missing.push("carrierCurrency");
-    }
-
-    return missing;
-}
-
-/** The same verdict as a boolean, for guards that don't report the gaps. */
-export function isReadyToBook(row: BookingRow): boolean {
-    return missingForBooking(row).length === 0;
+export function offerAcceptable(offer: { status: OfferStatus }): OfferAcceptability {
+    return offer.status === "pending" ? "ok" : "NOT_PENDING";
 }

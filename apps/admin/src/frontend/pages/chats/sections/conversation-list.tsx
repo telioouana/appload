@@ -55,7 +55,7 @@ export function ConversationList({
     onSelect: (id: string) => void;
     onNewChat: () => void;
 }) {
-    const t = useTranslations("Admin.chats");
+    const t = useTranslations("Admin.messages");
     const f = useFormatter();
     // Explicit now keeps relativeTime warning-free and ticks the labels over
     const now = useNow({ updateInterval: 60_000 });

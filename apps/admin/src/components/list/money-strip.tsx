@@ -4,6 +4,7 @@ import { useFormatter } from "@workspace/i18n"
 
 import { cn } from "@workspace/ui/lib/utils"
 
+import { moneyTone, type MoneyTone } from "@/components/list/money-tone"
 import { useListParams } from "@/components/list/use-list-params"
 
 export type MoneyMetric = {
@@ -13,20 +14,10 @@ export type MoneyMetric = {
     kind: "count" | "amount"
     /** URL params a click applies; the column is a plain figure without it */
     filter?: { key: string; value: string }[]
-    /**
-     * How the figure reads: money out is red, money in is green, and a
-     * balance is coloured by its own sign. Untinted without it, and a zero
-     * is always muted whatever the tone.
-     */
-    tone?: "negative" | "positive" | "signed"
+    /** How the figure reads: see `moneyTone`, which the dashboard shares */
+    tone?: MoneyTone
     /** The bottom line, weighted so it reads first */
     emphasis?: boolean
-}
-
-const tint = (metric: MoneyMetric, value: number) => {
-    if (value === 0 || !metric.tone) return value === 0 ? "text-muted-foreground" : undefined
-    if (metric.tone === "negative" || (metric.tone === "signed" && value < 0)) return "text-destructive"
-    return "text-emerald-600 dark:text-emerald-400"
 }
 
 /** The currency gutter, and the floor a metric column keeps before the strip scrolls */
@@ -153,7 +144,7 @@ export function MoneyStrip({
                                                 className={cn(
                                                     "border-t py-3.5 pl-3 text-right tabular-nums",
                                                     metric.emphasis && "pr-2 font-semibold",
-                                                    tint(metric, value),
+                                                    moneyTone(metric.tone, value),
                                                 )}
                                             >
                                                 {format(metric, value)}
