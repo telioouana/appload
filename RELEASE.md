@@ -103,6 +103,51 @@ first deployment could never happen.) The website app has no
    `ADD CONSTRAINT` statements are not idempotent), and never run the
    scripts against production. Note the two env files: the scripts read
    `apps/admin/.env`, drizzle-kit reads `packages/db/.env`.
+3. **Data backfills that a migration needs.** A few migrations add a table
+   the app then expects to be populated for existing rows; run these right
+   after `db:migrate`, before the release deploy:
+
+   - `0011_order_offer` — carrier offers. Every order now carries offers and
+     a prospect is booked by accepting one, so each existing order with a
+     carrier needs the offer that (retroactively) booked it. Dry-run first,
+     read the counts, then write:
+
+     ```bash
+     DATABASE_URL=<prod url> node packages/db/scripts/backfill-order-offers.mjs --dry
+     DATABASE_URL=<prod url> node packages/db/scripts/backfill-order-offers.mjs --yes
+     ```
+
+     Migration `0012_order_offer_pricing` (the commission and client-price
+     columns on the offer) must be applied before the backfill runs: the
+     script fills those columns from each order's commission and shipper
+     leg. The shared dev database got them from
+     `node packages/db/scripts/add-order-offer-pricing-columns.mjs`.
+
+     It writes one offer per order — `accepted` for booked-or-later orders,
+     `pending` for prospects that already name a carrier — and never edits
+     the order rows. Safe to re-run: orders that already have an offer are
+     skipped. The shared dev database gets the table itself from
+     `node packages/db/scripts/create-order-offer-table.mjs` and then the
+     same backfill.
+
+   - `0013_fx_daily_rate` — daily exchange rates. The KPIs page converts every
+     trip's money to USD at the rate of its own loading day, so the table
+     needs one row per calendar day from the oldest loading date to today, or
+     those transports show up as converted at a borrowed rate. Dry-run first,
+     read the per-source counts, then write:
+
+     ```bash
+     DATABASE_URL=<prod url> node packages/db/scripts/seed-daily-rates.mjs
+     DATABASE_URL=<prod url> node packages/db/scripts/seed-daily-rates.mjs --yes
+     ```
+
+     Sources are the daily currency feed from 2024-03-02 and Yahoo Finance
+     before it, with weekends and the odd unpublished day carried forward from
+     the previous close. The app tops up new days by itself afterwards, so
+     this is a one-off; it is safe to re-run and never overwrites a day
+     already stored. The shared dev database gets the table from
+     `node packages/db/scripts/create-fx-daily-rate-table.mjs` and then the
+     same seed.
 
 ## 2. Vercel — project + environment
 
@@ -120,7 +165,7 @@ first deployment could never happen.) The website app has no
    - `KYC_ENFORCEMENT`: `warn` to launch, `block` once partners' documents
      are loaded.
 
-## 3. Google — OAuth + service account + logbook spreadsheet + Maps
+## 3. Google — OAuth + service account + spreadsheets + Maps
 
 1. In the Google Cloud console OAuth client, add the redirect URI:
    `https://<prod origin>/api/auth/callback/google`.
@@ -140,7 +185,24 @@ first deployment could never happen.) The website app has no
    `Status` needs: Prospects, Booked, To Loading, At Loading, Loading,
    Waiting Documents, In Transit, Stopped, Issue, At Border, At Offloading,
    Offloading, Delivered, Completed, Cancelled, Underbid.
-4. **Maps (live tracking map).** Enable the **Routes API** on the server key
+4. **Seed the logbook's `MONTHLY RATES` tab once per environment.** The
+   Metrics page reads the same logbook the sync writes to (step 2) and pins
+   each month's opening exchange rate in a `MONTHLY RATES` tab there,
+   appending one row a month — the editor access step 2 requires covers it.
+   Backfill the history once per logbook: dry-run first, read the table it
+   prints, then write:
+
+   ```bash
+   node packages/db/scripts/seed-monthly-rates.mjs
+   node packages/db/scripts/seed-monthly-rates.mjs --yes
+   ```
+
+   The script reads `apps/admin/.env`, i.e. the dev logbook; for production
+   add `--spreadsheet <production logbook id>`. It fills every month from
+   2022-01 to the current one (Yahoo Finance before March 2024, the daily
+   currency feed after) and never overwrites a month already present, so it
+   is safe to re-run.
+5. **Maps (live tracking map).** Enable the **Routes API** on the server key
    behind `GOOGLE_MAPS_API_KEY` — it already carries Places and Geocoding;
    without Routes every order draws a straight line between geocoded
    endpoints instead of the road. Then create a second, *browser* key with
@@ -194,16 +256,21 @@ When enabling:
    DATABASE_URL=<prod url> node packages/db/scripts/promote-admin.mjs <email>
    ```
 
-3. Smoke test: sign out/in (lands on Orders), create a test order and
+3. Smoke test: sign out/in (lands on the Dashboard), create a test order and
    delete/cancel it, open Settings and set a password, run the
-   forgot-password flow end to end, confirm `https://<prod origin>/api/cron/tracking`
-   answers 401 without a signature.
+   forgot-password flow end to end, open `/metrics` and confirm the cards
+   load and no month is marked ≈ (a borrowed rate), confirm
+   `https://<prod origin>/api/cron/tracking` answers 401 without a
+   signature.
 
 ## Known deferred items (v1)
 
 - Phone/SMS OTP and the 2FA challenge page — settings cards hidden until
   built; do not re-enable the cards before `/2fa` exists.
-- Dashboard, Metrics, Stats pages — nav section hidden.
+- Stats page — nav entry hidden, still deferred. Metrics no longer is: it
+  ships as its own entry beside the Dashboard at `/metrics`
+  (`/estatisticas` in pt). Nor is the Dashboard, which ships as the landing
+  page (`/dashboard` in both locales) above the Ops rail.
 - Activity log has no reader UI yet (write-only audit trail).
 - KYC file URLs that leaked before the read proxy shipped remain
   fetchable until EdgeStore objects are re-keyed.
