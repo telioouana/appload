@@ -64,6 +64,8 @@
                 "unread": "Mensagens por ler",
                 "silent": "Camiões em silêncio",
                 "review": "Documentos por rever",
+                "claims-shippers": "Acesso ao portal — clientes",
+                "claims-carriers": "Acesso ao portal — transportadores",
                 "shippers": "Clientes",
                 "carriers": "Transportadores",
                 "drivers": "Motoristas",
@@ -2869,6 +2871,8 @@
                 "profile": "Perfil",
                 "incomplete": "Perfil incompleto",
                 "incomplete-hint": "NUIT, telefone ou email ainda em falta",
+                "claims": "Acesso ao portal pedido",
+                "claims-hint": "Alguém pediu para gerir esta empresa",
                 "contract-options": {
                     "valid": "Válido",
                     "missing": "Em falta ou expirado"
@@ -3168,6 +3172,7 @@
                     "fleet": "Frota",
                     "drivers": "Motoristas",
                     "orders": "Ordens",
+                    "portal": "Portal",
                     "activity": "Actividade"
                 },
                 "type": {
@@ -3343,6 +3348,64 @@
                 "confirmed": "Tem WhatsApp — abrir conversa",
                 "unreachable": "Não contactável por WhatsApp: a última mensagem falhou",
                 "start": "Iniciar conversa no WhatsApp"
+            },
+            "portal": {
+                "title": "Portal",
+                "inactive": "Ainda não está no portal",
+                "since": "No portal desde {date}",
+                "members": "{count, plural, =0 {ainda sem utilizadores} one {# utilizador} other {# utilizadores}}",
+                "claims": "Pedidos de acesso",
+                "no-claims": "Não há nada à espera de decisão.",
+                "approve": "Aprovar",
+                "reject": "Recusar",
+                "approved": "Acesso aprovado",
+                "rejected": "Pedido recusado",
+                "email-verified": "Email verificado",
+                "email-unverified": "Email por verificar",
+                "email-match": "Igual ao email registado",
+                "email-differs": "Diferente do email registado",
+                "reject-title": "Recusar este pedido",
+                "reject-description": "Quem pediu recebe a sua resposta por email.",
+                "reject-note": "Motivo (opcional)",
+                "reject-placeholder": "Porque é que o pedido não é aprovado",
+                "cancel": "Cancelar",
+                "access": "Acesso ao portal",
+                "no-members": "Ainda ninguém entra no portal por esta empresa.",
+                "invitations": "Convites pendentes",
+                "invitation-expires": "Expira",
+                "invitation-expired": "Expirado",
+                "role": {
+                    "owner": "Proprietário",
+                    "admin": "Administrador",
+                    "member": "Utilizador"
+                },
+                "invite": "Convidar proprietário",
+                "invite-title": "Convidar um proprietário do portal",
+                "invite-description": "Recebe um link válido durante 48 horas e passa a ser o proprietário desta empresa no portal.",
+                "invite-name": "Nome",
+                "invite-name-placeholder": "Quem está a convidar",
+                "invite-email": "Email",
+                "invite-email-placeholder": "Para onde enviar o convite",
+                "invite-send": "Enviar convite",
+                "invite-sent": "Convite enviado para {email}",
+                "subscription": "Subscrição",
+                "plan": "Plano",
+                "plan-free": "Gratuito",
+                "plan-pro": "Pro",
+                "expires": "Validade",
+                "no-expiry": "Sem data de fim",
+                "clear-expiry": "Retirar a data de fim",
+                "subscription-save": "Guardar plano",
+                "subscription-saved": "Plano actualizado",
+                "subscription-locked": "Só um gestor pode alterar o plano.",
+                "errors": {
+                    "name": "Indique um nome",
+                    "email": "Indique um email válido",
+                    "ALREADY_DECIDED": "Este pedido já foi respondido.",
+                    "NOT_ALLOWED": "O seu perfil não permite esta acção.",
+                    "NOT_FOUND": "Este registo já não existe.",
+                    "UNKNOWN": "Algo correu mal. Tente novamente."
+                }
             }
         },
         "list": {
@@ -3616,7 +3679,12 @@
         },
         "organizations": {
             "register": "Registou a organização {name}",
-            "update": "Actualizou {name} ({changedFields})"
+            "update": "Actualizou {name} ({changedFields})",
+            "setSubscription": "Colocou {name} no plano {plan} (validade {expiresAt})"
+        },
+        "partners": {
+            "decideClaim": "Marcou o pedido de acesso ao portal {claimId} como {decision}",
+            "inviteOwner": "Convidou {email} para gerir a organização {organizationId} no portal"
         },
         "chats": {
             "start": "Iniciou uma conversa com {driverName}",

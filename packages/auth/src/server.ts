@@ -48,6 +48,11 @@ export const auth = betterAuth({
     baseURL: {
         allowedHosts: [
             process.env.BETTER_AUTH_URL,
+            // The partner portal is a second origin on this one instance. Without
+            // it here a portal request falls through to the fallback, and the
+            // verification and reset links are built on the admin origin —
+            // where /verify-email does not exist and /reset-password is staff's
+            process.env.NEXT_PUBLIC_PORTAL_URL,
             "http://localhost:3000",
             "http://localhost:3001",
             "http://localhost:3002",
@@ -74,6 +79,7 @@ export const auth = betterAuth({
     // points at a deployed origin
     trustedOrigins: [
         process.env.BETTER_AUTH_URL,
+        process.env.NEXT_PUBLIC_PORTAL_URL,
         ...(process.env.NODE_ENV !== "production"
             ? [
                 "http://localhost:3000",
@@ -262,13 +268,14 @@ export const auth = betterAuth({
         sendResetPassword: async ({ user, url }) => {
             const result = await sendEmail({
                 to: [user.email],
-                subject: "Reset your password",
+                subject: "Redefinir a sua palavra-passe",
                 html: brandedEmail({
-                    title: "Reset your password",
-                    lines: ["A password reset was requested for your Appload account. The link below expires after one hour."],
-                    ctaLabel: "Reset password",
+                    locale: "pt",
+                    title: "Redefinir a sua palavra-passe",
+                    lines: ["Foi pedida a redefinição da palavra-passe da sua conta Appload. O link abaixo expira ao fim de uma hora."],
+                    ctaLabel: "Redefinir palavra-passe",
                     ctaUrl: url,
-                    disclaimer: "If you did not request this, you can safely ignore this email — your password stays unchanged.",
+                    disclaimer: "Se não foi você que pediu, pode ignorar este email — a sua palavra-passe fica como está.",
                 }),
             });
 
@@ -307,13 +314,14 @@ export const auth = betterAuth({
         sendVerificationEmail: async ({ user, url }) => {
             await sendEmail({
                 to: [user.email],
-                subject: "Verify your email",
+                subject: "Confirme o seu email",
                 html: brandedEmail({
-                    title: "Verify your email",
-                    lines: ["Confirm the email address on your Appload account to finish setting it up."],
-                    ctaLabel: "Verify email",
+                    locale: "pt",
+                    title: "Confirme o seu email",
+                    lines: ["Confirme o endereço de email da sua conta Appload para terminar de a configurar."],
+                    ctaLabel: "Confirmar email",
                     ctaUrl: url,
-                    disclaimer: "If you did not create an Appload account, you can safely ignore this email.",
+                    disclaimer: "Se não criou uma conta Appload, pode ignorar este email.",
                 }),
             });
         },
@@ -389,6 +397,18 @@ export const auth = betterAuth({
             // into that registry beside the gate
             allowUserToCreateOrganization: false,
             organizationLimit: 1,
+            // Nothing deletes organizations — Admin closes them with
+            // `status: "closed"`. Left open, POST /organization/delete needs
+            // only `organization:delete` (which every owner holds) and would
+            // wipe the registry row plus its cascades; on neon-http, which has
+            // no transactions, a delete blocked by an order's FK still leaves
+            // the member rows gone and every portal user of that partner out
+            disableOrganizationDeletion: true,
+            // Otherwise an invitation link is enough on its own: accept only
+            // checks that the signed-in address equals the invited one, never
+            // that the address was proven. Every other portal door already
+            // requires a verified address
+            requireEmailVerificationOnInvitation: true,
             ac: oac,
             roles: {
                 owner,
@@ -398,22 +418,38 @@ export const auth = betterAuth({
             schema: {
                 organization: {
                     additionalFields: {
+                        // `input: false` on the four below is the gate on
+                        // POST /organization/update: it builds its body from
+                        // every additional field that does not opt out, and
+                        // the only permission it asks for is
+                        // `organization:update` — which owners and admins hold.
+                        // An array type even degrades to z.any() there, so the
+                        // enum would not be enforced either. These four are
+                        // authorization and registry state (the pro gate, the
+                        // approval status, which procedures the tenant passes,
+                        // the key the logbook and every document are keyed on);
+                        // Admin writes them by direct Drizzle insert/update,
+                        // which is unaffected.
                         subscriptionPlan: {
                             type: ["free", "pro"],
                             required: true,
+                            input: false,
                             defaultValue: "free"
                         },
                         nuit: {
                             type: "string",
                             required: true,
+                            input: false,
                             unique: true,
                         },
                         type: {
                             required: true,
+                            input: false,
                             type: ["shipper", "carrier"]
                         },
                         status: {
                             required: true,
+                            input: false,
                             type: ["pending", "active", "closed"],
                             defaultValue: "pending"
                         },
@@ -449,13 +485,14 @@ export const auth = betterAuth({
                 const base = process.env.NEXT_PUBLIC_PORTAL_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
                 await sendEmail({
                     to: [email],
-                    subject: `Invitation to join ${organization.name}`,
+                    subject: `Convite para entrar na ${organization.name}`,
                     html: brandedEmail({
-                        title: `Join ${organization.name} on Appload`,
-                        lines: [`${inviter.user.email} invited you to join ${organization.name} on Appload.`],
-                        ctaLabel: "Accept the invitation",
+                        locale: "pt",
+                        title: `Entrar na ${organization.name} na Appload`,
+                        lines: [`${inviter.user.name} convidou-o para entrar na ${organization.name} na Appload.`],
+                        ctaLabel: "Aceitar o convite",
                         ctaUrl: `${base}/accept-invitation/${invitation.id}`,
-                        disclaimer: "If you were not expecting this invitation, you can safely ignore this email.",
+                        disclaimer: "Se não estava à espera deste convite, pode ignorar este email.",
                     }),
                 });
             }

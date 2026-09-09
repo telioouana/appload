@@ -5,6 +5,7 @@ import { and, asc, eq, ilike, or } from "drizzle-orm";
 import { organization } from "@workspace/db/schema";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
+import { notify } from "@workspace/domain/notifications";
 
 import { uniqueViolationConstraint } from "@/lib/db-errors";
 import { RegisterOrganizationBaseSchema, UpdateOrganizationBaseSchema } from "@/backend/schemas/register-organization";
@@ -195,6 +196,45 @@ export const organizationsRouter = createTRPCRouter({
             } catch (error) {
                 mapOrganizationUniqueViolation(error);
             }
+        }),
+
+    /**
+     * The partner's portal plan. There are no payments: ops agrees a plan
+     * commercially and records it here, and the portal gates its pro
+     * screens on `plan = 'pro' and (expires is null or expires > now())`.
+     * Supervisory — a plan is a commercial decision, not day-to-day ops.
+     */
+    setSubscription: authorizedProcedure("subscription", ["update"])
+        .input(z.object({
+            id: z.string().nonempty(),
+            plan: z.enum(["free", "pro"]),
+            // Null is an open-ended subscription, not an expired one
+            expiresAt: z.date().nullable(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const [updated] = await ctx.db
+                .update(organization)
+                .set({ subscriptionPlan: input.plan, subscriptionExpiresAt: input.expiresAt })
+                .where(eq(organization.id, input.id))
+                .returning({
+                    id: organization.id,
+                    name: organization.name,
+                    plan: organization.subscriptionPlan,
+                    expiresAt: organization.subscriptionExpiresAt,
+                });
+
+            if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+
+            // Everyone on the partner's side hears about it; an organization
+            // with nobody on the portal yet notifies nobody
+            await notify(ctx.db, {
+                organizationId: updated.id,
+                kind: "subscription.changed",
+                params: { plan: updated.plan },
+                email: true,
+            });
+
+            return updated;
         }),
 });
 

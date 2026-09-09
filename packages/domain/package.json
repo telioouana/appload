@@ -23,6 +23,7 @@
         "typescript": "^5"
     },
     "exports": {
+        "./notifications": "./src/notifications.ts",
         "./orders/*": "./src/orders/*.ts",
         "./kyc/*": "./src/kyc/*.ts",
         "./kpis/*": "./src/kpis/*.ts",

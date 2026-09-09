@@ -13,6 +13,12 @@
       "runtimeArgs": ["--filter", "website", "dev"],
       "port": 3100,
       "autoPort": true
+    },
+    {
+      "name": "app",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "app", "dev"],
+      "port": 3001
     }
   ]
 }

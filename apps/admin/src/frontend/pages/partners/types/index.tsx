@@ -233,6 +233,7 @@ export const organizationsListInput = (get: Get) => ({
     contract: oneOf(get("contract"), CONTRACT_FILTERS),
     risk: oneOf(get("risk"), RISK_FILTERS),
     province: text(get("province")),
+    claims: flag(get("claims")),
 })
 
 export const driversListInput = (get: Get) => ({
@@ -272,6 +273,7 @@ export const FILTER_KEYS = [
     "phone",
     "unassigned",
     "carrier",
+    "claims",
     "page",
 ] as const
 

@@ -51,6 +51,7 @@ export function usePartnerList(defaultSort: string) {
         const expiring = get("expiring")
         if (expiring) push("expiring", t("filters.expiring"), t("filters.within-days", { days: Number(expiring) || EXPIRY_WINDOW_DAYS }))
         if (get("incomplete")) push("incomplete", t("filters.profile"), t("filters.incomplete"))
+        if (get("claims")) push("claims", t("portal.title"), t("filters.claims"))
 
         const contract = get("contract")
         if (contract === "valid" || contract === "missing") push("contract", t("columns.contract"), t(`filters.contract-options.${contract}`))
@@ -86,5 +87,5 @@ export function withoutPaging<T extends { page: number; pageSize: number }>(inpu
 
 /** Whether anything narrows the list beyond its natural scope. */
 export const isFilteredList = (get: (key: string) => string | null) =>
-    ["search", "status", "expiring", "incomplete", "contract", "risk", "province", "ownership", "phone", "unassigned", "carrier"]
+    ["search", "status", "expiring", "incomplete", "contract", "risk", "province", "ownership", "phone", "unassigned", "carrier", "claims"]
         .some((key) => Boolean(get(key)))

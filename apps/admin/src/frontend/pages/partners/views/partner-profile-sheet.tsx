@@ -18,6 +18,7 @@ import { useTRPC } from "@/backend/api/client"
 import { initials, Mono, PlateChip } from "@/components/list/table-cells"
 import { DocumentChecklist } from "@/frontend/pages/kyc/sections/document-checklist"
 import { StandingMenu } from "@/frontend/pages/partners/sections/standing-menu"
+import { PortalSection } from "@/frontend/pages/partners/sections/portal-section"
 import { EditPartnerDialog, emptyLocation } from "@/frontend/pages/partners/sections/edit-partner-dialog"
 import { ContractChip, KycBadge, OwnershipBadge, RiskBadge } from "@/frontend/pages/partners/sections/badges"
 import {
@@ -240,6 +241,7 @@ function OrganizationPanel({ id, tab, onTab, onClose }: PanelProps) {
             { value: "drivers" as const, label: t("profile.tabs.drivers"), count: profile.fleet.drivers },
         ] : []),
         { value: "orders", label: t("profile.tabs.orders"), count: profile.performance.totalOrders },
+        { value: "portal", label: t("profile.tabs.portal") },
         { value: "activity", label: t("profile.tabs.activity") },
     ]
 
@@ -296,6 +298,14 @@ function OrganizationPanel({ id, tab, onTab, onClose }: PanelProps) {
             {tab === "fleet" && <FleetTab organizationId={profile.id} />}
             {tab === "drivers" && <DriversTab organizationId={profile.id} />}
             {tab === "orders" && <OrdersTab subjectType={profile.type} subjectId={profile.id} />}
+            {tab === "portal" && (
+                <PortalSection
+                    organizationId={profile.id}
+                    portalActivatedAt={profile.portalActivatedAt}
+                    subscriptionPlan={profile.subscriptionPlan}
+                    subscriptionExpiresAt={profile.subscriptionExpiresAt}
+                />
+            )}
             {tab === "activity" && (
                 <ActivityTab
                     subjectType="organization"
@@ -386,7 +396,7 @@ function DriverPanel({ id, tab, onTab, onClose }: PanelProps) {
             {tab === "documents" && <DocumentChecklist subjectType="driver" subjectId={profile.id} />}
             {tab === "orders" && <OrdersTab subjectType="driver" subjectId={profile.id} />}
             {tab === "activity" && <ActivityTab subjectType="driver" subjectId={profile.id} />}
-            {(tab === "fleet" || tab === "drivers") && <DriverOverview profile={profile} onOrders={() => onTab("orders")} />}
+            {(tab === "fleet" || tab === "drivers" || tab === "portal") && <DriverOverview profile={profile} onOrders={() => onTab("orders")} />}
 
             <EditPartnerDialog
                 target={{ kind: "driver", id: profile.id, values: editValues }}
@@ -480,7 +490,7 @@ function VehiclePanel({ kind, id, tab, onTab, onClose }: PanelProps & { kind: Ve
             {tab === "documents" && <DocumentChecklist subjectType={kind} subjectId={profile.id} />}
             {tab === "orders" && <OrdersTab subjectType={kind} subjectId={profile.id} />}
             {tab === "activity" && <ActivityTab subjectType={kind} subjectId={profile.id} />}
-            {(tab === "fleet" || tab === "drivers") && <VehicleOverview profile={profile} onOrders={() => onTab("orders")} />}
+            {(tab === "fleet" || tab === "drivers" || tab === "portal") && <VehicleOverview profile={profile} onOrders={() => onTab("orders")} />}
 
             <EditPartnerDialog
                 target={{ kind: "vehicle", vehicle: kind, id: profile.id, values: editValues }}

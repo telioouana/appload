@@ -133,6 +133,12 @@ export function OrganizationsDataView({ type }: { type: "shipper" | "carrier" })
                                     param="incomplete"
                                     value="1"
                                 />
+                                <FilterToggle
+                                    label={t("filters.claims")}
+                                    hint={t("filters.claims-hint")}
+                                    param="claims"
+                                    value="1"
+                                />
                             </div>
                         </>
                     }

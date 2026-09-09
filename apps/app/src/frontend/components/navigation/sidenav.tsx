@@ -1,0 +1,207 @@
+"use client"
+
+import Image from "next/image"
+import { useEffect } from "react";
+import { type Icon, IconBox, IconBuildingWarehouse, IconChartHistogram, IconFileInvoice, IconLayoutDashboard, IconMap2, IconRoute, IconSettings, IconTruck, IconUsers } from "@tabler/icons-react";
+
+import { routing } from "@/i18n/routing";
+import { useTranslations } from "@workspace/i18n";
+import { Link, usePathname } from "@/i18n/navigation";
+
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@workspace/ui/components/sidebar";
+
+import { cn } from "@workspace/ui/lib/utils";
+
+import { NavPending } from "./nav-pending";
+import { NavUser } from "./nav-user";
+
+// Internal pathnames accepted as `href` by the typed next-intl `Link`.
+// Dynamic routes (e.g. /orders/[section]) need a params object, so they are
+// excluded from the plain-string nav entries — the milestone that builds one
+// gives its entry the object form.
+type AppPathname = Exclude<keyof typeof routing.pathnames, `${string}[${string}`>;
+
+/**
+ * A rail entry. Everything but the dashboard and the settings page is still
+ * unbuilt, so the rest render as their own labels with a "soon" mark rather
+ * than as links to a 404 — the shape of the portal is visible from the first
+ * sign-in, and a later milestone only flips `enabled` and hands over a path.
+ */
+type NavEntry = {
+    Icon: Icon;
+    name: string;
+    /** Active matching and the React key; a route need not exist for it */
+    match: string;
+} & (
+        | { enabled: true; path: AppPathname }
+        | { enabled: false; path?: undefined }
+    );
+
+const ITEM_CLASSES = [
+    "flex-none cursor-pointer rounded-full whitespace-nowrap text-sm text-secondary-foreground h-9 bg-sidebar border-none px-4 py-2",
+    "hover:bg-linear-to-r/oklch from-primary from-0% via-50% via-sidebar-primary/75 to-sidebar-primary/50 hover:text-white",
+    "data-active:bg-linear-to-r/oklch data-active:text-white",
+    "data-open:hover:bg-linear-to-r/oklch data-open:hover:text-white active:bg-linear-to-r/oklch active:text-white",
+];
+
+// Heads each area of the rail in the same quiet key as the rest of it, so the
+// name separates the two lists without drawing a line between them.
+const SECTION_LABEL_CLASSES = "px-4 text-[11px] font-semibold tracking-wider uppercase text-sidebar-foreground/60";
+
+export function Sidenav({
+    orgType,
+    ...props
+}: React.ComponentProps<typeof Sidebar> & { orgType: "shipper" | "carrier" }) {
+    const t = useTranslations("App.shell.sidebar")
+    const g = useTranslations("General")
+    const pathname = usePathname()
+    const { setOpenMobile } = useSidebar()
+
+    // On a phone the nav is a sheet laid over the page, so following a link
+    // has to dismiss it — otherwise it sits on top of what it just opened.
+    // Keyed on the path so every link is covered, present and future.
+    useEffect(() => {
+        setOpenMobile(false)
+    }, [pathname, setOpenMobile])
+
+    const work: NavEntry[] = [
+        {
+            // Where signing in lands and where the logo goes back to
+            Icon: IconLayoutDashboard,
+            name: t("work.dashboard"),
+            match: "/dashboard",
+            enabled: true,
+            path: "/dashboard",
+        },
+        { Icon: IconBox, name: t("work.orders"), match: "/orders", enabled: false },
+        { Icon: IconFileInvoice, name: t("work.quotes"), match: "/quotes", enabled: false },
+        { Icon: IconRoute, name: t("work.trips"), match: "/trips", enabled: false },
+        { Icon: IconMap2, name: t("work.map"), match: "/map", enabled: false },
+    ]
+
+    const company: NavEntry[] = [
+        // Fleet and drivers are the carrier's own assets; a shipper has
+        // neither, so the two rows are absent rather than disabled for it
+        ...(orgType === "carrier"
+            ? [
+                { Icon: IconTruck, name: t("company.fleet"), match: "/fleet", enabled: false } as NavEntry,
+                { Icon: IconUsers, name: t("company.drivers"), match: "/drivers", enabled: false } as NavEntry,
+            ]
+            : []),
+        { Icon: IconBuildingWarehouse, name: t("company.partners"), match: "/partners", enabled: false },
+        { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", enabled: false },
+    ]
+
+    const renderEntries = (entries: NavEntry[]) => entries.map((item) => {
+        const isActive = pathname.startsWith(item.match);
+
+        return (
+            <SidebarMenuItem key={item.match}>
+                <SidebarMenuButton
+                    asChild
+                    tooltip={item.enabled ? item.name : `${item.name} — ${t("soon")}`}
+                    isActive={isActive}
+                    className={cn(
+                        ...ITEM_CLASSES,
+                        isActive && "bg-linear-to-r/oklch border-[#E67623]/10",
+                        !item.enabled && "cursor-default opacity-60 hover:bg-none hover:text-secondary-foreground",
+                    )}
+                >
+                    {item.enabled ? (
+                        <Link href={item.path}>
+                            <item.Icon className="size-5!" stroke={1} />
+                            <NavPending className="font-medium tracking-tight">
+                                {item.name}
+                            </NavPending>
+                        </Link>
+                    ) : (
+                        /* No href on purpose: a page that does not exist yet
+                           must not be a dead link */
+                        <div className="flex w-full items-center gap-2">
+                            <item.Icon className="size-5! shrink-0" stroke={1} />
+                            <span className="flex-1 text-left font-medium tracking-tight">{item.name}</span>
+                            <span className="text-[10px] uppercase tracking-wider text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden">
+                                {t("soon")}
+                            </span>
+                        </div>
+                    )}
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+        )
+    })
+
+    return (
+        <Sidebar variant="inset" collapsible="icon" {...props}>
+            <SidebarHeader>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton size="lg" asChild tooltip={g("app-name")}>
+                            <Link href="/dashboard">
+                                <div className="text-primary-foreground flex aspect-square size-12 items-center justify-center rounded-2xl">
+                                    <Image src="/logos/logo-unlabel.svg" alt={g("app-name")} width={40} height={40} className="size-10" unoptimized />
+                                </div>
+                                <div className="grid flex-1 text-left text-lg leading-tight">
+                                    <span className="truncate font-semibold tracking-wide">
+                                        {g("app-name")}
+                                    </span>
+                                    <span className="text-muted-foreground truncate text-sm">
+                                        {g("slogan")}
+                                    </span>
+                                </div>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarHeader>
+
+            <SidebarContent>
+                <SidebarGroup>
+                    <SidebarGroupLabel className={SECTION_LABEL_CLASSES}>
+                        {t("work.label")}
+                    </SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu className="gap-2">
+                            {renderEntries(work)}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarGroupLabel className={SECTION_LABEL_CLASSES}>
+                        {t("company.label")}
+                    </SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu className="gap-2">
+                            {renderEntries(company)}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+            </SidebarContent>
+
+            <SidebarFooter>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            tooltip={t("settings")}
+                            isActive={pathname.startsWith("/settings")}
+                            className={cn(
+                                ...ITEM_CLASSES,
+                                pathname.startsWith("/settings") && "bg-linear-to-r/oklch border-[#E67623]/10",
+                            )}
+                        >
+                            <Link href="/settings">
+                                <IconSettings className="size-5!" stroke={1} />
+                                <NavPending className="font-medium tracking-tight">
+                                    {t("settings")}
+                                </NavPending>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+
+                <NavUser />
+            </SidebarFooter>
+        </Sidebar>
+    )
+}
