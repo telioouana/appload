@@ -22,15 +22,15 @@ import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
 import { isAuthorized } from "@workspace/auth/user-permissions";
 
-import { effectiveTotals } from "@/lib/orders/totals";
+import { effectiveTotals } from "@workspace/domain/orders/totals";
 import { getSheetsAccessToken } from "@/lib/orders/google-token";
 import { markRecomputePending, syncSheetsAndRecord } from "@/lib/orders/sheet-outbox";
-import { isNote } from "@/lib/orders/note-currency";
+import { isNote } from "@workspace/domain/orders/note-currency";
 import { DEMURRAGE, demurrageFieldsComplete, descriptionRequired, noteDetailsSchema, noteOrderPatch } from "@/lib/orders/note-reasons";
 import { applyDocumentSums } from "@/lib/orders/document-sums";
-import { applyOrderFields, type OrderFieldPatch } from "@/lib/orders/order-facts";
-import { paymentSums } from "@/lib/orders/payment-sums";
-import { PAYMENT_KEYS, isFuturePaymentDate, isProofOfPayment } from "@/lib/orders/payments";
+import { applyOrderFields, type OrderFieldPatch } from "@workspace/domain/orders/order-facts";
+import { paymentSums } from "@workspace/domain/orders/payment-sums";
+import { PAYMENT_KEYS, isFuturePaymentDate, isProofOfPayment } from "@workspace/domain/orders/payments";
 
 import { toTRPCError } from "./procedures";
 

@@ -5,7 +5,7 @@ import type { Order } from "@workspace/db/orders"
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { deriveMilestones, type MilestoneEntry } from "@/lib/orders/milestones"
+import { deriveMilestones, type MilestoneEntry } from "@workspace/domain/orders/milestones"
 
 /**
  * Where the trip is on its chain, one line per stage with the date it was

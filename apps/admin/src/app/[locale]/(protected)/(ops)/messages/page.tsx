@@ -1,6 +1,6 @@
 import { getTranslations } from "@workspace/i18n/server"
+import { isInfobipConfigured } from "@workspace/comms/infobip"
 
-import { isInfobipConfigured } from "@/lib/chats/infobip"
 import { ChatsView } from "@/frontend/pages/chats/views/chats-view"
 
 export async function generateMetadata() {

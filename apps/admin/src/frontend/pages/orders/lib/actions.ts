@@ -1,6 +1,6 @@
 import type { Order } from "@workspace/db/orders";
 
-import { primaryTransition, type OrderStatus } from "@/lib/orders/transitions";
+import { primaryTransition, type OrderStatus } from "@workspace/domain/orders/transitions";
 
 /**
  * What the primary button does. A prospect is booked by accepting one of

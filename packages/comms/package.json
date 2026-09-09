@@ -1,0 +1,24 @@
+{
+    "name": "@workspace/comms",
+    "type": "module",
+    "scripts": {
+        "lint": "eslint",
+        "format": "prettier --write \"**/*.{ts,tsx}\"",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@upstash/qstash": "^2.8.4"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "@workspace/eslint-config": "workspace:*",
+        "@workspace/typescript-config": "workspace:*",
+        "eslint": "^9",
+        "typescript": "^5"
+    },
+    "exports": {
+        "./infobip": "./src/infobip.ts",
+        "./phone": "./src/phone.ts",
+        "./cron": "./src/cron.ts"
+    }
+}

@@ -3,8 +3,8 @@ import { and, eq, inArray, lt, or } from "drizzle-orm";
 
 import { db } from "@workspace/db/db";
 import { order, sheetSync } from "@workspace/db/orders";
+import { authorizeCron } from "@workspace/comms/cron";
 
-import { authorizeCron } from "@/lib/cron/verify";
 import { RECOMPUTE_CONFLICT, pushOrderToSheets, recordSheetSync, sheetCellOptions } from "@/lib/orders/sheet-outbox";
 import { applyDocumentSums } from "@/lib/orders/document-sums";
 import { getServiceAccountAccessToken } from "@/lib/orders/service-account-token";

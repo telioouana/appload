@@ -15,7 +15,7 @@ import { useTRPC } from "@/backend/api/client";
 import { useListParams } from "@/components/list/use-list-params";
 import type { ConversationSummary } from "@/backend/api/routers/chats";
 import { domainErrorCode } from "@/lib/trpc-error";
-import { TRACKED_STATUSES } from "@/lib/tracking/statuses";
+import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
 import { ConversationList, type ConversationFilter } from "@/frontend/pages/chats/sections/conversation-list";
 import { Thread } from "@/frontend/pages/chats/sections/thread";

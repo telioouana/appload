@@ -17,7 +17,7 @@ import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHe
 
 import { useTRPC } from "@/backend/api/client"
 import { domainErrorCode } from "@/lib/trpc-error"
-import { ORDER_ERROR_CODES } from "@/lib/orders/errors"
+import { ORDER_ERROR_CODES } from "@workspace/domain/orders/errors"
 import { PDF_RELEVANT_FIELDS } from "@/lib/orders/pdf"
 import { PATCH_ANCHORS, UpdateOrderSchema, orderToUpdateDefaults, type UpdateOrderForm, type UpdateOrderFormInput } from "@/backend/schemas/order"
 

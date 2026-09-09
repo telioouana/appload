@@ -12,7 +12,7 @@ import { Badge } from "@workspace/ui/components/badge"
 
 import { useTRPC } from "@/backend/api/client"
 import { domainErrorCode } from "@/lib/trpc-error"
-import { isProofOfPayment } from "@/lib/orders/payments"
+import { isProofOfPayment } from "@workspace/domain/orders/payments"
 
 import { SectionCard } from "@/frontend/pages/order/sections/section-card"
 import { DOCUMENT_ERROR_CODES, formType, invoicePartyOf } from "./add-document-dialog"

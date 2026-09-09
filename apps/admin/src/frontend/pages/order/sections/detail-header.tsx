@@ -30,7 +30,7 @@ import {
     DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu"
 
-import type { OrderStatus } from "@/lib/orders/transitions"
+import type { OrderStatus } from "@workspace/domain/orders/transitions"
 import { primaryOrderAction } from "@/frontend/pages/orders/lib/actions"
 import { OrderStatusBadge, place } from "@/frontend/pages/orders/sections/order-item-shared"
 import { ORDER_STATUS_SECTION, SECTION_PATHS } from "@/frontend/pages/orders/types"

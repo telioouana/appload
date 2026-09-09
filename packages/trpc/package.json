@@ -27,6 +27,8 @@
         "./activity-log": "./src/activity-log.ts",
         "./permissions": "./src/permissions.ts",
         "./staff-gate": "./src/staff-gate.ts",
+        "./tenant-gate": "./src/tenant-gate.ts",
+        "./tenant": "./src/tenant.ts",
         "./query-client": "./src/query-client.ts"
     }
 }

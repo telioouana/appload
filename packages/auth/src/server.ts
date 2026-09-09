@@ -445,7 +445,8 @@ export const auth = betterAuth({
                 }
             },
             sendInvitationEmail: async ({ email, inviter, invitation, organization }) => {
-                const base = process.env.NEXT_PUBLIC_APP_URL ?? "";
+                // The accept page lives in the partner portal
+                const base = process.env.NEXT_PUBLIC_PORTAL_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
                 await sendEmail({
                     to: [email],
                     subject: `Invitation to join ${organization.name}`,

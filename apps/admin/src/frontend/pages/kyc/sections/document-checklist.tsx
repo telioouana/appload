@@ -14,7 +14,7 @@ import { Spinner } from "@workspace/ui/components/spinner"
 
 import { useTRPC } from "@/backend/api/client"
 import { domainErrorCode } from "@/lib/trpc-error"
-import { REQUIRED_DOCS, requirementFor } from "@/lib/kyc/requirements"
+import { REQUIRED_DOCS, requirementFor } from "@workspace/domain/kyc/requirements"
 import { DocumentDecision } from "@/frontend/pages/kyc/sections/document-decision"
 import { DocumentSlot } from "@/frontend/pages/kyc/sections/document-slot"
 import { DocumentUpload } from "@/frontend/pages/kyc/sections/document-upload"

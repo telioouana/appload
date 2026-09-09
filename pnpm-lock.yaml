@@ -65,15 +65,24 @@ importers:
       '@workspace/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@workspace/comms':
+        specifier: workspace:*
+        version: link:../../packages/comms
       '@workspace/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@workspace/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@workspace/edgestore':
         specifier: workspace:*
         version: link:../../packages/edgestore
       '@workspace/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
+      '@workspace/maps':
+        specifier: workspace:*
+        version: link:../../packages/maps
       '@workspace/trpc':
         specifier: workspace:*
         version: link:../../packages/trpc
@@ -261,6 +270,28 @@ importers:
         specifier: ^5
         version: 5.9.3
 
+  packages/comms:
+    dependencies:
+      '@upstash/qstash':
+        specifier: ^2.8.4
+        version: 2.11.3
+    devDependencies:
+      '@types/node':
+        specifier: ^20
+        version: 20.19.43
+      '@workspace/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@workspace/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      eslint:
+        specifier: ^9
+        version: 9.39.5(jiti@2.7.0)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
   packages/db:
     dependencies:
       '@neondatabase/serverless':
@@ -288,6 +319,46 @@ importers:
       drizzle-kit:
         specifier: 0.31.10
         version: 0.31.10
+      eslint:
+        specifier: ^9
+        version: 9.39.5(jiti@2.7.0)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/domain:
+    dependencies:
+      '@trpc/server':
+        specifier: ^11.18.0
+        version: 11.18.0(typescript@5.9.3)
+      '@workspace/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@workspace/comms':
+        specifier: workspace:*
+        version: link:../comms
+      '@workspace/db':
+        specifier: workspace:*
+        version: link:../db
+      drizzle-orm:
+        specifier: 0.45.2
+        version: 0.45.2(@neondatabase/serverless@1.1.0)(kysely@0.29.5)
+      server-only:
+        specifier: ^0.0.1
+        version: 0.0.1
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: ^20
+        version: 20.19.43
+      '@workspace/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@workspace/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       eslint:
         specifier: ^9
         version: 9.39.5(jiti@2.7.0)
@@ -404,6 +475,58 @@ importers:
       react:
         specifier: 19.2.4
         version: 19.2.4
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/maps:
+    dependencies:
+      '@tabler/icons-react':
+        specifier: ^3.44.0
+        version: 3.46.0(react@19.2.4)
+      '@vis.gl/react-google-maps':
+        specifier: 1.9.0
+        version: 1.9.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@workspace/db':
+        specifier: workspace:*
+        version: link:../db
+      '@workspace/i18n':
+        specifier: workspace:*
+        version: link:../i18n
+      '@workspace/ui':
+        specifier: workspace:*
+        version: link:../ui
+      next-themes:
+        specifier: ^0.4.6
+        version: 0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react:
+        specifier: 19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: 19.2.4
+        version: 19.2.4(react@19.2.4)
+      server-only:
+        specifier: ^0.0.1
+        version: 0.0.1
+    devDependencies:
+      '@types/node':
+        specifier: ^20
+        version: 20.19.43
+      '@types/react':
+        specifier: ^19
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.4(@types/react@19.2.18)
+      '@workspace/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@workspace/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      eslint:
+        specifier: ^9
+        version: 9.39.5(jiti@2.7.0)
       typescript:
         specifier: ^5
         version: 5.9.3
@@ -4324,6 +4447,7 @@ packages:
   eslint@9.39.5:
     resolution: {integrity: sha512-DgZS62aPLXKlnxILS/AYCoRvHaZeXceIzlXPkkGGzJWSow1aEk0lbTlxUSlyjC8jcaKxAdOnTDz+o1JFSBsyjw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'

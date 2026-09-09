@@ -7,7 +7,7 @@ import type { DocumentParty, OrderDocument } from "@workspace/db/orders"
 
 import { Button } from "@workspace/ui/components/button"
 
-import { isProofOfPayment } from "@/lib/orders/payments"
+import { isProofOfPayment } from "@workspace/domain/orders/payments"
 
 /**
  * One party's proofs of payment on the details page: the live proofs from

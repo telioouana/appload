@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@workspace/db/db";
+import { authorizeCron } from "@workspace/comms/cron";
 
-import { authorizeCron } from "@/lib/cron/verify";
-import { currentSlotInfo, runTrackingSlot } from "@/lib/tracking/run-slot";
+import { currentSlotInfo } from "@workspace/domain/tracking/slot";
+import { runTrackingSlot } from "@/lib/tracking/run-slot";
 
 // Sequential Infobip + Neon-HTTP round trips per order; the batch cap in
 // run-slot keeps this inside the ceiling. 60 is the Vercel Hobby maximum —

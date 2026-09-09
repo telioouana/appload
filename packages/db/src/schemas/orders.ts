@@ -31,6 +31,12 @@ export type Location = {
     state: string;
 };
 
+// Which app the order was created in. Text + TS const so a new front door
+// never needs an ALTER TYPE on the shared database.
+export const ORDER_SOURCE = ["admin", "client", "carrier"] as const;
+
+export type OrderSource = (typeof ORDER_SOURCE)[number];
+
 export const order = pgTable(
     "order",
     {
@@ -207,6 +213,10 @@ export const order = pgTable(
         // never edit it
         disputeStatus: text("dispute_status", { enum: DISPUTE_STATUS }),
 
+        // Where the order came from: Admin ops, or a portal tenant on either
+        // side of the deal
+        source: text("source", { enum: ORDER_SOURCE }).default("admin").notNull(),
+
         createdBy: text("created_by").references(() => user.id),
         createdAt: timestamp("created_at").defaultNow().notNull(),
         updatedAt: timestamp("updated_at")
@@ -214,8 +224,14 @@ export const order = pgTable(
             .$onUpdate(() => /* @__PURE__ */ new Date())
             .notNull(),
     },
-    // Single arbiter for concurrent Order Id generation
-    (table) => [uniqueIndex("order_year_seq_idx").on(table.year, table.seq)],
+    (table) => [
+        // Single arbiter for concurrent Order Id generation
+        uniqueIndex("order_year_seq_idx").on(table.year, table.seq),
+        // Tenant lists: one party's orders, newest loading date first
+        index("order_shipper_loading_idx").on(table.shipperId, table.expectedLoadingDate),
+        index("order_carrier_loading_idx").on(table.carrierId, table.expectedLoadingDate),
+        index("order_status_idx").on(table.status),
+    ],
 );
 
 export type Order = typeof order.$inferSelect
@@ -266,7 +282,11 @@ export const orderHistory = pgTable(
         metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}).notNull(),
         createdAt: timestamp("created_at").defaultNow().notNull(),
     },
-    (table) => [index("order_history_order_created_idx").on(table.orderId, table.createdAt)],
+    (table) => [
+        index("order_history_order_created_idx").on(table.orderId, table.createdAt),
+        // The portal materializes notifications by sweeping the trail by time
+        index("order_history_created_idx").on(table.createdAt),
+    ],
 );
 
 export type OrderHistory = typeof orderHistory.$inferSelect
@@ -560,6 +580,8 @@ export const orderOffer = pgTable(
     },
     (table) => [
         index("order_offer_order_idx").on(table.orderId),
+        // A carrier's own offers, the portal's quote list
+        index("order_offer_carrier_status_idx").on(table.carrierId, table.status),
         // One accepted offer per order: the booking itself
         uniqueIndex("order_offer_accepted_uidx").on(table.orderId).where(sql`${table.status} = 'accepted'`),
     ],

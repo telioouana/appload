@@ -16,7 +16,7 @@ import { DecimalInput } from "@workspace/ui/inputs/decimal"
 import { TextAreaInput } from "@workspace/ui/inputs/textarea"
 
 import { useTRPC } from "@/backend/api/client"
-import { priceOffer, VAT_RATE, type RouteKind } from "@/lib/orders/commission"
+import { priceOffer, VAT_RATE, type RouteKind } from "@workspace/domain/orders/commission"
 import { OrganizationInput } from "@/components/inputs/organization"
 
 /** The eleven form fields one offer occupies, wherever its host form keeps them. */

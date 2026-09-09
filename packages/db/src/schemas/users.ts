@@ -105,6 +105,14 @@ export const organization = pgTable(
         subscriptionPlan: text("subscription_plan", { enum: ["free", "pro"] })
             .default("free")
             .notNull(),
+        // When the pro plan runs out; null on the free plan and on a
+        // subscription with no end date. The gate is
+        // `plan = 'pro' and (expires is null or expires > now())`. Written by
+        // Drizzle only, never a Better Auth additional field
+        subscriptionExpiresAt: timestamp("subscription_expires_at"),
+        // Set when the organization's first owner joins the partner portal;
+        // null means it exists in the database but nobody uses the portal yet
+        portalActivatedAt: timestamp("portal_activated_at"),
         nuit: text("nuit").notNull().unique(),
         type: text("type", { enum: ["shipper", "carrier"] }).notNull(),
         status: text("status", { enum: ["pending", "active", "closed"] })

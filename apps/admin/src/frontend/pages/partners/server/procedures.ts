@@ -13,8 +13,8 @@ import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
 
 import { ACTIVE_STATUSES } from "@/frontend/pages/orders/types";
-import { addDays, docProgress, today, type CurrentDoc } from "@/lib/kyc/derive";
-import { CONTRACT_DOC, subjectKind } from "@/lib/kyc/requirements";
+import { addDays, docProgress, today, type CurrentDoc } from "@workspace/domain/kyc/derive";
+import { CONTRACT_DOC, subjectKind } from "@workspace/domain/kyc/requirements";
 import {
     CONTRACT_FILTERS,
     DRIVER_SORTS,

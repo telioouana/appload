@@ -4,7 +4,7 @@ import { db } from "@workspace/db/db";
 import { account } from "@workspace/db/schema";
 import type { Auth } from "@workspace/auth/server";
 
-import { OrderError } from "./errors";
+import { OrderError } from "@workspace/domain/orders/errors";
 import { getServiceAccountAccessToken } from "./service-account-token";
 
 export const SPREADSHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";

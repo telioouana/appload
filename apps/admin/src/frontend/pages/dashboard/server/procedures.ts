@@ -5,7 +5,7 @@ import { order } from "@workspace/db/orders";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
 
-import { conditionCount, statusCount, thisYear } from "@/lib/orders/predicates";
+import { conditionCount, statusCount, thisYear } from "@workspace/domain/orders/predicates";
 import { ACTIVE_STATUSES } from "@/frontend/pages/orders/types";
 import { LOST_STATUSES, type MonthlyOrders, type MonthPoint } from "@/frontend/pages/dashboard/types";
 

@@ -7,6 +7,11 @@ import { IconList, IconMapPin, IconMaximize } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
 
+import { MapCanvas } from "@workspace/maps/components/map-canvas"
+import { GoogleMapsProvider } from "@workspace/maps/components/maps-provider"
+import { RouteLayer } from "@workspace/maps/components/route-layer"
+import { fitMapTo } from "@workspace/maps/lib/use-fit-bounds"
+
 import { Button } from "@workspace/ui/components/button"
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@workspace/ui/components/empty"
 
@@ -15,10 +20,6 @@ import { cn } from "@workspace/ui/lib/utils"
 import { useTRPC } from "@/backend/api/client"
 import { OrderSheet } from "@/frontend/pages/orders/views/order-sheet"
 
-import { MapCanvas } from "@/frontend/pages/map/components/map-canvas"
-import { GoogleMapsProvider } from "@/frontend/pages/map/components/maps-provider"
-import { RouteLayer } from "@/frontend/pages/map/components/route-layer"
-import { fitMapTo } from "@/frontend/pages/map/components/use-fit-bounds"
 import { useMapSelection } from "@/frontend/pages/map/hooks/use-map-selection"
 import { matchesOrder } from "@/frontend/pages/map/lib/search"
 import { MapOrderList } from "@/frontend/pages/map/sections/map-order-list"
@@ -170,7 +171,7 @@ export function MapView() {
                             </EmptyHeader>
                         </Empty>
                     ) : (
-                        <GoogleMapsProvider>
+                        <GoogleMapsProvider missingKeyMessage={t("detail.missing-key")}>
                             {/* The map owns the whole viewport here, so the
                                 wheel zooms it instead of scrolling a page */}
                             <MapCanvas className="h-full w-full" gestureHandling="greedy">

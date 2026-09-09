@@ -29,8 +29,8 @@ import { orderDocumentPath } from "@workspace/edgestore/path"
 
 import { useTRPC } from "@/backend/api/client"
 import { domainErrorCode } from "@/lib/trpc-error"
-import type { OrderStatus } from "@/lib/orders/transitions"
-import { offerAcceptable } from "@/lib/orders/booking-readiness"
+import type { OrderStatus } from "@workspace/domain/orders/transitions"
+import { offerAcceptable } from "@workspace/domain/orders/booking-readiness"
 import { OfferPicker } from "@/frontend/pages/order/components/offer-picker"
 
 const DIALOG_ERROR_CODES = [

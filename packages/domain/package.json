@@ -1,0 +1,31 @@
+{
+    "name": "@workspace/domain",
+    "type": "module",
+    "scripts": {
+        "lint": "eslint",
+        "format": "prettier --write \"**/*.{ts,tsx}\"",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@trpc/server": "^11.18.0",
+        "@workspace/auth": "workspace:*",
+        "@workspace/comms": "workspace:*",
+        "@workspace/db": "workspace:*",
+        "drizzle-orm": "0.45.2",
+        "server-only": "^0.0.1",
+        "zod": "^4.4.3"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "@workspace/eslint-config": "workspace:*",
+        "@workspace/typescript-config": "workspace:*",
+        "eslint": "^9",
+        "typescript": "^5"
+    },
+    "exports": {
+        "./orders/*": "./src/orders/*.ts",
+        "./kyc/*": "./src/kyc/*.ts",
+        "./kpis/*": "./src/kpis/*.ts",
+        "./tracking/*": "./src/tracking/*.ts"
+    }
+}

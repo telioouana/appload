@@ -41,6 +41,19 @@ function config() {
 
 export const isEmailConfigured = () => config() !== null;
 
+const BRANDED_COPY = {
+    en: {
+        fallbackLink: "If the button does not work, open this link:",
+        footer: "Appload — Going the extra mile",
+    },
+    pt: {
+        fallbackLink: "Se o botão não funcionar, abra este link:",
+        // The slogan is a brand mark, not copy: pt.json keeps it in English
+        // too (apps/admin, apps/website), so the footer does not translate.
+        footer: "Appload — Going the extra mile",
+    },
+} as const;
+
 /**
  * Minimal branded shell for transactional emails: logo, title, body copy,
  * one CTA button, muted disclaimer. Inline styles only — email clients
@@ -53,7 +66,12 @@ export function brandedEmail(params: {
     ctaLabel: string;
     ctaUrl: string;
     disclaimer: string;
+    // Switches the two strings this shell owns. Everything else the caller
+    // passes in is already localised on its side. Defaults to English.
+    locale?: "pt" | "en";
 }): string {
+    const copy = BRANDED_COPY[params.locale ?? "en"];
+
     const paragraphs = params.lines
         .map((line) => `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#1f2937;">${line}</p>`)
         .join("");
@@ -68,9 +86,9 @@ export function brandedEmail(params: {
       <div style="margin:24px 0;">
         <a href="${params.ctaUrl}" style="display:inline-block;background:#EE7623;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;">${params.ctaLabel}</a>
       </div>
-      <p style="margin:0 0 12px;font-size:13px;line-height:1.6;color:#6b7280;">If the button does not work, open this link:<br /><a href="${params.ctaUrl}" style="color:#EE7623;word-break:break-all;">${params.ctaUrl}</a></p>
+      <p style="margin:0 0 12px;font-size:13px;line-height:1.6;color:#6b7280;">${copy.fallbackLink}<br /><a href="${params.ctaUrl}" style="color:#EE7623;word-break:break-all;">${params.ctaUrl}</a></p>
       <p style="margin:16px 0 0;font-size:12px;line-height:1.6;color:#9ca3af;">${params.disclaimer}</p>
-      <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;">Appload — Going the extra mile</p>
+      <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;">${copy.footer}</p>
     </div>
   </body>
 </html>`;

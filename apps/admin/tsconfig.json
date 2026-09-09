@@ -8,11 +8,20 @@
             "@workspace/auth/*": [
                 "../../packages/auth/src/*"
             ],
+            "@workspace/comms/*": [
+                "../../packages/comms/src/*"
+            ],
+            "@workspace/domain/*": [
+                "../../packages/domain/src/*"
+            ],
             "@workspace/i18n/*": [
                 "../../packages/i18n/src/*"
             ],
             "@workspace/db/*": [
                 "../../packages/db/src/*"
+            ],
+            "@workspace/maps/*": [
+                "../../packages/maps/src/*"
             ],
             "@workspace/trpc/*": [
                 "../../packages/trpc/src/*"

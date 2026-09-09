@@ -1,33 +1,19 @@
-import { createHash, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq, inArray } from "drizzle-orm";
 
 import { db } from "@workspace/db/db";
 import { chatConversation, chatMessage, trackingRequest } from "@workspace/db/chats";
-
 import {
     locationRequestText,
     parseDeliveryReports,
     parseInboundWebhook,
     sendWhatsAppLocationRequest,
     SHARE_LOCATION_PAYLOAD,
-} from "@/lib/chats/infobip";
-import { normalizePhone } from "@/lib/chats/phone";
-import { recordOrderLocation, resolveOrderForConversation } from "@/lib/tracking/locations";
+} from "@workspace/comms/infobip";
+import { normalizePhone } from "@workspace/comms/phone";
+import { secretMatches } from "@workspace/comms/cron";
 
-/**
- * Constant-time compare that does not leak the secret's length. timingSafeEqual
- * throws on mismatched buffer sizes, so both sides are hashed to a fixed width
- * first.
- */
-function secretMatches(provided: string | null, expected: string): boolean {
-    if (!provided) return false;
-
-    const a = createHash("sha256").update(provided).digest();
-    const b = createHash("sha256").update(expected).digest();
-
-    return timingSafeEqual(a, b);
-}
+import { recordOrderLocation, resolveOrderForConversation } from "@workspace/domain/tracking/locations";
 
 /**
  * Infobip webhook: inbound WhatsApp/SMS messages AND delivery reports both

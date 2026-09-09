@@ -11,7 +11,7 @@ import { SelectItem } from "@workspace/ui/components/select";
 import { FieldGroup, FieldLegend, FieldSeparator, FieldSet, FieldTitle } from "@workspace/ui/components/field";
 
 import { UpdateOrderForm, UpdateOrderFormInput } from "@/backend/schemas/order";
-import { PAYMENT_KEYS } from "@/lib/orders/payments";
+import { PAYMENT_KEYS } from "@workspace/domain/orders/payments";
 
 type Party = "carrier" | "shipper";
 

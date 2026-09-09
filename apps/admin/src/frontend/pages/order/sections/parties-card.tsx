@@ -9,7 +9,7 @@ import type { Order, OrderDocument } from "@workspace/db/orders"
 
 import { PaymentLedger } from "@/frontend/pages/order/components/payment-ledger"
 import { PartyBlock } from "@/frontend/pages/orders/sections/order-item-parts"
-import { effectiveCommission, effectiveTotals } from "@/lib/orders/totals"
+import { effectiveCommission, effectiveTotals } from "@workspace/domain/orders/totals"
 import type { OfferRow } from "@/frontend/pages/order/server/offers-procedures"
 
 import { IncludesChips } from "./offers-card"

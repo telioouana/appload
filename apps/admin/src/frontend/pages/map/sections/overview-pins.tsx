@@ -2,9 +2,10 @@
 
 import { useMemo } from "react"
 
-import { StatusPin } from "@/frontend/pages/map/components/markers"
-import { useFitBounds } from "@/frontend/pages/map/components/use-fit-bounds"
-import { spreadOverlapping } from "@/frontend/pages/map/lib/geometry"
+import { StatusPin } from "@workspace/maps/components/markers"
+import { spreadOverlapping } from "@workspace/maps/lib/geometry"
+import { useFitBounds } from "@workspace/maps/lib/use-fit-bounds"
+
 import type { LatLng, MapOrder } from "@/frontend/pages/map/types"
 
 /**

@@ -9,7 +9,7 @@ import { useTranslations } from "@workspace/i18n"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
-import { today } from "@/lib/kyc/derive"
+import { today } from "@workspace/domain/kyc/derive"
 import { ListCard } from "@/components/list/list-card"
 import { ListFooter } from "@/components/list/list-footer"
 import { ListToolbar } from "@/components/list/list-toolbar"

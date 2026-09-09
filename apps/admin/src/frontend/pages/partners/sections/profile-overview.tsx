@@ -25,7 +25,7 @@ import { MissingField } from "@/frontend/pages/partners/sections/missing-field"
 import { StartChatButton } from "@/frontend/pages/partners/sections/whatsapp-mark"
 import { usePartnerMutations } from "@/frontend/pages/partners/hooks/use-partner-mutations"
 import { isPlaceholder, type VehicleKind } from "@/frontend/pages/partners/types"
-import { today } from "@/lib/kyc/derive"
+import { today } from "@workspace/domain/kyc/derive"
 
 type Outputs = inferRouterOutputs<AppRouter>
 

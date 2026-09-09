@@ -99,6 +99,13 @@
       "when": 1788796869330,
       "tag": "0013_fx_daily_rate",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1788972710524,
+      "tag": "0014_portal",
+      "breakpoints": true
     }
   ]
 }

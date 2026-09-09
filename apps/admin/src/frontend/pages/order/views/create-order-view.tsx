@@ -18,7 +18,7 @@ import { distanceCalculator, getLogisticsTripType } from "@workspace/ui/lib/goog
 
 import { useTRPC } from "@/backend/api/client"
 import { domainErrorCode } from "@/lib/trpc-error"
-import { ORDER_ERROR_CODES } from "@/lib/orders/errors"
+import { ORDER_ERROR_CODES } from "@workspace/domain/orders/errors"
 import { CreateOrderSchema, orderToCreateDefaults, type CreateOrderForm, type CreateOrderFormInput } from "@/backend/schemas/order";
 
 import { NewOrderForm } from "../forms/new-order-form"

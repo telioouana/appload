@@ -9,7 +9,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import { statusIcons } from "@workspace/ui/customs/badge/status-badge"
 
 import { Scroller } from "@/components/list/scroller"
-import { deriveMilestones, type MilestoneStep } from "@/lib/orders/milestones"
+import { deriveMilestones, type MilestoneStep } from "@workspace/domain/orders/milestones"
 import { daysLate } from "@/frontend/pages/orders/types"
 import type { HistoryEntry } from "@/frontend/pages/order/components/history-timeline"
 

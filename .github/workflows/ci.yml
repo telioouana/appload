@@ -22,6 +22,8 @@ jobs:
       # a missing one surfaces as "Failed to collect page data" in next build.
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_PORTAL_URL: http://localhost:3001
+      OPS_NOTIFICATION_EMAIL: ci-placeholder@example.com
       BETTER_AUTH_SECRET: ci-placeholder-secret-0123456789abcdefghijklmnop
       DATABASE_URL: postgres://ci:ci@localhost:5432/ci
       # EdgeStore validates these at module load during page-data collection.
