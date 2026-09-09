@@ -111,7 +111,9 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
         });
 
         if (!response.ok) {
-            return { ok: false, error: `Resend responded ${response.status}: ${await response.text()}` };
+            const detail = await response.text();
+            console.error(`[email] Resend responded ${response.status} for "${params.subject}": ${detail}`);
+            return { ok: false, error: `Resend responded ${response.status}: ${detail}` };
         }
 
         const data = (await response.json()) as { id?: string };
