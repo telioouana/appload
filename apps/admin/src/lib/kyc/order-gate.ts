@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { eq, inArray } from "drizzle-orm";
 
-import { organization } from "@workspace/db/users";
+import { organization, user } from "@workspace/db/users";
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import type { db as Database } from "@workspace/db/db";
 import { isAuthorized, type StaffRole } from "@workspace/auth/user-permissions";
@@ -135,7 +135,11 @@ export async function guardOrderGate(
     };
 }
 
-/** The driver and the vehicles named on the order, with their KYC state. */
+/**
+ * The driver and the vehicles named on the order, with their KYC state.
+ * Labelled the way the flag reason will show them: the driver by name,
+ * vehicles by plate.
+ */
 async function loadPartySubjects(db: Db, parties: OrderParties): Promise<SubjectFlag[]> {
     const plateLookups = (["truck", "trailer", "link"] as const)
         .map((kind) => ({ kind, plate: parties[`${kind}Plate` as const] }))
@@ -145,8 +149,9 @@ async function loadPartySubjects(db: Db, parties: OrderParties): Promise<Subject
 
     const [driverRows, ...vehicleRows] = await Promise.all([
         parties.driverId
-            ? db.select({ id: driver.id, kycStatus: driver.kycStatus })
+            ? db.select({ name: user.name, kycStatus: driver.kycStatus })
                 .from(driver)
+                .innerJoin(user, eq(user.id, driver.userId))
                 .where(eq(driver.id, parties.driverId))
             : Promise.resolve([]),
 
@@ -167,7 +172,7 @@ async function loadPartySubjects(db: Db, parties: OrderParties): Promise<Subject
     const subjects: SubjectFlag[] = [];
 
     for (const row of driverRows) {
-        subjects.push({ kind: "driver", label: row.id, kycStatus: row.kycStatus });
+        subjects.push({ kind: "driver", label: row.name, kycStatus: row.kycStatus });
     }
 
     plateLookups.forEach(({ kind }, index) => {

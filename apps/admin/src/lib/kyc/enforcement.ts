@@ -1,6 +1,7 @@
 import type { KycStatus, OwnershipStatus, RiskLevel } from "@workspace/db/types";
 
 import { carrierEligibility, type EligibilityVerdict } from "@/lib/kyc/eligibility";
+import type { FlagReasonCode } from "@/lib/kyc/flag-reason";
 import type { CurrentDoc, IsoDate } from "@/lib/kyc/derive";
 
 /**
@@ -96,20 +97,24 @@ export function evaluateOrderGate(input: {
 
 /**
  * The machine-readable reason stamped onto an auto-flagged order. Prefixed
- * so the cause can be told apart from an operator's own flag note.
+ * so the cause can be told apart from an operator's own flag note, and kept
+ * to a code plus its data — `parseFlagReason` reads it back and the client
+ * puts it into the reader's language.
  */
 export function gateFlagReason(gate: OrderGate): string | null {
+    const line = (code: FlagReasonCode, detail: string | null) => (detail ? `${code}: ${detail}` : code);
+
     if (gate.thirdParty.length > 0) {
-        return `HIGH_RISK_SUBCONTRACTOR: ${gate.thirdParty.map((s) => s.label).join(", ")} owned by a third party`;
+        return line("HIGH_RISK_SUBCONTRACTOR", gate.thirdParty.map((s) => s.label).join(", "));
     }
     if (gate.riskLevel === "high" || gate.riskLevel === "watch") {
-        return `CARRIER_RISK_${gate.riskLevel.toUpperCase()}: ${gate.riskReason ?? "flagged carrier"}`;
+        return line(gate.riskLevel === "high" ? "CARRIER_RISK_HIGH" : "CARRIER_RISK_WATCH", gate.riskReason);
     }
     if (!gate.carrier.eligible) {
-        return `KYC_${gate.carrier.code}`;
+        return line(`KYC_${gate.carrier.code}`, null);
     }
     if (gate.unverified.length > 0) {
-        return `KYC_UNVERIFIED: ${gate.unverified.map((s) => s.label).join(", ")}`;
+        return line("KYC_UNVERIFIED", gate.unverified.map((s) => s.label).join(", "));
     }
 
     return null;

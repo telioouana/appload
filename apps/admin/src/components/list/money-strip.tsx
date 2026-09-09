@@ -1,6 +1,6 @@
 "use client"
 
-import { useFormatter } from "@workspace/i18n"
+import { useFormatter, useTranslations } from "@workspace/i18n"
 
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -53,6 +53,7 @@ export function MoneyStrip({
     /** Shown instead of the grid when there is nothing to move */
     empty: string
 }) {
+    const t = useTranslations("Admin.list")
     const f = useFormatter()
     const { get, set } = useListParams()
 
@@ -97,7 +98,7 @@ export function MoneyStrip({
                         <thead>
                             <tr>
                                 <th scope="col" className="pb-2 text-left align-bottom" style={{ width: CURRENCY_COLUMN }}>
-                                    <span className="sr-only">Currency</span>
+                                    <span className="sr-only">{t("currency")}</span>
                                 </th>
                                 {metrics.map((metric) => {
                                     const active = isActive(metric)

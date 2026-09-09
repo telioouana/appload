@@ -8,6 +8,8 @@ import { Link } from "@/i18n/navigation"
 import { Button } from "@workspace/ui/components/button"
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
 
+import { parseFlagReason } from "@/lib/kyc/flag-reason"
+
 /** The active dispute as both order surfaces receive it from `order.get`. */
 export type OrderDisputeBanner = {
     id: string
@@ -59,6 +61,10 @@ export function DisputeBanner({ dispute }: { dispute: OrderDisputeBanner }) {
  * page and the panel invalidate different query sets after it — so this
  * takes the handler, its pending state and the permission as props rather
  * than deciding any of them.
+ *
+ * The reason is stored as a code (see `gateFlagReason`) and worded here:
+ * "Booked with a carrier that had no approved signed contract — accepted
+ * for one trip", the operator's note quoted after the dash.
  */
 export function FlagBanner({
     reason,
@@ -73,12 +79,24 @@ export function FlagBanner({
 }) {
     const t = useTranslations("Admin.orders.detailPage")
 
+    const parsed = reason ? parseFlagReason(reason) : null
+    const text = !parsed
+        ? t("flagged.noReason")
+        : parsed.code === null
+            ? parsed.note
+            : [
+                parsed.detail
+                    ? `${t(`flagged.reasons.${parsed.code}`)}: ${parsed.detail}`
+                    : t(`flagged.reasons.${parsed.code}`),
+                parsed.note,
+            ].filter(Boolean).join(" — ")
+
     return (
         <Alert variant="destructive">
             <IconFlag />
             <AlertTitle>{t("flagged.title")}</AlertTitle>
             <AlertDescription className="flex flex-col gap-2">
-                <span>{reason ?? t("flagged.noReason")}</span>
+                <span>{text}</span>
                 {canResolve && (
                     <Button size="sm" variant="outline" className="w-fit" disabled={resolving} onClick={onResolve}>
                         <IconFlagCheck />

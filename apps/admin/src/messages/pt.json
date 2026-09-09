@@ -1856,7 +1856,17 @@
                 "flagged": {
                     "title": "Sinalizada para revisão",
                     "noReason": "Nenhum motivo registado.",
-                    "resolve": "Resolver sinalização"
+                    "resolve": "Resolver sinalização",
+                    "reasons": {
+                        "KYC_CARRIER_NOT_VERIFIED": "Reservada com um transportador sem todos os documentos aprovados",
+                        "KYC_CARRIER_CONTRACT_MISSING": "Reservada com um transportador sem contrato assinado aprovado",
+                        "KYC_CARRIER_CONTRACT_EXPIRED": "Reservada com um transportador com o contrato assinado expirado",
+                        "KYC_CARRIER_SUSPENDED": "Reservada com um transportador suspenso",
+                        "KYC_UNVERIFIED": "Motorista ou viaturas ainda não verificados",
+                        "HIGH_RISK_SUBCONTRACTOR": "Viaturas pertencentes a terceiros",
+                        "CARRIER_RISK_HIGH": "Transportador de alto risco",
+                        "CARRIER_RISK_WATCH": "Transportador em observação"
+                    }
                 },
                 "sections": {
                     "shipment": "Carga",
@@ -3337,6 +3347,7 @@
         },
         "list": {
             "breadcrumb": "Está aqui",
+            "currency": "Moeda",
             "command": "Pesquisar em todo o lado (⌘K)",
             "empty": {
                 "adjust": "Tente outra pesquisa ou retire um filtro."

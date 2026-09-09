@@ -1856,7 +1856,17 @@
                 "flagged": {
                     "title": "Flagged for review",
                     "noReason": "No reason was recorded.",
-                    "resolve": "Resolve flag"
+                    "resolve": "Resolve flag",
+                    "reasons": {
+                        "KYC_CARRIER_NOT_VERIFIED": "Booked with a carrier whose documents were not all approved",
+                        "KYC_CARRIER_CONTRACT_MISSING": "Booked with a carrier that had no approved signed contract",
+                        "KYC_CARRIER_CONTRACT_EXPIRED": "Booked with a carrier whose signed contract had expired",
+                        "KYC_CARRIER_SUSPENDED": "Booked with a suspended carrier",
+                        "KYC_UNVERIFIED": "Driver or vehicles not yet verified",
+                        "HIGH_RISK_SUBCONTRACTOR": "Vehicles owned by a third party",
+                        "CARRIER_RISK_HIGH": "High-risk carrier",
+                        "CARRIER_RISK_WATCH": "Carrier under observation"
+                    }
                 },
                 "sections": {
                     "shipment": "Shipment",
@@ -3337,6 +3347,7 @@
         },
         "list": {
             "breadcrumb": "You are here",
+            "currency": "Currency",
             "command": "Search anywhere (⌘K)",
             "empty": {
                 "adjust": "Try a different search or clear a filter."
