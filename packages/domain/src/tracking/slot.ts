@@ -1,7 +1,8 @@
 import { and, desc, eq } from "drizzle-orm";
 
 import { type Order } from "@workspace/db/orders";
-import { chatMessage, type TrackingRequest, type TrackingSlot } from "@workspace/db/chats";
+import { chatMessage, type TrackingSlot, type TrackingStatus } from "@workspace/db/chats";
+import type { RouteDetails } from "@workspace/comms/infobip";
 import type { db as Database } from "@workspace/db/db";
 
 /**
@@ -83,27 +84,43 @@ export const place = (location: Order["loadingAddress"]) =>
 
 // Deliberately unaccented so the hardcoded part stays GSM-7; place names
 // from the database may still carry accents
+export const smsRequestText = (driverName: string, reference: string, route: RouteDetails) =>
+    `Ola ${driverName}, a Appload pede a sua localizacao atual para a carga ${reference} (camiao ${route.truckPlate ?? "s/ matricula"}, ${route.origin} para ${route.destination}). Por favor responda a esta mensagem com a sua localizacao.`;
+
+/** The order flavour of the copy above; a trip passes its own "TRP-<seq>". */
 export const smsText = (driverName: string, row: Order) =>
-    `Ola ${driverName}, a Appload pede a sua localizacao atual para a carga ${row.orderId} (camiao ${row.truckPlate ?? "s/ matricula"}, ${place(row.loadingAddress)} para ${place(row.offloadingAddress)}). Por favor responda a esta mensagem com a sua localizacao.`;
+    smsRequestText(driverName, row.orderId, {
+        truckPlate: row.truckPlate,
+        origin: place(row.loadingAddress),
+        destination: place(row.offloadingAddress),
+    });
 
 /**
- * What the next action for one order is, given every tracking row already
+ * What the next action for one subject is, given every tracking row already
  * written for this slot. Pure, so the decision table is testable and the
- * scheduler stays dumb.
+ * scheduler stays dumb. Generic over the row because orders and trips keep
+ * their attempts in separate tables that differ only in what they point at,
+ * and both must answer to one decision table.
+ *
+ * `exhausted` separates a slot that is over from one that is merely waiting
+ * out the gap: the portal's trip runner turns the first into a no-response
+ * notification, the order runner has no use for it.
  */
-type Decision =
-    | { action: "skip" }
-    | { action: "send"; attempt: number }
-    | { action: "resend"; row: TrackingRequest };
+type AttemptRow = { attempt: number; status: TrackingStatus; createdAt: Date };
 
-export function decideNextAttempt(rows: TrackingRequest[], now: Date): Decision {
+type Decision<Row extends AttemptRow> =
+    | { action: "skip"; exhausted: boolean }
+    | { action: "send"; attempt: number }
+    | { action: "resend"; row: Row };
+
+export function decideNextAttempt<Row extends AttemptRow>(rows: Row[], now: Date): Decision<Row> {
     if (rows.length === 0) {
         return { action: "send", attempt: 1 };
     }
 
     // The driver answered — nothing more to ask for this slot
     if (rows.some((row) => row.status === "responded")) {
-        return { action: "skip" };
+        return { action: "skip", exhausted: false };
     }
 
     const latest = rows.reduce((newest, row) => (row.attempt > newest.attempt ? row : newest));
@@ -117,18 +134,18 @@ export function decideNextAttempt(rows: TrackingRequest[], now: Date): Decision 
 
     // Too soon — this is what makes duplicate ticks harmless
     if (ageMinutes < ATTEMPT_GAP_MINUTES) {
-        return { action: "skip" };
+        return { action: "skip", exhausted: false };
     }
 
     if (latest.attempt >= MAX_ATTEMPTS) {
-        return { action: "skip" };
+        return { action: "skip", exhausted: true };
     }
 
     // Escalating to SMS is only worth it when WhatsApp never landed. A
     // delivered message that simply went unanswered means the driver is
     // reachable and chose not to reply.
     if (latest.attempt === MAX_ATTEMPTS - 1 && latest.status === "delivered") {
-        return { action: "skip" };
+        return { action: "skip", exhausted: true };
     }
 
     return { action: "send", attempt: latest.attempt + 1 };

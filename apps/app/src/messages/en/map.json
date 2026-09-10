@@ -1,1 +1,36 @@
-{}
+{
+    "title": "Map",
+    "description": "The last known position of everything your company has on the move",
+    "search": "Search order, trip, partner, driver or plate",
+    "clear-search": "Clear search",
+    "count": "{count, plural, =1 {# movement under way} other {# movements under way}}",
+    "matches": "{count, plural, =0 {No results} =1 {# result} other {# results}}",
+    "show-all": "Show all",
+    "error": "The map could not be loaded",
+    "empty": {
+        "title": "Nothing on the move",
+        "description": "Orders and trips appear here as soon as they are in transit"
+    },
+    "list": {
+        "no-location": "No location yet",
+        "last-seen": "Seen {ago}",
+        "toggle": "Movements"
+    },
+    "selected": {
+        "open": {
+            "order": "Open order",
+            "trip": "Open trip"
+        },
+        "close": "Close",
+        "last-seen": "Last seen {ago}",
+        "no-pings": "No location updates yet"
+    },
+    "detail": {
+        "no-pings": "No location updates yet",
+        "unavailable": "Route unavailable",
+        "missing-key": "Map not configured (browser key missing)",
+        "last-seen": "Last seen {date}",
+        "legend-route": "Planned route",
+        "legend-covered": "Covered"
+    }
+}

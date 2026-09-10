@@ -14,6 +14,7 @@ import { normalizePhone } from "@workspace/comms/phone";
 import { secretMatches } from "@workspace/comms/cron";
 
 import { recordOrderLocation, resolveOrderForConversation } from "@workspace/domain/tracking/locations";
+import { recordTripLocation, reportTripDelivery, resolveTripForConversation, respondTripRequests } from "@workspace/domain/tracking/trips";
 
 /**
  * Infobip webhook: inbound WhatsApp/SMS messages AND delivery reports both
@@ -69,6 +70,10 @@ export async function POST(request: NextRequest) {
                 eq(trackingRequest.externalId, report.externalId),
                 inArray(trackingRequest.status, ["pending", "sent"]),
             ));
+
+        // The portal's trips keep their attempts in their own table and answer
+        // to the same decision table, so a report has to reach both
+        await reportTripDelivery(db, report);
     }
 
     const inbound = parseInboundWebhook(payload);
@@ -189,6 +194,11 @@ export async function POST(request: NextRequest) {
                         inArray(trackingRequest.status, ["pending", "sent", "delivered"]),
                     ));
 
+                // The same reply closes the portal's trip requests on this
+                // thread: one driver, one number, and he has answered whoever
+                // was asking
+                await respondTripRequests(db, conversation.id);
+
                 // A pin is the payload we actually asked for: attribute it to
                 // the driver's load so it joins the map trail. Deliberately
                 // best-effort — the message is already stored, and throwing
@@ -218,9 +228,29 @@ export async function POST(request: NextRequest) {
                                 recordedAt: message.receivedAt ?? saved.createdAt,
                             });
                         } else {
-                            console.warn("[infobip] location pin without an order", {
+                            // No live order behind this driver — the pin may
+                            // still belong to a portal trip, the only path
+                            // that reaches the trip trail
+                            const activeTrip = await resolveTripForConversation(db, {
                                 conversationId: conversation.id,
+                                driverPhone: conversation.driverPhone,
                             });
+
+                            if (activeTrip) {
+                                await recordTripLocation(db, {
+                                    tripId: activeTrip.id,
+                                    conversationId: conversation.id,
+                                    chatMessageId: saved.id,
+                                    latitude: message.location.latitude,
+                                    longitude: message.location.longitude,
+                                    placeName: message.location.name,
+                                    recordedAt: message.receivedAt ?? saved.createdAt,
+                                });
+                            } else {
+                                console.warn("[infobip] location pin without an order", {
+                                    conversationId: conversation.id,
+                                });
+                            }
                         }
                     } catch (error) {
                         console.error("[infobip] location record failed", error);

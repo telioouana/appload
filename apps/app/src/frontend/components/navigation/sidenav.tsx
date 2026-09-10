@@ -82,8 +82,8 @@ export function Sidenav({
             path: { pathname: "/orders/[section]", params: { section: orgType === "shipper" ? "all" : "requests" } },
         },
         { Icon: IconFileInvoice, name: t("work.quotes"), match: "/quotes", enabled: true, path: "/quotes" },
-        { Icon: IconRoute, name: t("work.trips"), match: "/trips", enabled: false },
-        { Icon: IconMap2, name: t("work.map"), match: "/map", enabled: false },
+        { Icon: IconRoute, name: t("work.trips"), match: "/trips", enabled: true, path: "/trips" },
+        { Icon: IconMap2, name: t("work.map"), match: "/map", enabled: true, path: "/map" },
     ]
 
     const company: NavEntry[] = [

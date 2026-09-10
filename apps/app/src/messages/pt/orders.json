@@ -530,6 +530,10 @@
             "added": "Documento anexado"
         }
     },
+    "tracking": {
+        "title": "Rastreio em direto",
+        "open-map": "Abrir no Mapa"
+    },
     "timeline": {
         "title": "Actividade",
         "empty": "Ainda não aconteceu nada.",

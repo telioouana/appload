@@ -14,6 +14,7 @@ import { OperationsCard } from "@/frontend/pages/orders/sections/operations-card
 import { RequestsPanel } from "@/frontend/pages/orders/sections/requests-panel"
 import { MoneyCard, RouteCargoCard } from "@/frontend/pages/orders/sections/route-cargo-card"
 import { TimelineCard } from "@/frontend/pages/orders/sections/timeline-card"
+import { TrackingCard } from "@/frontend/pages/orders/sections/tracking-card"
 
 /**
  * One order on one page: where the trip is, what it is carrying, what it is
@@ -77,6 +78,8 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                 </div>
 
                 <div className="container-snap flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pb-2">
+                    <TrackingCard order={order} />
+
                     {/* Only the two parties to the deal have a leg to show:
                         a carrier that quoted and lost is given no figures */}
                     {order.permissions.isMine && <MoneyCard order={order} />}

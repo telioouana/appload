@@ -372,7 +372,8 @@ Every procedure is `tenantProcedure`-based unless marked _public_ / _onboarding_
 | `orders` | `list({section, …})`, `stats`, `get({orderId})`, `create` (shipper, `order:create`, pro), `sendRequests({orderId, carrierOrgIds})`, `withdrawRequest`, `cancel`, `transition` (carrier chain / shipper cancel), `documents.list/add` (POD/evidence), `history`, `timeline` | shipper: `order.shipper_id = T`; carrier: `order.carrier_id = T` OR an `order_request` for T OR a pending offer by T |
 | `offers` | `listForOrder`, `create` (carrier answering a request, `offer:create`, pro), `update`, `withdraw`, `accept` (shipper → booking door), `decline` | offer rows by `carrier_id = T` (carrier) or by `order.shipper_id = T` (shipper); `recorded` never returned |
 | `quotes` | `list`, `create` (carrier, pro), `withdraw`, `accept` (client: completes cargo details → `createOrder` booked with the accepted offer), `decline` | `carrier_org_id = T` or `client_org_id = T` |
-| `trips` | `list`, `get`, `create` (pro), `update`, `setStatus`, `trail`, `route`, `requestLocation` (Infobip), `overview` (map) | `organization_id = T OR counterparty_org_id = T`; order-backed trips come from `orders` (union DTO in the view) |
+| `trips` | `list`, `get`, `create` (pro), `update`, `setStatus`, `trail`, `route`, `requestLocation` (Infobip) | `organization_id = T OR counterparty_org_id = T` |
+| `map` | `overview`, `orderRoute`, `orderTrail` | orders where `shipper_id = T OR carrier_id = T` (parties only); trips where `organization_id = T OR counterparty_org_id = T` |
 | `analytics` | `pipeline`, `monthly`, `money`, `kpis({period})`, `partners({period, sort})` (`report:read`, pro) | tenant predicate + own-leg money only |
 | `notifications` | `list({cursor, unreadOnly})`, `unreadCount`, `markRead`, `markAllRead` | `user_id = ctx.userId AND organization_id = T` |
 | `search` | `global({query})` for ⌘K (partners, orders, trips) | tenant-scoped unions |
@@ -415,13 +416,13 @@ Order Ids: `nextOrderId(dbMaxSeq, 0, year)` with the `(year, seq)` unique-index 
 ## 6. Trips and tracking
 
 ### 6.1 Trip model
-A `trip` is any movement a tenant wants watched that is **not** an Appload order (or an order the portal cannot see). Register with driver name + phone (E.164, `z.e164()`), origin/destination via `LocationInput`, optional plate/cargo/dates; "already in transit" = `status: 'in-transit'`, `started_at = now`. The Trips page shows a union: order-backed rows (from `order` in `TRACKED_STATUSES` visible to T) and standalone rows.
+A `trip` is any movement a tenant wants watched that is **not** an Appload order (or an order the portal cannot see). Register with driver name + phone (E.164, `z.e164()`), origin/destination via `LocationInput`, optional plate/cargo/dates; "already in transit" = `status: 'in-transit'`, `started_at = now`. The Trips page lists **standalone trips only**: order-backed movements are already on Orders › On the road, and the `/map` overview is where the two kinds are seen together.
 
 ### 6.2 Outbound pings (portal cron)
 `apps/app/src/app/api/cron/trips-tracking/route.ts` (`authorizeCron` from `@workspace/comms`, `maxDuration 60`), QStash schedule id **`appload-app-tracking`** (never reuse `appload-tracking`), same cron `*/15 8-9,17-18 Africa/Maputo`. Runner in `@workspace/domain/tracking/trip-slot.ts`: select `trip` in-transit with `tracking_enabled`, **skip phones that also have an Admin order in `TRACKED_STATUSES`** (the Admin cron already pings them), ensure a `chat_conversation` (`startConversation`, stored on `trip.conversation_id`), claim `trip_tracking_request` on the unique key, attempt 1 native location request if the WhatsApp session is open else template, attempt 2 template, attempt 3 SMS — identical decision table. Template placeholders: `{{2}}` = `TRP-<seq>`, `{{3}}` plate or "—", `{{4}}/{{5}}` origin/destination state; button payload `share-location:TRP-<seq>`. Copy stays Meta-approved (no wording change). A slot whose three attempts end unanswered writes `trip.no-response` (dedupe key `trip:<id>:<slotDate>:<slot>`).
 
 ### 6.3 Inbound pins (Admin webhook, one addition)
-In `resolveOrderForConversation` (now `@workspace/domain/tracking/locations.ts`): the existing order attribution runs first and unchanged; only when it yields nothing does the trip branch run — the trip whose `conversation_id` is this conversation, else the newest `in-transit` trip whose `driver_phone` normalizes to the sender → `recordTripLocation` (idempotent on `chat_message_id`). The "responded" flip also updates `trip_tracking_request` rows on that conversation (a phone shared by an order and a trip closes both, which is acceptable). Inbound messages from trip drivers appear in Admin's Messages inbox like any other thread. Nothing else in Admin changes.
+In `resolveOrderForConversation` (now `@workspace/domain/tracking/locations.ts`): the existing order attribution runs first and unchanged; only when it yields nothing does the trip branch run — the trip whose `conversation_id` is this conversation, else the newest `in-transit` trip whose `driver_phone` normalizes to the sender → `recordTripLocation` (idempotent on `chat_message_id`). The "responded" flip also updates `trip_tracking_request` rows on that conversation (a phone shared by an order and a trip closes both, which is acceptable), and the delivery-report loop mirrors each report onto `trip_tracking_request` by `external_id` — the shared decision table drops the SMS escalation only when it can see a `delivered` attempt. Inbound messages from trip drivers appear in Admin's Messages inbox like any other thread. Nothing else in Admin changes.
 
 ### 6.4 Maps
 `trips.route` computes/caches via `@workspace/maps/server` into `trip_route` (same cache-key rule); `trips.trail`/`overview` mirror the Admin queries with the tenant predicate. Portal `/map` shows the tenant's tracked orders + trips with the shared `RouteLayer`/`OverviewPins`; 60 s polling.
@@ -466,7 +467,7 @@ In `resolveOrderForConversation` (now `@workspace/domain/tracking/locations.ts`)
   orders/[section]/            (/pedidos/[section])     all|requests|quoted|booked|on-going|delivered|history (sections differ per org type)
   orders/details/[orderId]/    (/pedidos/detalhes/[orderId])  static `details` segment beside `[section]`, as in Admin (two sibling dynamic segments are not allowed)
   quotes/                      (/cotacoes)              carrier: sent · client: received
-  trips/                       (/viagens)               union list; ?id= sheet
+  trips/                       (/viagens)               standalone trips; order-backed movements are on Orders › on-going; ?id= sheet
   trips/[tripId]/              (/viagens/[tripId])      detail with map, pings, ping-now, status
   map/                         (/mapa)
   analytics/                   (/analises)              pro

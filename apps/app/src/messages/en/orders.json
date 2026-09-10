@@ -530,6 +530,10 @@
             "added": "Document attached"
         }
     },
+    "tracking": {
+        "title": "Live tracking",
+        "open-map": "Open in Map"
+    },
     "timeline": {
         "title": "Activity",
         "empty": "Nothing has happened yet.",

@@ -1,1 +1,222 @@
-{}
+{
+    "metadata": "Viagens",
+    "eyebrow": "Viagens",
+    "title": "Viagens",
+    "description": "Cargas que segue por conta própria, sem pedido Appload por trás. As que têm pedido estão em Pedidos › Na estrada.",
+    "search": {
+        "placeholder": "Procurar por referência, motorista ou matrícula",
+        "clear": "Limpar a pesquisa"
+    },
+    "sections": {
+        "all": "Todas",
+        "scheduled": "Agendadas",
+        "in-transit": "Na estrada",
+        "delivered": "Entregues",
+        "history": "Histórico"
+    },
+    "status": {
+        "scheduled": "Agendada",
+        "in-transit": "Na estrada",
+        "delivered": "Entregue",
+        "cancelled": "Cancelada"
+    },
+    "columns": {
+        "ref": "Referência",
+        "status": "Estado",
+        "driver": "Motorista",
+        "plate": "Camião",
+        "lane": "Rota",
+        "dates": "Datas",
+        "partner": "Parceiro",
+        "last-ping": "Última posição"
+    },
+    "sort": {
+        "newest": "Mais recentes",
+        "started": "Saída",
+        "expected": "Entrega prevista"
+    },
+    "filters": {
+        "tracking": "Seguimento",
+        "no-response": "Sem resposta hoje",
+        "no-response-hint": "Camiões a quem pedimos a localização hoje e que ainda não responderam"
+    },
+    "tiles": {
+        "in-transit": "Na estrada",
+        "in-transit-hint": "Cargas em movimento neste momento",
+        "no-response": "Sem resposta hoje",
+        "no-response-hint": "Pedimos a localização e ainda não chegou nenhuma",
+        "scheduled": "Agendadas",
+        "scheduled-hint": "Registadas, ainda por sair",
+        "delivered": "Entregues",
+        "delivered-hint": "{count} este mês"
+    },
+    "values": {
+        "no-plate": "Sem matrícula",
+        "no-date": "Sem data",
+        "not-started": "Ainda não saiu",
+        "due": "Prevista {date}",
+        "no-due-date": "Sem data prevista",
+        "own-load": "Carga própria",
+        "no-pings": "Sem posições",
+        "not-stated": "Não indicado",
+        "pending": "Por entregar"
+    },
+    "data": {
+        "empty": "Ainda não há viagens",
+        "empty-description": "Registe uma viagem com o nome e o número do motorista e passamos a pedir-lhe a localização duas vezes por dia.",
+        "no-results": "Nenhuma viagem corresponde",
+        "error": "Não foi possível carregar as viagens"
+    },
+    "add": {
+        "trigger": "Nova viagem",
+        "title": "Nova viagem",
+        "description": "Uma carga para seguir: o motorista, o telefone e os dois extremos da estrada.",
+        "driver": "Motorista",
+        "lane": "Rota",
+        "load": "Carga",
+        "fields": {
+            "driverName": {
+                "label": "Nome do motorista",
+                "placeholder": "Nome completo"
+            },
+            "phone": {
+                "label": "Telefone do motorista",
+                "description": "O número de WhatsApp para onde vamos pedir a localização"
+            },
+            "plate": {
+                "label": "Matrícula do camião",
+                "placeholder": "AAA-000-MP",
+                "description": "Opcional; aparece na mensagem que o motorista recebe"
+            },
+            "origin": {
+                "label": "Origem",
+                "placeholder": "Onde carrega"
+            },
+            "destination": {
+                "label": "Destino",
+                "placeholder": "Onde descarrega"
+            },
+            "expected": {
+                "label": "Entrega prevista",
+                "placeholder": "Escolha a data"
+            },
+            "partner": {
+                "label": "Parceiro",
+                "placeholder": "Escolha uma empresa",
+                "description": "A empresa do outro lado da carga, se houver; passa a ver a viagem",
+                "none": "Sem parceiro (carga própria)"
+            },
+            "cargo": {
+                "label": "Descrição da carga",
+                "placeholder": "O que vai no camião"
+            },
+            "startNow": {
+                "label": "Já vai a caminho",
+                "description": "Abre a viagem na estrada e começa já o seguimento"
+            }
+        },
+        "errors": {
+            "driver": "Indique o nome do motorista",
+            "country": "Escolha o país do número",
+            "phone": "Introduza um número de telefone válido",
+            "address": "Escolha um endereço da lista",
+            "date": "Escolha uma data válida",
+            "plate": "A matrícula é demasiado longa",
+            "cargo": "A descrição é demasiado longa"
+        },
+        "actions": {
+            "save": "Registar viagem",
+            "start": "Registar e seguir",
+            "saving": "A guardar...",
+            "cancel": "Cancelar"
+        }
+    },
+    "panel": {
+        "title": "Viagem",
+        "description": "Onde está a carga e o que pode fazer com ela",
+        "error": "Não foi possível carregar a viagem",
+        "lane": "Rota",
+        "tracking": "Seguimento",
+        "open": "Abrir a viagem",
+        "fields": {
+            "partner": "Parceiro",
+            "cargo": "Carga",
+            "last-ping": "Última posição",
+            "pings": "Posições recebidas",
+            "started": "Saída",
+            "expected": "Entrega prevista",
+            "delivered": "Entrega"
+        }
+    },
+    "detail": {
+        "meta": "Viagem",
+        "error": "Não foi possível carregar a viagem",
+        "back": "Voltar às viagens",
+        "route": "Rota",
+        "pings": "Posições",
+        "no-pings": "O motorista ainda não partilhou nenhuma posição",
+        "unnamed-place": "Posição partilhada",
+        "requests": "Pedidos de localização",
+        "requests-hint": "Pedimos a localização duas vezes por dia, de manhã e ao fim da tarde.",
+        "no-requests": "Ainda não pedimos nenhuma localização",
+        "request-line": "{slot} · tentativa {attempt} · {channel}"
+    },
+    "actions": {
+        "start": "Pôr na estrada",
+        "request-location": "Pedir localização",
+        "deliver": "Marcar como entregue",
+        "cancel": "Cancelar viagem",
+        "confirm": {
+            "back": "Voltar",
+            "delivered": {
+                "title": "Marcar como entregue?",
+                "description": "A viagem {ref} passa a entregue e deixamos de pedir a localização ao motorista.",
+                "confirm": "Marcar como entregue"
+            },
+            "cancelled": {
+                "title": "Cancelar a viagem?",
+                "description": "A viagem {ref} é encerrada e deixa de ser seguida. Não é possível reabri-la.",
+                "confirm": "Cancelar viagem"
+            }
+        }
+    },
+    "slot": {
+        "morning": "Manhã",
+        "afternoon": "Tarde"
+    },
+    "channel": {
+        "whatsapp": "WhatsApp",
+        "sms": "SMS"
+    },
+    "requestStatus": {
+        "pending": "Por enviar",
+        "sent": "Enviado",
+        "delivered": "Entregue",
+        "responded": "Respondido",
+        "failed": "Falhou",
+        "skipped": "Ignorado"
+    },
+    "toasts": {
+        "created": "Viagem {ref} registada",
+        "requested": "Pedido de localização enviado ao motorista",
+        "status": {
+            "in-transit": "Viagem na estrada",
+            "delivered": "Viagem marcada como entregue",
+            "cancelled": "Viagem cancelada"
+        }
+    },
+    "errors": {
+        "notFound": "Viagem não encontrada",
+        "notAllowed": "Não tem permissão para esta acção",
+        "partnerNotConnected": "Essa empresa não é sua parceira",
+        "invalidStatus": "A viagem já não está nesse estado",
+        "tripClosed": "A viagem está encerrada e já não pode ser alterada",
+        "notInTransit": "Só se pede a localização de uma viagem que está na estrada",
+        "invalidPhone": "O número do motorista não é válido",
+        "subscriptionRequired": "Active o seu plano para começar a seguir cargas",
+        "quotaExceeded": "Já usou as cargas seguidas deste mês",
+        "infobipNotConfigured": "O envio de mensagens ainda não está configurado",
+        "sendFailed": "Não foi possível entregar a mensagem ao motorista",
+        "unknown": "Algo correu mal. Tente novamente"
+    }
+}
