@@ -272,7 +272,6 @@
                     "partners": "Parceiros",
                     "analytics": "Análises"
                 },
-                "soon": "Em breve",
                 "settings": "Definições"
             },
             "user": {
@@ -285,8 +284,7 @@
                     "system": "Sistema"
                 },
                 "sign-out": "Terminar sessão"
-            },
-            "command": "Pesquisar em todo o lado (⌘K)"
+            }
         },
         "access-denied": {
             "title": "Acesso restrito",
@@ -354,7 +352,6 @@
         "list": {
             "breadcrumb": "Está aqui",
             "currency": "Moeda",
-            "command": "Pesquisar em todo o lado (⌘K)",
             "empty": {
                 "adjust": "Tente outra pesquisa ou retire um filtro."
             },

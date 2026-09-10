@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { IconAlertCircle, IconLogout, IconUserCheck } from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
@@ -32,6 +32,8 @@ export function AcceptInvitationView({ invitationId }: { invitationId: string })
     const router = useRouter()
 
     const [isAccepting, setAccepting] = useState(false)
+
+    const activate = useMutation(trpc.onboarding.activate.mutationOptions())
 
     const { data: session, isPending: isSessionPending } = authClient.useSession()
     const { data: invitation, isPending, isError } = useQuery({
@@ -129,6 +131,14 @@ export function AcceptInvitationView({ invitationId }: { invitationId: string })
         if (organizationId) {
             await authClient.organization.setActive({ organizationId })
         }
+
+        // Better Auth's acceptInvitation writes the membership and nothing
+        // else, so this is where the company becomes a portal tenant — the
+        // stamp and the notification cursor the other two onboarding paths
+        // get from activateMembership. Never fatal: the member is in, and
+        // trapping them on this page over a bookkeeping write would be worse
+        // than the missing stamp.
+        await activate.mutateAsync().catch(() => undefined)
 
         router.push("/dashboard")
     }

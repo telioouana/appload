@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, ilike, ne, or, sql, type SQL, type SQLWrapper } from "drizzle-orm";
 
 import { order } from "@workspace/db/orders";
-import { organization, rateLimit } from "@workspace/db/users";
+import { organization } from "@workspace/db/users";
 import type { db as Database } from "@workspace/db/db";
 import { AddressSchema, type Address } from "@workspace/db/types";
 import { CONNECTION_RELATION, CONNECTION_STATUS, partnerConnection, type ConnectionRelation, type ConnectionStatus } from "@workspace/db/connections";
@@ -13,6 +13,7 @@ import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
 import { uniqueViolationConstraint } from "@/lib/db-errors";
+import { withinRateLimit } from "@/lib/rate-limit";
 import { ConnectionRequestBaseSchema, NUIT_RE, RegisterPartnerBaseSchema } from "@/backend/schemas/partner";
 import {
     counterpartType,
@@ -49,45 +50,6 @@ function toAddress(value: Partial<Address> | undefined): Address | null {
     const parsed = AddressSchema.safeParse(value);
 
     return parsed.success ? parsed.data : null;
-}
-
-/**
- * Counts one attempt against `key`, and answers whether it is allowed.
- *
- * The same counter table and shape onboarding's sign-up limiter uses (Better
- * Auth's own keys are `<ip><path>`, so this prefix cannot collide with them).
- * Read-then-write is not atomic on neon-http; a burst can overshoot by a
- * request or two, which is immaterial at these limits.
- */
-async function withinRateLimit(
-    db: typeof Database,
-    params: { key: string; windowMs: number; max: number },
-): Promise<boolean> {
-    const now = Date.now();
-
-    const [current] = await db
-        .select({ count: rateLimit.count, lastRequest: rateLimit.lastRequest })
-        .from(rateLimit)
-        .where(eq(rateLimit.id, params.key))
-        .limit(1);
-
-    const inWindow =
-        current?.lastRequest != null && now - current.lastRequest < params.windowMs;
-
-    if (inWindow && (current?.count ?? 0) >= params.max) return false;
-
-    await db
-        .insert(rateLimit)
-        .values({ id: params.key, key: params.key, count: 1, lastRequest: now })
-        .onConflictDoUpdate({
-            target: rateLimit.id,
-            set: {
-                count: inWindow ? sql`${rateLimit.count} + 1` : 1,
-                lastRequest: now,
-            },
-        });
-
-    return true;
 }
 
 /**

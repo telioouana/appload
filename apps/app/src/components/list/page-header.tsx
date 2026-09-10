@@ -5,7 +5,6 @@ import { IconSearch, IconX, type Icon } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
 
-import { Kbd } from "@workspace/ui/components/kbd"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { Command, CommandGroup, CommandItem, CommandList } from "@workspace/ui/components/command"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@workspace/ui/components/input-group"
@@ -13,9 +12,6 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useListParams, type Param } from "@/components/list/use-list-params"
-
-/** Opens the global ⌘K palette from anywhere; the palette listens for it. */
-export const COMMAND_EVENT = "appload:command"
 
 export type SuggestionItem = {
     id: string
@@ -138,8 +134,8 @@ export function PageHeader({
                 aria-autocomplete={suggestions ? "list" : undefined}
             />
 
-            <InputGroupAddon align="inline-end">
-                {query ? (
+            {query && (
+                <InputGroupAddon align="inline-end">
                     <InputGroupButton
                         size="icon-xs"
                         variant="ghost"
@@ -148,18 +144,8 @@ export function PageHeader({
                     >
                         <IconX className="size-4" stroke={1.5} />
                     </InputGroupButton>
-                ) : (
-                    <button
-                        type="button"
-                        aria-label={t("command")}
-                        title={t("command")}
-                        className="hidden cursor-pointer sm:inline-flex"
-                        onClick={() => window.dispatchEvent(new CustomEvent(COMMAND_EVENT))}
-                    >
-                        <Kbd>⌘K</Kbd>
-                    </button>
-                )}
-            </InputGroupAddon>
+                </InputGroupAddon>
+            )}
         </InputGroup>
     )
 

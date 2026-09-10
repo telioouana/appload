@@ -212,6 +212,7 @@
         "invalidStatus": "The trip is no longer in that state",
         "tripClosed": "The trip is closed and can no longer be changed",
         "notInTransit": "A location is only asked for a trip that is on the road",
+        "rateLimited": "You have asked for the location too many times. Wait a little before asking again",
         "invalidPhone": "The driver's number is not valid",
         "subscriptionRequired": "Activate your plan to start tracking loads",
         "quotaExceeded": "You have used this month's tracked loads",

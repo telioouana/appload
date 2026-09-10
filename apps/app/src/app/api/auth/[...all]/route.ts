@@ -17,8 +17,8 @@ const handler = toNextJsHandler(auth);
  *
  * Unlike the admin, `/update-user` stays open: partners edit their own
  * profile from Settings, and the `user.update.before` hook in
- * packages/auth/src/server.ts is what keeps `type` and `status` out of
- * reach.
+ * packages/auth/src/server.ts is what keeps `type`, `status` and the unique
+ * `phoneNumber` out of reach.
  *
  * The organization plugin's own write endpoints are closed: nothing in either
  * app calls them (companies are written by direct Drizzle insert/update —

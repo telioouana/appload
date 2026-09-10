@@ -40,6 +40,26 @@ export async function recordSheetSync(
 }
 
 /**
+ * Queues the order for the outbox cron without touching the bookkeeping:
+ * `lastError` and `attempts` are left exactly as they were.
+ *
+ * That matters because `lastError` is where the Admin parks the
+ * RECOMPUTE_CONFLICT marker below — the only record that an order's derived
+ * money block still has to be rebuilt. A portal write on the same order is
+ * one more reason to push it, never a reason to declare the re-derivation
+ * done, and `recordSheetSync` would clear the marker on its way past.
+ */
+export async function deferSheetSync(db: typeof Database, orderPk: string): Promise<void> {
+    await db
+        .insert(sheetSync)
+        .values({ orderId: orderPk, state: "pending" })
+        .onConflictDoUpdate({
+            target: sheetSync.orderId,
+            set: { state: "pending", updatedAt: new Date() },
+        });
+}
+
+/**
  * Outbox marker: a note/proof-of-payment row is committed but the order's
  * derived money block (note sums, remaining, POP paid columns) could not be
  * rebuilt — the write lost the optimistic lock on every attempt, or failed

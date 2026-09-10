@@ -87,6 +87,7 @@
     "profile": {
         "title": "Perfil do motorista",
         "description": "Contactos, verificação e atribuição do motorista escolhido",
+        "error": "Não foi possível carregar este motorista.",
         "close": "Fechar",
         "contact": "Contacto",
         "verification": "Verificação",

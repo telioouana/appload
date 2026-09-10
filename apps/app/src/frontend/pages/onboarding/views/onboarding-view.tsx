@@ -8,6 +8,7 @@ import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@workspace/auth/client";
 
 import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 
 import { useTRPC } from "@/backend/api/client";
@@ -23,12 +24,13 @@ import type { NuitLookup } from "@/frontend/pages/onboarding/server/procedures";
  */
 export function OnboardingView() {
     const t = useTranslations("App.onboarding")
+    const e = useTranslations("App.errors.boundary")
     const trpc = useTRPC()
     const router = useRouter()
 
     const [found, setFound] = useState<{ nuit: string; result: NuitLookup } | null>(null)
 
-    const { data: status, isPending, refetch } = useQuery(trpc.onboarding.status.queryOptions())
+    const { data: status, isPending, isError, refetch } = useQuery(trpc.onboarding.status.queryOptions())
 
     // Joining is what makes the cookie's organization stale, so it is
     // refreshed before the shell is asked to render for the new tenant
@@ -37,11 +39,24 @@ export function OnboardingView() {
         router.push("/dashboard")
     }
 
-    if (isPending || !status) {
+    if (isPending) {
         return (
             <div className="grid gap-4">
                 <Skeleton className="h-8 w-56" />
                 <Skeleton className="h-64 w-full rounded-xl" />
+            </div>
+        )
+    }
+
+    // The first screen after a verified email, and the (onboarding) group has
+    // no error.tsx — so a failed load says so and offers the way back in,
+    // rather than leaving a new partner on skeletons at the end of the funnel
+    if (isError || !status) {
+        return (
+            <div className="grid justify-items-start gap-3">
+                <h1 className="font-heading text-2xl font-bold tracking-tight">{e("title")}</h1>
+                <p className="max-w-sm text-sm text-muted-foreground">{e("description")}</p>
+                <Button onClick={() => refetch()}>{e("retry")}</Button>
             </div>
         )
     }

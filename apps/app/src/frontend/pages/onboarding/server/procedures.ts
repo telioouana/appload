@@ -1,19 +1,20 @@
 import { z } from "zod";
 import { APIError } from "better-auth/api";
-import { and, eq, or, sql } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 
 import type { Auth } from "@workspace/auth/server";
 import type { db as Database } from "@workspace/db/db";
 import type { Address } from "@workspace/db/types";
-import { invitation, member, organization, rateLimit, user } from "@workspace/db/users";
+import { invitation, member, organization, user } from "@workspace/db/users";
 import { organizationClaim, partnerConnection } from "@workspace/db/connections";
 import { notificationCursor } from "@workspace/db/notifications";
 
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "@workspace/trpc/init";
-import { onboardingProcedure } from "@workspace/trpc/tenant";
+import { onboardingProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 import { brandedEmail, sendEmail } from "@workspace/auth/email";
 
+import { withinRateLimit } from "@/lib/rate-limit";
 import { SignUpBaseSchema } from "@/backend/schemas/sign-up";
 import { CreateCompanyBaseSchema, NUIT_RE } from "@/frontend/pages/onboarding/types";
 
@@ -97,46 +98,6 @@ function clientIp(headers: Headers): string | null {
 }
 
 /**
- * Counts one attempt against `key`, and answers whether it is allowed.
- *
- * Better Auth's own limiter wraps requests to /api/auth only, so a procedure
- * that calls `signUpEmail`/`sendVerificationEmail` server-side from /api/trpc
- * passes none of it — and `signUp` is public. Counters live in the same
- * `rate_limit` table (Better Auth's own keys are `<ip><path>`, so the prefix
- * here cannot collide). Read-then-write is not atomic on neon-http; a burst
- * can overshoot by a request or two, which is immaterial at these limits.
- */
-async function withinRateLimit(
-    db: typeof Database,
-    params: { key: string; windowMs: number; max: number },
-): Promise<boolean> {
-    const now = Date.now();
-
-    const [current] = await db
-        .select({ count: rateLimit.count, lastRequest: rateLimit.lastRequest })
-        .from(rateLimit)
-        .where(eq(rateLimit.id, params.key))
-        .limit(1);
-
-    const inWindow =
-        current?.lastRequest != null && now - current.lastRequest < params.windowMs;
-
-    if (inWindow && (current?.count ?? 0) >= params.max) return false;
-
-    await db
-        .insert(rateLimit)
-        .values({ id: params.key, key: params.key, count: 1, lastRequest: now })
-        .onConflictDoUpdate({
-            target: rateLimit.id,
-            set: {
-                count: inWindow ? sql`${rateLimit.count} + 1` : 1,
-                lastRequest: now,
-            },
-        });
-
-    return true;
-}
-
 /**
  * Membership plus the two side effects that make an organization a portal
  * tenant: the activation stamp, and the notification cursor that tells the
@@ -185,7 +146,9 @@ export const onboardingRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<{ email: string }> => {
             // Unbounded, this mutation writes user rows and sends one Resend
             // mail per address for anyone who loops it — and squats an address
-            // its real owner has not signed up with yet
+            // its real owner has not signed up with yet. Better Auth's own
+            // limiter wraps /api/auth only, so a procedure calling
+            // signUpEmail/sendVerificationEmail server-side passes none of it.
             const ip = clientIp(ctx.headers);
 
             const allowed =
@@ -299,6 +262,39 @@ export const onboardingRouter = createTRPCRouter({
                 expired: row.expiresAt <= new Date(),
             };
         }),
+
+    /**
+     * The two writes of `activateMembership` for the one path that does not
+     * go through it: an invitation accepted against Better Auth's own
+     * endpoint (ops inviting a portal owner, or a colleague invited from
+     * Settings). Without the stamp the notifications cron never selects the
+     * organization (`api/cron/notifications` reads `portalActivatedAt`), so
+     * nothing it does is ever emailed, and Admin reads the company as not
+     * being on the portal at all.
+     *
+     * The organization is the caller's own — the tenant gate resolves the
+     * membership from the database, never from the request — and the stamp
+     * is written only while it is null: re-accepting must not move the day
+     * the company joined.
+     */
+    activate: tenantProcedure.mutation(async ({ ctx }): Promise<{ ok: true }> => {
+        const now = new Date();
+
+        await ctx.db
+            .update(organization)
+            .set({ portalActivatedAt: now })
+            .where(and(
+                eq(organization.id, ctx.tenant.organizationId),
+                isNull(organization.portalActivatedAt),
+            ));
+
+        await ctx.db
+            .insert(notificationCursor)
+            .values({ organizationId: ctx.tenant.organizationId, lastHistoryCreatedAt: now })
+            .onConflictDoNothing();
+
+        return { ok: true };
+    }),
 
     /** Where the onboarding screen starts: who the caller is and what is pending for them. */
     status: onboardingProcedure.query(async ({ ctx }): Promise<OnboardingStatus> => {

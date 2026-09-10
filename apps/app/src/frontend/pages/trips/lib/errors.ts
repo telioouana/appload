@@ -16,6 +16,9 @@ export const TRIP_ERROR_KEYS = {
     TRIP_CLOSED: "tripClosed",
     // Asking a driver where they are only makes sense while they are driving
     TRIP_NOT_IN_TRANSIT: "notInTransit",
+    // Too many manual location requests: every one is a real message to a
+    // real phone, so the button is metered per trip and per company
+    RATE_LIMITED: "rateLimited",
     INVALID_PHONE: "invalidPhone",
     // The plan gate in front of everything that starts tracking
     SUBSCRIPTION_REQUIRED: "subscriptionRequired",

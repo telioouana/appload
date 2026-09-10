@@ -257,6 +257,7 @@
         "carrierContractMissing": "Esse transportador não tem contrato com a Appload.",
         "carrierContractExpired": "O contrato desse transportador expirou.",
         "carrierSuspended": "Esse transportador está suspenso.",
+        "riskReview": "A Appload tem de rever este transportador antes de se reservar um pedido com ele.",
         "invalid": "Alguns dos dados enviados não são válidos.",
         "unknown": "Algo correu mal. Tente de novo."
     },

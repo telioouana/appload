@@ -136,6 +136,7 @@
     "profile": {
         "title": "Vehicle profile",
         "description": "Details, verification and assignment of the selected vehicle",
+        "error": "This vehicle could not be loaded.",
         "close": "Close",
         "details": "Vehicle details",
         "verification": "Verification",

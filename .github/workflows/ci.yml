@@ -20,6 +20,9 @@ jobs:
       # production without it); DATABASE_URL just has to be non-empty.
       # Keep this list in sync with what the build touches at module scope —
       # a missing one surfaces as "Failed to collect page data" in next build.
+      # The portal (apps/app) builds from this same block: every name it
+      # reads at module scope is one the admin reads too, and everything
+      # else it touches (Maps keys, contact address) has a code fallback.
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_PORTAL_URL: http://localhost:3001

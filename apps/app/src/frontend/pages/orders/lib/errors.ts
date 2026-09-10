@@ -43,6 +43,7 @@ export const ORDER_ERROR_KEYS = {
     CARRIER_CONTRACT_MISSING: "carrierContractMissing",
     CARRIER_CONTRACT_EXPIRED: "carrierContractExpired",
     CARRIER_SUSPENDED: "carrierSuspended",
+    RISK_REVIEW_REQUIRED: "riskReview",
     INVALID: "invalid",
     UNKNOWN: "unknown",
 } as const

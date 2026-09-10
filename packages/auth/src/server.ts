@@ -142,16 +142,29 @@ export const auth = betterAuth({
                 // and mapProfileToUser legitimately supply at creation time.
                 // Nothing in this app updates either field through Better Auth,
                 // so any attempt to is an escalation attempt.
+                //
+                // `phoneNumber` joins them because it is UNIQUE: the portal
+                // leaves /update-user open for profile edits, and a partner
+                // that took a driver's number on its own account would make
+                // that number unregistrable for every carrier and for staff.
+                // Driver phones are written by direct Drizzle update, and the
+                // phoneNumber plugin's OTP is a stub, so nothing legitimate
+                // sets it through Better Auth.
                 before: async (changes) => {
                     const patch = changes as typeof changes & {
                         type?: unknown;
                         status?: unknown;
+                        phoneNumber?: unknown;
                     };
 
-                    if (patch.type !== undefined || patch.status !== undefined) {
+                    if (
+                        patch.type !== undefined ||
+                        patch.status !== undefined ||
+                        patch.phoneNumber !== undefined
+                    ) {
                         throw new APIError("FORBIDDEN", {
                             code: "FIELD_NOT_UPDATABLE",
-                            message: "type and status cannot be changed",
+                            message: "type, status and phoneNumber cannot be changed",
                         });
                     }
 

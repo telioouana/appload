@@ -384,8 +384,13 @@ export const offersRouter = createTRPCRouter({
      * currency lock, the history row, the logbook outbox — belongs to the
      * shared transition; this procedure adds only what is portal business:
      * closing the request round and telling the carriers.
+     *
+     * Gated on `order:create`, not on `offer:update`: accepting is filing the
+     * order, and the other way in — `quotes.accept` — says the same thing.
+     * Answering an offer and committing the company to one are two different
+     * decisions and must not share a statement.
      */
-    accept: authorizedTenantProcedure("offer", ["update"])
+    accept: authorizedTenantProcedure("order", ["create"])
         .input(AcceptOfferBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; status: string; version: number }> => {
             try {

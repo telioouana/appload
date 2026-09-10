@@ -19,55 +19,66 @@ import { normalizePhone } from "@workspace/comms/phone";
  * attribution came back empty: an Appload order always wins, because its
  * trail is the one operations and the logbook are built on.
  *
- * Attribution, in order:
- *  1. the thread the trip itself points at — written by the first location
- *     request the portal's cron sent, so it is the strongest link there is;
- *  2. otherwise the driver's newest running trip — the phone match runs in
- *     JS because conversations store bare digits while trips keep E.164.
- *     Newest wins; a driver on two live trips at once is the one case this
- *     cannot disambiguate.
- *
- * Both branches look at in-transit trips only: a delivered trip keeps its
- * thread, and the driver's next job must not land on the finished one.
+ * A candidate is any in-transit trip on this thread or on this sender's
+ * number — in-transit only, because a delivered trip keeps its thread and
+ * the driver's next job must not land on the finished one. Among them:
+ *  1. no tenant proves it owns the number it typed, so candidates spread
+ *     over more than one organization mean the pin has no honest owner and
+ *     it is dropped — picking one would hand that tenant another's trail
+ *     (and close the other's open requests with it);
+ *  2. otherwise the trip whose location request this answers, which is the
+ *     only thing that tells two of one tenant's trips apart;
+ *  3. otherwise the trip pointing at this thread, else the newest one.
  */
 export async function resolveTripForConversation(
     db: typeof Database,
     conversation: { conversationId: string; driverPhone: string },
 ): Promise<{ id: string; seq: number; organizationId: string; counterpartyOrgId: string | null } | null> {
-    const [linked] = await db
+    const running = await db
         .select({
             id: trip.id,
             seq: trip.seq,
             organizationId: trip.organizationId,
             counterpartyOrgId: trip.counterpartyOrgId,
-        })
-        .from(trip)
-        .where(and(
-            eq(trip.conversationId, conversation.conversationId),
-            eq(trip.status, "in-transit"),
-        ))
-        .orderBy(desc(trip.createdAt))
-        .limit(1);
-
-    if (linked) {
-        return linked;
-    }
-
-    const candidates = await db
-        .select({
-            id: trip.id,
-            seq: trip.seq,
-            organizationId: trip.organizationId,
-            counterpartyOrgId: trip.counterpartyOrgId,
+            conversationId: trip.conversationId,
             driverPhone: trip.driverPhone,
         })
         .from(trip)
         .where(eq(trip.status, "in-transit"))
         .orderBy(desc(trip.createdAt));
 
-    const active = candidates.find(
-        (row) => normalizePhone(row.driverPhone) === conversation.driverPhone,
+    // The phone match runs in JS because conversations store bare digits
+    // while trips keep E.164. A thread is keyed on the phone alone, so the
+    // two halves of this are very nearly the same set.
+    const candidates = running.filter((row) =>
+        row.conversationId === conversation.conversationId
+        || normalizePhone(row.driverPhone) === conversation.driverPhone
     );
+
+    if (candidates.length === 0) return null;
+
+    if (new Set(candidates.map((row) => row.organizationId)).size > 1) {
+        console.warn(
+            `trip attribution refused for conversation ${conversation.conversationId}: live trips of more than one organization carry this driver`,
+        );
+        return null;
+    }
+
+    const [asked] = await db
+        .select({ tripId: tripTrackingRequest.tripId })
+        .from(tripTrackingRequest)
+        .where(and(
+            eq(tripTrackingRequest.conversationId, conversation.conversationId),
+            inArray(tripTrackingRequest.status, ["sent", "delivered"]),
+            inArray(tripTrackingRequest.tripId, candidates.map((row) => row.id)),
+        ))
+        .orderBy(desc(tripTrackingRequest.createdAt))
+        .limit(1);
+
+    const active =
+        candidates.find((row) => row.id === asked?.tripId)
+        ?? candidates.find((row) => row.conversationId === conversation.conversationId)
+        ?? candidates[0];
 
     return active
         ? {

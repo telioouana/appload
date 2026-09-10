@@ -62,9 +62,13 @@ function Panel({ id, onClose }: { id: string; onClose: () => void }) {
 
     const [editing, setEditing] = useState(false)
 
-    const { data, isPending } = useQuery(trpc.drivers.get.queryOptions({ id }))
+    const { data, isPending, isError } = useQuery(trpc.drivers.get.queryOptions({ id }))
 
-    if (isPending || !data) return <ProfileSkeleton />
+    if (isPending) return <ProfileSkeleton />
+
+    // An id that is not this carrier's own comes back NOT_FOUND, and the query
+    // does not throw — without this the sheet would sit on grey bars for ever
+    if (isError || !data) return <p className="text-destructive p-6 text-sm">{t("profile.error")}</p>
 
     return (
         <div className="flex h-full min-h-0 flex-col">

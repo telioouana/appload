@@ -20,20 +20,17 @@ import { NavUser } from "./nav-user";
 type NavHref = React.ComponentProps<typeof Link>["href"];
 
 /**
- * A rail entry. Everything but the dashboard and the settings page is still
- * unbuilt, so the rest render as their own labels with a "soon" mark rather
- * than as links to a 404 — the shape of the portal is visible from the first
- * sign-in, and a later milestone only flips `enabled` and hands over a path.
+ * A rail entry: one link to one page of the portal. The two groups below are
+ * the whole of it — a carrier sees two rows a shipper does not, and nothing
+ * else varies.
  */
 type NavEntry = {
     Icon: Icon;
     name: string;
-    /** Active matching and the React key; a route need not exist for it */
+    /** Active matching (by path prefix) and the React key */
     match: string;
-} & (
-        | { enabled: true; path: NavHref }
-        | { enabled: false; path?: undefined }
-    );
+    path: NavHref;
+};
 
 const ITEM_CLASSES = [
     "flex-none cursor-pointer rounded-full whitespace-nowrap text-sm text-secondary-foreground h-9 bg-sidebar border-none px-4 py-2",
@@ -68,44 +65,41 @@ export function Sidenav({
             Icon: IconLayoutDashboard,
             name: t("work.dashboard"),
             match: "/dashboard",
-            enabled: true,
             path: "/dashboard",
         },
         {
             Icon: IconBox,
             name: t("work.orders"),
             match: "/orders",
-            enabled: true,
             // The two sides enter the list at different sections: a client
             // starts from everything it filed, a carrier from the requests
             // waiting on its answer. The page's own tabs move from there
             path: { pathname: "/orders/[section]", params: { section: orgType === "shipper" ? "all" : "requests" } },
         },
-        { Icon: IconFileInvoice, name: t("work.quotes"), match: "/quotes", enabled: true, path: "/quotes" },
-        { Icon: IconRoute, name: t("work.trips"), match: "/trips", enabled: true, path: "/trips" },
-        { Icon: IconMap2, name: t("work.map"), match: "/map", enabled: true, path: "/map" },
+        { Icon: IconFileInvoice, name: t("work.quotes"), match: "/quotes", path: "/quotes" },
+        { Icon: IconRoute, name: t("work.trips"), match: "/trips", path: "/trips" },
+        { Icon: IconMap2, name: t("work.map"), match: "/map", path: "/map" },
     ]
 
     const company: NavEntry[] = [
         // Fleet and drivers are the carrier's own assets; a shipper has
-        // neither, so the two rows are absent rather than disabled for it
+        // neither, so the two rows are absent from its rail entirely
         ...(orgType === "carrier"
             ? [
                 {
                     Icon: IconTruck,
                     name: t("company.fleet"),
                     match: "/fleet",
-                    enabled: true,
                     // The three vehicle kinds are three routes; the rail
                     // enters at the trucks one and the page's own tabs
                     // switch between them
                     path: { pathname: "/fleet/[kind]", params: { kind: "trucks" } },
                 } as NavEntry,
-                { Icon: IconUsers, name: t("company.drivers"), match: "/drivers", enabled: true, path: "/drivers" } as NavEntry,
+                { Icon: IconUsers, name: t("company.drivers"), match: "/drivers", path: "/drivers" } as NavEntry,
             ]
             : []),
-        { Icon: IconBuildingWarehouse, name: t("company.partners"), match: "/partners", enabled: true, path: "/partners" },
-        { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", enabled: true, path: "/analytics" },
+        { Icon: IconBuildingWarehouse, name: t("company.partners"), match: "/partners", path: "/partners" },
+        { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", path: "/analytics" },
     ]
 
     const renderEntries = (entries: NavEntry[]) => entries.map((item) => {
@@ -115,32 +109,19 @@ export function Sidenav({
             <SidebarMenuItem key={item.match}>
                 <SidebarMenuButton
                     asChild
-                    tooltip={item.enabled ? item.name : `${item.name} — ${t("soon")}`}
+                    tooltip={item.name}
                     isActive={isActive}
                     className={cn(
                         ...ITEM_CLASSES,
                         isActive && "bg-linear-to-r/oklch border-[#E67623]/10",
-                        !item.enabled && "cursor-default opacity-60 hover:bg-none hover:text-secondary-foreground",
                     )}
                 >
-                    {item.enabled ? (
-                        <Link href={item.path}>
-                            <item.Icon className="size-5!" stroke={1} />
-                            <NavPending className="font-medium tracking-tight">
-                                {item.name}
-                            </NavPending>
-                        </Link>
-                    ) : (
-                        /* No href on purpose: a page that does not exist yet
-                           must not be a dead link */
-                        <div className="flex w-full items-center gap-2">
-                            <item.Icon className="size-5! shrink-0" stroke={1} />
-                            <span className="flex-1 text-left font-medium tracking-tight">{item.name}</span>
-                            <span className="text-[10px] uppercase tracking-wider text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden">
-                                {t("soon")}
-                            </span>
-                        </div>
-                    )}
+                    <Link href={item.path}>
+                        <item.Icon className="size-5!" stroke={1} />
+                        <NavPending className="font-medium tracking-tight">
+                            {item.name}
+                        </NavPending>
+                    </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
         )

@@ -40,6 +40,7 @@ import type { OrderRouteDto, TrailPoint } from "@workspace/maps/types";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
+import { withinRateLimit } from "@/lib/rate-limit";
 import { CreateTripBaseSchema, SetTripStatusBaseSchema, UpdateTripBaseSchema } from "@/backend/schemas/trip";
 import {
     PAGE_SIZES,
@@ -804,6 +805,14 @@ export const tripsRouter = createTRPCRouter({
      * the pre-approved template, whose button tap makes the webhook send the
      * native one. The message is stored either way, so a send that failed
      * stays visible in the thread instead of disappearing.
+     *
+     * Metered, unlike the rest of the router: nothing ties a trip's
+     * `driverPhone` to the tenant that typed it, so an unbounded button here
+     * is a billed WhatsApp send from Appload's own sender to any number
+     * somebody cares to name — which costs money, harasses the recipient and
+     * is what gets a sender and its template blocked. The cron's own pings
+     * are bounded by the attempt table (trip-slot.ts); these are bounded by
+     * the counters below.
      */
     requestLocation: authorizedTenantProcedure("trip", ["update"])
         .input(z.object({ id: z.string().nonempty() }))
@@ -813,6 +822,24 @@ export const tripsRouter = createTRPCRouter({
 
             if (row.status !== "in-transit") {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "TRIP_NOT_IN_TRANSIT" });
+            }
+
+            // Per trip first, so one impatient user cannot spend the whole
+            // company's budget on a single driver, then per company
+            const allowed =
+                await withinRateLimit(ctx.db, {
+                    key: `trip-ping:trip:${row.id}`,
+                    windowMs: 60 * 60 * 1000,
+                    max: 3,
+                }) &&
+                await withinRateLimit(ctx.db, {
+                    key: `trip-ping:org:${tenantId}`,
+                    windowMs: 24 * 60 * 60 * 1000,
+                    max: 30,
+                });
+
+            if (!allowed) {
+                throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "RATE_LIMITED" });
             }
 
             // No order id: chats point at orders, never at trips — the trip

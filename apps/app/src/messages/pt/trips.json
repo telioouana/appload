@@ -212,6 +212,7 @@
         "invalidStatus": "A viagem já não está nesse estado",
         "tripClosed": "A viagem está encerrada e já não pode ser alterada",
         "notInTransit": "Só se pede a localização de uma viagem que está na estrada",
+        "rateLimited": "Já pediu a localização vezes de mais. Espere um pouco antes de voltar a pedir",
         "invalidPhone": "O número do motorista não é válido",
         "subscriptionRequired": "Active o seu plano para começar a seguir cargas",
         "quotaExceeded": "Já usou as cargas seguidas deste mês",

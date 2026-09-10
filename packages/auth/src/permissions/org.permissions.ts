@@ -40,8 +40,11 @@ export const admin = oac.newRole({
 export const member = oac.newRole({
     ...memberAc.statements,
     order: ["read", "update", "list"],
-    offer: ["read", "update", "list"],
-    fleet: ["create", "read", "update", "list"],
+    // Reads only on both: `offer:update` is what the booking door and the
+    // offer decisions check, and registering a vehicle is the company's
+    // own asset register — neither belongs to the lowest role
+    offer: ["read", "list"],
+    fleet: ["read", "list"],
     partner: ["read"],
     trip: ["create", "read", "update", "list"],
     document: ["read", "upload"],

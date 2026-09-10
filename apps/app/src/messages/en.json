@@ -272,7 +272,6 @@
                     "partners": "Partners",
                     "analytics": "Analytics"
                 },
-                "soon": "Coming soon",
                 "settings": "Settings"
             },
             "user": {
@@ -285,8 +284,7 @@
                     "system": "System"
                 },
                 "sign-out": "Sign out"
-            },
-            "command": "Search anywhere (⌘K)"
+            }
         },
         "access-denied": {
             "title": "Access restricted",
@@ -354,7 +352,6 @@
         "list": {
             "breadcrumb": "You are here",
             "currency": "Currency",
-            "command": "Search anywhere (⌘K)",
             "empty": {
                 "adjust": "Try a different search or clear a filter."
             },

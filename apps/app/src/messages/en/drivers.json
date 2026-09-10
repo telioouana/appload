@@ -87,6 +87,7 @@
     "profile": {
         "title": "Driver profile",
         "description": "Contact, verification and assignment of the selected driver",
+        "error": "This driver could not be loaded.",
         "close": "Close",
         "contact": "Contact",
         "verification": "Verification",

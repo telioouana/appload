@@ -16,7 +16,7 @@ import { changedCurrencyParties, partiesWithMoneyDocuments } from "@workspace/do
 import { proofPaymentPatch } from "@workspace/domain/orders/payments";
 import { paymentSums } from "@workspace/domain/orders/payment-sums";
 import { allowedForActor } from "@workspace/domain/orders/policy";
-import { recordSheetSync, type SheetSyncResult } from "@workspace/domain/orders/sheet-sync";
+import { deferSheetSync, type SheetSyncResult } from "@workspace/domain/orders/sheet-sync";
 import { validateTransition, type OrderStatus } from "@workspace/domain/orders/transitions";
 import { assertTrackingAllowance, recordTrackingUsage } from "@workspace/domain/subscription";
 
@@ -656,9 +656,11 @@ export async function applyTransition(
     }
 
     // The portal defers the logbook: nothing is pushed, the outbox row
-    // is left pending and the existing sheet-sync cron heals it
+    // is left pending and the existing sheet-sync cron heals it. The row may
+    // already carry the Admin's re-derivation marker, which queueing must
+    // not erase — deferSheetSync is recordSheetSync minus the bookkeeping
     if (ctx.sheets === "defer") {
-        await recordSheetSync(ctx.db, updated.id, "pending");
+        await deferSheetSync(ctx.db, updated.id);
     } else {
         try {
             if (!(await ctx.sheets.push(updated)).ok) {

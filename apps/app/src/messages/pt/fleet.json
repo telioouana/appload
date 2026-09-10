@@ -136,6 +136,7 @@
     "profile": {
         "title": "Perfil do veículo",
         "description": "Dados, verificação e atribuição do veículo escolhido",
+        "error": "Não foi possível carregar este veículo.",
         "close": "Fechar",
         "details": "Dados do veículo",
         "verification": "Verificação",

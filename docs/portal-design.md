@@ -520,12 +520,12 @@ AppShell
 |---|---|
 | Dev port | `3001` (already in Better Auth `allowedHosts`/`trustedOrigins`; `turbo dev` runs admin 3000, website 3100, app 3001) |
 | Vercel | two projects: `appload-app-dev` (Production Branch `dev`) and `appload-app-prod` (Production Branch `prod/app`); Root Directory `apps/app`; "Include files outside root"; `apps/app/vercel.json` = Admin's `ignoreCommand`; on `prod/app` add the `[ "$VERCEL_GIT_COMMIT_REF" = "prod/app" ]` bootstrap clause (same trick as `prod/admin`) |
-| Origins | dev `https://app.dev.appload.co.mz`, prod `https://app.appload.co.mz` (to confirm); `BETTER_AUTH_URL` per project |
-| Env (apps/app/.env.example) | `DATABASE_URL`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET` (same as Admin), `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_PORTAL_URL` (new; also set on Admin), `RESEND_API_KEY`, `EMAIL_FROM`, `NEXT_PUBLIC_GOOGLE_SHEETS_AUTH_MODE=service-account` (read at import by packages/auth), `EDGE_STORE_*` (4), `INFOBIP_*` (6), `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY`, `QSTASH_TOKEN` (operator), `CRON_SECRET`, `GOOGLE_MAPS_API_KEY`, `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (portal origin added to the referrer list), `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID`, `KYC_ENFORCEMENT`, `OPS_NOTIFICATION_EMAIL` (new; claim emails) |
-| turbo.json / ci.yml | add `NEXT_PUBLIC_PORTAL_URL`, `OPS_NOTIFICATION_EMAIL` to `globalEnv` and CI placeholders |
-| QStash | `apps/app/scripts/qstash-schedules.mjs` with ids `appload-app-tracking` (tracking windows), `appload-app-notifications` (`*/5 * * * *`) — ≈ 300 msgs/day, inside the free tier with the Admin schedules |
-| Migrations | `0014_portal` applied to prod **before** the first `prod/app` push and before any Admin release that includes the Admin-side changes; dev DB via the new scripts |
-| Docs | RELEASE.md: `prod/app` row, env table, schedules, first-partner checklist; README workspace table; this plan copied to `docs/portal-design.md` |
+| Origins | dev `https://app.dev.appload.co.mz`, prod `https://app.appload.co.mz` (both to confirm — neither project exists before M8; take the real hostname from each project's Domains tab); `BETTER_AUTH_URL` per project |
+| Env (apps/app/.env.example) | Final list. `DATABASE_URL` + `BETTER_AUTH_SECRET` byte-for-byte the Admin's (one database, one cookie signature); `BETTER_AUTH_URL` and `NEXT_PUBLIC_PORTAL_URL` = this project's origin (`NEXT_PUBLIC_PORTAL_URL` also on both Admin projects); `NEXT_PUBLIC_APP_URL` = the **Admin's** origin (the claim email links there); `OPS_NOTIFICATION_EMAIL` (claim emails; unset = none, the Admin queue still fills); `NEXT_PUBLIC_CONTACT_EMAIL` (the "talk to Appload" address, falls back to `comercial@apploadafrica.com`); `RESEND_API_KEY`, `EMAIL_FROM`; `NEXT_PUBLIC_GOOGLE_SHEETS_AUTH_MODE=service-account` (read at import by packages/auth although the portal has no Google sign-in); `EDGE_STORE_*` (4), `INFOBIP_*` (6), `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY`, `QSTASH_TOKEN` (operator only — not set on Vercel), `CRON_SECRET`, `GOOGLE_MAPS_API_KEY`, `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (portal origins added to the referrer list), `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID`, `KYC_ENFORCEMENT` (same value as Admin — it is the same door). Deliberately absent: `COOKIE_DOMAIN` (separate session cookies) and every `GOOGLE_*` OAuth/Sheets credential (the portal never calls Sheets; its orders leave a `pending` `sheet_sync` row the Admin cron drains) |
+| turbo.json / ci.yml | Done in M0/M1 and re-audited in M8: `globalEnv` lists every name in both `.env.example` files (`NEXT_PUBLIC_PORTAL_URL`, `OPS_NOTIFICATION_EMAIL`, `NEXT_PUBLIC_CONTACT_EMAIL` included) and the CI env block already carries every placeholder the portal build needs — nothing the portal reads at module scope is new |
+| QStash | `node apps/app/scripts/qstash-schedules.mjs --apply` (reads `NEXT_PUBLIC_PORTAL_URL`): `appload-app-tracking` → `/api/cron/trips-tracking`, `CRON_TZ=Africa/Maputo */15 8-9,17-18 * * *`; `appload-app-notifications` → `/api/cron/notifications`, `*/5 * * * *`. 304 deliveries/day, ≈ 370 with the Admin's three — inside the free tier's 500. Re-registering an id repoints it, so one QStash account drives either dev or prod, not both |
+| Migrations | `0014_portal` **and** `0015_subscription` applied to prod with `pnpm --filter @workspace/db db:migrate` before the first `prod/app` push *and* before any Admin release carrying this branch (the Admin's Portal tab reads `organization_claim`); `0015` remaps `pro` → `business` and `free` → NULL. Dev DB got both from the idempotent scripts (`create-portal-tables`, `add-portal-columns`, `add-subscription-usage`) — never both against one database |
+| Docs | Done (M8): RELEASE.md gains the two `prod/app`/`dev` portal rows and release command, §1 "Partner portal" migrations, §2 "The portal's projects" + "New on the admin projects", §3 step 5 (Maps referrers), §5 (the webhook stays on the Admin), §6 step 3 (schedules), §8 "First partner on the portal"; README gains the workspace rows and the dev ports; this plan is `docs/portal-design.md` |
 
 Branching: `stage/22-portal` from `dev`; one PR per milestone group into `dev` (M0 first, alone).
 
@@ -537,18 +537,18 @@ Each milestone = one Workflow run: implement (parallel agents on disjoint units,
 
 M0 rules: extraction is a **pure move plus parameterization** — no logic edits, Admin routers become thin adapters that build the actor/sheets context and call the package; `frontend/pages/orders/types` re-exports the moved status groupings so Admin imports stay valid; M0 ships as its own PR into `dev` with the Admin regression list in §12 run before merge; a diff-focused review agent checks that every moved function body is byte-identical apart from the parameterized lines.
 
-| # | Milestone | Parallel units | Depends on |
-|---|---|---|---|
-| M0 | Foundations | (a) `packages/domain` orders extraction + Admin rewire; (b) `kyc`/`kpis`/`tracking` extraction; (c) `packages/comms` + `packages/maps`; (d) `packages/db` schemas + migration + dev scripts; (e) `packages/trpc` tenant gate + `packages/auth` statements/env + edgestore rule | — |
-| M1 | App scaffold & auth | (a) config/i18n/proxy/layouts/shell; (b) sign-up/verify/sign-in/reset/onboarding/claim; (c) settings (profile, members, subscription) + Admin portal section | M0 |
-| M2 | Partners & connections | search/lookup/register/request/respond/list/profile + UI + notifications wiring | M1 |
-| M3 | Fleet & drivers (carrier) | vehicles; drivers (server-side account creation, optional email → placeholder) | M1 |
-| M4 | Orders, requests, offers, quotes | (a) list/detail/projections; (b) create + requests + offers + booking door; (c) transitions + documents; (d) quotes | M2, M3 |
-| M4.5 | Subscription v2 | catalog + `subscription_usage` + counting/gates in the domain door; portal plan dialog, subscription card and dashboard badge; Admin plan editor + usage line (§4.1) | M1, M4 |
-| M5 | Trips & tracking | (a) trip CRUD + UI; (b) cron + Infobip; (c) Admin webhook attribution; (d) maps | M2 |
-| M6 | Notifications center | bell/popover/page, materializer, email outbox cron; wire kinds from M2–M5 | M2–M5 |
-| M7 | Analytics | pipeline/monthly/money/kpis/partners + views | M4, M5 |
-| M8 | Release | Vercel projects, envs, schedules, RELEASE/README, final full review | M1–M7 |
+| # | Milestone | Parallel units | Depends on | Status |
+|---|---|---|---|---|
+| M0 | Foundations | (a) `packages/domain` orders extraction + Admin rewire; (b) `kyc`/`kpis`/`tracking` extraction; (c) `packages/comms` + `packages/maps`; (d) `packages/db` schemas + migration + dev scripts; (e) `packages/trpc` tenant gate + `packages/auth` statements/env + edgestore rule | — | Built 2026-09-09 (`a1c078d`) |
+| M1 | App scaffold & auth | (a) config/i18n/proxy/layouts/shell; (b) sign-up/verify/sign-in/reset/onboarding/claim; (c) settings (profile, members, subscription) + Admin portal section | M0 | Built 2026-09-10 (`a316b32`, + `093f1a0` stale-cookie fix) |
+| M2 | Partners & connections | search/lookup/register/request/respond/list/profile + UI + notifications wiring | M1 | Built 2026-09-10 (`0f327ae`) |
+| M3 | Fleet & drivers (carrier) | vehicles; drivers (server-side account creation, optional email → placeholder) | M1 | Built 2026-09-10 (`0f327ae`) |
+| M4 | Orders, requests, offers, quotes | (a) list/detail/projections; (b) create + requests + offers + booking door; (c) transitions + documents; (d) quotes | M2, M3 | Built 2026-09-10 (`6d1a88e`) |
+| M4.5 | Subscription v2 | catalog + `subscription_usage` + counting/gates in the domain door; portal plan dialog, subscription card and dashboard badge; Admin plan editor + usage line (§4.1) | M1, M4 | Built 2026-09-10 (`87f356e`); quota figures still placeholders |
+| M5 | Trips & tracking | (a) trip CRUD + UI; (b) cron + Infobip; (c) Admin webhook attribution; (d) maps | M2 | Built 2026-09-10 (`6357657`) |
+| M6 | Notifications center | bell/popover/page, materializer, email outbox cron; wire kinds from M2–M5 | M2–M5 | Built 2026-09-10 (`36106db`) |
+| M7 | Analytics | pipeline/monthly/money/kpis/partners + views | M4, M5 | Built 2026-09-10 (`ac761a3`) |
+| M8 | Release | Vercel projects, envs, schedules, RELEASE/README, final full review | M1–M7 | In progress: docs and build plumbing done (§10); the two Vercel projects, their env vars, the DNS records and the QStash registration are operator steps that stay open until the release itself |
 
 ---
 
@@ -576,3 +576,18 @@ M0 rules: extraction is a **pure move plus parameterization** — no logic edits
 - SSE/WebSocket notifications; per-tenant WhatsApp sender or template language.
 - Drivers as portal members (`driver` org role stays unregistered); phone OTP (`phoneNumber` plugin stubs).
 - Dropping the legacy `network` table; the pre-existing Admin bug where `account-card.tsx` calls the blocked `/update-user`; the stale env path in `add-underbid-status.mjs`.
+
+### Left open by M0–M7 (recorded 2026-09-10)
+
+Things the build decided to live with rather than solve. Each is a
+deliberate gap, not a bug report — but each is the next question someone
+will ask.
+
+- **A manual location request is not a tracked attempt.** `trips.requestLocation` (`apps/app/src/frontend/pages/trips/server/procedures.ts`) sends the ping and stores the outbound `chat_message`, but writes no `trip_tracking_request` row — only the cron's slots claim one. So an ad-hoc "where are you?" is invisible to the delivery-report mirroring (which matches reports by `external_id` on that table) and to any count of attempts. Making it tracked needs a dedupe key that is not a slot.
+- **Plate and VIN uniqueness is per carrier, not global.** Two carriers can register the same plate and nothing reconciles them. Global uniqueness first needs an answer for the truck that legitimately changes owner.
+- **The Admin still has the stale-cookie redirect loop the portal fixed.** `apps/admin/src/proxy.ts:66` redirects an auth route away on the *presence* of a session cookie; a revoked or expired cookie therefore bounces `/sign-in` → `/dashboard` → `/sign-in`. The portal's fix (`093f1a0`: validate the real session on the auth pages, stop redirecting auth routes in the proxy) transplants directly.
+- **A losing bidder keeps seeing the movement.** A carrier that quoted an order and lost still reads that order, so it sees the winner's trip progress (status and dates). Money and other carriers' offers are never exposed — the projection strips them — but the shipment itself is not hidden once the offer is rejected.
+- **No mid-trip driver swap.** The driver on a trip (or a dispatched order) is fixed once it starts; changing driver means cancelling and re-registering. The tracking thread is keyed on the phone, so a real swap also has to hand the conversation over.
+- **Four cargo fields are patched in after the insert.** The shared create schema in `packages/domain` does not carry `packing`, `expectedTrucks`, `hazchem` or `refrigerated`, so the portal writes them in a second, deliberately non-fatal update right after the order row (`apps/app/src/frontend/pages/orders/server/procedures.ts`). Moving them onto the create payload makes a create one statement that cannot half-land.
+- **⌘K is deferred.** The `search` router of §5 and the `CommandPalette` of §9.4 are not built: no palette, no `search.global`, no hotkey. The ⌘K chip the list header used to render dispatched an event nobody listened for, so it was removed along with its message key rather than left as a control that does nothing. Building it means porting Admin's `command-palette.tsx` and adding a tenant-scoped `search.global` (partners, orders, trips — every predicate from `ctx.tenant`), and the §12 gate check "including via ⌘K" only becomes runnable then.
+- **Two notification kinds have no writer.** `claim.rejected` and `member.joined` are in the vocabulary (`packages/db/src/schemas/notifications.ts`) with pt/en copy, but nothing emits them: a rejected claim is only an email, and someone joining a company raises nothing. Either wire them or drop them from the vocabulary — a kind with copy and no writer reads as a bug to the next person.
