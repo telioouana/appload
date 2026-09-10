@@ -309,18 +309,46 @@
         "dashboard": {
             "title": "Dashboard",
             "greeting": "Welcome, {name}",
-            "description": "This is your company's home on Appload. The pages below open as we release them.",
+            "description": "{date} · what needs your attention today",
+            "error": "This part of the dashboard could not be loaded.",
+            "open-map": "Open map",
+            "view-all": "View all",
             "type": {
                 "shipper": "Client",
                 "carrier": "Transporter"
             },
-            "coming-next": {
-                "title": "Coming next",
-                "orders": "Orders — request carriers, compare offers and follow every load",
-                "quotes": "Quotes — standing prices between you and your partners",
-                "trips": "Trips — tracking for anything on the road, order or not",
-                "partners": "Partners — the clients and transporters you work with",
-                "analytics": "Analytics — volumes, money and partner performance"
+            "total": {
+                "label": "Orders in total",
+                "hint": {
+                    "shipper": "Everything your company has filed",
+                    "carrier": "Everything that has reached you"
+                }
+            },
+            "queue": {
+                "title": "Needs you",
+                "connections": "Partners waiting for an answer",
+                "clear-title": "All clear",
+                "clear-description": "Nothing is waiting on you right now"
+            },
+            "road": {
+                "title": "On the road now",
+                "empty-title": "Nothing moving",
+                "empty-description": "Orders and trips appear here as soon as they are in transit"
+            },
+            "trips": {
+                "title": "Trips",
+                "in-transit": "In transit",
+                "no-response": "No answer today"
+            },
+            "latest": {
+                "title": {
+                    "shipper": "Latest orders",
+                    "carrier": "Latest requests"
+                },
+                "empty": {
+                    "shipper": "You have not filed any orders yet",
+                    "carrier": "You have not received any requests yet"
+                }
             }
         },
         "list": {

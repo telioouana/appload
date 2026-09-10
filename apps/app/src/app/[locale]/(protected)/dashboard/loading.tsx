@@ -1,24 +1,11 @@
-import { Skeleton } from "@workspace/ui/components/skeleton"
+import { DashboardSkeleton } from "@/frontend/pages/dashboard/views/dashboard-fallbacks"
 
-// The shell stays up while this renders, so only the card is drawn — the
-// same box the page fills, so nothing jumps when it lands
+// The page's frame around its own skeleton, so the board's shape is on screen
+// the moment the route is entered — before the page has streamed in
 export default function DashboardLoading() {
     return (
-        <div className="flex-1 min-h-0 overflow-hidden py-4">
-            <div className="mx-auto grid max-w-3xl gap-4 rounded-xl border p-6">
-                <Skeleton className="h-7 w-64" />
-                <Skeleton className="h-4 w-full max-w-md" />
-                <div className="flex gap-2">
-                    <Skeleton className="h-6 w-40" />
-                    <Skeleton className="h-6 w-24" />
-                </div>
-                <div className="grid gap-2 pt-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                </div>
-            </div>
+        <div className="flex h-full min-h-0 flex-col gap-4 pt-5 pb-2">
+            <DashboardSkeleton />
         </div>
     )
 }

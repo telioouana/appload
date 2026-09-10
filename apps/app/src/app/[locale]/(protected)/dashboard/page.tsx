@@ -1,16 +1,12 @@
-import { eq } from "drizzle-orm"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
-import { IconArrowRight } from "@tabler/icons-react"
+import { Suspense } from "react"
+import { ErrorBoundary } from "react-error-boundary"
 
-import { db } from "@workspace/db/db"
-import { auth } from "@workspace/auth/server"
-import { organization } from "@workspace/db/users"
 import { getTranslations } from "@workspace/i18n/server"
-import { getTenantGates } from "@workspace/trpc/tenant-gate"
 
-import { Badge } from "@workspace/ui/components/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
+import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
+import { latestInput, yearInput } from "@/frontend/pages/dashboard/types"
+import { CardError, DashboardSkeleton } from "@/frontend/pages/dashboard/views/dashboard-fallbacks"
+import { DashboardView } from "@/frontend/pages/dashboard/views/dashboard-view"
 
 export async function generateMetadata() {
     const t = await getTranslations("App.dashboard")
@@ -18,67 +14,42 @@ export async function generateMetadata() {
     return { title: t("title") }
 }
 
-const COMING_NEXT = ["orders", "quotes", "trips", "partners", "analytics"] as const
-
 /**
- * Placeholder home: who you are signed in as, which company the portal is
- * showing and what opens next. M7 replaces it with the real board (tiles,
- * monthly chart, money card, on-the-road map).
+ * Where signing in lands. Everything the board reads is fetched here, on one
+ * request, with the very builders the client cards query with — so each card
+ * hydrates into its prefetched query instead of asking again, and the page
+ * streams card by card behind the boundaries the view puts around them.
+ *
+ * The tenancy is not read here: every one of these procedures is a
+ * `tenantProcedure`, so the organization comes from the session on the server
+ * side of each call rather than from anything this page could hand down.
  */
 export default async function Dashboard() {
     const t = await getTranslations("App.dashboard")
-    const tPlan = await getTranslations("App.plan")
 
-    // The layout has already gated this; the ids are re-read here rather
-    // than passed down, because a page must never trust a prop for tenancy
-    const session = await auth.api.getSession({ headers: await headers() })
+    prefetch(trpc.me.session.queryOptions())
+    prefetch(trpc.analytics.pipeline.queryOptions())
+    prefetch(trpc.map.overview.queryOptions())
+    prefetch(trpc.analytics.monthly.queryOptions(yearInput()))
+    prefetch(trpc.analytics.money.queryOptions(yearInput()))
+    prefetch(trpc.orders.list.queryOptions(latestInput()))
+    prefetch(trpc.trips.stats.queryOptions())
 
-    if (!session) redirect("/sign-in")
-
-    const tenant = await getTenantGates(db, { userId: session.user.id })
-
-    if (!tenant.ok) redirect("/onboarding")
-
-    const [company] = await db
-        .select({ name: organization.name })
-        .from(organization)
-        .where(eq(organization.id, tenant.organizationId))
-        .limit(1)
+    // The queue's connection count is warmed here too, but it rides its own
+    // client query: a bad minute there loses that one row, not the card
+    prefetch(trpc.partners.stats.queryOptions())
 
     return (
-        <div className="flex-1 min-h-0 overflow-y-auto py-4">
-            <Card className="mx-auto max-w-3xl">
-                <CardHeader>
-                    <CardTitle className="text-2xl">
-                        {t("greeting", { name: session.user.name.trim() || session.user.email })}
-                    </CardTitle>
-                    <CardDescription>{t("description")}</CardDescription>
-                </CardHeader>
-
-                <CardContent className="grid gap-6">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium">{company?.name}</span>
-                        <Badge variant="outline">{t(`type.${tenant.orgType}`)}</Badge>
-                        {/* An expired plan reads as no plan, the way the
-                            gate itself reads it */}
-                        <Badge variant={tenant.plan.active ? "default" : "secondary"}>
-                            {tPlan(`names.${tenant.plan.active && tenant.plan.plan ? tenant.plan.plan : "none"}`)}
-                        </Badge>
-                    </div>
-
-                    <div className="grid gap-2">
-                        <h2 className="text-sm font-semibold tracking-tight">{t("coming-next.title")}</h2>
-                        <ul className="grid gap-2">
-                            {COMING_NEXT.map((item) => (
-                                <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
-                                    <IconArrowRight className="mt-0.5 size-4 shrink-0" stroke={1.5} />
-                                    {t(`coming-next.${item}`)}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </CardContent>
-            </Card>
+        // The protected layout only pads horizontally; the vertical room and
+        // the viewport lock are this page's job, as on the list pages
+        <div className="flex h-full min-h-0 flex-col gap-4 pt-5 pb-2">
+            <HydrateClient>
+                <ErrorBoundary fallback={<CardError message={t("error")} />}>
+                    <Suspense fallback={<DashboardSkeleton />}>
+                        <DashboardView />
+                    </Suspense>
+                </ErrorBoundary>
+            </HydrateClient>
         </div>
     )
 }

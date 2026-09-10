@@ -44,6 +44,7 @@ import {
     type TransitionOptions,
 } from "@/frontend/pages/orders/types";
 import {
+    anyRequest,
     assertEdgeStoreUrl,
     assertOrgType,
     isMineColumn,
@@ -439,7 +440,7 @@ export const ordersRouter = createTRPCRouter({
                     ? countWhere(and(
                         eq(order.status, "prospect"),
                         sql`${pendingOfferCount} = 0`,
-                        myRequestAnywhere(["requested"]),
+                        anyRequest(["requested"]),
                     ))
                     : zeroCount,
                 offersToReview: shipper
@@ -1153,16 +1154,6 @@ export const ordersRouter = createTRPCRouter({
 // ---------------------------------------------------------------------------
 // Helpers the router leans on
 // ---------------------------------------------------------------------------
-
-/** Any request on the order in one of these states, whoever it went to. */
-function myRequestAnywhere(statuses: readonly OrderRequestStatus[]) {
-    return sql`exists (
-        select 1 from ${orderRequest} where ${and(
-            eq(orderRequest.orderId, order.id),
-            inArray(orderRequest.status, [...statuses]),
-        )}
-    )`;
-}
 
 /** The offer id a history row is about, whichever shape it was written in. */
 function readOfferId(metadata: Record<string, unknown>): string | null {

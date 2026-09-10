@@ -115,8 +115,12 @@ export const myOffer = (tenantId: string, statuses?: readonly OfferStatus[]) =>
         statuses ? inArray(orderOffer.status, [...statuses]) : ne(orderOffer.status, "recorded"),
     ));
 
-/** Any request on the order, whoever it went to — the shipper's own side. */
-const anyRequest = (statuses: readonly OrderRequestStatus[]) =>
+/**
+ * Any request on the order, whoever it went to — the shipper's own side. The
+ * sections, the stats and the analytics tiles all count with this one, so a
+ * tile can never disagree with the list it opens.
+ */
+export const anyRequest = (statuses: readonly OrderRequestStatus[]) =>
     requestExists(and(
         eq(orderRequest.orderId, order.id),
         inArray(orderRequest.status, [...statuses]),

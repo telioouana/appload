@@ -105,7 +105,7 @@ export function Sidenav({
             ]
             : []),
         { Icon: IconBuildingWarehouse, name: t("company.partners"), match: "/partners", enabled: true, path: "/partners" },
-        { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", enabled: false },
+        { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", enabled: true, path: "/analytics" },
     ]
 
     const renderEntries = (entries: NavEntry[]) => entries.map((item) => {

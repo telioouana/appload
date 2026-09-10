@@ -309,18 +309,46 @@
         "dashboard": {
             "title": "Painel",
             "greeting": "Bem-vindo, {name}",
-            "description": "Esta é a casa da sua empresa na Appload. As páginas abaixo abrem à medida que as lançamos.",
+            "description": "{date} · o que precisa da sua atenção hoje",
+            "error": "Não foi possível carregar esta parte do painel.",
+            "open-map": "Abrir mapa",
+            "view-all": "Ver todos",
             "type": {
                 "shipper": "Cliente",
                 "carrier": "Transportador"
             },
-            "coming-next": {
-                "title": "A seguir",
-                "orders": "Pedidos — pedir transportadores, comparar propostas e seguir cada carga",
-                "quotes": "Cotações — preços acordados entre si e os seus parceiros",
-                "trips": "Viagens — seguimento de tudo o que anda na estrada, com pedido ou sem ele",
-                "partners": "Parceiros — os clientes e transportadores com quem trabalha",
-                "analytics": "Análises — volumes, dinheiro e desempenho dos parceiros"
+            "total": {
+                "label": "Total de pedidos",
+                "hint": {
+                    "shipper": "Tudo o que a sua empresa registou",
+                    "carrier": "Tudo o que lhe chegou"
+                }
+            },
+            "queue": {
+                "title": "Precisa de si",
+                "connections": "Parceiros à espera de resposta",
+                "clear-title": "Tudo em ordem",
+                "clear-description": "Não há nada à sua espera neste momento"
+            },
+            "road": {
+                "title": "Na estrada agora",
+                "empty-title": "Nada em movimento",
+                "empty-description": "Os pedidos e as viagens aparecem aqui assim que estiverem em trânsito"
+            },
+            "trips": {
+                "title": "Viagens",
+                "in-transit": "Em trânsito",
+                "no-response": "Sem resposta hoje"
+            },
+            "latest": {
+                "title": {
+                    "shipper": "Últimos pedidos",
+                    "carrier": "Últimas solicitações"
+                },
+                "empty": {
+                    "shipper": "Ainda não registou nenhum pedido",
+                    "carrier": "Ainda não recebeu nenhuma solicitação"
+                }
             }
         },
         "list": {
