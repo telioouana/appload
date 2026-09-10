@@ -1,5 +1,7 @@
 import { getTranslations } from "@workspace/i18n/server";
 
+import { redirectIfSignedIn } from "@/lib/auth-redirect";
+
 import { SignUpView } from "@/frontend/pages/auth/sign-up-view";
 
 export async function generateMetadata() {
@@ -8,6 +10,8 @@ export async function generateMetadata() {
     return { title: t("sign-up.title") };
 }
 
-export default function SignUp() {
+export default async function SignUp() {
+    await redirectIfSignedIn();
+
     return <SignUpView />
 }

@@ -87,18 +87,10 @@ export default async function proxy(request: NextRequest) {
         ));
     }
 
-    if (isAuthRoute && sessionCookie) {
-        const redirectUrl = new URL(DEFAULT_LOGIN_REDIRECT, nextUrl);
-        const callback =
-            nextUrl.searchParams.get("callback") ??
-            nextUrl.searchParams.get("callbackUrl");
-
-        if (callback) {
-            redirectUrl.searchParams.set("callback", callback);
-        }
-
-        return NextResponse.redirect(redirectUrl);
-    }
+    // Signed-in visitors on an auth route are sent away by the page itself
+    // (src/lib/auth-redirect.ts), which validates the session. Deciding it
+    // here from the cookie's mere presence loops with the protected layout
+    // whenever the cookie is stale: /sign-in → /dashboard → /sign-in …
 
     return response;
 }

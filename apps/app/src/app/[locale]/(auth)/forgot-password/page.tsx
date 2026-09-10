@@ -1,5 +1,7 @@
 import { getTranslations } from "@workspace/i18n/server";
 
+import { redirectIfSignedIn } from "@/lib/auth-redirect";
+
 import { ForgotPasswordView } from "@/frontend/pages/auth/forgot-password-view";
 
 export async function generateMetadata() {
@@ -8,6 +10,8 @@ export async function generateMetadata() {
     return { title: t("forgot.title") };
 }
 
-export default function ForgotPassword() {
+export default async function ForgotPassword() {
+    await redirectIfSignedIn();
+
     return <ForgotPasswordView />
 }
