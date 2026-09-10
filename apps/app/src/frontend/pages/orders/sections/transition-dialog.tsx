@@ -20,6 +20,7 @@ import { orderDocumentPath } from "@workspace/edgestore/path"
 
 import { DriverInput } from "@/components/inputs/driver"
 import { FleetInput } from "@/components/inputs/fleet"
+import { planRefusal, type PlanReason } from "@/components/plan-dialog"
 import { orderErrorCode, orderErrorKey, type OrderErrorMessage } from "@/frontend/pages/orders/lib/errors"
 import { useOrderMutations } from "@/frontend/pages/orders/hooks/use-order-mutations"
 import { ACCEPTED_FILES } from "@/frontend/pages/orders/sections/add-document-dialog"
@@ -83,6 +84,7 @@ export function TransitionDialog({
     target,
     version,
     onClose,
+    onPlanRequired,
 }: {
     orderId: string
     /** Where the order stands now — the dispatch is only asked for on a booking */
@@ -92,6 +94,8 @@ export function TransitionDialog({
     /** The order's version, the optimistic-lock handshake */
     version: number
     onClose: () => void
+    /** The allowance ran out between opening this dialog and confirming it */
+    onPlanRequired: (reason: PlanReason) => void
 }) {
     const t = useTranslations("App.orders.transition")
     const tStatus = useTranslations("App.orders.status")
@@ -192,6 +196,15 @@ export function TransitionDialog({
                     onClose()
                 },
                 onError: (failure) => {
+                    const refusal = planRefusal(failure)
+
+                    // Not a move this form can complete: hand over to the
+                    // dialog that explains the plan
+                    if (refusal) {
+                        onPlanRequired(refusal)
+                        return
+                    }
+
                     setError(orderErrorKey(failure))
 
                     // The page was built from a version that has since moved on

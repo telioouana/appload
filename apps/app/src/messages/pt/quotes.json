@@ -338,12 +338,6 @@
             }
         }
     },
-    "upgrade": {
-        "title": "Enviar cotações é uma funcionalidade Pro",
-        "description": "O seu plano permite ler e responder a cotações. Actualize para oferecer as suas próprias rotas e preços aos clientes.",
-        "action": "Ver planos",
-        "dismiss": "Agora não"
-    },
     "actions": {
         "accept": "Aceitar",
         "decline": "Recusar",
@@ -381,7 +375,8 @@
         "loadingDate": "Escolha uma data de carga para o pedido.",
         "clientNotConnected": "Não está ligado a este cliente.",
         "notAllowed": "Não tem permissão para fazer isto.",
-        "subscription": "Enviar cotações precisa do plano Pro.",
+        "subscription": "A sua empresa não tem um plano activo. Fale connosco para activar um.",
+        "quotaExceeded": "Os movimentos seguidos deste mês já foram todos usados. O limite volta a zero no início do mês seguinte.",
         "carrierNotVerified": "Este transportador ainda não está verificado pela Appload, por isso o pedido não pode ser reservado.",
         "carrierContractMissing": "Este transportador ainda não tem contrato assinado com a Appload.",
         "carrierContractExpired": "O contrato deste transportador com a Appload expirou.",

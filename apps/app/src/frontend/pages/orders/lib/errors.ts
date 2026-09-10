@@ -14,6 +14,7 @@ export const ORDER_ERROR_KEYS = {
     NOT_FOUND: "notFound",
     WRONG_ORGANIZATION_TYPE: "notAllowed",
     SUBSCRIPTION_REQUIRED: "subscriptionRequired",
+    QUOTA_EXCEEDED: "quotaExceeded",
     // Transition requirements
     NOTE_REQUIRED: "noteRequired",
     POD_REQUIRED: "podRequired",

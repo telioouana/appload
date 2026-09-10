@@ -18,10 +18,11 @@ import { missingForDispatch } from "@workspace/domain/orders/dispatch-readiness"
 import { PENDING_POD_STATUSES } from "@workspace/domain/orders/status-groups";
 import { allowedTransitions, transitionRequirements } from "@workspace/domain/orders/transitions";
 import { applyTransition, deriveResumeStatus, pendingOfferCount } from "@workspace/domain/orders/transition";
+import { trackingAllowance } from "@workspace/domain/subscription";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, proProcedure, tenantProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
 import { CancelOrderBaseSchema, CreateOrderBaseSchema, SendRequestsBaseSchema } from "@/backend/schemas/order";
 import { AddDocumentBaseSchema, TransitionBaseSchema, type TransitionDocumentForm } from "@/backend/schemas/dispatch";
@@ -717,30 +718,51 @@ export const ordersRouter = createTRPCRouter({
             // A partner is never the admin the terminal reversals demand
             const machine = { status: row.status, route: row.route, role: "user" as const, resumeStatus };
 
-            const targets: TransitionOption[] = allowedTransitions(machine)
+            const allowed = allowedTransitions(machine)
                 .filter((to) => allowedForActor(actor, row, to, {
                     // The policy only asks WHETHER a booking accepts an offer;
                     // which one is the accept mutation's business, and the
                     // blocked flag below says whether there is one at all
                     offerId: "pending",
                     resumeStatus,
-                }))
-                .map((to) => {
-                    const requirements = transitionRequirements(row.status, to, { resumeStatus }) ?? [];
+                }));
 
-                    const blockedReason =
-                        requirements.includes("offer") && pendingOffers === 0 ? "NO_OFFERS" as const
-                            : to === "to-loading" && missing.length > 0 ? "INCOMPLETE_FOR_DISPATCH" as const
-                                : null;
+            // The two moves a plan pays for: the client's booking and the
+            // carrier's FIRST dispatch. A resume out of an interrupt lands on
+            // "to-loading" again for a movement that was already billed, so it
+            // is not on the plan's tab and must not be offered as blocked. The
+            // month's usage is counted once, and only when the gated move is
+            // actually on the table — every other reader of this query would
+            // be paying for a number it cannot act on
+            const gated = tenant.orgType !== "carrier" ? "booked"
+                : row.status === "booked" ? "to-loading"
+                    : null;
 
-                    return { to, requirements, blocked: blockedReason !== null, blockedReason };
-                });
+            const allowance = gated !== null && allowed.includes(gated)
+                ? await trackingAllowance(ctx.db, tenant.organizationId)
+                : null;
+
+            const targets: TransitionOption[] = allowed.map((to) => {
+                const requirements = transitionRequirements(row.status, to, { resumeStatus }) ?? [];
+
+                const blockedReason =
+                    requirements.includes("offer") && pendingOffers === 0 ? "NO_OFFERS" as const
+                        : to === "to-loading" && missing.length > 0 ? "INCOMPLETE_FOR_DISPATCH" as const
+                            : to === gated && allowance !== null && !allowance.active
+                                ? "SUBSCRIPTION_REQUIRED" as const
+                                : to === gated && allowance !== null && allowance.remaining === 0
+                                    ? "QUOTA_EXCEEDED" as const
+                                    : null;
+
+                return { to, requirements, blocked: blockedReason !== null, blockedReason };
+            });
 
             return {
                 status: row.status,
                 version: row.version,
                 resumeStatus,
                 targets,
+                allowance,
                 missingForDispatch: missing,
                 pendingOffers: tenant.orgType === "shipper" ? pendingOffers : 0,
             };
@@ -753,7 +775,7 @@ export const ordersRouter = createTRPCRouter({
      * offer list is always empty, so `guardCreateForActor` in the shared door
      * has nothing to refuse.
      */
-    create: proProcedure("order", ["create"])
+    create: authorizedTenantProcedure("order", ["create"])
         .input(CreateOrderBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; warning?: "DETAILS_INCOMPLETE" }> => {
             try {
@@ -842,7 +864,7 @@ export const ordersRouter = createTRPCRouter({
      * already sitting on the order is left alone; a withdrawn or declined one
      * is asked again.
      */
-    sendRequests: proProcedure("order", ["update"])
+    sendRequests: authorizedTenantProcedure("order", ["update"])
         .input(SendRequestsBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; sent: number; skipped: number }> => {
             try {

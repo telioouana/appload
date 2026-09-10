@@ -58,22 +58,6 @@ export const authorizedTenantProcedure = <R extends OrgResource>(
     });
 
 /**
- * Paid-plan procedure: the role statements plus a live subscription. The plan
- * is read with the rest of the gate, so an expired subscription closes the
- * screen on the next request, not on the next sign-in.
- */
-export const proProcedure = <R extends OrgResource>(
-    resource: R,
-    actions: OrgAction<R>[],
-) =>
-    authorizedTenantProcedure(resource, actions).use(({ ctx, next }) => {
-        if (!ctx.tenant.plan.isPro) {
-            throw new TRPCError({ code: "FORBIDDEN", message: "SUBSCRIPTION_REQUIRED" });
-        }
-        return next();
-    });
-
-/**
  * Pre-membership procedure: a partner account that is not banned and has a
  * verified email, with no organization required. This is what registers or
  * claims one, so it exposes the (not-ok) gate result on `ctx.tenant` instead

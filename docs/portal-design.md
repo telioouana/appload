@@ -15,7 +15,7 @@ Decisions confirmed with Claire (2026-09-09):
 |---|---|
 | Commission on portal deals | **None.** Portal offers are priced with `commissionTotal = 0`; client price = carrier price with the existing VAT rules. Staff can still re-price in Admin. |
 | Onboarding | **Self-serve + staff approval.** Unknown NUIT → organization created at sign-up. Known NUIT with no members → claim approved by staff in Admin; auto-approved when the verified sign-up email equals the organization's email on file. |
-| Subscription | **Manual plans + gating.** Staff set `free`/`pro` and an expiry in Admin; the portal gates pro features and shows a contact prompt. No payments. |
+| Subscription | **Named tiers by monthly tracked movements** (revised 2026-09-10, see §4.1): no free plan; staff set the tier (starter/business/enterprise) and an expiry in Admin; the portal blocks booking, dispatch and trips when there is no active plan or the month's allowance is used up. No payments. |
 | KYC | **Status badges only.** Uploads and review stay in Admin. |
 
 Architectural decisions taken in this plan (rationale inline):
@@ -33,7 +33,7 @@ Architectural decisions taken in this plan (rationale inline):
 
 ```
 apps/admin  (staff)          apps/app  (partners, NEW, port 3001)
-   │  authorizedProcedure       │  tenantProcedure / proProcedure
+   │  authorizedProcedure       │  tenantProcedure
    │  (user.type = appload)     │  (member of organization, type shipper|carrier)
    └──────────┬─────────────────┴──────────────┐
               ▼                                ▼
@@ -276,6 +276,89 @@ Gate order (in `(protected)/layout.tsx` and every `tenantProcedure`): session �
 
 ---
 
+### 4.1 Subscription model v2 (decided 2026-09-10 — supersedes every "free"/"pro" mention in this document)
+
+There is **no free plan**. Plans are named tiers that differ only by how many **tracked movements** (orders that get dispatched, standalone trips that go in transit) an organization may start per calendar month. Nothing else is gated: `proProcedure`, `TenantPlan.isPro` and the `SUBSCRIPTION_REQUIRED` gating of `orders.create`, `orders.sendRequests`, `offers.create`, `quotes.create`, `trips.create` and `analytics.*` are removed. Before staff assign a plan, an organization can onboard, connect partners, manage fleet and drivers, send and answer requests and quotes — only booking, dispatch and trips are blocked with an "activate your plan" prompt. No payments and no plan changes from the portal (a plan is agreed commercially and recorded by staff in Admin).
+
+**Catalog** — `packages/domain/src/subscription.ts` (package export `./subscription`; Drizzle + `@trpc/server` only, no React):
+
+```ts
+export { SUBSCRIPTION_PLAN, type SubscriptionPlan } from "@workspace/db/subscriptions";   // ["starter", "business", "enterprise"]
+/** Tracked movements per calendar month; null = unlimited. PLACEHOLDER figures until the commercial terms are final — one line each to change. */
+export const PLAN_QUOTA: Record<SubscriptionPlan, number | null> = { starter: 10, business: 50, enterprise: null };
+export const TRACKING_TIME_ZONE = "Africa/Maputo";
+/** "YYYY-MM" of the instant in Africa/Maputo — the month a movement is billed to. */
+export function periodKey(at?: Date): string;
+/** plan !== null && (expiresAt === null || expiresAt > at) */
+export function planIsActive(plan: SubscriptionPlan | null, expiresAt: Date | null, at?: Date): boolean;
+export type TrackingAllowance = {
+    plan: SubscriptionPlan | null; expiresAt: Date | null; active: boolean;
+    period: string;            // periodKey(at)
+    used: number;              // subscription_usage rows of this organization in `period`
+    quota: number | null;      // PLAN_QUOTA[plan] when active, 0 when not active; null = unlimited
+    remaining: number | null;  // max(quota - used, 0); null = unlimited
+};
+export async function trackingAllowance(db: Db, organizationId: string, at?: Date): Promise<TrackingAllowance>;
+/** Throws TRPCError FORBIDDEN "SUBSCRIPTION_REQUIRED" when !active, FORBIDDEN "QUOTA_EXCEEDED" when remaining === 0; returns the allowance otherwise. */
+export async function assertTrackingAllowance(db: Db, organizationId: string, at?: Date): Promise<TrackingAllowance>;
+/** One usage row per (organization, entity); idempotent (onConflictDoNothing on the unique index); nulls in organizationIds are skipped. */
+export async function recordTrackingUsage(db: Db, params: { organizationIds: readonly (string | null)[]; entityType: "order" | "trip"; entityId: string; at?: Date }): Promise<void>;
+```
+
+**Schema** — `packages/db/src/schemas/subscriptions.ts` (new; exported from `src/schema.ts` and as `./subscriptions` in `package.json`). The tier vocabulary itself is declared in `src/types/index.ts` with the other vocabularies — `organization` carries the column and `users.ts` imports no table module, so declaring it here would make the two table modules import each other and leave `SUBSCRIPTION_PLAN` in TDZ — and re-exported here, which stays the import path consumers use:
+
+```
+export { SUBSCRIPTION_PLAN, type SubscriptionPlan } from "@workspace/db/types"   // ["starter", "business", "enterprise"]
+export const USAGE_ENTITY = ["order", "trip"] as const
+subscription_usage {
+  id text pk default uuid
+  organization_id text FK organization (cascade) not null
+  period text not null                     -- "YYYY-MM"
+  entity_type text USAGE_ENTITY not null
+  entity_id text not null                  -- order.id (the pk, NOT order_id) or trip.id
+  created_at timestamp default now not null
+  UNIQUE INDEX subscription_usage_entity_uq (organization_id, entity_type, entity_id)
+  INDEX subscription_usage_period_idx (organization_id, period)
+}
+```
+
+`organization.subscription_plan` becomes `text("subscription_plan", { enum: SUBSCRIPTION_PLAN })` — **nullable, no default** (null = no plan agreed yet); `subscription_expires_at` unchanged. Migration `0015_subscription` is generated with `pnpm --filter @workspace/db db:generate --name subscription` and the data remap is appended to the SQL by hand:
+
+```sql
+UPDATE "organization" SET "subscription_plan" = CASE "subscription_plan" WHEN 'pro' THEN 'business' ELSE NULL END WHERE "subscription_plan" IN ('free', 'pro');
+```
+
+Dev script `packages/db/scripts/add-subscription-usage.mjs` (idempotent, same shape and header as `add-portal-columns.mjs`): create the table and indexes if they do not exist, `ALTER COLUMN subscription_plan DROP DEFAULT` and `DROP NOT NULL`, then the same remap. It is run against the shared dev database as part of the build; `subscription_usage` is appended to the TRUNCATE list in `scripts/sync-dev-from-logbook.mjs`. Prod applies 0015 with `db:migrate` (RELEASE.md, M8).
+
+Better Auth (`packages/auth/src/server.ts`): the organization additional field `subscriptionPlan` becomes `{ type: [...SUBSCRIPTION_PLAN], required: false, input: false }` (no `defaultValue`). Neither `organizations.register` (Admin) nor `onboarding.createOrganization` / `partners.register` (portal) writes a plan.
+
+**Counting** — a movement is billed to *both* parties the moment tracking starts:
+- Order: inside `applyTransition` (`packages/domain/src/orders/transition.ts`), right after the `order_history` insert, when `input.to === "to-loading"`: `recordTrackingUsage(ctx.db, { organizationIds: [updated.shipperId, updated.carrierId], entityType: "order", entityId: updated.id })`. Every actor, both apps: an Admin dispatch of an order whose parties use the portal counts too, and staff are never blocked. A re-dispatch after an interrupt hits the unique index and costs nothing.
+- Trip (M5): `trips.create` with status `in-transit` and `trips.setStatus` → `in-transit` call `assertTrackingAllowance` before the write and `recordTrackingUsage({ organizationIds: [trip.organizationId], entityType: "trip", entityId: trip.id })` after it.
+
+**Gates** (tenant actors only — `actor.kind === "staff"` is never gated):
+- Shipper booking: in `applyTransition`, when `ctx.actor.kind === "tenant"` and `input.to === "booked"`, `assertTrackingAllowance(ctx.db, ctx.actor.organizationId)` before any write. The same check in `createOrder` (`packages/domain/src/orders/create.ts`, next to `guardCreateForActor`) when the actor is a tenant and `input.status === "booked"` — the standing-quote acceptance path.
+- Carrier dispatch: in `applyTransition`, when `ctx.actor.kind === "tenant"` and `input.to === "to-loading"` **out of `booked`**, the same assertion. Only the first dispatch is gated: a resume out of `stopped`/`issue` lands on `to-loading` again for a movement that was already billed, and a truck on the road must stay movable when the month runs out or the plan lapses under it.
+- `orders.transitionOptions`: a `to-loading` target for a carrier on a `booked` order, or a `booked` target for a shipper, whose allowance is not ok is `blocked` with `blockedReason: "SUBSCRIPTION_REQUIRED" | "QUOTA_EXCEEDED"` (evaluated after `INCOMPLETE_FOR_DISPATCH` / `NO_OFFERS`); the response also carries `allowance: TrackingAllowance | null` — null when no gated target is on the table, so a reader with no gated move does not pay for the usage query.
+- Error codes `SUBSCRIPTION_REQUIRED` (no active plan) and `QUOTA_EXCEEDED` (this month's allowance used up) exist in the orders and quotes error tables with messages in both languages.
+
+**Tenant gate** — `TenantPlan` becomes `{ plan: SubscriptionPlan | null; expiresAt: Date | null; active: boolean; quota: number | null }` (`quota` = `PLAN_QUOTA[plan]` when active, `0` otherwise; the gate does not count usage — one more query per request is not worth it). `proProcedure` is deleted from `packages/trpc/src/tenant.ts`. `me.session` adds `allowance: TrackingAllowance`.
+
+**Portal UI**:
+- Settings › Subscription card: plan name (or "No plan yet"), expiry or "expired on", a usage line with a bar — "12 of 50 tracked movements in September 2026" (unlimited → "Unlimited tracked movements") — "on the portal since", and the contact block. The feature list becomes the tier list from the catalog (name + monthly allowance), marking the current tier.
+- Dashboard badge: the plan name, or "No plan" (secondary variant) when null or expired.
+- The orders `UpgradeDialog` and the quotes `UpgradeCard` are replaced by one `PlanDialog` (`apps/app/src/components/plan-dialog.tsx`) taking `reason: "SUBSCRIPTION_REQUIRED" | "QUOTA_EXCEEDED"` and the allowance, with the contact CTA and a link to settings. It opens (a) pre-emptively when the shipper clicks Accept on an offer or a standing quote, or the carrier clicks Dispatch, and the allowance is not ok (from `me.session.allowance` / `transitionOptions`), and (b) whenever `offers.accept`, `quotes.accept` or `orders.transition` answers with one of the two codes. New order, send requests, quote on a request, new standing quote and analytics no longer consult any plan: the `isPro` props and the dialogs behind them go away.
+- Messages (pt is the source of truth, en mirrors it): remove the `free`/`pro` keys; add plan names (`none`, `starter`, `business`, `enterprise`), the usage/unlimited lines, the dialog copy and the two error messages.
+
+**Admin**:
+- `organizations.setSubscription` input `plan: z.enum(SUBSCRIPTION_PLAN).nullable()`; the `subscription.changed` notification carries `{ plan: updated.plan ?? "none" }`.
+- Portal section plan editor: select with "No plan" + the three tiers, expiry as today; below it "Tracked this month: 12 of 50" (or unlimited / no plan) read from a new `partners.portalUsage({ organizationId })` query (`organizations: ["read"]`) that returns `trackingAllowance` — ops sees exactly what the portal enforces.
+- Admin messages pt/en for the new options, the usage line and the `none` plan in the `subscription.changed` notification copy.
+
+This section is the contract for M4.5 (subscription v2); §2.4, the §4 decisions row and the §5 "Pro-gated" rule are superseded by it.
+
+---
+
 ## 5. Portal tRPC API (`apps/app/src/backend/api/routers/_app.ts`)
 
 Every procedure is `tenantProcedure`-based unless marked _public_ / _onboarding_. `T` = tenant org id from ctx.
@@ -297,7 +380,7 @@ Every procedure is `tenantProcedure`-based unless marked _public_ / _onboarding_
 Cross-cutting: `registerActivityCatalog(portalCatalog)` at module scope; all mutations take `expectedVersion` where the row has one; domain errors travel in `TRPCError.message` (existing `domainErrorCode` pattern).
 
 Concrete rules an implementer must not have to guess:
-- **Pro-gated** (`proProcedure`): `orders.create`, `orders.sendRequests`, `offers.create`, `quotes.create`, `trips.create`, `analytics.*`. Everything else is free.
+- **Quota-gated** (see §4.1; `proProcedure` no longer exists): the shipper's booking (`offers.accept`, `quotes.accept`), the carrier's dispatch (`orders.transition` to `to-loading`) and starting a trip check the tenant's monthly allowance; every other procedure is available on every plan.
 - **Order sections** — shipper: `all` · `requests` (prospects with an open `order_request`) · `quoted` (prospects with ≥ 1 pending offer) · `booked` · `on-going` (`TRACKED_STATUSES`) · `delivered` · `history` (completed/cancelled/underbid). Carrier: `requests` (`order_request.status = requested` for T) · `quoted` (own pending offers) · `booked` · `on-going` · `delivered` · `history` (completed/cancelled + own offers lost/declined).
 - **Partner search** (`partners.search`): min 2 characters, `organization.type` = the relation's counterpart (`client-carrier` → opposite type; `subcontract` → carrier), excludes self and `status = closed`, limit 10, returns `{id, name, province (physicalAddress.state), kycStatus, connection: null | status}` — never email/phone/NUIT of unconnected organizations. `lookupNuit` returns the same shape for an exact 9-digit match.
 - **Register partner** (`partners.register`): NUIT (9 digits) and phone required, email optional → placeholder `missing-<uuid>@appload.invalid` (Admin's `PLACEHOLDER_PATTERNS` already flags it), addresses optional; `organization.status = pending`, `metadata.registeredBy = T`; connection inserted as `accepted` with `accepted_via = registration`.
@@ -416,7 +499,7 @@ AppShell
    ├─ Quotes: QuotesTable · NewQuoteSheet (carrier) · QuoteSheet · AcceptQuoteDialog (client cargo form)
    ├─ Trips: TripsHeader · TripsTable · NewTripSheet (phone-first form) · TripSheet · TripDetail(TripRouteMap, PingList, RequestLocationButton, StatusMenu)
    ├─ Map: MapView (OverviewPins over orders+trips) · MapEntityList · SelectedCard
-   ├─ Analytics: PipelineTiles · OrdersByMonth · MoneyCard · KpiTiles · PartnersRanking · PriceChart · PeriodSelect · UpgradeCard
+   ├─ Analytics: PipelineTiles · OrdersByMonth · MoneyCard · KpiTiles · PartnersRanking · PriceChart · PeriodSelect
    ├─ Notifications: NotificationsList · KindFilter · MarkAllButton
    └─ Settings: ProfileCard · PasswordCard · CompanyCard (addresses, contacts; NUIT read-only) · MembersTable · InviteMemberDialog · SubscriptionCard
 ```
@@ -460,6 +543,7 @@ M0 rules: extraction is a **pure move plus parameterization** — no logic edits
 | M2 | Partners & connections | search/lookup/register/request/respond/list/profile + UI + notifications wiring | M1 |
 | M3 | Fleet & drivers (carrier) | vehicles; drivers (server-side account creation, optional email → placeholder) | M1 |
 | M4 | Orders, requests, offers, quotes | (a) list/detail/projections; (b) create + requests + offers + booking door; (c) transitions + documents; (d) quotes | M2, M3 |
+| M4.5 | Subscription v2 | catalog + `subscription_usage` + counting/gates in the domain door; portal plan dialog, subscription card and dashboard badge; Admin plan editor + usage line (§4.1) | M1, M4 |
 | M5 | Trips & tracking | (a) trip CRUD + UI; (b) cron + Infobip; (c) Admin webhook attribution; (d) maps | M2 |
 | M6 | Notifications center | bell/popover/page, materializer, email outbox cron; wire kinds from M2–M5 | M2–M5 |
 | M7 | Analytics | pipeline/monthly/money/kpis/partners + views | M4, M5 |

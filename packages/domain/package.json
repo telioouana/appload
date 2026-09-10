@@ -24,6 +24,7 @@
     },
     "exports": {
         "./notifications": "./src/notifications.ts",
+        "./subscription": "./src/subscription.ts",
         "./orders/*": "./src/orders/*.ts",
         "./kyc/*": "./src/kyc/*.ts",
         "./kpis/*": "./src/kpis/*.ts",

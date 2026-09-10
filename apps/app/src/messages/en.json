@@ -315,10 +315,6 @@
                 "shipper": "Client",
                 "carrier": "Transporter"
             },
-            "plan": {
-                "free": "Free plan",
-                "pro": "Pro plan"
-            },
             "coming-next": {
                 "title": "Coming next",
                 "orders": "Orders — request carriers, compare offers and follow every load",
@@ -582,19 +578,16 @@
             "subscription": {
                 "title": "Subscription",
                 "description": "Your company's plan on the portal",
-                "plan": {
-                    "free": "Free plan",
-                    "pro": "Pro plan"
-                },
                 "expires": "Valid until {date}",
                 "no-expiry": "No end date",
                 "expired": "The subscription ended on {date}",
+                "none": "No active plan yet — talk to us to choose one.",
                 "since": "On the portal since {date}",
-                "features": {
-                    "title": "What the pro plan includes",
-                    "orders": "Direct orders and quotes with your partners",
-                    "trips": "Trip tracking, with or without an order",
-                    "analytics": "Analytics on volumes, money and partners"
+                "tiers": {
+                    "title": "Plans",
+                    "quota": "{quota} tracked movements a month",
+                    "unlimited": "Unlimited tracked movements",
+                    "current": "Current plan"
                 },
                 "contact": {
                     "title": "Want to change plan?",
@@ -602,6 +595,30 @@
                     "button": "Talk to Appload",
                     "subject": "Appload portal — {organization} plan"
                 }
+            }
+        },
+        "plan": {
+            "names": {
+                "none": "No plan",
+                "starter": "Starter",
+                "business": "Business",
+                "enterprise": "Enterprise"
+            },
+            "usage": "{used} of {quota} tracked movements in {month}",
+            "unlimited": "Unlimited tracked movements",
+            "dialog": {
+                "no-plan": {
+                    "title": "Your company has no plan yet",
+                    "description": "Booking a load and sending it to loading needs an active plan. The rest of the portal — partners, fleet, requests and quotes — stays open."
+                },
+                "quota": {
+                    "title": "This month's movements are used up",
+                    "description": "Your company has already tracked every movement its plan allows this month. The allowance starts again at the beginning of next month."
+                },
+                "close": "Not now",
+                "settings": "See subscription",
+                "contact": "Talk to Appload",
+                "subject": "Appload portal — {organization} plan"
             }
         }
     }

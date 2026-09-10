@@ -5,6 +5,14 @@ import { APIError } from "better-auth/api";
 import { organization, user } from "@workspace/db/users";
 import { AddressSchema, type Address } from "@workspace/db/types";
 
+import {
+    PLAN_QUOTA,
+    SUBSCRIPTION_PLAN,
+    trackingAllowance,
+    type SubscriptionPlan,
+    type TrackingAllowance,
+} from "@workspace/domain/subscription";
+
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 import type { OrgStatus, OrgType, TenantPlan, TenantRole } from "@workspace/trpc/tenant-gate";
@@ -25,13 +33,23 @@ export type MeSession = {
         billingAddress: Address | null;
         physicalAddress: Address | null;
         kycStatus: string;
-        subscriptionPlan: "free" | "pro";
+        /** Null until staff agree a plan with the company */
+        subscriptionPlan: SubscriptionPlan | null;
         subscriptionExpiresAt: Date | null;
         portalActivatedAt: Date | null;
     };
     role: TenantRole;
     plan: TenantPlan;
+    /** This month's tracked movements against what the plan allows */
+    allowance: TrackingAllowance;
+    /** Every tier and its monthly allowance, so the plan screens can list them */
+    tiers: Array<{ plan: SubscriptionPlan; quota: number | null }>;
 };
+
+// The catalog lives in a module the browser cannot load (it reads the
+// database), so the tiers travel to the client as data rather than as an
+// import
+const TIERS = SUBSCRIPTION_PLAN.map((plan) => ({ plan, quota: PLAN_QUOTA[plan] }));
 
 /**
  * The violated constraint name when the error (or its cause) is a postgres
@@ -78,7 +96,7 @@ export const meRouter = createTRPCRouter({
      * partner is signed in.
      */
     session: tenantProcedure.query(async ({ ctx }): Promise<MeSession> => {
-        const [account, company] = await Promise.all([
+        const [account, company, allowance] = await Promise.all([
             ctx.db
                 .select({
                     id: user.id,
@@ -110,6 +128,7 @@ export const meRouter = createTRPCRouter({
                 .where(eq(organization.id, ctx.tenant.organizationId))
                 .limit(1)
                 .then((rows) => rows[0]),
+            trackingAllowance(ctx.db, ctx.tenant.organizationId),
         ]);
 
         // The gate resolved both rows a moment ago, so a miss here is a row
@@ -123,6 +142,8 @@ export const meRouter = createTRPCRouter({
             organization: company,
             role: ctx.tenant.role,
             plan: ctx.tenant.plan,
+            allowance,
+            tiers: TIERS,
         };
     }),
 

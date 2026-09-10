@@ -23,6 +23,7 @@ import { FieldGroup, FieldLegend, FieldSet, FieldTitle } from "@workspace/ui/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
 
 import { useRouter } from "@/i18n/navigation"
+import { planRefusal, type PlanReason } from "@/components/plan-dialog"
 import { useMoney } from "@/frontend/pages/quotes/sections/badges"
 import { useQuoteMutations } from "@/frontend/pages/quotes/hooks/use-quote-mutations"
 import type { QuoteDetail } from "@/frontend/pages/quotes/types"
@@ -70,11 +71,14 @@ export function AcceptQuoteDialog({
     open,
     onOpenChange,
     onAccepted,
+    onPlanRequired,
 }: {
     quote: QuoteDetail
     open: boolean
     onOpenChange: (open: boolean) => void
     onAccepted?: () => void
+    /** The allowance ran out between opening this form and submitting it */
+    onPlanRequired: (reason: PlanReason) => void
 }) {
     const t = useTranslations("App.quotes")
     const locale = useLocale()
@@ -128,6 +132,13 @@ export function AcceptQuoteDialog({
                 onOpenChange(false)
                 onAccepted?.()
                 router.push({ pathname: "/orders/details/[orderId]", params: { orderId } })
+            },
+            onError: (failure) => {
+                // Not a booking this form can complete: hand over to the
+                // dialog that explains the plan
+                const refusal = planRefusal(failure)
+
+                if (refusal) onPlanRequired(refusal)
             },
         })
     }

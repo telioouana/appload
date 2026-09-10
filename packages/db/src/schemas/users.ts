@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
 import { bigint, pgTable, text, timestamp, boolean, index, integer, uniqueIndex, jsonb, primaryKey, } from "drizzle-orm/pg-core";
 
-import { Address, KYC_STATUS, RISK_LEVEL, Urls } from "@workspace/db/types";
+import { Address, KYC_STATUS, RISK_LEVEL, SUBSCRIPTION_PLAN, Urls } from "@workspace/db/types";
 
 export const user = pgTable(
     "user",
@@ -102,13 +102,14 @@ export const organization = pgTable(
         logo: text("logo"),
         createdAt: timestamp("created_at").notNull(),
         metadata: text("metadata"),
-        subscriptionPlan: text("subscription_plan", { enum: ["free", "pro"] })
-            .default("free")
-            .notNull(),
-        // When the pro plan runs out; null on the free plan and on a
-        // subscription with no end date. The gate is
-        // `plan = 'pro' and (expires is null or expires > now())`. Written by
-        // Drizzle only, never a Better Auth additional field
+        // Null until staff record the tier that was agreed commercially:
+        // there is no free plan, and no plan is not a tier of its own
+        subscriptionPlan: text("subscription_plan", { enum: SUBSCRIPTION_PLAN }),
+        // When the plan runs out; null on a subscription with no end date. The
+        // gate is `plan is not null and (expires is null or expires > now())`,
+        // and what the tier buys is its monthly quota of tracked movements
+        // (@workspace/domain/subscription). Written by Drizzle only, never a
+        // Better Auth additional field
         subscriptionExpiresAt: timestamp("subscription_expires_at"),
         // Set when the organization's first owner joins the partner portal;
         // null means it exists in the database but nobody uses the portal yet

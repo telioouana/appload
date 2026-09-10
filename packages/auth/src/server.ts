@@ -8,6 +8,7 @@ import { admin, organization, phoneNumber, twoFactor } from "better-auth/plugins
 import { db } from "@workspace/db/db";
 import { activityLog } from "@workspace/db/activity-log";
 import { member as memberSchema } from "@workspace/db/schema";
+import { SUBSCRIPTION_PLAN } from "@workspace/db/subscriptions";
 import { brandedEmail, sendEmail } from "@workspace/auth/email";
 import { admin as userAdmin, manager, uac, user } from "@workspace/auth/user-permissions";
 import { admin as orgAdmin, oac, owner, member } from "@workspace/auth/organization-permissions";
@@ -425,16 +426,19 @@ export const auth = betterAuth({
                         // `organization:update` — which owners and admins hold.
                         // An array type even degrades to z.any() there, so the
                         // enum would not be enforced either. These four are
-                        // authorization and registry state (the pro gate, the
-                        // approval status, which procedures the tenant passes,
-                        // the key the logbook and every document are keyed on);
-                        // Admin writes them by direct Drizzle insert/update,
-                        // which is unaffected.
+                        // authorization and registry state (the tier the
+                        // tracking quota comes from, the approval status, which
+                        // procedures the tenant passes, the key the logbook and
+                        // every document are keyed on); Admin writes them by
+                        // direct Drizzle insert/update, which is unaffected.
+                        //
+                        // The plan is optional and has no default: a partner
+                        // that signs up owes nothing until a tier is agreed
+                        // commercially and staff record it.
                         subscriptionPlan: {
-                            type: ["free", "pro"],
-                            required: true,
+                            type: [...SUBSCRIPTION_PLAN],
+                            required: false,
                             input: false,
-                            defaultValue: "free"
                         },
                         nuit: {
                             type: "string",

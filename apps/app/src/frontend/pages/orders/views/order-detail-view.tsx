@@ -32,7 +32,6 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
     const { data: options } = useSuspenseQuery(trpc.orders.transitionOptions.queryOptions({ orderId }))
 
     const orgType = session.organization.type
-    const isPro = session.plan.isPro
 
     const steps = orderMilestones(order, history)
 
@@ -41,7 +40,6 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
             <OrderDetailHeader
                 order={order}
                 orgType={orgType}
-                isPro={isPro}
                 organizationName={session.organization.name}
                 options={options}
             />
@@ -60,16 +58,11 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                     <OffersPanel
                         order={order}
                         orgType={orgType}
-                        isPro={isPro}
+                        allowance={session.allowance}
                         organizationName={session.organization.name}
                     />
 
-                    <RequestsPanel
-                        order={order}
-                        orgType={orgType}
-                        isPro={isPro}
-                        organizationName={session.organization.name}
-                    />
+                    <RequestsPanel order={order} orgType={orgType} />
 
                     <OperationsCard order={order} />
 

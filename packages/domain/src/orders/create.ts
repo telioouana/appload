@@ -11,6 +11,7 @@ import { OrderError } from "@workspace/domain/orders/errors";
 import { recordSheetSync } from "@workspace/domain/orders/sheet-sync";
 import type { CreateOrderForm } from "@workspace/domain/orders/schemas";
 import { offerMetadata, type OrderContext } from "@workspace/domain/orders/transition";
+import { assertTrackingAllowance } from "@workspace/domain/subscription";
 
 export const decimal = (value: number | undefined) => (value === undefined ? null : String(value));
 
@@ -171,6 +172,13 @@ export async function createOrder(
     const accepted = acceptedOfferOf(input);
 
     guardCreateForActor(ctx.actor, input);
+
+    // The other door onto a booking (a standing quote the client accepted), so
+    // it buys the same thing as prospect → booked: a partner books on an
+    // active plan with allowance left, staff on none
+    if (ctx.actor.kind === "tenant" && input.status === "booked") {
+        await assertTrackingAllowance(ctx.db, ctx.actor.organizationId);
+    }
 
     // Verification only bites once a carrier is actually
     // committed: a prospect is still a quote, and quoting an

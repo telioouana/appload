@@ -13,7 +13,7 @@ import { offerPricingColumns, priceOffer } from "@workspace/domain/orders/commis
 import { applyTransition } from "@workspace/domain/orders/transition";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, proProcedure, tenantProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
 import {
     AcceptOfferBaseSchema,
@@ -130,7 +130,7 @@ export const offersRouter = createTRPCRouter({
      * to set, so the offer is priced with a zero commission: the client price
      * equals the quote until staff price the deal in Admin.
      */
-    create: proProcedure("offer", ["create"])
+    create: authorizedTenantProcedure("offer", ["create"])
         .input(z.object({ orderId: z.string().nonempty(), values: OfferValuesBaseSchema }))
         .mutation(async ({ ctx, input }): Promise<OrderOfferView> => {
             try {

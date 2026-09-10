@@ -315,10 +315,6 @@
                 "shipper": "Cliente",
                 "carrier": "Transportador"
             },
-            "plan": {
-                "free": "Plano gratuito",
-                "pro": "Plano pro"
-            },
             "coming-next": {
                 "title": "A seguir",
                 "orders": "Pedidos — pedir transportadores, comparar propostas e seguir cada carga",
@@ -582,19 +578,16 @@
             "subscription": {
                 "title": "Subscrição",
                 "description": "O plano da sua empresa no portal",
-                "plan": {
-                    "free": "Plano gratuito",
-                    "pro": "Plano pro"
-                },
                 "expires": "Válido até {date}",
                 "no-expiry": "Sem data de fim",
                 "expired": "A subscrição terminou a {date}",
+                "none": "Ainda sem plano activo — fale connosco para escolher um.",
                 "since": "No portal desde {date}",
-                "features": {
-                    "title": "O que o plano pro inclui",
-                    "orders": "Pedidos directos e cotações com os seus parceiros",
-                    "trips": "Seguimento de viagens, com pedido ou sem ele",
-                    "analytics": "Análises de volumes, dinheiro e parceiros"
+                "tiers": {
+                    "title": "Planos",
+                    "quota": "{quota} movimentos seguidos por mês",
+                    "unlimited": "Movimentos seguidos sem limite",
+                    "current": "Plano actual"
                 },
                 "contact": {
                     "title": "Quer mudar de plano?",
@@ -602,6 +595,30 @@
                     "button": "Falar com a Appload",
                     "subject": "Portal Appload — plano da {organization}"
                 }
+            }
+        },
+        "plan": {
+            "names": {
+                "none": "Sem plano",
+                "starter": "Starter",
+                "business": "Business",
+                "enterprise": "Enterprise"
+            },
+            "usage": "{used} de {quota} movimentos seguidos em {month}",
+            "unlimited": "Movimentos seguidos sem limite",
+            "dialog": {
+                "no-plan": {
+                    "title": "A sua empresa ainda não tem plano",
+                    "description": "Reservar uma carga e enviá-la para carregamento precisa de um plano activo. O resto do portal — parceiros, frota, pedidos e cotações — continua aberto."
+                },
+                "quota": {
+                    "title": "Movimentos deste mês esgotados",
+                    "description": "O plano da sua empresa já seguiu todos os movimentos deste mês. O limite volta a zero no início do mês seguinte."
+                },
+                "close": "Agora não",
+                "settings": "Ver subscrição",
+                "contact": "Falar com a Appload",
+                "subject": "Portal Appload — plano da {organization}"
             }
         }
     }

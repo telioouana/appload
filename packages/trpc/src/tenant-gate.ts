@@ -2,6 +2,7 @@ import { desc, eq } from "drizzle-orm";
 
 import { member, organization, user } from "@workspace/db/users";
 import type { db as Database } from "@workspace/db/db";
+import { PLAN_QUOTA, planIsActive, type SubscriptionPlan } from "@workspace/domain/subscription";
 
 export type TenantReason =
     | "NOT_PARTNER_ACCOUNT"
@@ -15,10 +16,16 @@ export type OrgStatus = "pending" | "active" | "closed";
 export type TenantRole = "owner" | "admin" | "member";
 
 export type TenantPlan = {
-    plan: "free" | "pro";
-    // Null on the free plan and on a subscription with no end date
+    // Null until staff record the tier that was agreed commercially
+    plan: SubscriptionPlan | null;
+    // Null on a subscription with no end date
     expiresAt: Date | null;
-    isPro: boolean;
+    active: boolean;
+    // The tier's monthly allowance of tracked movements, 0 without an active
+    // plan and null when unlimited. What is left of it is not counted here:
+    // one more query on every request is not worth it, and the movements that
+    // spend it check their own allowance at the door
+    quota: number | null;
 };
 
 // Discriminated on `ok` so a procedure that has thrown on `!ok` sees the
@@ -48,7 +55,7 @@ export type TenantGates =
         plan: TenantPlan;
     };
 
-const FREE_PLAN: TenantPlan = { plan: "free", expiresAt: null, isPro: false };
+const NO_PLAN: TenantPlan = { plan: null, expiresAt: null, active: false, quota: 0 };
 
 /**
  * Reads the actor's account and its single membership live from the database.
@@ -95,15 +102,16 @@ export async function getTenantGates(
 
     const emailVerified = account?.emailVerified === true;
 
+    const active = membership ? planIsActive(membership.plan, membership.expiresAt) : false;
+
     const plan: TenantPlan = membership
         ? {
             plan: membership.plan,
             expiresAt: membership.expiresAt,
-            isPro:
-                membership.plan === "pro" &&
-                (membership.expiresAt === null || membership.expiresAt > new Date()),
+            active,
+            quota: active && membership.plan !== null ? PLAN_QUOTA[membership.plan] : 0,
         }
-        : FREE_PLAN;
+        : NO_PLAN;
 
     const role: TenantRole =
         membership?.role === "owner" ? "owner" :

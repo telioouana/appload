@@ -338,12 +338,6 @@
             }
         }
     },
-    "upgrade": {
-        "title": "Sending quotes is a Pro feature",
-        "description": "Your plan lets you read and answer quotes. Upgrade to offer your own lanes and prices to your clients.",
-        "action": "See plans",
-        "dismiss": "Not now"
-    },
     "actions": {
         "accept": "Accept",
         "decline": "Decline",
@@ -381,7 +375,8 @@
         "loadingDate": "Choose a loading date for the order.",
         "clientNotConnected": "You are not connected to this client.",
         "notAllowed": "You are not allowed to do this.",
-        "subscription": "Sending quotes needs a Pro plan.",
+        "subscription": "Your company has no active plan. Talk to us to activate one.",
+        "quotaExceeded": "This month's tracked movements are all used up. The allowance starts again at the beginning of next month.",
         "carrierNotVerified": "This transporter is not verified by Appload yet, so the order cannot be booked.",
         "carrierContractMissing": "This transporter has no signed contract with Appload yet.",
         "carrierContractExpired": "This transporter's contract with Appload has expired.",

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { IconPlus } from "@tabler/icons-react"
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 
@@ -11,7 +10,6 @@ import { Button } from "@workspace/ui/components/button"
 import { useTRPC } from "@/backend/api/client"
 import { PageHeader } from "@/components/list/page-header"
 import { SectionTabs } from "@/frontend/pages/orders/components/section-tabs"
-import { UpgradeDialog } from "@/frontend/pages/orders/components/upgrade-dialog"
 import { useNewOrder } from "@/frontend/pages/orders/hooks/use-new-order"
 import { NewOrderSheet } from "@/frontend/pages/orders/sections/new-order-sheet"
 import type { OrderSection } from "@/frontend/pages/orders/types"
@@ -19,8 +17,7 @@ import type { OrderSection } from "@/frontend/pages/orders/types"
 /**
  * The top of the orders list: which section is open, how many orders it
  * holds, the search box, and — for a client — the one thing that starts an
- * order. Filing one is a pro feature, so a free company is told what it
- * would get instead of being handed a form the server would refuse.
+ * order.
  */
 export function OrdersHeaderView({ section }: { section: OrderSection }) {
     const t = useTranslations("App.orders")
@@ -32,7 +29,6 @@ export function OrdersHeaderView({ section }: { section: OrderSection }) {
     const stats = useQuery(trpc.orders.stats.queryOptions())
 
     const { open } = useNewOrder()
-    const [upgradeOpen, setUpgradeOpen] = useState(false)
 
     const orgType = session.organization.type
     const canCreate = orgType === "shipper"
@@ -50,7 +46,7 @@ export function OrdersHeaderView({ section }: { section: OrderSection }) {
                 }}
                 below={<SectionTabs section={section} orgType={orgType} stats={stats.data} />}
                 actions={canCreate ? (
-                    <Button onClick={() => (session.plan.isPro ? open() : setUpgradeOpen(true))}>
+                    <Button onClick={open}>
                         <IconPlus className="size-4" stroke={1.5} />
                         {t("actions.new-order")}
                     </Button>
@@ -58,12 +54,6 @@ export function OrdersHeaderView({ section }: { section: OrderSection }) {
             />
 
             {canCreate && <NewOrderSheet />}
-
-            <UpgradeDialog
-                open={upgradeOpen}
-                onOpenChange={setUpgradeOpen}
-                organizationName={session.organization.name}
-            />
         </>
     )
 }

@@ -10,7 +10,6 @@ import { Button } from "@workspace/ui/components/button"
 
 import { useTRPC } from "@/backend/api/client"
 import { PageHeader } from "@/components/list/page-header"
-import { UpgradeCard } from "@/frontend/pages/quotes/sections/upgrade-card"
 import { NewQuoteSheet } from "@/frontend/pages/quotes/sections/new-quote-sheet"
 
 /**
@@ -27,10 +26,8 @@ export function QuotesHeaderView() {
     const { data: stats } = useSuspenseQuery(trpc.quotes.stats.queryOptions())
 
     const [creating, setCreating] = useState(false)
-    const [upgrading, setUpgrading] = useState(false)
 
     const orgType = session.organization.type
-    const isPro = session.plan.isPro
 
     return (
         <>
@@ -44,7 +41,7 @@ export function QuotesHeaderView() {
                 }}
                 actions={
                     orgType === "carrier" ? (
-                        <Button onClick={() => (isPro ? setCreating(true) : setUpgrading(true))}>
+                        <Button onClick={() => setCreating(true)}>
                             <IconPlus className="size-4" stroke={1.5} />
                             {t("add.trigger")}
                         </Button>
@@ -52,12 +49,7 @@ export function QuotesHeaderView() {
                 }
             />
 
-            {orgType === "carrier" && (
-                <>
-                    <NewQuoteSheet open={creating} onOpenChange={setCreating} />
-                    <UpgradeCard open={upgrading} onOpenChange={setUpgrading} />
-                </>
-            )}
+            {orgType === "carrier" && <NewQuoteSheet open={creating} onOpenChange={setCreating} />}
         </>
     )
 }

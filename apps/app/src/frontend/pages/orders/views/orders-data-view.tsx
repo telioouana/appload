@@ -101,7 +101,7 @@ export function OrdersDataView({ section }: { section: OrderSection }) {
                         title: t(`data.empty.${section}`),
                         description: t(`data.empty-description.${orgType}`),
                         filtered: t("data.no-results"),
-                        action: orgType === "shipper" && session.plan.isPro
+                        action: orgType === "shipper"
                             ? <Button onClick={openNewOrder}>{t("actions.new-order")}</Button>
                             : undefined,
                     }}

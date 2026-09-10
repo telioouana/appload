@@ -82,7 +82,11 @@ export function SettingsView() {
                 </TabsContent>
 
                 <TabsContent value="subscription" className="flex flex-col gap-4">
-                    <SubscriptionCard plan={data.plan} organization={data.organization} />
+                    <SubscriptionCard
+                        allowance={data.allowance}
+                        tiers={data.tiers}
+                        organization={data.organization}
+                    />
                 </TabsContent>
             </Tabs>
         </div>

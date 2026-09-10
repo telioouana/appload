@@ -16,6 +16,7 @@ import {
 } from "@workspace/db/types";
 import type { DispatchField } from "@workspace/domain/orders/dispatch-readiness";
 import type { TransitionRequirement } from "@workspace/domain/orders/transitions";
+import type { TrackingAllowance } from "@workspace/domain/subscription";
 
 export type { DispatchField, OfferStatus, OrderDocumentType, OrderRequestStatus, OrderStatus, TransitionRequirement };
 
@@ -352,7 +353,11 @@ export type OrderDetail = {
 };
 
 /** Why a move is advertised but not takeable. */
-export type TransitionBlockedReason = "NO_OFFERS" | "INCOMPLETE_FOR_DISPATCH";
+export type TransitionBlockedReason =
+    | "NO_OFFERS"
+    | "INCOMPLETE_FOR_DISPATCH"
+    | "SUBSCRIPTION_REQUIRED"
+    | "QUOTA_EXCEEDED";
 
 export type TransitionOption = {
     to: OrderStatus;
@@ -368,6 +373,11 @@ export type TransitionOptions = {
     /** Where an interrupted order resumes, derived from the timeline */
     resumeStatus: OrderStatus | null;
     targets: TransitionOption[];
+    /**
+     * This month's tracked movements, read only when the booking or the
+     * dispatch is among the targets — the two moves a plan pays for
+     */
+    allowance: TrackingAllowance | null;
     /** What the order still lacks before it can be dispatched */
     missingForDispatch: DispatchField[];
     /** Shipper: offers still awaiting a decision */

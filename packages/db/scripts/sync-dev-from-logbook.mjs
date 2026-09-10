@@ -785,7 +785,7 @@ await q(`
     TRUNCATE TABLE
         notification, notification_cursor,
         trip_location, trip_tracking_request, trip_route, trip,
-        order_request, quote, partner_connection, organization_claim,
+        order_request, quote, partner_connection, organization_claim, subscription_usage,
         order_document, order_history, order_offer, sheet_sync, tracking_request,
         chat_message, chat_conversation, "order",
         network, ops_order, kyc, member, invitation,
@@ -823,9 +823,9 @@ const json = (value) => JSON.stringify(value);
 console.log("inserting organizations...");
 await insertMany(
     "organization",
-    ["id", "name", "slug", "created_at", "nuit", "type", "status", "email", "phone_number", "subscription_plan", "kyc_status"],
+    ["id", "name", "slug", "created_at", "nuit", "type", "status", "email", "phone_number", "kyc_status"],
     [...organizations.values()],
-    (o) => [o.id, o.name, o.slug, new Date().toISOString(), o.nuit, o.type, "active", o.email, o.phoneNumber, "free", "draft"],
+    (o) => [o.id, o.name, o.slug, new Date().toISOString(), o.nuit, o.type, "active", o.email, o.phoneNumber, "draft"],
 );
 
 console.log("inserting trucks...");

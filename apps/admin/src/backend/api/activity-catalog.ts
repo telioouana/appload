@@ -272,9 +272,11 @@ export const activityCatalog: ActivityCatalog = {
     "organizations.setSubscription": {
         entity: (input) =>
             input?.id ? { type: "organization", id: String(input.id) } : null,
-        params: (input, output?: { name: string; plan: string; expiresAt: Date | null }) => ({
+        params: (input, output?: { name: string; plan: string | null; expiresAt: Date | null }) => ({
             name: output?.name ?? "",
-            plan: output?.plan ?? input?.plan ?? "",
+            // A null plan is "no plan agreed", which the log names rather
+            // than leaving blank
+            plan: output?.plan ?? input?.plan ?? "none",
             expiresAt: output?.expiresAt ? output.expiresAt.toISOString().slice(0, 10) : "",
         }),
     },

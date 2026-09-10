@@ -232,7 +232,8 @@
         "notAllowedForActor": "Your company cannot make this change.",
         "notAllowed": "You do not have permission to do this.",
         "notFound": "This order could not be found.",
-        "subscriptionRequired": "This is a pro feature. Talk to us to enable it.",
+        "subscriptionRequired": "Your company has no active plan. Talk to us to activate one.",
+        "quotaExceeded": "This month's tracked movements are all used up. The allowance starts again at the beginning of next month.",
         "noteRequired": "This change needs an explanation.",
         "podRequired": "This change needs the proof of delivery attached.",
         "evidenceRequired": "This change needs a document attached.",
@@ -258,18 +259,6 @@
         "carrierSuspended": "That carrier is suspended.",
         "invalid": "Some of what was sent is not valid.",
         "unknown": "Something went wrong. Try again."
-    },
-    "upgrade": {
-        "title": "A pro feature",
-        "description": "Your company is on the free plan. Pro opens the parts of the portal that move cargo.",
-        "features": {
-            "orders": "File orders and follow them to delivery",
-            "requests": "Send orders to your carriers and compare offers",
-            "quotes": "Quote for orders and publish standing quotes"
-        },
-        "close": "Not now",
-        "contact": "Talk to us",
-        "subject": "Pro plan for {organization}"
     },
     "create": {
         "title": "New order",

@@ -10,7 +10,6 @@ import { Button } from "@workspace/ui/components/button"
 import { initials } from "@/components/list/table-cells"
 import { RequestStatusChip } from "@/frontend/pages/orders/components/badges"
 import { SectionCard } from "@/frontend/pages/orders/components/section-card"
-import { UpgradeDialog } from "@/frontend/pages/orders/components/upgrade-dialog"
 import { useOrderMutations } from "@/frontend/pages/orders/hooks/use-order-mutations"
 import { SendRequestsDialog } from "@/frontend/pages/orders/sections/send-requests-dialog"
 import type { OrderDetail, OrgType } from "@/frontend/pages/orders/types"
@@ -23,29 +22,16 @@ const LIVE: string[] = ["requested", "quoted"]
  * answered, and can ask more of them while the order is still a prospect; a
  * carrier sees only its own request, with whatever the client wrote to it.
  */
-export function RequestsPanel({
-    order,
-    orgType,
-    isPro,
-    organizationName,
-}: {
-    order: OrderDetail
-    orgType: OrgType
-    isPro: boolean
-    organizationName: string
-}) {
+export function RequestsPanel({ order, orgType }: { order: OrderDetail; orgType: OrgType }) {
     const t = useTranslations("App.orders.requests")
     const f = useFormatter()
 
     const [sendOpen, setSendOpen] = useState(false)
-    const [upgradeOpen, setUpgradeOpen] = useState(false)
 
     const { withdrawRequest } = useOrderMutations()
 
     const prospect = order.status === "prospect"
     const canSend = orgType === "shipper" && prospect && order.permissions.isMine
-
-    const send = () => (isPro ? setSendOpen(true) : setUpgradeOpen(true))
 
     return (
         <>
@@ -53,7 +39,7 @@ export function RequestsPanel({
                 title={t("title")}
                 count={order.requests.length}
                 actions={canSend ? (
-                    <Button size="sm" variant="outline" onClick={send}>
+                    <Button size="sm" variant="outline" onClick={() => setSendOpen(true)}>
                         <IconSend />
                         {t("actions.send")}
                     </Button>
@@ -114,8 +100,6 @@ export function RequestsPanel({
                     onOpenChange={setSendOpen}
                 />
             )}
-
-            <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} organizationName={organizationName} />
         </>
     )
 }

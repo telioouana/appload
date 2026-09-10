@@ -20,7 +20,7 @@ import { CreateOrderSchemaServer } from "@workspace/domain/orders/schemas";
 import type { OrderContext } from "@workspace/domain/orders/transition";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, proProcedure, tenantProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
 import {
     AcceptQuoteBaseSchema,
@@ -429,7 +429,7 @@ export const quotesRouter = createTRPCRouter({
      * the only door it has to pass is the connection between the two
      * companies, checked here rather than trusted from the payload.
      */
-    create: proProcedure("offer", ["create"])
+    create: authorizedTenantProcedure("offer", ["create"])
         .input(CreateQuoteBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
             try {

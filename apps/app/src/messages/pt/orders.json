@@ -232,7 +232,8 @@
         "notAllowedForActor": "A sua empresa não pode fazer esta alteração.",
         "notAllowed": "Não tem permissão para fazer isto.",
         "notFound": "Não foi possível encontrar este pedido.",
-        "subscriptionRequired": "Esta funcionalidade é do plano pro. Fale connosco para a activar.",
+        "subscriptionRequired": "A sua empresa não tem um plano activo. Fale connosco para activar um.",
+        "quotaExceeded": "Os movimentos seguidos deste mês já foram todos usados. O limite volta a zero no início do mês seguinte.",
         "noteRequired": "Esta alteração precisa de uma explicação.",
         "podRequired": "Esta alteração precisa do comprovativo de entrega anexado.",
         "evidenceRequired": "Esta alteração precisa de um documento anexado.",
@@ -258,18 +259,6 @@
         "carrierSuspended": "Esse transportador está suspenso.",
         "invalid": "Alguns dos dados enviados não são válidos.",
         "unknown": "Algo correu mal. Tente de novo."
-    },
-    "upgrade": {
-        "title": "Funcionalidade pro",
-        "description": "A sua empresa está no plano gratuito. O plano pro abre as partes do portal que movem carga.",
-        "features": {
-            "orders": "Registar pedidos e acompanhá-los até à entrega",
-            "requests": "Enviar pedidos aos seus transportadores e comparar propostas",
-            "quotes": "Cotar pedidos e publicar cotações permanentes"
-        },
-        "close": "Agora não",
-        "contact": "Falar connosco",
-        "subject": "Plano pro para {organization}"
     },
     "create": {
         "title": "Novo pedido",

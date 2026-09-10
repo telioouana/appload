@@ -37,6 +37,7 @@
         "./notifications": "./src/schemas/notifications.ts",
         "./orders": "./src/schemas/orders.ts",
         "./quotes": "./src/schemas/quotes.ts",
+        "./subscriptions": "./src/schemas/subscriptions.ts",
         "./tracking": "./src/schemas/tracking.ts",
         "./trips": "./src/schemas/trips.ts",
         "./users": "./src/schemas/users.ts"

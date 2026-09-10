@@ -17,12 +17,14 @@ import {
 } from "@workspace/ui/components/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
 
+import type { TrackingAllowance } from "@workspace/domain/subscription"
+
 import { initials } from "@/components/list/table-cells"
+import { PlanDialog, planBlock, planRefusal, type PlanReason } from "@/components/plan-dialog"
 import { money } from "@/frontend/pages/orders/lib/format"
 import { orderErrorCode, orderErrorKey, type OrderErrorMessage } from "@/frontend/pages/orders/lib/errors"
 import { IncludesChips, OfferStatusBadge } from "@/frontend/pages/orders/components/badges"
 import { Dash, SectionCard } from "@/frontend/pages/orders/components/section-card"
-import { UpgradeDialog } from "@/frontend/pages/orders/components/upgrade-dialog"
 import { useOrderMutations } from "@/frontend/pages/orders/hooks/use-order-mutations"
 import { OfferFormDialog } from "@/frontend/pages/orders/sections/offer-form-dialog"
 import type { OrderDetail, OrderOfferView, OrgType } from "@/frontend/pages/orders/types"
@@ -34,30 +36,32 @@ import type { OrderDetail, OrderOfferView, OrgType } from "@/frontend/pages/orde
  * accepting an offer IS the booking. A carrier only ever sees its own quote
  * (that other carriers were asked is not a secret; what they asked for is),
  * and while a request of its own is open it can write one.
+ *
+ * Booking is the one action here a plan pays for, so Accept stays where it
+ * is when the allowance is spent and explains itself instead.
  */
 export function OffersPanel({
     order,
     orgType,
-    isPro,
+    allowance,
     organizationName,
 }: {
     order: OrderDetail
     orgType: OrgType
-    isPro: boolean
+    allowance: TrackingAllowance
     organizationName: string
 }) {
     const t = useTranslations("App.orders.offers")
 
     const [form, setForm] = useState<{ open: boolean; offer: OrderOfferView | null }>({ open: false, offer: null })
     const [accepting, setAccepting] = useState<OrderOfferView | null>(null)
-    const [upgradeOpen, setUpgradeOpen] = useState(false)
+    const [planReason, setPlanReason] = useState<PlanReason | null>(null)
 
     const { declineOffer, withdrawOffer } = useOrderMutations()
 
     const prospect = order.status === "prospect"
     const canQuote = orgType === "carrier" && order.permissions.canQuote
-
-    const quote = () => (isPro ? setForm({ open: true, offer: null }) : setUpgradeOpen(true))
+    const blocked = planBlock(allowance)
 
     return (
         <>
@@ -65,7 +69,7 @@ export function OffersPanel({
                 title={t("title")}
                 count={order.offers.length}
                 actions={canQuote ? (
-                    <Button size="sm" variant="outline" onClick={quote}>
+                    <Button size="sm" variant="outline" onClick={() => setForm({ open: true, offer: null })}>
                         <IconPlus />
                         {t("actions.quote")}
                     </Button>
@@ -82,7 +86,7 @@ export function OffersPanel({
                                 key={offer.id}
                                 offer={offer}
                                 onAccept={orgType === "shipper" && prospect && offer.status === "pending"
-                                    ? () => setAccepting(offer)
+                                    ? () => (blocked ? setPlanReason(blocked) : setAccepting(offer))
                                     : undefined}
                                 onDecline={orgType === "shipper" && prospect && offer.status === "pending"
                                     ? () => declineOffer.mutate({ offerId: offer.id })
@@ -119,10 +123,18 @@ export function OffersPanel({
                     offer={accepting}
                     expectedVersion={order.version}
                     onClose={() => setAccepting(null)}
+                    onPlanRequired={(reason) => { setAccepting(null); setPlanReason(reason) }}
                 />
             )}
 
-            <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} organizationName={organizationName} />
+            {planReason && (
+                <PlanDialog
+                    reason={planReason}
+                    allowance={allowance}
+                    organizationName={organizationName}
+                    onClose={() => setPlanReason(null)}
+                />
+            )}
         </>
     )
 }
@@ -245,11 +257,14 @@ function AcceptOfferDialog({
     offer,
     expectedVersion,
     onClose,
+    onPlanRequired,
 }: {
     orderId: string
     offer: OrderOfferView
     expectedVersion: number
     onClose: () => void
+    /** The allowance ran out between opening this dialog and confirming it */
+    onPlanRequired: (reason: PlanReason) => void
 }) {
     const t = useTranslations("App.orders.offers.accept")
     const tError = useTranslations("App.orders")
@@ -266,6 +281,15 @@ function AcceptOfferDialog({
             {
                 onSuccess: onClose,
                 onError: (failure) => {
+                    const refusal = planRefusal(failure)
+
+                    // Not a booking this dialog can fix: hand over to the one
+                    // that explains the plan
+                    if (refusal) {
+                        onPlanRequired(refusal)
+                        return
+                    }
+
                     setError(orderErrorKey(failure))
 
                     // The page was built from a version that has since moved on

@@ -27,6 +27,7 @@ const COMING_NEXT = ["orders", "quotes", "trips", "partners", "analytics"] as co
  */
 export default async function Dashboard() {
     const t = await getTranslations("App.dashboard")
+    const tPlan = await getTranslations("App.plan")
 
     // The layout has already gated this; the ids are re-read here rather
     // than passed down, because a page must never trust a prop for tenancy
@@ -58,8 +59,10 @@ export default async function Dashboard() {
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">{company?.name}</span>
                         <Badge variant="outline">{t(`type.${tenant.orgType}`)}</Badge>
-                        <Badge variant={tenant.plan.isPro ? "default" : "secondary"}>
-                            {t(`plan.${tenant.plan.isPro ? "pro" : "free"}`)}
+                        {/* An expired plan reads as no plan, the way the
+                            gate itself reads it */}
+                        <Badge variant={tenant.plan.active ? "default" : "secondary"}>
+                            {tPlan(`names.${tenant.plan.active && tenant.plan.plan ? tenant.plan.plan : "none"}`)}
                         </Badge>
                     </div>
 

@@ -27,6 +27,16 @@ export const YEARS = ["1981", "1982", "1983", "1984", "1985", "1986", "1987", "1
 // import this instead of re-deriving it.
 export type OrderStatus = (typeof ORDER_STATUS)[number]
 
+// The subscription tiers. Declared here, with the other vocabularies, rather
+// than in schemas/subscriptions.ts: `organization` carries the column and
+// users.ts must keep importing nothing but this module, or the two table
+// modules would reference each other and crash at runtime (TDZ). Consumers
+// read it from @workspace/db/subscriptions, which re-exports it next to the
+// usage table.
+export const SUBSCRIPTION_PLAN = ["starter", "business", "enterprise"] as const
+
+export type SubscriptionPlan = (typeof SUBSCRIPTION_PLAN)[number]
+
 // Partner verification. Every KYC vocabulary is text + TS const, never a pg
 // enum: adding a document type or status must not require an ALTER TYPE on
 // the shared database (same rule as ORDER_DOCUMENT_TYPE).

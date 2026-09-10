@@ -4,35 +4,40 @@ import { IconCheck, IconMail } from "@tabler/icons-react";
 
 import { useFormatter, useTranslations } from "@workspace/i18n";
 
+import { cn } from "@workspace/ui/lib/utils";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 
+import { PlanUsage } from "@/components/plan-usage";
 import type { MeSession } from "@/frontend/pages/settings/server/procedures";
 
-const FEATURES = ["orders", "trips", "analytics"] as const
-
-// Plans are set by Appload staff in Admin (plan §4), so the portal's side of
-// a plan change is a conversation, not a checkout
+// Plans are agreed commercially and recorded by Appload staff in Admin (plan
+// §4.1), so the portal's side of a plan change is a conversation, not a
+// checkout
 const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "comercial@apploadafrica.com"
 
 /**
- * The company's plan, what pro unlocks, and the way to ask for a change.
- * `plan.isPro` is the live verdict (plan and expiry together) — an expired
- * pro subscription reads as free everywhere the gate is applied, so it must
- * read that way here too.
+ * The company's plan, what it has used of this month's tracked movements,
+ * the tiers it could be on, and the way to ask for a change. `allowance` is
+ * the live verdict (plan and expiry together) — an expired subscription
+ * reads as no plan everywhere the gate is applied, so it must read that way
+ * here too.
  */
 export function SubscriptionCard({
-    plan,
+    allowance,
+    tiers,
     organization,
 }: {
-    plan: MeSession["plan"]
+    allowance: MeSession["allowance"]
+    tiers: MeSession["tiers"]
     organization: MeSession["organization"]
 }) {
     const t = useTranslations("App.settings")
+    const tPlan = useTranslations("App.plan")
     const f = useFormatter()
 
-    const expired = plan.plan === "pro" && !plan.isPro && plan.expiresAt !== null
+    const expired = allowance.plan !== null && !allowance.active
 
     const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
         t("subscription.contact.subject", { organization: organization.name }),
@@ -48,24 +53,32 @@ export function SubscriptionCard({
             <CardContent className="grid gap-6">
                 <div className="grid gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={plan.isPro ? "default" : "secondary"}>
-                            {t(`subscription.plan.${plan.isPro ? "pro" : "free"}`)}
+                        <Badge variant={allowance.active ? "default" : "secondary"}>
+                            {tPlan(`names.${allowance.active && allowance.plan ? allowance.plan : "none"}`)}
                         </Badge>
 
-                        {plan.isPro && (
+                        {allowance.active && (
                             <span className="text-muted-foreground text-sm">
-                                {plan.expiresAt
-                                    ? t("subscription.expires", { date: f.dateTime(plan.expiresAt, { day: "2-digit", month: "long", year: "numeric" }) })
+                                {allowance.expiresAt
+                                    ? t("subscription.expires", { date: f.dateTime(allowance.expiresAt, { day: "2-digit", month: "long", year: "numeric" }) })
                                     : t("subscription.no-expiry")}
                             </span>
                         )}
 
-                        {expired && plan.expiresAt && (
+                        {expired && allowance.expiresAt && (
                             <span className="text-destructive text-sm">
-                                {t("subscription.expired", { date: f.dateTime(plan.expiresAt, { day: "2-digit", month: "long", year: "numeric" }) })}
+                                {t("subscription.expired", { date: f.dateTime(allowance.expiresAt, { day: "2-digit", month: "long", year: "numeric" }) })}
                             </span>
                         )}
                     </div>
+
+                    {/* An expired plan already says so in red above; only a
+                        company that never had one needs the invitation */}
+                    {allowance.active
+                        ? <PlanUsage allowance={allowance} />
+                        : allowance.plan === null && (
+                            <span className="text-muted-foreground text-sm">{t("subscription.none")}</span>
+                        )}
 
                     {organization.portalActivatedAt && (
                         <span className="text-muted-foreground text-xs">
@@ -77,14 +90,31 @@ export function SubscriptionCard({
                 </div>
 
                 <div className="grid gap-2">
-                    <h3 className="text-sm font-semibold tracking-tight">{t("subscription.features.title")}</h3>
+                    <h3 className="text-sm font-semibold tracking-tight">{t("subscription.tiers.title")}</h3>
                     <ul className="grid gap-2">
-                        {FEATURES.map((feature) => (
-                            <li key={feature} className="text-muted-foreground flex items-start gap-2 text-sm">
-                                <IconCheck className="mt-0.5 size-4 shrink-0" stroke={1.5} />
-                                {t(`subscription.features.${feature}`)}
-                            </li>
-                        ))}
+                        {tiers.map((tier) => {
+                            const current = allowance.active && tier.plan === allowance.plan
+
+                            return (
+                                <li
+                                    key={tier.plan}
+                                    className={cn(
+                                        "flex flex-wrap items-center gap-2 text-sm",
+                                        current ? "font-medium" : "text-muted-foreground",
+                                    )}
+                                >
+                                    {current && <IconCheck className="size-4 shrink-0" stroke={1.5} />}
+                                    <span>{tPlan(`names.${tier.plan}`)}</span>
+                                    <span aria-hidden>·</span>
+                                    <span>
+                                        {tier.quota === null
+                                            ? t("subscription.tiers.unlimited")
+                                            : t("subscription.tiers.quota", { quota: tier.quota })}
+                                    </span>
+                                    {current && <Badge variant="outline">{t("subscription.tiers.current")}</Badge>}
+                                </li>
+                            )
+                        })}
                     </ul>
                 </div>
 

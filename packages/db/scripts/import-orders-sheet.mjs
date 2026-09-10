@@ -343,8 +343,8 @@ async function ensureOrganization(name, type) {
 
     if (!DRY) {
         await q(
-            `INSERT INTO organization (id, name, slug, created_at, nuit, type, status, email, phone_number, subscription_plan)
-             VALUES ($1, $2, $3, now(), $4, $5, 'active', $6, $7, 'free')
+            `INSERT INTO organization (id, name, slug, created_at, nuit, type, status, email, phone_number)
+             VALUES ($1, $2, $3, now(), $4, $5, 'active', $6, $7)
              ON CONFLICT (slug) DO NOTHING`,
             [id, name.trim(), slug, `IMP-${slug}`.slice(0, 30), type, `${slug}@import.appload.local`, `+258-imp-${slug}`.slice(0, 30)],
         );

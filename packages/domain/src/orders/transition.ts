@@ -18,6 +18,7 @@ import { paymentSums } from "@workspace/domain/orders/payment-sums";
 import { allowedForActor } from "@workspace/domain/orders/policy";
 import { recordSheetSync, type SheetSyncResult } from "@workspace/domain/orders/sheet-sync";
 import { validateTransition, type OrderStatus } from "@workspace/domain/orders/transitions";
+import { assertTrackingAllowance, recordTrackingUsage } from "@workspace/domain/subscription";
 
 /**
  * What an order write needs from the request, whichever app made it: the
@@ -384,6 +385,20 @@ export async function applyTransition(
         throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED_FOR_ACTOR" });
     }
 
+    // What a plan buys: the shipper's booking and the carrier's dispatch. It
+    // is asked after the policy, so a partner that does not own the move is
+    // told that rather than being sold a plan it does not need. Staff move
+    // orders on every plan and on none.
+    //
+    // Only the first dispatch is asked for: "to-loading" is also where an
+    // interrupted trip resumes, and that movement was already billed when it
+    // left "booked". A truck parked on the road must not become unmovable
+    // because the month ran out or the plan lapsed while it was stopped.
+    if (ctx.actor.kind === "tenant"
+        && (input.to === "booked" || (input.to === "to-loading" && current.status === "booked"))) {
+        await assertTrackingAllowance(ctx.db, ctx.actor.organizationId);
+    }
+
     // Booking a prospect is the acceptance of one of its carrier
     // offers, and nothing else: the carrier, the fiscal regime, the
     // carrier price and the commission are all copied from that offer
@@ -599,6 +614,17 @@ export async function applyTransition(
             ...(booked && { offer: booked.accepted.historyOffer }),
         },
     });
+
+    // Dispatch is the moment tracking starts, so the movement is billed to
+    // both parties then — whoever ordered it, Admin included: a partner's
+    // month must count the orders staff dispatched on its behalf too.
+    if (input.to === "to-loading") {
+        await recordTrackingUsage(ctx.db, {
+            organizationIds: [updated.shipperId, updated.carrierId],
+            entityType: "order",
+            entityId: updated.id,
+        });
+    }
 
     // The upload that backed the move becomes a first-class
     // document on the order (POD for completion, evidence for

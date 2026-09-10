@@ -12,10 +12,13 @@ import { Separator } from "@workspace/ui/components/separator"
 import { Avatar, AvatarFallback } from "@workspace/ui/components/avatar"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@workspace/ui/components/sheet"
 
+import type { TrackingAllowance } from "@workspace/domain/subscription"
+
 import { Link } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
 import { initials } from "@/components/list/table-cells"
 import { EmptyValue } from "@/components/list/empty-value"
+import { PlanDialog, planBlock, type PlanReason } from "@/components/plan-dialog"
 import { CoverChips, QuoteStatusChip, useMoney } from "@/frontend/pages/quotes/sections/badges"
 import { AcceptQuoteDialog } from "@/frontend/pages/quotes/sections/accept-quote-dialog"
 import { DeclineQuoteDialog } from "@/frontend/pages/quotes/sections/decline-quote-dialog"
@@ -30,7 +33,15 @@ import type { OrgType, QuoteDetail } from "@/frontend/pages/quotes/types"
  * What it offers comes from the server's own `permissions`, not from a rule
  * restated here: the buttons can only ever be the moves the mutations accept.
  */
-export function QuoteSheet({ orgType }: { orgType: OrgType }) {
+export function QuoteSheet({
+    orgType,
+    allowance,
+    organizationName,
+}: {
+    orgType: OrgType
+    allowance: TrackingAllowance
+    organizationName: string
+}) {
     const t = useTranslations("App.quotes.panel")
     const { id, close } = useQuoteSheet()
 
@@ -45,13 +56,34 @@ export function QuoteSheet({ orgType }: { orgType: OrgType }) {
                     <SheetDescription>{t("description")}</SheetDescription>
                 </SheetHeader>
 
-                {id && <Panel key={id} id={id} orgType={orgType} onClose={close} />}
+                {id && (
+                    <Panel
+                        key={id}
+                        id={id}
+                        orgType={orgType}
+                        allowance={allowance}
+                        organizationName={organizationName}
+                        onClose={close}
+                    />
+                )}
             </SheetContent>
         </Sheet>
     )
 }
 
-function Panel({ id, orgType, onClose }: { id: string; orgType: OrgType; onClose: () => void }) {
+function Panel({
+    id,
+    orgType,
+    allowance,
+    organizationName,
+    onClose,
+}: {
+    id: string
+    orgType: OrgType
+    allowance: TrackingAllowance
+    organizationName: string
+    onClose: () => void
+}) {
     const t = useTranslations("App.quotes")
     const trpc = useTRPC()
 
@@ -72,10 +104,30 @@ function Panel({ id, orgType, onClose }: { id: string; orgType: OrgType; onClose
         return <p className="text-destructive p-6 text-sm">{t("panel.error")}</p>
     }
 
-    return <Loaded quote={data} orgType={orgType} onClose={onClose} />
+    return (
+        <Loaded
+            quote={data}
+            orgType={orgType}
+            allowance={allowance}
+            organizationName={organizationName}
+            onClose={onClose}
+        />
+    )
 }
 
-function Loaded({ quote, orgType, onClose }: { quote: QuoteDetail; orgType: OrgType; onClose: () => void }) {
+function Loaded({
+    quote,
+    orgType,
+    allowance,
+    organizationName,
+    onClose,
+}: {
+    quote: QuoteDetail
+    orgType: OrgType
+    allowance: TrackingAllowance
+    organizationName: string
+    onClose: () => void
+}) {
     const t = useTranslations("App.quotes")
     const f = useFormatter()
     const money = useMoney()
@@ -83,8 +135,13 @@ function Loaded({ quote, orgType, onClose }: { quote: QuoteDetail; orgType: OrgT
     const { withdraw } = useQuoteMutations()
     const [declining, setDeclining] = useState(false)
     const [accepting, setAccepting] = useState(false)
+    const [planReason, setPlanReason] = useState<PlanReason | null>(null)
 
     const { partner, money: price, permissions } = quote
+
+    // Accepting a standing quote books an order, which is what a plan pays
+    // for — so the button stays and says why rather than disappearing
+    const blocked = planBlock(allowance)
 
     const capacity = quote.capacityWeight !== null && quote.capacityUnit !== null
         ? `${f.number(quote.capacityWeight, { maximumFractionDigits: 2 })} ${t(`unit.${quote.capacityUnit}`)}`
@@ -238,7 +295,7 @@ function Loaded({ quote, orgType, onClose }: { quote: QuoteDetail; orgType: OrgT
                         )}
 
                         {permissions.canAccept && (
-                            <Button onClick={() => setAccepting(true)}>
+                            <Button onClick={() => (blocked ? setPlanReason(blocked) : setAccepting(true))}>
                                 <IconCheck className="size-4" stroke={1.5} />
                                 {t("actions.accept")}
                             </Button>
@@ -266,7 +323,17 @@ function Loaded({ quote, orgType, onClose }: { quote: QuoteDetail; orgType: OrgT
                 open={accepting}
                 onOpenChange={setAccepting}
                 onAccepted={onClose}
+                onPlanRequired={(reason) => { setAccepting(false); setPlanReason(reason) }}
             />
+
+            {planReason && (
+                <PlanDialog
+                    reason={planReason}
+                    allowance={allowance}
+                    organizationName={organizationName}
+                    onClose={() => setPlanReason(null)}
+                />
+            )}
         </div>
     )
 }

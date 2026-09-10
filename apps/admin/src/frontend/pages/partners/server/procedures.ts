@@ -17,6 +17,7 @@ import { authorizedProcedure } from "@workspace/trpc/permissions";
 
 import { ACTIVE_STATUSES } from "@/frontend/pages/orders/types";
 import { notify } from "@workspace/domain/notifications";
+import { trackingAllowance } from "@workspace/domain/subscription";
 import { addDays, docProgress, today, type CurrentDoc } from "@workspace/domain/kyc/derive";
 import { CONTRACT_DOC, subjectKind } from "@workspace/domain/kyc/requirements";
 import {
@@ -1751,6 +1752,15 @@ export const partnersRouter = createTRPCRouter({
 
             return { members, invitations };
         }),
+
+    /**
+     * The same allowance the portal enforces: the plan, the running month
+     * and the tracked movements spent on it, so ops reads the quota off the
+     * source rather than counting orders by hand.
+     */
+    portalUsage: authorizedProcedure("organizations", ["read"])
+        .input(z.object({ organizationId: z.string().nonempty() }))
+        .query(async ({ ctx, input }) => trackingAllowance(ctx.db, input.organizationId)),
 
     /** Pending-review counts for the sidebar badges — one small query per table. */
     reviewQueue: authorizedProcedure("organizations", ["read"])

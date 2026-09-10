@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, eq, ilike, or } from "drizzle-orm";
 
 import { organization } from "@workspace/db/schema";
+import { SUBSCRIPTION_PLAN } from "@workspace/db/subscriptions";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
 import { notify } from "@workspace/domain/notifications";
@@ -200,14 +201,15 @@ export const organizationsRouter = createTRPCRouter({
 
     /**
      * The partner's portal plan. There are no payments: ops agrees a plan
-     * commercially and records it here, and the portal gates its pro
-     * screens on `plan = 'pro' and (expires is null or expires > now())`.
+     * commercially and records it here, and the portal gates booking,
+     * dispatch and trips on the tier's monthly quota of tracked movements.
+     * Null is no plan agreed yet — everything else stays open to them.
      * Supervisory — a plan is a commercial decision, not day-to-day ops.
      */
     setSubscription: authorizedProcedure("subscription", ["update"])
         .input(z.object({
             id: z.string().nonempty(),
-            plan: z.enum(["free", "pro"]),
+            plan: z.enum(SUBSCRIPTION_PLAN).nullable(),
             // Null is an open-ended subscription, not an expired one
             expiresAt: z.date().nullable(),
         }))
@@ -230,7 +232,7 @@ export const organizationsRouter = createTRPCRouter({
             await notify(ctx.db, {
                 organizationId: updated.id,
                 kind: "subscription.changed",
-                params: { plan: updated.plan },
+                params: { plan: updated.plan ?? "none" },
                 email: true,
             });
 

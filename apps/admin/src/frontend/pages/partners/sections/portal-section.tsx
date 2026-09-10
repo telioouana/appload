@@ -10,6 +10,7 @@ import { IconCheck, IconMailForward, IconUserPlus, IconX } from "@tabler/icons-r
 
 import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
 import { isAuthorized } from "@workspace/auth/user-permissions"
+import { SUBSCRIPTION_PLAN, type SubscriptionPlan } from "@workspace/db/types"
 
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
@@ -43,7 +44,9 @@ const inviteSchema = (t: Translate) => z.object({
 })
 
 const subscriptionSchema = z.object({
-    plan: z.enum(["free", "pro"]),
+    // A select item cannot carry an empty value, so "no plan agreed" rides a
+    // sentinel through the form and becomes null on the way to the mutation
+    plan: z.enum(["none", ...SUBSCRIPTION_PLAN]),
     // The picker has no "no date" state of its own; the Clear button empties it
     expiresAt: z.date().optional(),
 })
@@ -65,7 +68,7 @@ export function PortalSection({
 }: {
     organizationId: string
     portalActivatedAt: Date | null
-    subscriptionPlan: "free" | "pro"
+    subscriptionPlan: SubscriptionPlan | null
     subscriptionExpiresAt: Date | null
 }) {
     const t = useTranslations("Admin.partners.portal")
@@ -422,18 +425,23 @@ function SubscriptionCard({
     expiresAt,
 }: {
     organizationId: string
-    plan: "free" | "pro"
+    plan: SubscriptionPlan | null
     expiresAt: Date | null
 }) {
     const t = useTranslations("Admin.partners.portal")
+    const f = useFormatter()
     const trpc = useTRPC()
     const queryClient = useQueryClient()
 
     const role = useStaffRole()
     const canEdit = isAuthorized(role, "subscription", ["update"])
 
+    // What the portal's gate sees for this partner, so ops reads the quota
+    // off the same rows it enforces
+    const usage = useQuery(trpc.partners.portalUsage.queryOptions({ organizationId }))
+
     const values = useMemo<SubscriptionValues>(
-        () => ({ plan, expiresAt: expiresAt ?? undefined }),
+        () => ({ plan: plan ?? "none", expiresAt: expiresAt ?? undefined }),
         [plan, expiresAt],
     )
 
@@ -452,7 +460,11 @@ function SubscriptionCard({
         setError(null)
 
         try {
-            await save.mutateAsync({ id: organizationId, plan: next.plan, expiresAt: next.expiresAt ?? null })
+            await save.mutateAsync({
+                id: organizationId,
+                plan: next.plan === "none" ? null : next.plan,
+                expiresAt: next.expiresAt ?? null,
+            })
             toast(t("subscription-saved"))
         } catch (caught) {
             setError(domainErrorCode<PortalErrorCode>(caught, PORTAL_ERROR_CODES, "UNKNOWN"))
@@ -461,6 +473,18 @@ function SubscriptionCard({
 
     // A role without the statement reads the plan but cannot touch it
     const locked = save.isPending || !canEdit
+
+    // The allowance's period is a "YYYY-MM" key; its first day is all it takes
+    // to name the month in the reader's language
+    const month = usage.data ? f.dateTime(new Date(`${usage.data.period}-01`), { month: "long", year: "numeric" }) : ""
+
+    const usageLine = !usage.data
+        ? null
+        : usage.data.plan === null
+            ? t("usage-none")
+            : usage.data.quota === null
+                ? t("usage-unlimited", { month, used: usage.data.used })
+                : t("usage", { month, used: usage.data.used, quota: usage.data.quota })
 
     return (
         <ProfileCard title={t("subscription")}>
@@ -473,8 +497,10 @@ function SubscriptionCard({
             >
                 <FieldGroup className="gap-4">
                     <SelectInput name="plan" control={form.control} isPending={locked} label={t("plan")}>
-                        <SelectItem value="free">{t("plan-free")}</SelectItem>
-                        <SelectItem value="pro">{t("plan-pro")}</SelectItem>
+                        <SelectItem value="none">{t("plan-none")}</SelectItem>
+                        {SUBSCRIPTION_PLAN.map((tier) => (
+                            <SelectItem key={tier} value={tier}>{t(`plan-${tier}`)}</SelectItem>
+                        ))}
                     </SelectInput>
 
                     <DateInput
@@ -497,6 +523,8 @@ function SubscriptionCard({
                     />
                 </FieldGroup>
             </form>
+
+            {usageLine && <p className="text-muted-foreground text-xs">{usageLine}</p>}
 
             {error && <Alert variant="destructive"><AlertDescription>{t(`errors.${error}`)}</AlertDescription></Alert>}
 

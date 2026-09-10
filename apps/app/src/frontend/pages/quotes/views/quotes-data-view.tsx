@@ -110,7 +110,11 @@ export function QuotesDataView() {
                 <ListFooter page={data.page} pageSize={data.pageSize} total={data.total} pageSizes={PAGE_SIZES} />
             </ListCard>
 
-            <QuoteSheet orgType={orgType} />
+            <QuoteSheet
+                orgType={orgType}
+                allowance={session.allowance}
+                organizationName={session.organization.name}
+            />
         </>
     )
 }

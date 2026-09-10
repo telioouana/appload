@@ -11,7 +11,6 @@ import { Link } from "@/i18n/navigation"
 import { place } from "@/frontend/pages/orders/lib/format"
 import { sectionForOrder } from "@/frontend/pages/orders/lib/sections"
 import { OrderStatusBadge } from "@/frontend/pages/orders/components/badges"
-import { UpgradeDialog } from "@/frontend/pages/orders/components/upgrade-dialog"
 import { CancelOrderDialog } from "@/frontend/pages/orders/sections/cancel-order-dialog"
 import { SendRequestsDialog } from "@/frontend/pages/orders/sections/send-requests-dialog"
 import { TransitionBar } from "@/frontend/pages/orders/sections/transition-bar"
@@ -29,13 +28,11 @@ const LIVE: string[] = ["requested", "quoted"]
 export function OrderDetailHeader({
     order,
     orgType,
-    isPro,
     organizationName,
     options,
 }: {
     order: OrderDetail
     orgType: OrgType
-    isPro: boolean
     organizationName: string
     options: TransitionOptions
 }) {
@@ -44,7 +41,6 @@ export function OrderDetailHeader({
 
     const [sendOpen, setSendOpen] = useState(false)
     const [cancelOpen, setCancelOpen] = useState(false)
-    const [upgradeOpen, setUpgradeOpen] = useState(false)
 
     const section = sectionForOrder(order, orgType)
     const canSend = orgType === "shipper" && order.status === "prospect" && order.permissions.isMine
@@ -90,7 +86,7 @@ export function OrderDetailHeader({
 
             <div className="flex shrink-0 items-center gap-2 lg:mt-6">
                 {canSend && (
-                    <Button size="sm" onClick={() => (isPro ? setSendOpen(true) : setUpgradeOpen(true))}>
+                    <Button size="sm" onClick={() => setSendOpen(true)}>
                         <IconSend />
                         <span className="truncate">{t("requests.actions.send")}</span>
                     </Button>
@@ -104,7 +100,7 @@ export function OrderDetailHeader({
                 )}
 
                 {orgType === "carrier" && order.permissions.isMine && (
-                    <TransitionBar order={order} options={options} />
+                    <TransitionBar order={order} options={options} organizationName={organizationName} />
                 )}
             </div>
 
@@ -127,8 +123,6 @@ export function OrderDetailHeader({
                     onOpenChange={setCancelOpen}
                 />
             )}
-
-            <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} organizationName={organizationName} />
         </header>
     )
 }

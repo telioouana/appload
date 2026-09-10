@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
+import { planRefusal } from "@/components/plan-dialog"
 import { domainErrorCode } from "@/lib/trpc-error"
 
 /**
@@ -27,6 +28,7 @@ export const QUOTE_ERROR_KEYS = {
     NOT_ALLOWED_FOR_ACTOR: "notAllowed",
     WRONG_ORGANIZATION_TYPE: "notAllowed",
     SUBSCRIPTION_REQUIRED: "subscription",
+    QUOTA_EXCEEDED: "quotaExceeded",
     CARRIER_NOT_VERIFIED: "carrierNotVerified",
     CARRIER_CONTRACT_MISSING: "carrierContractMissing",
     CARRIER_CONTRACT_EXPIRED: "carrierContractExpired",
@@ -80,7 +82,9 @@ export function useQuoteMutations() {
             void queryClient.invalidateQueries({ queryKey: trpc.orders.pathKey() })
             toast.success(t("toasts.accepted", { orderId: data.orderId }))
         },
-        onError: fail,
+        // A plan refusal is answered by the dialog the form opens; a toast
+        // saying the same thing would only land on top of it
+        onError: (error) => { if (planRefusal(error) === null) fail(error) },
     }))
 
     return { create, withdraw, decline, accept, refresh }
