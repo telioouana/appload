@@ -2,25 +2,24 @@
  * Creates the partner portal tables: "partner_connection" and
  * "organization_claim" (who is connected to whom, and who owns a company that
  * was loaded from the logbook), "order_request" and "quote" (a client's RFQ to
- * its carriers, a carrier's standing quote to its clients), "trip" plus
- * "trip_route" / "trip_location" / "trip_tracking_request" (shipments a tenant
- * tracks without an Appload order behind them) and "notification" /
- * "notification_cursor" (the portal's notification centre).
+ * its carriers, a carrier's standing quote to its clients) and
+ * "notification" / "notification_cursor" (the portal's notification centre).
+ * The loads a tenant runs itself are in create-movement-tables.mjs.
  * Idempotent: `create table if not exists` / `create index if not exists`.
  *
  * Applied with targeted SQL on purpose: drizzle-kit push is unsafe against
  * the shared database (it would try to reshape unrelated legacy tables).
  * SHARED DEV DATABASE ONLY — production applies the generated drizzle
- * migration (packages/db/drizzle/0014_portal.sql) with `pnpm --filter
- * @workspace/db db:migrate` (see RELEASE.md); never run both against the same
- * database.
+ * migration (packages/db/drizzle/0014_portal.sql, then 0016_movements.sql)
+ * with `pnpm --filter @workspace/db db:migrate` (see RELEASE.md); never run
+ * both against the same database.
  *
  * The columns the portal adds to tables that already exist ("order".source,
  * organization.subscription_expires_at / portal_activated_at,
  * activity_log.app) are in add-portal-columns.mjs; run that one too.
  *
  * Must stay in sync with packages/db/src/schemas/connections.ts,
- * quotes.ts, trips.ts and notifications.ts.
+ * quotes.ts and notifications.ts.
  *
  * Usage:
  *   node packages/db/scripts/create-portal-tables.mjs
@@ -175,107 +174,9 @@ await sql`create index if not exists "quote_client_status_idx" on "quote" ("clie
 await sql`create index if not exists "quote_carrier_status_idx" on "quote" ("carrier_org_id", "status")`;
 console.log("quote ensured");
 
-await sql`
-    create table if not exists "trip" (
-        "id" text primary key,
-        "seq" serial not null,
-        "organization_id" text not null references "organization"("id"),
-        "counterparty_org_id" text references "organization"("id"),
-        "driver_name" text not null,
-        "driver_phone" text not null,
-        "conversation_id" text references "chat_conversation"("id") on delete set null,
-        "truck_plate" text,
-        "cargo_description" text,
-        "origin" jsonb not null,
-        "destination" jsonb not null,
-        "status" text not null default 'scheduled',
-        "tracking_enabled" boolean not null default true,
-        "started_at" timestamp,
-        "expected_delivery_at" timestamp,
-        "delivered_at" timestamp,
-        "created_by" text references "user"("id") on delete set null,
-        "created_at" timestamp not null default now(),
-        "updated_at" timestamp not null default now(),
-        constraint "trip_seq_unique" unique ("seq")
-    )`;
-
-await sql`create index if not exists "trip_organization_status_idx" on "trip" ("organization_id", "status")`;
-await sql`create index if not exists "trip_counterparty_status_idx" on "trip" ("counterparty_org_id", "status")`;
-// The tracking cron's working set: who is on the road right now
-await sql`create index if not exists "trip_driver_phone_idx" on "trip" ("driver_phone") where "status" = 'in-transit'`;
-console.log("trip ensured");
-
-await sql`
-    create table if not exists "trip_route" (
-        "trip_id" text primary key references "trip"("id") on delete cascade,
-        "origin_place_id" text not null,
-        "destination_place_id" text not null,
-        "origin_lat" double precision not null,
-        "origin_lng" double precision not null,
-        "destination_lat" double precision not null,
-        "destination_lng" double precision not null,
-        "encoded_polyline" text,
-        "distance_meters" integer,
-        "duration_seconds" integer,
-        "source" text not null,
-        "computed_at" timestamp not null default now()
-    )`;
-console.log("trip_route ensured");
-
-await sql`
-    create table if not exists "trip_location" (
-        "id" text primary key,
-        "trip_id" text not null references "trip"("id") on delete restrict,
-        "conversation_id" text references "chat_conversation"("id") on delete set null,
-        "chat_message_id" text references "chat_message"("id") on delete set null,
-        "latitude" double precision not null,
-        "longitude" double precision not null,
-        "place_name" text,
-        "source" text not null default 'whatsapp',
-        "recorded_at" timestamp not null default now(),
-        "created_at" timestamp not null default now(),
-        constraint "trip_location_chat_message_id_unique" unique ("chat_message_id"),
-        constraint "trip_location_latlng_ck" check (latitude between -90 and 90 and longitude between -180 and 180)
-    )`;
-
-// A phone with no GPS fix reports 0,0 and a swapped pair reports nonsense; a
-// ping is permanent, so junk coordinates are refused at the column. Added
-// separately because the `create table if not exists` above is a no-op once
-// the table exists.
-await sql`
-    do $$
-    begin
-        if not exists (select 1 from pg_constraint where conname = 'trip_location_latlng_ck') then
-            alter table "trip_location"
-                add constraint "trip_location_latlng_ck"
-                check (latitude between -90 and 90 and longitude between -180 and 180);
-        end if;
-    end
-    $$`;
-
-await sql`create index if not exists "trip_location_trip_recorded_idx" on "trip_location" ("trip_id", "recorded_at")`;
-console.log("trip_location ensured");
-
-await sql`
-    create table if not exists "trip_tracking_request" (
-        "id" text primary key,
-        "trip_id" text not null references "trip"("id") on delete restrict,
-        "conversation_id" text references "chat_conversation"("id") on delete set null,
-        "slot_date" text not null,
-        "slot" text not null,
-        "attempt" integer not null,
-        "channel" text not null,
-        "status" text not null default 'pending',
-        "external_id" text,
-        "error" text,
-        "scheduled_for" timestamp not null,
-        "created_at" timestamp not null default now(),
-        "updated_at" timestamp not null default now()
-    )`;
-
-await sql`create unique index if not exists "trip_tracking_request_trip_slot_attempt_uidx" on "trip_tracking_request" ("trip_id", "slot_date", "slot", "attempt")`;
-await sql`create index if not exists "trip_tracking_request_external_idx" on "trip_tracking_request" ("external_id")`;
-console.log("trip_tracking_request ensured");
+// The loads a tenant runs itself live in "movement" and its six satellites,
+// which create-movement-tables.mjs owns — one script per entity, and that one
+// is long enough on its own. Run it too.
 
 await sql`
     create table if not exists "notification" (

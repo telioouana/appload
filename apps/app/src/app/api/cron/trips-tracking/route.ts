@@ -4,7 +4,7 @@ import { db } from "@workspace/db/db";
 import { authorizeCron } from "@workspace/comms/cron";
 
 import { currentSlotInfo } from "@workspace/domain/tracking/slot";
-import { runTripTrackingSlot } from "@workspace/domain/tracking/trip-slot";
+import { runMovementTrackingSlot } from "@workspace/domain/tracking/movement-slot";
 
 // Sequential Infobip + Neon-HTTP round trips per trip; the batch cap in the
 // runner keeps this inside the ceiling. 60 is the Vercel Hobby maximum —
@@ -33,7 +33,7 @@ async function handle(request: NextRequest) {
         return NextResponse.json({ skipped: "outside slot windows" });
     }
 
-    const summary = await runTripTrackingSlot(db, info);
+    const summary = await runMovementTrackingSlot(db, info);
 
     console.log("[cron:trips-tracking]", JSON.stringify(summary));
 

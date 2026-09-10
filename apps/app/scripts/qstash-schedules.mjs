@@ -44,7 +44,7 @@ function env(key) {
  *
  * Tracking fires every 15 minutes across each window rather than at three
  * exact times: the handler derives the attempt from what it has already sent
- * (see @workspace/domain/tracking/trip-slot), so extra ticks are cheap no-ops
+ * (see @workspace/domain/tracking/movement-slot), so extra ticks are cheap no-ops
  * and a missed tick simply heals on the next one.
  */
 const SCHEDULES = [

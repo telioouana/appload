@@ -39,7 +39,7 @@
         "./quotes": "./src/schemas/quotes.ts",
         "./subscriptions": "./src/schemas/subscriptions.ts",
         "./tracking": "./src/schemas/tracking.ts",
-        "./trips": "./src/schemas/trips.ts",
+        "./movements": "./src/schemas/movements.ts",
         "./users": "./src/schemas/users.ts"
     }
 }

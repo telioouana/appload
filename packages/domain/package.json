@@ -26,6 +26,7 @@
         "./notifications": "./src/notifications.ts",
         "./notifications/*": "./src/notifications/*.ts",
         "./subscription": "./src/subscription.ts",
+        "./movements/*": "./src/movements/*.ts",
         "./orders/*": "./src/orders/*.ts",
         "./kyc/*": "./src/kyc/*.ts",
         "./kpis/*": "./src/kpis/*.ts",

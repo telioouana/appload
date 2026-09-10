@@ -1,8 +1,16 @@
 import type { Location } from "@workspace/db/orders";
 import type { TrackingChannel, TrackingSlot, TrackingStatus } from "@workspace/db/chats";
-import type { TripStatus } from "@workspace/db/trips";
+import type { MovementStatus } from "@workspace/db/movements";
 
-export type { Location, TripStatus };
+/**
+ * The four statuses this page models. A movement carries more of them —
+ * procurement and the offer pair belong to a load a partner executes — and
+ * narrowing here keeps every switch in the trips UI exhaustive until the
+ * movements rebuild widens it.
+ */
+export type TripStatus = Extract<MovementStatus, "scheduled" | "in-transit" | "delivered" | "cancelled">;
+
+export type { Location };
 
 /** The display reference a trip is known by, the way an order has "APPL021.26". */
 export const tripRef = (seq: number) => `TRP-${seq}`;
@@ -62,8 +70,12 @@ export type TripRow = {
     id: string;
     ref: string;
     status: TripStatus;
-    driverName: string;
-    driverPhone: string;
+    /**
+     * Nullable because the column is: a movement can be filed before anyone
+     * is driving it. Every trip this page creates names both.
+     */
+    driverName: string | null;
+    driverPhone: string | null;
     truckPlate: string | null;
     origin: Location;
     destination: Location;

@@ -7,6 +7,7 @@ import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
 import { Badge } from "@workspace/ui/components/badge"
 
 import { EmptyValue } from "@/components/list/empty-value"
+import { Dash } from "@/components/list/table-cells"
 import type { Location, TripPing, TripStatus } from "@/frontend/pages/trips/types"
 
 /** How a place reads in a cell: the province, or the first line of the address. */
@@ -43,11 +44,15 @@ export function LaneCell({ origin, destination }: { origin: Location; destinatio
 }
 
 /** Who is driving, and on what number — the trip's only contact. */
-export function DriverCell({ name, phone }: { name: string; phone: string }) {
+export function DriverCell({ name, phone }: { name: string | null; phone: string | null }) {
+    // Both columns are nullable on the movement row; a trip always names its
+    // driver, so the dash is for the rows another part of the portal filed
+    if (!name && !phone) return <Dash />
+
     return (
         <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate text-[13px] font-medium">{name}</span>
-            <span className="text-muted-foreground truncate font-mono text-xs">{phone}</span>
+            <span className="truncate text-[13px] font-medium">{name ?? "—"}</span>
+            <span className="text-muted-foreground truncate font-mono text-xs">{phone ?? "—"}</span>
         </div>
     )
 }

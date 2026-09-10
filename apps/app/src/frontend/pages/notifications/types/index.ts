@@ -17,7 +17,7 @@ export const KINDS_BY_FAMILY: Record<KindFamily, NotificationKind[]> = {
     connections: ["connection.requested", "connection.accepted", "connection.declined", "connection.removed"],
     orders: ["order.requested", "order.quoted", "order.booked", "order.status", "order.cancelled", "order.document"],
     quotes: ["quote.received", "quote.accepted", "quote.declined", "quote.withdrawn"],
-    trips: ["trip.started", "trip.delivered", "trip.no-response"],
+    trips: ["movement.started", "movement.delivered", "movement.no-response"],
     account: ["claim.approved", "claim.rejected", "member.joined", "subscription.changed"],
 };
 

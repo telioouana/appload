@@ -784,7 +784,8 @@ console.log("\nwiping...");
 await q(`
     TRUNCATE TABLE
         notification, notification_cursor,
-        trip_location, trip_tracking_request, trip_route, trip,
+        movement_event, movement_cost, movement_document,
+        movement_location, movement_tracking_request, movement_route, movement,
         order_request, quote, partner_connection, organization_claim, subscription_usage,
         order_document, order_history, order_offer, sheet_sync, tracking_request,
         chat_message, chat_conversation, "order",

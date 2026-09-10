@@ -6,7 +6,7 @@ import { and, asc, count, desc, eq, gte, ilike, inArray, or, sql, type AnyColumn
 
 import { chatConversation, chatMessage } from "@workspace/db/chats";
 import { partnerConnection } from "@workspace/db/connections";
-import { trip, tripLocation, tripRoute, tripTrackingRequest } from "@workspace/db/trips";
+import { movement, movementLocation, movementRoute, movementTrackingRequest } from "@workspace/db/movements";
 import { organization } from "@workspace/db/users";
 import type { db as Database } from "@workspace/db/db";
 
@@ -56,6 +56,8 @@ import {
     type TripStats,
     type TripStatus,
 } from "@/frontend/pages/trips/types";
+import { TRIP_STATUS } from "@/backend/schemas/trip";
+import type { MovementStatus } from "@workspace/db/movements";
 
 type Db = typeof Database;
 
@@ -63,13 +65,13 @@ type Db = typeof Database;
 const REQUEST_HISTORY = 3;
 
 /** Trips that are over: nothing on them may be edited or moved any more. */
-const CLOSED_STATUSES: TripStatus[] = ["delivered", "cancelled"];
+const CLOSED_STATUSES: MovementStatus[] = ["delivered", "cancelled"];
 
 /**
  * The state machine, in full. Only the owner drives it: the counterparty is
  * told where the load is, it does not decide when it left or arrived.
  */
-const NEXT_STATUS: Record<TripStatus, TripStatus[]> = {
+const NEXT_STATUS: Partial<Record<MovementStatus, TripStatus[]>> = {
     "scheduled": ["in-transit", "cancelled"],
     "in-transit": ["delivered", "cancelled"],
     "delivered": [],
@@ -105,16 +107,16 @@ const startOfDay = (now: Date) => new Date(Date.parse(`${slotDateToday(now)}T00:
  */
 const silentToday = (now: Date): SQL => and(
     sql`exists (
-        select 1 from ${tripTrackingRequest} where ${and(
-            eq(tripTrackingRequest.tripId, trip.id),
-            eq(tripTrackingRequest.slotDate, slotDateToday(now)),
-            inArray(tripTrackingRequest.status, ["sent", "delivered"]),
+        select 1 from ${movementTrackingRequest} where ${and(
+            eq(movementTrackingRequest.movementId, movement.id),
+            eq(movementTrackingRequest.slotDate, slotDateToday(now)),
+            inArray(movementTrackingRequest.status, ["sent", "delivered"]),
         )}
     )`,
     sql`not exists (
-        select 1 from ${tripLocation} where ${and(
-            eq(tripLocation.tripId, trip.id),
-            gte(tripLocation.recordedAt, startOfDay(now)),
+        select 1 from ${movementLocation} where ${and(
+            eq(movementLocation.movementId, movement.id),
+            gte(movementLocation.recordedAt, startOfDay(now)),
         )}
     )`,
 ) as SQL;
@@ -126,16 +128,21 @@ const silentToday = (now: Date): SQL => and(
  * concerned.
  */
 const visibleTrips = (tenantId: string): SQL =>
-    or(eq(trip.organizationId, tenantId), eq(trip.counterpartyOrgId, tenantId)) as SQL;
+    and(
+        or(eq(movement.organizationId, tenantId), eq(movement.clientOrgId, tenantId)),
+        // This page is the own-fleet half of the movement table: the statuses a
+        // partner-executed load passes through belong to Orders, not here
+        inArray(movement.status, TRIP_STATUS),
+    ) as SQL;
 
 /** The section's own predicate, on top of the tenant one. */
 const sectionScope = (section: TripSection): SQL | undefined => {
     switch (section) {
-        case "scheduled": return eq(trip.status, "scheduled");
-        case "in-transit": return eq(trip.status, "in-transit");
-        case "delivered": return eq(trip.status, "delivered");
+        case "scheduled": return eq(movement.status, "scheduled");
+        case "in-transit": return eq(movement.status, "in-transit");
+        case "delivered": return eq(movement.status, "delivered");
         // What never arrived; the loads that did have their own page
-        case "history": return eq(trip.status, "cancelled");
+        case "history": return eq(movement.status, "cancelled");
         default: return undefined;
     }
 };
@@ -145,26 +152,26 @@ const sectionScope = (section: TripSection): SQL | undefined => {
  * when the tenant owns the trip, the owner when it is the partner.
  */
 const partnerJoin = (tenantId: string): SQL => sql`${organization.id} = case
-    when ${trip.organizationId} = ${tenantId} then ${trip.counterpartyOrgId}
-    else ${trip.organizationId}
+    when ${movement.organizationId} = ${tenantId} then ${movement.clientOrgId}
+    else ${movement.organizationId}
 end`;
 
 const rowColumns = {
-    id: trip.id,
-    seq: trip.seq,
-    status: trip.status,
-    driverName: trip.driverName,
-    driverPhone: trip.driverPhone,
-    truckPlate: trip.truckPlate,
-    origin: trip.origin,
-    destination: trip.destination,
-    startedAt: trip.startedAt,
-    expectedDeliveryAt: trip.expectedDeliveryAt,
-    deliveredAt: trip.deliveredAt,
-    organizationId: trip.organizationId,
-    counterpartyOrgId: trip.counterpartyOrgId,
+    id: movement.id,
+    seq: movement.seq,
+    status: movement.status,
+    driverName: movement.driverName,
+    driverPhone: movement.driverPhone,
+    truckPlate: movement.truckPlate,
+    origin: movement.origin,
+    destination: movement.destination,
+    startedAt: movement.startedAt,
+    expectedDeliveryAt: movement.expectedDeliveryAt,
+    deliveredAt: movement.deliveredAt,
+    organizationId: movement.organizationId,
+    clientOrgId: movement.clientOrgId,
     counterpartyName: organization.name,
-    createdAt: trip.createdAt,
+    createdAt: movement.createdAt,
 } as const;
 
 /**
@@ -175,9 +182,9 @@ const rowColumns = {
 type RowProjection = {
     id: string;
     seq: number;
-    status: TripStatus;
-    driverName: string;
-    driverPhone: string;
+    status: MovementStatus;
+    driverName: string | null;
+    driverPhone: string | null;
     truckPlate: string | null;
     origin: Location;
     destination: Location;
@@ -185,7 +192,7 @@ type RowProjection = {
     expectedDeliveryAt: Date | null;
     deliveredAt: Date | null;
     organizationId: string;
-    counterpartyOrgId: string | null;
+    clientOrgId: string | null;
     counterpartyName: string | null;
     createdAt: Date;
 };
@@ -203,21 +210,21 @@ type PingState = {
 async function loadPings(db: Db, tripIds: string[]): Promise<PingState> {
     const [latest, counted] = await Promise.all([
         db
-            .selectDistinctOn([tripLocation.tripId], {
-                tripId: tripLocation.tripId,
-                latitude: tripLocation.latitude,
-                longitude: tripLocation.longitude,
-                placeName: tripLocation.placeName,
-                recordedAt: tripLocation.recordedAt,
+            .selectDistinctOn([movementLocation.movementId], {
+                tripId: movementLocation.movementId,
+                latitude: movementLocation.latitude,
+                longitude: movementLocation.longitude,
+                placeName: movementLocation.placeName,
+                recordedAt: movementLocation.recordedAt,
             })
-            .from(tripLocation)
-            .where(inArray(tripLocation.tripId, tripIds))
-            .orderBy(tripLocation.tripId, desc(tripLocation.recordedAt)),
+            .from(movementLocation)
+            .where(inArray(movementLocation.movementId, tripIds))
+            .orderBy(movementLocation.movementId, desc(movementLocation.recordedAt)),
         db
-            .select({ tripId: tripLocation.tripId, pings: count() })
-            .from(tripLocation)
-            .where(inArray(tripLocation.tripId, tripIds))
-            .groupBy(tripLocation.tripId),
+            .select({ tripId: movementLocation.movementId, pings: count() })
+            .from(movementLocation)
+            .where(inArray(movementLocation.movementId, tripIds))
+            .groupBy(movementLocation.movementId),
     ]);
 
     return {
@@ -234,7 +241,9 @@ async function loadPings(db: Db, tripIds: string[]): Promise<PingState> {
 const toRow = (row: RowProjection, tenantId: string, pings: PingState): TripRow => ({
     id: row.id,
     ref: tripRef(row.seq),
-    status: row.status,
+    // visibleTrips narrows the query to the four statuses this page models,
+    // so the column’s wider union cannot reach here
+    status: row.status as TripStatus,
     driverName: row.driverName,
     driverPhone: row.driverPhone,
     truckPlate: row.truckPlate,
@@ -256,8 +265,8 @@ const toRow = (row: RowProjection, tenantId: string, pings: PingState): TripRow 
 async function loadVisibleTrip(db: Db, id: string, tenantId: string) {
     const [row] = await db
         .select()
-        .from(trip)
-        .where(and(eq(trip.id, id), visibleTrips(tenantId)))
+        .from(movement)
+        .where(and(eq(movement.id, id), visibleTrips(tenantId)))
         .limit(1);
 
     if (!row) {
@@ -271,8 +280,8 @@ async function loadVisibleTrip(db: Db, id: string, tenantId: string) {
 async function loadOwnTrip(db: Db, id: string, tenantId: string) {
     const [row] = await db
         .select()
-        .from(trip)
-        .where(and(eq(trip.id, id), eq(trip.organizationId, tenantId)))
+        .from(movement)
+        .where(and(eq(movement.id, id), eq(movement.organizationId, tenantId)))
         .limit(1);
 
     if (!row) {
@@ -319,17 +328,17 @@ async function organizationName(db: Db, organizationId: string): Promise<string>
 /** Tells the partner on the other side that the load moved, when there is one. */
 async function notifyCounterparty(
     db: Db,
-    params: { row: typeof trip.$inferSelect; kind: "trip.started" | "trip.delivered" },
+    params: { row: typeof movement.$inferSelect; kind: "movement.started" | "movement.delivered" },
 ): Promise<void> {
     const { row } = params;
 
-    if (!row.counterpartyOrgId) return;
+    if (!row.clientOrgId) return;
 
     await notify(db, {
-        organizationId: row.counterpartyOrgId,
+        organizationId: row.clientOrgId,
         kind: params.kind,
         email: false,
-        entityType: "trip",
+        entityType: "movement",
         entityId: row.id,
         params: {
             ref: tripRef(row.seq),
@@ -362,9 +371,9 @@ function searchWhere(term: string): SQL | undefined {
     const seq = digits.length > 0 && digits.length <= 9 ? Number(digits) : null;
 
     return or(
-        ilike(trip.driverName, pattern),
-        ilike(trip.truckPlate, pattern),
-        seq === null ? undefined : eq(trip.seq, seq),
+        ilike(movement.driverName, pattern),
+        ilike(movement.truckPlate, pattern),
+        seq === null ? undefined : eq(movement.seq, seq),
     );
 }
 
@@ -373,9 +382,9 @@ function ordering(sort: TripsInput["sort"], dir: SortDir): SQL[] {
         dir === "desc" ? sql`${column} desc nulls last` : sql`${column} asc nulls last`;
 
     switch (sort) {
-        case "started": return [by(trip.startedAt), desc(trip.seq)];
-        case "expected": return [by(trip.expectedDeliveryAt), desc(trip.seq)];
-        default: return [by(trip.createdAt), desc(trip.seq)];
+        case "started": return [by(movement.startedAt), desc(movement.seq)];
+        case "expected": return [by(movement.expectedDeliveryAt), desc(movement.seq)];
+        default: return [by(movement.createdAt), desc(movement.seq)];
     }
 }
 
@@ -393,14 +402,14 @@ export const tripsRouter = createTRPCRouter({
             const filters: (SQL | undefined)[] = [visibleTrips(tenantId), sectionScope(input.section)];
 
             if (input.search) filters.push(searchWhere(input.search));
-            if (input.noResponse) filters.push(and(eq(trip.status, "in-transit"), silentToday(new Date())));
+            if (input.noResponse) filters.push(and(eq(movement.status, "in-transit"), silentToday(new Date())));
 
             const where = and(...filters);
 
             const [rows, [counted]] = await Promise.all([
                 ctx.db
                     .select(rowColumns)
-                    .from(trip)
+                    .from(movement)
                     .leftJoin(organization, partnerJoin(tenantId))
                     .where(where)
                     .orderBy(...ordering(input.sort, input.dir))
@@ -408,7 +417,7 @@ export const tripsRouter = createTRPCRouter({
                     .offset((input.page - 1) * input.pageSize),
                 ctx.db
                     .select({ value: count() })
-                    .from(trip)
+                    .from(movement)
                     .leftJoin(organization, partnerJoin(tenantId))
                     .where(where),
             ]);
@@ -443,10 +452,10 @@ export const tripsRouter = createTRPCRouter({
             .select({
                 ...sectionSelect,
                 total: count(),
-                noResponseToday: countWhere(and(eq(trip.status, "in-transit"), silentToday(now))),
-                deliveredThisMonth: countWhere(and(eq(trip.status, "delivered"), gte(trip.deliveredAt, monthStart))),
+                noResponseToday: countWhere(and(eq(movement.status, "in-transit"), silentToday(now))),
+                deliveredThisMonth: countWhere(and(eq(movement.status, "delivered"), gte(movement.deliveredAt, monthStart))),
             })
-            .from(trip)
+            .from(movement)
             .where(visibleTrips(tenantId));
 
         const bySection = Object.fromEntries(
@@ -479,7 +488,7 @@ export const tripsRouter = createTRPCRouter({
             const row = await loadVisibleTrip(ctx.db, input.id, tenantId);
             // The other company: the named partner when the tenant owns the
             // trip, the owner when the tenant is the partner
-            const partnerId = row.organizationId === tenantId ? row.counterpartyOrgId : row.organizationId;
+            const partnerId = row.organizationId === tenantId ? row.clientOrgId : row.organizationId;
 
             const [partner, pings, requests] = await Promise.all([
                 partnerId === null
@@ -493,17 +502,17 @@ export const tripsRouter = createTRPCRouter({
                 loadPings(ctx.db, [row.id]),
                 ctx.db
                     .select({
-                        id: tripTrackingRequest.id,
-                        slotDate: tripTrackingRequest.slotDate,
-                        slot: tripTrackingRequest.slot,
-                        attempt: tripTrackingRequest.attempt,
-                        channel: tripTrackingRequest.channel,
-                        status: tripTrackingRequest.status,
-                        createdAt: tripTrackingRequest.createdAt,
+                        id: movementTrackingRequest.id,
+                        slotDate: movementTrackingRequest.slotDate,
+                        slot: movementTrackingRequest.slot,
+                        attempt: movementTrackingRequest.attempt,
+                        channel: movementTrackingRequest.channel,
+                        status: movementTrackingRequest.status,
+                        createdAt: movementTrackingRequest.createdAt,
                     })
-                    .from(tripTrackingRequest)
-                    .where(eq(tripTrackingRequest.tripId, row.id))
-                    .orderBy(desc(tripTrackingRequest.createdAt))
+                    .from(movementTrackingRequest)
+                    .where(eq(movementTrackingRequest.movementId, row.id))
+                    .orderBy(desc(movementTrackingRequest.createdAt))
                     .limit(REQUEST_HISTORY),
             ]);
 
@@ -546,10 +555,10 @@ export const tripsRouter = createTRPCRouter({
             }
 
             const [created] = await ctx.db
-                .insert(trip)
+                .insert(movement)
                 .values({
                     organizationId: tenantId,
-                    counterpartyOrgId: input.counterpartyOrgId ?? null,
+                    clientOrgId: input.counterpartyOrgId ?? null,
                     driverName: input.driverName,
                     driverPhone: input.driverPhone,
                     truckPlate: input.truckPlate?.trim() || null,
@@ -570,11 +579,11 @@ export const tripsRouter = createTRPCRouter({
             if (input.startNow) {
                 await recordTrackingUsage(ctx.db, {
                     organizationIds: [tenantId],
-                    entityType: "trip",
+                    entityType: "movement",
                     entityId: created.id,
                 });
 
-                await notifyCounterparty(ctx.db, { row: created, kind: "trip.started" });
+                await notifyCounterparty(ctx.db, { row: created, kind: "movement.started" });
             }
 
             return { id: created.id, ref: tripRef(created.seq) };
@@ -598,7 +607,7 @@ export const tripsRouter = createTRPCRouter({
                 await assertConnectedPartner(ctx.db, tenantId, input.counterpartyOrgId);
             }
 
-            const values: Partial<typeof trip.$inferInsert> = {};
+            const values: Partial<typeof movement.$inferInsert> = {};
 
             if (input.driverName !== undefined) values.driverName = input.driverName;
             if (input.driverPhone !== undefined) values.driverPhone = input.driverPhone;
@@ -606,14 +615,14 @@ export const tripsRouter = createTRPCRouter({
             if (input.destination !== undefined) values.destination = input.destination;
             if (input.truckPlate !== undefined) values.truckPlate = input.truckPlate.trim() || null;
             if (input.cargoDescription !== undefined) values.cargoDescription = input.cargoDescription.trim() || null;
-            if (input.counterpartyOrgId !== undefined) values.counterpartyOrgId = input.counterpartyOrgId;
+            if (input.counterpartyOrgId !== undefined) values.clientOrgId = input.counterpartyOrgId;
             if (input.expectedDeliveryAt !== undefined) values.expectedDeliveryAt = input.expectedDeliveryAt;
 
             if (Object.keys(values).length > 0) {
                 await ctx.db
-                    .update(trip)
+                    .update(movement)
                     .set(values)
-                    .where(and(eq(trip.id, row.id), eq(trip.organizationId, tenantId)));
+                    .where(and(eq(movement.id, row.id), eq(movement.organizationId, tenantId)));
             }
 
             return { id: row.id };
@@ -631,7 +640,7 @@ export const tripsRouter = createTRPCRouter({
             const tenantId = ctx.tenant.organizationId;
             const row = await loadOwnTrip(ctx.db, input.id, tenantId);
 
-            if (!NEXT_STATUS[row.status].includes(input.to)) {
+            if (!(NEXT_STATUS[row.status] ?? []).includes(input.to)) {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATUS" });
             }
 
@@ -640,13 +649,13 @@ export const tripsRouter = createTRPCRouter({
             }
 
             const [updated] = await ctx.db
-                .update(trip)
+                .update(movement)
                 .set({
                     status: input.to,
                     ...(input.to === "in-transit" && { startedAt: new Date() }),
                     ...(input.to === "delivered" && { deliveredAt: new Date(), trackingEnabled: false }),
                 })
-                .where(and(eq(trip.id, row.id), eq(trip.organizationId, tenantId), eq(trip.status, row.status)))
+                .where(and(eq(movement.id, row.id), eq(movement.organizationId, tenantId), eq(movement.status, row.status)))
                 .returning();
 
             // The status moved between the read and the write: whoever got
@@ -658,18 +667,18 @@ export const tripsRouter = createTRPCRouter({
             if (input.to === "in-transit") {
                 await recordTrackingUsage(ctx.db, {
                     organizationIds: [tenantId],
-                    entityType: "trip",
+                    entityType: "movement",
                     entityId: updated.id,
                 });
 
-                await notifyCounterparty(ctx.db, { row: updated, kind: "trip.started" });
+                await notifyCounterparty(ctx.db, { row: updated, kind: "movement.started" });
             }
 
             if (input.to === "delivered") {
-                await notifyCounterparty(ctx.db, { row: updated, kind: "trip.delivered" });
+                await notifyCounterparty(ctx.db, { row: updated, kind: "movement.delivered" });
             }
 
-            return { id: updated.id, status: updated.status };
+            return { id: updated.id, status: input.to };
         }),
 
     /** Every position the driver reported for one trip, oldest first. */
@@ -680,16 +689,16 @@ export const tripsRouter = createTRPCRouter({
 
             const points = await ctx.db
                 .select({
-                    id: tripLocation.id,
-                    latitude: tripLocation.latitude,
-                    longitude: tripLocation.longitude,
-                    placeName: tripLocation.placeName,
-                    recordedAt: tripLocation.recordedAt,
-                    source: tripLocation.source,
+                    id: movementLocation.id,
+                    latitude: movementLocation.latitude,
+                    longitude: movementLocation.longitude,
+                    placeName: movementLocation.placeName,
+                    recordedAt: movementLocation.recordedAt,
+                    source: movementLocation.source,
                 })
-                .from(tripLocation)
-                .where(eq(tripLocation.tripId, row.id))
-                .orderBy(asc(tripLocation.recordedAt));
+                .from(movementLocation)
+                .where(eq(movementLocation.movementId, row.id))
+                .orderBy(asc(movementLocation.recordedAt));
 
             return points.map((point) => ({
                 id: point.id,
@@ -721,8 +730,8 @@ export const tripsRouter = createTRPCRouter({
 
             const [cached] = await ctx.db
                 .select()
-                .from(tripRoute)
-                .where(eq(tripRoute.tripId, row.id))
+                .from(movementRoute)
+                .where(eq(movementRoute.movementId, row.id))
                 .limit(1);
 
             const fresh = cached
@@ -755,7 +764,7 @@ export const tripsRouter = createTRPCRouter({
             routeFailures.delete(failure);
 
             const values = {
-                tripId: row.id,
+                movementId: row.id,
                 originPlaceId: cacheKey(row.origin),
                 destinationPlaceId: cacheKey(row.destination),
                 originLat: computed.origin.lat,
@@ -770,10 +779,10 @@ export const tripsRouter = createTRPCRouter({
             };
 
             const [saved] = await ctx.db
-                .insert(tripRoute)
+                .insert(movementRoute)
                 .values(values)
                 .onConflictDoUpdate({
-                    target: tripRoute.tripId,
+                    target: movementRoute.movementId,
                     set: {
                         originPlaceId: values.originPlaceId,
                         destinationPlaceId: values.destinationPlaceId,
@@ -844,16 +853,25 @@ export const tripsRouter = createTRPCRouter({
 
             // No order id: chats point at orders, never at trips — the trip
             // holds the link instead, which is what keeps the import one-way
+            // The columns are nullable because a movement can exist before
+            // anyone is driving it; a trip always names a driver at creation,
+            // so this only ever fires on a row the trips form did not make
+            const { driverName, driverPhone } = row;
+
+            if (!driverName || !driverPhone) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "NO_DRIVER" });
+            }
+
             const { conversation } = await startConversation(ctx.db, {
-                driverName: row.driverName,
-                driverPhone: row.driverPhone,
+                driverName,
+                driverPhone,
             });
 
             if (row.conversationId !== conversation.id) {
                 await ctx.db
-                    .update(trip)
+                    .update(movement)
                     .set({ conversationId: conversation.id })
-                    .where(and(eq(trip.id, row.id), eq(trip.organizationId, tenantId)));
+                    .where(and(eq(movement.id, row.id), eq(movement.organizationId, tenantId)));
             }
 
             const ref = tripRef(row.seq);
@@ -863,13 +881,13 @@ export const tripsRouter = createTRPCRouter({
 
             const body = open
                 ? locationRequestText(ref, { truckPlate: row.truckPlate, origin, destination })
-                : trackingTemplateText(row.driverName, ref, row.truckPlate ?? "—", origin, destination);
+                : trackingTemplateText(driverName, ref, row.truckPlate ?? "—", origin, destination);
 
             const result = open
                 ? await sendWhatsAppLocationRequest(conversation.driverPhone, body)
                 : await sendWhatsAppTemplate(
                     conversation.driverPhone,
-                    [row.driverName, ref, row.truckPlate ?? "—", origin, destination],
+                    [driverName, ref, row.truckPlate ?? "—", origin, destination],
                     shareLocationPayload(ref),
                 );
 

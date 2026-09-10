@@ -12,13 +12,13 @@ import { organization } from "@workspace/db/users";
 export { SUBSCRIPTION_PLAN, type SubscriptionPlan } from "@workspace/db/types";
 
 /** What a usage row counts — see `subscriptionUsage.entityType`. */
-export const USAGE_ENTITY = ["order", "trip"] as const;
+export const USAGE_ENTITY = ["order", "movement"] as const;
 export type UsageEntity = (typeof USAGE_ENTITY)[number];
 
 /**
  * One tracked movement, billed to one organization for one calendar month:
- * an order that got dispatched, a trip that went in transit. Both parties of
- * an order get their own row, since each of them spends its own allowance.
+ * an order that got dispatched, a movement that went in transit. Both parties
+ * of an order get their own row, since each spends its own allowance.
  *
  * The unique index is what makes counting idempotent: a re-dispatch after an
  * interrupt writes nothing, so an order can only ever cost the month once.

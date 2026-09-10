@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { TripStatus } from "@workspace/db/trips";
+import type { MovementStatus } from "@workspace/db/movements";
 import { toE164 } from "@workspace/ui/lib/phone";
 
 /**
@@ -36,12 +36,12 @@ export const CARGO_MAX = 500;
 
 /**
  * The status vocabulary, restated rather than imported from
- * `@workspace/db/trips`: that module builds drizzle tables at import time and
+ * `@workspace/db/movements`: that module builds drizzle tables at import time and
  * this file is part of the browser bundle the new-trip form ships. The
  * `satisfies` clause pins it to the column's own union, so a change to the
  * database vocabulary fails the typecheck here.
  */
-export const TRIP_STATUS = ["scheduled", "in-transit", "delivered", "cancelled"] as const satisfies readonly TripStatus[];
+export const TRIP_STATUS = ["scheduled", "in-transit", "delivered", "cancelled"] as const satisfies readonly MovementStatus[];
 
 /** The shape stored in the jsonb location columns (see `Location` in @workspace/db). */
 const location = (error?: ErrorParam) => z.object({

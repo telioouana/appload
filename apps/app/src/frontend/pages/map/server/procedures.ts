@@ -5,7 +5,7 @@ import { TRPCError } from "@trpc/server";
 
 import { order, type Order } from "@workspace/db/orders";
 import { orderLocation, orderRoute } from "@workspace/db/tracking";
-import { trip, tripLocation } from "@workspace/db/trips";
+import { movement, movementLocation } from "@workspace/db/movements";
 import { organization } from "@workspace/db/users";
 import type { OrderStatus } from "@workspace/db/types";
 
@@ -109,27 +109,27 @@ export const mapRouter = createTRPCRouter({
                 .orderBy(desc(order.createdAt)),
             ctx.db
                 .select({
-                    id: trip.id,
-                    seq: trip.seq,
-                    organizationId: trip.organizationId,
+                    id: movement.id,
+                    seq: movement.seq,
+                    organizationId: movement.organizationId,
                     ownerName: ownerOrg.name,
                     partnerName: partnerOrg.name,
-                    driverName: trip.driverName,
-                    truckPlate: trip.truckPlate,
-                    origin: trip.origin,
-                    destination: trip.destination,
+                    driverName: movement.driverName,
+                    truckPlate: movement.truckPlate,
+                    origin: movement.origin,
+                    destination: movement.destination,
                 })
-                .from(trip)
-                .leftJoin(ownerOrg, eq(ownerOrg.id, trip.organizationId))
-                .leftJoin(partnerOrg, eq(partnerOrg.id, trip.counterpartyOrgId))
+                .from(movement)
+                .leftJoin(ownerOrg, eq(ownerOrg.id, movement.organizationId))
+                .leftJoin(partnerOrg, eq(partnerOrg.id, movement.clientOrgId))
                 .where(and(
-                    eq(trip.status, "in-transit"),
+                    eq(movement.status, "in-transit"),
                     or(
-                        eq(trip.organizationId, tenant.organizationId),
-                        eq(trip.counterpartyOrgId, tenant.organizationId),
+                        eq(movement.organizationId, tenant.organizationId),
+                        eq(movement.clientOrgId, tenant.organizationId),
                     ),
                 ))
-                .orderBy(desc(trip.startedAt)),
+                .orderBy(desc(movement.startedAt)),
         ]);
 
         const orderIds = orders.map((row) => row.id);
@@ -155,18 +155,18 @@ export const mapRouter = createTRPCRouter({
                 : NO_PINGS,
             tripIds.length
                 ? ctx.db
-                    .selectDistinctOn([tripLocation.tripId], {
-                        subjectId: tripLocation.tripId,
-                        id: tripLocation.id,
-                        latitude: tripLocation.latitude,
-                        longitude: tripLocation.longitude,
-                        placeName: tripLocation.placeName,
-                        recordedAt: tripLocation.recordedAt,
-                        source: tripLocation.source,
+                    .selectDistinctOn([movementLocation.movementId], {
+                        subjectId: movementLocation.movementId,
+                        id: movementLocation.id,
+                        latitude: movementLocation.latitude,
+                        longitude: movementLocation.longitude,
+                        placeName: movementLocation.placeName,
+                        recordedAt: movementLocation.recordedAt,
+                        source: movementLocation.source,
                     })
-                    .from(tripLocation)
-                    .where(inArray(tripLocation.tripId, tripIds))
-                    .orderBy(tripLocation.tripId, desc(tripLocation.recordedAt))
+                    .from(movementLocation)
+                    .where(inArray(movementLocation.movementId, tripIds))
+                    .orderBy(movementLocation.movementId, desc(movementLocation.recordedAt))
                 : NO_PINGS,
         ]);
 
