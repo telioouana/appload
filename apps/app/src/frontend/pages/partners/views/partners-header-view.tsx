@@ -9,7 +9,7 @@ import { useTranslations } from "@workspace/i18n"
 import { Button } from "@workspace/ui/components/button"
 
 import { useTRPC } from "@/backend/api/client"
-import { PageHeader } from "@/components/list/page-header"
+import { PageHeader } from "@workspace/ui/customs/list/page-header"
 import { PartnersTabs } from "@/frontend/pages/partners/components/partner-tabs"
 import { AddPartnerDialog } from "@/frontend/pages/partners/sections/add-partner-dialog"
 

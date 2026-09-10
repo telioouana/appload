@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect } from "react"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 
 const TYPING_TAGS = ["INPUT", "TEXTAREA", "SELECT"]
 

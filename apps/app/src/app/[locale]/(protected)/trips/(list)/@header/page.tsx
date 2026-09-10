@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { HeaderSkeleton } from "@/frontend/components/list-fallbacks"
+import { HeaderSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 import { TripsHeaderView } from "@/frontend/pages/trips/views/trips-header-view"
 
 export default function Header() {

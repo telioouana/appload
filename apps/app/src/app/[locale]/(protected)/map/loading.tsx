@@ -1,4 +1,4 @@
-import { ListSkeleton } from "@/frontend/components/list-fallbacks"
+import { ListSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 // The page's frame around its own skeleton, so the shape is on screen the
 // moment the route is entered — before the page has streamed in

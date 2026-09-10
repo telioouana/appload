@@ -3,7 +3,7 @@ import { ErrorBoundary } from "react-error-boundary"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
 import { DisputesStatsView } from "@/frontend/pages/disputes/views/disputes-stats-view"
-import { StripSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { StripSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 export default function Stats() {
     prefetch(trpc.disputes.stats.queryOptions())

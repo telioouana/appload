@@ -11,8 +11,8 @@ import { Button } from "@workspace/ui/components/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@workspace/ui/components/sheet"
 
 import { useTRPC } from "@/backend/api/client"
-import { initials, Mono, PlateChip } from "@/components/list/table-cells"
-import { EmptyValue } from "@/components/list/empty-value"
+import { initials, Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
+import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { KycBadge, StateBadge } from "@/frontend/pages/fleet/sections/badges"
 import {
     DateValue,

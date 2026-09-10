@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { ANALYTICS_PERIODS, currentYear, DEFAULT_PERIOD, type AnalyticsPeriod } from "@/frontend/pages/analytics/types"
 
 /** The first year Appload's order book covers, so a company can look back over all of it. */

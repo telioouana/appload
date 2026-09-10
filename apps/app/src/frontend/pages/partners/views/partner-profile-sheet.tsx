@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback } from "@workspace/ui/components/avatar"
 import { StatusBadge } from "@workspace/ui/customs/badge/status-badge"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@workspace/ui/components/sheet"
 
-import { initials } from "@/components/list/table-cells"
+import { initials } from "@workspace/ui/customs/list/table-cells"
 import { useTRPC } from "@/backend/api/client"
 import { usePartnerSheet } from "@/frontend/pages/partners/hooks/use-partner-sheet"
 import { usePartnerMutations } from "@/frontend/pages/partners/hooks/use-partner-mutations"

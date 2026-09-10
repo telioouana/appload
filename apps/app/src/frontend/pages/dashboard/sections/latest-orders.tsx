@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import { Link, useRouter } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
-import { Dash, Mono } from "@/components/list/table-cells"
+import { Dash, Mono } from "@workspace/ui/customs/list/table-cells"
 import { latestInput } from "@/frontend/pages/dashboard/types"
 import { OrderStatusBadge } from "@/frontend/pages/orders/components/badges"
 import { money, place } from "@/frontend/pages/orders/lib/format"

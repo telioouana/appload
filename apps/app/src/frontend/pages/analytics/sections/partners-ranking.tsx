@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
-import { Scroller } from "@/components/list/scroller"
+import { Scroller } from "@workspace/ui/customs/list/scroller"
 import { analyticsInput, PARTNER_SORTS, type AnalyticsPartnerSort } from "@/frontend/pages/analytics/types"
 
 /**

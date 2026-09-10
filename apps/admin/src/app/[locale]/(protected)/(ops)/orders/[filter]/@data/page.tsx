@@ -7,7 +7,7 @@ import { getTranslations } from "@workspace/i18n/server"
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
 import { currentYear, isSection, ordersListInput } from "@/frontend/pages/orders/types"
 import { OrdersDataView } from "@/frontend/pages/orders/views/orders-data-view"
-import { ListError, ListSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { ListError, ListSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 export default async function Data({
     params,

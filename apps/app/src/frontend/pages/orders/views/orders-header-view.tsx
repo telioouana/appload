@@ -8,7 +8,7 @@ import { useTranslations } from "@workspace/i18n"
 import { Button } from "@workspace/ui/components/button"
 
 import { useTRPC } from "@/backend/api/client"
-import { PageHeader } from "@/components/list/page-header"
+import { PageHeader } from "@workspace/ui/customs/list/page-header"
 import { SectionTabs } from "@/frontend/pages/orders/components/section-tabs"
 import { useNewOrder } from "@/frontend/pages/orders/hooks/use-new-order"
 import { NewOrderSheet } from "@/frontend/pages/orders/sections/new-order-sheet"

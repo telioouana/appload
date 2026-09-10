@@ -4,7 +4,7 @@ import { ErrorBoundary } from "react-error-boundary"
 import { getTranslations } from "@workspace/i18n/server"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { ListError } from "@/frontend/components/list-fallbacks"
+import { ListError } from "@workspace/ui/customs/list/list-fallbacks"
 import { notificationsListInput } from "@/frontend/pages/notifications/types"
 import { NotificationsSkeleton } from "@/frontend/pages/notifications/views/notifications-fallbacks"
 import { NotificationsView } from "@/frontend/pages/notifications/views/notifications-view"

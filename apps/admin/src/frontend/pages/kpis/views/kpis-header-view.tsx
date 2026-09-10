@@ -6,7 +6,7 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
-import { PageHeader } from "@/components/list/page-header"
+import { PageHeader } from "@workspace/ui/customs/list/page-header"
 import { PeriodControl } from "@/frontend/pages/kpis/components/period-control"
 import { useKpiParams } from "@/frontend/pages/kpis/hooks/use-kpi-params"
 import { usePeriodLabel } from "@/frontend/pages/kpis/hooks/use-period-label"

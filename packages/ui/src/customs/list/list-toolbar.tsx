@@ -21,7 +21,7 @@ import {
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 
 export type StatusTab = { value: string; label: string; count: number }
 
@@ -62,7 +62,7 @@ export function ListToolbar<T>({
     onExport?: () => void
     isExporting?: boolean
 }) {
-    const t = useTranslations("App.list")
+    const t = useTranslations("List")
     const { get, set } = useListParams()
 
     const activeTab = get(tabs.param) ?? tabs.items[0]?.value ?? ""

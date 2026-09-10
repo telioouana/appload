@@ -5,9 +5,9 @@ import { useSearchParams } from "next/navigation"
 
 import { useTranslations } from "@workspace/i18n"
 
-import type { SortState } from "@/components/list/data-table"
-import type { ActiveFilter } from "@/components/list/list-toolbar"
-import { useListParams } from "@/components/list/use-list-params"
+import type { SortState } from "@workspace/ui/customs/list/data-table"
+import type { ActiveFilter } from "@workspace/ui/customs/list/list-toolbar"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { DEFAULT_DIR, DEFAULT_SORT, FILTER_KEYS } from "@/frontend/pages/orders/types"
 
 /**

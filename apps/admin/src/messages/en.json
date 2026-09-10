@@ -25,6 +25,35 @@
             }
         }
     },
+    "List": {
+        "ascending": "Ascending",
+        "breadcrumb": "You are here",
+        "clear-all": "Clear all",
+        "clear-selection": "Clear selection",
+        "columns": "Columns",
+        "command": "Search anywhere (⌘K)",
+        "copied": "Copied",
+        "currency": "Currency",
+        "descending": "Descending",
+        "empty": {
+            "adjust": "Try a different search or clear a filter."
+        },
+        "export": "Export CSV",
+        "filters": "Filters",
+        "next": "Next page",
+        "pagination": "Pages",
+        "per-page": "{count} per page",
+        "previous": "Previous page",
+        "remove-filter": "Remove {filter} filter",
+        "select-all": "Select all rows on this page",
+        "select-row": "Select row",
+        "selected": "{count, plural, one {# selected} other {# selected}}",
+        "showing": "Showing {from}–{to} of {total}",
+        "sort": "Sort",
+        "sort-by": "Sort by",
+        "status": "Status",
+        "suggestions": "Suggestions"
+    },
     "Admin": {
         "metadata": {
             "title": "Appload Admin",
@@ -3412,35 +3441,6 @@
                     "UNKNOWN": "Something went wrong. Try again."
                 }
             }
-        },
-        "list": {
-            "breadcrumb": "You are here",
-            "currency": "Currency",
-            "command": "Search anywhere (⌘K)",
-            "empty": {
-                "adjust": "Try a different search or clear a filter."
-            },
-            "select-all": "Select all rows on this page",
-            "select-row": "Select row",
-            "filters": "Filters",
-            "status": "Status",
-            "sort": "Sort",
-            "sort-by": "Sort by",
-            "ascending": "Ascending",
-            "descending": "Descending",
-            "columns": "Columns",
-            "export": "Export CSV",
-            "remove-filter": "Remove {filter} filter",
-            "clear-all": "Clear all",
-            "showing": "Showing {from}–{to} of {total}",
-            "pagination": "Pages",
-            "previous": "Previous page",
-            "next": "Next page",
-            "per-page": "{count} per page",
-            "selected": "{count, plural, one {# selected} other {# selected}}",
-            "clear-selection": "Clear selection",
-            "copied": "Copied",
-            "suggestions": "Suggestions"
         },
         "command": {
             "title": "Search",

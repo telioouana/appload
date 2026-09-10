@@ -8,7 +8,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 
 import { Badge } from "@workspace/ui/components/badge"
 
-import { Dash, Mono, PlateChip, StackCell } from "@/components/list/table-cells"
+import { Dash, Mono, PlateChip, StackCell } from "@workspace/ui/customs/list/table-cells"
 import { money, place } from "@/frontend/pages/orders/lib/format"
 import { OfferStatusBadge, OrderStatusBadge, RequestStatusChip } from "@/frontend/pages/orders/components/badges"
 import type { OrderRow, OrgType } from "@/frontend/pages/orders/types"

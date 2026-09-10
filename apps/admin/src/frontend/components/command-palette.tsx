@@ -15,8 +15,8 @@ import { useDebouncedValue } from "@workspace/ui/hooks/use-debounced-value"
 
 import { useRouter } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
-import { COMMAND_EVENT } from "@/components/list/page-header"
-import { initials, PlateChip } from "@/components/list/table-cells"
+import { COMMAND_EVENT } from "@workspace/ui/customs/list/command"
+import { initials, PlateChip } from "@workspace/ui/customs/list/table-cells"
 import { KycBadge } from "@/frontend/pages/partners/sections/badges"
 import { OrderStatusBadge, place } from "@/frontend/pages/orders/sections/order-item-shared"
 

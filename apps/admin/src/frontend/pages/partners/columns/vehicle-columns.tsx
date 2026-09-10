@@ -5,7 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
-import { Dash, IdentityCell, initials, Mono, PlateChip, ProgressCell, StackCell } from "@/components/list/table-cells"
+import { Dash, IdentityCell, initials, Mono, PlateChip, ProgressCell, StackCell } from "@workspace/ui/customs/list/table-cells"
 import { RowActions } from "@/frontend/pages/partners/sections/row-actions"
 import { TripLocation } from "@/frontend/pages/partners/sections/trip-location"
 import { daysUntil, KycBadge, OwnershipBadge } from "@/frontend/pages/partners/sections/badges"

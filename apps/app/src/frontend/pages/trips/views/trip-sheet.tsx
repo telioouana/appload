@@ -14,7 +14,7 @@ import type { TrackingAllowance } from "@workspace/domain/subscription"
 
 import { Link } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
-import { EmptyValue } from "@/components/list/empty-value"
+import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { LastPingCell, TripStatusChip } from "@/frontend/pages/trips/components/badges"
 import { TripActions } from "@/frontend/pages/trips/sections/trip-actions"
 import { useTripSheet } from "@/frontend/pages/trips/hooks/use-trip-sheet"

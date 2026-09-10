@@ -9,7 +9,7 @@ import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
 import { Link } from "@/i18n/navigation"
-import { moneyTone, type MoneyTone } from "@/components/list/money-tone"
+import { moneyTone, type MoneyTone } from "@workspace/ui/lib/money-tone"
 import { moneyInput } from "@/frontend/pages/dashboard/types"
 import { currentYear, type CashflowLine } from "@/frontend/pages/orders/types"
 

@@ -1,4 +1,4 @@
-import { StripSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { StripSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 export default function Loading() {
     return <StripSkeleton />

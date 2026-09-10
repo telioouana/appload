@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { KIND_FAMILIES, KINDS_BY_FAMILY, kindMessageKey } from "@/frontend/pages/notifications/types"
 
 // Radix Select cannot carry an empty value, so "every kind" travels as a

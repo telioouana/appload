@@ -12,7 +12,7 @@ import { cn } from "@workspace/ui/lib/utils"
 
 import { Link } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
-import { PageHeader } from "@/components/list/page-header"
+import { PageHeader } from "@workspace/ui/customs/list/page-header"
 import { RegisterVehicleDialog } from "@/frontend/pages/fleet/sections/register-vehicle-dialog"
 import { KIND_SLUGS, SLUG_FOR_KIND, type KindSlug, type VehicleKind } from "@/frontend/pages/fleet/types"
 

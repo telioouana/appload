@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { ErrorBoundary } from "react-error-boundary"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { TilesSkeleton } from "@/frontend/components/list-fallbacks"
+import { TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 import { FleetStatsView } from "@/frontend/pages/fleet/views/fleet-stats-view"
 import { kindFromSlug } from "@/frontend/pages/fleet/types"
 

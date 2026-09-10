@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { ErrorBoundary } from "react-error-boundary"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { TilesSkeleton } from "@/frontend/components/list-fallbacks"
+import { TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 import { OrdersStatsView } from "@/frontend/pages/orders/views/orders-stats-view"
 import { ORDER_SECTIONS, type OrderSection } from "@/frontend/pages/orders/types"
 

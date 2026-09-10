@@ -12,10 +12,8 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useListParams, type Param } from "@/components/list/use-list-params"
-
-/** Opens the global ⌘K palette from anywhere; the palette listens for it. */
-export const COMMAND_EVENT = "appload:command"
+import { useListParams, type Param } from "@workspace/ui/hooks/use-list-params"
+import { openCommandPalette, useHasCommandPalette } from "@workspace/ui/customs/list/command"
 
 export type SuggestionItem = {
     id: string
@@ -73,7 +71,9 @@ export function PageHeader({
     /** Sits before the title column, e.g. a detail page's back button */
     leading?: React.ReactNode
 }) {
-    const t = useTranslations("Admin.list")
+    const t = useTranslations("List")
+    // Only an app that mounts a palette advertises the shortcut
+    const hasCommandPalette = useHasCommandPalette()
     const { get, set, sync, cancel, isPending } = useListParams()
 
     const [query, setQuery] = useState(get("search") ?? "")
@@ -138,28 +138,30 @@ export function PageHeader({
                 aria-autocomplete={suggestions ? "list" : undefined}
             />
 
-            <InputGroupAddon align="inline-end">
-                {query ? (
-                    <InputGroupButton
-                        size="icon-xs"
-                        variant="ghost"
-                        aria-label={search?.clearLabel}
-                        onClick={() => update("")}
-                    >
-                        <IconX className="size-4" stroke={1.5} />
-                    </InputGroupButton>
-                ) : (
-                    <button
-                        type="button"
-                        aria-label={t("command")}
-                        title={t("command")}
-                        className="hidden cursor-pointer sm:inline-flex"
-                        onClick={() => window.dispatchEvent(new CustomEvent(COMMAND_EVENT))}
-                    >
-                        <Kbd>⌘K</Kbd>
-                    </button>
-                )}
-            </InputGroupAddon>
+            {(query || hasCommandPalette) && (
+                <InputGroupAddon align="inline-end">
+                    {query ? (
+                        <InputGroupButton
+                            size="icon-xs"
+                            variant="ghost"
+                            aria-label={search?.clearLabel}
+                            onClick={() => update("")}
+                        >
+                            <IconX className="size-4" stroke={1.5} />
+                        </InputGroupButton>
+                    ) : (
+                        <button
+                            type="button"
+                            aria-label={t("command")}
+                            title={t("command")}
+                            className="hidden cursor-pointer sm:inline-flex"
+                            onClick={openCommandPalette}
+                        >
+                            <Kbd>⌘K</Kbd>
+                        </button>
+                    )}
+                </InputGroupAddon>
+            )}
         </InputGroup>
     )
 

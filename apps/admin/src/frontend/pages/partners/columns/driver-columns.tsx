@@ -5,7 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import { useTranslations } from "@workspace/i18n"
 
-import { CopyableText, IdentityCell, initials, Mono, PlateChip, ProgressCell } from "@/components/list/table-cells"
+import { CopyableText, IdentityCell, initials, Mono, PlateChip, ProgressCell } from "@workspace/ui/customs/list/table-cells"
 import { RowActions } from "@/frontend/pages/partners/sections/row-actions"
 import { MissingField } from "@/frontend/pages/partners/sections/missing-field"
 import { WhatsappMark } from "@/frontend/pages/partners/sections/whatsapp-mark"

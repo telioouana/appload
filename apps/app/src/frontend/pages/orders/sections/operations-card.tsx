@@ -2,7 +2,7 @@
 
 import { useTranslations } from "@workspace/i18n"
 
-import { PlateChip } from "@/components/list/table-cells"
+import { PlateChip } from "@workspace/ui/customs/list/table-cells"
 import { Dash, DetailRow, SectionCard } from "@/frontend/pages/orders/components/section-card"
 import type { OrderDetail } from "@/frontend/pages/orders/types"
 

@@ -6,7 +6,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 
 import { Badge } from "@workspace/ui/components/badge"
 
-import { EmptyValue } from "@/components/list/empty-value"
+import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import type { Currency, Location, QuoteStatus } from "@/frontend/pages/quotes/types"
 
 /**

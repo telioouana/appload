@@ -5,7 +5,7 @@ import { useTranslations } from "@workspace/i18n"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { Link } from "@/i18n/navigation"
-import { Scroller } from "@/components/list/scroller"
+import { Scroller } from "@workspace/ui/customs/list/scroller"
 import { sectionsFor, type OrderSection, type OrderStats, type OrgType } from "@/frontend/pages/orders/types"
 
 /**

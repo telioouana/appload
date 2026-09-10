@@ -25,6 +25,35 @@
             }
         }
     },
+    "List": {
+        "ascending": "Ascendente",
+        "breadcrumb": "Está aqui",
+        "clear-all": "Limpar tudo",
+        "clear-selection": "Limpar selecção",
+        "columns": "Colunas",
+        "command": "Pesquisar em todo o lado (⌘K)",
+        "copied": "Copiado",
+        "currency": "Moeda",
+        "descending": "Descendente",
+        "empty": {
+            "adjust": "Tente outra pesquisa ou retire um filtro."
+        },
+        "export": "Exportar CSV",
+        "filters": "Filtros",
+        "next": "Página seguinte",
+        "pagination": "Páginas",
+        "per-page": "{count} por página",
+        "previous": "Página anterior",
+        "remove-filter": "Retirar o filtro {filter}",
+        "select-all": "Seleccionar todas as linhas desta página",
+        "select-row": "Seleccionar linha",
+        "selected": "{count, plural, one {# seleccionado} other {# seleccionados}}",
+        "showing": "A mostrar {from}–{to} de {total}",
+        "sort": "Ordenar",
+        "sort-by": "Ordenar por",
+        "status": "Estado",
+        "suggestions": "Sugestões"
+    },
     "Admin": {
         "metadata": {
             "title": "Appload Admin",
@@ -3412,35 +3441,6 @@
                     "UNKNOWN": "Algo correu mal. Tente novamente."
                 }
             }
-        },
-        "list": {
-            "breadcrumb": "Está aqui",
-            "currency": "Moeda",
-            "command": "Pesquisar em todo o lado (⌘K)",
-            "empty": {
-                "adjust": "Tente outra pesquisa ou retire um filtro."
-            },
-            "select-all": "Seleccionar todas as linhas desta página",
-            "select-row": "Seleccionar linha",
-            "filters": "Filtros",
-            "status": "Estado",
-            "sort": "Ordenar",
-            "sort-by": "Ordenar por",
-            "ascending": "Ascendente",
-            "descending": "Descendente",
-            "columns": "Colunas",
-            "export": "Exportar CSV",
-            "remove-filter": "Retirar o filtro {filter}",
-            "clear-all": "Limpar tudo",
-            "showing": "A mostrar {from}–{to} de {total}",
-            "pagination": "Páginas",
-            "previous": "Página anterior",
-            "next": "Página seguinte",
-            "per-page": "{count} por página",
-            "selected": "{count, plural, one {# seleccionado} other {# seleccionados}}",
-            "clear-selection": "Limpar selecção",
-            "copied": "Copiado",
-            "suggestions": "Sugestões"
         },
         "command": {
             "title": "Pesquisar",

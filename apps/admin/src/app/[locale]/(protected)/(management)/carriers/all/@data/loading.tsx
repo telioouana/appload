@@ -1,4 +1,4 @@
-import { ListSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { ListSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 export default function Loading() {
     return <ListSkeleton />

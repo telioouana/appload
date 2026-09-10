@@ -12,8 +12,8 @@ import { Button } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
-import { PageHeader } from "@/components/list/page-header"
-import { useListParams } from "@/components/list/use-list-params"
+import { PageHeader } from "@workspace/ui/customs/list/page-header"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { RegisterPartnerDialog, type RegisterTarget } from "@/frontend/pages/partners/sections/register-partner"
 import { currentKind, VEHICLE_KINDS, type VehicleKind } from "@/frontend/pages/partners/types"
 

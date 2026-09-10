@@ -7,7 +7,7 @@ import { IconClockExclamation, IconEyeExclamation, IconFileOff, IconHelpCircle, 
 import { useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
-import { AttentionTiles, type AttentionTile } from "@/components/list/attention-tiles"
+import { AttentionTiles, type AttentionTile } from "@workspace/ui/customs/list/attention-tiles"
 import { currentKind, EXPIRY_WINDOW_DAYS } from "@/frontend/pages/partners/types"
 import type { StatsBucket, VehicleKind } from "@/frontend/pages/partners/types"
 

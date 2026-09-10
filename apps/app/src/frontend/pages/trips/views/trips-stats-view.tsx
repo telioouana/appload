@@ -6,7 +6,7 @@ import { IconCalendarClock, IconFlagCheck, IconMapPinExclamation, IconTruckDeliv
 import { useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
-import { AttentionTiles, type AttentionTile } from "@/components/list/attention-tiles"
+import { AttentionTiles, type AttentionTile } from "@workspace/ui/customs/list/attention-tiles"
 
 /**
  * The work queue above the table: what is moving, who has gone quiet, what

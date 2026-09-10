@@ -12,7 +12,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@w
 import { Separator } from "@workspace/ui/components/separator";
 
 import { useTRPC } from "@/backend/api/client";
-import { useListParams } from "@/components/list/use-list-params";
+import { useListParams } from "@workspace/ui/hooks/use-list-params";
 import type { ConversationSummary } from "@/backend/api/routers/chats";
 import { domainErrorCode } from "@/lib/trpc-error";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";

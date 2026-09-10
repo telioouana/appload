@@ -15,7 +15,7 @@ import {
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 
 /** The page numbers worth showing around the current one: 1 … 4 5 6 … 29 */
 function pageWindow(page: number, pages: number): (number | "gap")[] {
@@ -52,7 +52,7 @@ export function ListFooter({
     total: number
     pageSizes: readonly number[]
 }) {
-    const t = useTranslations("Admin.list")
+    const t = useTranslations("List")
     const { set } = useListParams()
 
     const pages = Math.max(1, Math.ceil(total / pageSize))

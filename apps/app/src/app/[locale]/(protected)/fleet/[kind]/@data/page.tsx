@@ -5,7 +5,7 @@ import { ErrorBoundary } from "react-error-boundary"
 import { getTranslations } from "@workspace/i18n/server"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { ListError, ListSkeleton } from "@/frontend/components/list-fallbacks"
+import { ListError, ListSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 import { VehiclesDataView } from "@/frontend/pages/fleet/views/vehicles-data-view"
 import { kindFromSlug, vehiclesListInput } from "@/frontend/pages/fleet/types"
 

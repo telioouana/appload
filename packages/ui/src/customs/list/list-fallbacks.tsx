@@ -1,6 +1,6 @@
 import { Skeleton } from "@workspace/ui/components/skeleton"
 
-import { ListCard } from "@/components/list/list-card"
+import { ListCard } from "@workspace/ui/customs/list/list-card"
 
 /** Shape-matched placeholder for the table card while the first page loads. */
 export function ListSkeleton() {

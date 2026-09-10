@@ -4,7 +4,7 @@ import { IconCopy, IconMapPin } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
-import { Mono } from "@/components/list/table-cells"
+import { Mono } from "@workspace/ui/customs/list/table-cells"
 import { MissingField, type MissingFieldKind } from "@/frontend/pages/partners/sections/missing-field"
 import { WhatsappMark } from "@/frontend/pages/partners/sections/whatsapp-mark"
 import type { WhatsappStatus } from "@/frontend/pages/partners/types"

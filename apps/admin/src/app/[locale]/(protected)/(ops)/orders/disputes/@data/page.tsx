@@ -6,7 +6,7 @@ import { getTranslations } from "@workspace/i18n/server"
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
 import { disputesListInput } from "@/frontend/pages/disputes/types"
 import { DisputesDataView } from "@/frontend/pages/disputes/views/disputes-data-view"
-import { ListError, ListSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { ListError, ListSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 export default async function Data({
     searchParams,

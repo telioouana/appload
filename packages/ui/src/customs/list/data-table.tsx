@@ -22,8 +22,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { Scroller } from "@/components/list/scroller"
-import { useListParams } from "@/components/list/use-list-params"
+import { Scroller } from "@workspace/ui/customs/list/scroller"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 
 declare module "@tanstack/react-table" {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -167,7 +167,7 @@ export function DataTable<T>({
     /** The row whose profile is open, tinted so the reader keeps their place */
     activeRowId?: string | null
 }) {
-    const t = useTranslations("Admin.list")
+    const t = useTranslations("List")
     const rows = table.getRowModel().rows
 
     if (rows.length === 0) {

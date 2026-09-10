@@ -5,8 +5,8 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
-import { Mono, PlateChip } from "@/components/list/table-cells"
-import { EmptyValue } from "@/components/list/empty-value"
+import { Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
+import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { DriverCell, LaneCell, LastPingCell, TripDate, TripStatusChip } from "@/frontend/pages/trips/components/badges"
 import type { TripRow } from "@/frontend/pages/trips/types"
 

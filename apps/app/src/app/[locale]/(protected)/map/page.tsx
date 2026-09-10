@@ -4,7 +4,7 @@ import { ErrorBoundary } from "react-error-boundary"
 import { getTranslations } from "@workspace/i18n/server"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { ListError, ListSkeleton } from "@/frontend/components/list-fallbacks"
+import { ListError, ListSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 import { MapView } from "@/frontend/pages/map/views/map-view"
 
 export async function generateMetadata() {

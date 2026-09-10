@@ -5,7 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
-import { Dash, IdentityCell, initials, Mono } from "@/components/list/table-cells"
+import { Dash, IdentityCell, initials, Mono } from "@workspace/ui/customs/list/table-cells"
 import { PartnerRowActions } from "@/frontend/pages/partners/sections/row-actions"
 import { DirectionChip, KycBadge, RelationChip } from "@/frontend/pages/partners/sections/badges"
 import type { OrgType, PartnerRow } from "@/frontend/pages/partners/types"

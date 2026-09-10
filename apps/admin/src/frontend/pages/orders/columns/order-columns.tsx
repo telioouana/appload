@@ -6,7 +6,7 @@ import { IconAlertTriangle, IconArrowRight, IconFlag, IconGavel, IconSnowflake }
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
-import { Mono, PlateChip, StackCell } from "@/components/list/table-cells"
+import { Mono, PlateChip, StackCell } from "@workspace/ui/customs/list/table-cells"
 import { useMoney } from "@/frontend/pages/orders/sections/order-item-parts"
 import { OrderStatusBadge, PaymentStatusChip, place } from "@/frontend/pages/orders/sections/order-item-shared"
 import { OrderRowActions, type RowCallbacks } from "@/frontend/pages/orders/sections/order-row-actions"

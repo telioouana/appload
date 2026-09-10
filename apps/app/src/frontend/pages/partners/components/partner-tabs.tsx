@@ -6,7 +6,7 @@ import { useTranslations } from "@workspace/i18n"
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { currentTab, tabsFor, type OrgType, type PartnerStats, type PartnerTab } from "@/frontend/pages/partners/types"
 
 /**

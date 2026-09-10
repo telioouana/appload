@@ -4,7 +4,7 @@ import { useTranslations } from "@workspace/i18n"
 
 import { ToggleGroup, ToggleGroupItem } from "@workspace/ui/components/toggle-group"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { CURRENCY_CODES, useMetricsCurrency } from "@/frontend/pages/metrics/hooks/use-metrics-currency"
 import { PRESENTATION_CURRENCIES } from "@/frontend/pages/metrics/types"
 

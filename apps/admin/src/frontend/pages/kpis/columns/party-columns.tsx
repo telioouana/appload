@@ -5,7 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
-import { Dash, IdentityCell, initials, Mono } from "@/components/list/table-cells"
+import { Dash, IdentityCell, initials, Mono } from "@workspace/ui/customs/list/table-cells"
 import type { KpiPartyRow } from "@/frontend/pages/kpis/types"
 
 /**

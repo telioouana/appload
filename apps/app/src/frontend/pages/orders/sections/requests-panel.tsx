@@ -7,7 +7,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 
 import { Button } from "@workspace/ui/components/button"
 
-import { initials } from "@/components/list/table-cells"
+import { initials } from "@workspace/ui/customs/list/table-cells"
 import { RequestStatusChip } from "@/frontend/pages/orders/components/badges"
 import { SectionCard } from "@/frontend/pages/orders/components/section-card"
 import { useOrderMutations } from "@/frontend/pages/orders/hooks/use-order-mutations"

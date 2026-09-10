@@ -17,7 +17,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "@workspace/ui/comp
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
 
 import { useTRPC } from "@/backend/api/client"
-import { initials } from "@/components/list/table-cells"
+import { initials } from "@workspace/ui/customs/list/table-cells"
 import { KycBadge } from "@/frontend/pages/partners/sections/badges"
 import { orderErrorKey, type OrderErrorMessage } from "@/frontend/pages/orders/lib/errors"
 import { useOrderMutations } from "@/frontend/pages/orders/hooks/use-order-mutations"

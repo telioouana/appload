@@ -15,7 +15,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
-import { initials, Mono, PlateChip } from "@/components/list/table-cells"
+import { initials, Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
 import { DocumentChecklist } from "@/frontend/pages/kyc/sections/document-checklist"
 import { StandingMenu } from "@/frontend/pages/partners/sections/standing-menu"
 import { PortalSection } from "@/frontend/pages/partners/sections/portal-section"

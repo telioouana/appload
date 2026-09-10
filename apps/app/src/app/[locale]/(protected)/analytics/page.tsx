@@ -4,7 +4,7 @@ import { ErrorBoundary } from "react-error-boundary"
 import { getTranslations } from "@workspace/i18n/server"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { ListError } from "@/frontend/components/list-fallbacks"
+import { ListError } from "@workspace/ui/customs/list/list-fallbacks"
 import { analyticsInput } from "@/frontend/pages/analytics/types"
 import { AnalyticsSkeleton } from "@/frontend/pages/analytics/views/analytics-fallbacks"
 import { AnalyticsView } from "@/frontend/pages/analytics/views/analytics-view"

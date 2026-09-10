@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { TilesSkeleton } from "@/frontend/components/list-fallbacks"
+import { TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 import { DriversStatsView } from "@/frontend/pages/drivers/views/drivers-stats-view"
 
 export default function Stats() {

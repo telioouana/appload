@@ -5,7 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
-import { Dash, IdentityCell, initials, Mono, PlateChip, ProgressCell, StackCell } from "@/components/list/table-cells"
+import { Dash, IdentityCell, initials, Mono, PlateChip, ProgressCell, StackCell } from "@workspace/ui/customs/list/table-cells"
 import { RowActions } from "@/frontend/pages/fleet/sections/row-actions"
 import { KycBadge, OwnershipBadge, StateBadge } from "@/frontend/pages/fleet/sections/badges"
 import type { VehicleKind, VehicleRow } from "@/frontend/pages/fleet/types"

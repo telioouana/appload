@@ -2,7 +2,7 @@
 
 import { useCallback } from "react"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 
 /**
  * Which connection's profile is open, kept in the URL (`?id=…`) rather than

@@ -3,7 +3,7 @@
 import { useTranslations } from "@workspace/i18n"
 import { DISPUTE_LIABLE_PARTY, DISPUTE_REASON } from "@workspace/db/types"
 
-import { FilterChoice } from "@/components/list/filter-controls"
+import { FilterChoice } from "@workspace/ui/customs/list/filter-controls"
 import { HOLD_SIDES } from "@/frontend/pages/disputes/types"
 
 /** The Filters popover: the cause, who is thought liable, and whose money is held. */

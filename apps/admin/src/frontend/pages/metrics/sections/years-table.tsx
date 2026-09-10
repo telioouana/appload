@@ -9,9 +9,9 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
-import { Scroller } from "@/components/list/scroller"
+import { Scroller } from "@workspace/ui/customs/list/scroller"
 import { useMetricsCurrency } from "@/frontend/pages/metrics/hooks/use-metrics-currency"
-import { moneyTone } from "@/components/list/money-tone"
+import { moneyTone } from "@workspace/ui/lib/money-tone"
 import { overviewInput, type MetricsLifetime, type MetricYear } from "@/frontend/pages/metrics/types"
 
 /**

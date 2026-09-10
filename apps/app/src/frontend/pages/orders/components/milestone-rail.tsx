@@ -7,7 +7,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 import { cn } from "@workspace/ui/lib/utils"
 import { statusIcons } from "@workspace/ui/customs/badge/status-badge"
 
-import { Scroller } from "@/components/list/scroller"
+import { Scroller } from "@workspace/ui/customs/list/scroller"
 import type { MilestoneStep } from "@/frontend/pages/orders/lib/milestones"
 
 /**

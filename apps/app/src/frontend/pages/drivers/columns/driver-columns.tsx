@@ -5,8 +5,8 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import { useTranslations } from "@workspace/i18n"
 
-import { CopyableText, IdentityCell, initials, Mono, PlateChip, ProgressCell } from "@/components/list/table-cells"
-import { EmptyValue } from "@/components/list/empty-value"
+import { CopyableText, IdentityCell, initials, Mono, PlateChip, ProgressCell } from "@workspace/ui/customs/list/table-cells"
+import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { RowActions } from "@/frontend/pages/fleet/sections/row-actions"
 import { KycBadge, StateBadge } from "@/frontend/pages/fleet/sections/badges"
 import { isPlaceholderEmail, type DriverRow } from "@/frontend/pages/drivers/types"

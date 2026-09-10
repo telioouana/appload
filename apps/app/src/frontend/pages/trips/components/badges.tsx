@@ -6,8 +6,8 @@ import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
 
 import { Badge } from "@workspace/ui/components/badge"
 
-import { EmptyValue } from "@/components/list/empty-value"
-import { Dash } from "@/components/list/table-cells"
+import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
+import { Dash } from "@workspace/ui/customs/list/table-cells"
 import type { Location, TripPing, TripStatus } from "@/frontend/pages/trips/types"
 
 /** How a place reads in a cell: the province, or the first line of the address. */

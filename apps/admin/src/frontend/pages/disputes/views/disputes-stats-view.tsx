@@ -5,7 +5,7 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
-import { MoneyStrip, type MoneyMetric } from "@/components/list/money-strip"
+import { MoneyStrip, type MoneyMetric } from "@workspace/ui/customs/list/money-strip"
 
 /** What is at stake on the active disputes: how many, and the money claimed per currency. */
 export function DisputesStatsView() {

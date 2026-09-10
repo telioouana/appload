@@ -5,8 +5,8 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
-import { Dash, IdentityCell, initials, Mono } from "@/components/list/table-cells"
-import { EmptyValue } from "@/components/list/empty-value"
+import { Dash, IdentityCell, initials, Mono } from "@workspace/ui/customs/list/table-cells"
+import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { CoverChips, LaneCell, QuoteStatusChip, useMoney } from "@/frontend/pages/quotes/sections/badges"
 import type { QuoteRow } from "@/frontend/pages/quotes/types"
 

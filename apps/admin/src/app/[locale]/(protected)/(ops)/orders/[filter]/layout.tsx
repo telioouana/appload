@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 
 import { getTranslations } from "@workspace/i18n/server"
 
-import { ListPageShell } from "@/components/list/list-page-shell"
+import { ListPageShell } from "@workspace/ui/customs/list/list-page-shell"
 import { isSection } from "@/frontend/pages/orders/types"
 
 type Params = Promise<{ filter: string }>

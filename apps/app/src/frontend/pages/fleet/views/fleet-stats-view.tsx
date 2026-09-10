@@ -6,7 +6,7 @@ import { IconHelpCircle, IconParking, IconSearch, IconSteeringWheel } from "@tab
 import { useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
-import { AttentionTiles, type AttentionTile } from "@/components/list/attention-tiles"
+import { AttentionTiles, type AttentionTile } from "@workspace/ui/customs/list/attention-tiles"
 import type { VehicleKind } from "@/frontend/pages/fleet/types"
 
 /**

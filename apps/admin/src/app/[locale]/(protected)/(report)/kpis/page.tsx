@@ -4,13 +4,13 @@ import { ErrorBoundary } from "react-error-boundary"
 import { getTranslations } from "@workspace/i18n/server"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { ListPageShell } from "@/components/list/list-page-shell"
+import { ListPageShell } from "@workspace/ui/customs/list/list-page-shell"
 import { listInput, statsInput } from "@/frontend/pages/kpis/types"
 import { KpisDataView } from "@/frontend/pages/kpis/views/kpis-data-view"
 import { KpisHeaderSkeleton } from "@/frontend/pages/kpis/views/kpis-fallbacks"
 import { KpisHeaderView } from "@/frontend/pages/kpis/views/kpis-header-view"
 import { KpisStatsView } from "@/frontend/pages/kpis/views/kpis-stats-view"
-import { ListError, ListSkeleton, TilesSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { ListError, ListSkeleton, TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 export async function generateMetadata() {
     const t = await getTranslations("Admin.kpis")

@@ -28,7 +28,7 @@ import { SelectInput } from "@workspace/ui/inputs/select"
 
 import { useTRPC } from "@/backend/api/client"
 import { domainErrorCode } from "@/lib/trpc-error"
-import { Mono } from "@/components/list/table-cells"
+import { Mono } from "@workspace/ui/customs/list/table-cells"
 import { useStaffRole } from "@/frontend/pages/kyc/sections/document-checklist"
 import { DateValue, KeyValue, ProfileCard } from "@/frontend/pages/partners/sections/profile-parts"
 

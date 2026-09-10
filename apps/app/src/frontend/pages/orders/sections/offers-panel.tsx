@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 import type { TrackingAllowance } from "@workspace/domain/subscription"
 
-import { initials } from "@/components/list/table-cells"
+import { initials } from "@workspace/ui/customs/list/table-cells"
 import { PlanDialog, planBlock, planRefusal, type PlanReason } from "@/components/plan-dialog"
 import { money } from "@/frontend/pages/orders/lib/format"
 import { orderErrorCode, orderErrorKey, type OrderErrorMessage } from "@/frontend/pages/orders/lib/errors"

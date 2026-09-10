@@ -1,4 +1,4 @@
-import { HeaderSkeleton, ListSkeleton } from "@/frontend/components/list-fallbacks"
+import { HeaderSkeleton, ListSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 /**
  * The page is one client view over both slots, so its placeholder covers the

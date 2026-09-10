@@ -4,8 +4,8 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { moneyTone, type MoneyTone } from "@/components/list/money-tone"
-import { useListParams } from "@/components/list/use-list-params"
+import { moneyTone, type MoneyTone } from "@workspace/ui/lib/money-tone"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 
 export type MoneyMetric = {
     /** The key into each line's `values` */
@@ -53,7 +53,7 @@ export function MoneyStrip({
     /** Shown instead of the grid when there is nothing to move */
     empty: string
 }) {
-    const t = useTranslations("Admin.list")
+    const t = useTranslations("List")
     const f = useFormatter()
     const { get, set } = useListParams()
 

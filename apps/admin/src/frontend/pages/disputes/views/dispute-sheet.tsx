@@ -22,7 +22,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 
 import { useTRPC } from "@/backend/api/client"
 import { domainErrorCode } from "@/lib/trpc-error"
-import { Mono } from "@/components/list/table-cells"
+import { Mono } from "@workspace/ui/customs/list/table-cells"
 import { OrderStatusBadge, place } from "@/frontend/pages/orders/sections/order-item-shared"
 import { useDisputeSheet } from "@/frontend/pages/disputes/hooks/use-dispute-sheet"
 import { DisputeReasonBadge, DisputeStatusBadge } from "@/frontend/pages/disputes/sections/dispute-badges"

@@ -4,7 +4,7 @@ import type { Icon } from "@tabler/icons-react"
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 
 export type AttentionTile = {
     /** The URL filter this tile applies; the key is also the tile's identity */
@@ -55,7 +55,10 @@ export function AttentionTiles({ tiles, reset = [] }: { tiles: AttentionTile[]; 
 
                 return (
                     <button
-                        key={tile.filter.key}
+                        // Two tiles may share a param and differ by value (the
+                        // partners page's incoming/outgoing requests), so the
+                        // identity is the pair
+                        key={`${tile.filter.key}=${tile.filter.value}`}
                         type="button"
                         aria-pressed={active}
                         onClick={() => toggle(tile)}

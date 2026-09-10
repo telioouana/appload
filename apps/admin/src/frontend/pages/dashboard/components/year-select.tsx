@@ -4,7 +4,7 @@ import { useTranslations } from "@workspace/i18n"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { currentYear, FIRST_YEAR } from "@/frontend/pages/orders/types"
 
 /**

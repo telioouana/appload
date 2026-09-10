@@ -6,7 +6,7 @@ import { IconClockHour4, IconFileCheck, IconFileDollar, IconInbox, IconRoute, Ic
 import { useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { AttentionLinks, type AttentionLink } from "@/frontend/pages/orders/components/attention-links"
 import type { OrderSection } from "@/frontend/pages/orders/types"
 

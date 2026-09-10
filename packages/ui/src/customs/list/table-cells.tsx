@@ -79,7 +79,7 @@ export function PlateChip({ plate }: { plate: string }) {
 
 /** Text with a copy button that appears on hover. */
 export function CopyableText({ value, children, label }: { value: string; children?: React.ReactNode; label: string }) {
-    const t = useTranslations("App.list")
+    const t = useTranslations("List")
     const [copied, setCopied] = useState(false)
 
     const copy = async () => {

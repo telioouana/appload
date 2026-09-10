@@ -6,7 +6,7 @@ import { IconMail, IconPhone } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
-import { CopyableText, Dash, IdentityCell, initials, Mono, ProgressCell, StackCell } from "@/components/list/table-cells"
+import { CopyableText, Dash, IdentityCell, initials, Mono, ProgressCell, StackCell } from "@workspace/ui/customs/list/table-cells"
 import { RowActions } from "@/frontend/pages/partners/sections/row-actions"
 import { MissingField } from "@/frontend/pages/partners/sections/missing-field"
 import { usePartnerMutations } from "@/frontend/pages/partners/hooks/use-partner-mutations"

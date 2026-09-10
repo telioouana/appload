@@ -11,7 +11,7 @@ import { useTranslations } from "@workspace/i18n"
  * passed in as buttons so each page decides what a selection can do.
  */
 export function BulkBar<T>({ table, children }: { table: TableInstance<T>; children?: React.ReactNode }) {
-    const t = useTranslations("App.list")
+    const t = useTranslations("List")
     const selected = table.getSelectedRowModel().rows.length
 
     if (selected === 0) return null

@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { TilesSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 import { VehicleStatsView } from "@/frontend/pages/partners/views/partners-stats-view"
 import { currentKind } from "@/frontend/pages/partners/types"
 

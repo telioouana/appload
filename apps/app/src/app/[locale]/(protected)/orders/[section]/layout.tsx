@@ -6,7 +6,7 @@ import { auth } from "@workspace/auth/server"
 import { getTranslations } from "@workspace/i18n/server"
 import { getTenantGates } from "@workspace/trpc/tenant-gate"
 
-import { ListPageShell } from "@/components/list/list-page-shell"
+import { ListPageShell } from "@workspace/ui/customs/list/list-page-shell"
 import { ORDER_SECTIONS, isSection, type OrderSection } from "@/frontend/pages/orders/types"
 
 export async function generateMetadata({ params }: { params: Promise<{ section: string }> }) {

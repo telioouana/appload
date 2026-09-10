@@ -8,8 +8,8 @@ import { useTranslations } from "@workspace/i18n"
 import { Switch } from "@workspace/ui/components/switch"
 
 import { useTRPC } from "@/backend/api/client"
-import { MoneyStrip, type MoneyLine, type MoneyMetric } from "@/components/list/money-strip"
-import { useListParams } from "@/components/list/use-list-params"
+import { MoneyStrip, type MoneyLine, type MoneyMetric } from "@workspace/ui/customs/list/money-strip"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { cashflowInput } from "@/frontend/pages/orders/types"
 
 const SHIPPER_OUTSTANDING = [{ key: "paymentBy", value: "shipper" }, { key: "payment", value: "outstanding" }]
