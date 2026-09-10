@@ -4,7 +4,6 @@ import Image from "next/image"
 import { useEffect } from "react";
 import { type Icon, IconBox, IconBuildingWarehouse, IconChartHistogram, IconFileInvoice, IconLayoutDashboard, IconMap2, IconRoute, IconSettings, IconTruck, IconUsers } from "@tabler/icons-react";
 
-import { routing } from "@/i18n/routing";
 import { useTranslations } from "@workspace/i18n";
 import { Link, usePathname } from "@/i18n/navigation";
 
@@ -15,11 +14,10 @@ import { cn } from "@workspace/ui/lib/utils";
 import { NavPending } from "./nav-pending";
 import { NavUser } from "./nav-user";
 
-// Internal pathnames accepted as `href` by the typed next-intl `Link`.
-// Dynamic routes (e.g. /orders/[section]) need a params object, so they are
-// excluded from the plain-string nav entries — the milestone that builds one
-// gives its entry the object form.
-type AppPathname = Exclude<keyof typeof routing.pathnames, `${string}[${string}`>;
+// Whatever the typed next-intl `Link` accepts as `href`: a plain internal
+// pathname for a static route, or the `{ pathname, params }` object form for
+// a route with a dynamic segment (e.g. /fleet/[kind]).
+type NavHref = React.ComponentProps<typeof Link>["href"];
 
 /**
  * A rail entry. Everything but the dashboard and the settings page is still
@@ -33,7 +31,7 @@ type NavEntry = {
     /** Active matching and the React key; a route need not exist for it */
     match: string;
 } & (
-        | { enabled: true; path: AppPathname }
+        | { enabled: true; path: NavHref }
         | { enabled: false; path?: undefined }
     );
 
@@ -84,11 +82,20 @@ export function Sidenav({
         // neither, so the two rows are absent rather than disabled for it
         ...(orgType === "carrier"
             ? [
-                { Icon: IconTruck, name: t("company.fleet"), match: "/fleet", enabled: false } as NavEntry,
-                { Icon: IconUsers, name: t("company.drivers"), match: "/drivers", enabled: false } as NavEntry,
+                {
+                    Icon: IconTruck,
+                    name: t("company.fleet"),
+                    match: "/fleet",
+                    enabled: true,
+                    // The three vehicle kinds are three routes; the rail
+                    // enters at the trucks one and the page's own tabs
+                    // switch between them
+                    path: { pathname: "/fleet/[kind]", params: { kind: "trucks" } },
+                } as NavEntry,
+                { Icon: IconUsers, name: t("company.drivers"), match: "/drivers", enabled: true, path: "/drivers" } as NavEntry,
             ]
             : []),
-        { Icon: IconBuildingWarehouse, name: t("company.partners"), match: "/partners", enabled: false },
+        { Icon: IconBuildingWarehouse, name: t("company.partners"), match: "/partners", enabled: true, path: "/partners" },
         { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", enabled: false },
     ]
 

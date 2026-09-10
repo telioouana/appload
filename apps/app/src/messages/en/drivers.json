@@ -1,0 +1,176 @@
+{
+    "eyebrow": "Fleet",
+    "title": "Drivers",
+    "description": "Your company's registered drivers",
+    "add": "Register driver",
+    "status": {
+        "draft": "Draft",
+        "pending-review": "Pending review",
+        "verified": "Verified",
+        "rejected": "Rejected",
+        "expired": "Expired",
+        "suspended": "Suspended"
+    },
+    "state": {
+        "active": "On a trip",
+        "idle": "Idle",
+        "free": "Available"
+    },
+    "columns": {
+        "driver": "Driver",
+        "phone": "Phone",
+        "email": "Email",
+        "passport": "Passport",
+        "truck": "Truck",
+        "state": "Availability",
+        "status": "Verification",
+        "documents": "Licence",
+        "actions": "Actions"
+    },
+    "values": {
+        "none": "None",
+        "unassigned": "No truck",
+        "no-email": "No email",
+        "passport": "Passport {number}",
+        "progress": "{approved}/{required}"
+    },
+    "sort": {
+        "name": "Name",
+        "status": "Verification",
+        "created": "Registered"
+    },
+    "filters": {
+        "search": "Search name, phone, passport or plate",
+        "clear": "Clear search",
+        "all": "All",
+        "issues": "Issues",
+        "any": "Any",
+        "state": "Availability",
+        "assignment": "Assignment",
+        "unassigned": "No truck",
+        "unassigned-hint": "Not assigned to any vehicle"
+    },
+    "tiles": {
+        "idle": "Idle",
+        "idle-hint": "no trip right now",
+        "pending-review": "Pending review",
+        "pending-review-hint": "licences waiting on Appload",
+        "active": "On a trip",
+        "active-hint": "travelling now",
+        "free": "Available",
+        "free-hint": "ready for a trip",
+        "unassigned": "No truck",
+        "unassigned-hint": "no vehicle assigned yet"
+    },
+    "data": {
+        "empty": "Nothing here yet",
+        "empty-description": "Register your first driver to be able to dispatch them on your orders.",
+        "no-results": "No rows match the filters",
+        "error": "This list could not be loaded, please try again"
+    },
+    "actions": {
+        "menu": "More actions",
+        "open": "Open profile",
+        "edit": "Edit driver",
+        "copy-phone": "Copy phone",
+        "copy-email": "Copy email"
+    },
+    "assign": {
+        "assign-truck": "Assign truck",
+        "change-truck": "Change truck",
+        "search-truck": "Search your trucks…",
+        "no-trucks": "No truck matches",
+        "unassign": "Take off the truck",
+        "assigned": "Truck assigned",
+        "failed": "The truck could not be assigned"
+    },
+    "profile": {
+        "title": "Driver profile",
+        "description": "Contact, verification and assignment of the selected driver",
+        "close": "Close",
+        "contact": "Contact",
+        "verification": "Verification",
+        "assignment": "Assignment",
+        "documents": "Documents",
+        "registered": "Registered on",
+        "kyc": "Status",
+        "none": "None",
+        "read-only": "Documents are uploaded and reviewed by Appload. Talk to us to update one.",
+        "no-documents": "No documents for this driver yet.",
+        "doc-status": {
+            "pending": "Pending review",
+            "approved": "Approved",
+            "rejected": "Rejected"
+        },
+        "doc-type": {
+            "driver-license": "Driving licence",
+            "id-card": "ID card"
+        },
+        "expires": "Valid until {date}",
+        "no-expiry": "No expiry"
+    },
+    "edit": {
+        "title": "Edit driver",
+        "description": "Only the fields you change are sent.",
+        "save": "Save",
+        "saving": "Saving...",
+        "cancel": "Cancel",
+        "success": "Driver updated",
+        "errors": {
+            "DUPLICATE_EMAIL": "An account with this email already exists.",
+            "DUPLICATE_PHONE": "An account with this phone already exists.",
+            "EMAIL_LOCKED": "This driver already signs in with their own email, which only Appload can change. Talk to us.",
+            "NOT_ALLOWED": "Your role cannot edit drivers.",
+            "NOT_FOUND": "This driver no longer exists.",
+            "WRONG_ORGANIZATION_TYPE": "Only carriers have drivers.",
+            "UNKNOWN": "Something went wrong. Please try again."
+        }
+    },
+    "register": {
+        "title": "Register driver",
+        "description": "The driver gets an account in the app and sets their own password when they join.",
+        "fields": {
+            "name": {
+                "label": "Name",
+                "placeholder": "João Silva"
+            },
+            "phone": {
+                "label": "Phone",
+                "description": "This is where the driver receives location requests"
+            },
+            "email": {
+                "label": "Email",
+                "placeholder": "driver@example.com",
+                "description": "Optional. Without one we create an internal address for the account."
+            },
+            "passport": {
+                "label": "Passport",
+                "placeholder": "AB1234567 (optional)"
+            }
+        },
+        "actions": {
+            "save": "Register",
+            "saving": "Registering...",
+            "cancel": "Cancel"
+        },
+        "errors": {
+            "invalid": "The details are not valid.",
+            "unauthorized": "Your session is not valid. Please sign in again.",
+            "notAllowed": "Your role cannot register drivers.",
+            "duplicateEmail": "An account with this email already exists.",
+            "duplicatePhone": "An account with this phone already exists.",
+            "unknown": "Something went wrong. Please try again.",
+            "validation": {
+                "name": "The name is required",
+                "email": "Invalid email",
+                "phone": "Use a valid number, e.g. 84 000 0000",
+                "country": "Pick the country"
+            }
+        }
+    },
+    "combobox": {
+        "loading": "Searching...",
+        "empty": "No results",
+        "register": "Register \"{name}\""
+    }
+}

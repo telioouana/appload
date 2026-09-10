@@ -1,0 +1,219 @@
+{
+    "title": "Parceiros",
+    "description": {
+        "shipper": "As transportadoras com quem trabalha e as solicitações à espera de resposta.",
+        "carrier": "Os clientes que transporta, as transportadoras que subcontrata e as solicitações à espera de resposta."
+    },
+    "search": {
+        "placeholder": "Procurar pelo nome da empresa",
+        "clear": "Limpar a pesquisa"
+    },
+    "tabs": {
+        "clients": "Clientes",
+        "transporters": "Transportadoras",
+        "subcontractors": "Subcontratadas",
+        "requests": "Solicitações"
+    },
+    "tiles": {
+        "incoming": "À sua espera",
+        "incoming-hint": "Solicitações para aceitar ou recusar",
+        "outgoing": "À espera deles",
+        "outgoing-hint": "Solicitações que enviou",
+        "connected": "Ligados",
+        "connected-hint": "Empresas com quem já pode trabalhar"
+    },
+    "columns": {
+        "partner": "Empresa",
+        "relation": "Relação",
+        "kyc": "Verificação",
+        "orders": "Pedidos",
+        "since": "Ligados desde",
+        "actions": "Acções"
+    },
+    "kind": {
+        "client": "Cliente",
+        "transporter": "Transportadora",
+        "subcontractor": "Subcontratada"
+    },
+    "direction": {
+        "incoming": "Recebida",
+        "outgoing": "Enviada"
+    },
+    "status": {
+        "pending": "Pendente",
+        "accepted": "Ligados",
+        "declined": "Recusada",
+        "removed": "Terminada"
+    },
+    "kyc": {
+        "draft": "Por submeter",
+        "pending-review": "Em análise",
+        "verified": "Verificada",
+        "rejected": "Rejeitada",
+        "expired": "Expirada",
+        "suspended": "Suspensa"
+    },
+    "order-status": {
+        "prospect": "Proposta",
+        "booked": "Adjudicado",
+        "to-loading": "A caminho da carga",
+        "at-loading": "No local de carga",
+        "loading": "A carregar",
+        "waiting-documents": "À espera de documentos",
+        "on-route": "Em rota",
+        "stopped": "Parado",
+        "issue": "Com problema",
+        "at-border": "Na fronteira",
+        "at-offloading": "No local de descarga",
+        "offloading": "A descarregar",
+        "delivered": "Entregue",
+        "completed": "Concluído",
+        "cancelled": "Cancelado",
+        "underbid": "Perdido no preço"
+    },
+    "values": {
+        "missing": "Não indicado",
+        "no-province": "Província não indicada"
+    },
+    "data": {
+        "empty": "Ainda sem parceiros",
+        "empty-clients": "Adicione as empresas cuja carga transporta e os pedidos delas chegam aqui.",
+        "empty-transporters": "Adicione as transportadoras com quem envia carga e já lhes pode mandar pedidos.",
+        "empty-subcontractors": "Adicione as transportadoras que subcontrata e já lhes pode passar as cargas que não consegue cobrir.",
+        "empty-requests": "Não há nada à espera de resposta.",
+        "no-results": "Nenhuma empresa corresponde a esta pesquisa",
+        "error": "Não foi possível carregar a lista de parceiros."
+    },
+    "requests": {
+        "incoming": "À sua espera",
+        "outgoing": "À espera deles",
+        "empty": {
+            "title": "Sem solicitações",
+            "description": "As solicitações que envia e as que recebe aparecem todas aqui."
+        }
+    },
+    "actions": {
+        "menu": "Acções da linha",
+        "open": "Abrir perfil",
+        "accept": "Aceitar",
+        "decline": "Recusar",
+        "remove": "Terminar ligação",
+        "withdraw": "Retirar solicitação",
+        "cancel": "Cancelar",
+        "remove-confirm": {
+            "title": "Terminar esta ligação?",
+            "description": "{name} deixa de lhe poder enviar trabalho e você deixa de lhe poder enviar. Os pedidos que já fizeram juntos mantêm-se."
+        },
+        "withdraw-confirm": {
+            "title": "Retirar esta solicitação?",
+            "description": "{name} deixa de ver a sua solicitação. Pode voltar a enviá-la quando quiser."
+        }
+    },
+    "add": {
+        "trigger": "Adicionar parceiro",
+        "title": "Adicionar um parceiro",
+        "relation": "O que está a adicionar",
+        "description": {
+            "search": "Procure primeiro a empresa — quase todas as transportadoras e clientes com quem a Appload trabalha já estão aqui.",
+            "register": "Registe uma empresa que ainda não está na Appload. Fica ligada a si assim que for registada."
+        },
+        "search": {
+            "client": "Procurar um cliente pelo nome",
+            "transporter": "Procurar uma transportadora pelo nome",
+            "subcontractor": "Procurar uma transportadora pelo nome",
+            "hint": "Escreva pelo menos duas letras do nome da empresa.",
+            "empty": "Nenhuma empresa corresponde a esta pesquisa."
+        },
+        "state": {
+            "connected": "Ligados",
+            "pending": "Solicitação enviada",
+            "awaiting-you": "À sua espera"
+        },
+        "select": "Escolher",
+        "send": "Enviar solicitação",
+        "back": "Voltar",
+        "register": "Registar uma empresa",
+        "register-hint": "Não a encontra?",
+        "message": {
+            "label": "Nota (opcional)",
+            "placeholder": "Diga quem é e o que gostaria de trabalhar em conjunto.",
+            "hint": "A nota é mostrada junto com a sua solicitação."
+        }
+    },
+    "register": {
+        "submit": "Registar e ligar",
+        "duplicate-nuit-hint": "Este NUIT já está registado. Envie antes uma solicitação a essa empresa.",
+        "fields": {
+            "name": {
+                "client": "Nome do cliente",
+                "transporter": "Nome da transportadora",
+                "subcontractor": "Nome da transportadora",
+                "placeholder": "Nome da empresa tal como registada",
+                "error": "Indique o nome da empresa"
+            },
+            "nuit": {
+                "label": "NUIT",
+                "placeholder": "9 dígitos",
+                "error": "O NUIT tem 9 dígitos"
+            },
+            "phone": {
+                "label": "Telefone",
+                "placeholder": "+258 84 000 0000",
+                "error": "Indique um número de telefone"
+            },
+            "email": {
+                "label": "Email (opcional)",
+                "placeholder": "contacto@empresa.co.mz",
+                "description": "Um endereço de contacto desta empresa. A Appload guarda-o como nota — a empresa indica o seu quando aderir.",
+                "error": "Indique um email válido"
+            },
+            "physicalAddress": {
+                "label": "Endereço (opcional)",
+                "placeholder": "Procurar o endereço",
+                "error": "Escolha um endereço das sugestões"
+            }
+        }
+    },
+    "profile": {
+        "title": "Perfil do parceiro",
+        "description": "Contactos, histórico da ligação e os pedidos que já fizeram juntos.",
+        "error": "Não foi possível carregar este parceiro.",
+        "contact": "Contactos",
+        "connection": "Ligação",
+        "orders": "Pedidos em conjunto",
+        "locked": "Os contactos são mostrados assim que a ligação for aceite.",
+        "last-loading": "Última carga a {date}",
+        "no-orders": "Ainda sem pedidos em conjunto",
+        "fields": {
+            "email": "Email",
+            "phone": "Telefone",
+            "address": "Endereço",
+            "billing": "Endereço de facturação",
+            "requested": "Solicitada",
+            "answered": "Respondida",
+            "direction": "Solicitação"
+        }
+    },
+    "toasts": {
+        "requested": "Solicitação enviada.",
+        "accepted": "Ligação aceite.",
+        "declined": "Solicitação recusada.",
+        "removed": "Ligação terminada.",
+        "withdrawn": "Solicitação retirada.",
+        "registered": "{name} foi registada e já está ligada a si."
+    },
+    "errors": {
+        "notFound": "Esta solicitação já não está disponível. Actualize a página.",
+        "alreadyConnected": "Já está ligado a esta empresa.",
+        "alreadyPending": "Já existe uma solicitação em aberto com esta empresa.",
+        "selfConnection": "Uma empresa não se pode ligar a si própria.",
+        "wrongPartnerType": "Esta empresa não pode ser adicionada nesse papel.",
+        "relationNotAllowed": "A sua empresa não pode fazer este tipo de ligação.",
+        "notAllowed": "O seu perfil não permite esta acção.",
+        "duplicateNuit": "Este NUIT já está registado.",
+        "duplicateEmail": "Este email já está registado.",
+        "duplicatePhone": "Este número de telefone já está registado.",
+        "rateLimited": "Já registou várias empresas hoje. Tente novamente amanhã.",
+        "unknown": "Algo correu mal. Tente novamente."
+    }
+}

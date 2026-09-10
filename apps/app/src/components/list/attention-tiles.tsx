@@ -55,7 +55,10 @@ export function AttentionTiles({ tiles, reset = [] }: { tiles: AttentionTile[]; 
 
                 return (
                     <button
-                        key={tile.filter.key}
+                        // Two tiles may share a param and differ by value (the
+                        // partners page's incoming/outgoing requests), so the
+                        // identity is the pair
+                        key={`${tile.filter.key}=${tile.filter.value}`}
                         type="button"
                         aria-pressed={active}
                         onClick={() => toggle(tile)}

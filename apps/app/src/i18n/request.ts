@@ -4,6 +4,7 @@ import { hasLocale } from "@workspace/i18n";
 import { getRequestConfig } from "@workspace/i18n/server";
 
 import { routing } from "@/i18n/routing";
+import { en, pt } from "@/messages";
 
 // The portal runs on Mozambican time for the same reason the admin does:
 // a trip's timestamps are read against the trip's day, not the reader's.
@@ -21,18 +22,11 @@ export default getRequestConfig(async function createRequestConfig({
         ? requested
         : routing.defaultLocale;
 
-    // Portal messages are app-owned (src/messages/*), mirroring the admin —
-    // the shared i18n package carries no messages. Literal specifiers keep
-    // the imports statically analysable for the bundler.
-    const messages = (
-        locale === "en"
-            ? await import("../messages/en.json")
-            : await import("../messages/pt.json")
-    ).default;
-
+    // Portal messages are app-owned and assembled per feature in
+    // src/messages/index.ts — the shared i18n package carries no messages.
     return {
         locale,
-        messages,
+        messages: locale === "en" ? en : pt,
         timeZone: TIME_ZONE,
     };
 });

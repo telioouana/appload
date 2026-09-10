@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { APIError } from "better-auth/api";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 
 import type { Auth } from "@workspace/auth/server";
 import type { db as Database } from "@workspace/db/db";
 import type { Address } from "@workspace/db/types";
 import { invitation, member, organization, rateLimit, user } from "@workspace/db/users";
-import { organizationClaim } from "@workspace/db/connections";
+import { organizationClaim, partnerConnection } from "@workspace/db/connections";
 import { notificationCursor } from "@workspace/db/notifications";
 
 import { TRPCError } from "@trpc/server";
@@ -556,7 +556,24 @@ export const onboardingRouter = createTRPCRouter({
                 throw new TRPCError({ code: "FORBIDDEN", message: "NOT_PARTNER_ACCOUNT" });
             }
 
-            const autoApproved = lower(target.email) === lower(account.email);
+            // Defence in depth: a company another partner registered from the
+            // portal carries a caller-chosen contact and a placeholder email.
+            // Even if some future writer stored a real address on such a row,
+            // nobody walks into it unreviewed — ops decide those claims.
+            const [registeredByPartner] = await ctx.db
+                .select({ id: partnerConnection.id })
+                .from(partnerConnection)
+                .where(and(
+                    or(
+                        eq(partnerConnection.requesterOrgId, target.id),
+                        eq(partnerConnection.targetOrgId, target.id),
+                    ),
+                    eq(partnerConnection.acceptedVia, "registration"),
+                ))
+                .limit(1);
+
+            const autoApproved =
+                registeredByPartner === undefined && lower(target.email) === lower(account.email);
 
             if (autoApproved) {
                 await activateMembership(ctx, {

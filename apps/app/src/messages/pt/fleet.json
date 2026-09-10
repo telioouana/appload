@@ -1,0 +1,307 @@
+{
+    "eyebrow": "Frota",
+    "title": {
+        "truck": "Camiões",
+        "trailer": "Reboques",
+        "link": "Semi-reboques"
+    },
+    "description": {
+        "truck": "Os camiões registados da sua empresa",
+        "trailer": "Os reboques registados da sua empresa",
+        "link": "Os semi-reboques registados da sua empresa"
+    },
+    "add": {
+        "truck": "Registar camião",
+        "trailer": "Registar reboque",
+        "link": "Registar semi-reboque"
+    },
+    "kind": {
+        "truck": "Camiões",
+        "trailer": "Reboques",
+        "link": "Semi-reboques"
+    },
+    "status": {
+        "draft": "Rascunho",
+        "pending-review": "Por rever",
+        "verified": "Verificado",
+        "rejected": "Rejeitado",
+        "expired": "Expirado",
+        "suspended": "Suspenso"
+    },
+    "ownership": {
+        "unverified": "Não verificada",
+        "owner-verified": "Própria",
+        "third-party": "De terceiros"
+    },
+    "state": {
+        "active": "Em serviço",
+        "idle": "Parado",
+        "free": "Disponível"
+    },
+    "columns": {
+        "vehicle": "Veículo",
+        "ownership": "Propriedade",
+        "driver": "Motorista",
+        "hitched": "Engatado a",
+        "capacity": "Capacidade",
+        "bay": "Carroçaria",
+        "state": "Disponibilidade",
+        "status": "Verificação",
+        "documents": "Documentos",
+        "year": "Ano",
+        "actions": "Acções"
+    },
+    "values": {
+        "none": "Nenhum",
+        "unassigned": "Sem motorista",
+        "not-hitched": "Não engatado",
+        "progress": "{approved}/{required}",
+        "tons": "{tons} t",
+        "truck-type": {
+            "articulated": "Articulado",
+            "non-articulated": "Rígido"
+        }
+    },
+    "sort": {
+        "plate": "Matrícula",
+        "status": "Verificação",
+        "year": "Ano",
+        "created": "Data de registo"
+    },
+    "filters": {
+        "search": "Pesquisar matrícula, marca, modelo ou VIN",
+        "clear": "Limpar pesquisa",
+        "all": "Todos",
+        "issues": "Problemas",
+        "any": "Qualquer",
+        "state": "Disponibilidade",
+        "ownership": "Propriedade",
+        "assignment": "Atribuição",
+        "unassigned": {
+            "truck": "Sem motorista",
+            "trailer": "Não engatado",
+            "link": "Não engatado"
+        },
+        "unassigned-hint": {
+            "truck": "Nenhum motorista está atribuído",
+            "trailer": "Nenhum camião puxa este reboque",
+            "link": "Nenhum reboque leva este semi-reboque"
+        }
+    },
+    "tiles": {
+        "idle": "Parados",
+        "idle-hint": "sem viagem neste momento",
+        "pending-review": "Por rever",
+        "pending-review-hint": "papéis à espera da Appload",
+        "active": "Em serviço",
+        "active-hint": "numa viagem agora",
+        "ownership": "Propriedade por verificar",
+        "ownership-hint": "ainda sem prova de propriedade",
+        "unassigned": {
+            "truck": "Sem motorista",
+            "trailer": "Não engatados",
+            "link": "Não engatados"
+        },
+        "unassigned-hint": {
+            "truck": "camiões sem ninguém atribuído",
+            "trailer": "reboques sem camião",
+            "link": "semi-reboques sem reboque"
+        }
+    },
+    "data": {
+        "empty": "Ainda não há nada aqui",
+        "empty-description": {
+            "truck": "Registe o primeiro camião para o poder usar nas suas ordens.",
+            "trailer": "Registe o primeiro reboque para o poder usar nas suas ordens.",
+            "link": "Registe o primeiro semi-reboque para o poder usar nas suas ordens."
+        },
+        "no-results": "Nenhum resultado corresponde aos filtros",
+        "error": "Não foi possível carregar esta lista, tente novamente"
+    },
+    "actions": {
+        "menu": "Mais acções",
+        "open": "Abrir perfil",
+        "edit": "Editar veículo",
+        "copy-plate": "Copiar matrícula",
+        "copy-vin": "Copiar VIN"
+    },
+    "assign": {
+        "assign-driver": "Atribuir motorista",
+        "change-driver": "Mudar de motorista",
+        "search-driver": "Pesquisar os seus motoristas…",
+        "no-drivers": "Nenhum motorista corresponde",
+        "assigned": "Motorista atribuído",
+        "failed": "Não foi possível atribuir o motorista"
+    },
+    "profile": {
+        "title": "Perfil do veículo",
+        "description": "Dados, verificação e atribuição do veículo escolhido",
+        "close": "Fechar",
+        "details": "Dados do veículo",
+        "verification": "Verificação",
+        "operation": "Operação",
+        "documents": "Documentos",
+        "registered": "Registado em",
+        "owner": "Proprietário",
+        "make": "Marca e modelo",
+        "loading-bay": "Zona de carga",
+        "bay-on-trailer": "Vai no reboque",
+        "vehicle-type": "Tipo de camião",
+        "driver": "Motorista",
+        "hitched": "Engatado a",
+        "kyc": "Estado",
+        "none": "Nenhum",
+        "read-only": "Os documentos são carregados e verificados pela Appload. Fale connosco para actualizar um documento.",
+        "no-documents": "Ainda não há documentos deste veículo.",
+        "doc-status": {
+            "pending": "Por rever",
+            "approved": "Aprovado",
+            "rejected": "Rejeitado"
+        },
+        "doc-type": {
+            "vehicle-booklet": "Livrete",
+            "proof-of-ownership": "Prova de propriedade"
+        },
+        "expires": "Válido até {date}",
+        "no-expiry": "Sem validade"
+    },
+    "edit": {
+        "title": "Editar veículo",
+        "description": "Só os campos que alterar são enviados.",
+        "save": "Guardar",
+        "saving": "A guardar...",
+        "cancel": "Cancelar",
+        "success": "Veículo actualizado",
+        "fields": {
+            "plate": "Matrícula",
+            "internalId": "Id interno",
+            "brand": "Marca",
+            "model": "Modelo",
+            "year": "Ano",
+            "vin": "VIN"
+        },
+        "errors": {
+            "DUPLICATE_PLATE": "Esta matrícula já está na sua frota.",
+            "DUPLICATE_VIN": "Este VIN já está na sua frota.",
+            "PLATE_UNAVAILABLE": "Esta matrícula não pode ser registada. Se o veículo é seu, fale connosco.",
+            "VIN_UNAVAILABLE": "Este VIN não pode ser registado. Se o veículo é seu, fale connosco.",
+            "PLATE_LOCKED": "Esta matrícula já consta em ordens emitidas e não pode ser alterada. Fale connosco.",
+            "BAY_REQUIRED": "Reboques e semi-reboques precisam sempre de uma zona de carga.",
+            "NOT_ALLOWED": "A sua função não permite editar a frota.",
+            "NOT_FOUND": "Este veículo já não existe.",
+            "WRONG_ORGANIZATION_TYPE": "Só os transportadores têm frota.",
+            "UNKNOWN": "Ocorreu um erro inesperado. Tente novamente."
+        }
+    },
+    "register": {
+        "title": {
+            "truck": "Registar camião",
+            "trailer": "Registar reboque",
+            "link": "Registar semi-reboque"
+        },
+        "description": "Preencha os dados do veículo para o juntar à sua frota.",
+        "fields": {
+            "plate": {
+                "label": "Matrícula",
+                "placeholder": "AAA 000 MC"
+            },
+            "internalId": {
+                "label": "Id interno",
+                "placeholder": "Código interno da frota (opcional)"
+            },
+            "brand": {
+                "label": "Marca",
+                "placeholder": "Volvo"
+            },
+            "model": {
+                "label": "Modelo",
+                "placeholder": "FH16"
+            },
+            "year": {
+                "label": "Ano",
+                "placeholder": "Escolha o ano"
+            },
+            "vin": {
+                "label": "VIN",
+                "placeholder": "Número de chassis (17 caracteres)"
+            },
+            "type": {
+                "label": "Tipo de camião",
+                "placeholder": "Escolha o tipo",
+                "description": "Camiões articulados levam a zona de carga no reboque",
+                "options": {
+                    "articulated": "Articulado",
+                    "non-articulated": "Não articulado"
+                }
+            },
+            "bay": {
+                "title": "Zona de carga",
+                "type": {
+                    "label": "Tipo de carroçaria",
+                    "placeholder": "Escolha o tipo",
+                    "options": {
+                        "flatbed": "Plataforma (flatbed)",
+                        "dropsides": "Taipais (dropsides)",
+                        "tautliner": "Tautliner",
+                        "rigid-body": "Rígido",
+                        "refrigerated": "Refrigerado",
+                        "tipper": "Basculante",
+                        "side-tipper": "Basculante lateral",
+                        "tanker": "Cisterna",
+                        "lowbed": "Zorra (lowbed)"
+                    }
+                },
+                "width": {
+                    "label": "Largura (m)",
+                    "placeholder": "2.5"
+                },
+                "length": {
+                    "label": "Comprimento (m)",
+                    "placeholder": "13.6"
+                },
+                "height": {
+                    "label": "Altura (m)",
+                    "placeholder": "2.7"
+                },
+                "volume": {
+                    "label": "Volume (m³)",
+                    "placeholder": "L x C x A"
+                },
+                "capacity": {
+                    "label": "Capacidade (toneladas)",
+                    "placeholder": "34"
+                }
+            }
+        },
+        "actions": {
+            "save": "Registar",
+            "saving": "A registar...",
+            "cancel": "Cancelar"
+        },
+        "errors": {
+            "invalid": "Os dados são inválidos.",
+            "unauthorized": "Sessão inválida. Inicie a sessão novamente.",
+            "notAllowed": "A sua função não permite registar veículos.",
+            "duplicatePlate": "Esta matrícula já está na sua frota.",
+            "duplicateVin": "Este VIN já está na sua frota.",
+            "plateUnavailable": "Esta matrícula não pode ser registada. Se o veículo é seu, fale connosco.",
+            "vinUnavailable": "Este VIN não pode ser registado. Se o veículo é seu, fale connosco.",
+            "unknown": "Ocorreu um erro inesperado. Tente novamente.",
+            "validation": {
+                "plate": "A matrícula é obrigatória",
+                "brand": "A marca é obrigatória",
+                "model": "O modelo é obrigatório",
+                "year": "Escolha o ano",
+                "vin": "O VIN deve ter 17 caracteres (as letras I, O e Q não são usadas)",
+                "type": "Escolha o tipo de camião",
+                "bayValue": "Introduza um número positivo",
+                "bayType": "Escolha o tipo de carroçaria"
+            }
+        }
+    },
+    "combobox": {
+        "loading": "A procurar...",
+        "empty": "Sem resultados",
+        "register": "Registar \"{plate}\""
+    }
+}
