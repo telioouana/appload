@@ -18,7 +18,7 @@ import { FieldGroup, FieldSet } from "@workspace/ui/components/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 
 import { useTRPC } from "@/backend/api/client";
-import { domainErrorCode } from "@/lib/trpc-error";
+import { domainErrorCode } from "@workspace/trpc/errors";
 import { PasswordSchema } from "@/backend/schemas/settings";
 
 // Better Auth's own codes, forwarded by `me.changePassword`

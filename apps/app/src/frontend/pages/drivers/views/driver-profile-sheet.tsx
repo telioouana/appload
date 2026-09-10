@@ -24,7 +24,7 @@ import {
 } from "@/frontend/pages/fleet/sections/profile-parts"
 import { EditDriverDialog } from "@/frontend/pages/drivers/sections/edit-driver-dialog"
 import { AssignTruckPopover } from "@/frontend/pages/drivers/sections/assign-truck-popover"
-import { useDriverSheet } from "@/frontend/pages/drivers/hooks/use-driver-sheet"
+import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
 import { isPlaceholderEmail, type DriverProfile } from "@/frontend/pages/drivers/types"
 
 /**
@@ -36,7 +36,7 @@ import { isPlaceholderEmail, type DriverProfile } from "@/frontend/pages/drivers
  */
 export function DriverProfileSheet() {
     const t = useTranslations("App.drivers.profile")
-    const { id, close } = useDriverSheet()
+    const { id, close } = useEntitySheet()
 
     return (
         <Sheet open={Boolean(id)} onOpenChange={(next) => { if (!next) close() }}>

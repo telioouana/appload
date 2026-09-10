@@ -15,7 +15,7 @@ import { FilterToggle } from "@workspace/ui/customs/list/filter-controls"
 import { DataTable, useDataTable } from "@workspace/ui/customs/list/data-table"
 import { useTripColumns } from "@/frontend/pages/trips/columns/trip-columns"
 import { useTripsList } from "@/frontend/pages/trips/hooks/use-trips-list"
-import { useTripSheet } from "@/frontend/pages/trips/hooks/use-trip-sheet"
+import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
 import { TripSheet } from "@/frontend/pages/trips/views/trip-sheet"
 import {
     DEFAULT_DIR,
@@ -37,7 +37,7 @@ export function TripsDataView() {
     const trpc = useTRPC()
 
     const { get, sort, onSort, sectionTabs, activeFilters } = useTripsList()
-    const sheet = useTripSheet()
+    const sheet = useEntitySheet()
 
     const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
 

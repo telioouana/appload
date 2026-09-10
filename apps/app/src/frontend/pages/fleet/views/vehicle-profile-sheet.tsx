@@ -24,7 +24,7 @@ import {
     ProfileHeader,
     ProfileSkeleton,
 } from "@/frontend/pages/fleet/sections/profile-parts"
-import { useVehicleSheet } from "@/frontend/pages/fleet/hooks/use-vehicle-sheet"
+import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
 import type { VehicleKind, VehicleProfile } from "@/frontend/pages/fleet/types"
 
 /**
@@ -37,7 +37,7 @@ import type { VehicleKind, VehicleProfile } from "@/frontend/pages/fleet/types"
  */
 export function VehicleProfileSheet({ kind }: { kind: VehicleKind }) {
     const t = useTranslations("App.fleet.profile")
-    const { id, close } = useVehicleSheet()
+    const { id, close } = useEntitySheet()
 
     return (
         <Sheet open={Boolean(id)} onOpenChange={(next) => { if (!next) close() }}>

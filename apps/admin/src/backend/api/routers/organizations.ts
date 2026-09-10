@@ -8,7 +8,7 @@ import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
 import { notify } from "@workspace/domain/notifications";
 
-import { uniqueViolationConstraint } from "@/lib/db-errors";
+import { uniqueViolationConstraint } from "@workspace/db/errors";
 import { RegisterOrganizationBaseSchema, UpdateOrganizationBaseSchema } from "@/backend/schemas/register-organization";
 
 export type OrganizationType = "shipper" | "carrier";

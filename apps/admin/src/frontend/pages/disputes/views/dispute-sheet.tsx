@@ -21,10 +21,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@workspace/ui/components/sheet"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 import { Mono } from "@workspace/ui/customs/list/table-cells"
 import { OrderStatusBadge, place } from "@/frontend/pages/orders/sections/order-item-shared"
-import { useDisputeSheet } from "@/frontend/pages/disputes/hooks/use-dispute-sheet"
+import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
 import { DisputeReasonBadge, DisputeStatusBadge } from "@/frontend/pages/disputes/sections/dispute-badges"
 import { ResolveDisputeDialog } from "@/frontend/pages/disputes/components/resolve-dispute-dialog"
 
@@ -41,7 +41,7 @@ const NONE = "__none"
  */
 export function DisputeSheet() {
     const t = useTranslations("Admin.disputes.sheet")
-    const { id, close } = useDisputeSheet()
+    const { id, close } = useEntitySheet()
 
     return (
         <Sheet open={Boolean(id)} onOpenChange={(next) => { if (!next) close() }}>

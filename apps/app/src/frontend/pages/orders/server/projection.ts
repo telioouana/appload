@@ -15,7 +15,7 @@ import { pendingOfferCount } from "@workspace/domain/orders/transition";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 import { OrderError } from "@workspace/domain/orders/errors";
 
-import { foreignKeyViolationConstraint } from "@/lib/db-errors";
+import { foreignKeyViolationConstraint } from "@workspace/db/errors";
 import type {
     Currency,
     OrderMoney,

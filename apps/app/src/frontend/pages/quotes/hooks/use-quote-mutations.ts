@@ -7,7 +7,7 @@ import { useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
 import { planRefusal } from "@/components/plan-dialog"
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 
 /**
  * Every domain code the quotes procedures raise, mapped to the message key

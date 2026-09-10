@@ -17,7 +17,7 @@ import { FilterChoice, FilterToggle } from "@workspace/ui/customs/list/filter-co
 import { useVehicleColumns } from "@/frontend/pages/fleet/columns/vehicle-columns"
 import { VehicleProfileSheet } from "@/frontend/pages/fleet/views/vehicle-profile-sheet"
 import { isFilteredList, useFleetList } from "@/frontend/pages/fleet/hooks/use-fleet-list"
-import { useVehicleSheet } from "@/frontend/pages/fleet/hooks/use-vehicle-sheet"
+import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
 import {
     FLEET_STATES,
     PAGE_SIZES,
@@ -32,7 +32,7 @@ export function VehiclesDataView({ kind }: { kind: VehicleKind }) {
     const trpc = useTRPC()
 
     const { get, sort, onSort, statusTabs, activeFilters } = useFleetList(kind)
-    const sheet = useVehicleSheet()
+    const sheet = useEntitySheet()
 
     // The same builder the server prefetch used, so the first page hydrates
     // straight into this query instead of refetching

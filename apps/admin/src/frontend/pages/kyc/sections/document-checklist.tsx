@@ -13,7 +13,7 @@ import { Alert } from "@workspace/ui/components/alert"
 import { Spinner } from "@workspace/ui/components/spinner"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 import { REQUIRED_DOCS, requirementFor } from "@workspace/domain/kyc/requirements"
 import { DocumentDecision } from "@/frontend/pages/kyc/sections/document-decision"
 import { DocumentSlot } from "@/frontend/pages/kyc/sections/document-slot"

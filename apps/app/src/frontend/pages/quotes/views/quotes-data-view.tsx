@@ -15,7 +15,7 @@ import { FilterToggle } from "@workspace/ui/customs/list/filter-controls"
 import { DataTable, useDataTable } from "@workspace/ui/customs/list/data-table"
 import { useQuoteColumns } from "@/frontend/pages/quotes/columns/quote-columns"
 import { useQuotesList } from "@/frontend/pages/quotes/hooks/use-quotes-list"
-import { useQuoteSheet } from "@/frontend/pages/quotes/hooks/use-quote-sheet"
+import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
 import { QuoteSheet } from "@/frontend/pages/quotes/views/quote-sheet"
 import {
     DEFAULT_DIR,
@@ -37,7 +37,7 @@ export function QuotesDataView() {
     const trpc = useTRPC()
 
     const { get, sort, onSort, statusTabs, activeFilters } = useQuotesList()
-    const sheet = useQuoteSheet()
+    const sheet = useEntitySheet()
 
     const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
 

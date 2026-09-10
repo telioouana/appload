@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 
 type Currency = (typeof CURRENCY)[number]
 

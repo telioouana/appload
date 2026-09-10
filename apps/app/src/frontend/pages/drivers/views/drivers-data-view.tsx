@@ -16,7 +16,7 @@ import { FilterChoice, FilterToggle } from "@workspace/ui/customs/list/filter-co
 import { useDriverColumns } from "@/frontend/pages/drivers/columns/driver-columns"
 import { DriverProfileSheet } from "@/frontend/pages/drivers/views/driver-profile-sheet"
 import { isFilteredList, useDriversList } from "@/frontend/pages/drivers/hooks/use-drivers-list"
-import { useDriverSheet } from "@/frontend/pages/drivers/hooks/use-driver-sheet"
+import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
 import {
     DRIVER_SORTS,
     driversListInput,
@@ -30,7 +30,7 @@ export function DriversDataView() {
     const trpc = useTRPC()
 
     const { get, sort, onSort, statusTabs, activeFilters } = useDriversList()
-    const sheet = useDriverSheet()
+    const sheet = useEntitySheet()
 
     // The same builder the server prefetch used, so the first page hydrates
     // straight into this query instead of refetching

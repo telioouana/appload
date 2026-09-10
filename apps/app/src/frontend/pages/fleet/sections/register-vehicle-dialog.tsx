@@ -17,7 +17,7 @@ import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import { FieldGroup, FieldSet, FieldLegend, FieldTitle } from "@workspace/ui/components/field";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog";
 
-import { domainErrorCode } from "@/lib/trpc-error";
+import { domainErrorCode } from "@workspace/trpc/errors";
 import { useFleetMutations } from "@/frontend/pages/fleet/hooks/use-fleet-mutations";
 import type { VehicleOption } from "@/frontend/pages/fleet/server/procedures";
 import {

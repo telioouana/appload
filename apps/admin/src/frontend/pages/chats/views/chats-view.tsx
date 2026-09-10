@@ -14,7 +14,7 @@ import { Separator } from "@workspace/ui/components/separator";
 import { useTRPC } from "@/backend/api/client";
 import { useListParams } from "@workspace/ui/hooks/use-list-params";
 import type { ConversationSummary } from "@/backend/api/routers/chats";
-import { domainErrorCode } from "@/lib/trpc-error";
+import { domainErrorCode } from "@workspace/trpc/errors";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
 import { ConversationList, type ConversationFilter } from "@/frontend/pages/chats/sections/conversation-list";

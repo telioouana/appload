@@ -28,7 +28,7 @@ import { useEdgeStore } from "@workspace/edgestore/client"
 import { orderDocumentPath } from "@workspace/edgestore/path"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 import type { OrderStatus } from "@workspace/domain/orders/transitions"
 import { offerAcceptable } from "@workspace/domain/orders/booking-readiness"
 import { OfferPicker } from "@/frontend/pages/order/components/offer-picker"

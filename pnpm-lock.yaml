@@ -669,6 +669,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.101.3
         version: 5.101.4(react@19.2.4)
+      '@trpc/client':
+        specifier: ^11.18.0
+        version: 11.18.0(@trpc/server@11.18.0(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/server':
         specifier: ^11.18.0
         version: 11.18.0(typescript@5.9.3)

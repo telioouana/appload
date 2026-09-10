@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/componen
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@workspace/ui/components/sheet"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 import { ORDER_ERROR_CODES } from "@workspace/domain/orders/errors"
 import { PDF_RELEVANT_FIELDS } from "@/lib/orders/pdf"
 import { PATCH_ANCHORS, UpdateOrderSchema, orderToUpdateDefaults, type UpdateOrderForm, type UpdateOrderFormInput } from "@/backend/schemas/order"

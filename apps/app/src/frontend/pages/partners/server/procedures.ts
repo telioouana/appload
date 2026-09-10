@@ -12,7 +12,7 @@ import { notify } from "@workspace/domain/notifications";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
-import { uniqueViolationConstraint } from "@/lib/db-errors";
+import { uniqueViolationConstraint } from "@workspace/db/errors";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { ConnectionRequestBaseSchema, NUIT_RE, RegisterPartnerBaseSchema } from "@/backend/schemas/partner";
 import {

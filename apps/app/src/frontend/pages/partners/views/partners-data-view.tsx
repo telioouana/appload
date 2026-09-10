@@ -13,7 +13,7 @@ import { ListCard } from "@workspace/ui/customs/list/list-card"
 import { ListFooter } from "@workspace/ui/customs/list/list-footer"
 import { DataTable, useDataTable } from "@workspace/ui/customs/list/data-table"
 import { useListParams } from "@workspace/ui/hooks/use-list-params"
-import { usePartnerSheet } from "@/frontend/pages/partners/hooks/use-partner-sheet"
+import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
 import { usePartnerColumns } from "@/frontend/pages/partners/columns/partner-columns"
 import { RequestsList } from "@/frontend/pages/partners/sections/requests-list"
 import { PartnerProfileSheet } from "@/frontend/pages/partners/views/partner-profile-sheet"
@@ -48,7 +48,7 @@ export function PartnersDataView() {
     const { data } = useSuspenseQuery(trpc.partners.list.queryOptions(input))
     const isRefreshing = useIsFetching({ queryKey: trpc.partners.list.pathKey() }) > 0
 
-    const { id: openId, open } = usePartnerSheet()
+    const { id: openId, open } = useEntitySheet()
     const onOpen = useCallback((row: PartnerRow) => open(row.id), [open])
 
     const tab = currentTab(get, orgType)

@@ -45,7 +45,7 @@ import { useEdgeStore } from "@workspace/edgestore/client"
 import { orderDocumentPath } from "@workspace/edgestore/path"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 import { isProofOfPayment } from "@workspace/domain/orders/payments"
 import { DAMAGE, DEMURRAGE, DEMURRAGE_STAGE, NOTE_REASON, demurrageFieldsComplete, descriptionRequired } from "@/lib/orders/note-reasons"
 

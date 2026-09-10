@@ -21,7 +21,7 @@ import {
 } from "@workspace/ui/components/dialog"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 import type { OrderStatus } from "@workspace/domain/orders/transitions"
 import { offerValues, type OfferValues, type OfferValuesFormInput } from "@/backend/schemas/offer"
 import type { OfferRow } from "@/frontend/pages/order/server/offers-procedures"

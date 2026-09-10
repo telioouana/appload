@@ -12,7 +12,7 @@ import { Alert, AlertTitle } from "@workspace/ui/components/alert";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@workspace/ui/components/card";
 
 import { useTRPC } from "@/backend/api/client";
-import { domainErrorCode } from "@/lib/trpc-error";
+import { domainErrorCode } from "@workspace/trpc/errors";
 import type { NuitLookup } from "@/frontend/pages/onboarding/server/procedures";
 
 const ERROR_MESSAGE_KEYS = {

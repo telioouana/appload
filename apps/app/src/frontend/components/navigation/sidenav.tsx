@@ -10,8 +10,9 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@workspace/ui/components/sidebar";
 
 import { cn } from "@workspace/ui/lib/utils";
+import { NAV_ITEM_CLASSES, NAV_SECTION_LABEL_CLASSES } from "@workspace/ui/lib/nav-tokens";
 
-import { NavPending } from "./nav-pending";
+import { NavPending } from "@workspace/ui/customs/nav/nav-pending";
 import { NavUser } from "./nav-user";
 
 // Whatever the typed next-intl `Link` accepts as `href`: a plain internal
@@ -32,16 +33,6 @@ type NavEntry = {
     path: NavHref;
 };
 
-const ITEM_CLASSES = [
-    "flex-none cursor-pointer rounded-full whitespace-nowrap text-sm text-secondary-foreground h-9 bg-sidebar border-none px-4 py-2",
-    "hover:bg-linear-to-r/oklch from-primary from-0% via-50% via-sidebar-primary/75 to-sidebar-primary/50 hover:text-white",
-    "data-active:bg-linear-to-r/oklch data-active:text-white",
-    "data-open:hover:bg-linear-to-r/oklch data-open:hover:text-white active:bg-linear-to-r/oklch active:text-white",
-];
-
-// Heads each area of the rail in the same quiet key as the rest of it, so the
-// name separates the two lists without drawing a line between them.
-const SECTION_LABEL_CLASSES = "px-4 text-[11px] font-semibold tracking-wider uppercase text-sidebar-foreground/60";
 
 export function Sidenav({
     orgType,
@@ -112,7 +103,7 @@ export function Sidenav({
                     tooltip={item.name}
                     isActive={isActive}
                     className={cn(
-                        ...ITEM_CLASSES,
+                        ...NAV_ITEM_CLASSES,
                         isActive && "bg-linear-to-r/oklch border-[#E67623]/10",
                     )}
                 >
@@ -153,7 +144,7 @@ export function Sidenav({
 
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupLabel className={SECTION_LABEL_CLASSES}>
+                    <SidebarGroupLabel className={NAV_SECTION_LABEL_CLASSES}>
                         {t("work.label")}
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
@@ -164,7 +155,7 @@ export function Sidenav({
                 </SidebarGroup>
 
                 <SidebarGroup>
-                    <SidebarGroupLabel className={SECTION_LABEL_CLASSES}>
+                    <SidebarGroupLabel className={NAV_SECTION_LABEL_CLASSES}>
                         {t("company.label")}
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
@@ -183,7 +174,7 @@ export function Sidenav({
                             tooltip={t("settings")}
                             isActive={pathname.startsWith("/settings")}
                             className={cn(
-                                ...ITEM_CLASSES,
+                                ...NAV_ITEM_CLASSES,
                                 pathname.startsWith("/settings") && "bg-linear-to-r/oklch border-[#E67623]/10",
                             )}
                         >

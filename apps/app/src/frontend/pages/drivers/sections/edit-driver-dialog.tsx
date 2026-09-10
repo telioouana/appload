@@ -13,7 +13,7 @@ import { Button } from "@workspace/ui/components/button"
 import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
 
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 import { DriverFields } from "@/frontend/pages/drivers/sections/driver-fields"
 import { useDriverMutations } from "@/frontend/pages/drivers/hooks/use-driver-mutations"
 import { EditDriverSchema, type RegisterDriverForm } from "@/backend/schemas/register-driver"

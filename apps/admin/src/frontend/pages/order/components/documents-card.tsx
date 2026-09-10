@@ -11,7 +11,7 @@ import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 import { isProofOfPayment } from "@workspace/domain/orders/payments"
 
 import { SectionCard } from "@/frontend/pages/order/sections/section-card"

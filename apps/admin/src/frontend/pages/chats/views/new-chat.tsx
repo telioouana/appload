@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { TextInput } from "@workspace/ui/inputs/text";
 
 import { useTRPC } from "@/backend/api/client";
-import { domainErrorCode } from "@/lib/trpc-error";
+import { domainErrorCode } from "@workspace/trpc/errors";
 import { StartChatSchema, type StartChatForm } from "@/backend/schemas/start-chat";
 
 import type { ChatConversation } from "@workspace/db/chats";

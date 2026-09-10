@@ -1,4 +1,4 @@
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 
 /**
  * Every domain code the orders procedures (and the shared door behind them)

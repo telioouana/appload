@@ -23,7 +23,7 @@ import { CoverChips, QuoteStatusChip, useMoney } from "@/frontend/pages/quotes/s
 import { AcceptQuoteDialog } from "@/frontend/pages/quotes/sections/accept-quote-dialog"
 import { DeclineQuoteDialog } from "@/frontend/pages/quotes/sections/decline-quote-dialog"
 import { useQuoteMutations } from "@/frontend/pages/quotes/hooks/use-quote-mutations"
-import { useQuoteSheet } from "@/frontend/pages/quotes/hooks/use-quote-sheet"
+import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
 import type { OrgType, QuoteDetail } from "@/frontend/pages/quotes/types"
 
 /**
@@ -43,7 +43,7 @@ export function QuoteSheet({
     organizationName: string
 }) {
     const t = useTranslations("App.quotes.panel")
-    const { id, close } = useQuoteSheet()
+    const { id, close } = useEntitySheet()
 
     return (
         <Sheet open={Boolean(id)} onOpenChange={(next) => { if (!next) close() }}>

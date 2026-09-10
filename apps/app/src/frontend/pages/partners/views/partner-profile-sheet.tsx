@@ -14,7 +14,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 
 import { initials } from "@workspace/ui/customs/list/table-cells"
 import { useTRPC } from "@/backend/api/client"
-import { usePartnerSheet } from "@/frontend/pages/partners/hooks/use-partner-sheet"
+import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
 import { usePartnerMutations } from "@/frontend/pages/partners/hooks/use-partner-mutations"
 import { ConnectionStatusChip, KycBadge, RelationChip } from "@/frontend/pages/partners/sections/badges"
 import type { OrgType, PartnerProfile } from "@/frontend/pages/partners/types"
@@ -30,7 +30,7 @@ import type { OrgType, PartnerProfile } from "@/frontend/pages/partners/types"
  */
 export function PartnerProfileSheet({ orgType }: { orgType: OrgType }) {
     const t = useTranslations("App.partners.profile")
-    const { id, close } = usePartnerSheet()
+    const { id, close } = useEntitySheet()
 
     return (
         <Sheet open={Boolean(id)} onOpenChange={(next) => { if (!next) close() }}>

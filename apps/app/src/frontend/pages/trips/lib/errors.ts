@@ -1,4 +1,4 @@
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 
 /**
  * Every domain code the trips procedures raise, mapped to the message key

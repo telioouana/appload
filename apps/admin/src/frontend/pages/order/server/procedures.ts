@@ -18,7 +18,7 @@ import { CreateOrderSchemaServer, UpdateOrderSchemaServer, type CreateOrderForm 
 import { OrderError } from "@workspace/domain/orders/errors";
 import { guardOrderGate } from "@workspace/domain/kyc/order-gate";
 import { FOLLOW_UP_STATUSES } from "@workspace/domain/tracking/conversations";
-import { foreignKeyViolationConstraint } from "@/lib/db-errors";
+import { foreignKeyViolationConstraint } from "@workspace/db/errors";
 import { deriveOrderFields } from "@workspace/domain/orders/derive";
 import { allowedTransitions, transitionRequirements } from "@workspace/domain/orders/transitions";
 import { isReadyToDispatch } from "@workspace/domain/orders/dispatch-readiness";

@@ -15,7 +15,7 @@ import type { OrgAction } from "@workspace/auth/organization-permissions";
 
 import { docProgress, today } from "@workspace/domain/kyc/derive";
 
-import { uniqueViolationConstraint } from "@/lib/db-errors";
+import { uniqueViolationConstraint } from "@workspace/db/errors";
 import { RegisterDriverBaseSchema } from "@/backend/schemas/register-driver";
 // The KYC document reads live with the fleet router: one rule for which
 // document rows are current, shared by vehicles and drivers alike

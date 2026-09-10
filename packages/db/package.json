@@ -40,6 +40,7 @@
         "./subscriptions": "./src/schemas/subscriptions.ts",
         "./tracking": "./src/schemas/tracking.ts",
         "./movements": "./src/schemas/movements.ts",
-        "./users": "./src/schemas/users.ts"
+        "./users": "./src/schemas/users.ts",
+        "./errors": "./src/errors.ts"
     }
 }

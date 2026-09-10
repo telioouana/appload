@@ -16,7 +16,7 @@ import { DataTable, useDataTable } from "@workspace/ui/customs/list/data-table"
 import { downloadCsv, stamp } from "@workspace/ui/lib/csv"
 import { useDisputeColumns } from "@/frontend/pages/disputes/columns/dispute-columns"
 import { useDisputeList } from "@/frontend/pages/disputes/hooks/use-dispute-list"
-import { useDisputeSheet } from "@/frontend/pages/disputes/hooks/use-dispute-sheet"
+import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
 import { DisputeFilters } from "@/frontend/pages/disputes/sections/dispute-filters"
 import { DisputeSheet } from "@/frontend/pages/disputes/views/dispute-sheet"
 import {
@@ -36,7 +36,7 @@ export function DisputesDataView() {
     const queryClient = useQueryClient()
 
     const { get, sort, onSort, statusTabs, activeFilters } = useDisputeList()
-    const sheet = useDisputeSheet()
+    const sheet = useEntitySheet()
 
     const input = disputesListInput(get)
 

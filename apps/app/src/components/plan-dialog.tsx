@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import type { TrackingAllowance } from "@workspace/domain/subscription"
 
 import { Link } from "@/i18n/navigation"
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 import { PlanUsage } from "@/components/plan-usage"
 
 // Plans are agreed commercially and recorded by staff in Admin, so the

@@ -22,7 +22,7 @@ import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/al
 import { Card, CardContent, CardDescription, CardTitle } from "@workspace/ui/components/card";
 
 import { useTRPC } from "@/backend/api/client";
-import { domainErrorCode } from "@/lib/trpc-error";
+import { domainErrorCode } from "@workspace/trpc/errors";
 import { SignUpSchema } from "@/backend/schemas/sign-up";
 import { useResendCooldown } from "@/frontend/pages/auth/hooks/use-resend-cooldown";
 

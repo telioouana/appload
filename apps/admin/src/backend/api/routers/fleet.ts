@@ -9,7 +9,7 @@ import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import { createTRPCRouter, protectedProcedure } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
 
-import { uniqueViolationConstraint } from "@/lib/db-errors";
+import { uniqueViolationConstraint } from "@workspace/db/errors";
 import { RegisterDriverBaseSchema } from "@/backend/schemas/register-driver";
 import { RegisterLinkBaseSchema, RegisterTrailerBaseSchema, RegisterTruckBaseSchema, type VehicleKind } from "@/backend/schemas/register-fleet";
 

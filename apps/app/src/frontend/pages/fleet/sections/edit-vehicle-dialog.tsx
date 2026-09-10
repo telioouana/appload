@@ -14,7 +14,7 @@ import { FieldGroup } from "@workspace/ui/components/field"
 import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
 
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 import { useFleetMutations } from "@/frontend/pages/fleet/hooks/use-fleet-mutations"
 import { EditVehicleSchema, type EditVehicleForm } from "@/backend/schemas/register-fleet"
 import type { VehicleKind } from "@/frontend/pages/fleet/types"

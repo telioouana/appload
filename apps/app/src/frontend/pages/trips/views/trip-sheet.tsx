@@ -17,7 +17,7 @@ import { useTRPC } from "@/backend/api/client"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { LastPingCell, TripStatusChip } from "@/frontend/pages/trips/components/badges"
 import { TripActions } from "@/frontend/pages/trips/sections/trip-actions"
-import { useTripSheet } from "@/frontend/pages/trips/hooks/use-trip-sheet"
+import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
 import type { TripDetail } from "@/frontend/pages/trips/types"
 
 /**
@@ -35,7 +35,7 @@ export function TripSheet({
     organizationName: string
 }) {
     const t = useTranslations("App.trips.panel")
-    const { id, close } = useTripSheet()
+    const { id, close } = useEntitySheet()
 
     return (
         <Sheet open={Boolean(id)} onOpenChange={(next) => { if (!next) close() }}>

@@ -16,7 +16,7 @@ import type { OrgAction } from "@workspace/auth/organization-permissions";
 
 import { docProgress, today, type CurrentDoc } from "@workspace/domain/kyc/derive";
 
-import { uniqueViolationConstraint } from "@/lib/db-errors";
+import { uniqueViolationConstraint } from "@workspace/db/errors";
 import {
     RegisterLinkBaseSchema,
     RegisterTrailerBaseSchema,

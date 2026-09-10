@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { Analytics } from "@vercel/analytics/next"
 import { Geist_Mono, Montserrat } from "next/font/google"
 
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@workspace/ui/customs/theme-provider"
 
 import "@workspace/ui/globals.css"
 import { cn } from "@workspace/ui/lib/utils"
