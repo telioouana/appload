@@ -1,1 +1,669 @@
-{}
+{
+    "eyebrow": "Orders",
+    "title": {
+        "all": "All orders",
+        "requests": "Requests",
+        "quoted": "Quoted",
+        "booked": "Booked",
+        "on-going": "On the road",
+        "delivered": "Delivered",
+        "history": "History"
+    },
+    "sections": {
+        "all": "All",
+        "requests": "Requests",
+        "quoted": "Quoted",
+        "booked": "Booked",
+        "on-going": "On the road",
+        "delivered": "Delivered",
+        "history": "History"
+    },
+    "description": {
+        "all": {
+            "shipper": "Every order your company has filed",
+            "carrier": "Every order you were asked about"
+        },
+        "requests": {
+            "shipper": "Orders you sent out and are still waiting on",
+            "carrier": "Orders waiting for your quote"
+        },
+        "quoted": {
+            "shipper": "Orders with offers waiting for your decision",
+            "carrier": "Orders you have quoted for"
+        },
+        "booked": {
+            "shipper": "Orders with a carrier committed to them",
+            "carrier": "Trips you have won and not yet started"
+        },
+        "on-going": {
+            "shipper": "Orders on their way",
+            "carrier": "Trips you are running now"
+        },
+        "delivered": {
+            "shipper": "Orders delivered, pending paperwork",
+            "carrier": "Trips you have delivered"
+        },
+        "history": {
+            "shipper": "Orders that are closed, cancelled or lost",
+            "carrier": "Trips that are closed, cancelled or lost"
+        }
+    },
+    "status": {
+        "prospect": "Prospect",
+        "booked": "Booked",
+        "to-loading": "On the way to loading",
+        "at-loading": "At loading site",
+        "loading": "Loading",
+        "waiting-documents": "Waiting for documents",
+        "on-route": "On route",
+        "stopped": "Stopped",
+        "issue": "With issue",
+        "at-border": "At border",
+        "at-offloading": "At offloading site",
+        "offloading": "Offloading",
+        "delivered": "Delivered",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "underbid": "Lost on price"
+    },
+    "offerStatus": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "declined": "Declined",
+        "withdrawn": "Withdrawn",
+        "lost": "Lost",
+        "recorded": "Recorded"
+    },
+    "requestStatus": {
+        "requested": "Waiting for a quote",
+        "quoted": "Quoted",
+        "declined": "Declined",
+        "withdrawn": "Withdrawn",
+        "closed": "Closed"
+    },
+    "category": {
+        "agriculture-inputs": "Agriculture inputs",
+        "agriculture-products": "Agriculture products",
+        "construction": "Construction",
+        "machinery-equipment": "Machinery & equipment",
+        "fmcg": "FMCG",
+        "general-cargo": "General cargo",
+        "medicine": "Medicine",
+        "mining": "Mining",
+        "oil-gas": "Oil & gas",
+        "vehicles": "Vehicles",
+        "other": "Other"
+    },
+    "routeType": {
+        "national": "National",
+        "regional": "Regional"
+    },
+    "tripType": {
+        "backload": "Backload",
+        "normal": "Outbound"
+    },
+    "loadType": {
+        "dedicated": "Dedicated truck",
+        "groupage": "Groupage"
+    },
+    "weightUnit": {
+        "ton": "t",
+        "kg": "kg",
+        "liter": "L"
+    },
+    "currency": {
+        "MZN": "MZN",
+        "ZAR": "ZAR",
+        "USD": "USD"
+    },
+    "packing": {
+        "bags-1kg": "1 kg bags",
+        "bags-2kg": "2 kg bags",
+        "bags-5kg": "5 kg bags",
+        "bags-25kg": "25 kg bags",
+        "bags-30kg": "30 kg bags",
+        "bags-50kg": "50 kg bags",
+        "bags-100kg": "100 kg bags",
+        "bags-1ton": "1 ton bags (big bags)",
+        "bottle-1l": "1 L bottles",
+        "bottle-5l": "5 L bottles",
+        "bottle-10l": "10 L bottles",
+        "bottle-20l": "20 L bottles",
+        "bottle-25l": "25 L bottles",
+        "container-20ft": "20 ft container",
+        "container-40ft": "40 ft container",
+        "boxes": "Boxes",
+        "pallets": "Pallets",
+        "noPacking": "In bulk / no packing",
+        "other": "Other"
+    },
+    "fiscalRegime": {
+        "normal": "Normal (16%)",
+        "simplified-5": "Simplified (5%)",
+        "simplified-3": "Simplified (3%)",
+        "n/a": "Not applicable"
+    },
+    "podStatus": {
+        "pending-collection": "Pending collection",
+        "pending-delivery": "Pending delivery",
+        "delivered": "Delivered",
+        "verified": "Verified"
+    },
+    "truckAge": {
+        "recent": "Recent",
+        "not-recent": "Older"
+    },
+    "sort": {
+        "newest": "Newest first",
+        "loading": "Loading date",
+        "status": "Status"
+    },
+    "filters": {
+        "search": "Search by order, route or company",
+        "clear": "Clear search",
+        "dispatch": "Waiting for a rig",
+        "dispatch-hint": "Booked trips with no driver named yet",
+        "dispatch-value": "To dispatch"
+    },
+    "columns": {
+        "order": "Order",
+        "status": "Status",
+        "route": "Route",
+        "dates": "Loading",
+        "counterparty": {
+            "shipper": "Carrier",
+            "carrier": "Client"
+        },
+        "cargo": "Cargo",
+        "money": "Your price",
+        "answers": "Answers",
+        "dispatch": "Rig"
+    },
+    "values": {
+        "until": "to {date}",
+        "no-counterparty": {
+            "shipper": "No carrier yet",
+            "carrier": "Client"
+        },
+        "no-driver": "No driver yet",
+        "asked": "{count, plural, one {# carrier asked} other {# carriers asked}}",
+        "offers-pending": "{count, plural, one {# offer} other {# offers}}"
+    },
+    "tiles": {
+        "awaiting-offers": "Waiting for offers",
+        "awaiting-offers-hint": "Sent out, nobody has quoted yet",
+        "offers-to-review": "Offers to review",
+        "offers-to-review-hint": "Waiting for your decision",
+        "new-requests": "New requests",
+        "new-requests-hint": "Clients waiting for your quote",
+        "to-dispatch": "To dispatch",
+        "to-dispatch-hint": "Booked, no driver named yet",
+        "on-the-road": "On the road",
+        "on-the-road-hint": "Trips moving right now",
+        "delivered-pending": "Delivered",
+        "delivered-pending-hint": {
+            "shipper": "Delivered, paperwork pending",
+            "carrier": "Delivered, waiting to be closed"
+        }
+    },
+    "data": {
+        "empty": {
+            "all": "No orders yet",
+            "requests": "No requests here",
+            "quoted": "Nothing quoted yet",
+            "booked": "Nothing booked yet",
+            "on-going": "Nothing on the road",
+            "delivered": "Nothing delivered yet",
+            "history": "Nothing closed yet"
+        },
+        "empty-description": {
+            "shipper": "File an order and send it to your carriers to get offers.",
+            "carrier": "Orders your clients send you will appear here."
+        },
+        "no-results": "No orders match this search",
+        "error": "The orders could not be loaded."
+    },
+    "actions": {
+        "new-order": "New order",
+        "cancel": "Cancel order"
+    },
+    "errors": {
+        "versionConflict": "This order changed while you were working on it. Refresh and try again.",
+        "notAllowedForActor": "Your company cannot make this change.",
+        "notAllowed": "You do not have permission to do this.",
+        "notFound": "This order could not be found.",
+        "subscriptionRequired": "This is a pro feature. Talk to us to enable it.",
+        "noteRequired": "This change needs an explanation.",
+        "podRequired": "This change needs the proof of delivery attached.",
+        "evidenceRequired": "This change needs a document attached.",
+        "incompleteForDispatch": "The driver and the truck have to be named before the trip goes to loading.",
+        "dispatchRequired": "Pick the driver and the truck first.",
+        "disputeOpen": "This order has an open dispute. Appload has to settle it first.",
+        "driverNotRegistered": "That driver is not in your registry.",
+        "truckNotRegistered": "That truck is not in your fleet.",
+        "trailerNotRegistered": "That trailer is not in your fleet.",
+        "linkNotRegistered": "That link is not in your fleet.",
+        "invalidDocumentUrl": "That file could not be accepted.",
+        "uploadFailed": "The file could not be uploaded. Try again.",
+        "orderNotProspect": "This order is no longer open for offers.",
+        "carrierNotConnected": "One of those carriers is not connected to your company.",
+        "notRequested": "You were not asked to quote this order.",
+        "offerExists": "You already have an offer on this order.",
+        "offerNotPending": "That offer has already been decided.",
+        "offerUnpriced": "Appload has not priced this offer yet. Try again shortly.",
+        "offerRequired": "Booking needs an offer to accept.",
+        "carrierNotVerified": "That carrier's paperwork is not verified yet.",
+        "carrierContractMissing": "That carrier has no contract with Appload.",
+        "carrierContractExpired": "That carrier's contract has expired.",
+        "carrierSuspended": "That carrier is suspended.",
+        "invalid": "Some of what was sent is not valid.",
+        "unknown": "Something went wrong. Try again."
+    },
+    "upgrade": {
+        "title": "A pro feature",
+        "description": "Your company is on the free plan. Pro opens the parts of the portal that move cargo.",
+        "features": {
+            "orders": "File orders and follow them to delivery",
+            "requests": "Send orders to your carriers and compare offers",
+            "quotes": "Quote for orders and publish standing quotes"
+        },
+        "close": "Not now",
+        "contact": "Talk to us",
+        "subject": "Pro plan for {organization}"
+    },
+    "create": {
+        "title": "New order",
+        "description": "File the load. Once it is filed you can send it to your carriers for offers.",
+        "actions": {
+            "save": "File order",
+            "saving": "Filing...",
+            "cancel": "Cancel"
+        },
+        "errors": {
+            "address": "Pick a place from the list",
+            "category": "Choose a category",
+            "count": "Enter a whole number above zero",
+            "currency": "Choose a currency",
+            "date": "Choose a date",
+            "description": "Say what the load is",
+            "distance": "Enter the distance in kilometres",
+            "list": "Choose one of the options",
+            "value": "Enter a valid value",
+            "weight": "Enter the weight"
+        },
+        "toasts": {
+            "created": "Order {orderId} filed",
+            "detailsIncomplete": "Some details are still missing. You can add them later."
+        },
+        "form": {
+            "route": {
+                "title": "Route and dates",
+                "fields": {
+                    "loadingAddress": {
+                        "label": "Loading address",
+                        "placeholder": "Where the truck loads",
+                        "description": "Pick the place from the suggestions"
+                    },
+                    "offloadingAddress": {
+                        "label": "Offloading address",
+                        "placeholder": "Where the load is delivered",
+                        "description": "Pick the place from the suggestions"
+                    },
+                    "expectedLoadingDate": {
+                        "label": "Expected loading date",
+                        "placeholder": "Choose the date"
+                    },
+                    "expectedOffloadingDate": {
+                        "label": "Expected offloading date",
+                        "placeholder": "Choose the date"
+                    },
+                    "routeType": {
+                        "label": "Route",
+                        "placeholder": "Choose the route"
+                    },
+                    "tripType": {
+                        "label": "Trip",
+                        "placeholder": "Choose the trip type"
+                    },
+                    "distance": {
+                        "label": "Distance (km)",
+                        "placeholder": "0",
+                        "description": "Filled in from the two addresses; correct it if you need to"
+                    }
+                }
+            },
+            "cargo": {
+                "title": "Cargo",
+                "fields": {
+                    "category": {
+                        "label": "Category",
+                        "placeholder": "Choose the category"
+                    },
+                    "description": {
+                        "label": "What is the load?",
+                        "placeholder": "E.g. 30 pallets of bottled water"
+                    },
+                    "weight": {
+                        "label": "Weight",
+                        "placeholder": "0"
+                    },
+                    "loadType": {
+                        "label": "Load type",
+                        "placeholder": "Choose the load type"
+                    },
+                    "packing": {
+                        "label": "Packing",
+                        "placeholder": "Choose the packing"
+                    },
+                    "isHazardous": {
+                        "label": "Hazardous cargo?"
+                    },
+                    "hazchemCode": {
+                        "label": "HAZCHEM code",
+                        "placeholder": "E.g. 3YE"
+                    },
+                    "isRefrigerated": {
+                        "label": "Refrigerated cargo?"
+                    },
+                    "temperature": {
+                        "label": "Temperature (°C)",
+                        "placeholder": "-18"
+                    },
+                    "temperatureInstructions": {
+                        "label": "Temperature instructions",
+                        "placeholder": "E.g. Keep below -18 °C"
+                    }
+                }
+            },
+            "logistics": {
+                "title": "Deliveries and price",
+                "fields": {
+                    "deliveries": {
+                        "label": "Deliveries",
+                        "placeholder": "1"
+                    },
+                    "expectedTrucks": {
+                        "label": "Trucks needed",
+                        "placeholder": "1"
+                    },
+                    "currency": {
+                        "label": "Currency",
+                        "placeholder": "Choose the currency",
+                        "description": "What you want to be invoiced in"
+                    }
+                }
+            }
+        }
+    },
+    "requests": {
+        "title": "Carriers asked",
+        "sent-on": "Sent on {date}",
+        "actions": {
+            "send": "Send to carriers",
+            "withdraw": "Withdraw request"
+        },
+        "empty": {
+            "shipper": "This order has not been sent to anyone yet.",
+            "carrier": "You were not asked about this order."
+        },
+        "toasts": {
+            "sent": "{count, plural, one {Sent to # carrier} other {Sent to # carriers}}",
+            "withdrawn": "Request withdrawn"
+        },
+        "send": {
+            "title": "Send to carriers",
+            "description": "Pick the carriers you want offers from. Only your accepted connections can be asked.",
+            "search": "Search your carriers",
+            "empty": "No carriers found",
+            "already": "Already asked",
+            "no-province": "Province not set",
+            "selected": "{count} of {max} selected",
+            "submit": "Send",
+            "message": {
+                "label": "Message (optional)",
+                "placeholder": "Anything the carriers should know before quoting",
+                "hint": "The same message goes to every carrier you picked."
+            }
+        }
+    },
+    "offers": {
+        "title": "Offers",
+        "settled-hint": "This order is booked; the offers below are the record of what was quoted.",
+        "record": "With Appload since {date} · {trips} trips",
+        "record-unknown": "New to Appload",
+        "empty": {
+            "shipper": "No offers yet. Send the order to your carriers to get some.",
+            "carrier": "You have not quoted this order yet."
+        },
+        "includes": {
+            "git": "GIT",
+            "gps": "GPS"
+        },
+        "actions": {
+            "quote": "Quote",
+            "accept": "Accept",
+            "decline": "Decline",
+            "edit": "Edit offer",
+            "withdraw": "Withdraw offer",
+            "menu": "Offer actions"
+        },
+        "fields": {
+            "fiscalRegime": "Fiscal regime",
+            "currency": "Currency",
+            "total": "Price (VAT included)",
+            "vat": "VAT",
+            "subtotal": "Subtotal",
+            "includes": "What the price covers",
+            "notes": "Notes"
+        },
+        "errors": {
+            "currency": "Choose a currency",
+            "list": "Choose one of the options",
+            "subtotal": "Enter a valid amount",
+            "total": "Enter the price you are asking",
+            "value": "Enter a valid value"
+        },
+        "form": {
+            "title": "Your quote",
+            "edit-title": "Correct your quote",
+            "description": "One price, VAT included. The split below follows from your fiscal regime.",
+            "fiscalRegime-placeholder": "Choose the regime",
+            "currency-placeholder": "Choose the currency",
+            "total-placeholder": "0.00",
+            "total-description": "What you are asking to carry this load",
+            "derived": "Worked out for you",
+            "notes-placeholder": "Anything the client should know",
+            "git-hint": "Goods in transit insurance is included",
+            "gps-hint": "The truck is tracked by GPS",
+            "cancel": "Cancel",
+            "save": "Save quote",
+            "send": "Send quote"
+        },
+        "accept": {
+            "title": "Book with this carrier?",
+            "description": "{carrier} asked {amount} to carry this load.",
+            "consequences": "The order is booked with this carrier, the other offers are closed and every carrier you asked is told.",
+            "back": "Not yet",
+            "confirm": "Book"
+        },
+        "toasts": {
+            "sent": "Quote sent",
+            "updated": "Quote updated",
+            "withdrawn": "Quote withdrawn",
+            "accepted": "Order booked",
+            "declined": "Offer declined"
+        }
+    },
+    "cancel": {
+        "title": "Cancel this order?",
+        "description": "Order {orderId} will be closed and the carriers you asked will be told.",
+        "note": {
+            "label": "Why is it being cancelled?",
+            "placeholder": "E.g. the client called the load off",
+            "hint": "At least {min} characters. This is the record of why the load went away."
+        },
+        "back": "Keep the order",
+        "confirm": "Cancel order",
+        "toasts": {
+            "cancelled": "Order cancelled"
+        }
+    },
+    "documents": {
+        "title": "Documents",
+        "empty": "Nothing attached yet.",
+        "open": "Open document",
+        "types": {
+            "pod": "Proof of delivery",
+            "shipper-invoice": "Client invoice",
+            "carrier-invoice": "Carrier invoice",
+            "debit-note": "Debit note",
+            "credit-note": "Credit note",
+            "proof-of-payment": "Proof of payment",
+            "evidence": "Evidence",
+            "transport-order": "Transport order",
+            "other": "Other"
+        },
+        "add": {
+            "action": "Attach",
+            "title": "Attach a document",
+            "description": "PDF, JPG or PNG. It is filed against this order and both sides can read it.",
+            "type": "Type",
+            "file": "File",
+            "pick": "Choose a file",
+            "replace": "Choose another",
+            "remove": "Remove the file",
+            "hint": "Up to one file at a time.",
+            "format": "Only PDF, JPG and PNG files are accepted.",
+            "cancel": "Cancel",
+            "submit": "Attach"
+        },
+        "toasts": {
+            "added": "Document attached"
+        }
+    },
+    "timeline": {
+        "title": "Activity",
+        "empty": "Nothing has happened yet.",
+        "created": "Filed",
+        "system": "Appload",
+        "kinds": {
+            "transition": "Status change",
+            "update": "Details updated",
+            "document": "Document attached",
+            "note": "Note",
+            "payment": "Payment",
+            "flag": "Flagged for review",
+            "dispute": "Dispute",
+            "offer": "Offer",
+            "system": "System"
+        },
+        "offer": {
+            "created": "Quote from {carrier} · {amount}",
+            "updated": "{carrier} corrected its quote · {amount}",
+            "declined": "{carrier}'s quote declined",
+            "withdrawn": "{carrier} withdrew its quote",
+            "accepted": "Booked with {carrier} · {amount}",
+            "lost": "{carrier} lost this one",
+            "booked": "Booked with {carrier} · {amount}"
+        }
+    },
+    "transition": {
+        "title": "Move to {status}",
+        "description": "Order {orderId}",
+        "resume": "Resume · {status}",
+        "menu": "Other moves",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "toast": "Order moved to {status}",
+        "errors": {
+            "driver": "Pick a driver from your registry",
+            "truck": "Pick a truck from your fleet",
+            "note": "Write at least a few words",
+            "document": "Attach the file"
+        },
+        "dispatch": {
+            "driver": {
+                "label": "Driver",
+                "placeholder": "Search your drivers",
+                "description": "Only drivers registered by your company can be sent"
+            },
+            "truck": {
+                "label": "Truck",
+                "placeholder": "Search your trucks"
+            },
+            "trailer": {
+                "label": "Trailer (optional)",
+                "placeholder": "Search your trailers"
+            },
+            "link": {
+                "label": "Link (optional)",
+                "placeholder": "Search your links"
+            }
+        },
+        "note": {
+            "label": "What happened?",
+            "optional": "Note (optional)",
+            "placeholder": "Say what changed, in a line or two",
+            "hint": "At least {min} characters."
+        },
+        "document": {
+            "pod": "Proof of delivery",
+            "evidence": "Evidence",
+            "pick": "Choose a file",
+            "replace": "Choose another",
+            "remove": "Remove the file",
+            "format": "Only PDF, JPG and PNG files are accepted.",
+            "required": "This move needs the file.",
+            "optional": "Attach it now, or later from the documents card."
+        }
+    },
+    "detail": {
+        "meta": "Order {orderId}",
+        "error": "This order could not be loaded.",
+        "back": "Back to the list",
+        "trip": "Where the trip is",
+        "since": "since {date}",
+        "expected": "due {date}",
+        "footer": "Filed on {created} · last change {updated}",
+        "money-hint": "Your own leg of the deal; the other side's price is not shown.",
+        "operations-empty": "No driver or truck named yet.",
+        "sections": {
+            "trip": "Trip and cargo",
+            "money": "Your price",
+            "operations": "Driver and rig"
+        },
+        "fields": {
+            "route": "Route",
+            "expectedLoading": "Expected loading",
+            "expectedOffloading": "Expected offloading",
+            "actualLoading": "Loaded on",
+            "actualOffloading": "Offloaded on",
+            "distance": "Distance",
+            "routeType": "Route type",
+            "cargo": "Cargo",
+            "weight": "Weight",
+            "loadType": "Load type",
+            "packing": "Packing",
+            "deliveries": "Deliveries",
+            "trucks": "Trucks",
+            "subtotal": "Subtotal",
+            "vat": "VAT",
+            "total": "Total",
+            "driver": "Driver",
+            "driverPhone": "Phone",
+            "driverPassport": "Document",
+            "truck": "Truck",
+            "trailer": "Trailer",
+            "link": "Link",
+            "truckAge": "Truck age",
+            "pod": "Proof of delivery"
+        },
+        "values": {
+            "km": "{km} km",
+            "hazardous": "Hazardous",
+            "hazardous-code": "Hazardous · {code}",
+            "refrigerated": "Refrigerated",
+            "refrigerated-at": "Refrigerated · {temperature} °C"
+        }
+    }
+}

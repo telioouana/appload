@@ -71,8 +71,17 @@ export function Sidenav({
             enabled: true,
             path: "/dashboard",
         },
-        { Icon: IconBox, name: t("work.orders"), match: "/orders", enabled: false },
-        { Icon: IconFileInvoice, name: t("work.quotes"), match: "/quotes", enabled: false },
+        {
+            Icon: IconBox,
+            name: t("work.orders"),
+            match: "/orders",
+            enabled: true,
+            // The two sides enter the list at different sections: a client
+            // starts from everything it filed, a carrier from the requests
+            // waiting on its answer. The page's own tabs move from there
+            path: { pathname: "/orders/[section]", params: { section: orgType === "shipper" ? "all" : "requests" } },
+        },
+        { Icon: IconFileInvoice, name: t("work.quotes"), match: "/quotes", enabled: true, path: "/quotes" },
         { Icon: IconRoute, name: t("work.trips"), match: "/trips", enabled: false },
         { Icon: IconMap2, name: t("work.map"), match: "/map", enabled: false },
     ]

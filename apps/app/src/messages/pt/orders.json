@@ -1,1 +1,669 @@
-{}
+{
+    "eyebrow": "Pedidos",
+    "title": {
+        "all": "Todos os pedidos",
+        "requests": "Solicitações",
+        "quoted": "Cotados",
+        "booked": "Confirmados",
+        "on-going": "Em trânsito",
+        "delivered": "Entregues",
+        "history": "Histórico"
+    },
+    "sections": {
+        "all": "Todos",
+        "requests": "Solicitações",
+        "quoted": "Cotados",
+        "booked": "Confirmados",
+        "on-going": "Em trânsito",
+        "delivered": "Entregues",
+        "history": "Histórico"
+    },
+    "description": {
+        "all": {
+            "shipper": "Todos os pedidos que a sua empresa registou",
+            "carrier": "Todos os pedidos para os quais foi contactado"
+        },
+        "requests": {
+            "shipper": "Pedidos enviados que ainda aguardam resposta",
+            "carrier": "Pedidos à espera da sua cotação"
+        },
+        "quoted": {
+            "shipper": "Pedidos com propostas à espera da sua decisão",
+            "carrier": "Pedidos que já cotou"
+        },
+        "booked": {
+            "shipper": "Pedidos com transportador confirmado",
+            "carrier": "Viagens ganhas que ainda não começaram"
+        },
+        "on-going": {
+            "shipper": "Pedidos a caminho",
+            "carrier": "Viagens que está a fazer agora"
+        },
+        "delivered": {
+            "shipper": "Pedidos entregues, à espera de documentação",
+            "carrier": "Viagens que já entregou"
+        },
+        "history": {
+            "shipper": "Pedidos fechados, cancelados ou perdidos",
+            "carrier": "Viagens fechadas, canceladas ou perdidas"
+        }
+    },
+    "status": {
+        "prospect": "Prospectiva",
+        "booked": "Confirmado",
+        "to-loading": "A caminho do carregamento",
+        "at-loading": "No local de carregamento",
+        "loading": "Em carregamento",
+        "waiting-documents": "À espera de documentos",
+        "on-route": "Em trânsito",
+        "stopped": "Parado",
+        "issue": "Com problema",
+        "at-border": "Na fronteira",
+        "at-offloading": "No local de descarregamento",
+        "offloading": "Em descarregamento",
+        "delivered": "Entregue",
+        "completed": "Concluído",
+        "cancelled": "Cancelado",
+        "underbid": "Perdido por preço"
+    },
+    "offerStatus": {
+        "pending": "Pendente",
+        "accepted": "Aceite",
+        "declined": "Recusada",
+        "withdrawn": "Retirada",
+        "lost": "Perdida",
+        "recorded": "Registada"
+    },
+    "requestStatus": {
+        "requested": "À espera de cotação",
+        "quoted": "Cotado",
+        "declined": "Recusado",
+        "withdrawn": "Retirado",
+        "closed": "Fechado"
+    },
+    "category": {
+        "agriculture-inputs": "Insumos agrícolas",
+        "agriculture-products": "Produtos agrícolas",
+        "construction": "Construção",
+        "machinery-equipment": "Máquinas e equipamentos",
+        "fmcg": "Bens de consumo rápido",
+        "general-cargo": "Carga geral",
+        "medicine": "Medicamentos",
+        "mining": "Mineração",
+        "oil-gas": "Petróleo & Gás",
+        "vehicles": "Veículos",
+        "other": "Outro"
+    },
+    "routeType": {
+        "national": "Nacional",
+        "regional": "Regional"
+    },
+    "tripType": {
+        "backload": "Retorno",
+        "normal": "Viagem de ida"
+    },
+    "loadType": {
+        "dedicated": "Camião dedicado",
+        "groupage": "Grupagem"
+    },
+    "weightUnit": {
+        "ton": "t",
+        "kg": "kg",
+        "liter": "L"
+    },
+    "currency": {
+        "MZN": "MZN",
+        "ZAR": "ZAR",
+        "USD": "USD"
+    },
+    "packing": {
+        "bags-1kg": "Sacos de 1 kg",
+        "bags-2kg": "Sacos de 2 kg",
+        "bags-5kg": "Sacos de 5 kg",
+        "bags-25kg": "Sacos de 25 kg",
+        "bags-30kg": "Sacos de 30 kg",
+        "bags-50kg": "Sacos de 50 kg",
+        "bags-100kg": "Sacos de 100 kg",
+        "bags-1ton": "Big bags (1 t)",
+        "bottle-1l": "Garrafas de 1 L",
+        "bottle-5l": "Garrafões de 5 L",
+        "bottle-10l": "Garrafões de 10 L",
+        "bottle-20l": "Garrafões de 20 L",
+        "bottle-25l": "Garrafões de 25 L",
+        "container-20ft": "Contentor de 20 pés",
+        "container-40ft": "Contentor de 40 pés",
+        "boxes": "Caixas",
+        "pallets": "Paletes",
+        "noPacking": "A granel / sem embalagem",
+        "other": "Outro"
+    },
+    "fiscalRegime": {
+        "normal": "Normal (16%)",
+        "simplified-5": "Simplificado (5%)",
+        "simplified-3": "Simplificado (3%)",
+        "n/a": "Não aplicável"
+    },
+    "podStatus": {
+        "pending-collection": "Recolha pendente",
+        "pending-delivery": "Entrega pendente",
+        "delivered": "Entregue",
+        "verified": "Verificado"
+    },
+    "truckAge": {
+        "recent": "Recente",
+        "not-recent": "Mais antigo"
+    },
+    "sort": {
+        "newest": "Mais recentes",
+        "loading": "Data de carregamento",
+        "status": "Estado"
+    },
+    "filters": {
+        "search": "Procurar por pedido, rota ou empresa",
+        "clear": "Limpar pesquisa",
+        "dispatch": "À espera de camião",
+        "dispatch-hint": "Viagens confirmadas ainda sem motorista indicado",
+        "dispatch-value": "Para despachar"
+    },
+    "columns": {
+        "order": "Pedido",
+        "status": "Estado",
+        "route": "Rota",
+        "dates": "Carregamento",
+        "counterparty": {
+            "shipper": "Transportador",
+            "carrier": "Cliente"
+        },
+        "cargo": "Carga",
+        "money": "O seu valor",
+        "answers": "Respostas",
+        "dispatch": "Camião"
+    },
+    "values": {
+        "until": "até {date}",
+        "no-counterparty": {
+            "shipper": "Sem transportador",
+            "carrier": "Cliente"
+        },
+        "no-driver": "Sem motorista",
+        "asked": "{count, plural, one {# transportador contactado} other {# transportadores contactados}}",
+        "offers-pending": "{count, plural, one {# proposta} other {# propostas}}"
+    },
+    "tiles": {
+        "awaiting-offers": "À espera de propostas",
+        "awaiting-offers-hint": "Enviados, ainda sem cotação",
+        "offers-to-review": "Propostas por decidir",
+        "offers-to-review-hint": "À espera da sua decisão",
+        "new-requests": "Novas solicitações",
+        "new-requests-hint": "Clientes à espera da sua cotação",
+        "to-dispatch": "Para despachar",
+        "to-dispatch-hint": "Confirmados, sem motorista indicado",
+        "on-the-road": "Em trânsito",
+        "on-the-road-hint": "Viagens a decorrer agora",
+        "delivered-pending": "Entregues",
+        "delivered-pending-hint": {
+            "shipper": "Entregues, documentação pendente",
+            "carrier": "Entregues, à espera de fecho"
+        }
+    },
+    "data": {
+        "empty": {
+            "all": "Ainda não há pedidos",
+            "requests": "Não há solicitações aqui",
+            "quoted": "Ainda nada cotado",
+            "booked": "Ainda nada confirmado",
+            "on-going": "Nada em trânsito",
+            "delivered": "Ainda nada entregue",
+            "history": "Ainda nada fechado"
+        },
+        "empty-description": {
+            "shipper": "Registe um pedido e envie-o aos seus transportadores para receber propostas.",
+            "carrier": "Os pedidos que os seus clientes lhe enviarem aparecem aqui."
+        },
+        "no-results": "Nenhum pedido corresponde a esta pesquisa",
+        "error": "Não foi possível carregar os pedidos."
+    },
+    "actions": {
+        "new-order": "Novo pedido",
+        "cancel": "Cancelar pedido"
+    },
+    "errors": {
+        "versionConflict": "Este pedido mudou enquanto trabalhava nele. Actualize e tente de novo.",
+        "notAllowedForActor": "A sua empresa não pode fazer esta alteração.",
+        "notAllowed": "Não tem permissão para fazer isto.",
+        "notFound": "Não foi possível encontrar este pedido.",
+        "subscriptionRequired": "Esta funcionalidade é do plano pro. Fale connosco para a activar.",
+        "noteRequired": "Esta alteração precisa de uma explicação.",
+        "podRequired": "Esta alteração precisa do comprovativo de entrega anexado.",
+        "evidenceRequired": "Esta alteração precisa de um documento anexado.",
+        "incompleteForDispatch": "É preciso indicar o motorista e o camião antes de seguir para o carregamento.",
+        "dispatchRequired": "Escolha primeiro o motorista e o camião.",
+        "disputeOpen": "Este pedido tem uma disputa aberta. A Appload tem de a resolver primeiro.",
+        "driverNotRegistered": "Esse motorista não está registado na sua empresa.",
+        "truckNotRegistered": "Esse camião não está na sua frota.",
+        "trailerNotRegistered": "Esse reboque não está na sua frota.",
+        "linkNotRegistered": "Esse semi-reboque não está na sua frota.",
+        "invalidDocumentUrl": "Não foi possível aceitar esse ficheiro.",
+        "uploadFailed": "Não foi possível carregar o ficheiro. Tente de novo.",
+        "orderNotProspect": "Este pedido já não aceita propostas.",
+        "carrierNotConnected": "Um desses transportadores não está ligado à sua empresa.",
+        "notRequested": "Não foi contactado para cotar este pedido.",
+        "offerExists": "Já tem uma proposta neste pedido.",
+        "offerNotPending": "Essa proposta já foi decidida.",
+        "offerUnpriced": "A Appload ainda não fechou o preço desta proposta. Tente daqui a pouco.",
+        "offerRequired": "Para confirmar é preciso aceitar uma proposta.",
+        "carrierNotVerified": "A documentação desse transportador ainda não está verificada.",
+        "carrierContractMissing": "Esse transportador não tem contrato com a Appload.",
+        "carrierContractExpired": "O contrato desse transportador expirou.",
+        "carrierSuspended": "Esse transportador está suspenso.",
+        "invalid": "Alguns dos dados enviados não são válidos.",
+        "unknown": "Algo correu mal. Tente de novo."
+    },
+    "upgrade": {
+        "title": "Funcionalidade pro",
+        "description": "A sua empresa está no plano gratuito. O plano pro abre as partes do portal que movem carga.",
+        "features": {
+            "orders": "Registar pedidos e acompanhá-los até à entrega",
+            "requests": "Enviar pedidos aos seus transportadores e comparar propostas",
+            "quotes": "Cotar pedidos e publicar cotações permanentes"
+        },
+        "close": "Agora não",
+        "contact": "Falar connosco",
+        "subject": "Plano pro para {organization}"
+    },
+    "create": {
+        "title": "Novo pedido",
+        "description": "Registe a carga. Depois de registada pode enviá-la aos seus transportadores para receber propostas.",
+        "actions": {
+            "save": "Registar pedido",
+            "saving": "A registar...",
+            "cancel": "Cancelar"
+        },
+        "errors": {
+            "address": "Escolha um local da lista",
+            "category": "Escolha uma categoria",
+            "count": "Introduza um número inteiro maior que zero",
+            "currency": "Escolha uma moeda",
+            "date": "Escolha uma data",
+            "description": "Diga o que é a carga",
+            "distance": "Introduza a distância em quilómetros",
+            "list": "Escolha uma das opções",
+            "value": "Introduza um valor válido",
+            "weight": "Introduza o peso"
+        },
+        "toasts": {
+            "created": "Pedido {orderId} registado",
+            "detailsIncomplete": "Faltam alguns detalhes. Pode acrescentá-los mais tarde."
+        },
+        "form": {
+            "route": {
+                "title": "Rota e datas",
+                "fields": {
+                    "loadingAddress": {
+                        "label": "Local de carregamento",
+                        "placeholder": "Onde o camião carrega",
+                        "description": "Escolha o local a partir das sugestões"
+                    },
+                    "offloadingAddress": {
+                        "label": "Local de descarregamento",
+                        "placeholder": "Onde a carga é entregue",
+                        "description": "Escolha o local a partir das sugestões"
+                    },
+                    "expectedLoadingDate": {
+                        "label": "Data prevista de carregamento",
+                        "placeholder": "Escolha a data"
+                    },
+                    "expectedOffloadingDate": {
+                        "label": "Data prevista de descarregamento",
+                        "placeholder": "Escolha a data"
+                    },
+                    "routeType": {
+                        "label": "Rota",
+                        "placeholder": "Escolha a rota"
+                    },
+                    "tripType": {
+                        "label": "Viagem",
+                        "placeholder": "Escolha o tipo de viagem"
+                    },
+                    "distance": {
+                        "label": "Distância (km)",
+                        "placeholder": "0",
+                        "description": "Preenchida a partir dos dois locais; corrija se for preciso"
+                    }
+                }
+            },
+            "cargo": {
+                "title": "Carga",
+                "fields": {
+                    "category": {
+                        "label": "Categoria",
+                        "placeholder": "Escolha a categoria"
+                    },
+                    "description": {
+                        "label": "O que é a carga?",
+                        "placeholder": "Ex.: 30 paletes de água engarrafada"
+                    },
+                    "weight": {
+                        "label": "Peso",
+                        "placeholder": "0"
+                    },
+                    "loadType": {
+                        "label": "Tipo de carga",
+                        "placeholder": "Escolha o tipo de carga"
+                    },
+                    "packing": {
+                        "label": "Embalagem",
+                        "placeholder": "Escolha a embalagem"
+                    },
+                    "isHazardous": {
+                        "label": "Carga perigosa?"
+                    },
+                    "hazchemCode": {
+                        "label": "Código HAZCHEM",
+                        "placeholder": "Ex.: 3YE"
+                    },
+                    "isRefrigerated": {
+                        "label": "Carga refrigerada?"
+                    },
+                    "temperature": {
+                        "label": "Temperatura (°C)",
+                        "placeholder": "-18"
+                    },
+                    "temperatureInstructions": {
+                        "label": "Instruções de temperatura",
+                        "placeholder": "Ex.: Manter abaixo de -18 °C"
+                    }
+                }
+            },
+            "logistics": {
+                "title": "Entregas e valor",
+                "fields": {
+                    "deliveries": {
+                        "label": "Entregas",
+                        "placeholder": "1"
+                    },
+                    "expectedTrucks": {
+                        "label": "Camiões necessários",
+                        "placeholder": "1"
+                    },
+                    "currency": {
+                        "label": "Moeda",
+                        "placeholder": "Escolha a moeda",
+                        "description": "A moeda em que quer ser facturado"
+                    }
+                }
+            }
+        }
+    },
+    "requests": {
+        "title": "Transportadores contactados",
+        "sent-on": "Enviado a {date}",
+        "actions": {
+            "send": "Enviar a transportadores",
+            "withdraw": "Retirar solicitação"
+        },
+        "empty": {
+            "shipper": "Este pedido ainda não foi enviado a ninguém.",
+            "carrier": "Não foi contactado sobre este pedido."
+        },
+        "toasts": {
+            "sent": "{count, plural, one {Enviado a # transportador} other {Enviado a # transportadores}}",
+            "withdrawn": "Solicitação retirada"
+        },
+        "send": {
+            "title": "Enviar a transportadores",
+            "description": "Escolha os transportadores de quem quer propostas. Só as ligações aceites podem ser contactadas.",
+            "search": "Procurar nos seus transportadores",
+            "empty": "Nenhum transportador encontrado",
+            "already": "Já contactado",
+            "no-province": "Província não definida",
+            "selected": "{count} de {max} seleccionados",
+            "submit": "Enviar",
+            "message": {
+                "label": "Mensagem (opcional)",
+                "placeholder": "O que os transportadores devem saber antes de cotar",
+                "hint": "A mesma mensagem segue para todos os transportadores escolhidos."
+            }
+        }
+    },
+    "offers": {
+        "title": "Propostas",
+        "settled-hint": "Este pedido está confirmado; as propostas abaixo são o registo do que foi cotado.",
+        "record": "Com a Appload desde {date} · {trips} viagens",
+        "record-unknown": "Novo na Appload",
+        "empty": {
+            "shipper": "Ainda não há propostas. Envie o pedido aos seus transportadores.",
+            "carrier": "Ainda não cotou este pedido."
+        },
+        "includes": {
+            "git": "GIT",
+            "gps": "GPS"
+        },
+        "actions": {
+            "quote": "Cotar",
+            "accept": "Aceitar",
+            "decline": "Recusar",
+            "edit": "Editar proposta",
+            "withdraw": "Retirar proposta",
+            "menu": "Acções da proposta"
+        },
+        "fields": {
+            "fiscalRegime": "Regime fiscal",
+            "currency": "Moeda",
+            "total": "Preço (IVA incluído)",
+            "vat": "IVA",
+            "subtotal": "Subtotal",
+            "includes": "O que o preço cobre",
+            "notes": "Notas"
+        },
+        "errors": {
+            "currency": "Escolha uma moeda",
+            "list": "Escolha uma das opções",
+            "subtotal": "Introduza um valor válido",
+            "total": "Introduza o preço que está a pedir",
+            "value": "Introduza um valor válido"
+        },
+        "form": {
+            "title": "A sua cotação",
+            "edit-title": "Corrigir a sua cotação",
+            "description": "Um preço, com IVA incluído. A divisão abaixo resulta do seu regime fiscal.",
+            "fiscalRegime-placeholder": "Escolha o regime",
+            "currency-placeholder": "Escolha a moeda",
+            "total-placeholder": "0,00",
+            "total-description": "Quanto pede para transportar esta carga",
+            "derived": "Calculado por si",
+            "notes-placeholder": "O que o cliente deve saber",
+            "git-hint": "Inclui seguro de mercadoria em trânsito",
+            "gps-hint": "O camião é seguido por GPS",
+            "cancel": "Cancelar",
+            "save": "Guardar cotação",
+            "send": "Enviar cotação"
+        },
+        "accept": {
+            "title": "Confirmar com este transportador?",
+            "description": "{carrier} pediu {amount} para transportar esta carga.",
+            "consequences": "O pedido fica confirmado com este transportador, as outras propostas são fechadas e todos os transportadores contactados são informados.",
+            "back": "Ainda não",
+            "confirm": "Confirmar"
+        },
+        "toasts": {
+            "sent": "Cotação enviada",
+            "updated": "Cotação actualizada",
+            "withdrawn": "Cotação retirada",
+            "accepted": "Pedido confirmado",
+            "declined": "Proposta recusada"
+        }
+    },
+    "cancel": {
+        "title": "Cancelar este pedido?",
+        "description": "O pedido {orderId} será fechado e os transportadores contactados serão informados.",
+        "note": {
+            "label": "Porque está a ser cancelado?",
+            "placeholder": "Ex.: o cliente desistiu da carga",
+            "hint": "Pelo menos {min} caracteres. É o registo de porque a carga deixou de existir."
+        },
+        "back": "Manter o pedido",
+        "confirm": "Cancelar pedido",
+        "toasts": {
+            "cancelled": "Pedido cancelado"
+        }
+    },
+    "documents": {
+        "title": "Documentos",
+        "empty": "Ainda não há nada anexado.",
+        "open": "Abrir documento",
+        "types": {
+            "pod": "Comprovativo de entrega",
+            "shipper-invoice": "Factura ao cliente",
+            "carrier-invoice": "Factura do transportador",
+            "debit-note": "Nota de débito",
+            "credit-note": "Nota de crédito",
+            "proof-of-payment": "Comprovativo de pagamento",
+            "evidence": "Evidência",
+            "transport-order": "Ordem de transporte",
+            "other": "Outro"
+        },
+        "add": {
+            "action": "Anexar",
+            "title": "Anexar um documento",
+            "description": "PDF, JPG ou PNG. Fica registado neste pedido e ambas as partes podem lê-lo.",
+            "type": "Tipo",
+            "file": "Ficheiro",
+            "pick": "Escolher ficheiro",
+            "replace": "Escolher outro",
+            "remove": "Remover o ficheiro",
+            "hint": "Um ficheiro de cada vez.",
+            "format": "Só são aceites ficheiros PDF, JPG e PNG.",
+            "cancel": "Cancelar",
+            "submit": "Anexar"
+        },
+        "toasts": {
+            "added": "Documento anexado"
+        }
+    },
+    "timeline": {
+        "title": "Actividade",
+        "empty": "Ainda não aconteceu nada.",
+        "created": "Registado",
+        "system": "Appload",
+        "kinds": {
+            "transition": "Mudança de estado",
+            "update": "Detalhes actualizados",
+            "document": "Documento anexado",
+            "note": "Nota",
+            "payment": "Pagamento",
+            "flag": "Marcado para revisão",
+            "dispute": "Disputa",
+            "offer": "Proposta",
+            "system": "Sistema"
+        },
+        "offer": {
+            "created": "Cotação de {carrier} · {amount}",
+            "updated": "{carrier} corrigiu a cotação · {amount}",
+            "declined": "Cotação de {carrier} recusada",
+            "withdrawn": "{carrier} retirou a cotação",
+            "accepted": "Confirmado com {carrier} · {amount}",
+            "lost": "{carrier} perdeu esta",
+            "booked": "Confirmado com {carrier} · {amount}"
+        }
+    },
+    "transition": {
+        "title": "Mudar para {status}",
+        "description": "Pedido {orderId}",
+        "resume": "Retomar · {status}",
+        "menu": "Outras mudanças",
+        "confirm": "Confirmar",
+        "cancel": "Cancelar",
+        "toast": "Pedido mudou para {status}",
+        "errors": {
+            "driver": "Escolha um motorista registado",
+            "truck": "Escolha um camião da sua frota",
+            "note": "Escreva pelo menos algumas palavras",
+            "document": "Anexe o ficheiro"
+        },
+        "dispatch": {
+            "driver": {
+                "label": "Motorista",
+                "placeholder": "Procurar nos seus motoristas",
+                "description": "Só podem ser enviados motoristas registados pela sua empresa"
+            },
+            "truck": {
+                "label": "Camião",
+                "placeholder": "Procurar nos seus camiões"
+            },
+            "trailer": {
+                "label": "Reboque (opcional)",
+                "placeholder": "Procurar nos seus reboques"
+            },
+            "link": {
+                "label": "Semi-reboque (opcional)",
+                "placeholder": "Procurar nos seus semi-reboques"
+            }
+        },
+        "note": {
+            "label": "O que aconteceu?",
+            "optional": "Nota (opcional)",
+            "placeholder": "Diga o que mudou, numa linha ou duas",
+            "hint": "Pelo menos {min} caracteres."
+        },
+        "document": {
+            "pod": "Comprovativo de entrega",
+            "evidence": "Evidência",
+            "pick": "Escolher ficheiro",
+            "replace": "Escolher outro",
+            "remove": "Remover o ficheiro",
+            "format": "Só são aceites ficheiros PDF, JPG e PNG.",
+            "required": "Esta mudança precisa do ficheiro.",
+            "optional": "Anexe agora, ou mais tarde no cartão de documentos."
+        }
+    },
+    "detail": {
+        "meta": "Pedido {orderId}",
+        "error": "Não foi possível carregar este pedido.",
+        "back": "Voltar à lista",
+        "trip": "Onde está a viagem",
+        "since": "desde {date}",
+        "expected": "previsto {date}",
+        "footer": "Registado a {created} · última alteração {updated}",
+        "money-hint": "Apenas o seu lado do negócio; o preço da outra parte não é mostrado.",
+        "operations-empty": "Ainda não há motorista nem camião indicados.",
+        "sections": {
+            "trip": "Viagem e carga",
+            "money": "O seu valor",
+            "operations": "Motorista e camião"
+        },
+        "fields": {
+            "route": "Rota",
+            "expectedLoading": "Carregamento previsto",
+            "expectedOffloading": "Descarregamento previsto",
+            "actualLoading": "Carregado a",
+            "actualOffloading": "Descarregado a",
+            "distance": "Distância",
+            "routeType": "Tipo de rota",
+            "cargo": "Carga",
+            "weight": "Peso",
+            "loadType": "Tipo de carga",
+            "packing": "Embalagem",
+            "deliveries": "Entregas",
+            "trucks": "Camiões",
+            "subtotal": "Subtotal",
+            "vat": "IVA",
+            "total": "Total",
+            "driver": "Motorista",
+            "driverPhone": "Telefone",
+            "driverPassport": "Documento",
+            "truck": "Camião",
+            "trailer": "Reboque",
+            "link": "Semi-reboque",
+            "truckAge": "Idade do camião",
+            "pod": "Comprovativo de entrega"
+        },
+        "values": {
+            "km": "{km} km",
+            "hazardous": "Perigosa",
+            "hazardous-code": "Perigosa · {code}",
+            "refrigerated": "Refrigerada",
+            "refrigerated-at": "Refrigerada · {temperature} °C"
+        }
+    }
+}
