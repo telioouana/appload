@@ -1,1 +1,100 @@
-{}
+{
+    "title": "Notificações",
+    "description": "Tudo o que aconteceu à sua empresa no portal.",
+    "unread": "Por ler",
+    "bell": {
+        "label": "Notificações",
+        "unread": "{count, plural, one {# notificação por ler} other {# notificações por ler}}",
+        "overflow": "{count}+"
+    },
+    "popover": {
+        "empty": "Não há nada por aqui.",
+        "view-all": "Ver todas"
+    },
+    "filters": {
+        "all": "Todas",
+        "unread": "Por ler",
+        "any-kind": "Todos os tipos"
+    },
+    "families": {
+        "connections": "Parceiros",
+        "orders": "Pedidos",
+        "quotes": "Cotações",
+        "trips": "Viagens",
+        "account": "Conta"
+    },
+    "actions": {
+        "mark-all": "Marcar todas como lidas",
+        "mark-all-short": "Marcar todas"
+    },
+    "data": {
+        "empty": {
+            "title": "Ainda não há notificações.",
+            "description": "Assim que algo acontecer aos seus pedidos, parceiros ou viagens, aparece aqui."
+        },
+        "no-results": {
+            "title": "Nada com estes filtros.",
+            "description": "Retire um filtro para ver mais."
+        },
+        "error": "Não foi possível carregar as notificações."
+    },
+    "toasts": {
+        "all-read": "{count, plural, =0 {Não havia nada por ler} one {# notificação marcada como lida} other {# notificações marcadas como lidas}}"
+    },
+    "errors": {
+        "unknown": "Não foi possível concluir. Tente novamente."
+    },
+    "kind-labels": {
+        "connection-requested": "Pedido de ligação",
+        "connection-accepted": "Ligação aceite",
+        "connection-declined": "Ligação recusada",
+        "connection-removed": "Ligação terminada",
+        "claim-approved": "Acesso aprovado",
+        "claim-rejected": "Acesso recusado",
+        "member-joined": "Novo membro",
+        "order-requested": "Pedido de cotação",
+        "order-quoted": "Pedido cotado",
+        "order-booked": "Pedido confirmado",
+        "order-status": "Mudança de estado",
+        "order-cancelled": "Pedido cancelado",
+        "order-document": "Documento anexado",
+        "quote-received": "Cotação recebida",
+        "quote-accepted": "Cotação aceite",
+        "quote-declined": "Cotação recusada",
+        "quote-withdrawn": "Cotação retirada",
+        "trip-started": "Viagem iniciada",
+        "trip-delivered": "Viagem entregue",
+        "trip-no-response": "Motorista sem resposta",
+        "subscription-changed": "Plano alterado"
+    },
+    "kinds": {
+        "connection-requested": "{partnerName} quer ligar-se à sua empresa.",
+        "connection-accepted": "{partnerName} aceitou a sua ligação.",
+        "connection-declined": "{partnerName} recusou a sua ligação.",
+        "connection-removed": "{partnerName} terminou a ligação com a sua empresa.",
+        "claim-approved": "O seu acesso ao portal foi aprovado.",
+        "claim-rejected": "O seu pedido de acesso ao portal foi recusado.",
+        "member-joined": "Entrou um novo membro na sua empresa.",
+        "order-requested": "{shipperName} pediu-lhe uma cotação para o pedido {orderId}.",
+        "order-quoted": "{carrierName} cotou o pedido {orderId}.",
+        "order-booked": "O pedido {orderId} foi confirmado.",
+        "order-status": "{to, select, prospect{O pedido {orderId} voltou a cotação.} booked{O pedido {orderId} foi confirmado.} loading{O pedido {orderId} está em carregamento.} offloading{O pedido {orderId} está em descarregamento.} stopped{O pedido {orderId} está parado.} issue{O pedido {orderId} está com um problema.} delivered{O pedido {orderId} foi entregue.} completed{O pedido {orderId} está concluído.} cancelled{O pedido {orderId} foi cancelado.} underbid{O pedido {orderId} foi perdido por preço.} other{O pedido {orderId} mudou de estado.}}",
+        "order-cancelled": "O pedido {orderId} foi cancelado.",
+        "order-document": "Foi anexado {documentType, select, pod{um comprovativo de entrega} evidence{uma evidência} other{um documento}} ao pedido {orderId}.",
+        "quote-received": "{carrierName} enviou-lhe uma cotação.",
+        "quote-accepted": "{clientName} aceitou a sua cotação e o pedido {orderId} foi criado.",
+        "quote-declined": "Uma cotação sua foi recusada.",
+        "quote-withdrawn": "{carrierName} retirou a cotação que lhe tinha enviado.",
+        "trip-started": "{organizationName} pôs a viagem {ref} a caminho: {origin} → {destination}.",
+        "trip-delivered": "A viagem {ref} de {organizationName} chegou a {destination}.",
+        "trip-no-response": "{driverName} não respondeu ao pedido de localização da viagem {ref}.",
+        "subscription-changed": "{plan, select, starter{A sua empresa passou para o plano Starter.} business{A sua empresa passou para o plano Business.} enterprise{A sua empresa passou para o plano Enterprise.} other{A sua empresa ficou sem plano activo.}}"
+    },
+    "email": {
+        "subject": "Appload — {title}",
+        "greeting": "Olá, tem uma novidade na sua conta Appload.",
+        "cta": "Abrir no portal",
+        "disclaimer": "Recebeu esta mensagem porque a sua empresa usa o portal Appload.",
+        "footer": "Pode acompanhar tudo no portal, a qualquer momento."
+    }
+}

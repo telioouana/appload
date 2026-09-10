@@ -54,6 +54,12 @@ const SCHEDULES = [
         cron: "CRON_TZ=Africa/Maputo */15 8-9,17-18 * * *",
         note: "trip location requests, 08:00-09:45 and 17:00-18:45 Maputo",
     },
+    {
+        id: "appload-app-notifications",
+        path: "/api/cron/notifications",
+        cron: "*/5 * * * *",
+        note: "materializes admin order events and sends the notification email outbox",
+    },
 ];
 
 const token = env("QSTASH_TOKEN");

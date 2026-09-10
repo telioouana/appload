@@ -286,8 +286,7 @@
                 },
                 "sign-out": "Sign out"
             },
-            "command": "Search anywhere (⌘K)",
-            "notifications": "Notifications"
+            "command": "Search anywhere (⌘K)"
         },
         "access-denied": {
             "title": "Access restricted",

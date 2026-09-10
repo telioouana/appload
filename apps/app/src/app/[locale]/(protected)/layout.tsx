@@ -1,24 +1,21 @@
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
-import { IconBell } from "@tabler/icons-react"
 
 import { db } from "@workspace/db/db"
 import { auth } from "@workspace/auth/server"
-import { getTranslations } from "@workspace/i18n/server"
 import { getTenantGates } from "@workspace/trpc/tenant-gate"
 
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@workspace/ui/components/sidebar"
 
 import { Sidenav } from "@/frontend/components/navigation/sidenav"
 import { AccessDenied } from "@/frontend/components/access-denied"
+import { NotificationBell } from "@/frontend/components/notifications/notification-bell"
 
 export default async function Layout({
     children,
 }: Readonly<{
     children: React.ReactNode
 }>) {
-    const t = await getTranslations("App.shell")
-
     // proxy.ts only checks that a session cookie exists; this is the first
     // point that validates it. Layouts don't re-run on soft navigation, so
     // the tRPC gates remain the authoritative check per request — this gate
@@ -57,16 +54,7 @@ export default async function Layout({
                 <header className="flex h-12 shrink-0 items-center gap-2 px-2">
                     <SidebarTrigger className="md:hidden" />
 
-                    {/* Placeholder for the notification centre (M6): the bell
-                        has its seat in the header from the first release, so
-                        wiring it later moves nothing else */}
-                    <span
-                        className="ml-auto inline-flex size-9 items-center justify-center rounded-full text-muted-foreground/60"
-                        aria-hidden="true"
-                    >
-                        <IconBell className="size-5" stroke={1.5} />
-                    </span>
-                    <span className="sr-only">{t("notifications")}</span>
+                    <NotificationBell className="ml-auto" />
                 </header>
 
                 <main className="mx-4 flex-1 min-h-0 flex flex-col overflow-hidden">

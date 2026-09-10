@@ -33,8 +33,13 @@ export const NOTIFICATION_KIND = [
 
 export type NotificationKind = (typeof NOTIFICATION_KIND)[number];
 
-/** Where the notification's email is in its own lifecycle — see `notification.emailState`. */
-export const EMAIL_STATE = ["none", "pending", "sent", "failed"] as const;
+/**
+ * Where the notification's email is in its own lifecycle — see
+ * `notification.emailState`. "sending" is the outbox worker's claim: a row it
+ * has taken out of the queue and not yet settled, which is what keeps two
+ * overlapping runs from sending the same email twice.
+ */
+export const EMAIL_STATE = ["none", "pending", "sending", "sent", "failed"] as const;
 export type EmailState = (typeof EMAIL_STATE)[number];
 
 // Display-safe values only, same rule as activity_log's params

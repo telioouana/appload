@@ -286,8 +286,7 @@
                 },
                 "sign-out": "Terminar sessão"
             },
-            "command": "Pesquisar em todo o lado (⌘K)",
-            "notifications": "Notificações"
+            "command": "Pesquisar em todo o lado (⌘K)"
         },
         "access-denied": {
             "title": "Acesso restrito",

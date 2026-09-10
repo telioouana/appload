@@ -232,6 +232,9 @@ export const organizationsRouter = createTRPCRouter({
             await notify(ctx.db, {
                 organizationId: updated.id,
                 kind: "subscription.changed",
+                // The plan lives on the portal's settings page, which is where
+                // both the row and its email send the reader
+                entityType: "subscription",
                 params: { plan: updated.plan ?? "none" },
                 email: true,
             });
