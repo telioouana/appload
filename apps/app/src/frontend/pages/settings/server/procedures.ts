@@ -1,9 +1,10 @@
-import { and, eq, or, sql } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { APIError } from "better-auth/api";
 
 import { partnerConnection } from "@workspace/db/connections";
 import { movement } from "@workspace/db/movements";
+import { order } from "@workspace/db/orders";
 import { organization, user } from "@workspace/db/users";
 import { AddressSchema, type Address } from "@workspace/db/types";
 
@@ -15,22 +16,29 @@ import {
     type TrackingAllowance,
 } from "@workspace/domain/subscription";
 
+import { conditionCount } from "@workspace/domain/orders/predicates";
+import { pendingOfferCount } from "@workspace/domain/orders/transition";
+
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 import type { OrgStatus, OrgType, TenantPlan, TenantRole } from "@workspace/trpc/tenant-gate";
 
 import { ChangePasswordBaseSchema } from "@/backend/schemas/settings";
 import { UpdateCompanyBaseSchema } from "@/backend/schemas/company";
+import { myRequest, visibleOrders } from "@/frontend/pages/orders/server/projection";
 
 /**
  * The numbers on the rail, each for the one list it leads to: work partners
  * offered this company and are waiting on, its own orders a partner turned
- * down (to place again), and connection requests it has not answered.
+ * down (to place again), connection requests it has not answered, and the
+ * brokerage's own queue — a carrier's unanswered requests and booked orders
+ * with nobody driving, a shipper's offers to decide.
  */
 export type RailCounts = {
     inbox: number;
     declined: number;
     partners: number;
+    appload: { newRequests: number; toDispatch: number; offersToReview: number };
 };
 
 export type MeSession = {
@@ -165,11 +173,19 @@ export const meRouter = createTRPCRouter({
      * entry opens will show — the Orders inbox, the turned-down loads inside
      * Orders' procurement section, the incoming requests on Partners — so a
      * badge never promises a row the page does not have.
+     *
+     * Its own read, never the pages' stats: the rail mounts above every
+     * page's hydration boundary, and a query it observed first would be
+     * hydrated only after the page's server render had already asked for it
+     * again — without the cookie. The brokerage counts are the same
+     * predicates `orders.stats` counts with.
      */
     railCounts: tenantProcedure.query(async ({ ctx }): Promise<RailCounts> => {
         const tenantId = ctx.tenant.organizationId;
+        const shipper = ctx.tenant.orgType === "shipper";
+        const zero = sql<number>`0`.mapWith(Number);
 
-        const [loads, connections] = await Promise.all([
+        const [loads, connections, brokerage] = await Promise.all([
             ctx.db
                 .select({
                     inbox: sql<number>`count(*) filter (where ${movement.carrierOrgId} = ${tenantId} and ${movement.status} = 'offered')::int`,
@@ -186,12 +202,30 @@ export const meRouter = createTRPCRouter({
                 .from(partnerConnection)
                 .where(and(eq(partnerConnection.targetOrgId, tenantId), eq(partnerConnection.status, "pending")))
                 .then((rows) => rows[0]),
+            ctx.db
+                .select({
+                    newRequests: shipper ? zero : conditionCount(myRequest(tenantId, ["requested"])),
+                    toDispatch: shipper
+                        ? zero
+                        : conditionCount(and(eq(order.carrierId, tenantId), eq(order.status, "booked"), isNull(order.driverId))!),
+                    offersToReview: shipper
+                        ? conditionCount(and(eq(order.status, "prospect"), sql`${pendingOfferCount} > 0`)!)
+                        : zero,
+                })
+                .from(order)
+                .where(visibleOrders(tenantId, ctx.tenant.orgType))
+                .then((rows) => rows[0]),
         ]);
 
         return {
             inbox: Number(loads?.inbox ?? 0),
             declined: Number(loads?.declined ?? 0),
             partners: Number(connections?.incoming ?? 0),
+            appload: {
+                newRequests: Number(brokerage?.newRequests ?? 0),
+                toDispatch: Number(brokerage?.toDispatch ?? 0),
+                offersToReview: Number(brokerage?.offersToReview ?? 0),
+            },
         };
     }),
 

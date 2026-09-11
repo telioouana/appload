@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import {
     IconArrowBackUp,
     IconBan,
@@ -84,6 +84,14 @@ export function LoadActions({
     const { withdraw, requestLocation } = useMovementMutations()
 
     const [open, setOpen] = useState<Open>(null)
+    // Set when a menu item opens a dialog or the sheet: the menu must not
+    // hand focus back to its trigger as it closes, or the sheet it just
+    // opened reads that as a click away and shuts again
+    const fromMenu = useRef(false)
+    const openFromMenu = (next: Open) => {
+        fromMenu.current = true
+        setOpen(next)
+    }
     const [planReason, setPlanReason] = useState<PlanReason | null>(null)
 
     const close = () => setOpen(null)
@@ -169,9 +177,17 @@ export function LoadActions({
                             </Button>
                         </DropdownMenuTrigger>
 
-                        <DropdownMenuContent align="end" className="min-w-52">
+                        <DropdownMenuContent
+                            align="end"
+                            className="min-w-52"
+                            onCloseAutoFocus={(event) => {
+                                if (!fromMenu.current) return
+                                fromMenu.current = false
+                                event.preventDefault()
+                            }}
+                        >
                             {canEdit && (
-                                <DropdownMenuItem onSelect={() => setOpen({ kind: "edit" })}>
+                                <DropdownMenuItem onSelect={() => openFromMenu({ kind: "edit" })}>
                                     <IconPencil stroke={1.5} />
                                     {t("actions.edit")}
                                 </DropdownMenuItem>
@@ -185,7 +201,7 @@ export function LoadActions({
                             )}
 
                             {permissions.canConvert && (
-                                <DropdownMenuItem onSelect={() => setOpen({ kind: "convert" })}>
+                                <DropdownMenuItem onSelect={() => openFromMenu({ kind: "convert" })}>
                                     <IconTransfer stroke={1.5} />
                                     {t(load.execution === "own-fleet" ? "actions.convert.to-partner" : "actions.convert.to-own-fleet")}
                                 </DropdownMenuItem>
@@ -206,7 +222,7 @@ export function LoadActions({
                                     <DropdownMenuItem
                                         variant="destructive"
                                         disabled={cancel.blocker !== null}
-                                        onSelect={() => setOpen({ kind: "transition", option: cancel })}
+                                        onSelect={() => openFromMenu({ kind: "transition", option: cancel })}
                                     >
                                         <IconBan stroke={1.5} />
                                         {t("actions.to.cancelled")}

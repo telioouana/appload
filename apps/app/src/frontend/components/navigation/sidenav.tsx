@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { useEffect } from "react";
+import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
     type Icon,
@@ -134,6 +135,7 @@ export function Sidenav({
     const to = useTranslations("App.orders.sections")
     const g = useTranslations("General")
     const pathname = usePathname()
+    const params = useParams<Record<string, string | string[]>>()
     const trpc = useTRPC()
     const { setOpenMobile } = useSidebar()
 
@@ -146,11 +148,11 @@ export function Sidenav({
         setOpenMobile(false)
     }, [pathname, setOpenMobile])
 
-    // One cheap read for the loads and the partners; a minute stale is fine
-    // for a badge. The brokerage's own counts are the stats its pages already
-    // read, and the unread number is the bell's query — one request for both
+    // One cheap read for every badge; a minute stale is fine for a count.
+    // Never a page's own query: the rail sits above the pages' hydration, and
+    // a key it observed first reaches a page's server render empty. The
+    // unread number is the bell's query, which no page suspends on
     const { data: counts } = useQuery({ ...trpc.me.railCounts.queryOptions(), staleTime: 60_000 })
-    const { data: brokerage } = useQuery({ ...trpc.orders.stats.queryOptions(), staleTime: 60_000 })
     const { data: unread } = useQuery(trpc.notifications.unreadCount.queryOptions(undefined, { refetchInterval: UNREAD_POLL_MS }))
 
     const carrier = orgType === "carrier"
@@ -204,8 +206,8 @@ export function Sidenav({
                     match: `/appload/${section}`,
                     path: { pathname: "/appload/[section]" as const, params: { section } },
                     badge: carrier
-                        ? section === "requests" ? brokerage?.attention.newRequests : section === "booked" ? brokerage?.attention.toDispatch : undefined
-                        : section === "quoted" ? brokerage?.attention.offersToReview : undefined,
+                        ? section === "requests" ? counts?.appload.newRequests : section === "booked" ? counts?.appload.toDispatch : undefined
+                        : section === "quoted" ? counts?.appload.offersToReview : undefined,
                 })),
                 { Icon: IconFileInvoice, name: t("work.quotes"), match: "/appload/quotes", path: "/appload/quotes" },
             ],
@@ -243,9 +245,17 @@ export function Sidenav({
         },
     ]
 
+    // With localized pathnames next-intl hands back the route template
+    // ("/orders/[section]"), so the segments are filled back in from the
+    // params before a section row can tell it is the one on screen
+    const current = pathname.replace(/\[([^\]]+)\]/g, (_, key: string) => {
+        const value = params[key]
+        return Array.isArray(value) ? value.join("/") : value ?? ""
+    })
+
     // The quotes live under /appload too, so the sections test for an exact
     // segment rather than a prefix that would light "all" up on /appload/quotes
-    const isOn = (match: string) => pathname === match || pathname.startsWith(`${match}/`)
+    const isOn = (match: string) => current === match || current.startsWith(`${match}/`)
 
     const renderEntries = (entries: NavEntry[]) => entries.map((item) => {
         const isActive = isOn(item.match);
