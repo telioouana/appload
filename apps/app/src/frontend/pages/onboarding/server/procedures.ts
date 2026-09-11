@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { APIError } from "better-auth/api";
-import { and, eq, isNull, or, sql } from "drizzle-orm";
+import { and, eq, isNull, ne, or, sql } from "drizzle-orm";
 
 import type { Auth } from "@workspace/auth/server";
 import type { db as Database } from "@workspace/db/db";
@@ -8,6 +8,7 @@ import type { Address } from "@workspace/db/types";
 import { invitation, member, organization, user } from "@workspace/db/users";
 import { organizationClaim, partnerConnection } from "@workspace/db/connections";
 import { notificationCursor } from "@workspace/db/notifications";
+import { notify } from "@workspace/domain/notifications";
 
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "@workspace/trpc/init";
@@ -276,6 +277,10 @@ export const onboardingRouter = createTRPCRouter({
      * membership from the database, never from the request — and the stamp
      * is written only while it is null: re-accepting must not move the day
      * the company joined.
+     *
+     * It is also the one place a colleague joining an existing company is
+     * seen, so the people already there hear about it — once per member,
+     * whatever calls this again (the dedupe key).
      */
     activate: tenantProcedure.mutation(async ({ ctx }): Promise<{ ok: true }> => {
         const now = new Date();
@@ -292,6 +297,24 @@ export const onboardingRouter = createTRPCRouter({
             .insert(notificationCursor)
             .values({ organizationId: ctx.tenant.organizationId, lastHistoryCreatedAt: now })
             .onConflictDoNothing();
+
+        const [others, [joiner]] = await Promise.all([
+            ctx.db
+                .select({ userId: member.userId })
+                .from(member)
+                .where(and(eq(member.organizationId, ctx.tenant.organizationId), ne(member.userId, ctx.tenant.userId))),
+            ctx.db.select({ name: user.name, email: user.email }).from(user).where(eq(user.id, ctx.tenant.userId)).limit(1),
+        ]);
+
+        if (others.length > 0) {
+            await notify(ctx.db, {
+                organizationId: ctx.tenant.organizationId,
+                kind: "member.joined",
+                userIds: others.map((row) => row.userId),
+                params: { memberName: joiner?.name.trim() || joiner?.email || "" },
+                dedupeKey: `member:${ctx.tenant.userId}`,
+            });
+        }
 
         return { ok: true };
     }),

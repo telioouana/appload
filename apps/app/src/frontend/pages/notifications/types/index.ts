@@ -5,20 +5,32 @@ import type { NotificationKind, NotificationParams } from "@workspace/db/notific
 
 // ---------------------------------------------------------------------------
 // Families. The filter groups the vocabulary the way the portal itself is
-// organized, so a reader picks "Orders" without meeting the twenty-one kind
+// organized, so a reader picks "Your loads" without meeting the two dozen kind
 // names behind it. Every kind belongs to exactly one family.
 // ---------------------------------------------------------------------------
 
-export const KIND_FAMILIES = ["connections", "orders", "quotes", "trips", "account"] as const;
+export const KIND_FAMILIES = ["connections", "loads", "orders", "quotes", "account"] as const;
 
 export type KindFamily = (typeof KIND_FAMILIES)[number];
 
 export const KINDS_BY_FAMILY: Record<KindFamily, NotificationKind[]> = {
     connections: ["connection.requested", "connection.accepted", "connection.declined", "connection.removed"],
+    // The company's own orders and trips, whoever moves them
+    loads: [
+        "movement.offered",
+        "movement.accepted",
+        "movement.declined",
+        "movement.started",
+        "movement.delivered",
+        "movement.cancelled",
+        "movement.withdrawn",
+        "movement.no-response",
+        "movement.document",
+    ],
+    // Appload's brokerage
     orders: ["order.requested", "order.quoted", "order.booked", "order.status", "order.cancelled", "order.document"],
     quotes: ["quote.received", "quote.accepted", "quote.declined", "quote.withdrawn"],
-    trips: ["movement.started", "movement.delivered", "movement.no-response"],
-    account: ["claim.approved", "claim.rejected", "member.joined", "subscription.changed"],
+    account: ["claim.approved", "member.joined", "subscription.changed"],
 };
 
 /** The whole vocabulary, as the families spell it out — what the URL is read against. */

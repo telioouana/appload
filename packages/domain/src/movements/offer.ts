@@ -180,7 +180,7 @@ export async function withdrawOffer(
     if (row.carrierOrgId) {
         await notify(db, {
             organizationId: row.carrierOrgId,
-            kind: "movement.cancelled",
+            kind: "movement.withdrawn",
             email: false,
             entityType: "movement",
             entityId: row.id,
@@ -189,7 +189,6 @@ export async function withdrawOffer(
                 organizationName: await organizationName(db, actor.organizationId),
                 origin: place(row.origin),
                 destination: place(row.destination),
-                reason: "withdrawn",
             },
         });
     }

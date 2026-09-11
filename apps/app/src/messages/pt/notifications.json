@@ -18,9 +18,9 @@
     },
     "families": {
         "connections": "Parceiros",
-        "orders": "Pedidos",
+        "orders": "Pedidos Appload",
         "quotes": "Cotações",
-        "trips": "Viagens",
+        "loads": "As suas cargas",
         "account": "Conta"
     },
     "actions": {
@@ -30,7 +30,7 @@
     "data": {
         "empty": {
             "title": "Ainda não há notificações.",
-            "description": "Assim que algo acontecer aos seus pedidos, parceiros ou viagens, aparece aqui."
+            "description": "Assim que algo acontecer às suas cargas, pedidos ou parceiros, aparece aqui."
         },
         "no-results": {
             "title": "Nada com estes filtros.",
@@ -50,7 +50,6 @@
         "connection-declined": "Ligação recusada",
         "connection-removed": "Ligação terminada",
         "claim-approved": "Acesso aprovado",
-        "claim-rejected": "Acesso recusado",
         "member-joined": "Novo membro",
         "order-requested": "Pedido de cotação",
         "order-quoted": "Pedido cotado",
@@ -62,9 +61,15 @@
         "quote-accepted": "Cotação aceite",
         "quote-declined": "Cotação recusada",
         "quote-withdrawn": "Cotação retirada",
-        "trip-started": "Viagem iniciada",
-        "trip-delivered": "Viagem entregue",
-        "trip-no-response": "Motorista sem resposta",
+        "movement-offered": "Carga oferecida",
+        "movement-accepted": "Oferta aceite",
+        "movement-declined": "Oferta recusada",
+        "movement-started": "Carga a caminho",
+        "movement-delivered": "Carga entregue",
+        "movement-cancelled": "Carga cancelada",
+        "movement-withdrawn": "Oferta retirada",
+        "movement-no-response": "Motorista sem resposta",
+        "movement-document": "Documento adicionado",
         "subscription-changed": "Plano alterado"
     },
     "kinds": {
@@ -73,8 +78,7 @@
         "connection-declined": "{partnerName} recusou a sua ligação.",
         "connection-removed": "{partnerName} terminou a ligação com a sua empresa.",
         "claim-approved": "O seu acesso ao portal foi aprovado.",
-        "claim-rejected": "O seu pedido de acesso ao portal foi recusado.",
-        "member-joined": "Entrou um novo membro na sua empresa.",
+        "member-joined": "{memberName} entrou na sua empresa.",
         "order-requested": "{shipperName} pediu-lhe uma cotação para o pedido {orderId}.",
         "order-quoted": "{carrierName} cotou o pedido {orderId}.",
         "order-booked": "O pedido {orderId} foi confirmado.",
@@ -85,9 +89,15 @@
         "quote-accepted": "{clientName} aceitou a sua cotação e o pedido {orderId} foi criado.",
         "quote-declined": "Uma cotação sua foi recusada.",
         "quote-withdrawn": "{carrierName} retirou a cotação que lhe tinha enviado.",
-        "trip-started": "{organizationName} pôs a viagem {ref} a caminho: {origin} → {destination}.",
-        "trip-delivered": "A viagem {ref} de {organizationName} chegou a {destination}.",
-        "trip-no-response": "{driverName} não respondeu ao pedido de localização da viagem {ref}.",
+        "movement-offered": "{organizationName} ofereceu-lhe a carga {ref}: {origin} → {destination}, por {total} {currency}.",
+        "movement-accepted": "{organizationName} aceitou a carga {ref} ({origin} → {destination}).",
+        "movement-declined": "{organizationName} recusou a carga {ref} ({origin} → {destination}); é preciso entregá-la a outro parceiro.",
+        "movement-started": "A carga {ref} está a caminho: {origin} → {destination}.",
+        "movement-delivered": "A carga {ref} chegou a {destination}.",
+        "movement-cancelled": "A carga {ref} ({origin} → {destination}) foi cancelada.",
+        "movement-withdrawn": "{organizationName} retirou a oferta da carga {ref} ({origin} → {destination}).",
+        "movement-no-response": "{driverName} não respondeu ao pedido de localização da carga {ref}.",
+        "movement-document": "{type, select, pod {Um comprovativo de entrega} cmr {Um CMR} invoice {Uma fatura} receipt {Um recibo} other {Um documento}} foi adicionado à carga {ref}.",
         "subscription-changed": "{plan, select, starter{A sua empresa passou para o plano Starter.} business{A sua empresa passou para o plano Business.} enterprise{A sua empresa passou para o plano Enterprise.} other{A sua empresa ficou sem plano activo.}}"
     },
     "email": {

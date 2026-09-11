@@ -18,9 +18,9 @@
     },
     "families": {
         "connections": "Partners",
-        "orders": "Orders",
+        "orders": "Appload orders",
         "quotes": "Quotes",
-        "trips": "Trips",
+        "loads": "Your loads",
         "account": "Account"
     },
     "actions": {
@@ -30,7 +30,7 @@
     "data": {
         "empty": {
             "title": "No notifications yet.",
-            "description": "As soon as something happens to your orders, partners or trips, it shows up here."
+            "description": "As soon as something happens to your loads, orders or partners, it shows up here."
         },
         "no-results": {
             "title": "Nothing matches these filters.",
@@ -50,7 +50,6 @@
         "connection-declined": "Connection declined",
         "connection-removed": "Connection ended",
         "claim-approved": "Access approved",
-        "claim-rejected": "Access declined",
         "member-joined": "New member",
         "order-requested": "Quote requested",
         "order-quoted": "Order quoted",
@@ -62,9 +61,15 @@
         "quote-accepted": "Quote accepted",
         "quote-declined": "Quote declined",
         "quote-withdrawn": "Quote withdrawn",
-        "trip-started": "Trip started",
-        "trip-delivered": "Trip delivered",
-        "trip-no-response": "Driver silent",
+        "movement-offered": "Load offered",
+        "movement-accepted": "Offer accepted",
+        "movement-declined": "Offer declined",
+        "movement-started": "Load on the road",
+        "movement-delivered": "Load delivered",
+        "movement-cancelled": "Load cancelled",
+        "movement-withdrawn": "Offer withdrawn",
+        "movement-no-response": "Driver silent",
+        "movement-document": "Document added",
         "subscription-changed": "Plan changed"
     },
     "kinds": {
@@ -73,8 +78,7 @@
         "connection-declined": "{partnerName} declined your connection.",
         "connection-removed": "{partnerName} ended the connection with your company.",
         "claim-approved": "Your access to the portal was approved.",
-        "claim-rejected": "Your request for access to the portal was declined.",
-        "member-joined": "A new member joined your company.",
+        "member-joined": "{memberName} joined your company.",
         "order-requested": "{shipperName} asked you to quote order {orderId}.",
         "order-quoted": "{carrierName} quoted order {orderId}.",
         "order-booked": "Order {orderId} was booked.",
@@ -85,9 +89,15 @@
         "quote-accepted": "{clientName} accepted your quote and order {orderId} was created.",
         "quote-declined": "A quote of yours was declined.",
         "quote-withdrawn": "{carrierName} withdrew the quote they had sent you.",
-        "trip-started": "{organizationName} put trip {ref} on the road: {origin} → {destination}.",
-        "trip-delivered": "Trip {ref} from {organizationName} arrived in {destination}.",
-        "trip-no-response": "{driverName} did not answer the location request for trip {ref}.",
+        "movement-offered": "{organizationName} offered you load {ref}: {origin} → {destination}, for {total} {currency}.",
+        "movement-accepted": "{organizationName} accepted load {ref} ({origin} → {destination}).",
+        "movement-declined": "{organizationName} declined load {ref} ({origin} → {destination}); it needs another partner.",
+        "movement-started": "Load {ref} is on the road: {origin} → {destination}.",
+        "movement-delivered": "Load {ref} arrived in {destination}.",
+        "movement-cancelled": "Load {ref} ({origin} → {destination}) was cancelled.",
+        "movement-withdrawn": "{organizationName} withdrew the offer of load {ref} ({origin} → {destination}).",
+        "movement-no-response": "{driverName} did not answer the location request for load {ref}.",
+        "movement-document": "{type, select, pod {A proof of delivery} cmr {A CMR} invoice {An invoice} receipt {A receipt} other {A document}} was added to load {ref}.",
         "subscription-changed": "{plan, select, starter{Your company moved to the Starter plan.} business{Your company moved to the Business plan.} enterprise{Your company moved to the Enterprise plan.} other{Your company has no active plan.}}"
     },
     "email": {
