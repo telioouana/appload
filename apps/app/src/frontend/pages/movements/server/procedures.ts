@@ -79,6 +79,8 @@ import {
     loadNames,
     loadOwn,
     loadPings,
+    loadTerminalProofs,
+    loadTerminalRigs,
     loadVisible,
     sectionPredicate,
     toMovementDetail,
@@ -307,12 +309,17 @@ function ordering(sort: ListInput["sort"], dir: "asc" | "desc"): SQL[] {
 async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<MovementRow[]> {
     const roles = rows.map((row) => ({ row, role: roleOrThrow(row, tenantId) }));
     const trails = await trailIds(db, rows);
-    const [names, pings] = await Promise.all([
+    const linkedTerminals = rows.filter((row) => row.executionMovementId).map((row) => trails.get(row.id) ?? row.id);
+    const [names, pings, rigs] = await Promise.all([
         loadNames(db, rows.flatMap((row) => [row.organizationId, row.clientOrgId, row.carrierOrgId])),
         loadPings(db, [...trails.values()]),
+        loadTerminalRigs(db, linkedTerminals),
     ]);
 
-    return roles.map(({ row, role }) => toMovementRow(row, role, { names, pings, trailId: trails.get(row.id) ?? row.id }));
+    return roles.map(({ row, role }) => {
+        const trailId = trails.get(row.id) ?? row.id;
+        return toMovementRow(row, role, { names, pings, trailId, terminalRig: rigs.get(trailId) ?? null });
+    });
 }
 
 function roleOrThrow(row: Movement, tenantId: string) {
@@ -328,7 +335,9 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
     const owner = role === "owner";
     const trailId = row.executionMovementId ? await terminalMovementId(db, row.id) : row.id;
 
-    const [names, pings, costs, documents, events, hasParent, executorOnPortal] = await Promise.all([
+    const linked = row.executionMovementId !== null;
+
+    const [names, pings, costs, documents, events, hasParent, executorOnPortal, rigs, terminalProofs] = await Promise.all([
         loadNames(db, [row.organizationId, row.clientOrgId, row.carrierOrgId]),
         loadPings(db, [trailId]),
         owner ? loadCosts(db, row.id) : Promise.resolve([]),
@@ -336,10 +345,14 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
         loadEvents(db, row.id),
         owner ? hasParentRow(db, row.id) : Promise.resolve(false),
         row.execution === "partner" ? isOnPortal(db, row.carrierOrgId) : Promise.resolve(false),
+        linked ? loadTerminalRigs(db, [trailId]) : Promise.resolve(new Map()),
+        linked ? loadTerminalProofs(db, trailId) : Promise.resolve([]),
     ]);
 
     return toMovementDetail(row, role, {
         tenantId,
+        terminalRig: rigs.get(trailId) ?? null,
+        terminalProofs,
         names,
         pings,
         trailId,

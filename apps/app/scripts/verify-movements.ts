@@ -209,6 +209,11 @@ async function main() {
     check("A's order followed B's truck into transit", aDetail.status === "in-transit", aDetail.status);
     check("…with a trail line that says it was carried up", aDetail.events.some((event) => event.kind === "system" && event.toStatus === "in-transit"), aDetail.events);
     check("…and still no phone of B's driver", aDetail.driverPhone === null);
+    check("…but it knows which truck is coming", aDetail.driverName === "HARNESS Driver" && aDetail.truckPlate === "HAR-001-MP", { driver: aDetail.driverName, plate: aDetail.truckPlate });
+
+    const aOrderRows = await a.list({ scope: "orders", section: "in-transit" });
+    const aOrderRow = aOrderRows.items.find((row) => row.id === filed.id);
+    check("…in its list too", aOrderRow?.truckPlate === "HAR-001-MP", aOrderRow);
 
     const usage = await db
         .select({ org: subscriptionUsage.organizationId, entity: subscriptionUsage.entityId })
@@ -225,6 +230,15 @@ async function main() {
     const pinOwner = await resolveMovementForConversation(db, { conversationId: "harness-no-thread", driverPhone: normalizePhone(phone) });
     check("a pin on that phone lands on B's row, not nowhere", pinOwner?.id === accepted.id, pinOwner);
     await db.update(movement).set({ driverPhone: null }).where(eq(movement.id, filed.id));
+
+    console.log("\n— the proof of delivery travels up");
+    await b.documents.add({ movementId: accepted.id, type: "pod", url: "https://files.edgestore.dev/harness/pod.pdf", title: "HARNESS POD" });
+    await b.documents.add({ movementId: accepted.id, type: "invoice", leg: "sell", url: "https://files.edgestore.dev/harness/invoice.pdf", title: "HARNESS B invoice" });
+    aDetail = await a.get({ id: filed.id });
+    const pod = aDetail.documents.find((document) => document.title === "HARNESS POD");
+    check("B's POD shows on A's order", Boolean(pod), aDetail.documents.map((document) => document.title));
+    check("…without naming who at B uploaded it", pod?.uploadedByName === null, pod);
+    check("…and B's own invoice to A does not ride up with it", !aDetail.documents.some((document) => document.title === "HARNESS B invoice"), aDetail.documents.map((document) => document.title));
 
     console.log("\n— delivery, money, and the books closing");
     bOwn = await b.get({ id: accepted.id });

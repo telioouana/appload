@@ -221,6 +221,42 @@ export async function trailIds(db: Db, rows: readonly Movement[]): Promise<Map<s
     return map;
 }
 
+/** What of the row with the truck travels up a chain besides its pings. */
+export type TerminalRig = { driverName: string | null; truckPlate: string | null };
+
+/**
+ * The driver's name and the plate from the row with the truck, for the
+ * linked rows on a page. A client waiting on a load asks which truck is
+ * coming, and an owner has no rig of its own on a load it handed on — so
+ * these two travel up with the positions, and nothing else of that row does:
+ * not its phone (the executor's alone), not its money, not its client.
+ */
+export async function loadTerminalRigs(db: Db, terminalIds: readonly string[]): Promise<Map<string, TerminalRig>> {
+    if (terminalIds.length === 0) return new Map();
+
+    const rows = await db
+        .select({ id: movement.id, driverName: movement.driverName, truckPlate: movement.truckPlate })
+        .from(movement)
+        .where(inArray(movement.id, [...new Set(terminalIds)]));
+
+    return new Map(rows.map((row) => [row.id, { driverName: row.driverName, truckPlate: row.truckPlate }]));
+}
+
+/**
+ * The proof a load arrived, from the row with the truck. The one paper that
+ * belongs to everybody on a chain: the executor produces it, and the client
+ * at the top is the one waiting for it. Only the load's own papers (no leg)
+ * of the kinds that prove delivery; the uploader is not named, since that
+ * person works for a company the viewer may not be meant to know.
+ */
+export async function loadTerminalProofs(db: Db, terminalId: string): Promise<MovementDocumentView[]> {
+    const rows = await loadDocuments(db, terminalId);
+
+    return rows
+        .filter((document) => document.leg === null && (document.type === "pod" || document.type === "cmr"))
+        .map((document) => ({ ...document, uploadedByName: null }));
+}
+
 export type PingState = {
     last: Map<string, MovementPing>;
     counts: Map<string, number>;
@@ -350,7 +386,7 @@ const party = (id: string | null, fallback: string | null, names: Map<string, st
 export function toMovementRow(
     row: Movement,
     role: MovementRole,
-    ctx: { names: Map<string, string>; pings: PingState; trailId: string },
+    ctx: { names: Map<string, string>; pings: PingState; trailId: string; terminalRig?: TerminalRig | null },
 ): MovementRow {
     const owner = role === "owner";
     // The list shows headlines only; costs are not read for it, and the
@@ -373,8 +409,9 @@ export function toMovementRow(
         owner: owner ? null : party(row.organizationId, null, ctx.names),
         client: owner ? party(row.clientOrgId, row.clientName, ctx.names) : null,
         carrier: owner ? party(row.carrierOrgId, row.carrierName, ctx.names) : null,
-        driverName: row.driverName,
-        truckPlate: row.truckPlate,
+        // A linked row has no rig of its own; the truck carrying it is below
+        driverName: row.executionMovementId ? ctx.terminalRig?.driverName ?? null : row.driverName,
+        truckPlate: row.executionMovementId ? ctx.terminalRig?.truckPlate ?? null : row.truckPlate,
         payable: headline(money.payable),
         receivable: headline(money.receivable),
         isLinked: owner && row.executionMovementId !== null,
@@ -402,6 +439,9 @@ const eventKindsFor = (role: MovementRole): readonly MovementEventKind[] =>
 type DetailExtras = {
     /** The company reading — an executor's view is cut to its own offer round */
     tenantId: string;
+    terminalRig: TerminalRig | null;
+    /** A linked row's proof of delivery, from the row with the truck */
+    terminalProofs: readonly MovementDocumentView[];
     names: Map<string, string>;
     pings: PingState;
     trailId: string;
@@ -469,7 +509,10 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
                 createdAt: cost.createdAt,
             }))
             : [],
-        documents: extras.documents.filter((document) => legs.includes(document.leg) && inRound(document.createdAt)),
+        documents: [
+            ...extras.documents.filter((document) => legs.includes(document.leg) && inRound(document.createdAt)),
+            ...extras.terminalProofs,
+        ],
         events: extras.events
             .filter((event) => kinds.includes(event.kind) && inRound(event.createdAt) && nameable(event.actorOrgId))
             .map((event) => ({
