@@ -262,8 +262,8 @@ export const AddMovementDocumentBaseSchema = z.object({
 export const RecordPaymentBaseSchema = z.object({
     ...versioned,
     leg: z.enum(MOVEMENT_DOCUMENT_LEG),
-    /** What moved against the leg in this one payment */
-    amount: positiveAmount,
+    /** What moved against the leg in this one payment; negative corrects an earlier one */
+    amount: z.preprocess(toNumber, z.number().refine((value) => value !== 0).refine((value) => Math.abs(value) <= 1e12)),
     paidAt: z.date().optional(),
     reference: text(REFERENCE_MAX).optional(),
 });

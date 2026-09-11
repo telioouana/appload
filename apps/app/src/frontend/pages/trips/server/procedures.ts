@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { and, asc, count, desc, eq, gte, ilike, inArray, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import { chatConversation, chatMessage } from "@workspace/db/chats";
 import { partnerConnection } from "@workspace/db/connections";
@@ -130,10 +131,28 @@ const silentToday = (now: Date): SQL => and(
 const visibleTrips = (tenantId: string): SQL =>
     and(
         or(eq(movement.organizationId, tenantId), eq(movement.clientOrgId, tenantId)),
+        standalone,
         // This page is the own-fleet half of the movement table: the statuses a
         // partner-executed load passes through belong to Orders, not here
         inArray(movement.status, TRIP_STATUS),
     ) as SQL;
+
+const parentRow = alias(movement, "parent_row");
+
+/**
+ * The rows this router may touch at all: a company's own truck on a load of
+ * its own. Partner loads, and the rows an executor holds for somebody else's
+ * order, are part of a chain — their status travels, their terms are frozen,
+ * their driver's phone is the executor's alone — and only the movements
+ * router carries those rules. This page predates them and is replaced by
+ * the movements pages; until then it must not be a side door around them.
+ */
+const standalone: SQL = and(
+    eq(movement.execution, "own-fleet"),
+    // A drizzle condition, not bare columns: interpolated raw, `movement.id`
+    // loses its table prefix in a query with no joins and binds to the alias
+    sql`not exists (select 1 from ${movement} as ${sql.identifier("parent_row")} where ${eq(parentRow.executionMovementId, movement.id)})`,
+) as SQL;
 
 /** The section's own predicate, on top of the tenant one. */
 const sectionScope = (section: TripSection): SQL | undefined => {
@@ -245,7 +264,8 @@ const toRow = (row: RowProjection, tenantId: string, pings: PingState): TripRow 
     // so the column’s wider union cannot reach here
     status: row.status as TripStatus,
     driverName: row.driverName,
-    driverPhone: row.driverPhone,
+    // The driver's phone is its employer's alone, never the client's
+    driverPhone: row.organizationId === tenantId ? row.driverPhone : null,
     truckPlate: row.truckPlate,
     origin: row.origin,
     destination: row.destination,
@@ -281,7 +301,7 @@ async function loadOwnTrip(db: Db, id: string, tenantId: string) {
     const [row] = await db
         .select()
         .from(movement)
-        .where(and(eq(movement.id, id), eq(movement.organizationId, tenantId)))
+        .where(and(eq(movement.id, id), eq(movement.organizationId, tenantId), standalone))
         .limit(1);
 
     if (!row) {
@@ -621,7 +641,7 @@ export const tripsRouter = createTRPCRouter({
             if (Object.keys(values).length > 0) {
                 await ctx.db
                     .update(movement)
-                    .set(values)
+                    .set({ ...values, version: sql`${movement.version} + 1` })
                     .where(and(eq(movement.id, row.id), eq(movement.organizationId, tenantId)));
             }
 
@@ -652,6 +672,9 @@ export const tripsRouter = createTRPCRouter({
                 .update(movement)
                 .set({
                     status: input.to,
+                    // The handshake the movements router checks: a change made
+                    // here is a change it must see
+                    version: sql`${movement.version} + 1`,
                     ...(input.to === "in-transit" && { startedAt: new Date() }),
                     ...(input.to === "delivered" && { deliveredAt: new Date(), trackingEnabled: false }),
                 })

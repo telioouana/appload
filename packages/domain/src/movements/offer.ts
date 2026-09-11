@@ -434,6 +434,13 @@ export async function convertMovement(
         if ((row.status !== "procurement" && row.status !== "declined") || row.executionMovementId) {
             throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATUS" });
         }
+
+        // An own-fleet load has no buy leg, so taking it back would wipe what
+        // was already paid to the partner off the books. That money is owed
+        // back, and it stays on the leg until somebody records it returned
+        if (Number(row.buyPaidAmount ?? 0) > 0) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: "LEG_HAS_PAYMENTS" });
+        }
     }
 
     const [updated] = await db

@@ -16,7 +16,7 @@
  */
 import fs from "node:fs";
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray } from "drizzle-orm";
 
 import { db } from "@workspace/db/db";
 import {
@@ -31,6 +31,8 @@ import {
 import { notification } from "@workspace/db/notifications";
 import { subscriptionUsage } from "@workspace/db/subscriptions";
 import { activityLog } from "@workspace/db/activity-log";
+import { member } from "@workspace/db/users";
+import { ownerTargets } from "@workspace/domain/movements/status";
 import { normalizePhone } from "@workspace/comms/phone";
 import { resolveMovementForConversation } from "@workspace/domain/tracking/movements";
 import { getStaffGates } from "@workspace/trpc/staff-gate";
@@ -38,11 +40,27 @@ import { getTenantGates } from "@workspace/trpc/tenant-gate";
 import { createCallerFactory } from "@workspace/trpc/init";
 
 import { movementsRouter } from "@/frontend/pages/movements/server/procedures";
+import { tripsRouter } from "@/frontend/pages/trips/server/procedures";
 
 process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
 
 const SESSION_ID = "verify-movements";
 const createCaller = createCallerFactory(movementsRouter);
+const createTripsCaller = createCallerFactory(tripsRouter);
+
+const contextFor = (userId: string) => ({
+    authApi: undefined as never,
+    session: { user: { id: userId, name: "harness" }, session: { id: SESSION_ID, userId } } as never,
+    db,
+    app: "portal" as const,
+    headers: new Headers(),
+    waitUntil: undefined,
+    staffGates: (id: string) => getStaffGates(db, { userId: id }),
+    tenantGates: (id: string) => getTenantGates(db, { userId: id }),
+});
+
+/** The old trips router, still mounted until the movements pages replace it. */
+const trips = (userId: string) => createTripsCaller(contextFor(userId));
 
 const as = (userId: string) =>
     createCaller({
@@ -249,7 +267,171 @@ async function main() {
     check("B closes its own books once paid", bOwn.status === "closed", bOwn.status);
 }
 
+/**
+ * The review's findings, each proven against the database rather than
+ * asserted: the side door the old trips router was, the offer round an
+ * executor may read, the probe a search could run, the role gates, what a
+ * re-priced leg keeps, corrections, the atomic cancel, and one notification
+ * per milestone rather than two.
+ */
+async function hardening() {
+    const a = as(A.user);
+    const b = as(B.user);
+    const bMember = as(BM.user);
+    const tripsA = trips(A.user);
+
+    console.log("\n— the old trips page is no side door");
+    const filed = await a.create({
+        execution: "partner", carrierOrgId: B.org, origin, destination,
+        cargoDescription: "HARNESS hardening", clientReference: "ACME-PO-7731",
+        buy: { total: 58000, subtotal: 50000, vat: 8000, currency: "MZN", fiscalRegime: "normal" },
+    });
+    created.push(filed.id);
+
+    let aDetail = await a.get({ id: filed.id });
+    const offered = await a.offer({ id: filed.id, expectedVersion: aDetail.version });
+
+    const probe = await b.list({ scope: "orders", section: "inbox", search: "ACME-PO" });
+    check("searching the inbox by A's client reference finds nothing", !probe.items.some((row) => row.id === filed.id), probe.items.map((row) => row.ref));
+
+    const accepted = await b.respond({ id: filed.id, expectedVersion: offered.version, decision: "accept" });
+    created.push(accepted.id);
+    let bOwn = await b.get({ id: accepted.id });
+    const named = await b.update({ id: accepted.id, expectedVersion: bOwn.version, driverName: "HARNESS Two", driverPhone: "+258840000998" });
+
+    const legacyList = await tripsA.list({ section: "all" });
+    check("A's old trips list does not show B's row for it", !legacyList.items.some((row) => row.id === accepted.id), legacyList.items.map((row) => row.ref));
+    await expectError("…nor open it", () => tripsA.get({ id: accepted.id }), "NOT_FOUND");
+    await expectError("…nor move it", () => trips(B.user).setStatus({ id: accepted.id, to: "in-transit" }), "NOT_FOUND");
+
+    console.log("\n— one notification per milestone, not one per role");
+    const before = await startedFor(A.org);
+    await b.transition({ id: accepted.id, to: "in-transit", expectedVersion: named.version });
+    const after = await startedFor(A.org);
+    const members = await membersOf(A.org);
+    check("A hears once that B's truck left", after - before === members, { before, after, members });
+
+    console.log("\n— margin is earnings, not VAT");
+    bOwn = await b.get({ id: accepted.id });
+    check("B's gross is the ex-VAT price", bOwn.money.margin?.gross?.amount === 50000, bOwn.money.margin);
+
+    console.log("\n— cancelling a linked order takes the executor's row with it, or nothing");
+    const second = await a.create({
+        execution: "partner", carrierOrgId: B.org, origin, destination, cargoDescription: "HARNESS cancel",
+        buy: { total: 1000, currency: "MZN" },
+    });
+    created.push(second.id);
+    aDetail = await a.get({ id: second.id });
+    const secondOffer = await a.offer({ id: second.id, expectedVersion: aDetail.version });
+    const secondAccept = await b.respond({ id: second.id, expectedVersion: secondOffer.version, decision: "accept" });
+    created.push(secondAccept.id);
+
+    // The race the fix closes: B's truck leaves between A's read and A's
+    // write. Staged directly, since two requests cannot be timed from here
+    await db.update(movement).set({ status: "in-transit" }).where(eq(movement.id, secondAccept.id));
+    aDetail = await a.get({ id: second.id });
+    await expectError("A cannot cancel once B's truck has left", () =>
+        a.transition({ id: second.id, to: "cancelled", expectedVersion: aDetail.version, note: "HARNESS" }), "EXECUTOR_DEPARTED");
+    const [stillA] = await db.select({ status: movement.status }).from(movement).where(eq(movement.id, second.id));
+    check("…and A's order was left untouched", stillA?.status === "scheduled", stillA);
+    await db.update(movement).set({ status: "scheduled" }).where(eq(movement.id, secondAccept.id));
+
+    aDetail = await a.get({ id: second.id });
+    await a.transition({ id: second.id, to: "cancelled", expectedVersion: aDetail.version, note: "HARNESS client changed plans" });
+    const [bothA] = await db.select({ status: movement.status }).from(movement).where(eq(movement.id, second.id));
+    const [bothB] = await db.select({ status: movement.status }).from(movement).where(eq(movement.id, secondAccept.id));
+    check("otherwise both rows are cancelled together", bothA?.status === "cancelled" && bothB?.status === "cancelled", { bothA, bothB });
+
+    console.log("\n— an executor reads its own offer round, and nothing before it");
+    const third = await a.create({
+        execution: "partner", carrierOrgId: B.org, origin, destination, cargoDescription: "HARNESS rounds",
+        buy: { total: 2000, currency: "MZN" },
+    });
+    created.push(third.id);
+    aDetail = await a.get({ id: third.id });
+    let round = await a.offer({ id: third.id, expectedVersion: aDetail.version, message: "HARNESS first round" });
+    const declined = await b.respond({ id: third.id, expectedVersion: round.version, decision: "decline", note: "HARNESS need 1400" });
+    void declined;
+    aDetail = await a.get({ id: third.id });
+    round = await a.offer({ id: third.id, expectedVersion: aDetail.version, message: "HARNESS second round" });
+    const reread = await b.get({ id: third.id });
+    const notes = reread.events.map((event) => event.note).filter(Boolean);
+    check("B sees the second offer's message", notes.includes("HARNESS second round"), notes);
+    check("…but not the first round, nor its own earlier answer", !notes.includes("HARNESS first round") && !notes.includes("HARNESS need 1400"), notes);
+
+    console.log("\n— a different partner starts a different deal");
+    aDetail = await a.get({ id: third.id });
+    const withdrawn = await a.withdraw({ id: third.id, expectedVersion: aDetail.version });
+    await a.update({ id: third.id, expectedVersion: withdrawn.version, carrierName: "HARNESS Off-Platform Lda" });
+    const swapped = await a.get({ id: third.id });
+    check("swapping the carrier clears the last offer's answer", swapped.responseNote === null && swapped.respondedAt === null && swapped.offeredAt === null, swapped);
+    await expectError("B can no longer open it", () => b.get({ id: third.id }), "NOT_FOUND");
+
+    console.log("\n— the role gates on partner loads");
+    const bPartner = await b.create({
+        execution: "partner", carrierName: "HARNESS Subcontractor", origin, destination, cargoDescription: "HARNESS roles",
+        buy: { total: 3000, currency: "MZN" },
+    });
+    created.push(bPartner.id);
+    let bp = await b.get({ id: bPartner.id });
+    await expectError("B's member cannot place it (schedule an off-platform partner)", () =>
+        bMember.transition({ id: bPartner.id, to: "scheduled", expectedVersion: bp.version }), "NOT_ALLOWED");
+    await expectError("B's member cannot cancel it", () =>
+        bMember.transition({ id: bPartner.id, to: "cancelled", expectedVersion: bp.version }), "NOT_ALLOWED");
+    const bpMember = await bMember.get({ id: bPartner.id });
+    check("…and is not offered either button", !bpMember.permissions.transitions.some((t) => t.to === "scheduled" || t.to === "cancelled"), bpMember.permissions.transitions);
+
+    console.log("\n— what a re-priced leg keeps, and how a mistake is corrected");
+    bp = await b.get({ id: bPartner.id });
+    const paid = await b.recordPayment({ id: bPartner.id, expectedVersion: bp.version, leg: "buy", amount: 3000 });
+    const repriced = await b.update({ id: bPartner.id, expectedVersion: paid.version, buy: { total: 3000, subtotal: 3000, vat: 0, currency: "MZN" } });
+    bp = await b.get({ id: bPartner.id });
+    check("re-splitting a paid leg keeps it settled", bp.money.payable?.settlement === "completed" && bp.money.payable.settled === 3000, bp.money.payable);
+    await expectError("moving a paid leg to another currency is refused", () =>
+        b.update({ id: bPartner.id, expectedVersion: repriced.version, buy: { total: 150, currency: "USD" } }), "LEG_HAS_PAYMENTS");
+    await expectError("so is converting it back in-house", () =>
+        b.convert({ id: bPartner.id, expectedVersion: repriced.version, to: "own-fleet" }), "LEG_HAS_PAYMENTS");
+    await expectError("a correction needs a reference", () =>
+        b.recordPayment({ id: bPartner.id, expectedVersion: repriced.version, leg: "buy", amount: -500 }), "CORRECTION_NEEDS_REFERENCE");
+    await expectError("and cannot take the leg below zero", () =>
+        b.recordPayment({ id: bPartner.id, expectedVersion: repriced.version, leg: "buy", amount: -4000, reference: "HARNESS typo" }), "PAYMENT_BELOW_ZERO");
+    await b.recordPayment({ id: bPartner.id, expectedVersion: repriced.version, leg: "buy", amount: -500, reference: "HARNESS typed 3000, paid 2500" });
+    bp = await b.get({ id: bPartner.id });
+    check("a correction brings the leg back to partial", bp.money.payable?.settled === 2500 && bp.money.payable.settlement === "partially", bp.money.payable);
+
+    console.log("\n— closed books stay closed");
+    const own = await b.create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS closed", driverName: "HARNESS Three", driverPhone: "+258840000997", status: "scheduled" });
+    created.push(own.id);
+    const cost = await b.costs.add({ movementId: own.id, kind: "fuel", amount: 100, currency: "MZN" });
+    let o = await b.get({ id: own.id });
+    const cancelled = await b.transition({ id: own.id, to: "cancelled", expectedVersion: o.version, note: "HARNESS" });
+    void cancelled;
+    await expectError("a cost line cannot be taken off a cancelled load", () => b.costs.remove({ id: cost.id }), "MOVEMENT_CLOSED");
+
+    console.log("\n— a partner that joined after its load left keeps the load's lifecycle");
+    const late = ownerTargets({ execution: "partner", status: "in-transit", linked: false, executorOnPortal: true });
+    check("the owner can still deliver or call it off", late.includes("delivered") && late.includes("cancelled"), late);
+    o = await b.get({ id: own.id });
+    void o;
+}
+
+/** One notification row goes to each member of a company. */
+async function membersOf(organizationId: string): Promise<number> {
+    const [row] = await db.select({ value: count() }).from(member).where(eq(member.organizationId, organizationId));
+    return row?.value ?? 0;
+}
+
+/** How many "your truck left" notifications a company has had. */
+async function startedFor(organizationId: string): Promise<number> {
+    const [row] = await db
+        .select({ value: count() })
+        .from(notification)
+        .where(and(eq(notification.organizationId, organizationId), eq(notification.kind, "movement.started")));
+    return row?.value ?? 0;
+}
+
 main()
+    .then(hardening)
     .catch((error) => {
         console.error("\nharness crashed:", error);
         results.push({ name: "harness ran to the end", ok: false, detail: String(error) });

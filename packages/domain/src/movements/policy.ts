@@ -9,7 +9,7 @@
 
 import type { MovementExecution, MovementStatus } from "@workspace/db/movements";
 
-import { isTerminal } from "@workspace/domain/movements/status";
+import { isAskable, isTerminal } from "@workspace/domain/movements/status";
 
 /**
  * The caller's relation to one row. Precedence owner > executor > client: a
@@ -89,11 +89,15 @@ export function editableGroups(row: EditInput): EditableGroup[] {
     if (!row.hasParent) groups.push("client");
     if (!row.hasParent && !offerInFlight) groups.push("sellAmounts");
 
+    // A partner that joined the portal after its load had already left is
+    // still the off-platform partner it was on that load (status.ts)
+    const asksPartner = row.execution === "partner" && row.executorOnPortal && isAskable(row.status);
+
     if (row.execution === "partner") {
         // On the platform the partner answers to these exact terms, so they
         // change only while nobody has been asked; off it, the owner is the
         // only one who can record that a price was renegotiated
-        const open = row.executorOnPortal
+        const open = asksPartner
             ? row.status === "procurement" || row.status === "declined"
             : !row.linked;
 
@@ -103,7 +107,7 @@ export function editableGroups(row: EditInput): EditableGroup[] {
     // The rig is whoever drives: the owner's own, or — for a partner off the
     // platform — the one the owner was told about. A partner on the platform
     // names its own driver in its own row.
-    if (row.execution === "own-fleet" || (!row.executorOnPortal && !row.linked)) {
+    if (row.execution === "own-fleet" || (!row.linked && !asksPartner)) {
         groups.push("rig");
     }
 

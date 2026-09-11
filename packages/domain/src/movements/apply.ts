@@ -115,6 +115,14 @@ export async function announce(
     const kind = KIND_FOR[row.status];
     if (!kind) return;
 
+    // An executor's own row names the company that placed the order as its
+    // client — and that company is told about the milestone anyway, as the
+    // owner of the order the move travels up to. Telling it twice, once per
+    // role, would say the same thing twice (and on a back-out, contradict
+    // itself: "cancelled" as client, "declined" as owner)
+    const parent = row.clientOrgId ? await parentMovement(db, row.id) : null;
+    const clientHearsAsOwner = parent !== null && parent.organizationId === row.clientOrgId;
+
     const params = {
         ref: movementRef(row.seq, row.execution),
         origin: place(row.origin),
@@ -123,7 +131,7 @@ export async function announce(
     const email = EMAIL_KINDS.includes(kind);
     const entity = { entityType: "movement", entityId: row.id } as const;
 
-    if (row.clientOrgId && row.clientOrgId !== opts.actorOrgId && CLIENT_KINDS.includes(kind)) {
+    if (row.clientOrgId && row.clientOrgId !== opts.actorOrgId && !clientHearsAsOwner && CLIENT_KINDS.includes(kind)) {
         await notify(db, {
             organizationId: row.clientOrgId,
             kind,
@@ -211,18 +219,13 @@ export async function transitionMovement(
     }
 
     const now = new Date();
+    // Calling off a load whose truck is somebody else's calls off theirs too —
+    // in the same statement, so the two cannot disagree (see below)
+    const withExecutor = input.to === "cancelled" && row.executionMovementId !== null;
 
-    const [updated] = await db
-        .update(movement)
-        .set({
-            status: input.to,
-            version: sql`${movement.version} + 1`,
-            ...statusStamps(input.to, now),
-        })
-        .where(and(eq(movement.id, row.id), eq(movement.version, input.expectedVersion)))
-        .returning();
-
-    if (!updated) throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
+    const updated = withExecutor
+        ? await cancelWithExecutor(db, row, input.expectedVersion, now)
+        : await moveOne(db, row, input.expectedVersion, input.to, now);
 
     await recordEvent(db, {
         movementId: row.id,
@@ -248,10 +251,10 @@ export async function transitionMovement(
         notifyExecutor: row.status === "offered" && input.to === "cancelled",
     });
 
-    // Calling off a linked load calls off the chain below it, before any
-    // truck of theirs leaves for a job that no longer exists
-    if (input.to === "cancelled" && row.executionMovementId) {
-        await cancelDown(db, updated, now);
+    // The executor's row went with it; its owner hears why, and whatever it
+    // had handed further down follows
+    if (withExecutor && row.executionMovementId) {
+        await executorCancelled(db, updated, row.executionMovementId, now);
     }
 
     // And a milestone on this row is a milestone on the orders above it
@@ -323,10 +326,113 @@ export async function propagateUp(db: Db, child: Movement, now: Date, hop = 0): 
     if (!next.unlink) await propagateUp(db, moved, now, hop + 1);
 }
 
+/** The ordinary move: one row, compare-and-set on its version. */
+async function moveOne(
+    db: Db,
+    row: Movement,
+    expectedVersion: number,
+    to: MovementStatus,
+    now: Date,
+): Promise<Movement> {
+    const [updated] = await db
+        .update(movement)
+        .set({ status: to, version: sql`${movement.version} + 1`, ...statusStamps(to, now) })
+        .where(and(eq(movement.id, row.id), eq(movement.version, expectedVersion)))
+        .returning();
+
+    if (!updated) throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
+
+    return updated;
+}
+
 /**
- * Calls off the rows below a cancelled order. Only rows that have not left:
- * the owner can cancel a linked load only while it is scheduled, and a
- * child that raced into transit in between has already decided the question.
+ * Cancels a linked order and the executor's row under it in ONE statement.
+ *
+ * Done as two separate writes, an owner calling the load off and the
+ * executor starting its truck in the same moment could each win their own
+ * row: the order cancelled, its client told so, and a truck on the road for
+ * it. Here the executor's row is locked first and only cancelled — together
+ * with the order — while it has not left. If the truck got away first,
+ * nothing is written at all and the owner is told the executor departed.
+ */
+async function cancelWithExecutor(db: Db, row: Movement, expectedVersion: number, now: Date): Promise<Movement> {
+    const childId = row.executionMovementId!;
+    const stamp = now.toISOString();
+    const below = sql.identifier("below");
+
+    const result = await db.execute<{ parent_id: string | null }>(sql`
+        with parent as (
+            update ${movement}
+            set status = 'cancelled', version = version + 1, tracking_enabled = false, updated_at = ${stamp}::timestamp
+            where id = ${row.id}
+              and version = ${expectedVersion}
+              and exists (
+                  select 1 from ${movement} as ${below}
+                  where ${below}.id = ${childId}
+                    and ${below}.status in ('procurement', 'offered', 'declined', 'scheduled')
+                  for update
+              )
+            returning id
+        ), child as (
+            update ${movement}
+            set status = 'cancelled', version = version + 1, tracking_enabled = false, updated_at = ${stamp}::timestamp
+            where id = ${childId} and exists (select 1 from parent)
+            returning id
+        )
+        select (select id from parent) as parent_id
+    `);
+
+    if (!result.rows[0]?.parent_id) {
+        const [child] = await db.select({ status: movement.status }).from(movement).where(eq(movement.id, childId)).limit(1);
+
+        if (child && (child.status === "in-transit" || child.status === "delivered")) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: "EXECUTOR_DEPARTED" });
+        }
+
+        throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
+    }
+
+    const [updated] = await db.select().from(movement).where(eq(movement.id, row.id)).limit(1);
+
+    if (!updated) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
+
+    return updated;
+}
+
+/** The executor's row was cancelled with the order above it: its trail, its owner, its own chain. */
+async function executorCancelled(db: Db, parent: Movement, childId: string, now: Date): Promise<void> {
+    const [child] = await db.select().from(movement).where(eq(movement.id, childId)).limit(1);
+    if (!child) return;
+
+    await recordEvent(db, {
+        movementId: child.id,
+        kind: "system",
+        actor: null,
+        toStatus: "cancelled",
+        note: "CLIENT_CANCELLED",
+    });
+
+    await notify(db, {
+        organizationId: child.organizationId,
+        kind: "movement.cancelled",
+        email: true,
+        entityType: "movement",
+        entityId: child.id,
+        params: {
+            ref: movementRef(child.seq, child.execution),
+            origin: place(child.origin),
+            destination: place(child.destination),
+            organizationName: await organizationName(db, parent.organizationId),
+        },
+    });
+
+    await cancelDown(db, child, now);
+}
+
+/**
+ * Calls off the rows further below, when the executor had itself handed the
+ * load on. Only rows that have not left: a truck already on the road has
+ * decided the question for its own row.
  */
 async function cancelDown(db: Db, parent: Movement, now: Date, hop = 0): Promise<void> {
     if (hop >= MAX_HOPS || !parent.executionMovementId) return;

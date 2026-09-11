@@ -67,6 +67,16 @@ export function costTotals(lines: readonly CostLine[]): CostTotal[] {
     return [...byCurrency.values()];
 }
 
+/**
+ * What a leg is worth before VAT. VAT collected on a sale is owed to the
+ * tax authority and VAT paid on a purchase is claimed back, so neither is
+ * earnings — the same reason the order legs' commission is split by fiscal
+ * regime (orders/commission.ts). A leg entered without its split falls back
+ * to its total less whatever VAT it does carry.
+ */
+export const exVat = (leg: { subtotal: number | null; vat: number | null; total: number }): number =>
+    leg.subtotal ?? Math.round((leg.total - (leg.vat ?? 0)) * 100) / 100;
+
 export type Margin = {
     /** Sell minus buy; null when there is nothing to subtract or no common currency */
     gross: Amount | null;
@@ -76,9 +86,13 @@ export type Margin = {
 };
 
 /**
- * What a load earned its owner. An own-fleet load has no buy leg, so its
- * gross is the sell leg and its costs are the whole of what it cost to run;
- * a partner load's gross is what was charged less what was paid out.
+ * What a load earned its owner, before VAT (callers pass `exVat` amounts).
+ * An own-fleet load has no buy leg, so its gross is the sell leg and its
+ * costs are the whole of what it cost to run; a partner load's gross is what
+ * was charged less what was paid out.
+ *
+ * Cost lines are taken as entered: a fuel receipt has no VAT split on it, so
+ * there is nothing honest to take off.
  *
  * Costs in another currency than the margin's are left out of `net` rather
  * than converted — the cost totals are returned beside it, so the page can

@@ -18,7 +18,7 @@ import { organization, user } from "@workspace/db/users";
 
 import { isOrgAuthorized, type OrgRole } from "@workspace/auth/organization-permissions";
 import { terminalMovementId } from "@workspace/domain/movements/link";
-import { costTotals, legSettled, margin } from "@workspace/domain/movements/money";
+import { costTotals, exVat, legSettled, margin } from "@workspace/domain/movements/money";
 import { editableGroups, movementRole, type MovementRole } from "@workspace/domain/movements/policy";
 import { movementRef } from "@workspace/domain/movements/refs";
 import { isTerminal, ownerTargets, transitionBlocker } from "@workspace/domain/movements/status";
@@ -328,8 +328,8 @@ export function projectMoney(row: Movement, role: MovementRole, costs: readonly 
         receivable: sell,
         margin: {
             ...margin({
-                sell: sell && { amount: sell.total, currency: sell.currency },
-                buy: buy && { amount: buy.total, currency: buy.currency },
+                sell: sell && { amount: exVat(sell), currency: sell.currency },
+                buy: buy && { amount: exVat(buy), currency: buy.currency },
                 ownFleet: row.execution === "own-fleet",
                 costs: totals,
             }),
@@ -400,6 +400,8 @@ const eventKindsFor = (role: MovementRole): readonly MovementEventKind[] =>
             : ["status", "system"];
 
 type DetailExtras = {
+    /** The company reading — an executor's view is cut to its own offer round */
+    tenantId: string;
     names: Map<string, string>;
     pings: PingState;
     trailId: string;
@@ -416,6 +418,24 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
     const money = projectMoney(row, role, owner ? extras.costs : []);
     const legs = documentLegsFor(role);
     const kinds = eventKindsFor(role);
+
+    // An executor sees this load from the moment it was offered the load, and
+    // nothing from before. The row outlives any one carrier: an owner whose
+    // first carrier declined — or accepted and then backed out — places the
+    // same row with the next one, and the earlier round's messages, answers
+    // and papers are between the owner and that earlier carrier. Anchored on
+    // the offer event rather than on `offeredAt`, since events and papers are
+    // stamped by the database clock and `offeredAt` by the server's.
+    const roundStart = role === "executor"
+        ? extras.events.find((event) =>
+            event.kind === "offer" && event.actorOrgId === row.organizationId && readAction(event.metadata) === "offered",
+        )?.createdAt ?? null
+        : null;
+    const inRound = (createdAt: Date) => role !== "executor" || (roundStart !== null && createdAt >= roundStart);
+    // The companies this caller may see named on the trail: itself, the owner,
+    // and nobody when a move was carried up from below
+    const nameable = (actorOrgId: string | null) =>
+        owner || actorOrgId === null || actorOrgId === extras.tenantId || actorOrgId === row.organizationId;
 
     return {
         ...toMovementRow(row, role, extras),
@@ -449,9 +469,9 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
                 createdAt: cost.createdAt,
             }))
             : [],
-        documents: extras.documents.filter((document) => legs.includes(document.leg)),
+        documents: extras.documents.filter((document) => legs.includes(document.leg) && inRound(document.createdAt)),
         events: extras.events
-            .filter((event) => kinds.includes(event.kind))
+            .filter((event) => kinds.includes(event.kind) && inRound(event.createdAt) && nameable(event.actorOrgId))
             .map((event) => ({
                 id: event.id,
                 kind: event.kind,
@@ -515,7 +535,15 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
 
     return {
         transitions: mayWrite
-            ? ownerTargets(shape).map((to) => {
+            ? ownerTargets(shape).filter((to) => {
+                // Scheduling a partner load is placing it — committing the
+                // company to paying somebody — and calling one off unwinds
+                // that; both are above the plain member's role, the same way
+                // offering and cancelling are (procedures.ts mirrors this)
+                if (partner && row.status === "procurement" && (to === "scheduled" || to === "in-transit")) return can("order", "create");
+                if (partner && to === "cancelled") return can("order", "cancel");
+                return true;
+            }).map((to) => {
                 // A reason is typed in the dialog that takes the move, so it
                 // is reported as a field to ask for, never as a blocker
                 const blocker = transitionBlocker(guards, to, null);

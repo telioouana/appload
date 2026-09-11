@@ -28,6 +28,10 @@ const COMMITTED_STATUSES: readonly MovementStatus[] = ["scheduled", "in-transit"
 export const isTerminal = (status: MovementStatus): boolean =>
     (TERMINAL_STATUSES as readonly MovementStatus[]).includes(status);
 
+/** Where a partner load still waits on somebody agreeing to move it. */
+export const isAskable = (status: MovementStatus): boolean =>
+    status === "procurement" || status === "offered" || status === "declined";
+
 /** What the transition table needs to know about a row. */
 export type MovementShape = {
     execution: MovementExecution;
@@ -55,8 +59,13 @@ export function ownerTargets(shape: MovementShape): MovementStatus[] {
         }
     }
 
-    // A partner who can answer on the portal is asked, never assumed
-    if (execution === "partner" && executorOnPortal) {
+    // A partner who can answer on the portal is asked, never assumed — but
+    // only while there is still something to ask. A load already on its way
+    // with a partner that was off the platform when it left keeps the
+    // lifecycle it started with when that partner later joins: there is no
+    // offer to make any more, and without this the owner could neither
+    // deliver it nor call it off, while the cron kept asking its driver
+    if (execution === "partner" && executorOnPortal && isAskable(status)) {
         switch (status) {
             case "procurement": return ["cancelled"];
             case "offered": return ["cancelled"];

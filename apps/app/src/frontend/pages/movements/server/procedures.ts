@@ -30,7 +30,7 @@ import { announce, recordEvent, statusStamps, transitionMovement, type MovementA
 import { isConnected, isOnPortal, terminalMovementId } from "@workspace/domain/movements/link";
 import { settlementStatus } from "@workspace/domain/movements/money";
 import { assertExecutor, convertMovement, offerMovement, respondToOffer, withdrawOffer } from "@workspace/domain/movements/offer";
-import { editableGroups, movementRole, type EditableGroup } from "@workspace/domain/movements/policy";
+import { editableGroups, isExecutorOf, movementRole, type EditableGroup } from "@workspace/domain/movements/policy";
 import { movementRef } from "@workspace/domain/movements/refs";
 import { transitionBlocker } from "@workspace/domain/movements/status";
 import { notify } from "@workspace/domain/notifications";
@@ -270,7 +270,7 @@ const ListInput = z.object({
 type ListInput = z.infer<typeof ListInput>;
 
 /** The reference, the driver, the plate and the cargo are what a load is looked up by. */
-function searchWhere(term: string): SQL | undefined {
+function searchWhere(term: string, tenantId: string): SQL | undefined {
     const pattern = `%${escapeLike(term)}%`;
     const digits = term.replace(/\D/g, "");
     // "ORD-42", "trp 42" and "42" all mean the same row; anything longer than
@@ -281,7 +281,13 @@ function searchWhere(term: string): SQL | undefined {
         ilike(movement.driverName, pattern),
         ilike(movement.truckPlate, pattern),
         ilike(movement.cargoDescription, pattern),
-        ilike(movement.clientReference, pattern),
+        // The client's own reference names the client, which an executor
+        // must never learn — and a search that matches a hidden column gives it
+        // away one character at a time, by whether the row comes back
+        and(
+            or(eq(movement.organizationId, tenantId), eq(movement.clientOrgId, tenantId)),
+            ilike(movement.clientReference, pattern),
+        ),
         seq === null ? undefined : eq(movement.seq, seq),
     );
 }
@@ -333,6 +339,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
     ]);
 
     return toMovementDetail(row, role, {
+        tenantId,
         names,
         pings,
         trailId,
@@ -354,7 +361,7 @@ export const movementsRouter = createTRPCRouter({
             const where = and(
                 visibleMovements(tenantId),
                 sectionPredicate(input.scope, input.section, tenantId),
-                input.search ? searchWhere(input.search) : undefined,
+                input.search ? searchWhere(input.search, tenantId) : undefined,
             );
 
             const [rows, [counted]] = await Promise.all([
@@ -551,17 +558,26 @@ export const movementsRouter = createTRPCRouter({
             }
 
             const partner = row.execution === "partner";
-            const [hasParent, executorOnPortal] = await Promise.all([
+            // The partner after this patch: a named organization, a typed name
+            // (which is no organization at all), or whoever was there before
+            const nextCarrierOrgId = input.carrierOrgId !== undefined
+                ? input.carrierOrgId
+                : input.carrierName ? null : row.carrierOrgId;
+
+            const [hasParent, onPortalNow, executorOnPortal] = await Promise.all([
                 hasParentRow(ctx.db, row.id),
-                partner ? isOnPortal(ctx.db, input.carrierOrgId ?? row.carrierOrgId) : Promise.resolve(false),
+                partner ? isOnPortal(ctx.db, row.carrierOrgId) : Promise.resolve(false),
+                partner ? isOnPortal(ctx.db, nextCarrierOrgId) : Promise.resolve(false),
             ]);
 
+            // What may change is judged on the load as it stands now; what the
+            // rig rules are, on the partner it will have
             const groups = editableGroups({
                 execution: row.execution,
                 status: row.status,
                 linked: row.executionMovementId !== null,
                 hasParent,
-                executorOnPortal,
+                executorOnPortal: onPortalNow,
             });
 
             const touched = (Object.keys(input) as (keyof UpdateMovementInput)[])
@@ -621,7 +637,45 @@ export const movementsRouter = createTRPCRouter({
 
             // A named organization and a typed name are the same slot
             if (input.clientOrgId) patch.clientName = null;
+            if (input.clientName) patch.clientOrgId = null;
             if (input.carrierOrgId) patch.carrierName = null;
+            if (input.carrierName) patch.carrierOrgId = null;
+
+            // A different partner starts a different deal. Whatever was
+            // offered, answered, invoiced or paid was between the owner and
+            // the previous one — it stays on the owner's trail, and none of it
+            // carries over to the next company, which would otherwise read
+            // another carrier's answer and what the owner paid it
+            const carrierChanged =
+                (input.carrierOrgId !== undefined && input.carrierOrgId !== row.carrierOrgId)
+                || (input.carrierName !== undefined && (input.carrierName || null) !== row.carrierName);
+
+            if (carrierChanged) {
+                if (Number(row.buyPaidAmount ?? 0) > 0) {
+                    throw new TRPCError({ code: "PRECONDITION_FAILED", message: "LEG_HAS_PAYMENTS" });
+                }
+
+                Object.assign(patch, {
+                    status: "procurement" as const,
+                    offeredAt: null,
+                    respondedAt: null,
+                    responseNote: null,
+                    buyInvoiceNumber: null,
+                    buyInvoiceDate: null,
+                    buyPaidAmount: null,
+                    buySettledAt: null,
+                    buySettlement: row.buyTotal !== null ? ("pending" as const) : null,
+                });
+
+                // A partner on the portal names its own driver; the one the
+                // owner was told about for the previous partner is not it
+                if (executorOnPortal) {
+                    Object.assign(patch, {
+                        driverName: null, driverPhone: null, driverId: null,
+                        truckPlate: null, truckId: null, trailerId: null, linkId: null,
+                    });
+                }
+            }
 
             for (const key of ["driverId", "truckId", "trailerId", "linkId"] as const) {
                 if (input[key] === null) patch[key] = null;
@@ -634,8 +688,35 @@ export const movementsRouter = createTRPCRouter({
                 linkId: input.linkId,
             }));
 
-            if (input.sell !== undefined) Object.assign(patch, legColumns("sell", input.sell));
-            if (input.buy !== undefined) Object.assign(patch, legColumns("buy", input.buy));
+            // Re-pricing a leg keeps what has already moved against it: the
+            // settlement is re-derived from the running total rather than
+            // reset, and a leg with money on it can be neither cleared nor
+            // moved to another currency — the amount received or paid would
+            // otherwise be read against a figure it was never measured in
+            for (const side of ["sell", "buy"] as const) {
+                const next = input[side];
+                if (next === undefined) continue;
+
+                const moved = Number((side === "sell" ? row.sellReceivedAmount : row.buyPaidAmount) ?? 0);
+                const currency = side === "sell" ? row.sellCurrency : row.buyCurrency;
+
+                if (moved > 0 && (next === null || next.currency !== currency)) {
+                    throw new TRPCError({ code: "PRECONDITION_FAILED", message: "LEG_HAS_PAYMENTS" });
+                }
+
+                Object.assign(patch, legColumns(side, next));
+
+                if (next) {
+                    const settlement = settlementStatus(next.total, moved);
+                    const settledAt = settlement === "completed"
+                        ? (side === "sell" ? row.sellSettledAt : row.buySettledAt) ?? new Date()
+                        : null;
+
+                    Object.assign(patch, side === "sell"
+                        ? { sellSettlement: settlement, sellSettledAt: settledAt }
+                        : { buySettlement: settlement, buySettledAt: settledAt });
+                }
+            }
             if (input.sellInvoice) {
                 set("sellInvoiceNumber", input.sellInvoice.invoiceNumber || null);
                 set("sellInvoiceDate", input.sellInvoice.invoiceDate ?? null);
@@ -676,6 +757,18 @@ export const movementsRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<{ id: string; status: Movement["status"]; version: number }> => {
             const row = await loadOwn(ctx.db, input.id, ctx.tenant.organizationId);
             assertCan(ctx.tenant.role, writeResource(row), "update");
+
+            if (row.execution === "partner") {
+                // Scheduling a partner load out of procurement is placing it —
+                // committing the company to paying somebody — the same act an
+                // offer is, and it takes the same role
+                if (row.status === "procurement" && (input.to === "scheduled" || input.to === "in-transit")) {
+                    assertCan(ctx.tenant.role, "order", "create");
+                }
+
+                // And calling one off takes the role that cancels orders
+                if (input.to === "cancelled") assertCan(ctx.tenant.role, "order", "cancel");
+            }
 
             const updated = await transitionMovement(ctx.db, actorOf(ctx.tenant), input);
             return { id: updated.id, status: updated.status, version: updated.version };
@@ -746,7 +839,17 @@ export const movementsRouter = createTRPCRouter({
 
             if (row.status === "cancelled") throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATUS" });
 
+            // A negative amount corrects a payment typed wrong. It is a line of
+            // its own on the trail rather than an edit of the earlier one, so
+            // the books still show what was entered and what fixed it — and it
+            // needs a reference saying why, and cannot take the leg below zero
+            if (input.amount < 0 && !input.reference?.trim()) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "CORRECTION_NEEDS_REFERENCE" });
+            }
+
             const settled = Math.round((Number((sell ? row.sellReceivedAmount : row.buyPaidAmount) ?? 0) + input.amount) * 100) / 100;
+
+            if (settled < 0) throw new TRPCError({ code: "BAD_REQUEST", message: "PAYMENT_BELOW_ZERO" });
             const status = settlementStatus(Number(total), settled);
             const paidAt = input.paidAt ?? new Date();
 
@@ -769,7 +872,7 @@ export const movementsRouter = createTRPCRouter({
                 actor: actorOf(ctx.tenant),
                 note: input.reference,
                 metadata: {
-                    action: sell ? "received" : "paid",
+                    action: input.amount < 0 ? "corrected" : sell ? "received" : "paid",
                     leg: input.leg,
                     amount: input.amount,
                     paidAt: paidAt.toISOString(),
@@ -825,7 +928,7 @@ export const movementsRouter = createTRPCRouter({
             .input(z.object({ id: z.string().nonempty() }))
             .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
                 const [cost] = await ctx.db
-                    .select({ id: movementCost.id, movementId: movementCost.movementId })
+                    .select({ id: movementCost.id, movementId: movementCost.movementId, status: movement.status })
                     .from(movementCost)
                     .innerJoin(movement, eq(movement.id, movementCost.movementId))
                     .where(and(
@@ -837,6 +940,11 @@ export const movementsRouter = createTRPCRouter({
 
                 if (!cost) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
                 assertCan(ctx.tenant.role, "trip", "update");
+
+                // Closed books stay closed — the same guard adding a line has
+                if (cost.status === "closed" || cost.status === "cancelled") {
+                    throw new TRPCError({ code: "BAD_REQUEST", message: "MOVEMENT_CLOSED" });
+                }
 
                 await ctx.db
                     .update(movementCost)
@@ -906,8 +1014,13 @@ export const movementsRouter = createTRPCRouter({
                     metadata: { action: "added", type: input.type, leg: input.leg ?? null },
                 });
 
-                // The company on the other side of that paper hears about it
-                const recipient = input.leg === "buy" ? row.carrierOrgId : row.clientOrgId;
+                // The company on the other side of that paper hears about it —
+                // for a buy-leg paper, only a partner actually on the load: one
+                // merely named in procurement, or asked and then withdrawn from,
+                // cannot open the row, and telling it the row exists is a leak
+                const recipient = input.leg === "buy"
+                    ? (row.carrierOrgId && isExecutorOf(row, row.carrierOrgId) ? row.carrierOrgId : null)
+                    : row.clientOrgId;
 
                 if (recipient) {
                     await notify(ctx.db, {
