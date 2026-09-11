@@ -15,7 +15,7 @@ import { useTRPC } from "@/backend/api/client"
 import { PageHeader } from "@workspace/ui/customs/list/page-header"
 import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { RegisterPartnerDialog, type RegisterTarget } from "@/frontend/pages/partners/sections/register-partner"
-import { currentKind, VEHICLE_KINDS, type VehicleKind } from "@/frontend/pages/partners/types"
+import { currentKind, currentOwner, VEHICLE_KINDS, type OwnerType, type VehicleKind } from "@/frontend/pages/partners/types"
 
 type Page = "shippers" | "carriers" | "drivers" | "fleet"
 
@@ -33,15 +33,15 @@ const KIND_ICON: Record<VehicleKind, Icon> = {
 }
 
 /** The record count for the title pill, read from the same stats the tiles show. */
-function useTotal(page: Page, kind: VehicleKind) {
+function useTotal(page: Page, kind: VehicleKind, owner: OwnerType) {
     const trpc = useTRPC()
 
     const organizations = useQuery({
         ...trpc.partners.organizationStats.queryOptions({ type: page === "shippers" ? "shipper" : "carrier" }),
         enabled: page === "shippers" || page === "carriers",
     })
-    const drivers = useQuery({ ...trpc.partners.driverStats.queryOptions(), enabled: page === "drivers" })
-    const vehicles = useQuery({ ...trpc.partners.vehicleStats.queryOptions({ kind }), enabled: page === "fleet" })
+    const drivers = useQuery({ ...trpc.partners.driverStats.queryOptions({ owner }), enabled: page === "drivers" })
+    const vehicles = useQuery({ ...trpc.partners.vehicleStats.queryOptions({ kind, owner }), enabled: page === "fleet" })
 
     if (page === "drivers") return drivers.data?.total
     if (page === "fleet") return vehicles.data?.total
@@ -58,7 +58,7 @@ export function PartnersHeaderView({ page }: { page: Page }) {
     // Trucks, trailers and links share one page — the kind is a filter, not
     // a route, so switching does not remount the page or lose the search
     const kind = currentKind((key) => searchParams.get(key))
-    const total = useTotal(page, kind)
+    const total = useTotal(page, kind, currentOwner((key) => searchParams.get(key)))
 
     const target: RegisterTarget =
         page === "shippers" ? { kind: "organization", type: "shipper" }

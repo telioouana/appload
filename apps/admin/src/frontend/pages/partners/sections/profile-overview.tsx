@@ -223,7 +223,7 @@ export function DriverOverview({ profile, onOrders }: { profile: DriverProfile; 
                             ? <Mono>{profile.passport}</Mono>
                             : <MissingField kind="passport" label={t("missing.add.passport")} onSave={patch("passport")} />}
                     </KeyValue>
-                    <KeyValue label={t("columns.carrier")}>
+                    <KeyValue label={t("columns.owner")}>
                         {profile.carrierName ? (
                             <Link href={{ pathname: "/carriers/all", query: { id: profile.carrierId } }} className="hover:text-primary inline-flex items-center gap-1 underline-offset-4 hover:underline">
                                 {profile.carrierName}
@@ -334,7 +334,7 @@ export function VehicleOverview({ profile, onOrders }: { profile: VehicleProfile
                 aside={profile.kind === "truck" ? <AssignDriverPopover truckId={profile.id} carrierId={profile.carrierId} /> : undefined}
             >
                 <dl className="flex flex-col gap-2">
-                    <KeyValue label={t("columns.carrier")}>
+                    <KeyValue label={t("columns.owner")}>
                         {profile.carrierName ? (
                             <Link href={{ pathname: "/carriers/all", query: { id: profile.carrierId } }} className="hover:text-primary inline-flex items-center gap-1 underline-offset-4 hover:underline">
                                 {profile.carrierName}

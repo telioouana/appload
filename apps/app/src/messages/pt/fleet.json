@@ -190,7 +190,6 @@
             "BAY_REQUIRED": "Reboques e semi-reboques precisam sempre de uma zona de carga.",
             "NOT_ALLOWED": "A sua função não permite editar a frota.",
             "NOT_FOUND": "Este veículo já não existe.",
-            "WRONG_ORGANIZATION_TYPE": "Só os transportadores têm frota.",
             "UNKNOWN": "Ocorreu um erro inesperado. Tente novamente."
         }
     },

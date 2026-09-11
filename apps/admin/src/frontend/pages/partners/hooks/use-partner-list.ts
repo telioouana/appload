@@ -69,7 +69,10 @@ export function usePartnerList(defaultSort: string) {
 
         if (get("phone") === "missing") push("phone", t("columns.phone"), t("values.missing"))
         if (get("unassigned")) push("unassigned", t("filters.assignment"), t("values.unassigned"))
-        if (get("carrier")) push("carrier", t("columns.carrier"), t("filters.selected"))
+        if (get("carrier")) push("carrier", t("columns.owner"), t("filters.selected"))
+
+        const owner = get("owner")
+        if (owner === "shipper" || owner === "all") push("owner", t("filters.owner"), t(`filters.owner-options.${owner}`))
 
         return chips
     }
@@ -87,5 +90,5 @@ export function withoutPaging<T extends { page: number; pageSize: number }>(inpu
 
 /** Whether anything narrows the list beyond its natural scope. */
 export const isFilteredList = (get: (key: string) => string | null) =>
-    ["search", "status", "expiring", "incomplete", "contract", "risk", "province", "ownership", "phone", "unassigned", "carrier", "claims"]
+    ["search", "status", "expiring", "incomplete", "contract", "risk", "province", "ownership", "phone", "unassigned", "carrier", "owner", "claims"]
         .some((key) => Boolean(get(key)))

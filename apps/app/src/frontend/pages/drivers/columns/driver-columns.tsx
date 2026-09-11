@@ -9,12 +9,20 @@ import { CopyableText, IdentityCell, initials, Mono, PlateChip, ProgressCell } f
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { RowActions } from "@/frontend/pages/fleet/sections/row-actions"
 import { KycBadge, StateBadge } from "@/frontend/pages/fleet/sections/badges"
+import { withVerification } from "@/frontend/pages/fleet/hooks/use-verified-fleet"
 import { isPlaceholderEmail, type DriverRow } from "@/frontend/pages/drivers/types"
 
-export function useDriverColumns({ onOpen }: { onOpen: (row: DriverRow) => void }) {
+export function useDriverColumns({
+    onOpen,
+    verified,
+}: {
+    onOpen: (row: DriverRow) => void
+    /** Whether Appload verifies this fleet — see use-verified-fleet.ts */
+    verified: boolean
+}) {
     const t = useTranslations("App.drivers")
 
-    return useMemo<ColumnDef<DriverRow, unknown>[]>(() => [
+    return useMemo<ColumnDef<DriverRow, unknown>[]>(() => withVerification(verified, [
         {
             id: "name",
             accessorKey: "name",
@@ -114,5 +122,5 @@ export function useDriverColumns({ onOpen }: { onOpen: (row: DriverRow) => void 
                 />
             ),
         },
-    ], [t, onOpen])
+    ]), [t, onOpen, verified])
 }

@@ -25,7 +25,6 @@ const EDIT_ERROR_CODES = [
     "EMAIL_LOCKED",
     "NOT_ALLOWED",
     "NOT_FOUND",
-    "WRONG_ORGANIZATION_TYPE",
     "UNKNOWN",
 ] as const
 

@@ -25,6 +25,7 @@ import {
     ProfileSkeleton,
 } from "@/frontend/pages/fleet/sections/profile-parts"
 import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
+import { useVerifiedFleet } from "@/frontend/pages/fleet/hooks/use-verified-fleet"
 import type { VehicleKind, VehicleProfile } from "@/frontend/pages/fleet/types"
 
 /**
@@ -60,6 +61,7 @@ export function VehicleProfileSheet({ kind }: { kind: VehicleKind }) {
 function Panel({ kind, id, onClose }: { kind: VehicleKind; id: string; onClose: () => void }) {
     const t = useTranslations("App.fleet")
     const trpc = useTRPC()
+    const verified = useVerifiedFleet()
 
     const [editing, setEditing] = useState(false)
 
@@ -80,8 +82,8 @@ function Panel({ kind, id, onClose }: { kind: VehicleKind; id: string; onClose: 
                     subtitle={`${data.brand} ${data.model} · ${data.year}`}
                     badges={
                         <>
-                            <KycBadge status={data.kycStatus} />
-                            <OwnershipBadge status={data.ownershipStatus} />
+                            {verified && <KycBadge status={data.kycStatus} />}
+                            {verified && <OwnershipBadge status={data.ownershipStatus} />}
                             <StateBadge state={data.status} />
                         </>
                     }
@@ -99,9 +101,9 @@ function Panel({ kind, id, onClose }: { kind: VehicleKind; id: string; onClose: 
             <ProfileBody>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <Details profile={data} />
-                    <Verification profile={data} />
-                    <Operation profile={data} />
-                    <Documents profile={data} />
+                    {verified && <Verification profile={data} />}
+                    <Operation profile={data} verified={verified} />
+                    {verified && <Documents profile={data} />}
                 </div>
             </ProfileBody>
 
@@ -183,7 +185,7 @@ function Verification({ profile }: { profile: VehicleProfile }) {
     )
 }
 
-function Operation({ profile }: { profile: VehicleProfile }) {
+function Operation({ profile, verified }: { profile: VehicleProfile; verified: boolean }) {
     const t = useTranslations("App.fleet")
 
     return (
@@ -205,7 +207,7 @@ function Operation({ profile }: { profile: VehicleProfile }) {
                                     {profile.drivers.map((driver) => (
                                         <span key={driver.id} className="inline-flex items-center gap-1.5">
                                             <span className="truncate">{driver.name}</span>
-                                            <KycBadge status={driver.kycStatus} />
+                                            {verified && <KycBadge status={driver.kycStatus} />}
                                         </span>
                                     ))}
                                 </span>

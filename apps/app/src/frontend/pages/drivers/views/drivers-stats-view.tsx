@@ -6,6 +6,7 @@ import { IconParking, IconSearch, IconTruckOff } from "@tabler/icons-react"
 import { useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
+import { useVerifiedFleet } from "@/frontend/pages/fleet/hooks/use-verified-fleet"
 import { AttentionTiles, type AttentionTile } from "@workspace/ui/customs/list/attention-tiles"
 
 /**
@@ -20,6 +21,7 @@ export function DriversStatsView() {
     const trpc = useTRPC()
 
     const { data } = useSuspenseQuery(trpc.drivers.stats.queryOptions())
+    const verified = useVerifiedFleet()
 
     const tiles: AttentionTile[] = [
         {
@@ -29,13 +31,16 @@ export function DriversStatsView() {
             hint: t("idle-hint"),
             Icon: IconParking,
         },
-        {
-            filter: { key: "status", value: "pending-review" },
-            label: t("pending-review"),
-            value: data.byStatus["pending-review"],
-            hint: t("pending-review-hint"),
-            Icon: IconSearch,
-        },
+        // What Appload is still waiting on only exists where Appload verifies
+        ...(verified
+            ? [{
+                filter: { key: "status", value: "pending-review" },
+                label: t("pending-review"),
+                value: data.byStatus["pending-review"],
+                hint: t("pending-review-hint"),
+                Icon: IconSearch,
+            }]
+            : []),
         {
             filter: { key: "unassigned", value: "1" },
             label: t("unassigned"),

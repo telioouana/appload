@@ -8,6 +8,7 @@ import { useTranslations } from "@workspace/i18n"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
+import { useVerifiedFleet } from "@/frontend/pages/fleet/hooks/use-verified-fleet"
 import { ListCard } from "@workspace/ui/customs/list/list-card"
 import { ListFooter } from "@workspace/ui/customs/list/list-footer"
 import { ListToolbar } from "@workspace/ui/customs/list/list-toolbar"
@@ -43,7 +44,8 @@ export function DriversDataView() {
     const { open } = sheet
     const onOpen = useCallback((row: DriverRow) => open(row.id), [open])
 
-    const columns = useDriverColumns({ onOpen })
+    const verified = useVerifiedFleet()
+    const columns = useDriverColumns({ onOpen, verified })
     const table = useDataTable({
         columns,
         data: data.items,
@@ -58,7 +60,9 @@ export function DriversDataView() {
             <ListCard>
                 <ListToolbar
                     table={table}
-                    tabs={{ param: "status", items: statusTabs(stats) }}
+                    // Verification statuses only exist where Appload verifies;
+                    // a shipper's list keeps the one tab that counts it
+                    tabs={{ param: "status", items: statusTabs(stats).filter((tab) => verified || tab.value === "all") }}
                     filterCount={chips.length}
                     activeFilters={chips}
                     sort={{

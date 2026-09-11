@@ -190,7 +190,6 @@
             "BAY_REQUIRED": "Trailers and links always need a loading bay.",
             "NOT_ALLOWED": "Your role cannot edit the fleet.",
             "NOT_FOUND": "This vehicle no longer exists.",
-            "WRONG_ORGANIZATION_TYPE": "Only carriers have a fleet.",
             "UNKNOWN": "Something went wrong. Please try again."
         }
     },

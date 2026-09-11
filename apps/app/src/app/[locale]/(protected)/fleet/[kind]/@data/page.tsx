@@ -33,6 +33,8 @@ export default async function Data({
 
     prefetch(trpc.fleet.vehicles.list.queryOptions(input))
     prefetch(trpc.fleet.vehicles.stats.queryOptions({ kind: vehicle }))
+    // Whether the columns and the profile include verification (use-verified-fleet.ts)
+    prefetch(trpc.me.session.queryOptions())
 
     return (
         <HydrateClient>

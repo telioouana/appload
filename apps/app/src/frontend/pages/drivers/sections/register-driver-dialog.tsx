@@ -22,7 +22,6 @@ const ERROR_MESSAGE_KEYS = {
     "INVALID": "invalid",
     "UNAUTHORIZED": "unauthorized",
     "NOT_ALLOWED": "notAllowed",
-    "WRONG_ORGANIZATION_TYPE": "notAllowed",
     "DUPLICATE_EMAIL": "duplicateEmail",
     "DUPLICATE_PHONE": "duplicatePhone",
     "UNKNOWN": "unknown",

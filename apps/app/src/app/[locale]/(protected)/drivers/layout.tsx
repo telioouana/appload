@@ -33,7 +33,7 @@ export default async function Layout({
 
     const tenant = await getTenantGates(db, { userId: session.user.id })
 
-    if (!tenant.ok || tenant.orgType !== "carrier") notFound()
+    if (!tenant.ok) notFound()
 
     return <ListPageShell header={header} stats={stats} data={data} />
 }

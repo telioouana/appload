@@ -28,7 +28,6 @@ const EDIT_ERROR_CODES = [
     "BAY_REQUIRED",
     "NOT_ALLOWED",
     "NOT_FOUND",
-    "WRONG_ORGANIZATION_TYPE",
     "UNKNOWN",
 ] as const
 

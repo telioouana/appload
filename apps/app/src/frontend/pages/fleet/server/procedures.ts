@@ -11,7 +11,7 @@ import type { KycStatus, KycSubjectType, LoadingBay, OwnershipStatus } from "@wo
 import type { db as Database } from "@workspace/db/db";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, carrierProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 import type { OrgAction } from "@workspace/auth/organization-permissions";
 
 import { docProgress, today, type CurrentDoc } from "@workspace/domain/kyc/derive";
@@ -60,18 +60,12 @@ const VEHICLE_TABLE = { truck, trailer, link } as const;
 const vehicleKind = z.enum(VEHICLE_KIND);
 
 /**
- * Fleet writes need two things at once: a carrier tenant (a shipper has no
- * fleet to register into) and the role statement. `carrierProcedure` and
- * `authorizedTenantProcedure` each give one, so the two are composed here
- * rather than repeated on every mutation.
+ * Fleet writes need the role statement and nothing else. Any company may
+ * keep a fleet: a carrier's is what it sells, a shipper's moves its own goods
+ * between its own sites. The rows are scoped to the tenant either way, which
+ * is what actually protects them.
  */
-const fleetProcedure = (actions: OrgAction<"fleet">[]) =>
-    authorizedTenantProcedure("fleet", actions).use(({ ctx, next }) => {
-        if (ctx.tenant.orgType !== "carrier") {
-            throw new TRPCError({ code: "FORBIDDEN", message: "WRONG_ORGANIZATION_TYPE" });
-        }
-        return next();
-    });
+const fleetProcedure = (actions: OrgAction<"fleet">[]) => authorizedTenantProcedure("fleet", actions);
 
 // Escape LIKE wildcards so user input matches literally
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
@@ -119,7 +113,7 @@ const VehiclePatch = z.object({
 export const fleetRouter = createTRPCRouter({
     vehicles: createTRPCRouter({
         /** One page of the tenant's own trucks, trailers or links. */
-        list: carrierProcedure
+        list: tenantProcedure
             .input(VehiclesInput)
             .query(async ({ ctx, input }): Promise<PagedResult<VehicleRow>> => {
                 const page = input.page ?? 1;
@@ -135,7 +129,7 @@ export const fleetRouter = createTRPCRouter({
             }),
 
         /** The counts behind the status tabs and the attention tiles. */
-        stats: carrierProcedure
+        stats: tenantProcedure
             .input(z.object({ kind: vehicleKind }))
             .query(async ({ ctx, input }): Promise<VehicleStats> => {
                 const table = VEHICLE_TABLE[input.kind];
@@ -180,7 +174,7 @@ export const fleetRouter = createTRPCRouter({
             }),
 
         /** Everything the profile panel shows for one vehicle. */
-        get: carrierProcedure
+        get: tenantProcedure
             .input(z.object({ kind: vehicleKind, id: z.string().nonempty() }))
             .query(async ({ ctx, input }): Promise<VehicleProfile> => {
                 const table = VEHICLE_TABLE[input.kind];
@@ -245,7 +239,7 @@ export const fleetRouter = createTRPCRouter({
          * The carrier is the signed-in tenant, so — unlike Admin — there is no
          * carrier to pass and none to get wrong.
          */
-        search: carrierProcedure
+        search: tenantProcedure
             .input(z.object({ kind: vehicleKind, query: z.string() }))
             .query(async ({ ctx, input }): Promise<VehicleOption[]> => {
                 const table = VEHICLE_TABLE[input.kind];

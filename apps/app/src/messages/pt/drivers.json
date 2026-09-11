@@ -123,7 +123,6 @@
             "EMAIL_LOCKED": "Este motorista já entra com o email dele; só a Appload o pode alterar. Fale connosco.",
             "NOT_ALLOWED": "A sua função não permite editar motoristas.",
             "NOT_FOUND": "Este motorista já não existe.",
-            "WRONG_ORGANIZATION_TYPE": "Só os transportadores têm motoristas.",
             "UNKNOWN": "Ocorreu um erro inesperado. Tente novamente."
         }
     },

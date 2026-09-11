@@ -22,8 +22,8 @@ type NavHref = React.ComponentProps<typeof Link>["href"];
 
 /**
  * A rail entry: one link to one page of the portal. The two groups below are
- * the whole of it — a carrier sees two rows a shipper does not, and nothing
- * else varies.
+ * the whole of it, and both kinds of company see the same rows — the only
+ * thing that varies is which section the orders list opens at.
  */
 type NavEntry = {
     Icon: Icon;
@@ -73,22 +73,17 @@ export function Sidenav({
     ]
 
     const company: NavEntry[] = [
-        // Fleet and drivers are the carrier's own assets; a shipper has
-        // neither, so the two rows are absent from its rail entirely
-        ...(orgType === "carrier"
-            ? [
-                {
-                    Icon: IconTruck,
-                    name: t("company.fleet"),
-                    match: "/fleet",
-                    // The three vehicle kinds are three routes; the rail
-                    // enters at the trucks one and the page's own tabs
-                    // switch between them
-                    path: { pathname: "/fleet/[kind]", params: { kind: "trucks" } },
-                } as NavEntry,
-                { Icon: IconUsers, name: t("company.drivers"), match: "/drivers", path: "/drivers" } as NavEntry,
-            ]
-            : []),
+        // Every company may keep a fleet: a carrier's is what it sells, a
+        // shipper's moves its own goods between its own sites
+        {
+            Icon: IconTruck,
+            name: t("company.fleet"),
+            match: "/fleet",
+            // The three vehicle kinds are three routes; the rail enters at
+            // the trucks one and the page's own tabs switch between them
+            path: { pathname: "/fleet/[kind]", params: { kind: "trucks" } },
+        },
+        { Icon: IconUsers, name: t("company.drivers"), match: "/drivers", path: "/drivers" },
         { Icon: IconBuildingWarehouse, name: t("company.partners"), match: "/partners", path: "/partners" },
         { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", path: "/analytics" },
     ]

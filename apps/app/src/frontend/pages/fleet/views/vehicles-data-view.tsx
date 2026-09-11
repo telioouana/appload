@@ -9,6 +9,7 @@ import { OWNERSHIP_STATUS } from "@workspace/db/types"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
+import { useVerifiedFleet } from "@/frontend/pages/fleet/hooks/use-verified-fleet"
 import { ListCard } from "@workspace/ui/customs/list/list-card"
 import { ListFooter } from "@workspace/ui/customs/list/list-footer"
 import { ListToolbar } from "@workspace/ui/customs/list/list-toolbar"
@@ -45,7 +46,8 @@ export function VehiclesDataView({ kind }: { kind: VehicleKind }) {
     const { open } = sheet
     const onOpen = useCallback((row: VehicleRow) => open(row.id), [open])
 
-    const columns = useVehicleColumns({ kind, onOpen })
+    const verified = useVerifiedFleet()
+    const columns = useVehicleColumns({ kind, onOpen, verified })
     const table = useDataTable({
         columns,
         data: data.items,
@@ -60,7 +62,9 @@ export function VehiclesDataView({ kind }: { kind: VehicleKind }) {
             <ListCard>
                 <ListToolbar
                     table={table}
-                    tabs={{ param: "status", items: statusTabs(stats) }}
+                    // Verification statuses only exist where Appload verifies;
+                    // a shipper's list keeps the one tab that counts it
+                    tabs={{ param: "status", items: statusTabs(stats).filter((tab) => verified || tab.value === "all") }}
                     filterCount={chips.length}
                     activeFilters={chips}
                     sort={{
@@ -79,12 +83,14 @@ export function VehiclesDataView({ kind }: { kind: VehicleKind }) {
                                     count: stats.byState[value],
                                 }))}
                             />
-                            <FilterChoice
-                                label={t("filters.ownership")}
-                                param="ownership"
-                                anyLabel={t("filters.any")}
-                                options={OWNERSHIP_STATUS.map((value) => ({ value, label: t(`ownership.${value}`) }))}
-                            />
+                            {verified && (
+                                <FilterChoice
+                                    label={t("filters.ownership")}
+                                    param="ownership"
+                                    anyLabel={t("filters.any")}
+                                    options={OWNERSHIP_STATUS.map((value) => ({ value, label: t(`ownership.${value}`) }))}
+                                />
+                            )}
                             <div className="flex flex-col gap-1 border-t pt-3">
                                 <FilterToggle
                                     label={t(`filters.unassigned.${kind}`)}

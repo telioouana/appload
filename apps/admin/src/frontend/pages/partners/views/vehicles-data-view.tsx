@@ -40,7 +40,7 @@ export function VehiclesDataView() {
     const input = vehiclesListInput(get)
 
     const { data } = useSuspenseQuery(trpc.partners.vehicles.queryOptions(input))
-    const { data: stats } = useSuspenseQuery(trpc.partners.vehicleStats.queryOptions({ kind: input.kind }))
+    const { data: stats } = useSuspenseQuery(trpc.partners.vehicleStats.queryOptions({ kind: input.kind, owner: input.owner }))
     const isRefreshing = useIsFetching({ queryKey: trpc.partners.vehicles.pathKey() }) > 0
 
     const on = today()
@@ -95,6 +95,16 @@ export function VehiclesDataView() {
                     isExporting={isExporting}
                     filters={
                         <>
+                            {/* Carriers when absent: the fleet somebody verifies */}
+                            <FilterChoice
+                                label={t("filters.owner")}
+                                param="owner"
+                                anyLabel={t("filters.owner-options.carrier")}
+                                options={[
+                                    { value: "shipper", label: t("filters.owner-options.shipper") },
+                                    { value: "all", label: t("filters.owner-options.all") },
+                                ]}
+                            />
                             <FilterChoice
                                 label={t("columns.ownership")}
                                 param="ownership"

@@ -10,7 +10,7 @@ import type { KycStatus } from "@workspace/db/types";
 import type { db as Database } from "@workspace/db/db";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, carrierProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 import type { OrgAction } from "@workspace/auth/organization-permissions";
 
 import { docProgress, today } from "@workspace/domain/kyc/derive";
@@ -45,16 +45,11 @@ export type DriverOption = {
 };
 
 /**
- * Drivers belong to a carrier, so every procedure here needs both the carrier
- * tenant and the `fleet` role statement — the same pairing the vehicles use.
+ * Drivers belong to whichever company employs them — a carrier's, or a
+ * shipper running its own trucks — so the writes need the `fleet` role
+ * statement and nothing about the organization's type, the same as vehicles.
  */
-const fleetProcedure = (actions: OrgAction<"fleet">[]) =>
-    authorizedTenantProcedure("fleet", actions).use(({ ctx, next }) => {
-        if (ctx.tenant.orgType !== "carrier") {
-            throw new TRPCError({ code: "FORBIDDEN", message: "WRONG_ORGANIZATION_TYPE" });
-        }
-        return next();
-    });
+const fleetProcedure = (actions: OrgAction<"fleet">[]) => authorizedTenantProcedure("fleet", actions);
 
 // Escape LIKE wildcards so user input matches literally
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
@@ -90,7 +85,7 @@ const DriverPatch = z.object({
 
 export const driversRouter = createTRPCRouter({
     /** One page of the tenant's own drivers. */
-    list: carrierProcedure
+    list: tenantProcedure
         .input(DriversInput)
         .query(async ({ ctx, input }): Promise<PagedResult<DriverRow>> => {
             const page = input.page ?? 1;
@@ -106,7 +101,7 @@ export const driversRouter = createTRPCRouter({
         }),
 
     /** The counts behind the status tabs and the attention tiles. */
-    stats: carrierProcedure.query(async ({ ctx }): Promise<DriverStats> => {
+    stats: tenantProcedure.query(async ({ ctx }): Promise<DriverStats> => {
         const carrier = eq(driver.carrierId, ctx.tenant.organizationId);
 
         const [row] = await ctx.db
@@ -144,7 +139,7 @@ export const driversRouter = createTRPCRouter({
     }),
 
     /** Everything the profile panel shows for one driver. */
-    get: carrierProcedure
+    get: tenantProcedure
         .input(z.object({ id: z.string().nonempty() }))
         .query(async ({ ctx, input }): Promise<DriverProfile> => {
             const [row] = await ctx.db
@@ -198,7 +193,7 @@ export const driversRouter = createTRPCRouter({
         }),
 
     /** Type-ahead over the tenant's own drivers, by name. */
-    search: carrierProcedure
+    search: tenantProcedure
         .input(z.object({ query: z.string() }))
         .query(async ({ ctx, input }): Promise<DriverOption[]> => {
             const trimmed = input.query.trim();

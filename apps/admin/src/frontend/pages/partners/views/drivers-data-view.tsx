@@ -14,7 +14,7 @@ import { ListFooter } from "@workspace/ui/customs/list/list-footer"
 import { ListToolbar } from "@workspace/ui/customs/list/list-toolbar"
 import { BulkAction, BulkBar } from "@workspace/ui/customs/list/bulk-bar"
 import { DataTable, useDataTable } from "@workspace/ui/customs/list/data-table"
-import { FilterToggle } from "@workspace/ui/customs/list/filter-controls"
+import { FilterChoice, FilterToggle } from "@workspace/ui/customs/list/filter-controls"
 import { downloadCsv, stamp } from "@workspace/ui/lib/csv"
 import { useDriverColumns } from "@/frontend/pages/partners/columns/driver-columns"
 import { isFilteredList, usePartnerList, withoutPaging } from "@/frontend/pages/partners/hooks/use-partner-list"
@@ -39,7 +39,7 @@ export function DriversDataView() {
     const input = driversListInput(get)
 
     const { data } = useSuspenseQuery(trpc.partners.drivers.queryOptions(input))
-    const { data: stats } = useSuspenseQuery(trpc.partners.driverStats.queryOptions())
+    const { data: stats } = useSuspenseQuery(trpc.partners.driverStats.queryOptions({ owner: input.owner }))
     const isRefreshing = useIsFetching({ queryKey: trpc.partners.drivers.pathKey() }) > 0
 
     const on = today()
@@ -92,16 +92,28 @@ export function DriversDataView() {
                     onExport={() => exportRows()}
                     isExporting={isExporting}
                     filters={
-                        <div className="flex flex-col gap-1">
-                            <FilterToggle
-                                label={t("filters.expiring")}
-                                hint={t("filters.within-days", { days: EXPIRY_WINDOW_DAYS })}
-                                param="expiring"
-                                value={String(EXPIRY_WINDOW_DAYS)}
+                        <>
+                            {/* Carriers when absent: the drivers somebody verifies */}
+                            <FilterChoice
+                                label={t("filters.owner")}
+                                param="owner"
+                                anyLabel={t("filters.owner-options.carrier")}
+                                options={[
+                                    { value: "shipper", label: t("filters.owner-options.shipper") },
+                                    { value: "all", label: t("filters.owner-options.all") },
+                                ]}
                             />
-                            <FilterToggle label={t("filters.no-phone")} hint={t("filters.no-phone-hint")} param="phone" value="missing" />
-                            <FilterToggle label={t("filters.no-truck")} hint={t("filters.no-truck-hint")} param="unassigned" value="1" />
-                        </div>
+                            <div className="flex flex-col gap-1 border-t pt-3">
+                                <FilterToggle
+                                    label={t("filters.expiring")}
+                                    hint={t("filters.within-days", { days: EXPIRY_WINDOW_DAYS })}
+                                    param="expiring"
+                                    value={String(EXPIRY_WINDOW_DAYS)}
+                                />
+                                <FilterToggle label={t("filters.no-phone")} hint={t("filters.no-phone-hint")} param="phone" value="missing" />
+                                <FilterToggle label={t("filters.no-truck")} hint={t("filters.no-truck-hint")} param="unassigned" value="1" />
+                            </div>
+                        </>
                     }
                 />
 

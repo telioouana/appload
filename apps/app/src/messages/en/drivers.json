@@ -123,7 +123,6 @@
             "EMAIL_LOCKED": "This driver already signs in with their own email, which only Appload can change. Talk to us.",
             "NOT_ALLOWED": "Your role cannot edit drivers.",
             "NOT_FOUND": "This driver no longer exists.",
-            "WRONG_ORGANIZATION_TYPE": "Only carriers have drivers.",
             "UNKNOWN": "Something went wrong. Please try again."
         }
     },

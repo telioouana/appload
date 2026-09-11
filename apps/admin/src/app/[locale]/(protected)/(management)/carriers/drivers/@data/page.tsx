@@ -24,7 +24,7 @@ export default async function Data({
     })
 
     prefetch(trpc.partners.drivers.queryOptions(input))
-    prefetch(trpc.partners.driverStats.queryOptions())
+    prefetch(trpc.partners.driverStats.queryOptions({ owner: input.owner }))
 
     return (
         <HydrateClient>

@@ -26,6 +26,7 @@ import {
     EXPIRY_WINDOW_DAYS,
     ISSUE_STATUSES,
     ORGANIZATION_SORTS,
+    OWNER_TYPES,
     PLACEHOLDER_PATTERNS,
     RISK_FILTERS,
     STATUS_FILTERS,
@@ -88,6 +89,7 @@ const DriversInput = z.object({
     phone: z.literal("missing").optional(),
     unassigned: z.boolean().optional(),
     carrier: z.string().optional(),
+    owner: z.enum(OWNER_TYPES).default("carrier"),
 });
 
 const VehiclesInput = z.object({
@@ -97,7 +99,11 @@ const VehiclesInput = z.object({
     ownership: z.enum(OWNERSHIP_STATUS).optional(),
     unassigned: z.boolean().optional(),
     carrier: z.string().optional(),
+    owner: z.enum(OWNER_TYPES).default("carrier"),
 });
+
+/** The owner scope the fleet pages and their tiles share (see OWNER_TYPES). */
+const OwnerInput = z.object({ owner: z.enum(OWNER_TYPES).default("carrier") });
 
 type OrganizationsInput = z.infer<typeof OrganizationsInput>;
 type DriversInput = z.infer<typeof DriversInput>;
@@ -576,8 +582,22 @@ async function listOrganizations(db: Db, input: OrganizationsInput, limit: numbe
 // Drivers
 // ---------------------------------------------------------------------------
 
+/**
+ * Assets owned by one kind of organization. The fleet tables key on
+ * `carrier_id`, which since the portal opened fleet registration to shippers
+ * is any owning organization — this is what tells the two apart.
+ */
+function ownedBy(db: Db, column: AnyColumn, owner: z.infer<typeof OwnerInput>["owner"]): SQL | undefined {
+    if (owner === "all") return undefined;
+
+    return inArray(column, db.select({ id: organization.id }).from(organization).where(eq(organization.type, owner)));
+}
+
 function driverConditions(db: Db, input: DriversInput): SQL | undefined {
     const conditions: SQL[] = [];
+
+    const owner = ownedBy(db, driver.carrierId, input.owner);
+    if (owner) conditions.push(owner);
 
     if (input.status) conditions.push(statusCondition(driver.kycStatus, input.status));
     if (input.expiring) conditions.push(inArray(driver.id, expiringSubjects(db, "driver", input.expiring, today())));
@@ -708,6 +728,9 @@ async function listDrivers(db: Db, input: DriversInput, limit: number, offset: n
 function vehicleConditions(db: Db, input: VehiclesInput): SQL | undefined {
     const table = VEHICLE_TABLE[input.kind];
     const conditions: SQL[] = [];
+
+    const owner = ownedBy(db, table.carrierId, input.owner);
+    if (owner) conditions.push(owner);
 
     if (input.status) conditions.push(statusCondition(table.kycStatus, input.status));
     if (input.expiring) conditions.push(inArray(table.id, expiringSubjects(db, input.kind, input.expiring, today())));
@@ -1039,16 +1062,22 @@ export const partnersRouter = createTRPCRouter({
         }),
 
     driverStats: authorizedProcedure("organizations", ["read"])
-        .query(async ({ ctx }): Promise<StatsBucket> => {
+        .input(OwnerInput)
+        .query(async ({ ctx, input }): Promise<StatsBucket> => {
+            // The same owner scope as the list, so a tile always counts
+            // exactly the rows it opens
+            const owner = ownedBy(ctx.db, driver.carrierId, input.owner);
+
             const [buckets, [attention]] = await Promise.all([
-                statusBuckets(ctx.db, driver, "driver"),
+                statusBuckets(ctx.db, driver, "driver", owner),
                 ctx.db
                     .select({
                         phone: conditionCount(missingDriverPhone()),
                         unassigned: conditionCount(isNull(driver.truckId)),
                     })
                     .from(driver)
-                    .innerJoin(user, eq(user.id, driver.userId)),
+                    .innerJoin(user, eq(user.id, driver.userId))
+                    .where(owner),
             ]);
 
             return {
@@ -1074,18 +1103,22 @@ export const partnersRouter = createTRPCRouter({
         }),
 
     vehicleStats: authorizedProcedure("organizations", ["read"])
-        .input(z.object({ kind: vehicleKind }))
+        .input(OwnerInput.extend({ kind: vehicleKind }))
         .query(async ({ ctx, input }): Promise<StatsBucket> => {
             const table = VEHICLE_TABLE[input.kind];
+            // The same owner scope as the list, so a tile always counts
+            // exactly the rows it opens
+            const owner = ownedBy(ctx.db, table.carrierId, input.owner);
 
             const [buckets, [attention]] = await Promise.all([
-                statusBuckets(ctx.db, table, input.kind),
+                statusBuckets(ctx.db, table, input.kind, owner),
                 ctx.db
                     .select({
                         ownership: conditionCount(eq(table.ownershipStatus, "unverified")),
                         unassigned: conditionCount(unassignedVehicle(ctx.db, input.kind)),
                     })
-                    .from(table),
+                    .from(table)
+                    .where(owner),
             ]);
 
             return {

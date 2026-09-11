@@ -8,6 +8,7 @@ import { useTranslations } from "@workspace/i18n"
 import { useTRPC } from "@/backend/api/client"
 import { AttentionTiles, type AttentionTile } from "@workspace/ui/customs/list/attention-tiles"
 import type { VehicleKind } from "@/frontend/pages/fleet/types"
+import { useVerifiedFleet } from "@/frontend/pages/fleet/hooks/use-verified-fleet"
 
 /**
  * The work queue above the table: what is standing still, what Appload is
@@ -23,6 +24,7 @@ export function FleetStatsView({ kind }: { kind: VehicleKind }) {
     const trpc = useTRPC()
 
     const { data } = useSuspenseQuery(trpc.fleet.vehicles.stats.queryOptions({ kind }))
+    const verified = useVerifiedFleet()
 
     const tiles: AttentionTile[] = [
         {
@@ -32,20 +34,25 @@ export function FleetStatsView({ kind }: { kind: VehicleKind }) {
             hint: t("idle-hint"),
             Icon: IconParking,
         },
-        {
-            filter: { key: "status", value: "pending-review" },
-            label: t("pending-review"),
-            value: data.byStatus["pending-review"],
-            hint: t("pending-review-hint"),
-            Icon: IconSearch,
-        },
-        {
-            filter: { key: "ownership", value: "unverified" },
-            label: t("ownership"),
-            value: data.attention.ownership,
-            hint: t("ownership-hint"),
-            Icon: IconHelpCircle,
-        },
+        // What Appload is still waiting on only exists where Appload verifies
+        ...(verified
+            ? [
+                {
+                    filter: { key: "status", value: "pending-review" },
+                    label: t("pending-review"),
+                    value: data.byStatus["pending-review"],
+                    hint: t("pending-review-hint"),
+                    Icon: IconSearch,
+                },
+                {
+                    filter: { key: "ownership", value: "unverified" },
+                    label: t("ownership"),
+                    value: data.attention.ownership,
+                    hint: t("ownership-hint"),
+                    Icon: IconHelpCircle,
+                },
+            ]
+            : []),
         {
             filter: { key: "unassigned", value: "1" },
             label: t(`unassigned.${kind}`),

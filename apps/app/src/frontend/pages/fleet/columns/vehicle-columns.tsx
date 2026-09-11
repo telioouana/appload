@@ -8,21 +8,25 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 import { Dash, IdentityCell, initials, Mono, PlateChip, ProgressCell, StackCell } from "@workspace/ui/customs/list/table-cells"
 import { RowActions } from "@/frontend/pages/fleet/sections/row-actions"
 import { KycBadge, OwnershipBadge, StateBadge } from "@/frontend/pages/fleet/sections/badges"
+import { withVerification } from "@/frontend/pages/fleet/hooks/use-verified-fleet"
 import type { VehicleKind, VehicleRow } from "@/frontend/pages/fleet/types"
 
 export function useVehicleColumns({
     kind,
     onOpen,
+    verified,
 }: {
     kind: VehicleKind
     onOpen: (row: VehicleRow) => void
+    /** Whether Appload verifies this fleet — see use-verified-fleet.ts */
+    verified: boolean
 }) {
     const t = useTranslations("App.fleet")
     // The body labels already exist for the registration form; reuse them
     const bays = useTranslations("App.fleet.register.fields.bay.type.options")
     const f = useFormatter()
 
-    return useMemo<ColumnDef<VehicleRow, unknown>[]>(() => [
+    return useMemo<ColumnDef<VehicleRow, unknown>[]>(() => withVerification(verified, [
         {
             id: "plate",
             accessorKey: "regPlate",
@@ -138,5 +142,5 @@ export function useVehicleColumns({
                 />
             ),
         },
-    ], [kind, t, bays, f, onOpen])
+    ]), [kind, t, bays, f, onOpen, verified])
 }

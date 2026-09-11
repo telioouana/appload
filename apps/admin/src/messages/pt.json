@@ -2923,7 +2923,13 @@
                 "unassigned-trailer": "Não engatado",
                 "unassigned-trailer-hint": "Nenhum camião puxa este reboque",
                 "unassigned-link": "Não engatado",
-                "unassigned-link-hint": "Nenhum reboque leva este link"
+                "unassigned-link-hint": "Nenhum reboque leva este link",
+                "owner": "Proprietário",
+                "owner-options": {
+                    "carrier": "Transportadores",
+                    "shipper": "Clientes",
+                    "all": "Todos"
+                }
             },
             "values": {
                 "none": "Nenhum",
@@ -3119,7 +3125,7 @@
                 "actions": "Acções",
                 "driver": "Motorista",
                 "phone": "Telefone",
-                "carrier": "Transportador",
+                "owner": "Proprietário",
                 "truck": "Camião",
                 "location": "Localização",
                 "status": "Estado",

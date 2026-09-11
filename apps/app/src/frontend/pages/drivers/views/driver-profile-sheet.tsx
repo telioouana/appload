@@ -25,6 +25,7 @@ import {
 import { EditDriverDialog } from "@/frontend/pages/drivers/sections/edit-driver-dialog"
 import { AssignTruckPopover } from "@/frontend/pages/drivers/sections/assign-truck-popover"
 import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
+import { useVerifiedFleet } from "@/frontend/pages/fleet/hooks/use-verified-fleet"
 import { isPlaceholderEmail, type DriverProfile } from "@/frontend/pages/drivers/types"
 
 /**
@@ -59,6 +60,7 @@ export function DriverProfileSheet() {
 function Panel({ id, onClose }: { id: string; onClose: () => void }) {
     const t = useTranslations("App.drivers")
     const trpc = useTRPC()
+    const verified = useVerifiedFleet()
 
     const [editing, setEditing] = useState(false)
 
@@ -80,7 +82,7 @@ function Panel({ id, onClose }: { id: string; onClose: () => void }) {
                     subtitle={data.passport ? t("values.passport", { number: data.passport }) : undefined}
                     badges={
                         <>
-                            <KycBadge status={data.kycStatus} />
+                            {verified && <KycBadge status={data.kycStatus} />}
                             <StateBadge state={data.status} />
                         </>
                     }
@@ -98,9 +100,9 @@ function Panel({ id, onClose }: { id: string; onClose: () => void }) {
             <ProfileBody>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <Contact profile={data} />
-                    <Verification profile={data} />
+                    {verified && <Verification profile={data} />}
                     <Assignment profile={data} />
-                    <Documents profile={data} />
+                    {verified && <Documents profile={data} />}
                 </div>
             </ProfileBody>
 

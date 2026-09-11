@@ -31,7 +31,6 @@ const ERROR_MESSAGE_KEYS = {
     "INVALID": "invalid",
     "UNAUTHORIZED": "unauthorized",
     "NOT_ALLOWED": "notAllowed",
-    "WRONG_ORGANIZATION_TYPE": "notAllowed",
     "DUPLICATE_PLATE": "duplicatePlate",
     "DUPLICATE_VIN": "duplicateVin",
     "PLATE_UNAVAILABLE": "plateUnavailable",

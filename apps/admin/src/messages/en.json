@@ -2923,7 +2923,13 @@
                 "unassigned-trailer": "Not hitched",
                 "unassigned-trailer-hint": "No truck tows this trailer",
                 "unassigned-link": "Not hitched",
-                "unassigned-link-hint": "No trailer carries this link"
+                "unassigned-link-hint": "No trailer carries this link",
+                "owner": "Owner",
+                "owner-options": {
+                    "carrier": "Carriers",
+                    "shipper": "Shippers",
+                    "all": "Everyone"
+                }
             },
             "values": {
                 "none": "None",
@@ -3119,7 +3125,7 @@
                 "actions": "Actions",
                 "driver": "Driver",
                 "phone": "Phone",
-                "carrier": "Carrier",
+                "owner": "Owner",
                 "truck": "Truck",
                 "location": "Location",
                 "status": "Status",

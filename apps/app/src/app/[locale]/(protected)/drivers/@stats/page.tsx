@@ -7,6 +7,8 @@ import { DriversStatsView } from "@/frontend/pages/drivers/views/drivers-stats-v
 
 export default function Stats() {
     prefetch(trpc.drivers.stats.queryOptions())
+    // Whether the tiles include the verification ones (use-verified-fleet.ts)
+    prefetch(trpc.me.session.queryOptions())
 
     return (
         <HydrateClient>

@@ -231,15 +231,13 @@ function OrganizationPanel({ id, tab, onTab, onClose }: PanelProps) {
     if (query.isPending) return <PanelSkeleton />
     if (query.isError || !profile || !editValues) return <PanelError onClose={onClose} />
 
-    const isCarrier = profile.type === "carrier"
-
+    // A shipper can keep a fleet of its own since the portal opened fleet
+    // registration to it; staff see it here, where they would look for it
     const tabs: TabItem[] = [
         { value: "overview", label: t("profile.tabs.overview") },
         { value: "documents", label: t("profile.tabs.documents"), count: `${profile.progress.approved}/${profile.progress.required}` },
-        ...(isCarrier ? [
-            { value: "fleet" as const, label: t("profile.tabs.fleet"), count: profile.fleet.trucks + profile.fleet.trailers + profile.fleet.links },
-            { value: "drivers" as const, label: t("profile.tabs.drivers"), count: profile.fleet.drivers },
-        ] : []),
+        { value: "fleet" as const, label: t("profile.tabs.fleet"), count: profile.fleet.trucks + profile.fleet.trailers + profile.fleet.links },
+        { value: "drivers" as const, label: t("profile.tabs.drivers"), count: profile.fleet.drivers },
         { value: "orders", label: t("profile.tabs.orders"), count: profile.performance.totalOrders },
         { value: "portal", label: t("profile.tabs.portal") },
         { value: "activity", label: t("profile.tabs.activity") },

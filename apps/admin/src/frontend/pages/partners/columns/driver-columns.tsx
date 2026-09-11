@@ -68,9 +68,9 @@ export function useDriverColumns({
             {
                 id: "carrier",
                 accessorKey: "carrierName",
-                header: t("columns.carrier"),
+                header: t("columns.owner"),
                 size: 180,
-                meta: { label: t("columns.carrier"), sortKey: "carrier" },
+                meta: { label: t("columns.owner"), sortKey: "carrier" },
                 cell: ({ row }) => <span className="block truncate">{row.original.carrierName ?? <span className="text-muted-foreground">{t("values.none")}</span>}</span>,
             },
             {

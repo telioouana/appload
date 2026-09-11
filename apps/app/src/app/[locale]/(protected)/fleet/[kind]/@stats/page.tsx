@@ -14,6 +14,8 @@ export default async function Stats({ params }: { params: Promise<{ kind: string
     if (!vehicle) notFound()
 
     prefetch(trpc.fleet.vehicles.stats.queryOptions({ kind: vehicle }))
+    // Whether the tiles include the verification ones (use-verified-fleet.ts)
+    prefetch(trpc.me.session.queryOptions())
 
     return (
         <HydrateClient>

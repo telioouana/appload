@@ -8,7 +8,7 @@ import { useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
 import { AttentionTiles, type AttentionTile } from "@workspace/ui/customs/list/attention-tiles"
-import { currentKind, EXPIRY_WINDOW_DAYS } from "@/frontend/pages/partners/types"
+import { currentKind, currentOwner, EXPIRY_WINDOW_DAYS } from "@/frontend/pages/partners/types"
 import type { StatsBucket, VehicleKind } from "@/frontend/pages/partners/types"
 
 /**
@@ -88,7 +88,10 @@ export function OrganizationStatsView({ type }: { type: "shipper" | "carrier" })
 
 export function DriverStatsView() {
     const trpc = useTRPC()
-    const { data } = useSuspenseQuery(trpc.partners.driverStats.queryOptions())
+    const searchParams = useSearchParams()
+    const owner = currentOwner((key) => searchParams.get(key))
+
+    const { data } = useSuspenseQuery(trpc.partners.driverStats.queryOptions({ owner }))
 
     return <Tiles stats={data} page="driver" />
 }
@@ -97,8 +100,9 @@ export function VehicleStatsView() {
     const trpc = useTRPC()
     const searchParams = useSearchParams()
     const kind = currentKind((key) => searchParams.get(key))
+    const owner = currentOwner((key) => searchParams.get(key))
 
-    const { data } = useSuspenseQuery(trpc.partners.vehicleStats.queryOptions({ kind }))
+    const { data } = useSuspenseQuery(trpc.partners.vehicleStats.queryOptions({ kind, owner }))
 
     return <Tiles stats={data} page={kind} />
 }
