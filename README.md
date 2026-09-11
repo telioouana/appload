@@ -13,17 +13,17 @@ pnpm + Turborepo monorepo.
 | Path | What it is |
 |---|---|
 | `apps/admin` | Next.js 16 admin app (App Router, next-intl `en`/`pt`, tRPC, Better Auth) — port 3000 |
-| `apps/app` | Next.js 16 partner portal: one organization per tenant, orders/quotes/trips/analytics for shippers and carriers — port 3001 |
+| `apps/app` | Next.js 16 partner portal: one organization per tenant — the company's own orders and trips (loads it hands to partners, loads its own fleet moves), fleet, partners, analytics, and Appload's brokerage beside them — port 3001 |
 | `apps/website` | Next.js 16 public website (App Router, next-intl `en`/`pt`, ISR) — port 3100 |
 | `packages/db` | Drizzle ORM schemas, migrations (`drizzle/`) and dev-DB scripts (`scripts/`) for Neon Postgres |
 | `packages/auth` | Better Auth server/client, email templates, RBAC permission statements |
 | `packages/trpc` | tRPC router/procedure factories, staff gate, tenant gate, permissions, activity-log catalog |
-| `packages/domain` | Business rules both apps run: the order create/transition doors, KYC gates, KPIs, tracking slots, subscriptions, notifications |
+| `packages/domain` | Business rules both apps run: the order create/transition doors, the portal's movement doors (`movements/`), KYC gates, KPIs, tracking slots, subscriptions, notifications |
 | `packages/comms` | Infobip WhatsApp/SMS sends, phone normalization, QStash cron authorization |
 | `packages/maps` | Google Maps route/trail queries and the map components |
 | `packages/edgestore` | EdgeStore file buckets (uploads, KYC documents) |
 | `packages/i18n` | next-intl plugin, routing, middleware and message catalogs |
-| `packages/ui` | Shared shadcn/base-ui component library and inputs |
+| `packages/ui` | Shared shadcn/base-ui component library and inputs, plus `customs/` — the pieces both apps build pages from: the list kit (`customs/list`), the detail-page cards (`customs/detail`), the nav furniture (`customs/nav`) — with their hooks in `hooks/` and helpers in `lib/`. `customs/*` resolves to `.tsx` only, so a `.ts` helper goes in `lib/` or `hooks/` |
 | `packages/eslint-config`, `packages/typescript-config` | Shared lint / TS presets |
 
 ## Getting started

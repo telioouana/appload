@@ -3,6 +3,16 @@
 _Phase 1 deliverable (Fable 5.1). Phase 2 (implementation, Opus 5 Ultracode) starts only after approval._
 _Grounded in the codebase as of 2026-09-09 (branch `dev`, last commit `faf2caa`) and ten subsystem reads under `apps/admin`, `packages/*`, `RELEASE.md`._
 
+> **Superseded in part (2026-09-10/11, branch `stage/22-portal`).** The portal was redesigned to be the company's own operations hub rather than a front end onto Appload's brokerage. What changed against this document:
+>
+> - **The company's own loads are a `movement` table** (migration `0016_movements`, which replaces the `trip` tables below): a *Trip* when its own fleet moves the load, an *Order* when a partner does for an agreed price, one row either way so a trip handed to a partner keeps its number, address and trail. Both money legs (what it charges, what it pays), cost lines, papers by audience and an event trail. The first status is `procurement`. None of it reaches the admin, the logbook, the KPIs or the commission. Doors in `packages/domain/src/movements`, the three-role projection (owner / executor / client) in `apps/app/src/frontend/pages/movements/server/projection.ts`.
+> - **Partners on the portal are offered loads and answer them**; accepting creates the partner's own row linked below the order, whose tracking and proof of delivery flow up. Only the row with the truck is pinged (§ tracking and the Infobip attribution now filter on it).
+> - **Routes:** `/orders/[section]` and `/trips/[section]` are the company's own lists, `/orders/load/[loadId]` the one load page; Appload's brokerage (orders, offers, quotes — §§ below, unchanged in behaviour) moved to `/appload/*`. `/trips/[tripId]` is gone.
+> - **Fleet and drivers are open to shippers** (no KYC for their assets; the admin's Owner filter defaults to carriers), the rail takes the admin's structure, and the UI both apps shared by copy now lives in `packages/ui/src/customs`.
+> - Notification kinds `trip.*` became `movement.*`; `claim.rejected` was dropped and `member.joined` has a writer.
+>
+> The sections below still describe the brokerage, onboarding, subscriptions and notifications accurately except where these points say otherwise. Regression script for the new model: `apps/app/scripts/verify-movements.ts`.
+
 ---
 
 ## Context

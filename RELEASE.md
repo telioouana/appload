@@ -175,7 +175,8 @@ matching ref clause before the first push, or Vercel will refuse to save
 ### Partner portal
 
 The portal reads and writes the admin's database — one database, two apps.
-Its two migrations go in with the same command as everything else:
+Its three migrations go in with the same command as everything else, in one
+run — `0014 → 0015 → 0016` back to back:
 
 ```bash
 DATABASE_URL=<prod url> pnpm --filter @workspace/db db:migrate
@@ -189,7 +190,8 @@ deployed ahead of the migration breaks that tab.
 
 - `0014_portal` — the portal's own tables (`partner_connection`,
   `organization_claim`, `order_request`, `quote`, `trip` with
-  `trip_route` / `trip_location` / `trip_tracking_request`, and
+  `trip_route` / `trip_location` / `trip_tracking_request` (replaced by
+  `0016`), and
   `notification` / `notification_cursor`), the columns it adds to tables
   that already exist (`order.source` — which app created the order —
   `organization.subscription_expires_at`, `organization.portal_activated_at`,
@@ -203,13 +205,27 @@ deployed ahead of the migration breaks that tab.
   and remaps the two legacy values in the same statement: `pro` → `business`,
   `free` → NULL. That remap is the whole data step — nothing else has to be
   touched afterwards.
+- `0016_movements` — the portal's own loads. The `trip` tables of `0014`
+  give way to one `movement` table (a Trip when the company's own fleet
+  moves the load, an Order when a partner does, for an agreed price) with
+  `movement_route` / `movement_location` / `movement_tracking_request` and
+  three new ones: `movement_cost`, `movement_document` and the append-only
+  `movement_event`. It creates and drops instead of renaming, which is safe
+  only because `0014` has never run on production — there is no `trip` row
+  anywhere but dev. It also remaps `subscription_usage.entity_type` `trip` →
+  `movement` and deletes `trip.*` notifications, both no-ops on production.
+  None of these rows reach the admin, the logbook, the KPIs or the
+  commission: a company's own loads are its own.
 
-The shared **dev** database got both from the idempotent scripts instead —
-`node packages/db/scripts/create-portal-tables.mjs`,
-`node packages/db/scripts/add-portal-columns.mjs` and
-`node packages/db/scripts/add-subscription-usage.mjs`. Same rule as every
-other table: scripts on dev, `db:migrate` on production, **never both**
-against one database.
+The shared **dev** database got all three from the idempotent scripts
+instead — `node packages/db/scripts/create-portal-tables.mjs`,
+`node packages/db/scripts/add-portal-columns.mjs`,
+`node packages/db/scripts/add-subscription-usage.mjs`, then
+`node packages/db/scripts/rename-trip-to-movement.mjs` (moves an existing
+`trip` table across with its rows; a fresh database uses
+`create-movement-tables.mjs` instead). Same rule as every other table:
+scripts on dev, `db:migrate` on production, **never both** against one
+database.
 
 ## 2. Vercel — project + environment
 
@@ -382,9 +398,12 @@ When enabling:
 
 The portal changes nothing here. The inbound webhook stays on the **admin**
 and remains the single receiver for both apps: its attribution tries the
-orders first and only then the portal's trips, so a location a trip driver
-shares lands on that trip and the thread shows up in the admin's Messages
-inbox like any other. Do not point a second webhook at the portal — the
+orders first and only then the portal's own loads, so a location a driver on
+one of them shares lands on that load and the thread shows up in the
+admin's Messages inbox like any other. On a load handed from one company to
+another on the portal, only the row with the truck is a candidate — the
+driver is asked once, by the company that employs them, and the pin reaches
+the company above by projection. Do not point a second webhook at the portal — the
 portal only *sends* (its own tracking cron, §6), and it needs the same
 `INFOBIP_WEBHOOK_SECRET` value only because it shares the module that reads
 it.
@@ -471,11 +490,15 @@ admin, **Portal** section.
 
 **What a company can do before a plan is set**: everything except starting
 a tracked movement. It can onboard, connect partners, manage fleet and
-drivers, send order requests, answer them with offers, and publish or accept
-quotes. Three doors ask for a plan — booking (a client accepting an offer or
-a standing quote), the carrier's first dispatch (`booked → to loading`) and
-starting a trip — and they answer `SUBSCRIPTION_REQUIRED` without an active
-plan, `QUOTA_EXCEEDED` once the month's tracked movements are spent. Both
+drivers, file its own loads, send order requests, answer them with offers,
+and publish or accept quotes. The doors that ask for a plan are the ones that
+start a truck being watched — on Appload's orders, booking (a client
+accepting an offer or a standing quote) and the carrier's first dispatch
+(`booked → to loading`); on the company's own loads, offering one to a
+partner on the portal, the partner accepting it, and putting one on the
+road — and they answer `SUBSCRIPTION_REQUIRED` without an active plan,
+`QUOTA_EXCEEDED` once the month's tracked movements are spent. Each company
+on a load spends its own allowance for it, once. Both
 render as an "activate your plan" prompt pointing at
 `NEXT_PUBLIC_CONTACT_EMAIL`. Staff are never gated: the same order booked
 from the admin goes through, and a movement already on the road is never
@@ -486,9 +509,18 @@ dashboard loads; try a staff `@apploadafrica.com` account and confirm the
 portal refuses it (`NOT_PARTNER_ACCOUNT`, not a redirect loop); confirm a
 second tenant cannot open the first one's order by URL; confirm
 `https://<portal origin>/api/cron/trips-tracking` answers 401 without a
-signature; create an order in the portal and confirm it appears in the
-admin with source `client` and reaches the logbook after the next
-`appload-sheet-sync` tick.
+signature; create an Appload order in the portal (Appload → Requests) and
+confirm it appears in the admin with source `client` and reaches the logbook
+after the next `appload-sheet-sync` tick; then file one of the company's own
+loads (New load → a partner on the portal), offer it, accept it as that
+partner, and confirm it appears on both companies' portals — as an order on
+one, a trip on the other — and **nowhere** in the admin's orders or the
+logbook.
+
+The movements have a regression script of their own that drives the router
+as the dev test tenants and cleans up after itself (dev database only):
+`NODE_OPTIONS=--conditions=react-server npx tsx scripts/verify-movements.ts`
+from `apps/app`.
 
 ## Known deferred items (v1)
 
