@@ -47,7 +47,7 @@ export function AttentionLinks({
                     <Link
                         key={`${tile.section}${tile.dispatch ? "-dispatch" : ""}`}
                         href={{
-                            pathname: "/orders/[section]",
+                            pathname: "/appload/[section]",
                             params: { section: tile.section },
                             query: tile.dispatch ? { dispatch: "1" } : undefined,
                         }}

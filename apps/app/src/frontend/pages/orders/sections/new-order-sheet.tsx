@@ -143,7 +143,7 @@ export function NewOrderSheet() {
                     toast.warning(t("toasts.detailsIncomplete"))
                 }
 
-                router.push({ pathname: "/orders/details/[orderId]", params: { orderId: result.orderId } })
+                router.push({ pathname: "/appload/details/[orderId]", params: { orderId: result.orderId } })
             },
             onError: (failure) => setError(orderErrorKey(failure)),
         })

@@ -36,7 +36,7 @@ export function PipelineTiles() {
         label: tiles("on-the-road"),
         value: attention.onTheRoad,
         hint: tiles("on-the-road-hint"),
-        href: { pathname: "/orders/[section]", params: { section: "on-going" } },
+        href: { pathname: "/appload/[section]", params: { section: "on-going" } },
     }
 
     const delivered: StatTileProps & { key: string } = {
@@ -45,7 +45,7 @@ export function PipelineTiles() {
         label: tiles("delivered-pending"),
         value: attention.deliveredPending,
         hint: tiles(shipper ? "delivered-pending-hint.shipper" : "delivered-pending-hint.carrier"),
-        href: { pathname: "/orders/[section]", params: { section: "delivered" } },
+        href: { pathname: "/appload/[section]", params: { section: "delivered" } },
     }
 
     const row: Array<StatTileProps & { key: string }> = shipper
@@ -56,7 +56,7 @@ export function PipelineTiles() {
                 label: t("total.label"),
                 value: data.total,
                 hint: t("total.hint.shipper"),
-                href: { pathname: "/orders/[section]", params: { section: "all" } },
+                href: { pathname: "/appload/[section]", params: { section: "all" } },
             },
             {
                 key: "awaiting-offers",
@@ -64,7 +64,7 @@ export function PipelineTiles() {
                 label: tiles("awaiting-offers"),
                 value: attention.awaitingOffers,
                 hint: tiles("awaiting-offers-hint"),
-                href: { pathname: "/orders/[section]", params: { section: "requests" } },
+                href: { pathname: "/appload/[section]", params: { section: "requests" } },
             },
             {
                 key: "offers-to-review",
@@ -72,7 +72,7 @@ export function PipelineTiles() {
                 label: tiles("offers-to-review"),
                 value: attention.offersToReview,
                 hint: tiles("offers-to-review-hint"),
-                href: { pathname: "/orders/[section]", params: { section: "quoted" } },
+                href: { pathname: "/appload/[section]", params: { section: "quoted" } },
             },
             onTheRoad,
             delivered,
@@ -93,7 +93,7 @@ export function PipelineTiles() {
                 label: tiles("new-requests"),
                 value: attention.newRequests,
                 hint: tiles("new-requests-hint"),
-                href: { pathname: "/orders/[section]", params: { section: "requests" } },
+                href: { pathname: "/appload/[section]", params: { section: "requests" } },
             },
             {
                 key: "to-dispatch",
@@ -101,7 +101,7 @@ export function PipelineTiles() {
                 label: tiles("to-dispatch"),
                 value: attention.toDispatch,
                 hint: tiles("to-dispatch-hint"),
-                href: { pathname: "/orders/[section]", params: { section: "booked" }, query: { dispatch: "1" } },
+                href: { pathname: "/appload/[section]", params: { section: "booked" }, query: { dispatch: "1" } },
             },
             onTheRoad,
             delivered,

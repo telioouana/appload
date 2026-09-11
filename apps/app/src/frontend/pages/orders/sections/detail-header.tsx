@@ -49,7 +49,7 @@ export function OrderDetailHeader({
         <header className="flex flex-col gap-4 px-2 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex min-w-0 items-start gap-3">
                 <Button asChild size="icon" variant="outline" aria-label={t("detail.back")} className="mt-4 shrink-0">
-                    <Link href={{ pathname: "/orders/[section]", params: { section } }}>
+                    <Link href={{ pathname: "/appload/[section]", params: { section } }}>
                         <IconArrowLeft className="size-4" stroke={1.5} />
                     </Link>
                 </Button>

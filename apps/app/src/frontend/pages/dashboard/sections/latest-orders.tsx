@@ -43,7 +43,7 @@ export function LatestOrders() {
                 <h2 className="text-sm font-medium">{t(`latest.title.${orgType}`)}</h2>
 
                 <Link
-                    href={{ pathname: "/orders/[section]", params: { section } }}
+                    href={{ pathname: "/appload/[section]", params: { section } }}
                     className="text-muted-foreground hover:text-foreground flex shrink-0 items-center gap-1.5 text-xs"
                 >
                     {t("view-all")}
@@ -73,14 +73,14 @@ export function LatestOrders() {
                             {data.items.map((order) => (
                                 <TableRow
                                     key={order.orderId}
-                                    onClick={() => router.push({ pathname: "/orders/details/[orderId]", params: { orderId: order.orderId } })}
+                                    onClick={() => router.push({ pathname: "/appload/details/[orderId]", params: { orderId: order.orderId } })}
                                     className="cursor-pointer"
                                 >
                                     <TableCell className="px-2 py-2.5">
                                         {/* The whole row opens the order for a
                                             mouse; this is the same door for a
                                             keyboard, which cannot click a `tr` */}
-                                        <Link href={{ pathname: "/orders/details/[orderId]", params: { orderId: order.orderId } }}>
+                                        <Link href={{ pathname: "/appload/details/[orderId]", params: { orderId: order.orderId } }}>
                                             <Mono>{order.orderId}</Mono>
                                         </Link>
                                     </TableCell>

@@ -70,7 +70,7 @@ export function PipelineTiles() {
                             <Link
                                 key={key}
                                 href={{
-                                    pathname: "/orders/[section]",
+                                    pathname: "/appload/[section]",
                                     params: { section: ATTENTION[key].section },
                                     query: ATTENTION[key].dispatch ? { dispatch: "1" } : undefined,
                                 }}

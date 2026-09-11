@@ -266,7 +266,7 @@ function Loaded({
 
                         {quote.orderRef && (
                             <Button asChild variant="outline" size="sm" className="mt-1 w-fit">
-                                <Link href={{ pathname: "/orders/details/[orderId]", params: { orderId: quote.orderRef } }}>
+                                <Link href={{ pathname: "/appload/details/[orderId]", params: { orderId: quote.orderRef } }}>
                                     <IconExternalLink className="size-4" stroke={1.5} />
                                     {t("panel.open-order", { orderId: quote.orderRef })}
                                 </Link>

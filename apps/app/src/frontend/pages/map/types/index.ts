@@ -14,7 +14,7 @@ export type MapEntityKind = "order" | "trip";
 
 /** The page a pin opens, in the object form the typed `Link` takes. */
 export type MapEntityHref =
-    | { pathname: "/orders/details/[orderId]"; params: { orderId: string } }
+    | { pathname: "/appload/details/[orderId]"; params: { orderId: string } }
     | { pathname: "/trips/[tripId]"; params: { tripId: string } };
 
 /**

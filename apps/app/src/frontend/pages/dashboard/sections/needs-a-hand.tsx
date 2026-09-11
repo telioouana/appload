@@ -98,7 +98,7 @@ export function NeedsAHand() {
                 Icon: IconFileDollar,
                 label: tiles("offers-to-review"),
                 count: attention.offersToReview,
-                href: { pathname: "/orders/[section]", params: { section: "quoted" } },
+                href: { pathname: "/appload/[section]", params: { section: "quoted" } },
                 tone: "warn",
             },
             {
@@ -106,7 +106,7 @@ export function NeedsAHand() {
                 Icon: IconFileCheck,
                 label: tiles("delivered-pending"),
                 count: attention.deliveredPending,
-                href: { pathname: "/orders/[section]", params: { section: "delivered" } },
+                href: { pathname: "/appload/[section]", params: { section: "delivered" } },
             },
         ]
         : [
@@ -115,7 +115,7 @@ export function NeedsAHand() {
                 Icon: IconInbox,
                 label: tiles("new-requests"),
                 count: attention.newRequests,
-                href: { pathname: "/orders/[section]", params: { section: "requests" } },
+                href: { pathname: "/appload/[section]", params: { section: "requests" } },
                 tone: "warn",
             },
             {
@@ -123,7 +123,7 @@ export function NeedsAHand() {
                 Icon: IconSteeringWheel,
                 label: tiles("to-dispatch"),
                 count: attention.toDispatch,
-                href: { pathname: "/orders/[section]", params: { section: "booked" }, query: { dispatch: "1" } },
+                href: { pathname: "/appload/[section]", params: { section: "booked" }, query: { dispatch: "1" } },
                 tone: "warn",
             },
             {
@@ -131,7 +131,7 @@ export function NeedsAHand() {
                 Icon: IconFileCheck,
                 label: tiles("delivered-pending"),
                 count: attention.deliveredPending,
-                href: { pathname: "/orders/[section]", params: { section: "delivered" } },
+                href: { pathname: "/appload/[section]", params: { section: "delivered" } },
             },
         ]
 

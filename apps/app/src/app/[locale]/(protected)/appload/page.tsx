@@ -10,7 +10,7 @@ import { getPathname } from "@/i18n/navigation"
 import { defaultSection } from "@/frontend/pages/orders/types"
 
 /**
- * `/orders` has no page of its own: the sections are the pages, and which
+ * `/appload` has no page of its own: the sections are the pages, and which
  * one a company lands on depends on what it does — a client opens everything
  * it has filed, a carrier the requests waiting for an answer.
  *
@@ -29,7 +29,7 @@ export default async function Orders() {
     const locale = await getLocale()
 
     redirect(getPathname({
-        href: { pathname: "/orders/[section]", params: { section: defaultSection(tenant.orgType) } },
+        href: { pathname: "/appload/[section]", params: { section: defaultSection(tenant.orgType) } },
         locale,
     }))
 }

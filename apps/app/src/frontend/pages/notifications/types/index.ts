@@ -82,10 +82,10 @@ export type PagedResult<T> = {
  * the list itself writes it.
  */
 export type NotificationLink =
-    | { pathname: "/orders/details/[orderId]"; params: { orderId: string } }
+    | { pathname: "/appload/details/[orderId]"; params: { orderId: string } }
     | { pathname: "/trips/[tripId]"; params: { tripId: string } }
     | { pathname: "/partners"; query: { id: string } }
-    | { pathname: "/quotes"; query: { id: string } }
+    | { pathname: "/appload/quotes"; query: { id: string } }
     | { pathname: "/settings" };
 
 /**
@@ -101,7 +101,7 @@ export function notificationTarget(
     switch (entityType) {
         case "order":
             return entityId
-                ? { link: { pathname: "/orders/details/[orderId]", params: { orderId: entityId } }, path: `/orders/details/${encodeURIComponent(entityId)}` }
+                ? { link: { pathname: "/appload/details/[orderId]", params: { orderId: entityId } }, path: `/appload/details/${encodeURIComponent(entityId)}` }
                 : null;
         case "trip":
             return entityId
@@ -113,7 +113,7 @@ export function notificationTarget(
                 : null;
         case "quote":
             return entityId
-                ? { link: { pathname: "/quotes", query: { id: entityId } }, path: `/quotes?id=${encodeURIComponent(entityId)}` }
+                ? { link: { pathname: "/appload/quotes", query: { id: entityId } }, path: `/appload/quotes?id=${encodeURIComponent(entityId)}` }
                 : null;
         case "subscription":
             return { link: { pathname: "/settings" }, path: "/settings" };

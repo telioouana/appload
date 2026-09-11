@@ -180,7 +180,7 @@ export const mapRouter = createTRPCRouter({
                 kind: "order",
                 id: row.id,
                 ref: row.orderId,
-                href: { pathname: "/orders/details/[orderId]", params: { orderId: row.orderId } },
+                href: { pathname: "/appload/details/[orderId]", params: { orderId: row.orderId } },
                 counterpartyName: shipper ? row.carrierName : row.shipperName,
                 status: row.status,
                 origin: row.loadingAddress,

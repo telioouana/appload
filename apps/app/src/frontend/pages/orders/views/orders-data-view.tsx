@@ -47,7 +47,7 @@ export function OrdersDataView({ section }: { section: OrderSection }) {
     const { open: openNewOrder } = useNewOrder()
 
     const onOpen = useCallback(
-        (row: OrderRow) => router.push({ pathname: "/orders/details/[orderId]", params: { orderId: row.orderId } }),
+        (row: OrderRow) => router.push({ pathname: "/appload/details/[orderId]", params: { orderId: row.orderId } }),
         [router],
     )
 

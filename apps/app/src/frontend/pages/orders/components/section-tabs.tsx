@@ -42,7 +42,7 @@ export function SectionTabs({
                             key={value}
                             role="tab"
                             aria-selected={active}
-                            href={{ pathname: "/orders/[section]", params: { section: value } }}
+                            href={{ pathname: "/appload/[section]", params: { section: value } }}
                             className={cn(
                                 "text-muted-foreground hover:text-foreground flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13px] whitespace-nowrap transition-colors",
                                 active && "bg-primary/10 text-primary font-medium",

@@ -131,7 +131,7 @@ export function AcceptQuoteDialog({
             onSuccess: ({ orderId }) => {
                 onOpenChange(false)
                 onAccepted?.()
-                router.push({ pathname: "/orders/details/[orderId]", params: { orderId } })
+                router.push({ pathname: "/appload/details/[orderId]", params: { orderId } })
             },
             onError: (failure) => {
                 // Not a booking this form can complete: hand over to the
