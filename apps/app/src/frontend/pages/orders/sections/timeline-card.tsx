@@ -2,7 +2,7 @@
 
 import { useTranslations } from "@workspace/i18n"
 
-import { SectionCard } from "@/frontend/pages/orders/components/section-card"
+import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 import { HistoryTimeline } from "@/frontend/pages/orders/components/history-timeline"
 import type { OrderHistoryEntry } from "@/frontend/pages/orders/types"
 

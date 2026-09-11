@@ -6,7 +6,7 @@ import { useTranslations } from "@workspace/i18n"
 
 import { Link } from "@/i18n/navigation"
 import { OrderRouteMapLazy } from "@/frontend/pages/map/components/order-route-map.lazy"
-import { SectionCard } from "@/frontend/pages/orders/components/section-card"
+import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 import type { OrderDetail, OrderStatus } from "@/frontend/pages/orders/types"
 
 /** Nothing is driving yet, or nothing ever will: neither has a route worth buying. */

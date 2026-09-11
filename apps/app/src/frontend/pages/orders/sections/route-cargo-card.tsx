@@ -7,7 +7,8 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 import { Badge } from "@workspace/ui/components/badge"
 
 import { money } from "@/frontend/pages/orders/lib/format"
-import { Dash, DetailRow, SectionCard } from "@/frontend/pages/orders/components/section-card"
+import { DetailRow, SectionCard } from "@workspace/ui/customs/detail/section-card"
+import { Dash } from "@workspace/ui/customs/list/table-cells"
 import type { OrderDetail } from "@/frontend/pages/orders/types"
 
 /**

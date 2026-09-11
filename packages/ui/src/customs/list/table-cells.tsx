@@ -157,5 +157,5 @@ export function ProgressCell({
 
 /** A muted dash for a value that does not apply. */
 export function Dash() {
-    return <span className="text-muted-foreground/60">—</span>
+    return <span className="text-muted-foreground/60 font-normal">—</span>
 }

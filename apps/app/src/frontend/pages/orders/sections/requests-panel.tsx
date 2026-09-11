@@ -9,7 +9,7 @@ import { Button } from "@workspace/ui/components/button"
 
 import { initials } from "@workspace/ui/customs/list/table-cells"
 import { RequestStatusChip } from "@/frontend/pages/orders/components/badges"
-import { SectionCard } from "@/frontend/pages/orders/components/section-card"
+import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 import { useOrderMutations } from "@/frontend/pages/orders/hooks/use-order-mutations"
 import { SendRequestsDialog } from "@/frontend/pages/orders/sections/send-requests-dialog"
 import type { OrderDetail, OrgType } from "@/frontend/pages/orders/types"

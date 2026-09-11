@@ -2,8 +2,8 @@
 
 import { useTranslations } from "@workspace/i18n"
 
-import { PlateChip } from "@workspace/ui/customs/list/table-cells"
-import { Dash, DetailRow, SectionCard } from "@/frontend/pages/orders/components/section-card"
+import { Dash, PlateChip } from "@workspace/ui/customs/list/table-cells"
+import { DetailRow, SectionCard } from "@workspace/ui/customs/detail/section-card"
 import type { OrderDetail } from "@/frontend/pages/orders/types"
 
 /**

@@ -8,7 +8,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 
-import { SectionCard } from "@/frontend/pages/orders/components/section-card"
+import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 import { AddDocumentDialog } from "@/frontend/pages/orders/sections/add-document-dialog"
 import type { OrderDetail, OrgType } from "@/frontend/pages/orders/types"
 import { PARTNER_DOCUMENT_TYPES, type PartnerDocumentType } from "@/backend/schemas/dispatch"

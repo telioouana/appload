@@ -19,12 +19,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 import type { TrackingAllowance } from "@workspace/domain/subscription"
 
-import { initials } from "@workspace/ui/customs/list/table-cells"
+import { Dash, initials } from "@workspace/ui/customs/list/table-cells"
 import { PlanDialog, planBlock, planRefusal, type PlanReason } from "@/components/plan-dialog"
 import { money } from "@/frontend/pages/orders/lib/format"
 import { orderErrorCode, orderErrorKey, type OrderErrorMessage } from "@/frontend/pages/orders/lib/errors"
 import { IncludesChips, OfferStatusBadge } from "@/frontend/pages/orders/components/badges"
-import { Dash, SectionCard } from "@/frontend/pages/orders/components/section-card"
+import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 import { useOrderMutations } from "@/frontend/pages/orders/hooks/use-order-mutations"
 import { OfferFormDialog } from "@/frontend/pages/orders/sections/offer-form-dialog"
 import type { OrderDetail, OrderOfferView, OrgType } from "@/frontend/pages/orders/types"

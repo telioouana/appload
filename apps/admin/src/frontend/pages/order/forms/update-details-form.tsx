@@ -17,7 +17,7 @@ import { FieldGroup, FieldLegend, FieldSeparator, FieldSet, FieldTitle } from "@
 
 import { FleetInput } from "@/components/inputs/fleet";
 import { DriverInput } from "@/components/inputs/driver";
-import { DetailRow } from "@/frontend/pages/order/sections/section-card";
+import { DetailRow } from "@workspace/ui/customs/detail/section-card";
 import { KycGateBanner } from "@/frontend/pages/order/components/kyc-gate-banner";
 import { truckAgeFromYear } from "@/lib/fleet";
 import { UpdateOrderForm, UpdateOrderFormInput } from "@/backend/schemas/order";

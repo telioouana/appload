@@ -8,7 +8,7 @@ import type { Order } from "@workspace/db/orders"
 
 import { OrderRouteMapLazy } from "@/frontend/pages/map/components/order-route-map.lazy"
 
-import { SectionCard } from "./section-card"
+import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 
 /**
  * The trip on a map: the planned road route in grey, the ground the driver

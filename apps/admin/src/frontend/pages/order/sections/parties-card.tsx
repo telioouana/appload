@@ -13,7 +13,7 @@ import { effectiveCommission, effectiveTotals } from "@workspace/domain/orders/t
 import type { OfferRow } from "@/frontend/pages/order/server/offers-procedures"
 
 import { IncludesChips } from "./offers-card"
-import { Cell, CellRow, SectionCard } from "./section-card"
+import { Cell, CellRow, SectionCard } from "@workspace/ui/customs/detail/section-card"
 
 /**
  * Both sides of the money, side by side: what the shipper owes and what the

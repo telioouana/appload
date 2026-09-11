@@ -11,7 +11,7 @@ import { CopyButton } from "@/frontend/pages/partners/sections/profile-parts"
 import { OperationsStrip } from "@/frontend/pages/orders/sections/order-item-parts"
 
 import { OpenChatButton } from "./open-chat-button"
-import { SectionCard, StatTile } from "./section-card"
+import { SectionCard, StatTile } from "@workspace/ui/customs/detail/section-card"
 
 /** Booking no longer asks for the rig, so these two statuses are where it is still missing. */
 const AWAITING_ASSIGNMENT: Order["status"][] = ["booked", "to-loading"]

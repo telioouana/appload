@@ -3,10 +3,10 @@
 import { cn } from "@workspace/ui/lib/utils"
 
 /**
- * A block on the order page. Same ring-and-radius surface as the list card
- * and the partner profile cards, so the page reads as part of the same
- * system: a small title, an optional count, something on the right, then the
- * content.
+ * A block on a detail page — an order, a load, a partner. The same
+ * ring-and-radius surface as the list card and the profile cards, so every
+ * page reads as part of one system: a small title, an optional count,
+ * something on the right, then the content.
  */
 export function SectionCard({
     title,
@@ -46,7 +46,7 @@ export function SectionCard({
     )
 }
 
-/** A figure with its caption, four to a row. */
+/** A figure with its caption. */
 export function StatTile({ value, label }: { value: React.ReactNode; label: string }) {
     return (
         <div className="flex flex-col gap-0.5">
