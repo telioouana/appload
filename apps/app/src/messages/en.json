@@ -360,7 +360,11 @@
                 "title": "Needs you",
                 "connections": "Partners waiting for an answer",
                 "clear-title": "All clear",
-                "clear-description": "Nothing is waiting on you right now"
+                "clear-description": "Nothing is waiting on you right now",
+                "offered": "Loads partners offered you",
+                "declined": "Declined — to place with another partner",
+                "silent-trips": "Drivers silent today",
+                "silent-orders": "Partners' drivers silent today"
             },
             "road": {
                 "title": "On the road now",
@@ -372,14 +376,19 @@
                 "in-transit": "In transit",
                 "no-response": "No answer today"
             },
-            "latest": {
-                "title": {
-                    "shipper": "Latest orders",
-                    "carrier": "Latest requests"
-                },
-                "empty": {
-                    "shipper": "You have not filed any orders yet",
-                    "carrier": "You have not received any requests yet"
+            "loads": {
+                "appload": "Appload",
+                "planning": "Trips to plan",
+                "planning-hint": "No driver or truck yet",
+                "own-road": "Own fleet on the road",
+                "own-road-hint": "Your trucks moving right now",
+                "partner-road": "Partners on the road",
+                "partner-road-hint": "Loads partners are moving for you",
+                "latest": {
+                    "title": "Latest loads",
+                    "empty": "You have not filed any loads yet",
+                    "amount": "Amount",
+                    "appload": "Appload"
                 }
             }
         },

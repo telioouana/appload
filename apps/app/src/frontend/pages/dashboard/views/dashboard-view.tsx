@@ -9,6 +9,8 @@ import { Badge } from "@workspace/ui/components/badge"
 import { useTRPC } from "@/backend/api/client"
 
 import { LatestOrders } from "@/frontend/pages/dashboard/sections/latest-orders"
+import { LoadsTiles } from "@/frontend/pages/dashboard/sections/loads-tiles"
+import { YearLoads } from "@/frontend/pages/dashboard/sections/year-loads"
 import { MonthlyOrders } from "@/frontend/pages/dashboard/sections/monthly-orders"
 import { NeedsAHand } from "@/frontend/pages/dashboard/sections/needs-a-hand"
 import { OnTheRoad } from "@/frontend/pages/dashboard/sections/on-the-road"
@@ -18,9 +20,10 @@ import { YearMoney } from "@/frontend/pages/dashboard/sections/year-money"
 import { CardBoundary, CardSkeleton, TilesSkeleton } from "@/frontend/pages/dashboard/views/dashboard-fallbacks"
 
 /**
- * The board the day starts on: how the order book stands, what is waiting on
- * a decision, where the loads are, how the year is loading and what it is
- * worth, then the orders filed last.
+ * The board the day starts on: the company's own loads first — what is
+ * waiting on it, what is on the road — then what needs a decision, where the
+ * trucks are, what the year of its own loads is worth, the Appload book
+ * beside it, and the loads filed last.
  *
  * The greeting stays put and the bands scroll under it, as on the order
  * details page — the shell is viewport-locked, so this body is the only thing
@@ -72,7 +75,7 @@ export function DashboardView() {
             <div className="container-snap flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pb-1">
                 <div className="shrink-0">
                     <CardBoundary fallback={<TilesSkeleton />} message={t("error")}>
-                        <PipelineTiles />
+                        <LoadsTiles />
                     </CardBoundary>
                 </div>
 
@@ -104,6 +107,25 @@ export function DashboardView() {
                             <TripsTile />
                         </CardBoundary>
                     </div>
+                </div>
+
+                <div className="shrink-0 px-2">
+                    <CardBoundary
+                        className="mx-0"
+                        fallback={<CardSkeleton className="mx-0 h-[220px]" />}
+                        message={t("error")}
+                    >
+                        <YearLoads />
+                    </CardBoundary>
+                </div>
+
+                {/* Appload's brokerage, under its own name: its book is one
+                    part of what the company moves, not the whole of it */}
+                <div className="flex shrink-0 flex-col gap-2">
+                    <h2 className="text-muted-foreground px-2 text-xs font-medium tracking-wide uppercase">{t("loads.appload")}</h2>
+                    <CardBoundary fallback={<TilesSkeleton />} message={t("error")}>
+                        <PipelineTiles />
+                    </CardBoundary>
                 </div>
 
                 <div className="grid shrink-0 gap-4 px-2 xl:grid-cols-3 xl:items-stretch">

@@ -12,6 +12,7 @@ import { TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 import { PeriodControl } from "@/frontend/pages/analytics/components/period-control"
 import { usePeriodLabel } from "@/frontend/pages/analytics/hooks/use-period-label"
 import { KpiTiles } from "@/frontend/pages/analytics/sections/kpi-tiles"
+import { LoadsCard } from "@/frontend/pages/analytics/sections/loads-card"
 import { MoneyCard } from "@/frontend/pages/analytics/sections/money-card"
 import { OrdersByMonth } from "@/frontend/pages/analytics/sections/orders-by-month"
 import { PartnersRanking } from "@/frontend/pages/analytics/sections/partners-ranking"
@@ -41,10 +42,18 @@ function MoneyPanel({ year }: { year: number }) {
     return <MoneyCard data={data} />
 }
 
+function LoadsPanel({ year }: { year: number }) {
+    const trpc = useTRPC()
+    const { data } = useSuspenseQuery(trpc.analytics.loads.queryOptions({ year }))
+
+    return <LoadsCard data={data} />
+}
+
 /**
- * The company's own report: where its order book stands today, how the year
- * loaded and what it is worth, how the period's transports actually went,
- * and who moved them.
+ * The company's own report: the year of its own loads — the orders and trips
+ * it runs, whatever Appload has to do with them — then, for the Appload
+ * orders, where that book stands today, how the year loaded and what it is
+ * worth, how the period's transports actually went, and who moved them.
  *
  * Every figure is this company's own — its orders, its leg of the money,
  * its partners — and every card streams and fails behind its own boundary,
@@ -73,6 +82,16 @@ export function AnalyticsView() {
             {/* The bands are `shrink-0`: in a scrolling flex column a band
                 would otherwise be squeezed to fit instead of scrolling */}
             <div className="container-snap flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pb-1">
+                <div className="shrink-0 px-2">
+                    <CardBoundary
+                        className="mx-0"
+                        fallback={<CardSkeleton className="mx-0 h-[260px]" />}
+                        message={t("error")}
+                    >
+                        <LoadsPanel year={year} />
+                    </CardBoundary>
+                </div>
+
                 <div className="shrink-0">
                     <CardBoundary fallback={<CardSkeleton className="h-52" />} message={t("error")}>
                         <PipelineTiles />

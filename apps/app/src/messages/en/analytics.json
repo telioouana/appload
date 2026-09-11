@@ -11,8 +11,29 @@
         "quarter-label": "Q{quarter} {year}",
         "year-select": "Choose year"
     },
+    "loads": {
+        "title": "Your own loads",
+        "hint": "Your company's orders and trips loading in {year}, inside or outside Appload",
+        "empty": "No loads in {year} yet",
+        "no-money": "No amounts recorded on {count, plural, one {your load} other {your # loads}} yet.",
+        "receivable": "To receive from clients",
+        "received": "Received",
+        "payable": "To pay partners",
+        "paid": "Paid",
+        "costs": "Running costs",
+        "rechargeable": "of which {amount} recharged",
+        "gross": "Gross margin ({count, plural, one {# load} other {# loads}})",
+        "net": "Net margin",
+        "comparable": "{comparable} of {finished} delivered loads have a comparable margin: the others have no price or are in two currencies.",
+        "partners": {
+            "title": "Who you worked with",
+            "client": "Client",
+            "partner": "Partner",
+            "loads": "{count, plural, one {# load} other {# loads}}"
+        }
+    },
     "pipeline": {
-        "title": "Your orders",
+        "title": "Appload orders",
         "hint": "Today's count, whatever period is chosen above",
         "total": "{count, plural, one {# order} other {# orders}}",
         "sections": {
@@ -34,7 +55,7 @@
         "empty": "No orders to count yet"
     },
     "monthly": {
-        "title": "Orders by month",
+        "title": "Appload orders by month",
         "total": "{count} in {year}",
         "series": {
             "orders": "Orders",
@@ -44,7 +65,7 @@
         "empty": "No orders in {year}"
     },
     "money": {
-        "title": "Money",
+        "title": "Money on Appload orders",
         "shipper": {
             "outstanding": "To pay",
             "settled": "Paid",
@@ -59,7 +80,7 @@
         "empty": "No amounts to show yet"
     },
     "kpis": {
-        "title": "Performance",
+        "title": "Performance on Appload orders",
         "empty": "No transports analysed in this period",
         "days-value": "{days} days",
         "tiles": {
@@ -98,7 +119,7 @@
         }
     },
     "partners": {
-        "title": "Partners",
+        "title": "Partners on Appload orders",
         "hint": "The other party of every order in the period",
         "columns": {
             "partner": "Partner",

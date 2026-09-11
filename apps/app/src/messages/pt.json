@@ -360,7 +360,11 @@
                 "title": "Precisa de si",
                 "connections": "Parceiros à espera de resposta",
                 "clear-title": "Tudo em ordem",
-                "clear-description": "Não há nada à sua espera neste momento"
+                "clear-description": "Não há nada à sua espera neste momento",
+                "offered": "Cargas oferecidas por parceiros",
+                "declined": "Recusadas — por entregar a outro parceiro",
+                "silent-trips": "Motoristas sem resposta hoje",
+                "silent-orders": "Motoristas de parceiros sem resposta hoje"
             },
             "road": {
                 "title": "Na estrada agora",
@@ -372,14 +376,19 @@
                 "in-transit": "Em trânsito",
                 "no-response": "Sem resposta hoje"
             },
-            "latest": {
-                "title": {
-                    "shipper": "Últimos pedidos",
-                    "carrier": "Últimas solicitações"
-                },
-                "empty": {
-                    "shipper": "Ainda não registou nenhum pedido",
-                    "carrier": "Ainda não recebeu nenhuma solicitação"
+            "loads": {
+                "appload": "Appload",
+                "planning": "Viagens por planear",
+                "planning-hint": "Ainda sem motorista ou camião",
+                "own-road": "Frota própria a caminho",
+                "own-road-hint": "Os seus camiões na estrada agora",
+                "partner-road": "Parceiros a caminho",
+                "partner-road-hint": "Cargas que parceiros transportam para si",
+                "latest": {
+                    "title": "Últimas cargas",
+                    "empty": "Ainda não registou nenhuma carga",
+                    "amount": "Valor",
+                    "appload": "Appload"
                 }
             }
         },

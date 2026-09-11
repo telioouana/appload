@@ -33,6 +33,7 @@ export default async function AnalyticsPage({
     prefetch(trpc.analytics.pipeline.queryOptions())
     prefetch(trpc.analytics.monthly.queryOptions({ year: input.year }))
     prefetch(trpc.analytics.money.queryOptions({ year: input.year }))
+    prefetch(trpc.analytics.loads.queryOptions({ year: input.year }))
     prefetch(trpc.analytics.kpis.queryOptions(input))
     // The ranking opens on its busiest partners; the card starts on the same
     // order, which is what makes this a hydration rather than a second fetch

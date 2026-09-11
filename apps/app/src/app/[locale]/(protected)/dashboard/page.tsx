@@ -4,7 +4,7 @@ import { ErrorBoundary } from "react-error-boundary"
 import { getTranslations } from "@workspace/i18n/server"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { latestInput, yearInput } from "@/frontend/pages/dashboard/types"
+import { latestInput, latestLoadsInput, yearInput } from "@/frontend/pages/dashboard/types"
 import { CardError, DashboardSkeleton } from "@/frontend/pages/dashboard/views/dashboard-fallbacks"
 import { DashboardView } from "@/frontend/pages/dashboard/views/dashboard-view"
 
@@ -32,7 +32,11 @@ export default async function Dashboard() {
     prefetch(trpc.map.overview.queryOptions())
     prefetch(trpc.analytics.monthly.queryOptions(yearInput()))
     prefetch(trpc.analytics.money.queryOptions(yearInput()))
+    prefetch(trpc.analytics.loads.queryOptions(yearInput()))
     prefetch(trpc.orders.list.queryOptions(latestInput()))
+    prefetch(trpc.movements.list.queryOptions(latestLoadsInput("orders")))
+    prefetch(trpc.movements.list.queryOptions(latestLoadsInput("trips")))
+    prefetch(trpc.movements.stats.queryOptions({ scope: "orders" }))
     prefetch(trpc.movements.stats.queryOptions({ scope: "trips" }))
 
     // The queue's connection count is warmed here too, but it rides its own

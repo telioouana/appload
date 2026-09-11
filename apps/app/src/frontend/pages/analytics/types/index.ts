@@ -166,3 +166,41 @@ export type AnalyticsPartners = {
     rows: AnalyticsPartnerRow[];
     sort: AnalyticsPartnerSort;
 };
+
+/**
+ * One currency of the company's own loads — the orders it placed and the
+ * trips it ran, never Appload's brokerage. Nothing is converted: a load sold
+ * in rand and bought in meticais puts one figure in each line.
+ */
+export type AnalyticsLoadsLine = {
+    currency: Currency;
+    /** Its sell legs: what its clients still owe it, and what came in */
+    receivable: { outstanding: number; settled: number };
+    /** Its buy legs: what it still owes the partners it placed loads with, and what it paid */
+    payable: { outstanding: number; settled: number };
+    /** What the loads cost to run, and the part passed on to the client */
+    costs: { total: number; rechargeable: number };
+    /** Delivered and closed loads whose margin could be worked out in this currency, ex-VAT */
+    margin: { gross: number; net: number; loads: number };
+};
+
+/** A company the tenant's own loads were for, or were handed to. */
+export type AnalyticsLoadsPartner = {
+    id: string | null;
+    name: string;
+    side: "client" | "partner";
+    loads: number;
+};
+
+export type AnalyticsLoads = {
+    year: number;
+    /** Every load of the year, priced or not */
+    total: number;
+    byCurrency: AnalyticsLoadsLine[];
+    /** Loads of the year that arrived — delivered or closed */
+    finished: number;
+    /** Of those, the ones with a margin: both legs in one currency, or an own-fleet trip with a price */
+    comparable: number;
+    /** Who the year's loads were with, most loads first */
+    partners: AnalyticsLoadsPartner[];
+};

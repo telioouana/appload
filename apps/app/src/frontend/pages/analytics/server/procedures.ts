@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 import { and, asc, count, eq, inArray, isNotNull, isNull, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 
+import { movement, movementCost } from "@workspace/db/movements";
 import { order } from "@workspace/db/orders";
 import { CURRENCY } from "@workspace/db/types";
 
@@ -18,6 +19,7 @@ import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure } from "@workspace/trpc/tenant";
 
 import { anyRequest, myRequest, orderScope, scopeOf, visibleOrders, type TenantScope } from "@/frontend/pages/orders/server/projection";
+import { loadNames, projectMoney, type CostRow } from "@/frontend/pages/movements/server/projection";
 import type { Currency } from "@/frontend/pages/orders/types";
 import {
     ANALYTICS_PERIODS,
@@ -27,6 +29,9 @@ import {
     currentYear,
     type AnalyticsKpiBucket,
     type AnalyticsKpis,
+    type AnalyticsLoads,
+    type AnalyticsLoadsLine,
+    type AnalyticsLoadsPartner,
     type AnalyticsMonthly,
     type AnalyticsMoney,
     type AnalyticsMoneyLine,
@@ -140,6 +145,23 @@ const partnerOrder = (sort: AnalyticsPartnerSort, money: SQL, name: SQL, id: Any
  * missing from the bottom of it.
  */
 const PARTNER_LIMIT = 100;
+
+/** How far down the own-loads breakdown of partners reaches: a glance, not a directory. */
+const LOAD_PARTNER_LIMIT = 8;
+
+const round2 = (value: number) => Math.round(value * 100) / 100;
+
+const emptyLoadsLine = (currency: Currency): AnalyticsLoadsLine => ({
+    currency,
+    receivable: { outstanding: 0, settled: 0 },
+    payable: { outstanding: 0, settled: 0 },
+    costs: { total: 0, rechargeable: 0 },
+    margin: { gross: 0, net: 0, loads: 0 },
+});
+
+/** What a leg still owes: nothing once settled, or once it was marked as not applying. */
+const stillOwed = (leg: { total: number; settled: number; settlement: string }) =>
+    leg.settlement === "completed" || leg.settlement === "not-applicable" ? 0 : Math.max(leg.total - leg.settled, 0);
 
 // ---------------------------------------------------------------------------
 // Router
@@ -358,6 +380,133 @@ export const analyticsRouter = createTRPCRouter({
 
                     return entry && carries(entry) ? [entry] : [];
                 }),
+            };
+        }),
+
+    /**
+     * The year of the company's own loads — the orders it placed and the
+     * trips it ran, loading in the year (or filed in it, when no loading date
+     * was given) — per currency: what its clients owe it and paid, what it
+     * owes its partners and paid, what the loads cost to run, and the margin
+     * of the ones that arrived. Appload's brokerage is not here; the money
+     * card above reads that.
+     *
+     * Every figure is the load page's own: each row goes through the same
+     * money projection, so the margin here is the sum of the margins those
+     * pages show — ex-VAT, never across two currencies. A load whose legs are
+     * in different currencies, or that has no price, has no margin and is
+     * left out of it, which is what `comparable` says.
+     */
+    loads: authorizedTenantProcedure("report", ["read"])
+        .input(YearInput)
+        .query(async ({ ctx, input }): Promise<AnalyticsLoads> => {
+            const tenantId = ctx.tenant.organizationId;
+            const chosen = input.year ?? currentYear();
+            const loadingYear = sql<number>`extract(year from coalesce(${movement.expectedLoadingDate}, ${movement.createdAt}))::int`;
+
+            const rows = await ctx.db
+                .select()
+                .from(movement)
+                .where(and(eq(movement.organizationId, tenantId), eq(loadingYear, chosen)));
+
+            const ids = rows.map((row) => row.id);
+
+            const [costRows, names] = await Promise.all([
+                ids.length
+                    ? ctx.db
+                        .select({
+                            id: movementCost.id,
+                            movementId: movementCost.movementId,
+                            kind: movementCost.kind,
+                            description: movementCost.description,
+                            amount: movementCost.amount,
+                            currency: movementCost.currency,
+                            incurredAt: movementCost.incurredAt,
+                            rechargeable: movementCost.rechargeable,
+                            createdAt: movementCost.createdAt,
+                        })
+                        .from(movementCost)
+                        .where(and(inArray(movementCost.movementId, ids), isNull(movementCost.deletedAt)))
+                    : Promise.resolve([]),
+                loadNames(ctx.db, rows.flatMap((row) => [row.clientOrgId, row.carrierOrgId])),
+            ]);
+
+            const costsBy = new Map<string, CostRow[]>();
+            for (const { movementId, ...cost } of costRows) {
+                costsBy.set(movementId, [...(costsBy.get(movementId) ?? []), cost]);
+            }
+
+            const lines = new Map<Currency, AnalyticsLoadsLine>();
+            const line = (currency: Currency) => {
+                const existing = lines.get(currency);
+                if (existing) return existing;
+                const created = emptyLoadsLine(currency);
+                lines.set(currency, created);
+                return created;
+            };
+
+            const partners = new Map<string, AnalyticsLoadsPartner>();
+            const tally = (side: AnalyticsLoadsPartner["side"], id: string | null, typed: string | null) => {
+                const name = id ? names.get(id) ?? null : typed;
+                if (!name) return;
+                const key = `${side}:${id ?? name.toLowerCase()}`;
+                const entry = partners.get(key) ?? { id, name, side, loads: 0 };
+                entry.loads += 1;
+                partners.set(key, entry);
+            };
+
+            let finished = 0;
+            let comparable = 0;
+
+            for (const row of rows) {
+                const money = projectMoney(row, "owner", costsBy.get(row.id) ?? []);
+
+                // A cancelled load owes nothing more, whatever moved before it
+                // was called off; what did move still counts as moved
+                for (const [leg, bucket] of [[money.receivable, "receivable"], [money.payable, "payable"]] as const) {
+                    if (!leg) continue;
+                    const entry = line(leg.currency)[bucket];
+                    entry.settled = round2(entry.settled + leg.settled);
+                    if (row.status !== "cancelled") entry.outstanding = round2(entry.outstanding + stillOwed(leg));
+                }
+
+                for (const cost of money.margin?.costs ?? []) {
+                    const entry = line(cost.currency).costs;
+                    entry.total = round2(entry.total + cost.total);
+                    entry.rechargeable = round2(entry.rechargeable + cost.rechargeable);
+                }
+
+                if (row.status === "delivered" || row.status === "closed") {
+                    finished += 1;
+                    const { gross, net } = money.margin ?? { gross: null, net: null };
+
+                    if (gross && net) {
+                        comparable += 1;
+                        const entry = line(net.currency).margin;
+                        entry.gross = round2(entry.gross + gross.amount);
+                        entry.net = round2(entry.net + net.amount);
+                        entry.loads += 1;
+                    }
+                }
+
+                if (row.status !== "cancelled") {
+                    tally("client", row.clientOrgId, row.clientName);
+                    if (row.execution === "partner") tally("partner", row.carrierOrgId, row.carrierName);
+                }
+            }
+
+            return {
+                year: chosen,
+                total: rows.length,
+                byCurrency: CURRENCY.flatMap((currency) => {
+                    const entry = lines.get(currency);
+                    return entry ? [entry] : [];
+                }),
+                finished,
+                comparable,
+                partners: [...partners.values()]
+                    .sort((a, b) => b.loads - a.loads || a.name.localeCompare(b.name))
+                    .slice(0, LOAD_PARTNER_LIMIT),
             };
         }),
 

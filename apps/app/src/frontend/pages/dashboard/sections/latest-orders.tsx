@@ -5,45 +5,64 @@ import { IconArrowRight } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
+import { Badge } from "@workspace/ui/components/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@workspace/ui/components/table"
 
 import { Link, useRouter } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
 import { Dash, Mono } from "@workspace/ui/customs/list/table-cells"
-import { latestInput } from "@/frontend/pages/dashboard/types"
+import { LATEST_LIMIT, latestInput, latestLoadsInput } from "@/frontend/pages/dashboard/types"
+import { MovementStatusChip, place as loadPlace, useMoney } from "@/frontend/pages/movements/components/badges"
+import type { MovementRow } from "@/frontend/pages/movements/types"
 import { OrderStatusBadge } from "@/frontend/pages/orders/components/badges"
 import { money, place } from "@/frontend/pages/orders/lib/format"
+import type { OrderRow } from "@/frontend/pages/orders/types"
+
+type Line =
+    | { kind: "load"; key: string; createdAt: Date; row: MovementRow }
+    | { kind: "order"; key: string; createdAt: Date; row: OrderRow }
+
+/** The other company on a load, from where the reader stands. */
+const partyOf = (row: MovementRow) =>
+    row.role === "owner" ? (row.execution === "partner" ? row.carrier : row.client)?.name ?? null : row.owner?.name ?? null
 
 /**
- * The five orders filed most recently, as a plain table rather than the list
- * kit's `DataTable`: nothing here sorts, selects or pages. A row opens the
- * order's own page, which is where every decision on it is taken.
- *
- * Which five depends on the side of the trade: a client's own orders, or the
- * requests a carrier has been sent — the procedure resolves that from the
- * tenant, so the card asks for the newest of "your list" and the header names
- * whichever list that turned out to be.
+ * The loads filed most recently, whichever list they are on: the company's
+ * own orders and trips, and the orders it runs through Appload — one table,
+ * newest first, as a plain table rather than the list kit's: nothing here
+ * sorts, selects or pages. A row opens the page where every decision on it
+ * is taken.
  */
 export function LatestOrders() {
     const t = useTranslations("App.dashboard")
-    const columns = useTranslations("App.orders.columns")
+    const columns = useTranslations("App.loads.columns")
     const f = useFormatter()
+    const loadMoney = useMoney()
     const trpc = useTRPC()
     const router = useRouter()
 
-    const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
-    const { data } = useSuspenseQuery(trpc.orders.list.queryOptions(latestInput()))
+    const { data: orders } = useSuspenseQuery(trpc.movements.list.queryOptions(latestLoadsInput("orders")))
+    const { data: trips } = useSuspenseQuery(trpc.movements.list.queryOptions(latestLoadsInput("trips")))
+    const { data: appload } = useSuspenseQuery(trpc.orders.list.queryOptions(latestInput()))
 
-    const orgType = session.organization.type
-    const section = orgType === "shipper" ? "all" : "requests"
+    const lines: Line[] = [
+        ...[...orders.items, ...trips.items].map((row): Line => ({ kind: "load", key: row.id, createdAt: row.createdAt, row })),
+        ...appload.items.map((row): Line => ({ kind: "order", key: row.id, createdAt: row.createdAt, row })),
+    ]
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(0, LATEST_LIMIT)
+
+    const open = (line: Line) => line.kind === "load"
+        ? router.push({ pathname: "/orders/load/[loadId]", params: { loadId: line.row.id } })
+        : router.push({ pathname: "/appload/details/[orderId]", params: { orderId: line.row.orderId } })
 
     return (
         <section className="bg-card ring-foreground/5 dark:ring-foreground/10 flex flex-col gap-3.5 rounded-2xl px-5 pt-4 pb-2 ring-1">
             <header className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-medium">{t(`latest.title.${orgType}`)}</h2>
+                <h2 className="text-sm font-medium">{t("loads.latest.title")}</h2>
 
                 <Link
-                    href={{ pathname: "/appload/[section]", params: { section } }}
+                    href={{ pathname: "/orders/[section]", params: { section: "all" } }}
                     className="text-muted-foreground hover:text-foreground flex shrink-0 items-center gap-1.5 text-xs"
                 >
                     {t("view-all")}
@@ -51,8 +70,8 @@ export function LatestOrders() {
                 </Link>
             </header>
 
-            {data.items.length === 0 ? (
-                <p className="text-muted-foreground pb-2 text-sm">{t(`latest.empty.${orgType}`)}</p>
+            {lines.length === 0 ? (
+                <p className="text-muted-foreground pb-2 text-sm">{t("loads.latest.empty")}</p>
             ) : (
                 // The kit's table brings a scroll container of its own; opened
                 // up so this one wrapper is what scrolls, with the scrollbar hidden
@@ -60,52 +79,79 @@ export function LatestOrders() {
                     <Table>
                         <TableHeader>
                             <TableRow className="hover:bg-transparent">
-                                <TableHead className="h-8 px-2 text-xs font-normal">{columns("order")}</TableHead>
-                                <TableHead className="h-8 px-2 text-xs font-normal">{columns(`counterparty.${orgType}`)}</TableHead>
-                                <TableHead className="hidden h-8 px-2 text-xs font-normal md:table-cell">{columns("route")}</TableHead>
+                                <TableHead className="h-8 px-2 text-xs font-normal">{columns("ref")}</TableHead>
+                                <TableHead className="h-8 px-2 text-xs font-normal">{columns("partner")}</TableHead>
+                                <TableHead className="hidden h-8 px-2 text-xs font-normal md:table-cell">{columns("lane")}</TableHead>
                                 <TableHead className="hidden h-8 px-2 text-xs font-normal md:table-cell">{columns("dates")}</TableHead>
                                 <TableHead className="h-8 px-2 text-xs font-normal">{columns("status")}</TableHead>
-                                <TableHead className="h-8 px-2 text-right text-xs font-normal">{columns("money")}</TableHead>
+                                <TableHead className="h-8 px-2 text-right text-xs font-normal">{t("loads.latest.amount")}</TableHead>
                             </TableRow>
                         </TableHeader>
 
                         <TableBody>
-                            {data.items.map((order) => (
-                                <TableRow
-                                    key={order.orderId}
-                                    onClick={() => router.push({ pathname: "/appload/details/[orderId]", params: { orderId: order.orderId } })}
-                                    className="cursor-pointer"
-                                >
-                                    <TableCell className="px-2 py-2.5">
-                                        {/* The whole row opens the order for a
-                                            mouse; this is the same door for a
-                                            keyboard, which cannot click a `tr` */}
-                                        <Link href={{ pathname: "/appload/details/[orderId]", params: { orderId: order.orderId } }}>
-                                            <Mono>{order.orderId}</Mono>
-                                        </Link>
-                                    </TableCell>
+                            {lines.map((line) => {
+                                if (line.kind === "load") {
+                                    const { row } = line
+                                    const figure = row.receivable ?? row.payable
 
-                                    <TableCell className="px-2 py-2.5 text-[13px]">
-                                        <span className="block max-w-44 truncate">{order.counterparty.name ?? <Dash />}</span>
-                                    </TableCell>
+                                    return (
+                                        <TableRow key={line.key} onClick={() => open(line)} className="cursor-pointer">
+                                            <TableCell className="px-2 py-2.5">
+                                                {/* The whole row opens the load for a mouse;
+                                                    this is the same door for a keyboard */}
+                                                <Link href={{ pathname: "/orders/load/[loadId]", params: { loadId: row.id } }}>
+                                                    <Mono>{row.ref}</Mono>
+                                                </Link>
+                                            </TableCell>
+                                            <TableCell className="px-2 py-2.5 text-[13px]">
+                                                <span className="block max-w-44 truncate">{partyOf(row) ?? <Dash />}</span>
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground hidden px-2 py-2.5 text-[13px] md:table-cell">
+                                                {`${loadPlace(row.origin)} → ${loadPlace(row.destination)}`}
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground hidden px-2 py-2.5 text-[13px] tabular-nums md:table-cell">
+                                                {row.expectedLoadingDate ? f.dateTime(row.expectedLoadingDate, { dateStyle: "medium" }) : <Dash />}
+                                            </TableCell>
+                                            <TableCell className="px-2 py-2.5">
+                                                <MovementStatusChip status={row.status} execution={row.execution} />
+                                            </TableCell>
+                                            <TableCell className="px-2 py-2.5 text-right text-[13px] tabular-nums">
+                                                {figure ? loadMoney(figure.total, figure.currency) : <Dash />}
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                }
 
-                                    <TableCell className="text-muted-foreground hidden px-2 py-2.5 text-[13px] md:table-cell">
-                                        {`${place(order.loadingAddress)} → ${place(order.offloadingAddress)}`}
-                                    </TableCell>
+                                const { row } = line
 
-                                    <TableCell className="text-muted-foreground hidden px-2 py-2.5 text-[13px] tabular-nums md:table-cell">
-                                        {f.dateTime(order.expectedLoadingDate, { dateStyle: "medium" })}
-                                    </TableCell>
-
-                                    <TableCell className="px-2 py-2.5">
-                                        <OrderStatusBadge status={order.status} />
-                                    </TableCell>
-
-                                    <TableCell className="px-2 py-2.5 text-right text-[13px] tabular-nums">
-                                        {money(f, order.money.total, order.money.currency) ?? <Dash />}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                                return (
+                                    <TableRow key={line.key} onClick={() => open(line)} className="cursor-pointer">
+                                        <TableCell className="px-2 py-2.5">
+                                            <span className="flex items-center gap-1.5">
+                                                <Link href={{ pathname: "/appload/details/[orderId]", params: { orderId: row.orderId } }}>
+                                                    <Mono>{row.orderId}</Mono>
+                                                </Link>
+                                                <Badge variant="outline" className="rounded-full font-normal">{t("loads.latest.appload")}</Badge>
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="px-2 py-2.5 text-[13px]">
+                                            <span className="block max-w-44 truncate">{row.counterparty.name ?? <Dash />}</span>
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground hidden px-2 py-2.5 text-[13px] md:table-cell">
+                                            {`${place(row.loadingAddress)} → ${place(row.offloadingAddress)}`}
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground hidden px-2 py-2.5 text-[13px] tabular-nums md:table-cell">
+                                            {f.dateTime(row.expectedLoadingDate, { dateStyle: "medium" })}
+                                        </TableCell>
+                                        <TableCell className="px-2 py-2.5">
+                                            <OrderStatusBadge status={row.status} />
+                                        </TableCell>
+                                        <TableCell className="px-2 py-2.5 text-right text-[13px] tabular-nums">
+                                            {money(f, row.money.total, row.money.currency) ?? <Dash />}
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })}
                         </TableBody>
                     </Table>
                 </div>

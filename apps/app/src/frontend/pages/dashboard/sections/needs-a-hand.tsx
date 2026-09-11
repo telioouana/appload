@@ -8,6 +8,8 @@ import {
     IconFileCheck,
     IconFileDollar,
     IconInbox,
+    IconMapPinExclamation,
+    IconRepeat,
     IconSteeringWheel,
     IconUserPlus,
 } from "@tabler/icons-react"
@@ -67,8 +69,10 @@ function QueueRow({ item }: { item: QueueItem }) {
 
 /**
  * What is waiting on this company specifically — the moves nobody else can
- * make for it: a decision on an offer, a quote a client is expecting, a truck
- * to name, paperwork to close, a partner asking to connect. Loads already
+ * make for it: a load a partner offered it, one a partner turned down that
+ * needs placing again, a driver who has not answered today, then Appload's
+ * own queue (a decision on an offer, a quote a client is expecting, a truck
+ * to name, paperwork to close) and a partner asking to connect. Loads simply
  * rolling are not here; they are on the tiles above and on the map beside it.
  *
  * A line only appears when it has something to say: rows at zero are gone,
@@ -87,6 +91,12 @@ export function NeedsAHand() {
 
     // The same query the partners page's own tabs count from
     const partners = useQuery({ ...trpc.partners.stats.queryOptions(), staleTime: 60_000 })
+
+    // The company's own lists' counts, the tiles above read the same; the
+    // turned-down loads are a slice of procurement only the rail counts
+    const { data: ownOrders } = useSuspenseQuery(trpc.movements.stats.queryOptions({ scope: "orders" }))
+    const { data: ownTrips } = useSuspenseQuery(trpc.movements.stats.queryOptions({ scope: "trips" }))
+    const rail = useQuery({ ...trpc.me.railCounts.queryOptions(), staleTime: 60_000 })
 
     const shipper = session.organization.type === "shipper"
     const { attention } = data
@@ -135,7 +145,41 @@ export function NeedsAHand() {
             },
         ]
 
+    const loads: QueueItem[] = [
+        {
+            key: "offered",
+            Icon: IconInbox,
+            label: t("queue.offered"),
+            count: ownOrders.inbox,
+            href: { pathname: "/orders/[section]", params: { section: "inbox" } },
+            tone: "warn",
+        },
+        {
+            key: "declined",
+            Icon: IconRepeat,
+            label: t("queue.declined"),
+            count: rail.isError ? 0 : rail.data?.declined,
+            href: { pathname: "/orders/[section]", params: { section: "procurement" } },
+            tone: "warn",
+        },
+        {
+            key: "silent-trips",
+            Icon: IconMapPinExclamation,
+            label: t("queue.silent-trips"),
+            count: ownTrips.silent,
+            href: { pathname: "/trips/[section]", params: { section: "in-transit" }, query: { silent: "1" } },
+        },
+        {
+            key: "silent-orders",
+            Icon: IconMapPinExclamation,
+            label: t("queue.silent-orders"),
+            count: ownOrders.silent,
+            href: { pathname: "/orders/[section]", params: { section: "in-transit" }, query: { silent: "1" } },
+        },
+    ]
+
     const rows: QueueItem[] = [
+        ...loads,
         ...orders,
         {
             key: "connections",

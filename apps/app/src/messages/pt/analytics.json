@@ -11,8 +11,29 @@
         "quarter-label": "{quarter}.º trimestre de {year}",
         "year-select": "Escolher ano"
     },
+    "loads": {
+        "title": "As suas cargas",
+        "hint": "Pedidos e viagens da sua empresa com carregamento em {year}, dentro ou fora da Appload",
+        "empty": "Ainda não há cargas em {year}",
+        "no-money": "Ainda não há valores registados {count, plural, one {na sua carga} other {nas suas # cargas}}.",
+        "receivable": "A receber dos clientes",
+        "received": "Recebido",
+        "payable": "A pagar a parceiros",
+        "paid": "Pago",
+        "costs": "Custos de operação",
+        "rechargeable": "dos quais {amount} a refaturar",
+        "gross": "Margem bruta ({count, plural, one {# carga} other {# cargas}})",
+        "net": "Margem líquida",
+        "comparable": "{comparable} de {finished} cargas entregues têm margem comparável: as outras não têm preço ou estão em duas moedas.",
+        "partners": {
+            "title": "Com quem trabalhou",
+            "client": "Cliente",
+            "partner": "Parceiro",
+            "loads": "{count, plural, one {# carga} other {# cargas}}"
+        }
+    },
     "pipeline": {
-        "title": "Os seus pedidos",
+        "title": "Pedidos Appload",
         "hint": "A contagem de hoje, seja qual for o período escolhido acima",
         "total": "{count, plural, one {# pedido} other {# pedidos}}",
         "sections": {
@@ -34,7 +55,7 @@
         "empty": "Ainda não há pedidos para contar"
     },
     "monthly": {
-        "title": "Pedidos por mês",
+        "title": "Pedidos Appload por mês",
         "total": "{count} em {year}",
         "series": {
             "orders": "Pedidos",
@@ -44,7 +65,7 @@
         "empty": "Nenhum pedido em {year}"
     },
     "money": {
-        "title": "Dinheiro",
+        "title": "Valores dos pedidos Appload",
         "shipper": {
             "outstanding": "A pagar",
             "settled": "Pago",
@@ -59,7 +80,7 @@
         "empty": "Ainda não há valores para mostrar"
     },
     "kpis": {
-        "title": "Desempenho",
+        "title": "Desempenho nos pedidos Appload",
         "empty": "Sem transportes analisados neste período",
         "days-value": "{days} dias",
         "tiles": {
@@ -98,7 +119,7 @@
         }
     },
     "partners": {
-        "title": "Parceiros",
+        "title": "Parceiros nos pedidos Appload",
         "hint": "A outra parte de cada pedido do período",
         "columns": {
             "partner": "Parceiro",

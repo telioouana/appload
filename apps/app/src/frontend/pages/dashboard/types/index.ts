@@ -29,3 +29,17 @@ export const latestInput = () => ({
     page: 1,
     pageSize: LATEST_LIMIT,
 });
+
+/**
+ * One of the company's own lists, newest first, for the "latest" table. The
+ * lists page in 25s, so that is what is asked for; the table keeps the few
+ * newest across these and the Appload orders.
+ */
+export const latestLoadsInput = (scope: "orders" | "trips") => ({
+    scope,
+    section: "all" as const,
+    sort: "newest" as const,
+    dir: "desc" as const,
+    page: 1,
+    pageSize: 25,
+});

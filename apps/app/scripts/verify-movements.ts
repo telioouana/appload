@@ -39,6 +39,7 @@ import { getStaffGates } from "@workspace/trpc/staff-gate";
 import { getTenantGates } from "@workspace/trpc/tenant-gate";
 import { createCallerFactory } from "@workspace/trpc/init";
 
+import { analyticsRouter } from "@/frontend/pages/analytics/server/procedures";
 import { mapRouter } from "@/frontend/pages/map/server/procedures";
 import { movementsRouter } from "@/frontend/pages/movements/server/procedures";
 import { meRouter } from "@/frontend/pages/settings/server/procedures";
@@ -47,6 +48,7 @@ process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DA
 
 const SESSION_ID = "verify-movements";
 const createCaller = createCallerFactory(movementsRouter);
+const createAnalyticsCaller = createCallerFactory(analyticsRouter);
 const createMapCaller = createCallerFactory(mapRouter);
 const createMeCaller = createCallerFactory(meRouter);
 
@@ -63,6 +65,20 @@ const contextFor = (userId: string) => ({
 
 /** The map and the rail read the same rows through their own doors. */
 const mapFor = (userId: string) => createMapCaller(contextFor(userId));
+const analyticsFor = (userId: string) => createAnalyticsCaller(contextFor(userId));
+
+/** One currency of a company's own-loads report, zero when it has none. */
+const loadsLine = async (userId: string, currency: string) => {
+    const report = await analyticsFor(userId).loads({});
+    const line = report.byCurrency.find((entry) => entry.currency === currency);
+    return {
+        comparable: report.comparable,
+        gross: line?.margin.gross ?? 0,
+        net: line?.margin.net ?? 0,
+        paid: line?.payable.settled ?? 0,
+        costs: line?.costs.total ?? 0,
+    };
+};
 const meFor = (userId: string) => createMeCaller(contextFor(userId));
 
 const as = (userId: string) =>
@@ -244,6 +260,8 @@ async function main() {
     check("…and B's own invoice to A does not ride up with it", !aDetail.documents.some((document) => document.title === "HARNESS B invoice"), aDetail.documents.map((document) => document.title));
 
     console.log("\n— delivery, money, and the books closing");
+    const bReportBefore = await loadsLine(B.user, "MZN");
+    const aReportBefore = await loadsLine(A.user, "MZN");
     bOwn = await b.get({ id: accepted.id });
     await b.transition({ id: accepted.id, to: "delivered", expectedVersion: bOwn.version });
     aDetail = await a.get({ id: filed.id });
@@ -277,6 +295,14 @@ async function main() {
 
     const aAfter = await a.get({ id: accepted.id });
     check("A, as client, sees none of B's costs or margin", aAfter.costs.length === 0 && aAfter.money.margin === null, aAfter.money);
+
+    console.log("\n— the year's report adds up to the load pages");
+    const bReport = await loadsLine(B.user, "MZN");
+    check("B's report gains this load's margin, as its page shows it", bReport.gross - bReportBefore.gross === 50000 && bReport.net - bReportBefore.net === 38000, { before: bReportBefore, after: bReport });
+    check("…and counts it as comparable", bReport.comparable - bReportBefore.comparable === 1, { before: bReportBefore.comparable, after: bReport.comparable });
+    check("…with both its MZN costs, rechargeable included", bReport.costs - bReportBefore.costs === 13500, { before: bReportBefore.costs, after: bReport.costs });
+    const aReport = await loadsLine(A.user, "MZN");
+    check("A's report counts what it paid B, and no margin — it sells nothing", aReport.paid - aReportBefore.paid === 50000 && aReport.gross === aReportBefore.gross, { before: aReportBefore, after: aReport });
 
     const bMoney = await b.recordPayment({ id: accepted.id, expectedVersion: bOwn.version, leg: "sell", amount: 50000 });
     await b.transition({ id: accepted.id, to: "closed", expectedVersion: bMoney.version });
