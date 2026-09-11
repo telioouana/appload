@@ -10,6 +10,8 @@ import { fleetCatalog } from "@/frontend/pages/fleet/server/activity"
 import { fleetRouter } from "@/frontend/pages/fleet/server/procedures"
 import { mapCatalog } from "@/frontend/pages/map/server/activity"
 import { mapRouter } from "@/frontend/pages/map/server/procedures"
+import { movementsCatalog } from "@/frontend/pages/movements/server/activity"
+import { movementsRouter } from "@/frontend/pages/movements/server/procedures"
 import { notificationsCatalog } from "@/frontend/pages/notifications/server/activity"
 import { notificationsRouter } from "@/frontend/pages/notifications/server/procedures"
 import { onboardingRouter } from "@/frontend/pages/onboarding/server/procedures"
@@ -33,6 +35,7 @@ registerActivityCatalog({
     ...driversCatalog,
     ...fleetCatalog,
     ...mapCatalog,
+    ...movementsCatalog,
     ...notificationsCatalog,
     ...ordersCatalog,
     ...partnersCatalog,
@@ -46,6 +49,7 @@ export const appRouter = createTRPCRouter({
     fleet: fleetRouter,
     map: mapRouter,
     me: meRouter,
+    movements: movementsRouter,
     notifications: notificationsRouter,
     onboarding: onboardingRouter,
     orders: ordersRouter,
