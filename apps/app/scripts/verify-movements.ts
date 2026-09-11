@@ -39,14 +39,16 @@ import { getStaffGates } from "@workspace/trpc/staff-gate";
 import { getTenantGates } from "@workspace/trpc/tenant-gate";
 import { createCallerFactory } from "@workspace/trpc/init";
 
+import { mapRouter } from "@/frontend/pages/map/server/procedures";
 import { movementsRouter } from "@/frontend/pages/movements/server/procedures";
-import { tripsRouter } from "@/frontend/pages/trips/server/procedures";
+import { meRouter } from "@/frontend/pages/settings/server/procedures";
 
 process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
 
 const SESSION_ID = "verify-movements";
 const createCaller = createCallerFactory(movementsRouter);
-const createTripsCaller = createCallerFactory(tripsRouter);
+const createMapCaller = createCallerFactory(mapRouter);
+const createMeCaller = createCallerFactory(meRouter);
 
 const contextFor = (userId: string) => ({
     authApi: undefined as never,
@@ -59,8 +61,9 @@ const contextFor = (userId: string) => ({
     tenantGates: (id: string) => getTenantGates(db, { userId: id }),
 });
 
-/** The old trips router, still mounted until the movements pages replace it. */
-const trips = (userId: string) => createTripsCaller(contextFor(userId));
+/** The map and the rail read the same rows through their own doors. */
+const mapFor = (userId: string) => createMapCaller(contextFor(userId));
+const meFor = (userId: string) => createMeCaller(contextFor(userId));
 
 const as = (userId: string) =>
     createCaller({
@@ -283,7 +286,8 @@ async function main() {
 
 /**
  * The review's findings, each proven against the database rather than
- * asserted: the side door the old trips router was, the offer round an
+ * asserted: that no list, map or count shows a partner's row twice or
+ * lets its owner's client move it, the offer round an
  * executor may read, the probe a search could run, the role gates, what a
  * re-priced leg keeps, corrections, the atomic cancel, and one notification
  * per milestone rather than two.
@@ -292,9 +296,8 @@ async function hardening() {
     const a = as(A.user);
     const b = as(B.user);
     const bMember = as(BM.user);
-    const tripsA = trips(A.user);
 
-    console.log("\n— the old trips page is no side door");
+    console.log("\n— no list is a side door into the partner's row");
     const filed = await a.create({
         execution: "partner", carrierOrgId: B.org, origin, destination,
         cargoDescription: "HARNESS hardening", clientReference: "ACME-PO-7731",
@@ -305,6 +308,9 @@ async function hardening() {
     let aDetail = await a.get({ id: filed.id });
     const offered = await a.offer({ id: filed.id, expectedVersion: aDetail.version });
 
+    const railB = await meFor(B.user).railCounts();
+    check("B's rail counts the offer in its inbox", railB.inbox >= 1, railB);
+
     const probe = await b.list({ scope: "orders", section: "inbox", search: "ACME-PO" });
     check("searching the inbox by A's client reference finds nothing", !probe.items.some((row) => row.id === filed.id), probe.items.map((row) => row.ref));
 
@@ -313,10 +319,13 @@ async function hardening() {
     let bOwn = await b.get({ id: accepted.id });
     const named = await b.update({ id: accepted.id, expectedVersion: bOwn.version, driverName: "HARNESS Two", driverPhone: "+258840000998" });
 
-    const legacyList = await tripsA.list({ section: "all" });
-    check("A's old trips list does not show B's row for it", !legacyList.items.some((row) => row.id === accepted.id), legacyList.items.map((row) => row.ref));
-    await expectError("…nor open it", () => tripsA.get({ id: accepted.id }), "NOT_FOUND");
-    await expectError("…nor move it", () => trips(B.user).setStatus({ id: accepted.id, to: "in-transit" }), "NOT_FOUND");
+    const aTrips = await a.list({ scope: "trips", section: "all" });
+    const aOrders = await a.list({ scope: "orders", section: "all" });
+    check("A's trips list does not show B's row", !aTrips.items.some((row) => row.id === accepted.id), aTrips.items.map((row) => row.ref));
+    check("A's orders list shows the load once, as its own order", aOrders.items.filter((row) => row.id === accepted.id || row.id === filed.id).map((row) => row.id).join() === filed.id, aOrders.items.map((row) => row.ref));
+    const aAsClient = await a.get({ id: accepted.id });
+    check("A opening B's row by id reads it as the client, with no phone", aAsClient.role === "client" && aAsClient.driverPhone === null && aAsClient.money.receivable === null, { role: aAsClient.role, phone: aAsClient.driverPhone });
+    await expectError("…and cannot move it", () => a.transition({ id: accepted.id, to: "in-transit", expectedVersion: named.version }), "NOT_FOUND");
 
     console.log("\n— one notification per milestone, not one per role");
     const before = await startedFor(A.org);
@@ -324,6 +333,13 @@ async function hardening() {
     const after = await startedFor(A.org);
     const members = await membersOf(A.org);
     check("A hears once that B's truck left", after - before === members, { before, after, members });
+
+    console.log("\n— the map shows one truck, where the partner's driver is");
+    const aPins = (await mapFor(A.user).overview()).filter((pin) => pin.kind === "load" && (pin.id === filed.id || pin.id === accepted.id));
+    check("A's map has the load once, as its own order", aPins.length === 1 && aPins[0]!.id === filed.id, aPins.map((pin) => pin.ref));
+    check("…carrying B's driver and plate, not B's phone", aPins[0]?.driverName === "HARNESS Two" && !JSON.stringify(aPins[0]).includes("+258840000998"), aPins[0]);
+    const bPins = (await mapFor(B.user).overview()).filter((pin) => pin.kind === "load" && (pin.id === filed.id || pin.id === accepted.id));
+    check("B's map has it once, as its own trip", bPins.length === 1 && bPins[0]!.id === accepted.id, bPins.map((pin) => pin.ref));
 
     console.log("\n— margin is earnings, not VAT");
     bOwn = await b.get({ id: accepted.id });

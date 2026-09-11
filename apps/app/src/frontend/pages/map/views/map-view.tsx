@@ -34,7 +34,7 @@ import { OVERVIEW_POLL_MS, TRAIL_POLL_MS, type LatLng, type MapEntity, type Trai
  * fetched by the view above, so the overview knows whether this layer has a
  * pin to draw yet.
  *
- * An order and a trip cache their routes in their own tables, so which of the
+ * An order and a load cache their routes in their own tables, so which of the
  * two queries runs is decided here rather than by the caller; the disabled
  * one costs nothing.
  */
@@ -48,14 +48,14 @@ function SelectedRoute({ entity, trail, emphasis }: { entity: MapEntity; trail: 
         { enabled: isOrder, staleTime: 5 * 60_000, retry: false },
     ))
 
-    const tripRoute = useQuery(trpc.trips.route.queryOptions(
+    const loadRoute = useQuery(trpc.movements.route.queryOptions(
         { id: entity.id },
         { enabled: !isOrder, staleTime: 5 * 60_000, retry: false },
     ))
 
     return (
         <RouteLayer
-            route={isOrder ? orderRoute.data : tripRoute.data}
+            route={isOrder ? orderRoute.data : loadRoute.data}
             trail={trail}
             status={entity.status}
             fit
@@ -128,21 +128,21 @@ export function MapView() {
     // the overview can hold its pin until the route layer has one of its own:
     // dropping it the moment a pin is clicked leaves that truck unmarked for
     // a whole round trip, and for good if the trail request fails. An order's
-    // trail and a trip's are two tables and two procedures; only the one
+    // trail and a load's are two tables and two procedures; only the one
     // matching the open pin runs.
     const orderTrail = useQuery(trpc.map.orderTrail.queryOptions(
         { orderId: selectedEntity?.ref ?? "" },
         { enabled: Boolean(selectedEntity) && isOrder, refetchInterval: TRAIL_POLL_MS },
     ))
 
-    const tripTrail = useQuery(trpc.trips.trail.queryOptions(
+    const loadTrail = useQuery(trpc.movements.trail.queryOptions(
         { id: selectedEntity?.id ?? "" },
         { enabled: Boolean(selectedEntity) && !isOrder, refetchInterval: TRAIL_POLL_MS },
     ))
 
     const trail = useMemo<TrailPoint[]>(
-        () => (selectedEntity && (isOrder ? orderTrail.data : tripTrail.data)) || [],
-        [selectedEntity, isOrder, orderTrail.data, tripTrail.data],
+        () => (selectedEntity && (isOrder ? orderTrail.data : loadTrail.data)) || [],
+        [selectedEntity, isOrder, orderTrail.data, loadTrail.data],
     )
 
     const points = useMemo<LatLng[]>(

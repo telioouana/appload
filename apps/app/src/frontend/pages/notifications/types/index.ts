@@ -83,7 +83,7 @@ export type PagedResult<T> = {
  */
 export type NotificationLink =
     | { pathname: "/appload/details/[orderId]"; params: { orderId: string } }
-    | { pathname: "/trips/[tripId]"; params: { tripId: string } }
+    | { pathname: "/orders/load/[loadId]"; params: { loadId: string } }
     | { pathname: "/partners"; query: { id: string } }
     | { pathname: "/appload/quotes"; query: { id: string } }
     | { pathname: "/settings" };
@@ -103,9 +103,9 @@ export function notificationTarget(
             return entityId
                 ? { link: { pathname: "/appload/details/[orderId]", params: { orderId: entityId } }, path: `/appload/details/${encodeURIComponent(entityId)}` }
                 : null;
-        case "trip":
+        case "movement":
             return entityId
-                ? { link: { pathname: "/trips/[tripId]", params: { tripId: entityId } }, path: `/trips/${encodeURIComponent(entityId)}` }
+                ? { link: { pathname: "/orders/load/[loadId]", params: { loadId: entityId } }, path: `/orders/load/${encodeURIComponent(entityId)}` }
                 : null;
         case "connection":
             return entityId

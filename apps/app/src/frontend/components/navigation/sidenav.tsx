@@ -2,46 +2,142 @@
 
 import Image from "next/image"
 import { useEffect } from "react";
-import { type Icon, IconBox, IconBuildingWarehouse, IconChartHistogram, IconFileInvoice, IconLayoutDashboard, IconMap2, IconRoute, IconSettings, IconTruck, IconUsers } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
+import {
+    type Icon,
+    IconBell,
+    IconBox,
+    IconBuildingWarehouse,
+    IconCalendarClock,
+    IconChartHistogram,
+    IconChecks,
+    IconContainer,
+    IconFileInvoice,
+    IconHistory,
+    IconInbox,
+    IconLayoutDashboard,
+    IconLink,
+    IconList,
+    IconLockOpen,
+    IconMap2,
+    IconPlus,
+    IconRoute,
+    IconSearch,
+    IconSteeringWheel,
+    IconTruck,
+    IconTruckDelivery,
+    IconUsers,
+} from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
 import { Link, usePathname } from "@/i18n/navigation";
 
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@workspace/ui/components/sidebar";
+import { Button } from "@workspace/ui/components/button";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@workspace/ui/components/sidebar";
 
 import { cn } from "@workspace/ui/lib/utils";
 import { NAV_ITEM_CLASSES, NAV_SECTION_LABEL_CLASSES } from "@workspace/ui/lib/nav-tokens";
-
 import { NavPending } from "@workspace/ui/customs/nav/nav-pending";
+
+import { useTRPC } from "@/backend/api/client";
+import { UNREAD_POLL_MS } from "@/frontend/pages/notifications/types";
+import { sectionsFor } from "@/frontend/pages/orders/types";
+import { useNewLoad } from "@/frontend/pages/movements/hooks/use-new-load";
+import { NewLoadSheet } from "@/frontend/pages/movements/sections/new-load-sheet";
+import { ORDER_SECTIONS, TRIP_SECTIONS } from "@/frontend/pages/movements/types";
+
 import { NavUser } from "./nav-user";
 
 // Whatever the typed next-intl `Link` accepts as `href`: a plain internal
 // pathname for a static route, or the `{ pathname, params }` object form for
-// a route with a dynamic segment (e.g. /fleet/[kind]).
+// a route with a dynamic segment (e.g. /orders/[section]).
 type NavHref = React.ComponentProps<typeof Link>["href"];
 
-/**
- * A rail entry: one link to one page of the portal. The two groups below are
- * the whole of it, and both kinds of company see the same rows — the only
- * thing that varies is which section the orders list opens at.
- */
-type NavEntry = {
+/** A navigable leaf. */
+type NavLink = {
     Icon: Icon;
     name: string;
     /** Active matching (by path prefix) and the React key */
     match: string;
     path: NavHref;
+    /** Rows waiting on this company behind this entry */
+    badge?: number;
 };
 
+// A parent group, always open: `match` is only used for active matching; the
+// row itself is never a link.
+type NavGroup = {
+    Icon: Icon;
+    name: string;
+    match: string;
+    items: NavLink[];
+    // No badge of its own on purpose: a count on the parent only says that
+    // something below needs a hand, never which page to open. The children
+    // carry them, each one for the list it leads to.
+};
 
+type NavEntry = NavLink | NavGroup;
+
+function ReviewBadge({ count }: { count?: number }) {
+    if (!count) return null;
+
+    return (
+        <span className="bg-primary text-primary-foreground ml-auto inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[11px] font-medium tabular-nums group-data-[collapsible=icon]:hidden">
+            {count > 99 ? "99+" : count}
+        </span>
+    );
+}
+
+const ORDER_ICONS: Record<(typeof ORDER_SECTIONS)[number], Icon> = {
+    "all": IconList,
+    "inbox": IconInbox,
+    "procurement": IconSearch,
+    "booked": IconCalendarClock,
+    "in-transit": IconTruckDelivery,
+    "delivered": IconChecks,
+    "history": IconHistory,
+};
+
+const TRIP_ICONS: Record<(typeof TRIP_SECTIONS)[number], Icon> = {
+    "all": IconList,
+    "planning": IconSteeringWheel,
+    "scheduled": IconCalendarClock,
+    "in-transit": IconTruckDelivery,
+    "delivered": IconChecks,
+    "history": IconHistory,
+};
+
+const APPLOAD_ICONS: Record<ReturnType<typeof sectionsFor>[number], Icon> = {
+    "all": IconList,
+    "requests": IconLockOpen,
+    "quoted": IconFileInvoice,
+    "booked": IconCalendarClock,
+    "on-going": IconTruckDelivery,
+    "delivered": IconChecks,
+    "history": IconHistory,
+};
+
+/**
+ * The portal's rail, in the admin's shape: an unlabelled group for reading
+ * the business, Operations for the day's work with the one button that
+ * files a load, Company for what it owns and who it works with, and the
+ * account menu at the foot. The three lists of loads are always open, each
+ * section one click away from anywhere, and a count sits on exactly the
+ * section that needs the company.
+ */
 export function Sidenav({
     orgType,
     ...props
 }: React.ComponentProps<typeof Sidebar> & { orgType: "shipper" | "carrier" }) {
     const t = useTranslations("App.shell.sidebar")
+    const tl = useTranslations("App.loads.sections")
+    const to = useTranslations("App.orders.sections")
     const g = useTranslations("General")
     const pathname = usePathname()
+    const trpc = useTRPC()
     const { setOpenMobile } = useSidebar()
+
+    const { open: openNewLoad } = useNewLoad()
 
     // On a phone the nav is a sheet laid over the page, so following a link
     // has to dismiss it — otherwise it sits on top of what it just opened.
@@ -50,7 +146,16 @@ export function Sidenav({
         setOpenMobile(false)
     }, [pathname, setOpenMobile])
 
-    const work: NavEntry[] = [
+    // One cheap read for the loads and the partners; a minute stale is fine
+    // for a badge. The brokerage's own counts are the stats its pages already
+    // read, and the unread number is the bell's query — one request for both
+    const { data: counts } = useQuery({ ...trpc.me.railCounts.queryOptions(), staleTime: 60_000 })
+    const { data: brokerage } = useQuery({ ...trpc.orders.stats.queryOptions(), staleTime: 60_000 })
+    const { data: unread } = useQuery(trpc.notifications.unreadCount.queryOptions(undefined, { refetchInterval: UNREAD_POLL_MS }))
+
+    const carrier = orgType === "carrier"
+
+    const report: NavEntry[] = [
         {
             // Where signing in lands and where the logo goes back to
             Icon: IconLayoutDashboard,
@@ -58,57 +163,149 @@ export function Sidenav({
             match: "/dashboard",
             path: "/dashboard",
         },
-        {
-            Icon: IconBox,
-            name: t("work.orders"),
-            match: "/appload",
-            // The two sides enter the list at different sections: a client
-            // starts from everything it filed, a carrier from the requests
-            // waiting on its answer. The page's own tabs move from there
-            path: { pathname: "/appload/[section]", params: { section: orgType === "shipper" ? "all" : "requests" } },
-        },
-        { Icon: IconFileInvoice, name: t("work.quotes"), match: "/appload/quotes", path: "/appload/quotes" },
-        { Icon: IconRoute, name: t("work.trips"), match: "/trips", path: "/trips" },
-        { Icon: IconMap2, name: t("work.map"), match: "/map", path: "/map" },
-    ]
-
-    const company: NavEntry[] = [
-        // Every company may keep a fleet: a carrier's is what it sells, a
-        // shipper's moves its own goods between its own sites
-        {
-            Icon: IconTruck,
-            name: t("company.fleet"),
-            match: "/fleet",
-            // The three vehicle kinds are three routes; the rail enters at
-            // the trucks one and the page's own tabs switch between them
-            path: { pathname: "/fleet/[kind]", params: { kind: "trucks" } },
-        },
-        { Icon: IconUsers, name: t("company.drivers"), match: "/drivers", path: "/drivers" },
-        { Icon: IconBuildingWarehouse, name: t("company.partners"), match: "/partners", path: "/partners" },
         { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", path: "/analytics" },
     ]
 
+    const ops: NavEntry[] = [
+        {
+            Icon: IconBox,
+            name: t("work.orders"),
+            match: "/orders",
+            // A shipper is never offered work, so it has no inbox to open
+            items: ORDER_SECTIONS.filter((section) => carrier || section !== "inbox").map((section) => ({
+                Icon: ORDER_ICONS[section],
+                name: tl(section),
+                match: `/orders/${section}`,
+                path: { pathname: "/orders/[section]", params: { section } },
+                badge: section === "inbox" ? counts?.inbox : section === "procurement" ? counts?.declined : undefined,
+            })),
+        },
+        {
+            Icon: IconRoute,
+            name: t("work.trips"),
+            match: "/trips",
+            items: TRIP_SECTIONS.map((section) => ({
+                Icon: TRIP_ICONS[section],
+                name: tl(section),
+                match: `/trips/${section}`,
+                path: { pathname: "/trips/[section]", params: { section } },
+            })),
+        },
+        {
+            // Appload's brokerage, beside the company's own loads: the
+            // requests and offers it runs through Appload, and the quotes
+            Icon: IconContainer,
+            name: t("work.appload"),
+            match: "/appload",
+            items: [
+                ...sectionsFor(orgType).map((section) => ({
+                    Icon: APPLOAD_ICONS[section],
+                    name: to(section),
+                    match: `/appload/${section}`,
+                    path: { pathname: "/appload/[section]" as const, params: { section } },
+                    badge: carrier
+                        ? section === "requests" ? brokerage?.attention.newRequests : section === "booked" ? brokerage?.attention.toDispatch : undefined
+                        : section === "quoted" ? brokerage?.attention.offersToReview : undefined,
+                })),
+                { Icon: IconFileInvoice, name: t("work.quotes"), match: "/appload/quotes", path: "/appload/quotes" },
+            ],
+        },
+        { Icon: IconMap2, name: t("work.map"), match: "/map", path: "/map" },
+        {
+            Icon: IconBell,
+            name: t("work.notifications"),
+            match: "/notifications",
+            path: "/notifications",
+            badge: unread?.count,
+        },
+    ]
+
+    const company: NavEntry[] = [
+        {
+            // Every company may keep a fleet: a carrier's is what it sells, a
+            // shipper's moves its own goods between its own sites
+            Icon: IconTruck,
+            name: t("company.fleet"),
+            match: "/fleet",
+            items: [
+                { Icon: IconTruck, name: t("company.trucks"), match: "/fleet/trucks", path: { pathname: "/fleet/[kind]", params: { kind: "trucks" } } },
+                { Icon: IconContainer, name: t("company.trailers"), match: "/fleet/trailers", path: { pathname: "/fleet/[kind]", params: { kind: "trailers" } } },
+                { Icon: IconLink, name: t("company.links"), match: "/fleet/links", path: { pathname: "/fleet/[kind]", params: { kind: "links" } } },
+            ],
+        },
+        { Icon: IconUsers, name: t("company.drivers"), match: "/drivers", path: "/drivers" },
+        {
+            Icon: IconBuildingWarehouse,
+            name: t("company.partners"),
+            match: "/partners",
+            path: "/partners",
+            badge: counts?.partners,
+        },
+    ]
+
+    // The quotes live under /appload too, so the sections test for an exact
+    // segment rather than a prefix that would light "all" up on /appload/quotes
+    const isOn = (match: string) => pathname === match || pathname.startsWith(`${match}/`)
+
     const renderEntries = (entries: NavEntry[]) => entries.map((item) => {
-        const isActive = pathname.startsWith(item.match);
+        const isActive = isOn(item.match);
 
         return (
             <SidebarMenuItem key={item.match}>
                 <SidebarMenuButton
+                    // Always wrapping our own element: a Link for a leaf, and a
+                    // plain div for a group, which has nothing to toggle and so
+                    // should not sit in the page as a dead button
                     asChild
                     tooltip={item.name}
                     isActive={isActive}
-                    className={cn(
-                        ...NAV_ITEM_CLASSES,
-                        isActive && "bg-linear-to-r/oklch border-[#E67623]/10",
-                    )}
+                    className={cn(...NAV_ITEM_CLASSES, isActive && "bg-linear-to-r/oklch border-[#E67623]/10")}
                 >
-                    <Link href={item.path}>
-                        <item.Icon className="size-5!" stroke={1} />
-                        <NavPending className="font-medium tracking-tight">
-                            {item.name}
-                        </NavPending>
-                    </Link>
+                    {"items" in item ? (
+                        <div className="flex w-full items-center gap-2">
+                            <item.Icon className="size-5! shrink-0" stroke={1} />
+                            <span className="flex-1 text-left font-medium tracking-tight">
+                                {item.name}
+                            </span>
+                        </div>
+                    ) : (
+                        <Link href={item.path}>
+                            <item.Icon className="size-5!" stroke={1} />
+                            <NavPending className="font-medium tracking-tight">
+                                {item.name}
+                            </NavPending>
+                            <ReviewBadge count={item.badge} />
+                        </Link>
+                    )}
                 </SidebarMenuButton>
+
+                {"items" in item && (
+                    <SidebarMenuSub className="mx-0 border-l-0 px-0 pl-3.5">
+                        {item.items.map((subItem) => {
+                            const isSubActive = isOn(subItem.match);
+
+                            return (
+                                <SidebarMenuSubItem key={subItem.match} className="gap-2">
+                                    <SidebarMenuSubButton
+                                        asChild
+                                        isActive={isSubActive}
+                                        // The kit pins sub-item icons to the accent colour, which stays
+                                        // dark on the orange hover in light mode; follow the text instead
+                                        className={cn(...NAV_ITEM_CLASSES, "[&>svg]:text-current", isSubActive && "bg-linear-to-r/oklch border-[#E67623]/10")}
+                                    >
+                                        <Link href={subItem.path}>
+                                            <subItem.Icon className="size-5!" stroke={1} />
+                                            <NavPending className="tracking-tight">
+                                                {subItem.name}
+                                            </NavPending>
+                                            <ReviewBadge count={subItem.badge} />
+                                        </Link>
+                                    </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                            )
+                        })}
+                    </SidebarMenuSub>
+                )}
             </SidebarMenuItem>
         )
     })
@@ -139,12 +336,32 @@ export function Sidenav({
 
             <SidebarContent>
                 <SidebarGroup>
+                    <SidebarGroupContent>
+                        <SidebarMenu className="gap-2">
+                            {renderEntries(report)}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                {/* The areas are told apart by their name rather than a rule:
+                    the label says what the links under it are for, and folds
+                    away on its own once the rail collapses to icons */}
+                <SidebarGroup>
                     <SidebarGroupLabel className={NAV_SECTION_LABEL_CLASSES}>
                         {t("work.label")}
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu className="gap-2">
-                            {renderEntries(work)}
+                            <NewLoadSheet />
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild tooltip={t("new-load")}>
+                                    <Button onClick={() => openNewLoad(carrier ? "own-fleet" : "partner")}>
+                                        <IconPlus />
+                                        {t("new-load")}
+                                    </Button>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            {renderEntries(ops)}
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
@@ -162,27 +379,6 @@ export function Sidenav({
             </SidebarContent>
 
             <SidebarFooter>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            asChild
-                            tooltip={t("settings")}
-                            isActive={pathname.startsWith("/settings")}
-                            className={cn(
-                                ...NAV_ITEM_CLASSES,
-                                pathname.startsWith("/settings") && "bg-linear-to-r/oklch border-[#E67623]/10",
-                            )}
-                        >
-                            <Link href="/settings">
-                                <IconSettings className="size-5!" stroke={1} />
-                                <NavPending className="font-medium tracking-tight">
-                                    {t("settings")}
-                                </NavPending>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

@@ -22,8 +22,6 @@ import { partnersRouter } from "@/frontend/pages/partners/server/procedures"
 import { quotesCatalog } from "@/frontend/pages/quotes/server/activity"
 import { quotesRouter } from "@/frontend/pages/quotes/server/procedures"
 import { meRouter } from "@/frontend/pages/settings/server/procedures"
-import { tripsCatalog } from "@/frontend/pages/trips/server/activity"
-import { tripsRouter } from "@/frontend/pages/trips/server/procedures"
 
 // Module scope: runs on every cold start before any request is handled, so
 // mutation log rows get their enriched params from the first request on.
@@ -40,7 +38,6 @@ registerActivityCatalog({
     ...ordersCatalog,
     ...partnersCatalog,
     ...quotesCatalog,
-    ...tripsCatalog,
 });
 
 export const appRouter = createTRPCRouter({
@@ -55,7 +52,6 @@ export const appRouter = createTRPCRouter({
     orders: ordersRouter,
     partners: partnersRouter,
     quotes: quotesRouter,
-    trips: tripsRouter,
 });
 
 // export type definition of API

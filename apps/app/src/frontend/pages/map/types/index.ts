@@ -9,13 +9,13 @@ export { OVERVIEW_POLL_MS, TRAIL_POLL_MS } from "@workspace/maps/types";
 
 export type { OrderStatus };
 
-/** The two kinds of movement the portal watches: an Appload order, or a standalone trip. */
-export type MapEntityKind = "order" | "trip";
+/** The two kinds of movement the portal watches: an Appload order, or one of the company's own loads. */
+export type MapEntityKind = "order" | "load";
 
 /** The page a pin opens, in the object form the typed `Link` takes. */
 export type MapEntityHref =
     | { pathname: "/appload/details/[orderId]"; params: { orderId: string } }
-    | { pathname: "/trips/[tripId]"; params: { tripId: string } };
+    | { pathname: "/orders/load/[loadId]"; params: { loadId: string } };
 
 /**
  * One movement on the overview map, whichever kind it is. The two sources
@@ -27,16 +27,16 @@ export type MapEntity = {
     kind: MapEntityKind;
     /** Row id, and the query key of the entity's own route and trail */
     id: string;
-    /** What the pin is labelled with: the order id, or "TRP-<seq>" */
+    /** What the pin is labelled with: the order id, or the load's TRP-/ORD- reference */
     ref: string;
     href: MapEntityHref;
     /** The company on the other side, when the movement has one */
     counterpartyName: string | null;
     /**
      * The order-status vocabulary, because the pin colour, the icon and the
-     * badge all read it off the same `--status-*` variables. A standalone
-     * trip is drawn as "on-route": in transit is the only state that reaches
-     * the map, and it is the same truck on the same road.
+     * badge all read it off the same `--status-*` variables. A load is drawn
+     * as "on-route": in transit is the only state that reaches the map, and
+     * it is the same truck on the same road.
      */
     status: OrderStatus;
     origin: Location;

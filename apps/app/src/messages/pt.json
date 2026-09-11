@@ -292,16 +292,21 @@
                     "orders": "Pedidos",
                     "quotes": "Cotações",
                     "trips": "Viagens",
-                    "map": "Mapa"
+                    "map": "Mapa",
+                    "appload": "Appload",
+                    "notifications": "Notificações"
                 },
                 "company": {
                     "label": "Empresa",
                     "fleet": "Frota",
                     "drivers": "Motoristas",
                     "partners": "Parceiros",
-                    "analytics": "Análises"
+                    "analytics": "Análises",
+                    "trucks": "Camiões",
+                    "trailers": "Reboques",
+                    "links": "Conjuntos"
                 },
-                "settings": "Definições"
+                "new-load": "Nova carga"
             },
             "user": {
                 "settings": "Definições",
@@ -363,7 +368,7 @@
                 "empty-description": "Os pedidos e as viagens aparecem aqui assim que estiverem em trânsito"
             },
             "trips": {
-                "title": "Viagens",
+                "title": "Frota própria",
                 "in-transit": "Em trânsito",
                 "no-response": "Sem resposta hoje"
             },

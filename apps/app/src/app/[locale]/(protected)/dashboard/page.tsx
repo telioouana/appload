@@ -33,7 +33,7 @@ export default async function Dashboard() {
     prefetch(trpc.analytics.monthly.queryOptions(yearInput()))
     prefetch(trpc.analytics.money.queryOptions(yearInput()))
     prefetch(trpc.orders.list.queryOptions(latestInput()))
-    prefetch(trpc.trips.stats.queryOptions())
+    prefetch(trpc.movements.stats.queryOptions({ scope: "trips" }))
 
     // The queue's connection count is warmed here too, but it rides its own
     // client query: a bad minute there loses that one row, not the card

@@ -25,6 +25,25 @@ export const routing = defineRouting({
         "/drivers": {
             pt: "/motoristas"
         },
+        // The company's own loads: Orders are the ones somebody else moves,
+        // Trips the ones its own fleet moves, and both open on one shared
+        // page — a static segment beside the section, so a trip handed to a
+        // partner keeps its address
+        "/orders": {
+            pt: "/pedidos"
+        },
+        "/orders/[section]": {
+            pt: "/pedidos/[section]"
+        },
+        "/orders/load/[loadId]": {
+            pt: "/pedidos/carga/[loadId]"
+        },
+        "/trips": {
+            pt: "/viagens"
+        },
+        "/trips/[section]": {
+            pt: "/viagens/[section]"
+        },
         // Appload's brokerage: requests, offers, standing quotes and the
         // orders Appload books, beside the company's own loads rather than
         // mixed into them. Static segments sit beside the dynamic one, as in
@@ -32,18 +51,13 @@ export const routing = defineRouting({
         // static one wins the match. The code behind these pages is still
         // named `orders` and `quotes` (frontend/pages, App.orders,
         // App.quotes): only the addresses moved
+        "/appload": "/appload",
         "/appload/[section]": "/appload/[section]",
         "/appload/details/[orderId]": {
             pt: "/appload/detalhes/[orderId]"
         },
         "/appload/quotes": {
             pt: "/appload/cotacoes"
-        },
-        "/trips": {
-            pt: "/viagens"
-        },
-        "/trips/[tripId]": {
-            pt: "/viagens/[tripId]"
         },
         "/map": {
             pt: "/mapa"

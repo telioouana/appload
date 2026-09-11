@@ -7,6 +7,8 @@ import driversEn from "./en/drivers.json";
 import driversPt from "./pt/drivers.json";
 import fleetEn from "./en/fleet.json";
 import fleetPt from "./pt/fleet.json";
+import loadsEn from "./en/loads.json";
+import loadsPt from "./pt/loads.json";
 import mapEn from "./en/map.json";
 import mapPt from "./pt/map.json";
 import notificationsEn from "./en/notifications.json";
@@ -17,8 +19,6 @@ import partnersEn from "./en/partners.json";
 import partnersPt from "./pt/partners.json";
 import quotesEn from "./en/quotes.json";
 import quotesPt from "./pt/quotes.json";
-import tripsEn from "./en/trips.json";
-import tripsPt from "./pt/trips.json";
 
 /**
  * The portal's message catalog is split per feature so the features can be
@@ -34,12 +34,12 @@ export const en = {
         analytics: analyticsEn,
         drivers: driversEn,
         fleet: fleetEn,
+        loads: loadsEn,
         map: mapEn,
         notifications: notificationsEn,
         orders: ordersEn,
         partners: partnersEn,
         quotes: quotesEn,
-        trips: tripsEn,
     },
 };
 
@@ -50,12 +50,12 @@ export const pt = {
         analytics: analyticsPt,
         drivers: driversPt,
         fleet: fleetPt,
+        loads: loadsPt,
         map: mapPt,
         notifications: notificationsPt,
         orders: ordersPt,
         partners: partnersPt,
         quotes: quotesPt,
-        trips: tripsPt,
     },
 };
 

@@ -11,34 +11,34 @@ import { Link } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
 
 /**
- * The trips the company watches on its own, in two numbers: what is moving,
- * and who was asked for a position today and has not answered. Both open the
- * trips list already narrowed to exactly what they counted.
- *
- * Order-backed movements are deliberately absent — they are on the tiles and
- * the map above; this card is the standalone half of the same road.
+ * The company's own fleet, in two numbers: what is moving, and whose driver
+ * was asked for a position today and has not answered. Both open the trips
+ * list already narrowed to exactly what they counted — the same stats the
+ * list's own tiles read.
  */
 export function TripsTile() {
     const t = useTranslations("App.dashboard")
     const f = useFormatter()
     const trpc = useTRPC()
 
-    const { data } = useSuspenseQuery(trpc.trips.stats.queryOptions())
+    const { data } = useSuspenseQuery(trpc.movements.stats.queryOptions({ scope: "trips" }))
+
+    const onTheRoad = data.bySection["in-transit"] ?? 0
 
     const figures = [
         {
             key: "in-transit",
             label: t("trips.in-transit"),
-            value: data.attention.inTransit,
-            query: { section: "in-transit" },
+            value: onTheRoad,
+            query: undefined,
             warn: false,
         },
         {
             key: "no-response",
             label: t("trips.no-response"),
-            value: data.attention.noResponseToday,
-            query: { noResponse: "1" },
-            warn: data.attention.noResponseToday > 0,
+            value: data.silent,
+            query: { silent: "1" },
+            warn: data.silent > 0,
         },
     ]
 
@@ -48,7 +48,7 @@ export function TripsTile() {
                 <h2 className="text-sm font-medium">{t("trips.title")}</h2>
 
                 <Link
-                    href="/trips"
+                    href={{ pathname: "/trips/[section]", params: { section: "all" } }}
                     className="text-muted-foreground hover:text-foreground flex shrink-0 items-center gap-1.5 text-xs"
                 >
                     {t("view-all")}
@@ -60,7 +60,7 @@ export function TripsTile() {
                 {figures.map((figure) => (
                     <Link
                         key={figure.key}
-                        href={{ pathname: "/trips", query: figure.query }}
+                        href={{ pathname: "/trips/[section]", params: { section: "in-transit" }, query: figure.query }}
                         className="hover:bg-muted/50 flex flex-col rounded-xl px-1 py-0.5 transition-colors"
                     >
                         <span className="text-muted-foreground truncate text-xs font-medium">{figure.label}</span>

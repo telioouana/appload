@@ -1,14 +1,13 @@
 import { z } from "zod";
 import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
-import { alias } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
 
 import { order, type Order } from "@workspace/db/orders";
 import { orderLocation, orderRoute } from "@workspace/db/tracking";
 import { movement, movementLocation } from "@workspace/db/movements";
-import { organization } from "@workspace/db/users";
 import type { OrderStatus } from "@workspace/db/types";
 
+import { movementRole } from "@workspace/domain/movements/policy";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
@@ -19,14 +18,18 @@ import { cacheKey, failedRecently, failureKey, GEOCODE_TTL_MS, num, rememberFail
 import type { OrderRouteDto, TrailPoint } from "@workspace/maps/types";
 
 import { loadVisibleOrder, ownsOrder, scopeOf, type Db, type TenantScope } from "@/frontend/pages/orders/server/projection";
+import { loadNames, loadTerminalRigs, onTheMap, toMovementRow, trailIds } from "@/frontend/pages/movements/server/projection";
 import type { MapEntity } from "@/frontend/pages/map/types";
 
 /**
- * A standalone trip only reaches the map while it is in transit, which is
+ * A company's own load only reaches the map while it is in transit, which is
  * the same thing an order's "on-route" says — and the pin, the icon and the
  * badge are all keyed on the order vocabulary.
  */
-const TRIP_PIN_STATUS: OrderStatus = "on-route";
+const LOAD_PIN_STATUS: OrderStatus = "on-route";
+
+/** The map reads its own newest pings below; the row projection is only asked for names and the rig. */
+const NO_PING_STATE = { last: new Map(), counts: new Map() };
 
 /**
  * The order behind a map query, or NOT_FOUND. Seeing an order is not being a
@@ -68,24 +71,25 @@ const toPoint = (ping: PingRow): TrailPoint => ({
 
 export const mapRouter = createTRPCRouter({
     /**
-     * Everything of this tenant's that is on the road right now: the orders
-     * it is a party to in a tracked status, and the standalone trips it owns
-     * or is the counterparty on, each at its latest known position.
+     * Everything of this tenant's that is on the road right now: the Appload
+     * orders it is a party to in a tracked status, and its own loads — the
+     * ones it runs and the ones moved for it — each at its latest known
+     * position.
      *
-     * Four queries, never one per row: the two sets are read in parallel and
-     * their newest pings looked up in one DISTINCT ON each, because the
-     * client polls this on a timer.
+     * A load handed to a partner on the portal has no pings of its own: its
+     * truck reports on the partner's row, so the pin is that row's newest
+     * position, and the driver and plate come up with it — nothing else of
+     * that row does.
+     *
+     * A handful of queries, never one per row: the two sets are read in
+     * parallel and their newest pings looked up in one DISTINCT ON each,
+     * because the client polls this on a timer.
      */
     overview: tenantProcedure.query(async ({ ctx }): Promise<MapEntity[]> => {
         const tenant = scopeOf(ctx.tenant);
         const shipper = tenant.orgType === "shipper";
 
-        // The trip's two sides are two rows of the same table; aliasing lets
-        // one query name both without a second round trip
-        const ownerOrg = alias(organization, "trip_owner_org");
-        const partnerOrg = alias(organization, "trip_partner_org");
-
-        const [orders, trips] = await Promise.all([
+        const [orders, loads] = await Promise.all([
             ctx.db
                 .select({
                     id: order.id,
@@ -108,36 +112,25 @@ export const mapRouter = createTRPCRouter({
                 ))
                 .orderBy(desc(order.createdAt)),
             ctx.db
-                .select({
-                    id: movement.id,
-                    seq: movement.seq,
-                    organizationId: movement.organizationId,
-                    ownerName: ownerOrg.name,
-                    partnerName: partnerOrg.name,
-                    driverName: movement.driverName,
-                    truckPlate: movement.truckPlate,
-                    origin: movement.origin,
-                    destination: movement.destination,
-                })
+                .select()
                 .from(movement)
-                .leftJoin(ownerOrg, eq(ownerOrg.id, movement.organizationId))
-                .leftJoin(partnerOrg, eq(partnerOrg.id, movement.clientOrgId))
-                .where(and(
-                    eq(movement.status, "in-transit"),
-                    or(
-                        eq(movement.organizationId, tenant.organizationId),
-                        eq(movement.clientOrgId, tenant.organizationId),
-                    ),
-                ))
+                .where(onTheMap(tenant.organizationId))
                 .orderBy(desc(movement.startedAt)),
         ]);
 
         const orderIds = orders.map((row) => row.id);
-        const tripIds = trips.map((row) => row.id);
+        const trails = await trailIds(ctx.db, loads);
+        const trailSubjects = [...new Set(trails.values())];
+        const linkedTrails = loads.filter((row) => row.executionMovementId).map((row) => trails.get(row.id) ?? row.id);
+
+        const [names, rigs] = await Promise.all([
+            loadNames(ctx.db, loads.flatMap((row) => [row.organizationId, row.clientOrgId, row.carrierOrgId])),
+            loadTerminalRigs(ctx.db, linkedTrails),
+        ]);
 
         // Annotated rather than inferred: the empty-set branch and the query
         // branch are two different types, and a union of arrays has no `map`
-        const [orderPings, tripPings]: [PingRow[], PingRow[]] = await Promise.all([
+        const [orderPings, loadPings]: [PingRow[], PingRow[]] = await Promise.all([
             orderIds.length
                 ? ctx.db
                     .selectDistinctOn([orderLocation.orderId], {
@@ -153,7 +146,7 @@ export const mapRouter = createTRPCRouter({
                     .where(inArray(orderLocation.orderId, orderIds))
                     .orderBy(orderLocation.orderId, desc(orderLocation.recordedAt))
                 : NO_PINGS,
-            tripIds.length
+            trailSubjects.length
                 ? ctx.db
                     .selectDistinctOn([movementLocation.movementId], {
                         subjectId: movementLocation.movementId,
@@ -165,13 +158,13 @@ export const mapRouter = createTRPCRouter({
                         source: movementLocation.source,
                     })
                     .from(movementLocation)
-                    .where(inArray(movementLocation.movementId, tripIds))
+                    .where(inArray(movementLocation.movementId, trailSubjects))
                     .orderBy(movementLocation.movementId, desc(movementLocation.recordedAt))
                 : NO_PINGS,
         ]);
 
         const lastByOrder = new Map(orderPings.map((ping) => [ping.subjectId, ping]));
-        const lastByTrip = new Map(tripPings.map((ping) => [ping.subjectId, ping]));
+        const lastByTrail = new Map(loadPings.map((ping) => [ping.subjectId, ping]));
 
         const orderEntities: MapEntity[] = orders.map((row) => {
             const ping = lastByOrder.get(row.id);
@@ -191,26 +184,37 @@ export const mapRouter = createTRPCRouter({
             };
         });
 
-        const tripEntities: MapEntity[] = trips.map((row) => {
-            const ping = lastByTrip.get(row.id);
+        const loadEntities: MapEntity[] = loads.map((row) => {
+            // The predicate only admits rows the tenant owns or is the client of
+            const role = movementRole(row, tenant.organizationId) ?? "client";
+            const trailId = trails.get(row.id) ?? row.id;
+            // Cut to what this company may know of the row, the way the lists cut it
+            const view = toMovementRow(row, role, {
+                names,
+                pings: NO_PING_STATE,
+                trailId,
+                terminalRig: rigs.get(trailId) ?? null,
+            });
+            const ping = lastByTrail.get(trailId);
+            const party = role === "owner" ? (row.execution === "partner" ? view.carrier : view.client) : view.owner;
 
             return {
-                kind: "trip",
+                kind: "load",
                 id: row.id,
-                ref: `TRP-${row.seq}`,
-                href: { pathname: "/trips/[tripId]", params: { tripId: row.id } },
-                // Whichever side of the trip the reader is not on
-                counterpartyName: row.organizationId === tenant.organizationId ? row.partnerName : row.ownerName,
-                status: TRIP_PIN_STATUS,
+                ref: view.ref,
+                href: { pathname: "/orders/load/[loadId]", params: { loadId: row.id } },
+                // Whoever else is on the load, from where the reader stands
+                counterpartyName: party?.name ?? null,
+                status: LOAD_PIN_STATUS,
                 origin: row.origin,
                 destination: row.destination,
-                driverName: row.driverName,
-                truckPlate: row.truckPlate,
+                driverName: view.driverName,
+                truckPlate: view.truckPlate,
                 lastPosition: ping ? toPoint(ping) : null,
             };
         });
 
-        return [...orderEntities, ...tripEntities];
+        return [...orderEntities, ...loadEntities];
     }),
 
     /**

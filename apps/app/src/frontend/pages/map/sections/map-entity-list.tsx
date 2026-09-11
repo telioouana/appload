@@ -112,9 +112,9 @@ export function MapEntityList({
                 {sorted.map((entity) => {
                     const isSelected = entity.ref === selected
                     const isDimmed = !!query && !matches.has(entity.ref)
-                    // An order and a trip read alike otherwise; the mark says
+                    // An order and a load read alike otherwise; the mark says
                     // which page the row leads to
-                    const KindIcon = entity.kind === "trip" ? IconRoute : IconBox
+                    const KindIcon = entity.kind === "load" ? IconRoute : IconBox
 
                     return (
                         <button

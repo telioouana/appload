@@ -171,6 +171,8 @@ export type MovementDocumentView = {
     mimeType: string | null;
     costId: string | null;
     uploadedByName: string | null;
+    /** A proof filed on the row with the truck, shown here; it is removed there, not here */
+    fromExecutor: boolean;
     createdAt: Date;
 };
 
@@ -240,9 +242,102 @@ export type MovementDetail = MovementRow & {
     updatedAt: Date;
 };
 
+/** What the load form picks from; every pick is checked again server-side. */
+export type LoadFormOptions = {
+    /** Accepted connections, either way round */
+    partners: Array<{ id: string; name: string; type: OrgType; onPortal: boolean }>;
+    drivers: Array<{ id: string; name: string; phone: string | null }>;
+    trucks: Array<{ id: string; plate: string }>;
+};
+
 export type MovementStats = {
     total: number;
     bySection: Record<string, number>;
     /** Orders only: loads partners have offered this company, awaiting its answer */
     inbox: number;
+    /** On the road, asked for a position today, and silent since midnight */
+    silent: number;
 };
+
+// ---------------------------------------------------------------------------
+// The list pages. The section is the route segment, never a query param, so
+// a shared link opens the list the sender meant; everything else the table
+// can be cut by lives in the query string, and the same parser feeds the
+// server prefetch and the client query so the first page hydrates.
+// ---------------------------------------------------------------------------
+
+export type OrgType = "carrier" | "shipper";
+
+export type SortDir = "asc" | "desc";
+
+export const DEFAULT_SORT: MovementSort = "newest";
+export const DEFAULT_DIR: SortDir = "desc";
+export const DEFAULT_PAGE_SIZE = 25;
+
+export const sectionsOf = (scope: MovementScope): readonly MovementSection[] =>
+    scope === "orders" ? ORDER_SECTIONS : TRIP_SECTIONS;
+
+/** Whether a URL segment is a section of this list. */
+export const isScopeSection = (scope: MovementScope, value: string | undefined): value is MovementSection =>
+    value !== undefined && (sectionsOf(scope) as readonly string[]).includes(value);
+
+/** Where `/orders` and `/trips` land: everything, newest first. */
+export const DEFAULT_SECTION = "all" as const satisfies OrderSection & TripSection;
+
+type Get = (key: string) => string | null;
+
+const oneOf = <T extends readonly string[]>(value: string | null, allowed: T): T[number] | undefined =>
+    value && (allowed as readonly string[]).includes(value) ? (value as T[number]) : undefined;
+
+const parsePage = (value: string | null): number => {
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
+};
+
+const parsePageSize = (value: string | null): number => {
+    const parsed = Number(value);
+    return (PAGE_SIZES as readonly number[]).includes(parsed) ? parsed : DEFAULT_PAGE_SIZE;
+};
+
+/** The list input for one section page; the scope and section come from the route. */
+export const movementsListInput = (scope: MovementScope, section: MovementSection, get: Get) => ({
+    scope,
+    section,
+    search: get("search")?.trim() || undefined,
+    /** Asked for a position today and still silent — the tile's filter */
+    silent: get("silent") === "1" ? (true as const) : undefined,
+    sort: oneOf(get("sort"), MOVEMENT_SORTS) ?? DEFAULT_SORT,
+    dir: get("dir") === "asc" ? ("asc" as const) : DEFAULT_DIR,
+    page: parsePage(get("page")),
+    pageSize: parsePageSize(get("size")),
+});
+
+export type MovementsListInput = ReturnType<typeof movementsListInput>;
+
+/** Every URL key a filter control owns, so "nothing yet" is told from "nothing matched". */
+export const FILTER_KEYS = ["search", "silent"] as const;
+
+export const isFilteredMovements = (get: Get) => FILTER_KEYS.some((key) => Boolean(get(key)));
+
+/**
+ * Which of the two lists a load belongs to, for the caller: a load its own
+ * fleet moves is a trip; everything else it can see — a load it placed with
+ * a partner, one a partner offered it, one somebody moves for it — is on
+ * Orders. The detail page's way back is decided from this.
+ */
+export const scopeOf = (load: Pick<MovementRow, "execution" | "role">): MovementScope =>
+    load.execution === "own-fleet" && load.role === "owner" ? "trips" : "orders";
+
+/** The section of that list a load sits in right now. */
+export function sectionOf(load: Pick<MovementRow, "execution" | "role" | "status">): MovementSection {
+    const { status } = load;
+
+    if (status === "closed" || status === "cancelled") return "history";
+    if (status === "in-transit" || status === "delivered") return status;
+
+    if (scopeOf(load) === "trips") return status === "scheduled" ? "scheduled" : "planning";
+
+    if (load.role === "executor" && status === "offered") return "inbox";
+
+    return status === "scheduled" ? "booked" : "procurement";
+}

@@ -8,6 +8,7 @@ import type {
     MovementStatus,
 } from "@workspace/db/movements";
 import { CATEGORIES, CURRENCY, FISCAL_REGIME, ROUTE_TYPE, WEIGHT_UNIT } from "@workspace/db/types";
+import { toE164 } from "@workspace/ui/lib/phone";
 
 /**
  * What the portal's own loads accept on the way in.
@@ -267,3 +268,132 @@ export const RecordPaymentBaseSchema = z.object({
     paidAt: z.date().optional(),
     reference: text(REFERENCE_MAX).optional(),
 });
+
+// ---------------------------------------------------------------------------
+// The forms. What the browser holds while a person types: amounts as the
+// strings DecimalInput keeps, a phone as a country and a national number,
+// every picker as a string with a sentinel for "none" and for "somebody not
+// on the portal". The sheet and the dialogs turn these into the inputs
+// above; the procedures validate those again.
+// ---------------------------------------------------------------------------
+
+export type ErrorParam = { error: string } | undefined;
+
+/** The message key each field's error comes from (see `App.loads.form.errors`). */
+export type LoadMessageField =
+    | "address"
+    | "amount"
+    | "weight"
+    | "phone"
+    | "name"
+    | "partner"
+    | "driver"
+    | "reference"
+    | "text";
+
+type Message = (field: LoadMessageField) => ErrorParam;
+
+/** Picker sentinels: nobody picked, and somebody typed in instead of picked. */
+export const NONE = "__none";
+export const TYPED = "__typed";
+
+const formLocation = (error?: ErrorParam) => z.object({
+    address: z.string().nonempty(error),
+    placeId: z.string().nonempty(error),
+    country: z.string().nonempty(error),
+    state: z.string().nonempty(error),
+});
+
+/** An amount as typed: empty, or a number that is not negative. */
+const typedAmount = (error?: ErrorParam) => z.string().refine(
+    (value) => value.trim() === "" || (Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1e12),
+    error,
+);
+
+export function LoadFormSchema(msg: Message) {
+    return z
+        .object({
+            execution: z.enum(MOVEMENT_EXECUTION),
+            status: z.enum(CREATE_STATUS),
+            origin: formLocation(msg("address")),
+            destination: formLocation(msg("address")),
+            expectedLoadingDate: z.date().optional(),
+            expectedDeliveryAt: z.date().optional(),
+            cargoDescription: text(TEXT_MAX),
+            category: z.enum(CATEGORIES).optional(),
+            weight: typedAmount(msg("weight")),
+            weightUnit: z.enum(WEIGHT_UNIT),
+            clientOrgId: z.string(),
+            clientName: text(NAME_MAX),
+            clientReference: text(REFERENCE_MAX),
+            carrierOrgId: z.string(),
+            carrierName: text(NAME_MAX),
+            driverId: z.string(),
+            driverName: text(NAME_MAX),
+            country: z.string(),
+            phoneNumber: z.string(),
+            truckId: z.string(),
+            truckPlate: text(PLATE_MAX),
+            sellTotal: typedAmount(msg("amount")),
+            sellCurrency: z.enum(CURRENCY),
+            sellFiscalRegime: z.enum(FISCAL_REGIME).optional(),
+            sellInvoiceNumber: text(REFERENCE_MAX),
+            buyTotal: typedAmount(msg("amount")),
+            buyCurrency: z.enum(CURRENCY),
+            buyFiscalRegime: z.enum(FISCAL_REGIME).optional(),
+            buyInvoiceNumber: text(REFERENCE_MAX),
+            notes: text(NOTES_MAX),
+        })
+        // A typed client or partner needs its name
+        .refine((data) => data.clientOrgId !== TYPED || data.clientName.trim().length > 0, {
+            ...(msg("name") ?? {}),
+            path: ["clientName"],
+        })
+        .refine((data) => data.execution !== "partner" || data.carrierOrgId !== TYPED || data.carrierName.trim().length > 0, {
+            ...(msg("name") ?? {}),
+            path: ["carrierName"],
+        })
+        // A number typed in has to be a whole one; an untouched field is fine
+        .refine((data) => data.phoneNumber.trim() === "" || z.e164().safeParse(toE164(data.country, data.phoneNumber)).success, {
+            ...(msg("phone") ?? {}),
+            path: ["phoneNumber"],
+        });
+}
+
+export type LoadForm = z.infer<ReturnType<typeof LoadFormSchema>>;
+
+export type PaymentMessageField = "amount" | "reference";
+
+export function PaymentFormSchema(msg: (field: PaymentMessageField) => ErrorParam) {
+    return z
+        .object({
+            leg: z.enum(MOVEMENT_DOCUMENT_LEG),
+            amount: z.string().refine((value) => Number(value) > 0 && Number(value) <= 1e12, msg("amount")),
+            paidAt: z.date().optional(),
+            reference: text(REFERENCE_MAX),
+            /** Takes an earlier payment back rather than adding one */
+            correction: z.boolean(),
+        })
+        // A correction is a line of its own on the books, and says why
+        .refine((data) => !data.correction || data.reference.trim().length > 0, {
+            ...(msg("reference") ?? {}),
+            path: ["reference"],
+        });
+}
+
+export type PaymentForm = z.infer<ReturnType<typeof PaymentFormSchema>>;
+
+export type CostMessageField = "amount" | "text";
+
+export function CostFormSchema(msg: (field: CostMessageField) => ErrorParam) {
+    return z.object({
+        kind: z.enum(MOVEMENT_COST_KIND),
+        description: text(TEXT_MAX),
+        amount: z.string().refine((value) => Number(value) > 0 && Number(value) <= 1e12, msg("amount")),
+        currency: z.enum(CURRENCY),
+        incurredAt: z.date().optional(),
+        rechargeable: z.boolean(),
+    });
+}
+
+export type CostForm = z.infer<ReturnType<typeof CostFormSchema>>;

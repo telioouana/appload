@@ -1,7 +1,9 @@
-import { eq } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { APIError } from "better-auth/api";
 
+import { partnerConnection } from "@workspace/db/connections";
+import { movement } from "@workspace/db/movements";
 import { organization, user } from "@workspace/db/users";
 import { AddressSchema, type Address } from "@workspace/db/types";
 
@@ -19,6 +21,17 @@ import type { OrgStatus, OrgType, TenantPlan, TenantRole } from "@workspace/trpc
 
 import { ChangePasswordBaseSchema } from "@/backend/schemas/settings";
 import { UpdateCompanyBaseSchema } from "@/backend/schemas/company";
+
+/**
+ * The numbers on the rail, each for the one list it leads to: work partners
+ * offered this company and are waiting on, its own orders a partner turned
+ * down (to place again), and connection requests it has not answered.
+ */
+export type RailCounts = {
+    inbox: number;
+    declined: number;
+    partners: number;
+};
 
 export type MeSession = {
     user: { id: string; name: string; email: string; image: string | null };
@@ -144,6 +157,41 @@ export const meRouter = createTRPCRouter({
             plan: ctx.tenant.plan,
             allowance,
             tiers: TIERS,
+        };
+    }),
+
+    /**
+     * The rail's badges in one small read. Each counts rows the page its
+     * entry opens will show — the Orders inbox, the turned-down loads inside
+     * Orders' procurement section, the incoming requests on Partners — so a
+     * badge never promises a row the page does not have.
+     */
+    railCounts: tenantProcedure.query(async ({ ctx }): Promise<RailCounts> => {
+        const tenantId = ctx.tenant.organizationId;
+
+        const [loads, connections] = await Promise.all([
+            ctx.db
+                .select({
+                    inbox: sql<number>`count(*) filter (where ${movement.carrierOrgId} = ${tenantId} and ${movement.status} = 'offered')::int`,
+                    declined: sql<number>`count(*) filter (where ${movement.organizationId} = ${tenantId} and ${movement.status} = 'declined')::int`,
+                })
+                .from(movement)
+                .where(and(
+                    or(eq(movement.organizationId, tenantId), eq(movement.carrierOrgId, tenantId)),
+                    sql`${movement.status} in ('offered', 'declined')`,
+                ))
+                .then((rows) => rows[0]),
+            ctx.db
+                .select({ incoming: sql<number>`count(*)::int` })
+                .from(partnerConnection)
+                .where(and(eq(partnerConnection.targetOrgId, tenantId), eq(partnerConnection.status, "pending")))
+                .then((rows) => rows[0]),
+        ]);
+
+        return {
+            inbox: Number(loads?.inbox ?? 0),
+            declined: Number(loads?.declined ?? 0),
+            partners: Number(connections?.incoming ?? 0),
         };
     }),
 

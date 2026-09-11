@@ -5,6 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, count, desc, eq, ilike, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 
 import { chatConversation, chatMessage } from "@workspace/db/chats";
+import { partnerConnection } from "@workspace/db/connections";
 import type { db as Database } from "@workspace/db/db";
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import {
@@ -16,7 +17,7 @@ import {
     type CreateMovement,
     type Movement,
 } from "@workspace/db/movements";
-import { user } from "@workspace/db/users";
+import { organization, user } from "@workspace/db/users";
 
 import { isOrgAuthorized, type OrgRole } from "@workspace/auth/organization-permissions";
 import {
@@ -83,6 +84,7 @@ import {
     loadTerminalRigs,
     loadVisible,
     sectionPredicate,
+    silentToday,
     toMovementDetail,
     toMovementRow,
     trailIds,
@@ -94,6 +96,7 @@ import {
     ORDER_SECTIONS,
     PAGE_SIZES,
     TRIP_SECTIONS,
+    type LoadFormOptions,
     type MovementDetail,
     type MovementRow,
     type MovementSection,
@@ -263,6 +266,8 @@ const ListInput = z.object({
     scope: z.enum(MOVEMENT_SCOPES),
     section: z.enum([...new Set([...ORDER_SECTIONS, ...TRIP_SECTIONS])] as [MovementSection, ...MovementSection[]]).default("all"),
     search: z.string().trim().max(120).optional(),
+    /** The tile: asked for a position today and still silent */
+    silent: z.literal(true).optional(),
     sort: z.enum(MOVEMENT_SORTS).default("newest"),
     dir: z.enum(["asc", "desc"]).default("desc"),
     page: z.number().int().positive().default(1),
@@ -375,6 +380,7 @@ export const movementsRouter = createTRPCRouter({
                 visibleMovements(tenantId),
                 sectionPredicate(input.scope, input.section, tenantId),
                 input.search ? searchWhere(input.search, tenantId) : undefined,
+                input.silent ? silentToday(tenantId, new Date()) : undefined,
             );
 
             const [rows, [counted]] = await Promise.all([
@@ -411,6 +417,13 @@ export const movementsRouter = createTRPCRouter({
                 sql<number>`count(*) filter (where ${sectionPredicate(input.scope, section, tenantId)})::int`.mapWith(Number),
             ]));
 
+            // Counted inside the list's own base, so the tile and the filtered
+            // list it opens hold the same rows
+            select.silent = sql<number>`count(*) filter (where ${and(
+                sectionPredicate(input.scope, "all", tenantId),
+                silentToday(tenantId, new Date()),
+            )})::int`.mapWith(Number);
+
             const [row] = await ctx.db
                 .select(select as Record<string, SQL<number>>)
                 .from(movement)
@@ -422,8 +435,59 @@ export const movementsRouter = createTRPCRouter({
                 total: bySection.all ?? 0,
                 bySection,
                 inbox: input.scope === "orders" ? bySection.inbox ?? 0 : 0,
+                silent: Number(row?.silent ?? 0),
             };
         }),
+
+    /**
+     * What the load form picks from: the companies this one is connected to
+     * (a client, or a partner to hand the load to — and whether that partner
+     * answers on the portal, which decides who names the driver), and its own
+     * drivers and trucks. The procedures check every pick again on the way in.
+     */
+    formOptions: tenantProcedure.query(async ({ ctx }): Promise<LoadFormOptions> => {
+        const tenantId = ctx.tenant.organizationId;
+        const other = sql<string>`case when ${partnerConnection.requesterOrgId} = ${tenantId} then ${partnerConnection.targetOrgId} else ${partnerConnection.requesterOrgId} end`;
+
+        const [partners, drivers, trucks] = await Promise.all([
+            ctx.db
+                .select({
+                    id: organization.id,
+                    name: organization.name,
+                    type: organization.type,
+                    portalActivatedAt: organization.portalActivatedAt,
+                })
+                .from(partnerConnection)
+                .innerJoin(organization, eq(organization.id, other))
+                .where(and(
+                    eq(partnerConnection.status, "accepted"),
+                    or(eq(partnerConnection.requesterOrgId, tenantId), eq(partnerConnection.targetOrgId, tenantId)),
+                ))
+                .orderBy(asc(organization.name)),
+            ctx.db
+                .select({ id: driver.id, name: user.name, phone: user.phoneNumber })
+                .from(driver)
+                .innerJoin(user, eq(user.id, driver.userId))
+                .where(eq(driver.carrierId, tenantId))
+                .orderBy(asc(user.name)),
+            ctx.db
+                .select({ id: truck.id, plate: truck.regPlate })
+                .from(truck)
+                .where(eq(truck.carrierId, tenantId))
+                .orderBy(asc(truck.regPlate)),
+        ]);
+
+        return {
+            partners: partners.map((row) => ({
+                id: row.id,
+                name: row.name,
+                type: row.type,
+                onPortal: row.portalActivatedAt !== null,
+            })),
+            drivers: drivers.map((row) => ({ id: row.id, name: row.name, phone: row.phone ?? null })),
+            trucks: trucks.map((row) => ({ id: row.id, plate: row.plate })),
+        };
+    }),
 
     /**
      * One load in full, as this caller may see it. The buttons come from

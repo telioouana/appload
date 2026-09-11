@@ -1,7 +1,7 @@
 import "server-only";
 
 import { TRPCError } from "@trpc/server";
-import { and, count, desc, eq, inArray, isNotNull, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNotNull, isNull, ne, or, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import type { db as Database } from "@workspace/db/db";
@@ -11,6 +11,7 @@ import {
     movementDocument,
     movementEvent,
     movementLocation,
+    movementTrackingRequest,
     type Movement,
     type MovementEventKind,
 } from "@workspace/db/movements";
@@ -22,6 +23,7 @@ import { costTotals, exVat, legSettled, margin } from "@workspace/domain/movemen
 import { editableGroups, movementRole, type MovementRole } from "@workspace/domain/movements/policy";
 import { movementRef } from "@workspace/domain/movements/refs";
 import { isTerminal, ownerTargets, transitionBlocker } from "@workspace/domain/movements/status";
+import { MAPUTO_OFFSET_MS } from "@workspace/domain/tracking/slot";
 
 import type {
     Currency,
@@ -111,6 +113,60 @@ const forMe = (tenantId: string): SQL =>
             eq(ownOrder.organizationId, tenantId),
             eq(ownOrder.executionMovementId, movement.id),
         )})`,
+    ) as SQL;
+
+/**
+ * The loads a company has a truck on the road for, once each: its own rows,
+ * and the ones moved for it that it does not already hold an order for. The
+ * rows it was only offered stay off — a partner that accepted works the load
+ * from its own row, which this already includes.
+ */
+export const onTheMap = (tenantId: string): SQL =>
+    and(
+        eq(movement.status, "in-transit"),
+        or(eq(movement.organizationId, tenantId), forMe(tenantId)),
+    ) as SQL;
+
+/**
+ * Today's slot date in Maputo — the key the tracking cron writes its request
+ * rows under, so "asked today" means exactly the rows it claimed.
+ */
+const slotDateToday = (now: Date) => new Date(now.getTime() + MAPUTO_OFFSET_MS).toISOString().slice(0, 10);
+
+/** Midnight in Maputo as the UTC instant the pings are timestamped in. */
+const startOfDay = (now: Date) => new Date(Date.parse(`${slotDateToday(now)}T00:00:00Z`) - MAPUTO_OFFSET_MS);
+
+/**
+ * Loads whose driver this company asked for a position today and who has
+ * not answered: a request the cron sent (or saw delivered) under today's
+ * slot date, and no pin since midnight. Only the rows the company pings
+ * itself — on the road, and not handed to a partner who tracks its own
+ * truck; how a partner's driver answers the partner is the partner's
+ * business.
+ *
+ * The conditions go in as drizzle expressions rather than as bare columns —
+ * a column interpolated straight into a template loses its table prefix
+ * when the outer query has no joins, and `movement_id` would then bind to
+ * the subquery's own table.
+ */
+export const silentToday = (tenantId: string, now: Date): SQL =>
+    and(
+        eq(movement.organizationId, tenantId),
+        eq(movement.status, "in-transit"),
+        isNull(movement.executionMovementId),
+        sql`exists (
+            select 1 from ${movementTrackingRequest} where ${and(
+                eq(movementTrackingRequest.movementId, movement.id),
+                eq(movementTrackingRequest.slotDate, slotDateToday(now)),
+                inArray(movementTrackingRequest.status, ["sent", "delivered"]),
+            )}
+        )`,
+        sql`not exists (
+            select 1 from ${movementLocation} where ${and(
+                eq(movementLocation.movementId, movement.id),
+                gte(movementLocation.recordedAt, startOfDay(now)),
+            )}
+        )`,
     ) as SQL;
 
 /** Loads somebody else moves for this company. */
@@ -254,7 +310,7 @@ export async function loadTerminalProofs(db: Db, terminalId: string): Promise<Mo
 
     return rows
         .filter((document) => document.leg === null && (document.type === "pod" || document.type === "cmr"))
-        .map((document) => ({ ...document, uploadedByName: null }));
+        .map((document) => ({ ...document, uploadedByName: null, fromExecutor: true }));
 }
 
 export type PingState = {
@@ -661,7 +717,7 @@ export async function loadDocuments(db: Db, movementId: string): Promise<Movemen
 
     return rows
         .filter((row) => row.deletedAt === null)
-        .map(({ deletedAt: _deleted, ...document }) => document);
+        .map(({ deletedAt: _deleted, ...document }) => ({ ...document, fromExecutor: false }));
 }
 
 export async function loadEvents(db: Db, movementId: string): Promise<DetailExtras["events"]> {

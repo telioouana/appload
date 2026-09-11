@@ -292,16 +292,21 @@
                     "orders": "Orders",
                     "quotes": "Quotes",
                     "trips": "Trips",
-                    "map": "Map"
+                    "map": "Map",
+                    "appload": "Appload",
+                    "notifications": "Notifications"
                 },
                 "company": {
                     "label": "Company",
                     "fleet": "Fleet",
                     "drivers": "Drivers",
                     "partners": "Partners",
-                    "analytics": "Analytics"
+                    "analytics": "Analytics",
+                    "trucks": "Trucks",
+                    "trailers": "Trailers",
+                    "links": "Links"
                 },
-                "settings": "Settings"
+                "new-load": "New load"
             },
             "user": {
                 "settings": "Settings",
@@ -363,7 +368,7 @@
                 "empty-description": "Orders and trips appear here as soon as they are in transit"
             },
             "trips": {
-                "title": "Trips",
+                "title": "Own fleet",
                 "in-transit": "In transit",
                 "no-response": "No answer today"
             },

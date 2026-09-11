@@ -1,0 +1,581 @@
+{
+    "scope": {
+        "orders": "Orders",
+        "trips": "Trips"
+    },
+    "sections": {
+        "all": "All",
+        "inbox": "Inbox",
+        "procurement": "Procurement",
+        "booked": "Booked",
+        "planning": "Planning",
+        "scheduled": "Scheduled",
+        "in-transit": "On the road",
+        "delivered": "Delivered",
+        "history": "History"
+    },
+    "titles": {
+        "all-orders": "All orders",
+        "all-trips": "All trips",
+        "inbox": "Loads partners offered you",
+        "procurement": "Orders in procurement",
+        "booked": "Booked orders",
+        "planning": "Trips being planned",
+        "scheduled": "Scheduled trips",
+        "in-transit": "On the road",
+        "delivered": "Delivered",
+        "history": "History"
+    },
+    "description": {
+        "orders": {
+            "carrier": "The loads you handed to partners, the ones partners offered you, and the ones somebody moves for you",
+            "shipper": "The loads your transporters move for you, inside or outside Appload"
+        },
+        "trips": {
+            "carrier": "The loads your own fleet moves",
+            "shipper": "The loads your own trucks move between your sites"
+        }
+    },
+    "search": {
+        "placeholder": "Search by reference, driver, plate or cargo",
+        "clear": "Clear search"
+    },
+    "status": {
+        "planning": "Planning",
+        "procurement": "Procurement",
+        "offered": "Offered",
+        "declined": "Declined",
+        "scheduled": "Scheduled",
+        "in-transit": "On the road",
+        "delivered": "Delivered",
+        "closed": "Closed",
+        "cancelled": "Cancelled"
+    },
+    "role": {
+        "owner": "Yours",
+        "executor": "Offered to you",
+        "client": "For you"
+    },
+    "execution": {
+        "own-fleet": "Trip",
+        "partner": "Order"
+    },
+    "columns": {
+        "ref": "Reference",
+        "status": "Status",
+        "lane": "Lane",
+        "partner": "Partner",
+        "client": "Client",
+        "rig": "Driver and truck",
+        "dates": "Dates",
+        "receivable": "To receive",
+        "payable": "To pay",
+        "last-ping": "Last position"
+    },
+    "values": {
+        "own-account": "Own account",
+        "no-partner": "Not assigned",
+        "no-rig": "Not assigned",
+        "no-date": "No date",
+        "due": "Due {date}",
+        "no-due-date": "No due date",
+        "no-price": "No price",
+        "no-pings": "No positions"
+    },
+    "tiles": {
+        "inbox": "Offered to you",
+        "inbox-hint": "Partners' loads waiting on your answer",
+        "booked": "Booked",
+        "booked-hint": "With a transporter, waiting to leave",
+        "procurement": "Procurement",
+        "procurement-hint": "No partner confirmed yet",
+        "scheduled": "Scheduled",
+        "scheduled-hint": "Ready to leave",
+        "in-transit": "On the road",
+        "in-transit-hint": "Trucks moving right now",
+        "delivered": "Delivered",
+        "delivered-hint": "Arrived, waiting for the books to close",
+        "silent": "Silent today",
+        "silent-hint": "Drivers who have not answered yet"
+    },
+    "sort": {
+        "newest": "Newest",
+        "loading": "Loading date",
+        "delivery": "Delivery date"
+    },
+    "filters": {
+        "tracking": "Tracking",
+        "silent": "Silent today",
+        "silent-hint": "On the road, asked for a position today and not answered yet"
+    },
+    "data": {
+        "empty": {
+            "orders": "No orders here yet",
+            "trips": "No trips here yet"
+        },
+        "empty-description": {
+            "orders": "File a load a partner will move, and follow it from here.",
+            "trips": "File a load for your own fleet, and follow it from here."
+        },
+        "empty-inbox": "When a partner offers you a load on the portal, it shows up here for you to accept or decline.",
+        "no-results": "No load matches the search.",
+        "error": "The loads could not be loaded. Try again."
+    },
+    "actions": {
+        "new": {
+            "orders": "New order",
+            "trips": "New trip"
+        },
+        "accept": "Accept",
+        "decline": "Decline",
+        "offer": "Offer to partner",
+        "withdraw": "Withdraw the offer",
+        "edit": "Edit",
+        "more": "More actions",
+        "request-location": "Ask for location",
+        "convert": {
+            "to-partner": "Hand to a partner",
+            "to-own-fleet": "Run on own fleet"
+        },
+        "to": {
+            "procurement": "Back to procurement",
+            "offered": "Offer",
+            "declined": "Decline",
+            "scheduled": "Schedule",
+            "in-transit": "Put on the road",
+            "delivered": "Mark delivered",
+            "closed": "Close",
+            "cancelled": "Cancel the load"
+        }
+    },
+    "blockers": {
+        "NO_DRIVER": "Name the driver and their phone first.",
+        "NO_CARRIER": "Name the partner that will move the load first.",
+        "NO_PRICE": "Record what you will pay the partner first.",
+        "NOTE_REQUIRED": "A reason is required.",
+        "UNSETTLED": "It can only be closed once the payments are settled."
+    },
+    "dialogs": {
+        "back": "Back",
+        "confirm": "Confirm"
+    },
+    "transition": {
+        "description": "{ref} goes from {from} to {to}.",
+        "consequence": {
+            "in-transit": "The driver starts getting location requests on WhatsApp, and the load counts towards this month's plan.",
+            "cancelled": "Everyone on this load is told, and a partner that already accepted it has it cancelled too.",
+            "closed": "A closed load can no longer be changed."
+        },
+        "note": "Reason (optional)",
+        "note-required": "Reason",
+        "note-placeholder": "Recorded on the load's history"
+    },
+    "offer": {
+        "title": "Offer the load",
+        "description": "{partner} gets the lane, the cargo, the dates and what it will be paid, and answers on the portal. The terms are locked while it decides.",
+        "price": "You pay",
+        "message": "Message (optional)",
+        "message-placeholder": "Anything the partner should know",
+        "submit": "Send offer"
+    },
+    "respond": {
+        "accept-title": "Accept the load",
+        "decline-title": "Decline the load",
+        "accept-description": "{ref} becomes a trip of yours, with {owner} as the client. Next you name the driver and the truck.",
+        "decline-description": "{owner} is told you cannot move {ref}.",
+        "price": "You receive",
+        "note": "Note (optional)",
+        "accept-placeholder": "Anything the client should know",
+        "decline-placeholder": "Why you cannot move this load"
+    },
+    "convert": {
+        "to-partner-title": "Hand to a partner",
+        "to-own-fleet-title": "Run on own fleet",
+        "to-partner-description": "{ref} becomes an order with the same number, history and costs, and goes back to procurement until the partner is confirmed.",
+        "to-own-fleet-description": "{ref} becomes a trip on your own fleet. Whatever was agreed with the partner no longer applies.",
+        "partner": "Partner",
+        "partner-placeholder": "Pick a transporter",
+        "partner-name": "Transporter's name"
+    },
+    "money": {
+        "title": "Money",
+        "record": "Record payment",
+        "receivable": {
+            "owner": "To receive from the client",
+            "executor": "To receive"
+        },
+        "payable": {
+            "owner": "To pay the partner",
+            "client": "To pay"
+        },
+        "received": "Received",
+        "paid": "Paid",
+        "no-legs": "No amounts recorded for this load yet.",
+        "settlement": {
+            "pending": "Pending",
+            "partially": "Partial",
+            "completed": "Settled",
+            "not-applicable": "Not applicable"
+        },
+        "subtotal": "Subtotal",
+        "vat": "VAT",
+        "fiscal-regime": "Fiscal regime",
+        "invoice": "Invoice",
+        "gross": "Gross margin",
+        "net": "Net margin",
+        "costs": "Costs ({currency})",
+        "rechargeable-part": "{amount} recharged",
+        "blocked": {
+            "CURRENCY_MISMATCH": "The two amounts are in different currencies, so no margin is worked out.",
+            "MISSING_LEG": "The margin shows once both amounts are recorded."
+        }
+    },
+    "payment": {
+        "title": "Record payment",
+        "description": "Money received or paid on {ref}.",
+        "legs": {
+            "sell": "Received from the client",
+            "buy": "Paid to the partner"
+        },
+        "progress": "{settled} of {total} recorded so far",
+        "fields": {
+            "leg": "Kind",
+            "amount": "Amount ({currency})",
+            "amount-placeholder": "0.00",
+            "paid-at": "Date",
+            "reference": "Reference",
+            "reference-placeholder": "Receipt, transfer…",
+            "correction": "Corrects an earlier payment",
+            "correction-hint": "Takes the amount off instead of adding it. Give the reference of the payment it corrects."
+        },
+        "errors": {
+            "amount": "Enter an amount above zero.",
+            "reference": "A correction needs a reference."
+        },
+        "submit": "Record"
+    },
+    "costs": {
+        "title": "Costs",
+        "add": "Add",
+        "empty": "No costs recorded",
+        "remove": "Remove cost",
+        "rechargeable": "Recharged",
+        "kinds": {
+            "fuel": "Fuel",
+            "tolls": "Tolls",
+            "driver-allowance": "Driver allowance",
+            "border-fees": "Border fees",
+            "escort": "Escort",
+            "parking": "Parking",
+            "maintenance": "Maintenance",
+            "fine": "Fine",
+            "loading": "Loading",
+            "offloading": "Offloading",
+            "insurance": "Insurance",
+            "other": "Other"
+        },
+        "fields": {
+            "kind": "Kind",
+            "amount": "Amount",
+            "amount-placeholder": "0.00",
+            "currency": "Currency",
+            "incurred-at": "Date",
+            "description": "Description",
+            "description-placeholder": "Optional",
+            "rechargeable": "Recharged to the client",
+            "rechargeable-hint": "It does not come out of the margin: the client pays it."
+        },
+        "errors": {
+            "amount": "Enter an amount above zero.",
+            "text": "The text is too long."
+        },
+        "dialog": {
+            "title": "Add cost",
+            "description": "What it cost to run this load. Only your company sees costs.",
+            "submit": "Add"
+        }
+    },
+    "documents": {
+        "title": "Documents",
+        "add": "Add",
+        "empty": "No documents",
+        "open": "Open document",
+        "remove": "Remove document",
+        "from-executor": "From the transporter",
+        "types": {
+            "pod": "Proof of delivery",
+            "cmr": "CMR",
+            "invoice": "Invoice",
+            "receipt": "Receipt",
+            "evidence": "Evidence",
+            "transport-order": "Transport order",
+            "other": "Other"
+        },
+        "audience": {
+            "shared": "Everyone on the load",
+            "sell": "You and the client",
+            "buy": "You and the partner"
+        },
+        "dialog": {
+            "title": "Add document",
+            "description": "PDF, JPG or PNG. Choose who can see it.",
+            "type": "Kind",
+            "audience": "Who sees it",
+            "file": "File",
+            "pick": "Choose file",
+            "replace": "Replace file",
+            "clear": "Remove file",
+            "hint": "A shared proof of delivery reaches everyone on the load, including the end client.",
+            "format": "Only PDF, JPG or PNG files are accepted.",
+            "upload-failed": "The upload failed. Try again.",
+            "submit": "Add"
+        }
+    },
+    "tracking": {
+        "title": "Location",
+        "request": "Ask now",
+        "last": "Last position",
+        "linked": "The partner tracks its own truck; positions show here as they arrive.",
+        "disabled": "Tracking is switched off for this load.",
+        "empty": "No positions yet",
+        "unnamed": "Unnamed place"
+    },
+    "timeline": {
+        "title": "History",
+        "empty": "Nothing has happened yet",
+        "created": "Filed as {status}",
+        "accepted-offer": "Accepted from an offer",
+        "moved": "Moved to {status}",
+        "from-below": "By the transporter",
+        "actions": {
+            "offered": "Offered to the partner",
+            "withdrawn": "Offer withdrawn",
+            "accepted": "Offer accepted",
+            "declined": "Offer declined",
+            "converted": "Changed shape",
+            "updated": "Details changed",
+            "received": "Payment received",
+            "paid": "Payment made",
+            "corrected": "Payment corrected",
+            "cost-added": "Cost added",
+            "cost-removed": "Cost removed",
+            "document-added": "Document added",
+            "document-removed": "Document removed"
+        },
+        "kinds": {
+            "status": "Status change",
+            "offer": "Offer",
+            "update": "Change",
+            "money": "Payment",
+            "cost": "Cost",
+            "document": "Document",
+            "note": "Note",
+            "system": "Automatic update"
+        },
+        "codes": {
+            "EXECUTOR_WITHDREW": "The transporter pulled out before leaving; the load can go to another partner.",
+            "CLIENT_CANCELLED": "The client cancelled the load."
+        }
+    },
+    "detail": {
+        "meta": "Load",
+        "error": "This load could not be opened. It may have been removed, or not be shared with you.",
+        "back": "Back to the list",
+        "footer": "Filed {created} · updated {updated}",
+        "route": "Lane and cargo",
+        "parties": "Who is on the load",
+        "fields": {
+            "loading": "Loading",
+            "due": "Due",
+            "started": "Left",
+            "delivered": "Delivered",
+            "category": "Category",
+            "weight": "Weight",
+            "cargo": "Cargo",
+            "offered-by": "Offered by",
+            "moved-by": "Moved by",
+            "client": "Client",
+            "client-reference": "Client reference",
+            "partner": "Partner",
+            "offered-at": "Offered",
+            "responded-at": "Answered",
+            "response-note": "Answer",
+            "driver": "Driver",
+            "phone": "Phone",
+            "plate": "Plate"
+        },
+        "values": {
+            "own-account": "Own account",
+            "no-partner": "Not assigned",
+            "has-parent": "This trip is your part of an order a client handed you on the portal.",
+            "linked": "The partner accepted; the driver and the truck are theirs."
+        }
+    },
+    "form": {
+        "new-order": "New order",
+        "new-trip": "New trip",
+        "edit-title": "Edit {ref}",
+        "edit-description": "Blocks that can no longer change are locked.",
+        "description": {
+            "carrier": "A load for your own fleet, or one you hand to a partner. It stays with your company; Appload does not see it.",
+            "shipper": "A load a transporter moves for you, or one on your own trucks. It stays with your company; Appload does not see it."
+        },
+        "shape": {
+            "label": "Who moves it",
+            "own-fleet": "My fleet",
+            "own-fleet-hint": "A trip on your own trucks",
+            "partner": "A partner",
+            "partner-hint": "An order another transporter moves"
+        },
+        "sections": {
+            "lane": "Lane",
+            "cargo": "Cargo",
+            "client": "Client",
+            "partner": "Partner",
+            "rig": "Driver and truck",
+            "status": "Status",
+            "paperwork": "Notes"
+        },
+        "fields": {
+            "origin": "Origin",
+            "origin-placeholder": "Where it loads",
+            "destination": "Destination",
+            "destination-placeholder": "Where it offloads",
+            "loading": "Loading date",
+            "due": "Due",
+            "date-placeholder": "Pick a date",
+            "category": "Category",
+            "category-placeholder": "Pick a category",
+            "weight": "Weight",
+            "weight-placeholder": "0",
+            "cargo": "Cargo description",
+            "cargo-placeholder": "What is on the truck",
+            "client": "Who it is for",
+            "client-hint": "A partner you are connected to, somebody off the portal, or your own company",
+            "client-none": "My own company",
+            "client-typed": "Somebody off the portal",
+            "client-name": "Client's name",
+            "client-reference": "Client reference",
+            "client-reference-placeholder": "The client's order number (optional)",
+            "sell": "What you charge",
+            "sell-hint": "VAT included",
+            "partner": "Transporter",
+            "partner-placeholder": "Pick a transporter",
+            "partner-hint": "A transporter you are connected to, or somebody off the portal",
+            "partner-on-portal": "This transporter is on the portal: the load stays in procurement and you offer it from its page. They name their own driver.",
+            "partner-none": "Not decided yet",
+            "partner-name": "Transporter's name",
+            "buy": "What you pay the partner",
+            "buy-hint": "VAT included",
+            "total": "Amount",
+            "total-placeholder": "0.00",
+            "currency": "Currency",
+            "fiscal-regime": "Fiscal regime",
+            "fiscal-regime-placeholder": "Pick one",
+            "driver": "Driver",
+            "driver-hint": "From your drivers, or somebody you have not registered",
+            "driver-none": "Not decided yet",
+            "driver-typed": "Somebody else",
+            "driver-name": "Driver's name",
+            "phone": "Phone (WhatsApp)",
+            "truck": "Truck",
+            "truck-none": "Not decided yet",
+            "truck-typed": "Another truck",
+            "plate": "Plate",
+            "plate-placeholder": "AAA-000-MC",
+            "status": "Where it stands",
+            "status-hint": "You can move it on later from the load's page",
+            "status-in-transit-hint": "The driver starts getting location requests and the load counts towards this month's plan",
+            "sell-invoice": "Invoice number to the client",
+            "buy-invoice": "Partner's invoice number",
+            "notes": "Notes",
+            "notes-placeholder": "Optional",
+            "notes-hint": "Only your company sees the notes"
+        },
+        "off-portal-partner": "Somebody off the portal",
+        "statuses": {
+            "order": {
+                "procurement": "Still looking for a partner",
+                "scheduled": "Already agreed with the partner",
+                "in-transit": "Already on the road"
+            },
+            "trip": {
+                "procurement": "Still being planned",
+                "scheduled": "Scheduled",
+                "in-transit": "Already on the road"
+            }
+        },
+        "errors": {
+            "address": "Pick an address from the list.",
+            "amount": "Enter a valid amount.",
+            "weight": "Enter a valid weight.",
+            "phone": "Enter a valid phone number.",
+            "name": "Enter the name.",
+            "partner": "Pick the partner that will move the load.",
+            "driver": "Name the driver and their phone to schedule it or put it on the road.",
+            "reference": "Enter the reference.",
+            "text": "The text is too long."
+        },
+        "file": "File load",
+        "save": "Save changes",
+        "saving": "Saving…",
+        "cancel": "Cancel"
+    },
+    "toasts": {
+        "created": "{ref} filed",
+        "updated": "Changes saved",
+        "offered": "Offer sent to the partner",
+        "withdrawn": "Offer withdrawn",
+        "accepted": "Load accepted",
+        "declined": "Load declined",
+        "converted": "The load is now {ref}",
+        "payment": "Payment recorded",
+        "cost-added": "Cost added",
+        "cost-removed": "Cost removed",
+        "document-added": "Document added",
+        "document-removed": "Document removed",
+        "requested": "Location request sent to the driver",
+        "status": {
+            "procurement": "The load is back in procurement",
+            "offered": "Load offered",
+            "declined": "Load declined",
+            "scheduled": "Load scheduled",
+            "in-transit": "Load on the road",
+            "delivered": "Load delivered",
+            "closed": "Load closed",
+            "cancelled": "Load cancelled"
+        }
+    },
+    "errors": {
+        "notFound": "This load no longer exists, or is not shared with you.",
+        "notAllowed": "Your role in the company does not allow this.",
+        "versionConflict": "Somebody changed this load in the meantime. Refresh the page and try again.",
+        "invalidStatus": "This is no longer possible where the load stands.",
+        "closed": "This load is closed and can no longer be changed.",
+        "fieldLocked": "Part of what you changed can no longer change on this load.",
+        "partnerNotConnected": "This company is not connected to you as a partner.",
+        "partnerNotOnPortal": "This partner is not on the portal; schedule the load directly.",
+        "notACarrier": "Only a transporter can be given a load.",
+        "ownFleetHasNoCarrier": "A trip on your own fleet has no partner and nothing to pay.",
+        "rigIsThePartners": "The partner is on the portal and names its own driver and truck.",
+        "executorDeparted": "The transporter has already left with the load; only they can cancel it now.",
+        "rigNotRegistered": "The driver or truck picked is not in your fleet.",
+        "noDriver": "Name the driver and their phone first.",
+        "noCarrier": "Name the partner that will move the load first.",
+        "noPrice": "Record what you will pay the partner first.",
+        "noteRequired": "A reason is required.",
+        "unsettled": "It can only be closed once the payments are settled.",
+        "noSuchLeg": "This load has no such amount recorded.",
+        "legHasPayments": "Payments are already recorded against this amount; it cannot be removed or change currency.",
+        "paymentBelowZero": "The correction would take the total paid below zero.",
+        "correctionNeedsReference": "A correction needs a reference.",
+        "invalidDocument": "The document was not accepted. Upload it again.",
+        "notTrackable": "Location can only be asked for on a load on the road with a driver.",
+        "rateLimited": "You have asked for the location several times already. Try again later.",
+        "infobipNotConfigured": "WhatsApp is not set up on this environment.",
+        "subscriptionRequired": "A plan is needed to track loads.",
+        "quotaExceeded": "This month's plan is used up.",
+        "sendFailed": "The request was saved, but the message did not reach the driver.",
+        "unknown": "Something went wrong. Try again."
+    }
+}

@@ -1,0 +1,581 @@
+{
+    "scope": {
+        "orders": "Pedidos",
+        "trips": "Viagens"
+    },
+    "sections": {
+        "all": "Tudo",
+        "inbox": "Recebidos",
+        "procurement": "Em procura",
+        "booked": "Confirmados",
+        "planning": "Em planeamento",
+        "scheduled": "Agendadas",
+        "in-transit": "Em trânsito",
+        "delivered": "Entregues",
+        "history": "Histórico"
+    },
+    "titles": {
+        "all-orders": "Todos os pedidos",
+        "all-trips": "Todas as viagens",
+        "inbox": "Cargas oferecidas por parceiros",
+        "procurement": "Pedidos em procura",
+        "booked": "Pedidos confirmados",
+        "planning": "Viagens em planeamento",
+        "scheduled": "Viagens agendadas",
+        "in-transit": "Em trânsito",
+        "delivered": "Entregues",
+        "history": "Histórico"
+    },
+    "description": {
+        "orders": {
+            "carrier": "As cargas que entregou a parceiros, as que parceiros lhe ofereceram e as que alguém transporta para si",
+            "shipper": "As cargas que os seus transportadores movimentam para si, dentro ou fora da Appload"
+        },
+        "trips": {
+            "carrier": "As cargas que a sua própria frota transporta",
+            "shipper": "As cargas que os seus próprios camiões transportam entre os seus locais"
+        }
+    },
+    "search": {
+        "placeholder": "Procurar por referência, motorista, matrícula ou carga",
+        "clear": "Limpar pesquisa"
+    },
+    "status": {
+        "planning": "Em planeamento",
+        "procurement": "Em procura",
+        "offered": "Oferecido",
+        "declined": "Recusado",
+        "scheduled": "Agendado",
+        "in-transit": "Em trânsito",
+        "delivered": "Entregue",
+        "closed": "Fechado",
+        "cancelled": "Cancelado"
+    },
+    "role": {
+        "owner": "Seu",
+        "executor": "Oferecido a si",
+        "client": "Para si"
+    },
+    "execution": {
+        "own-fleet": "Viagem",
+        "partner": "Pedido"
+    },
+    "columns": {
+        "ref": "Referência",
+        "status": "Estado",
+        "lane": "Rota",
+        "partner": "Parceiro",
+        "client": "Cliente",
+        "rig": "Motorista e camião",
+        "dates": "Datas",
+        "receivable": "A receber",
+        "payable": "A pagar",
+        "last-ping": "Última posição"
+    },
+    "values": {
+        "own-account": "Conta própria",
+        "no-partner": "Por atribuir",
+        "no-rig": "Por atribuir",
+        "no-date": "Sem data",
+        "due": "Prevista {date}",
+        "no-due-date": "Sem data prevista",
+        "no-price": "Sem preço",
+        "no-pings": "Sem posições"
+    },
+    "tiles": {
+        "inbox": "Oferecidos a si",
+        "inbox-hint": "Cargas de parceiros à espera da sua resposta",
+        "booked": "Confirmados",
+        "booked-hint": "Com transportador e à espera de sair",
+        "procurement": "Em procura",
+        "procurement-hint": "Ainda sem parceiro confirmado",
+        "scheduled": "Agendadas",
+        "scheduled-hint": "Prontas para sair",
+        "in-transit": "Em trânsito",
+        "in-transit-hint": "Camiões na estrada agora",
+        "delivered": "Entregues",
+        "delivered-hint": "Chegaram e aguardam fecho de contas",
+        "silent": "Sem resposta hoje",
+        "silent-hint": "Motoristas que ainda não responderam"
+    },
+    "sort": {
+        "newest": "Mais recentes",
+        "loading": "Data de carregamento",
+        "delivery": "Data de entrega"
+    },
+    "filters": {
+        "tracking": "Localização",
+        "silent": "Sem resposta hoje",
+        "silent-hint": "Na estrada, a quem pedimos a posição hoje e que ainda não respondeu"
+    },
+    "data": {
+        "empty": {
+            "orders": "Ainda não há pedidos aqui",
+            "trips": "Ainda não há viagens aqui"
+        },
+        "empty-description": {
+            "orders": "Registe uma carga que um parceiro vai transportar e acompanhe-a daqui.",
+            "trips": "Registe uma carga da sua própria frota e acompanhe-a daqui."
+        },
+        "empty-inbox": "Quando um parceiro lhe oferecer uma carga no portal, ela aparece aqui para aceitar ou recusar.",
+        "no-results": "Nenhuma carga corresponde à pesquisa.",
+        "error": "Não foi possível carregar as cargas. Tente novamente."
+    },
+    "actions": {
+        "new": {
+            "orders": "Novo pedido",
+            "trips": "Nova viagem"
+        },
+        "accept": "Aceitar",
+        "decline": "Recusar",
+        "offer": "Oferecer ao parceiro",
+        "withdraw": "Retirar a oferta",
+        "edit": "Editar",
+        "more": "Mais ações",
+        "request-location": "Pedir localização",
+        "convert": {
+            "to-partner": "Entregar a um parceiro",
+            "to-own-fleet": "Fazer com a própria frota"
+        },
+        "to": {
+            "procurement": "Voltar à procura",
+            "offered": "Oferecer",
+            "declined": "Recusar",
+            "scheduled": "Agendar",
+            "in-transit": "Pôr a caminho",
+            "delivered": "Marcar como entregue",
+            "closed": "Fechar",
+            "cancelled": "Cancelar a carga"
+        }
+    },
+    "blockers": {
+        "NO_DRIVER": "Indique o nome e o telefone do motorista primeiro.",
+        "NO_CARRIER": "Indique o parceiro que vai transportar a carga primeiro.",
+        "NO_PRICE": "Indique quanto vai pagar ao parceiro primeiro.",
+        "NOTE_REQUIRED": "É necessário indicar o motivo.",
+        "UNSETTLED": "Só pode fechar quando os pagamentos estiverem liquidados."
+    },
+    "dialogs": {
+        "back": "Voltar",
+        "confirm": "Confirmar"
+    },
+    "transition": {
+        "description": "{ref} passa de {from} para {to}.",
+        "consequence": {
+            "in-transit": "O motorista começa a receber pedidos de localização por WhatsApp, e a carga conta para o plano deste mês.",
+            "cancelled": "Quem estiver ligado a esta carga é avisado, e um parceiro que já a tenha aceite fica com ela cancelada também.",
+            "closed": "Uma carga fechada deixa de poder ser alterada."
+        },
+        "note": "Motivo (opcional)",
+        "note-required": "Motivo",
+        "note-placeholder": "Fica registado no histórico da carga"
+    },
+    "offer": {
+        "title": "Oferecer a carga",
+        "description": "{partner} recebe a rota, a carga, as datas e o valor a pagar, e responde no portal. Os termos ficam bloqueados enquanto decide.",
+        "price": "Valor a pagar",
+        "message": "Mensagem (opcional)",
+        "message-placeholder": "Algo que o parceiro deva saber",
+        "submit": "Enviar oferta"
+    },
+    "respond": {
+        "accept-title": "Aceitar a carga",
+        "decline-title": "Recusar a carga",
+        "accept-description": "{ref} passa a ser uma viagem sua, com {owner} como cliente. A seguir indica o motorista e o camião.",
+        "decline-description": "{owner} é avisado de que não pode transportar {ref}.",
+        "price": "Vai receber",
+        "note": "Nota (opcional)",
+        "accept-placeholder": "Algo que o cliente deva saber",
+        "decline-placeholder": "Porque não pode transportar esta carga"
+    },
+    "convert": {
+        "to-partner-title": "Entregar a um parceiro",
+        "to-own-fleet-title": "Fazer com a própria frota",
+        "to-partner-description": "{ref} passa a ser um pedido com o mesmo número, histórico e custos, e volta à procura até o parceiro ser confirmado.",
+        "to-own-fleet-description": "{ref} passa a ser uma viagem da sua frota. O que foi combinado com o parceiro deixa de valer.",
+        "partner": "Parceiro",
+        "partner-placeholder": "Escolha um transportador",
+        "partner-name": "Nome do transportador"
+    },
+    "money": {
+        "title": "Valores",
+        "record": "Registar pagamento",
+        "receivable": {
+            "owner": "A receber do cliente",
+            "executor": "A receber"
+        },
+        "payable": {
+            "owner": "A pagar ao parceiro",
+            "client": "A pagar"
+        },
+        "received": "Recebido",
+        "paid": "Pago",
+        "no-legs": "Ainda não registou valores para esta carga.",
+        "settlement": {
+            "pending": "Pendente",
+            "partially": "Parcial",
+            "completed": "Liquidado",
+            "not-applicable": "Não aplicável"
+        },
+        "subtotal": "Subtotal",
+        "vat": "IVA",
+        "fiscal-regime": "Regime fiscal",
+        "invoice": "Fatura",
+        "gross": "Margem bruta",
+        "net": "Margem líquida",
+        "costs": "Custos ({currency})",
+        "rechargeable-part": "{amount} a refaturar",
+        "blocked": {
+            "CURRENCY_MISMATCH": "Os dois valores estão em moedas diferentes, por isso não se calcula a margem.",
+            "MISSING_LEG": "A margem aparece quando os dois valores estiverem registados."
+        }
+    },
+    "payment": {
+        "title": "Registar pagamento",
+        "description": "Dinheiro recebido ou pago em {ref}.",
+        "legs": {
+            "sell": "Recebido do cliente",
+            "buy": "Pago ao parceiro"
+        },
+        "progress": "{settled} de {total} já registados",
+        "fields": {
+            "leg": "Tipo",
+            "amount": "Valor ({currency})",
+            "amount-placeholder": "0,00",
+            "paid-at": "Data",
+            "reference": "Referência",
+            "reference-placeholder": "Recibo, transferência…",
+            "correction": "Corrige um pagamento anterior",
+            "correction-hint": "Desconta o valor em vez de o somar. Indique a referência do pagamento que corrige."
+        },
+        "errors": {
+            "amount": "Indique um valor maior que zero.",
+            "reference": "Uma correção precisa de referência."
+        },
+        "submit": "Registar"
+    },
+    "costs": {
+        "title": "Custos",
+        "add": "Adicionar",
+        "empty": "Sem custos registados",
+        "remove": "Remover custo",
+        "rechargeable": "A refaturar",
+        "kinds": {
+            "fuel": "Combustível",
+            "tolls": "Portagens",
+            "driver-allowance": "Ajudas de custo do motorista",
+            "border-fees": "Taxas de fronteira",
+            "escort": "Escolta",
+            "parking": "Estacionamento",
+            "maintenance": "Manutenção",
+            "fine": "Multa",
+            "loading": "Carregamento",
+            "offloading": "Descarregamento",
+            "insurance": "Seguro",
+            "other": "Outro"
+        },
+        "fields": {
+            "kind": "Tipo",
+            "amount": "Valor",
+            "amount-placeholder": "0,00",
+            "currency": "Moeda",
+            "incurred-at": "Data",
+            "description": "Descrição",
+            "description-placeholder": "Opcional",
+            "rechargeable": "A refaturar ao cliente",
+            "rechargeable-hint": "Não sai da margem: é cobrado ao cliente."
+        },
+        "errors": {
+            "amount": "Indique um valor maior que zero.",
+            "text": "O texto é demasiado longo."
+        },
+        "dialog": {
+            "title": "Adicionar custo",
+            "description": "O que custou fazer esta carga. Só a sua empresa vê os custos.",
+            "submit": "Adicionar"
+        }
+    },
+    "documents": {
+        "title": "Documentos",
+        "add": "Adicionar",
+        "empty": "Sem documentos",
+        "open": "Abrir documento",
+        "remove": "Remover documento",
+        "from-executor": "Do transportador",
+        "types": {
+            "pod": "Comprovativo de entrega",
+            "cmr": "CMR",
+            "invoice": "Fatura",
+            "receipt": "Recibo",
+            "evidence": "Evidência",
+            "transport-order": "Ordem de transporte",
+            "other": "Outro"
+        },
+        "audience": {
+            "shared": "Todos na carga",
+            "sell": "Você e o cliente",
+            "buy": "Você e o parceiro"
+        },
+        "dialog": {
+            "title": "Adicionar documento",
+            "description": "PDF, JPG ou PNG. Escolha quem o pode ver.",
+            "type": "Tipo",
+            "audience": "Quem vê",
+            "file": "Ficheiro",
+            "pick": "Escolher ficheiro",
+            "replace": "Trocar ficheiro",
+            "clear": "Remover ficheiro",
+            "hint": "Um comprovativo de entrega partilhado chega a todos na carga, incluindo o cliente final.",
+            "format": "Só são aceites PDF, JPG ou PNG.",
+            "upload-failed": "O envio do ficheiro falhou. Tente novamente.",
+            "submit": "Adicionar"
+        }
+    },
+    "tracking": {
+        "title": "Localização",
+        "request": "Pedir agora",
+        "last": "Última posição",
+        "linked": "O parceiro acompanha o próprio camião; as posições aparecem aqui à medida que chegam.",
+        "disabled": "O acompanhamento está desligado para esta carga.",
+        "empty": "Ainda sem posições",
+        "unnamed": "Local sem nome"
+    },
+    "timeline": {
+        "title": "Histórico",
+        "empty": "Ainda nada aconteceu",
+        "created": "Registada como {status}",
+        "accepted-offer": "Aceite a partir de uma oferta",
+        "moved": "Passou a {status}",
+        "from-below": "Pelo transportador",
+        "actions": {
+            "offered": "Oferecida ao parceiro",
+            "withdrawn": "Oferta retirada",
+            "accepted": "Oferta aceite",
+            "declined": "Oferta recusada",
+            "converted": "Mudou de tipo",
+            "updated": "Dados alterados",
+            "received": "Pagamento recebido",
+            "paid": "Pagamento feito",
+            "corrected": "Pagamento corrigido",
+            "cost-added": "Custo adicionado",
+            "cost-removed": "Custo removido",
+            "document-added": "Documento adicionado",
+            "document-removed": "Documento removido"
+        },
+        "kinds": {
+            "status": "Mudança de estado",
+            "offer": "Oferta",
+            "update": "Alteração",
+            "money": "Pagamento",
+            "cost": "Custo",
+            "document": "Documento",
+            "note": "Nota",
+            "system": "Atualização automática"
+        },
+        "codes": {
+            "EXECUTOR_WITHDREW": "O transportador desistiu antes de sair; a carga pode ser entregue a outro parceiro.",
+            "CLIENT_CANCELLED": "O cliente cancelou a carga."
+        }
+    },
+    "detail": {
+        "meta": "Carga",
+        "error": "Não foi possível abrir esta carga. Pode ter sido removida, ou não estar partilhada consigo.",
+        "back": "Voltar à lista",
+        "footer": "Registada a {created} · atualizada a {updated}",
+        "route": "Rota e carga",
+        "parties": "Quem está na carga",
+        "fields": {
+            "loading": "Carregamento",
+            "due": "Entrega prevista",
+            "started": "Saiu a",
+            "delivered": "Entregue a",
+            "category": "Categoria",
+            "weight": "Peso",
+            "cargo": "Carga",
+            "offered-by": "Oferecido por",
+            "moved-by": "Transportado por",
+            "client": "Cliente",
+            "client-reference": "Referência do cliente",
+            "partner": "Parceiro",
+            "offered-at": "Oferecido a",
+            "responded-at": "Respondido a",
+            "response-note": "Resposta",
+            "driver": "Motorista",
+            "phone": "Telefone",
+            "plate": "Matrícula"
+        },
+        "values": {
+            "own-account": "Conta própria",
+            "no-partner": "Por atribuir",
+            "has-parent": "Esta viagem é a sua parte de um pedido que um cliente lhe entregou no portal.",
+            "linked": "O parceiro aceitou; o motorista e o camião são dele."
+        }
+    },
+    "form": {
+        "new-order": "Novo pedido",
+        "new-trip": "Nova viagem",
+        "edit-title": "Editar {ref}",
+        "edit-description": "Os blocos que já não podem mudar aparecem bloqueados.",
+        "description": {
+            "carrier": "Uma carga da sua frota, ou uma que entrega a um parceiro. Fica só na sua empresa; a Appload não a vê.",
+            "shipper": "Uma carga que um transportador faz para si, ou uma dos seus próprios camiões. Fica só na sua empresa; a Appload não a vê."
+        },
+        "shape": {
+            "label": "Quem transporta",
+            "own-fleet": "A minha frota",
+            "own-fleet-hint": "Uma viagem dos seus camiões",
+            "partner": "Um parceiro",
+            "partner-hint": "Um pedido que outro transportador faz"
+        },
+        "sections": {
+            "lane": "Rota",
+            "cargo": "Carga",
+            "client": "Cliente",
+            "partner": "Parceiro",
+            "rig": "Motorista e camião",
+            "status": "Estado",
+            "paperwork": "Notas"
+        },
+        "fields": {
+            "origin": "Origem",
+            "origin-placeholder": "Onde carrega",
+            "destination": "Destino",
+            "destination-placeholder": "Onde descarrega",
+            "loading": "Data de carregamento",
+            "due": "Entrega prevista",
+            "date-placeholder": "Escolha uma data",
+            "category": "Categoria",
+            "category-placeholder": "Escolha uma categoria",
+            "weight": "Peso",
+            "weight-placeholder": "0",
+            "cargo": "Descrição da carga",
+            "cargo-placeholder": "O que vai no camião",
+            "client": "Para quem é",
+            "client-hint": "Um parceiro ligado a si, alguém fora do portal, ou a sua própria empresa",
+            "client-none": "Para a minha empresa",
+            "client-typed": "Alguém fora do portal",
+            "client-name": "Nome do cliente",
+            "client-reference": "Referência do cliente",
+            "client-reference-placeholder": "Número do pedido do cliente (opcional)",
+            "sell": "O que cobra",
+            "sell-hint": "Valor com IVA incluído",
+            "partner": "Transportador",
+            "partner-placeholder": "Escolha um transportador",
+            "partner-hint": "Um transportador ligado a si, ou alguém fora do portal",
+            "partner-on-portal": "Este transportador está no portal: a carga fica em procura e oferece-lha a partir da página dela. Ele indica o próprio motorista.",
+            "partner-none": "Ainda por decidir",
+            "partner-name": "Nome do transportador",
+            "buy": "O que paga ao parceiro",
+            "buy-hint": "Valor com IVA incluído",
+            "total": "Valor",
+            "total-placeholder": "0,00",
+            "currency": "Moeda",
+            "fiscal-regime": "Regime fiscal",
+            "fiscal-regime-placeholder": "Escolha",
+            "driver": "Motorista",
+            "driver-hint": "Da sua lista de motoristas, ou alguém que ainda não registou",
+            "driver-none": "Ainda por decidir",
+            "driver-typed": "Outra pessoa",
+            "driver-name": "Nome do motorista",
+            "phone": "Telefone (WhatsApp)",
+            "truck": "Camião",
+            "truck-none": "Ainda por decidir",
+            "truck-typed": "Outro camião",
+            "plate": "Matrícula",
+            "plate-placeholder": "AAA-000-MC",
+            "status": "Em que ponto está",
+            "status-hint": "Pode avançar mais tarde a partir da página da carga",
+            "status-in-transit-hint": "O motorista começa a receber pedidos de localização e a carga conta para o plano deste mês",
+            "sell-invoice": "N.º da fatura ao cliente",
+            "buy-invoice": "N.º da fatura do parceiro",
+            "notes": "Notas",
+            "notes-placeholder": "Opcional",
+            "notes-hint": "Só a sua empresa vê as notas"
+        },
+        "off-portal-partner": "Alguém fora do portal",
+        "statuses": {
+            "order": {
+                "procurement": "Ainda à procura de parceiro",
+                "scheduled": "Já confirmado com o parceiro",
+                "in-transit": "Já a caminho"
+            },
+            "trip": {
+                "procurement": "Ainda em planeamento",
+                "scheduled": "Agendada",
+                "in-transit": "Já a caminho"
+            }
+        },
+        "errors": {
+            "address": "Escolha um endereço da lista.",
+            "amount": "Indique um valor válido.",
+            "weight": "Indique um peso válido.",
+            "phone": "Indique um número de telefone válido.",
+            "name": "Indique o nome.",
+            "partner": "Escolha o parceiro que vai transportar a carga.",
+            "driver": "Indique o motorista e o telefone para agendar ou pôr a caminho.",
+            "reference": "Indique a referência.",
+            "text": "O texto é demasiado longo."
+        },
+        "file": "Registar carga",
+        "save": "Guardar alterações",
+        "saving": "A guardar…",
+        "cancel": "Cancelar"
+    },
+    "toasts": {
+        "created": "{ref} registada",
+        "updated": "Alterações guardadas",
+        "offered": "Oferta enviada ao parceiro",
+        "withdrawn": "Oferta retirada",
+        "accepted": "Carga aceite",
+        "declined": "Carga recusada",
+        "converted": "A carga passou a {ref}",
+        "payment": "Pagamento registado",
+        "cost-added": "Custo adicionado",
+        "cost-removed": "Custo removido",
+        "document-added": "Documento adicionado",
+        "document-removed": "Documento removido",
+        "requested": "Pedido de localização enviado ao motorista",
+        "status": {
+            "procurement": "A carga voltou à procura",
+            "offered": "Carga oferecida",
+            "declined": "Carga recusada",
+            "scheduled": "Carga agendada",
+            "in-transit": "Carga a caminho",
+            "delivered": "Carga entregue",
+            "closed": "Carga fechada",
+            "cancelled": "Carga cancelada"
+        }
+    },
+    "errors": {
+        "notFound": "Esta carga já não existe, ou não está partilhada consigo.",
+        "notAllowed": "O seu papel na empresa não permite esta ação.",
+        "versionConflict": "Alguém alterou esta carga entretanto. Atualize a página e tente novamente.",
+        "invalidStatus": "Esta ação já não é possível no estado atual da carga.",
+        "closed": "Esta carga está fechada e já não pode ser alterada.",
+        "fieldLocked": "Parte do que alterou já não pode mudar nesta carga.",
+        "partnerNotConnected": "Esta empresa não está ligada a si como parceiro.",
+        "partnerNotOnPortal": "Este parceiro não está no portal; agende a carga diretamente.",
+        "notACarrier": "Só um transportador pode receber uma carga.",
+        "ownFleetHasNoCarrier": "Uma viagem da própria frota não tem parceiro nem valor a pagar.",
+        "rigIsThePartners": "O parceiro está no portal e indica o próprio motorista e camião.",
+        "executorDeparted": "O transportador já saiu com a carga; só ele a pode cancelar agora.",
+        "rigNotRegistered": "O motorista ou o camião escolhido não é da sua frota.",
+        "noDriver": "Indique o nome e o telefone do motorista primeiro.",
+        "noCarrier": "Indique o parceiro que vai transportar a carga primeiro.",
+        "noPrice": "Indique quanto vai pagar ao parceiro primeiro.",
+        "noteRequired": "É necessário indicar o motivo.",
+        "unsettled": "Só pode fechar quando os pagamentos estiverem liquidados.",
+        "noSuchLeg": "Esta carga não tem esse valor registado.",
+        "legHasPayments": "Já há pagamentos registados neste valor; não pode ser removido nem mudar de moeda.",
+        "paymentBelowZero": "A correção deixaria o total pago abaixo de zero.",
+        "correctionNeedsReference": "Uma correção precisa de referência.",
+        "invalidDocument": "O documento não foi aceite. Envie-o novamente.",
+        "notTrackable": "Só se pede a localização de uma carga em trânsito com motorista.",
+        "rateLimited": "Já pediu a localização várias vezes. Tente mais tarde.",
+        "infobipNotConfigured": "O WhatsApp não está configurado neste ambiente.",
+        "subscriptionRequired": "É necessário um plano para acompanhar cargas.",
+        "quotaExceeded": "O plano deste mês já foi usado.",
+        "sendFailed": "O pedido foi guardado, mas a mensagem não chegou ao motorista.",
+        "unknown": "Algo correu mal. Tente novamente."
+    }
+}
