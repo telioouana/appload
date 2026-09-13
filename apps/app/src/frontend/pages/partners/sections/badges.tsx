@@ -7,15 +7,32 @@ import type { KycStatus } from "@workspace/db/types"
 import type { ConnectionRelation, ConnectionStatus } from "@workspace/db/connections"
 
 import { Badge } from "@workspace/ui/components/badge"
-import { StatusBadge } from "@workspace/ui/customs/badge/status-badge"
+import { StatusBadge, type StatusKey } from "@workspace/ui/customs/badge/status-badge"
 
-import { partnerKind, type ConnectionDirection, type OrgType } from "@/frontend/pages/partners/types"
+import { partnerKind, type ConnectionDirection, type OrgType, type PartnerContractState } from "@/frontend/pages/partners/types"
 
 /** Appload's verdict on the partner's paperwork — the same badge Admin shows. */
 export function KycBadge({ status }: { status: KycStatus }) {
     const t = useTranslations("App.partners.kyc")
 
     return <StatusBadge label={t(status)} status={status} />
+}
+
+// The contract has no status vocabulary of its own — it is one KYC document —
+// so each state borrows the tone of the verification state it amounts to:
+// nothing on file reads the same as paperwork that was turned down.
+const CONTRACT_TONE: Record<PartnerContractState, StatusKey> = {
+    valid: "verified",
+    pending: "pending-review",
+    missing: "rejected",
+    expired: "expired",
+}
+
+/** Whether the transporter has a valid signed contract with Appload. */
+export function ContractChip({ state }: { state: PartnerContractState }) {
+    const t = useTranslations("App.partners.profile.contract")
+
+    return <StatusBadge label={t(state)} status={CONTRACT_TONE[state]} />
 }
 
 /** What the other company is to this one: client, transporter or subcontractor. */

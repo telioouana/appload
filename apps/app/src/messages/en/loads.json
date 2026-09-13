@@ -10,7 +10,7 @@
         "booked": "Booked",
         "planning": "Planning",
         "scheduled": "Scheduled",
-        "in-transit": "On the road",
+        "in-transit": "In progress",
         "delivered": "Delivered",
         "history": "History"
     },
@@ -22,7 +22,7 @@
         "booked": "Booked orders",
         "planning": "Trips being planned",
         "scheduled": "Scheduled trips",
-        "in-transit": "On the road",
+        "in-transit": "In progress",
         "delivered": "Delivered",
         "history": "History"
     },
@@ -46,7 +46,7 @@
         "offered": "Offered",
         "declined": "Declined",
         "scheduled": "Scheduled",
-        "in-transit": "On the road",
+        "in-transit": "In progress",
         "delivered": "Delivered",
         "closed": "Closed",
         "cancelled": "Cancelled"
@@ -132,6 +132,7 @@
         "withdraw": "Withdraw the offer",
         "edit": "Edit",
         "more": "More actions",
+        "send-confirmation": "Send confirmation",
         "request-location": "Ask for location",
         "convert": {
             "to-partner": "Hand to a partner",
@@ -196,6 +197,24 @@
         "partner": "Partner",
         "partner-placeholder": "Pick a transporter",
         "partner-name": "Transporter's name"
+    },
+    "confirmation": {
+        "title": "Send confirmation",
+        "description": "{partner} gets the confirmation of {ref} by email, and it is filed on the order.",
+        "to": "To",
+        "cc": "Cc (comma separated)",
+        "message": "Message (optional)",
+        "message-placeholder": "Anything the partner should know",
+        "generating": "Preparing…",
+        "uploading": "Uploading…",
+        "sending": "Sending…",
+        "send": "Send",
+        "sent": "Confirmation sent",
+        "sent-simulated": "Confirmation prepared — email is not configured on this environment",
+        "errors": {
+            "email": "The email was not sent. Check the address and try again.",
+            "failed": "The confirmation could not be sent. Try again."
+        }
     },
     "money": {
         "title": "Money",
@@ -346,6 +365,7 @@
         "created": "Filed as {status}",
         "accepted-offer": "Accepted from an offer",
         "moved": "Moved to {status}",
+        "confirmation-sent": "Confirmation sent to {to}",
         "from-below": "By the transporter",
         "actions": {
             "offered": "Offered to the partner",

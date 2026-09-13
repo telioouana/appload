@@ -19,6 +19,7 @@ import {
 } from "@workspace/db/movements";
 import { organization, user } from "@workspace/db/users";
 
+import { brandedEmail, sendEmail } from "@workspace/auth/email";
 import { isOrgAuthorized, type OrgRole } from "@workspace/auth/organization-permissions";
 import {
     locationRequestText,
@@ -38,6 +39,8 @@ import { notify } from "@workspace/domain/notifications";
 import { assertTrackingAllowance, recordTrackingUsage } from "@workspace/domain/subscription";
 import { startConversation } from "@workspace/domain/tracking/conversations";
 import { hasOpenSession, place } from "@workspace/domain/tracking/slot";
+
+import { movementDocumentPath } from "@workspace/edgestore/path";
 
 import { computeRoute } from "@workspace/maps/server/routes";
 import {
@@ -65,6 +68,7 @@ import {
     OfferMovementBaseSchema,
     RecordPaymentBaseSchema,
     RespondOfferBaseSchema,
+    SendConfirmationBaseSchema,
     TransitionMovementBaseSchema,
     UpdateMovementBaseSchema,
     WithdrawOfferBaseSchema,
@@ -78,10 +82,12 @@ import {
     loadDocuments,
     loadEvents,
     loadNames,
+    loadOrgEmail,
     loadOwn,
     loadPings,
     loadTerminalProofs,
     loadTerminalRigs,
+    loadTrailerPlate,
     loadVisible,
     sectionPredicate,
     silentToday,
@@ -335,6 +341,29 @@ function roleOrThrow(row: Movement, tenantId: string) {
     return role;
 }
 
+/**
+ * The confirmation must be the file the browser just uploaded for this load.
+ * The host check alone is not enough: every object on the delivery host
+ * passes it — other loads' papers, and the KYC bucket's, whose whole
+ * protection is that its URLs stay secret — and what is named here is
+ * fetched by this server, mailed out and filed for the partner to open.
+ */
+function assertConfirmationUrl(url: string, movementId: string) {
+    let path: string;
+
+    try {
+        path = decodeURIComponent(new URL(url).pathname);
+    } catch {
+        path = "";
+    }
+
+    assertEdgeStoreUrl(url);
+
+    if (!path.includes(`/${movementDocumentPath(movementId, "transport-order")}/`)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_DOCUMENT_URL" });
+    }
+}
+
 async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRole): Promise<MovementDetail> {
     const role = roleOrThrow(row, tenantId);
     const owner = role === "owner";
@@ -342,7 +371,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
 
     const linked = row.executionMovementId !== null;
 
-    const [names, pings, costs, documents, events, hasParent, executorOnPortal, rigs, terminalProofs] = await Promise.all([
+    const [names, pings, costs, documents, events, hasParent, executorOnPortal, rigs, terminalProofs, carrierEmail, trailerPlate] = await Promise.all([
         loadNames(db, [row.organizationId, row.clientOrgId, row.carrierOrgId]),
         loadPings(db, [trailId]),
         owner ? loadCosts(db, row.id) : Promise.resolve([]),
@@ -352,12 +381,16 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
         row.execution === "partner" ? isOnPortal(db, row.carrierOrgId) : Promise.resolve(false),
         linked ? loadTerminalRigs(db, [trailId]) : Promise.resolve(new Map()),
         linked ? loadTerminalProofs(db, trailId) : Promise.resolve([]),
+        owner && row.carrierOrgId ? loadOrgEmail(db, row.carrierOrgId) : Promise.resolve(null),
+        owner && row.trailerId ? loadTrailerPlate(db, row.trailerId) : Promise.resolve(null),
     ]);
 
     return toMovementDetail(row, role, {
         tenantId,
         terminalRig: rigs.get(trailId) ?? null,
         terminalProofs,
+        carrierEmail,
+        trailerPlate,
         names,
         pings,
         trailId,
@@ -1145,6 +1178,120 @@ export const movementsRouter = createTRPCRouter({
                 return { id: document.id };
             }),
     }),
+
+    /**
+     * Emails the partner the confirmation of the load it was given: the
+     * transport-order template, filled and uploaded by the browser before it
+     * reaches here, attached to a message in the company's own name.
+     *
+     * The document is filed on the load as a buy-leg paper on the way out, so
+     * what was sent stays readable by both sides afterwards — the confirmation
+     * is the agreement, and neither company should have to go back to an inbox
+     * to find out what it says.
+     */
+    sendConfirmation: tenantProcedure
+        .input(SendConfirmationBaseSchema)
+        .mutation(async ({ ctx, input }): Promise<{ id: string; simulated: boolean }> => {
+            const tenantId = ctx.tenant.organizationId;
+            const row = await loadOwn(ctx.db, input.id, tenantId);
+            assertCan(ctx.tenant.role, "document", "upload");
+            assertConfirmationUrl(input.url, row.id);
+
+            // Only an order has a partner to confirm anything to
+            if (row.execution !== "partner") {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "NOT_A_PARTNER_LOAD" });
+            }
+
+            // The menu offers this from the moment the load is placed until the
+            // truck arrives, and the server holds the same line rather than
+            // trusting it — anything else is a send out of Appload's domain on
+            // a row that has no confirmation to make.
+            if (row.status !== "scheduled" && row.status !== "in-transit") {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "NOT_SENDABLE" });
+            }
+
+            // Metered like the location request, and for the same reason: the
+            // recipient is typed by the caller and the mail leaves under
+            // Appload's verified sender. Per load first, so one impatient user
+            // cannot spend the company's standing on a single partner.
+            const allowed =
+                await withinRateLimit(ctx.db, { key: `confirmation:load:${row.id}`, windowMs: 60 * 60 * 1000, max: 3 })
+                && await withinRateLimit(ctx.db, { key: `confirmation:org:${tenantId}`, windowMs: 24 * 60 * 60 * 1000, max: 30 });
+
+            if (!allowed) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "RATE_LIMITED" });
+
+            const ref = movementRef(row.seq, row.execution);
+            const names = await loadNames(ctx.db, [row.organizationId]);
+            const tenantName = names.get(row.organizationId) ?? "";
+
+            const response = await fetch(input.url);
+
+            if (!response.ok) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_DOCUMENT_URL" });
+            }
+
+            const content = Buffer.from(await response.arrayBuffer()).toString("base64");
+
+            const result = await sendEmail({
+                to: [input.to],
+                cc: input.cc,
+                subject: `Confirmação de carga ${ref} · ${tenantName}`,
+                html: brandedEmail({
+                    locale: "pt",
+                    title: `Confirmação de carga ${ref}`,
+                    lines: [input.message || `Segue em anexo a confirmação da carga ${ref}.`],
+                    // The attachment is the document; the link is the same
+                    // file, for a mail client that strips attachments
+                    ctaLabel: "Abrir a confirmação",
+                    ctaUrl: input.url,
+                    disclaimer: `Este email foi enviado por ${tenantName} através do portal de parceiros da Appload.`,
+                }),
+                attachments: [{ filename: input.filename, content }],
+            });
+
+            if (!result.ok) {
+                throw new TRPCError({ code: "BAD_GATEWAY", message: "EMAIL_FAILED", cause: new Error(result.error) });
+            }
+
+            const [created] = await ctx.db
+                .insert(movementDocument)
+                .values({
+                    movementId: row.id,
+                    type: "transport-order",
+                    leg: "buy",
+                    title: input.filename,
+                    url: input.url,
+                    mimeType: "application/pdf",
+                    uploadedBy: ctx.tenant.userId,
+                })
+                .returning({ id: movementDocument.id });
+
+            if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
+
+            await recordEvent(ctx.db, {
+                movementId: row.id,
+                kind: "document",
+                actor: actorOf(ctx.tenant),
+                metadata: { action: "sent", type: "transport-order", sentTo: input.to },
+            });
+
+            // Only a partner actually on the load hears about it, the same
+            // rule a buy-leg paper filed by hand goes out under
+            const recipient = row.carrierOrgId && isExecutorOf(row, row.carrierOrgId) ? row.carrierOrgId : null;
+
+            if (recipient) {
+                await notify(ctx.db, {
+                    organizationId: recipient,
+                    kind: "movement.document",
+                    email: false,
+                    entityType: "movement",
+                    entityId: row.id,
+                    params: { ref, type: "transport-order" },
+                });
+            }
+
+            return { id: created.id, simulated: result.simulated };
+        }),
 
     /**
      * Every position reported for the load, oldest first. A linked order

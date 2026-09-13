@@ -10,7 +10,7 @@
         "booked": "Confirmados",
         "planning": "Em planeamento",
         "scheduled": "Agendadas",
-        "in-transit": "Em trânsito",
+        "in-transit": "Em curso",
         "delivered": "Entregues",
         "history": "Histórico"
     },
@@ -22,7 +22,7 @@
         "booked": "Pedidos confirmados",
         "planning": "Viagens em planeamento",
         "scheduled": "Viagens agendadas",
-        "in-transit": "Em trânsito",
+        "in-transit": "Em curso",
         "delivered": "Entregues",
         "history": "Histórico"
     },
@@ -46,7 +46,7 @@
         "offered": "Oferecido",
         "declined": "Recusado",
         "scheduled": "Agendado",
-        "in-transit": "Em trânsito",
+        "in-transit": "Em curso",
         "delivered": "Entregue",
         "closed": "Fechado",
         "cancelled": "Cancelado"
@@ -132,6 +132,7 @@
         "withdraw": "Retirar a oferta",
         "edit": "Editar",
         "more": "Mais ações",
+        "send-confirmation": "Enviar confirmação",
         "request-location": "Pedir localização",
         "convert": {
             "to-partner": "Entregar a um parceiro",
@@ -196,6 +197,24 @@
         "partner": "Parceiro",
         "partner-placeholder": "Escolha um transportador",
         "partner-name": "Nome do transportador"
+    },
+    "confirmation": {
+        "title": "Enviar confirmação",
+        "description": "{partner} recebe por email a confirmação da carga {ref}, e ela fica anexada ao pedido.",
+        "to": "Para",
+        "cc": "Cc (separados por vírgula)",
+        "message": "Mensagem (opcional)",
+        "message-placeholder": "Algo que o parceiro deva saber",
+        "generating": "A preparar…",
+        "uploading": "A carregar…",
+        "sending": "A enviar…",
+        "send": "Enviar",
+        "sent": "Confirmação enviada",
+        "sent-simulated": "Confirmação preparada — o email não está configurado neste ambiente",
+        "errors": {
+            "email": "O email não foi enviado. Verifique o endereço e tente de novo.",
+            "failed": "Não foi possível enviar a confirmação. Tente de novo."
+        }
     },
     "money": {
         "title": "Valores",
@@ -346,6 +365,7 @@
         "created": "Registada como {status}",
         "accepted-offer": "Aceite a partir de uma oferta",
         "moved": "Passou a {status}",
+        "confirmation-sent": "Confirmação enviada para {to}",
         "from-below": "Pelo transportador",
         "actions": {
             "offered": "Oferecida ao parceiro",

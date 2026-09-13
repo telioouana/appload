@@ -260,6 +260,20 @@ export const AddMovementDocumentBaseSchema = z.object({
     costId: z.string().nonempty().optional(),
 });
 
+/**
+ * Emailing the partner the confirmation of a load. The browser fills the
+ * template and uploads the result, so what reaches the server is the
+ * EdgeStore URL it came back with plus who it goes to.
+ */
+export const SendConfirmationBaseSchema = z.object({
+    id: z.string().nonempty(),
+    url: z.url(),
+    filename: text(200).min(1),
+    to: z.email(),
+    cc: z.array(z.email()).max(5).default([]),
+    message: text(TEXT_MAX).optional(),
+});
+
 export const RecordPaymentBaseSchema = z.object({
     ...versioned,
     leg: z.enum(MOVEMENT_DOCUMENT_LEG),

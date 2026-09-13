@@ -192,6 +192,12 @@
             "requested": "Solicitada",
             "answered": "Respondida",
             "direction": "Solicitação"
+        },
+        "contract": {
+            "valid": "Contrato válido",
+            "missing": "Sem contrato com a Appload",
+            "expired": "Contrato expirado",
+            "pending": "Contrato em análise"
         }
     },
     "toasts": {

@@ -55,10 +55,29 @@ const BRANDED_COPY = {
 } as const;
 
 /**
+ * Escapes the five characters that would otherwise let a value break out of
+ * the markup it is interpolated into — as text or inside a double-quoted
+ * attribute, which is why the URL goes through it too (`&` becomes `&amp;`,
+ * which a mail client reads back as `&`).
+ */
+const escapeHtml = (value: string) =>
+    value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
+/**
  * Minimal branded shell for transactional emails: logo, title, body copy,
  * one CTA button, muted disclaimer. Inline styles only — email clients
  * ignore stylesheets. (The richer react-email setup in the conecta app is
  * the eventual destination; this keeps parity without new dependencies.)
+ *
+ * Everything the caller passes is escaped here rather than trusted: one of
+ * these emails carries a message typed by a portal user (the confirmation a
+ * company sends its partner), and an unescaped body would let it forge a
+ * link or a button under Appload's own logo and sending domain.
  */
 export function brandedEmail(params: {
     title: string;
@@ -71,9 +90,13 @@ export function brandedEmail(params: {
     locale?: "pt" | "en";
 }): string {
     const copy = BRANDED_COPY[params.locale ?? "en"];
+    const title = escapeHtml(params.title);
+    const ctaLabel = escapeHtml(params.ctaLabel);
+    const ctaUrl = escapeHtml(params.ctaUrl);
+    const disclaimer = escapeHtml(params.disclaimer);
 
     const paragraphs = params.lines
-        .map((line) => `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#1f2937;">${line}</p>`)
+        .map((line) => `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#1f2937;">${escapeHtml(line)}</p>`)
         .join("");
 
     return `<!doctype html>
@@ -81,13 +104,13 @@ export function brandedEmail(params: {
   <body style="margin:0;padding:24px;background:#f8fafc;font-family:'Segoe UI',Arial,sans-serif;">
     <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;">
       <a href="https://appload.co.mz/"><img src="https://appload.co.mz/appload.svg" width="72" alt="Appload" /></a>
-      <h1 style="margin:24px 0 16px;font-size:20px;color:#111827;">${params.title}</h1>
+      <h1 style="margin:24px 0 16px;font-size:20px;color:#111827;">${title}</h1>
       ${paragraphs}
       <div style="margin:24px 0;">
-        <a href="${params.ctaUrl}" style="display:inline-block;background:#EE7623;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;">${params.ctaLabel}</a>
+        <a href="${ctaUrl}" style="display:inline-block;background:#EE7623;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;">${ctaLabel}</a>
       </div>
-      <p style="margin:0 0 12px;font-size:13px;line-height:1.6;color:#6b7280;">${copy.fallbackLink}<br /><a href="${params.ctaUrl}" style="color:#EE7623;word-break:break-all;">${params.ctaUrl}</a></p>
-      <p style="margin:16px 0 0;font-size:12px;line-height:1.6;color:#9ca3af;">${params.disclaimer}</p>
+      <p style="margin:0 0 12px;font-size:13px;line-height:1.6;color:#6b7280;">${copy.fallbackLink}<br /><a href="${ctaUrl}" style="color:#EE7623;word-break:break-all;">${ctaUrl}</a></p>
+      <p style="margin:16px 0 0;font-size:12px;line-height:1.6;color:#9ca3af;">${disclaimer}</p>
       <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;">${copy.footer}</p>
     </div>
   </body>

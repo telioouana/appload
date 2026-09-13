@@ -12,6 +12,7 @@
         "@workspace/comms": "workspace:*",
         "@workspace/db": "workspace:*",
         "drizzle-orm": "0.45.2",
+        "pdf-lib": "^1.17.1",
         "server-only": "^0.0.1",
         "zod": "^4.4.3"
     },
@@ -30,6 +31,7 @@
         "./orders/*": "./src/orders/*.ts",
         "./kyc/*": "./src/kyc/*.ts",
         "./kpis/*": "./src/kpis/*.ts",
+        "./pdf/*": "./src/pdf/*.ts",
         "./tracking/*": "./src/tracking/*.ts"
     }
 }

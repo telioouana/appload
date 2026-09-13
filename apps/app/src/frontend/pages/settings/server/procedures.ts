@@ -1,12 +1,14 @@
-import { and, eq, isNull, or, sql } from "drizzle-orm";
+import { z } from "zod";
+import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { APIError } from "better-auth/api";
 
 import { partnerConnection } from "@workspace/db/connections";
+import { kycDocument } from "@workspace/db/kyc-documents";
 import { movement } from "@workspace/db/movements";
 import { order } from "@workspace/db/orders";
 import { organization, user } from "@workspace/db/users";
-import { AddressSchema, type Address } from "@workspace/db/types";
+import { AddressSchema, KycPagesSchema, type Address, type KycDocumentStatus } from "@workspace/db/types";
 
 import {
     PLAN_QUOTA,
@@ -16,6 +18,10 @@ import {
     type TrackingAllowance,
 } from "@workspace/domain/subscription";
 
+import { isValid, today } from "@workspace/domain/kyc/derive";
+import { isKycUrl } from "@workspace/domain/kyc/file-access";
+import { CONTRACT_DOC } from "@workspace/domain/kyc/requirements";
+import { currentDocuments, loadSubject, toCurrentDoc, writeDerivedStatus } from "@workspace/domain/kyc/subjects";
 import { conditionCount } from "@workspace/domain/orders/predicates";
 import { pendingOfferCount } from "@workspace/domain/orders/transition";
 
@@ -23,9 +29,13 @@ import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 import type { OrgStatus, OrgType, TenantPlan, TenantRole } from "@workspace/trpc/tenant-gate";
 
+import type { db as Database } from "@workspace/db/db";
+
 import { ChangePasswordBaseSchema } from "@/backend/schemas/settings";
 import { UpdateCompanyBaseSchema } from "@/backend/schemas/company";
 import { myRequest, visibleOrders } from "@/frontend/pages/orders/server/projection";
+
+type Db = typeof Database;
 
 /**
  * The numbers on the rail, each for the one list it leads to: work partners
@@ -67,10 +77,86 @@ export type MeSession = {
     tiers: Array<{ plan: SubscriptionPlan; quota: number | null }>;
 };
 
+/**
+ * Where the company's signed contract with Appload stands. `valid` and
+ * `expired` are a comparison against today rather than a stored state — the
+ * same rule the KYC derivation applies, so a contract is expired the day
+ * after its date whether or not any sweep has noticed.
+ */
+export type ContractState = "missing" | "pending" | "valid" | "expired" | "rejected";
+
+export type MeContract = {
+    status: ContractState;
+    /** The calendar day it runs to, as stored (YYYY-MM-DD) */
+    expiresAt: string | null;
+};
+
 // The catalog lives in a module the browser cannot load (it reads the
 // database), so the tiers travel to the client as data rather than as an
 // import
 const TIERS = SUBSCRIPTION_PLAN.map((plan) => ({ plan, quota: PLAN_QUOTA[plan] }));
+
+// Calendar day, matching the pg `date` column the expiry is stored in
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "INVALID_DATE");
+
+/**
+ * The contract the company is currently on: its latest live submission.
+ * Superseded rows are still the newest of their chain only until the one
+ * replacing them is written, and a soft-deleted row is history, so both are
+ * excluded the way `currentDocuments` excludes them for the whole set.
+ */
+async function latestContract(db: Db, organizationId: string) {
+    const [row] = await db
+        .select({
+            id: kycDocument.id,
+            status: kycDocument.status,
+            expiresAt: kycDocument.expiresAt,
+        })
+        .from(kycDocument)
+        .where(and(
+            eq(kycDocument.subjectType, "organization"),
+            eq(kycDocument.subjectId, organizationId),
+            eq(kycDocument.type, CONTRACT_DOC),
+            isNull(kycDocument.deletedAt),
+        ))
+        .orderBy(desc(kycDocument.createdAt))
+        .limit(1);
+
+    return row;
+}
+
+function contractState(doc: { status: KycDocumentStatus; expiresAt: string | null } | undefined): ContractState {
+    if (!doc) return "missing";
+    if (doc.status !== "approved") return doc.status;
+
+    return isValid({ type: CONTRACT_DOC, status: doc.status, expiresAt: doc.expiresAt }, today())
+        ? "valid"
+        : "expired";
+}
+
+/**
+ * An uploaded page has to be an object this company just wrote to our own
+ * KYC bucket, under its own contract prefix. The bucket builds that path
+ * from the three input values (packages/edgestore/src/server.ts), so
+ * requiring them back in the URL is what ties the row to the file the upload
+ * hook allowed — without it the mutation would file whatever URL it was
+ * handed, including another subject's ID scan, as this company's contract.
+ */
+function assertContractUrl(url: string, organizationId: string) {
+    let path: string;
+
+    try {
+        path = decodeURIComponent(new URL(url).pathname);
+    } catch {
+        path = "";
+    }
+
+    const filed = path.includes(`/organization/${organizationId}/${CONTRACT_DOC}/`);
+
+    if (!isKycUrl(url, "organization", organizationId) || !filed) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_DOCUMENT_URL" });
+    }
+}
 
 /**
  * The violated constraint name when the error (or its cause) is a postgres
@@ -278,6 +364,75 @@ export const meRouter = createTRPCRouter({
 
                 throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
             }
+        }),
+
+    /**
+     * Where the company's signed contract with Appload stands. Its own small
+     * read rather than a field on `me.session`: the card that shows it is one
+     * tab of the settings page, and the upload below is what refetches it.
+     */
+    contract: tenantProcedure.query(async ({ ctx }): Promise<MeContract> => {
+        const row = await latestContract(ctx.db, ctx.tenant.organizationId);
+
+        return { status: contractState(row), expiresAt: row?.expiresAt ?? null };
+    }),
+
+    /**
+     * Files the countersigned contract. Owner and admin only (the
+     * `organization: ["update"]` statement): it is the company's agreement
+     * with Appload, not a working document.
+     *
+     * The row lands `pending` — uploading is not approving, and only a staff
+     * review in Admin turns it into something partners read as valid. A
+     * previous submission is superseded rather than overwritten, so a
+     * rejection and the contract answering it both stay on record, exactly
+     * as Admin's own upload writes the chain.
+     */
+    uploadContract: authorizedTenantProcedure("organization", ["update"])
+        .input(z.object({ pages: KycPagesSchema, expiresAt: isoDate.optional() }))
+        .mutation(async ({ ctx, input }): Promise<MeContract> => {
+            const tenantId = ctx.tenant.organizationId;
+
+            // The contract is a required document for a carrier and no part of
+            // a shipper's file at all — the card hides the row for one, and
+            // Admin's own upload refuses the type for the same reason
+            if (ctx.tenant.orgType !== "carrier") {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "DOCUMENT_NOT_APPLICABLE" });
+            }
+
+            for (const page of input.pages) assertContractUrl(page.url, tenantId);
+
+            const subject = await loadSubject(ctx.db, "organization", tenantId);
+            const existing = await latestContract(ctx.db, tenantId);
+
+            const [document] = await ctx.db
+                .insert(kycDocument)
+                .values({
+                    // The subject is the gate's organization, never an id
+                    // from input — the same predicate the URL check demanded
+                    subjectType: "organization",
+                    subjectId: tenantId,
+                    type: CONTRACT_DOC,
+                    pages: input.pages,
+                    expiresAt: input.expiresAt ?? null,
+                    supersedesId: existing?.id ?? null,
+                    uploadedBy: ctx.tenant.userId,
+                })
+                .returning({ status: kycDocument.status, expiresAt: kycDocument.expiresAt });
+
+            if (!document) {
+                throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
+            }
+
+            // The company's verification is derived from the documents it has,
+            // and this one just replaced an approved contract with a pending
+            // submission — so the stored verdict is rewritten here rather than
+            // left claiming more than the file supports until staff look at it.
+            // The same three lines Admin's own upload ends on.
+            const current = await currentDocuments(ctx.db, subject);
+            await writeDerivedStatus(ctx.db, subject, current.map(toCurrentDoc));
+
+            return { status: contractState(document), expiresAt: document.expiresAt };
         }),
 
     /**

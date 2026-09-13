@@ -16,7 +16,7 @@ import { initials } from "@workspace/ui/customs/list/table-cells"
 import { useTRPC } from "@/backend/api/client"
 import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
 import { usePartnerMutations } from "@/frontend/pages/partners/hooks/use-partner-mutations"
-import { ConnectionStatusChip, KycBadge, RelationChip } from "@/frontend/pages/partners/sections/badges"
+import { ConnectionStatusChip, ContractChip, KycBadge, RelationChip } from "@/frontend/pages/partners/sections/badges"
 import type { OrgType, PartnerProfile } from "@/frontend/pages/partners/types"
 
 /**
@@ -111,6 +111,7 @@ function Profile({
                 <div className="flex flex-wrap items-center gap-2">
                     <RelationChip relation={connection.relation} orgType={orgType} />
                     <KycBadge status={partner.kycStatus} />
+                    {partner.contract && <ContractChip state={partner.contract} />}
                     <ConnectionStatusChip status={connection.status} />
                 </div>
             </div>

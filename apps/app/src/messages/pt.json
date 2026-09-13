@@ -297,10 +297,11 @@
                     "notifications": "Notificações"
                 },
                 "company": {
-                    "label": "Empresa",
+                    "label": "A minha empresa",
                     "fleet": "Frota",
                     "drivers": "Motoristas",
-                    "partners": "Parceiros",
+                    "team": "Equipa",
+                    "partners": "Fornecedores / parceiros",
                     "analytics": "Análises",
                     "trucks": "Camiões",
                     "trailers": "Reboques",
@@ -526,6 +527,31 @@
                     "NOT_ALLOWED": "Não tem permissão para alterar os dados da empresa",
                     "NOT_FOUND": "Não encontrámos a sua empresa",
                     "UNKNOWN": "Não foi possível guardar. Tente novamente"
+                },
+                "contract": {
+                    "title": "Contrato com a Appload",
+                    "valid-until": "válido até {date}",
+                    "states": {
+                        "valid": "Válido",
+                        "pending": "Em análise",
+                        "missing": "Sem contrato",
+                        "expired": "Expirado",
+                        "rejected": "Rejeitado"
+                    },
+                    "upload": "Carregar contrato",
+                    "dialog": {
+                        "title": "Carregar o contrato assinado",
+                        "description": "Envie o contrato que assinou com a Appload e indique até quando é válido",
+                        "file": "Escolher ficheiro",
+                        "expires": "Válido até",
+                        "submit": "Enviar",
+                        "success": "Contrato enviado. A Appload vai analisá-lo",
+                        "errors": {
+                            "size": "O ficheiro não pode ter mais de 5 MB",
+                            "type": "Só aceitamos PDF, JPG ou PNG"
+                        }
+                    },
+                    "hint": "A Appload analisa o contrato; os parceiros passam a ver se está válido."
                 }
             },
             "members": {

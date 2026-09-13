@@ -184,6 +184,8 @@ export type MovementEventView = {
     note: string | null;
     /** What happened to an offer, a conversion or a payment */
     action: string | null;
+    /** Where a paper was emailed, when it was emailed rather than filed */
+    sentTo: string | null;
     /** The company that acted; null when the move was carried up from below */
     actorName: string | null;
     createdAt: Date;
@@ -222,11 +224,15 @@ export type MovementDetail = MovementRow & {
     notes: string | null;
     /** Owner and client only: the client's own purchase-order number */
     clientReference: string | null;
+    /** Owner only: where the partner is written to, when it is on the portal */
+    carrierEmail: string | null;
     /** Owner only: its own driver, or the partner's it was told about */
     driverPhone: string | null;
     driverId: string | null;
     truckId: string | null;
     trailerId: string | null;
+    /** Owner only: the assigned trailer's plate, which papers have to name */
+    trailerPlate: string | null;
     linkId: string | null;
     /** Partner loads: the offer round, as far as the caller is part of it */
     offeredAt: Date | null;

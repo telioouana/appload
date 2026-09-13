@@ -192,6 +192,12 @@
             "requested": "Requested",
             "answered": "Answered",
             "direction": "Request"
+        },
+        "contract": {
+            "valid": "Contract valid",
+            "missing": "No contract with Appload",
+            "expired": "Contract expired",
+            "pending": "Contract under review"
         }
     },
     "toasts": {

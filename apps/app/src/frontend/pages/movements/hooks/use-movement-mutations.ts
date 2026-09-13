@@ -85,6 +85,15 @@ export function useMovementMutations() {
         onSuccess: () => { void refresh(); toast.success(t("toasts.document-added")) },
     }))
 
+    const sendConfirmation = useMutation(trpc.movements.sendConfirmation.mutationOptions({
+        onSuccess: (data) => {
+            void refresh()
+            // Without a mail provider the send is only logged, and saying so
+            // is the difference between a test and a partner who never wrote back
+            toast.success(t(data.simulated ? "confirmation.sent-simulated" : "confirmation.sent"))
+        },
+    }))
+
     const removeDocument = useMutation(trpc.movements.documents.remove.mutationOptions({
         onSuccess: () => { void refresh(); toast.success(t("toasts.document-removed")) },
         onError: fail,
@@ -117,6 +126,7 @@ export function useMovementMutations() {
         addCost,
         removeCost,
         addDocument,
+        sendConfirmation,
         removeDocument,
         requestLocation,
         refresh,

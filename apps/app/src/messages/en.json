@@ -297,10 +297,11 @@
                     "notifications": "Notifications"
                 },
                 "company": {
-                    "label": "Company",
+                    "label": "My company",
                     "fleet": "Fleet",
                     "drivers": "Drivers",
-                    "partners": "Partners",
+                    "team": "Team",
+                    "partners": "Suppliers / partners",
                     "analytics": "Analytics",
                     "trucks": "Trucks",
                     "trailers": "Trailers",
@@ -526,6 +527,31 @@
                     "NOT_ALLOWED": "You are not allowed to change the company's details",
                     "NOT_FOUND": "Your company could not be found",
                     "UNKNOWN": "Could not save. Try again"
+                },
+                "contract": {
+                    "title": "Contract with Appload",
+                    "valid-until": "valid until {date}",
+                    "states": {
+                        "valid": "Valid",
+                        "pending": "Under review",
+                        "missing": "No contract",
+                        "expired": "Expired",
+                        "rejected": "Rejected"
+                    },
+                    "upload": "Upload contract",
+                    "dialog": {
+                        "title": "Upload the signed contract",
+                        "description": "Send the contract you signed with Appload and say how long it is valid for",
+                        "file": "Choose file",
+                        "expires": "Valid until",
+                        "submit": "Send",
+                        "success": "Contract sent. Appload will review it",
+                        "errors": {
+                            "size": "The file cannot be larger than 5 MB",
+                            "type": "Only PDF, JPG or PNG are accepted"
+                        }
+                    },
+                    "hint": "Appload reviews the contract; partners then see whether it is valid."
                 }
             },
             "members": {

@@ -8,6 +8,7 @@ import {
     IconDots,
     IconFlagCheck,
     IconLock,
+    IconMail,
     IconMapPinShare,
     IconPencil,
     IconSend,
@@ -39,6 +40,7 @@ import { ConvertDialog } from "@/frontend/pages/movements/sections/convert-dialo
 import { LoadSheet } from "@/frontend/pages/movements/sections/load-sheet"
 import { OfferDialog } from "@/frontend/pages/movements/sections/offer-dialog"
 import { RespondDialog } from "@/frontend/pages/movements/sections/respond-dialog"
+import { SendConfirmationDialog } from "@/frontend/pages/movements/sections/send-confirmation-dialog"
 import { TransitionDialog } from "@/frontend/pages/movements/sections/transition-dialog"
 import type { MovementDetail, MovementStatus, OrgType, TransitionOption } from "@/frontend/pages/movements/types"
 
@@ -55,6 +57,7 @@ type Open =
     | { kind: "offer" }
     | { kind: "respond"; decision: "accept" | "decline" }
     | { kind: "convert" }
+    | { kind: "confirmation" }
     | { kind: "edit" }
     | null
 
@@ -109,8 +112,14 @@ export function LoadActions({
     const forward = permissions.transitions.filter((option) => option.to !== "cancelled")
     const cancel = permissions.transitions.find((option) => option.to === "cancelled")
     const canEdit = permissions.editable.length > 0
+    // The confirmation is what the partner works from, so it is worth sending
+    // from the moment the load is placed with it until the truck arrives
+    const canConfirm = permissions.canManageDocuments
+        && load.execution === "partner"
+        && (load.status === "scheduled" || load.status === "in-transit")
 
-    const menu = canEdit || permissions.canRequestLocation || permissions.canConvert || permissions.canWithdraw || cancel
+    const menu = canEdit || canConfirm || permissions.canRequestLocation || permissions.canConvert
+        || permissions.canWithdraw || cancel
 
     return (
         <>
@@ -193,6 +202,13 @@ export function LoadActions({
                                 </DropdownMenuItem>
                             )}
 
+                            {canConfirm && (
+                                <DropdownMenuItem onSelect={() => openFromMenu({ kind: "confirmation" })}>
+                                    <IconMail stroke={1.5} />
+                                    {t("actions.send-confirmation")}
+                                </DropdownMenuItem>
+                            )}
+
                             {permissions.canRequestLocation && (
                                 <DropdownMenuItem onSelect={() => requestLocation.mutate({ id: load.id })}>
                                     <IconMapPinShare stroke={1.5} />
@@ -250,6 +266,10 @@ export function LoadActions({
             )}
 
             {open?.kind === "convert" && <ConvertDialog load={load} onClose={close} />}
+
+            {open?.kind === "confirmation" && (
+                <SendConfirmationDialog load={load} companyName={organizationName} onClose={close} />
+            )}
 
             <LoadSheet
                 mode={{ kind: "edit", load }}

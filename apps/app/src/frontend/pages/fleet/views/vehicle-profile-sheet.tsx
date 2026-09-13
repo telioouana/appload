@@ -244,9 +244,7 @@ function Documents({ profile }: { profile: VehicleProfile }) {
                     {profile.documents.map((doc) => (
                         <li key={doc.type} className="flex items-center justify-between gap-3 text-[13px]">
                             <span className="truncate">
-                                {doc.type === "vehicle-booklet" || doc.type === "proof-of-ownership"
-                                    ? types(doc.type)
-                                    : doc.type}
+                                {types.has(doc.type) ? types(doc.type) : doc.type}
                             </span>
                             <span className="flex shrink-0 items-center gap-2">
                                 <span className="text-muted-foreground text-xs">

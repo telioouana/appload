@@ -641,7 +641,7 @@ export const onboardingRouter = createTRPCRouter({
                         locale: "pt",
                         title: "Novo pedido de acesso ao portal",
                         lines: [
-                            `${account.name} (${account.email}) pediu para ser responsável da empresa <strong>${target.name}</strong>.`,
+                            `${account.name} (${account.email}) pediu para ser responsável da empresa ${target.name}.`,
                             "O email da conta não corresponde ao email registado da empresa, por isso o pedido fica à espera de decisão.",
                         ],
                         ctaLabel: "Abrir no Admin",

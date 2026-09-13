@@ -476,6 +476,9 @@ importers:
       drizzle-orm:
         specifier: 0.45.2
         version: 0.45.2(@neondatabase/serverless@1.1.0)(kysely@0.29.5)
+      pdf-lib:
+        specifier: ^1.17.1
+        version: 1.17.1
       server-only:
         specifier: ^0.0.1
         version: 0.0.1

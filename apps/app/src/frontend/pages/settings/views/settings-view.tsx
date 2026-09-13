@@ -1,5 +1,6 @@
 "use client"
 
+import { useSearchParams } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { IconBuilding, IconRosetteDiscountCheck, IconUser, IconUsers } from "@tabler/icons-react";
 
@@ -22,12 +23,23 @@ import { PendingInvitations } from "@/frontend/pages/settings/components/pending
  * verdict — rather than from the auth session: the organization row carries
  * the plan and the KYC status, and the session cookie's organization id is
  * not trusted for tenancy anywhere in the portal.
+ *
+ * A `?tab=` opens the page on that tab, so a link from elsewhere — the
+ * rail's Team entry — can land on the one the reader asked for. Only the
+ * tab it starts on: which tab is open afterwards is the reader's own, which
+ * is why the tabs stay uncontrolled and the query remounts them instead. A
+ * reader already on Settings navigates within the same route, so without the
+ * key the URL would change and the tab would stay where it was.
  */
 export function SettingsView() {
     const t = useTranslations("App.settings")
     const trpc = useTRPC()
+    const searchParams = useSearchParams()
 
     const { data } = useSuspenseQuery(trpc.me.session.queryOptions())
+
+    const tab = searchParams.get("tab")
+    const initialTab = tab === "company" || tab === "members" || tab === "subscription" ? tab : "profile"
 
     const canManage = data.role === "owner" || data.role === "admin"
 
@@ -38,7 +50,7 @@ export function SettingsView() {
                 <p className="text-muted-foreground text-sm">{t("description")}</p>
             </div>
 
-            <Tabs defaultValue="profile" className="gap-4">
+            <Tabs key={initialTab} defaultValue={initialTab} className="gap-4">
                 <TabsList>
                     <TabsTrigger value="profile">
                         <IconUser />

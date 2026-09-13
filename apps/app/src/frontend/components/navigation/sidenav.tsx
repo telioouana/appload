@@ -28,6 +28,7 @@ import {
     IconTruck,
     IconTruckDelivery,
     IconUsers,
+    IconUsersGroup,
 } from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
@@ -48,6 +49,12 @@ import { NewLoadSheet } from "@/frontend/pages/movements/sections/new-load-sheet
 import { ORDER_SECTIONS, TRIP_SECTIONS } from "@/frontend/pages/movements/types";
 
 import { NavUser } from "./nav-user";
+
+// Temporary kill switch (2026-09-13): Appload's brokerage is hidden from
+// the rail while the portal is shown as the company's own operations hub.
+// Flip to true to bring the whole group back (the sections and the quotes);
+// the routes under /appload stay reachable by URL either way.
+const SHOW_APPLOAD: boolean = false
 
 // Whatever the typed next-intl `Link` accepts as `href`: a plain internal
 // pathname for a static route, or the `{ pathname, params }` object form for
@@ -193,7 +200,7 @@ export function Sidenav({
                 path: { pathname: "/trips/[section]", params: { section } },
             })),
         },
-        {
+        ...(SHOW_APPLOAD ? [{
             // Appload's brokerage, beside the company's own loads: the
             // requests and offers it runs through Appload, and the quotes
             Icon: IconContainer,
@@ -211,7 +218,7 @@ export function Sidenav({
                 })),
                 { Icon: IconFileInvoice, name: t("work.quotes"), match: "/appload/quotes", path: "/appload/quotes" },
             ],
-        },
+        } satisfies NavGroup] : []),
         { Icon: IconMap2, name: t("work.map"), match: "/map", path: "/map" },
         {
             Icon: IconBell,
@@ -236,6 +243,9 @@ export function Sidenav({
             ],
         },
         { Icon: IconUsers, name: t("company.drivers"), match: "/drivers", path: "/drivers" },
+        // The people who sign in for the company, which is the members tab
+        // of the settings page rather than a page of its own
+        { Icon: IconUsersGroup, name: t("company.team"), match: "/settings", path: { pathname: "/settings", query: { tab: "members" } } },
         {
             Icon: IconBuildingWarehouse,
             name: t("company.partners"),

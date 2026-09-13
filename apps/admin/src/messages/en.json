@@ -2972,7 +2972,7 @@
                 "third-party": "Third party"
             },
             "documents": {
-                "nuit": "VAT registration (NUIT)",
+                "nuit": "NUIT registration",
                 "id-card": "ID card",
                 "commercial-certificate": "Commercial certificate",
                 "alvara": "Transport licence (alvará)",

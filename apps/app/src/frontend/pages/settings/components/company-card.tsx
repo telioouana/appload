@@ -5,23 +5,26 @@ import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconDeviceFloppy } from "@tabler/icons-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useTranslations } from "@workspace/i18n";
+import { useFormatter, useTranslations } from "@workspace/i18n";
 
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { EmailInput } from "@workspace/ui/inputs/email";
 import { TextInput } from "@workspace/ui/inputs/text";
+import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Spinner } from "@workspace/ui/components/spinner";
 import { LocationInput } from "@workspace/ui/inputs/location";
 import { FieldGroup, FieldSet } from "@workspace/ui/components/field";
+import { StatusBadge, type StatusKey } from "@workspace/ui/customs/badge/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 
 import { useTRPC } from "@/backend/api/client";
 import { domainErrorCode } from "@workspace/trpc/errors";
 import { UpdateCompanySchema, type UpdateCompanyForm } from "@/backend/schemas/company";
-import type { MeSession } from "@/frontend/pages/settings/server/procedures";
+import { ContractUploadDialog } from "@/frontend/pages/settings/components/contract-upload-dialog";
+import type { ContractState, MeSession } from "@/frontend/pages/settings/server/procedures";
 
 const ERROR_CODES = ["DUPLICATE_EMAIL", "DUPLICATE_PHONE", "NOT_ALLOWED", "NOT_FOUND", "UNKNOWN"] as const
 
@@ -142,6 +145,13 @@ export function CompanyCard({
                             </div>
                         </div>
                     </div>
+
+                    {/* Only transporters sign one (packages/domain kyc
+                        requirements), so a shipper is not shown a paper it
+                        was never asked for */}
+                    {organization.type === "carrier" && (
+                        <ContractRow organizationId={organization.id} canEdit={canEdit} />
+                    )}
                 </div>
 
                 <p className="text-muted-foreground text-xs">{t("company.readonly.hint")}</p>
@@ -203,6 +213,52 @@ export function CompanyCard({
                 </form>
             </CardContent>
         </Card>
+    )
+}
+
+// The contract has no status vocabulary of its own — it is one KYC document —
+// so each state borrows the tone of the verification state it amounts to
+const CONTRACT_TONE: Record<ContractState, StatusKey> = {
+    valid: "verified",
+    pending: "pending-review",
+    missing: "rejected",
+    expired: "expired",
+    rejected: "rejected",
+}
+
+/**
+ * The signed contract with Appload: where it stands, and the way to file a
+ * new one. Its own query rather than a field on the session — staff approve
+ * or reject it in Admin while the partner is signed in, and the upload
+ * refetches exactly this.
+ */
+function ContractRow({ organizationId, canEdit }: { organizationId: string; canEdit: boolean }) {
+    const t = useTranslations("App.settings.company.contract")
+    const f = useFormatter()
+    const trpc = useTRPC()
+
+    const { data } = useQuery(trpc.me.contract.queryOptions())
+
+    return (
+        <div className="grid gap-1">
+            <span className="text-sm font-medium">{t("title")}</span>
+
+            <div className="flex flex-wrap items-center gap-2">
+                {data
+                    ? <StatusBadge label={t(`states.${data.status}`)} status={CONTRACT_TONE[data.status]} />
+                    : <Skeleton className="h-7 w-24 rounded-full" />}
+
+                {data?.status === "valid" && data.expiresAt && (
+                    <span className="text-muted-foreground text-sm">
+                        {t("valid-until", { date: f.dateTime(new Date(`${data.expiresAt}T00:00:00`), { dateStyle: "medium" }) })}
+                    </span>
+                )}
+
+                {canEdit && <ContractUploadDialog organizationId={organizationId} />}
+            </div>
+
+            <p className="text-muted-foreground text-xs">{t("hint")}</p>
+        </div>
     )
 }
 

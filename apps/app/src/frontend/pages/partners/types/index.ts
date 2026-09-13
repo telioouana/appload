@@ -116,6 +116,15 @@ export type PartnerStats = {
     outgoing: number;
 };
 
+/**
+ * Where a transporter's signed contract with Appload stands, in the one word
+ * that may cross the tenant boundary. A rejected submission reads as
+ * `missing`: why Appload turned the paperwork down is between Appload and
+ * that company, and what this side needs is only that there is nothing valid
+ * to work under.
+ */
+export type PartnerContractState = "valid" | "missing" | "expired" | "pending";
+
 export type SharedOrders = {
     total: number;
     lastLoadingDate: Date | null;
@@ -144,6 +153,8 @@ export type PartnerProfile = {
         phoneNumber: string | null;
         billingAddress: Address | null;
         physicalAddress: Address | null;
+        /** Null for a shipper: only transporters sign a contract with Appload */
+        contract: PartnerContractState | null;
     };
     /** Null until the connection is accepted */
     orders: SharedOrders | null;

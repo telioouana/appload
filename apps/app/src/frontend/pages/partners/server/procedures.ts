@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq, ilike, ne, or, sql, type SQL, type SQLWrapper } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNull, ne, or, sql, type SQL, type SQLWrapper } from "drizzle-orm";
 
+import { kycDocument } from "@workspace/db/kyc-documents";
 import { order } from "@workspace/db/orders";
 import { organization } from "@workspace/db/users";
 import type { db as Database } from "@workspace/db/db";
@@ -9,6 +10,8 @@ import { AddressSchema, type Address } from "@workspace/db/types";
 import { CONNECTION_RELATION, CONNECTION_STATUS, partnerConnection, type ConnectionRelation, type ConnectionStatus } from "@workspace/db/connections";
 
 import { notify } from "@workspace/domain/notifications";
+import { isValid, today } from "@workspace/domain/kyc/derive";
+import { CONTRACT_DOC } from "@workspace/domain/kyc/requirements";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
@@ -25,6 +28,7 @@ import {
     type OrgType,
     type PagedResult,
     type PartnerCandidate,
+    type PartnerContractState,
     type PartnerProfile,
     type PartnerRow,
     type PartnerStats,
@@ -676,7 +680,10 @@ export const partnersRouter = createTRPCRouter({
             const accepted = row.status === "accepted";
             const direction: ConnectionDirection = row.requesterOrgId === tenantId ? "outgoing" : "incoming";
 
-            const orders = accepted ? await sharedOrderSummary(ctx.db, tenantId, row.partnerId) : null;
+            const [orders, contract] = await Promise.all([
+                accepted ? sharedOrderSummary(ctx.db, tenantId, row.partnerId) : null,
+                accepted && row.partnerType === "carrier" ? partnerContract(ctx.db, row.partnerId) : null,
+            ]);
 
             return {
                 connection: {
@@ -699,6 +706,7 @@ export const partnersRouter = createTRPCRouter({
                     phoneNumber: accepted ? row.partnerPhone : null,
                     billingAddress: accepted ? row.partnerBillingAddress : null,
                     physicalAddress: accepted ? row.partnerAddress : null,
+                    contract,
                 },
                 orders,
             };
@@ -762,6 +770,38 @@ function toCandidate(row: CandidateRow, tenantId: string): PartnerCandidate {
             }
             : null,
     };
+}
+
+/**
+ * Where the transporter's signed contract with Appload stands, from its
+ * latest live submission. Only this one word leaves the tenant boundary:
+ * the pages themselves are identity documents and their storage URLs are
+ * secrets, so nothing but the verdict is selected.
+ *
+ * Rejected reads as `missing` — see `PartnerContractState`. `valid` is a
+ * comparison against today rather than a stored state, the rule the whole
+ * KYC derivation applies.
+ */
+async function partnerContract(db: typeof Database, partnerId: string): Promise<PartnerContractState> {
+    const [doc] = await db
+        .select({ status: kycDocument.status, expiresAt: kycDocument.expiresAt })
+        .from(kycDocument)
+        .where(and(
+            eq(kycDocument.subjectType, "organization"),
+            eq(kycDocument.subjectId, partnerId),
+            eq(kycDocument.type, CONTRACT_DOC),
+            isNull(kycDocument.deletedAt),
+        ))
+        .orderBy(desc(kycDocument.createdAt))
+        .limit(1);
+
+    if (!doc) return "missing";
+    if (doc.status === "rejected") return "missing";
+    if (doc.status === "pending") return "pending";
+
+    return isValid({ type: CONTRACT_DOC, status: doc.status, expiresAt: doc.expiresAt }, today())
+        ? "valid"
+        : "expired";
 }
 
 /**

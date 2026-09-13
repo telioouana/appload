@@ -121,8 +121,15 @@ export const edgeStoreRouter = es.router({
      * So the URLs are treated as secrets instead. They are never sent to a
      * browser: the host app rewrites every page to a session-gated route
      * (apps/admin/src/app/api/kyc/file/[documentId]/[page]) that re-checks
-     * staff status against the database and streams the bytes itself. Writing
-     * and deleting stay staff-only through the hooks below.
+     * staff status against the database and streams the bytes itself.
+     * Deleting stays staff-only through the hook below.
+     *
+     * Writing is staff plus one narrow case: a company uploading its own
+     * signed contract with Appload from the portal, which may only write
+     * under its own `organization/<its own id>/` prefix. That is the whole
+     * widening — the prefix is the tenancy, so a member can no more reach
+     * another company's papers than a stranger can, and reading is still
+     * only the staff-gated proxy.
      *
      * That leaves one residue this design cannot fix — an object whose URL
      * leaked BEFORE the proxy existed is still fetchable by whoever holds it.
@@ -160,7 +167,20 @@ export const edgeStoreRouter = es.router({
         // two distinct subject ids onto one segment would file one
         // subject's ID documents under another
         .beforeUpload(({ ctx, input }) =>
-            ctx.isStaff === "true" &&
+            (
+                ctx.isStaff === "true" ||
+                // The portal's contract upload, and nothing else: the one
+                // document a company may file itself, under its own prefix.
+                // `orgId` is resolved live from the database by the host app,
+                // so a removed member loses this at once rather than when the
+                // cookie next refreshes. The type is spelled out rather than
+                // imported — this package knows nothing of @workspace/domain,
+                // where `CONTRACT_DOC` names the same string.
+                (input.subjectType === "organization" &&
+                    input.docType === "signed-contract" &&
+                    ctx.orgId !== null &&
+                    input.subjectId === ctx.orgId)
+            ) &&
             Object.entries(KYC_SEGMENT).every(([key, pattern]) =>
                 isLegal(`kyc ${key}`, (input as Record<string, unknown>)[key], pattern),
             ),

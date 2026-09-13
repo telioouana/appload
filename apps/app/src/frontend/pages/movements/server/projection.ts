@@ -5,6 +5,7 @@ import { and, count, desc, eq, gte, inArray, isNotNull, isNull, ne, or, sql, typ
 import { alias } from "drizzle-orm/pg-core";
 
 import type { db as Database } from "@workspace/db/db";
+import { trailer } from "@workspace/db/fleet";
 import {
     movement,
     movementCost,
@@ -262,6 +263,37 @@ export async function loadNames(db: Db, ids: Iterable<string | null>): Promise<M
 }
 
 /**
+ * The address a company is written to. Read on the detail page for the
+ * partner a load was placed with, so the owner does not have to retype an
+ * address it already sees on the partner's own page.
+ */
+/**
+ * The plate of the trailer assigned to a load. Read on its own rather than
+ * joined into the row: only the detail needs it, and only to print it on the
+ * confirmation the partner receives — a transport order that omits the
+ * trailer reads as a load that has none.
+ */
+export async function loadTrailerPlate(db: Db, trailerId: string): Promise<string | null> {
+    const [row] = await db
+        .select({ plate: trailer.regPlate })
+        .from(trailer)
+        .where(eq(trailer.id, trailerId))
+        .limit(1);
+
+    return row?.plate ?? null;
+}
+
+export async function loadOrgEmail(db: Db, organizationId: string): Promise<string | null> {
+    const [row] = await db
+        .select({ email: organization.email })
+        .from(organization)
+        .where(eq(organization.id, organizationId))
+        .limit(1);
+
+    return row?.email ?? null;
+}
+
+/**
  * Which row's trail each movement shows. A linked order has no pings of its
  * own — its truck reports on the executor's row — so it borrows the trail of
  * the row at the end of its chain. Only the positions travel up: nothing of
@@ -498,6 +530,10 @@ type DetailExtras = {
     terminalRig: TerminalRig | null;
     /** A linked row's proof of delivery, from the row with the truck */
     terminalProofs: readonly MovementDocumentView[];
+    /** The partner's address, read for the owner alone */
+    carrierEmail: string | null;
+    /** The assigned trailer's plate, likewise the owner's */
+    trailerPlate: string | null;
     names: Map<string, string>;
     pings: PingState;
     trailId: string;
@@ -505,7 +541,7 @@ type DetailExtras = {
     executorOnPortal: boolean;
     costs: readonly CostRow[];
     documents: readonly MovementDocumentView[];
-    events: readonly (Omit<MovementEventView, "action"> & { metadata: unknown; actorOrgId: string | null })[];
+    events: readonly (Omit<MovementEventView, "action" | "sentTo"> & { metadata: unknown; actorOrgId: string | null })[];
     orgRole: OrgRole;
 };
 
@@ -543,10 +579,12 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
         trackingEnabled: row.trackingEnabled,
         notes: owner ? row.notes : null,
         clientReference: role === "executor" ? null : row.clientReference,
+        carrierEmail: owner ? extras.carrierEmail : null,
         driverPhone: owner ? row.driverPhone : null,
         driverId: owner ? row.driverId : null,
         truckId: owner ? row.truckId : null,
         trailerId: owner ? row.trailerId : null,
+        trailerPlate: owner ? extras.trailerPlate : null,
         linkId: owner ? row.linkId : null,
         offeredAt: role === "client" ? null : row.offeredAt,
         respondedAt: role === "client" ? null : row.respondedAt,
@@ -580,6 +618,7 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
                 // executor, everything else stays with the owner
                 note: owner || (role === "executor" && event.kind === "offer") ? event.note : null,
                 action: readAction(event.metadata),
+                sentTo: readText(event.metadata, "sentTo"),
                 actorName: event.actorName,
                 createdAt: event.createdAt,
             })),
@@ -588,13 +627,16 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
     };
 }
 
-function readAction(metadata: unknown): string | null {
-    if (metadata && typeof metadata === "object" && "action" in metadata) {
-        const action = (metadata as { action: unknown }).action;
-        return typeof action === "string" ? action : null;
+/** A string the writer of an event put on it, when it put one there. */
+function readText(metadata: unknown, key: string): string | null {
+    if (metadata && typeof metadata === "object" && key in metadata) {
+        const value = (metadata as Record<string, unknown>)[key];
+        return typeof value === "string" ? value : null;
     }
     return null;
 }
+
+const readAction = (metadata: unknown): string | null => readText(metadata, "action");
 
 /**
  * What the caller may do now. Decided here, from the same functions the
