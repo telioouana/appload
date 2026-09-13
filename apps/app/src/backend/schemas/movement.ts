@@ -30,6 +30,7 @@ export const MOVEMENT_STATUS = [
     "offered",
     "declined",
     "scheduled",
+    "booked",
     "in-transit",
     "delivered",
     "closed",
@@ -37,7 +38,7 @@ export const MOVEMENT_STATUS = [
 ] as const satisfies readonly MovementStatus[];
 
 /** Where a new load may start: a load is never created offered, declined or finished. */
-export const CREATE_STATUS = ["procurement", "scheduled", "in-transit"] as const satisfies readonly MovementStatus[];
+export const CREATE_STATUS = ["procurement", "scheduled", "booked", "in-transit"] as const satisfies readonly MovementStatus[];
 
 export const MOVEMENT_COST_KIND = [
     "fuel",
@@ -300,8 +301,6 @@ export type LoadMessageField =
     | "weight"
     | "phone"
     | "name"
-    | "partner"
-    | "driver"
     | "reference"
     | "text";
 

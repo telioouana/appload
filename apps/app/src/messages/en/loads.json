@@ -6,7 +6,9 @@
     "sections": {
         "all": "All",
         "inbox": "Inbox",
-        "procurement": "Procurement",
+        "procurement": "Draft",
+        "awarded": "Awarded",
+        "confirmed": "Confirmed",
         "booked": "Booked",
         "planning": "Planning",
         "scheduled": "Scheduled",
@@ -18,8 +20,10 @@
         "all-orders": "All orders",
         "all-trips": "All trips",
         "inbox": "Loads partners offered you",
-        "procurement": "Orders in procurement",
-        "booked": "Booked orders",
+        "procurement": "Draft",
+        "awarded": "Awarded",
+        "confirmed": "Confirmed",
+        "booked": "Booked",
         "planning": "Trips being planned",
         "scheduled": "Scheduled trips",
         "in-transit": "In progress",
@@ -42,14 +46,25 @@
     },
     "status": {
         "planning": "Planning",
-        "procurement": "Procurement",
-        "offered": "Offered",
+        "procurement": "Draft",
+        "offered": "Awarded",
         "declined": "Declined",
-        "scheduled": "Scheduled",
+        "scheduled": "Confirmed",
+        "booked": "Booked",
         "in-transit": "In progress",
         "delivered": "Delivered",
         "closed": "Closed",
         "cancelled": "Cancelled"
+    },
+    "flags": {
+        "NO_DRIVER": "No driver",
+        "NO_TRUCK": "No truck",
+        "NO_CARRIER": "No transporter",
+        "NO_PRICE": "No agreed price",
+        "PHOTOS_UNAPPROVED": "Loading photos not yet approved"
+    },
+    "header": {
+        "flags": "{count, plural, one {# flag} other {# flags}}"
     },
     "role": {
         "owner": "Yours",
@@ -85,10 +100,10 @@
     "tiles": {
         "inbox": "Offered to you",
         "inbox-hint": "Partners' loads waiting on your answer",
-        "booked": "Booked",
-        "booked-hint": "With a transporter, waiting to leave",
-        "procurement": "Procurement",
-        "procurement-hint": "No partner confirmed yet",
+        "confirmed": "Confirmed",
+        "confirmed-hint": "With a transporter, waiting to leave",
+        "procurement": "Drafts",
+        "procurement-hint": "Not offered to anybody yet",
         "scheduled": "Scheduled",
         "scheduled-hint": "Ready to leave",
         "in-transit": "On the road",
@@ -142,7 +157,8 @@
             "procurement": "Back to procurement",
             "offered": "Offer",
             "declined": "Decline",
-            "scheduled": "Schedule",
+            "scheduled": "Confirm",
+            "booked": "Book",
             "in-transit": "Put on the road",
             "delivered": "Mark delivered",
             "closed": "Close",
@@ -150,20 +166,20 @@
         }
     },
     "blockers": {
-        "NO_DRIVER": "Name the driver and their phone first.",
-        "NO_CARRIER": "Name the partner that will move the load first.",
-        "NO_PRICE": "Record what you will pay the partner first.",
         "NOTE_REQUIRED": "A reason is required.",
         "UNSETTLED": "It can only be closed once the payments are settled."
     },
     "dialogs": {
         "back": "Back",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "proceed-flagged": "Proceed anyway"
     },
     "transition": {
         "description": "{ref} goes from {from} to {to}.",
+        "flagged-title": "Proceeding with {count, plural, one {# flag} other {# flags}}",
         "consequence": {
             "in-transit": "The driver starts getting location requests on WhatsApp, and the load counts towards this month's plan.",
+            "in-transit-undriven": "The load counts towards this month's plan, but with no driver named nobody can be asked where it is — name one and the location requests start.",
             "cancelled": "Everyone on this load is told, and a partner that already accepted it has it cancelled too.",
             "closed": "A closed load can no longer be changed."
         },
@@ -366,6 +382,7 @@
         "accepted-offer": "Accepted from an offer",
         "moved": "Moved to {status}",
         "confirmation-sent": "Confirmation sent to {to}",
+        "flags": "Proceeded with flags: {list}",
         "from-below": "By the transporter",
         "actions": {
             "offered": "Offered to the partner",
@@ -517,11 +534,13 @@
             "order": {
                 "procurement": "Still looking for a partner",
                 "scheduled": "Already agreed with the partner",
+                "booked": "Agreed and booked in",
                 "in-transit": "Already on the road"
             },
             "trip": {
                 "procurement": "Still being planned",
-                "scheduled": "Scheduled",
+                "scheduled": "Confirmed",
+                "booked": "Scheduled",
                 "in-transit": "Already on the road"
             }
         },
@@ -531,8 +550,6 @@
             "weight": "Enter a valid weight.",
             "phone": "Enter a valid phone number.",
             "name": "Enter the name.",
-            "partner": "Pick the partner that will move the load.",
-            "driver": "Name the driver and their phone to schedule it or put it on the road.",
             "reference": "Enter the reference.",
             "text": "The text is too long."
         },
@@ -559,7 +576,8 @@
             "procurement": "The load is back in procurement",
             "offered": "Load offered",
             "declined": "Load declined",
-            "scheduled": "Load scheduled",
+            "scheduled": "Load confirmed",
+            "booked": "Load booked",
             "in-transit": "Load on the road",
             "delivered": "Load delivered",
             "closed": "Load closed",

@@ -6,8 +6,10 @@
     "sections": {
         "all": "Tudo",
         "inbox": "Recebidos",
-        "procurement": "Em procura",
-        "booked": "Confirmados",
+        "procurement": "Rascunho",
+        "awarded": "Adjudicado",
+        "confirmed": "Confirmado",
+        "booked": "Agendado",
         "planning": "Em planeamento",
         "scheduled": "Agendadas",
         "in-transit": "Em curso",
@@ -18,8 +20,10 @@
         "all-orders": "Todos os pedidos",
         "all-trips": "Todas as viagens",
         "inbox": "Cargas oferecidas por parceiros",
-        "procurement": "Pedidos em procura",
-        "booked": "Pedidos confirmados",
+        "procurement": "Rascunho",
+        "awarded": "Adjudicado",
+        "confirmed": "Confirmado",
+        "booked": "Agendado",
         "planning": "Viagens em planeamento",
         "scheduled": "Viagens agendadas",
         "in-transit": "Em curso",
@@ -42,14 +46,25 @@
     },
     "status": {
         "planning": "Em planeamento",
-        "procurement": "Em procura",
-        "offered": "Oferecido",
+        "procurement": "Rascunho",
+        "offered": "Adjudicado",
         "declined": "Recusado",
-        "scheduled": "Agendado",
+        "scheduled": "Confirmado",
+        "booked": "Agendado",
         "in-transit": "Em curso",
         "delivered": "Entregue",
         "closed": "Fechado",
         "cancelled": "Cancelado"
+    },
+    "flags": {
+        "NO_DRIVER": "Sem motorista",
+        "NO_TRUCK": "Sem camião",
+        "NO_CARRIER": "Sem transportador",
+        "NO_PRICE": "Sem preço acordado",
+        "PHOTOS_UNAPPROVED": "Fotos de carregamento por aprovar"
+    },
+    "header": {
+        "flags": "{count, plural, one {# alerta} other {# alertas}}"
     },
     "role": {
         "owner": "Seu",
@@ -85,10 +100,10 @@
     "tiles": {
         "inbox": "Oferecidos a si",
         "inbox-hint": "Cargas de parceiros à espera da sua resposta",
-        "booked": "Confirmados",
-        "booked-hint": "Com transportador e à espera de sair",
-        "procurement": "Em procura",
-        "procurement-hint": "Ainda sem parceiro confirmado",
+        "confirmed": "Confirmados",
+        "confirmed-hint": "Com transportador e à espera de sair",
+        "procurement": "Rascunhos",
+        "procurement-hint": "Ainda sem oferta feita",
         "scheduled": "Agendadas",
         "scheduled-hint": "Prontas para sair",
         "in-transit": "Em trânsito",
@@ -142,7 +157,8 @@
             "procurement": "Voltar à procura",
             "offered": "Oferecer",
             "declined": "Recusar",
-            "scheduled": "Agendar",
+            "scheduled": "Confirmar",
+            "booked": "Agendar",
             "in-transit": "Pôr a caminho",
             "delivered": "Marcar como entregue",
             "closed": "Fechar",
@@ -150,20 +166,20 @@
         }
     },
     "blockers": {
-        "NO_DRIVER": "Indique o nome e o telefone do motorista primeiro.",
-        "NO_CARRIER": "Indique o parceiro que vai transportar a carga primeiro.",
-        "NO_PRICE": "Indique quanto vai pagar ao parceiro primeiro.",
         "NOTE_REQUIRED": "É necessário indicar o motivo.",
         "UNSETTLED": "Só pode fechar quando os pagamentos estiverem liquidados."
     },
     "dialogs": {
         "back": "Voltar",
-        "confirm": "Confirmar"
+        "confirm": "Confirmar",
+        "proceed-flagged": "Avançar mesmo assim"
     },
     "transition": {
         "description": "{ref} passa de {from} para {to}.",
+        "flagged-title": "A avançar com {count, plural, one {# alerta} other {# alertas}}",
         "consequence": {
             "in-transit": "O motorista começa a receber pedidos de localização por WhatsApp, e a carga conta para o plano deste mês.",
+            "in-transit-undriven": "A carga conta para o plano deste mês, mas sem motorista indicado não há a quem pedir a localização — indique um e os pedidos começam.",
             "cancelled": "Quem estiver ligado a esta carga é avisado, e um parceiro que já a tenha aceite fica com ela cancelada também.",
             "closed": "Uma carga fechada deixa de poder ser alterada."
         },
@@ -366,6 +382,7 @@
         "accepted-offer": "Aceite a partir de uma oferta",
         "moved": "Passou a {status}",
         "confirmation-sent": "Confirmação enviada para {to}",
+        "flags": "Avançou com alertas: {list}",
         "from-below": "Pelo transportador",
         "actions": {
             "offered": "Oferecida ao parceiro",
@@ -517,11 +534,13 @@
             "order": {
                 "procurement": "Ainda à procura de parceiro",
                 "scheduled": "Já confirmado com o parceiro",
+                "booked": "Confirmado e já agendado",
                 "in-transit": "Já a caminho"
             },
             "trip": {
                 "procurement": "Ainda em planeamento",
-                "scheduled": "Agendada",
+                "scheduled": "Confirmada",
+                "booked": "Agendada",
                 "in-transit": "Já a caminho"
             }
         },
@@ -531,8 +550,6 @@
             "weight": "Indique um peso válido.",
             "phone": "Indique um número de telefone válido.",
             "name": "Indique o nome.",
-            "partner": "Escolha o parceiro que vai transportar a carga.",
-            "driver": "Indique o motorista e o telefone para agendar ou pôr a caminho.",
             "reference": "Indique a referência.",
             "text": "O texto é demasiado longo."
         },
@@ -559,7 +576,8 @@
             "procurement": "A carga voltou à procura",
             "offered": "Carga oferecida",
             "declined": "Carga recusada",
-            "scheduled": "Carga agendada",
+            "scheduled": "Carga confirmada",
+            "booked": "Carga agendada",
             "in-transit": "Carga a caminho",
             "delivered": "Carga entregue",
             "closed": "Carga fechada",

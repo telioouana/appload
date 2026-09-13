@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { IconAlertTriangle } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
 
@@ -8,13 +9,13 @@ import { Button } from "@workspace/ui/components/button"
 import { Label } from "@workspace/ui/components/label"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { Textarea } from "@workspace/ui/components/textarea"
-import { Alert, AlertDescription } from "@workspace/ui/components/alert"
+import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
 
 import { planRefusal, type PlanReason } from "@/components/plan-dialog"
 import { movementErrorKey, type MovementErrorMessage } from "@/frontend/pages/movements/lib/errors"
 import { useMovementMutations } from "@/frontend/pages/movements/hooks/use-movement-mutations"
-import { useStatusLabel } from "@/frontend/pages/movements/components/badges"
+import { useFlagLabel, useStatusLabel } from "@/frontend/pages/movements/components/badges"
 import type { MovementDetail, TransitionOption } from "@/frontend/pages/movements/types"
 
 /** Mirrors TEXT_MAX on the transition schema. */
@@ -24,6 +25,10 @@ const NOTE_MAX = 500
  * Taking one move. Every move is confirmed — a load that left cannot un-leave
  * — and calling one off after it was scheduled asks for the reason, which
  * goes on the trail every company on the load reads.
+ *
+ * A move with something still missing is never refused, only flagged: the
+ * dialog names what is missing, offers a line to say why it goes ahead
+ * anyway, and the move itself records the flags it was taken with.
  */
 export function TransitionDialog({
     load,
@@ -38,6 +43,7 @@ export function TransitionDialog({
 }) {
     const t = useTranslations("App.loads")
     const statusLabel = useStatusLabel()
+    const flagLabel = useFlagLabel()
 
     const { transition } = useMovementMutations()
 
@@ -45,9 +51,14 @@ export function TransitionDialog({
     const [error, setError] = useState<MovementErrorMessage | null>(null)
 
     const cancelling = option.to === "cancelled"
+    const flagged = option.flags.length > 0
     // The moves that set something off beyond the status: the plan and the
-    // driver's messages, the chain below, the books
-    const consequence = option.to === "in-transit" || option.to === "cancelled" || option.to === "closed" ? option.to : null
+    // driver's messages, the chain below, the books. A load that leaves with
+    // nobody named gets only half of that — there is no phone to ask — and
+    // the dialog says so rather than promising messages that never go out
+    const consequence = option.to === "in-transit"
+        ? option.flags.includes("NO_DRIVER") ? "in-transit-undriven" : "in-transit"
+        : option.to === "cancelled" || option.to === "closed" ? option.to : null
     const missingNote = option.needsNote && note.trim().length === 0
 
     function submit() {
@@ -93,7 +104,20 @@ export function TransitionDialog({
                         </p>
                     )}
 
-                    {(cancelling || option.needsNote) && (
+                    {flagged && (
+                        <Alert variant="destructive">
+                            <IconAlertTriangle />
+                            <AlertTitle>{t("transition.flagged-title", { count: option.flags.length })}</AlertTitle>
+                            <AlertDescription>
+                                <ul className="list-disc pl-4">
+                                    {option.flags.map((flag) => <li key={flag}>{flagLabel(flag)}</li>)}
+                                </ul>
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
+                    {/* A flagged move is worth a line saying why it went ahead */}
+                    {(cancelling || option.needsNote || flagged) && (
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="transition-note">
                                 {option.needsNote ? t("transition.note-required") : t("transition.note")}
@@ -126,7 +150,7 @@ export function TransitionDialog({
                         onClick={submit}
                     >
                         {transition.isPending && <Spinner className="size-4" />}
-                        {t("dialogs.confirm")}
+                        {t(flagged ? "dialogs.proceed-flagged" : "dialogs.confirm")}
                     </Button>
                 </DialogFooter>
             </DialogContent>

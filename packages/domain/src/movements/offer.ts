@@ -423,7 +423,7 @@ export async function convertMovement(
             };
 
     if (input.to === "partner") {
-        if (row.status !== "procurement" && row.status !== "scheduled") {
+        if (row.status !== "procurement" && row.status !== "scheduled" && row.status !== "booked") {
             throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATUS" });
         }
 

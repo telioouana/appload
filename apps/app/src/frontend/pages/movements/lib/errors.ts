@@ -27,12 +27,15 @@ export const MOVEMENT_ERROR_KEYS = {
     TRUCK_NOT_REGISTERED: "rigNotRegistered",
     TRAILER_NOT_REGISTERED: "rigNotRegistered",
     LINK_NOT_REGISTERED: "rigNotRegistered",
-    // What a move needs before it can be taken (status.ts)
-    NO_DRIVER: "noDriver",
-    NO_CARRIER: "noCarrier",
-    NO_PRICE: "noPrice",
+    // The two moves that cannot be taken at all (status.ts). Everything else
+    // a load lacks is a flag the user may proceed past, not an error
     NOTE_REQUIRED: "noteRequired",
     UNSETTLED: "unsettled",
+    // What an offer to a partner on the portal still insists on (offer.ts),
+    // and what asking a driver where they are needs (requestLocation)
+    NO_CARRIER: "noCarrier",
+    NO_PRICE: "noPrice",
+    NO_DRIVER: "noDriver",
     // Money
     NO_SUCH_LEG: "noSuchLeg",
     LEG_HAS_PAYMENTS: "legHasPayments",

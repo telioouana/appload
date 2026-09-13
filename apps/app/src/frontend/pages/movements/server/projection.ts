@@ -23,7 +23,7 @@ import { terminalMovementId } from "@workspace/domain/movements/link";
 import { costTotals, exVat, legSettled, margin } from "@workspace/domain/movements/money";
 import { editableGroups, movementRole, type MovementRole } from "@workspace/domain/movements/policy";
 import { movementRef } from "@workspace/domain/movements/refs";
-import { isTerminal, ownerTargets, transitionBlocker } from "@workspace/domain/movements/status";
+import { isTerminal, MOVEMENT_FLAGS, movementFlags, ownerTargets, transitionBlocker } from "@workspace/domain/movements/status";
 import { MAPUTO_OFFSET_MS } from "@workspace/domain/tracking/slot";
 
 import type {
@@ -33,6 +33,7 @@ import type {
     MovementDetail,
     MovementDocumentView,
     MovementEventView,
+    MovementFlag,
     MovementMoney,
     MovementParty,
     MovementPermissions,
@@ -190,8 +191,10 @@ export function sectionPredicate(scope: MovementScope, section: MovementSection,
         const base = orderBase(tenantId);
 
         switch (section) {
-            case "procurement": return and(base, inArray(movement.status, ["procurement", "offered", "declined"])) as SQL;
-            case "booked": return and(base, eq(movement.status, "scheduled")) as SQL;
+            case "procurement": return and(base, inArray(movement.status, ["procurement", "declined"])) as SQL;
+            case "awarded": return and(base, eq(movement.status, "offered")) as SQL;
+            case "confirmed": return and(base, eq(movement.status, "scheduled")) as SQL;
+            case "booked": return and(base, eq(movement.status, "booked")) as SQL;
             case "in-transit": return and(base, eq(movement.status, "in-transit")) as SQL;
             case "delivered": return and(base, eq(movement.status, "delivered")) as SQL;
             case "history": return and(base, inArray(movement.status, ["closed", "cancelled"])) as SQL;
@@ -203,7 +206,8 @@ export function sectionPredicate(scope: MovementScope, section: MovementSection,
 
     switch (section) {
         case "planning": return and(base, eq(movement.status, "procurement")) as SQL;
-        case "scheduled": return and(base, eq(movement.status, "scheduled")) as SQL;
+        // A trip has nothing to confirm with anybody: agreed and booked are one tab
+        case "scheduled": return and(base, inArray(movement.status, ["scheduled", "booked"])) as SQL;
         case "in-transit": return and(base, eq(movement.status, "in-transit")) as SQL;
         case "delivered": return and(base, eq(movement.status, "delivered")) as SQL;
         case "history": return and(base, inArray(movement.status, ["closed", "cancelled"])) as SQL;
@@ -464,6 +468,20 @@ export function projectMoney(row: Movement, role: MovementRole, costs: readonly 
 
 const headline = (value: MoneyLeg | null) => (value ? { total: value.total, currency: value.currency } : null);
 
+/**
+ * What the guards and the flags read off a row: its own columns, whether each
+ * leg is settled — an own-fleet load has no partner to pay — and whether the
+ * truck is somebody else's. Loading photos are Batch C's; nothing reviews any
+ * yet, so there are never any waiting.
+ */
+const guardsOf = (row: Movement) => ({
+    ...row,
+    sellSettled: legSettled(row.sellTotal, row.sellSettlement),
+    buySettled: row.execution === "own-fleet" || legSettled(row.buyTotal, row.buySettlement),
+    linked: row.executionMovementId !== null,
+    unapprovedPhotos: 0,
+});
+
 // ---------------------------------------------------------------------------
 // Rows and details
 // ---------------------------------------------------------------------------
@@ -541,7 +559,7 @@ type DetailExtras = {
     executorOnPortal: boolean;
     costs: readonly CostRow[];
     documents: readonly MovementDocumentView[];
-    events: readonly (Omit<MovementEventView, "action" | "sentTo"> & { metadata: unknown; actorOrgId: string | null })[];
+    events: readonly (Omit<MovementEventView, "action" | "sentTo" | "flags"> & { metadata: unknown; actorOrgId: string | null })[];
     orgRole: OrgRole;
 };
 
@@ -590,6 +608,9 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
         respondedAt: role === "client" ? null : row.respondedAt,
         responseNote: role === "client" ? null : row.responseNote,
         hasParent: owner && extras.hasParent,
+        // What the load is missing as it stands. The owner's own reading of
+        // its own books: nobody else is told what its paperwork lacks
+        flags: owner ? movementFlags(guardsOf(row), row.status) : [],
         money,
         costs: owner
             ? extras.costs.map((cost) => ({
@@ -620,6 +641,10 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
                 action: readAction(event.metadata),
                 sentTo: readText(event.metadata, "sentTo"),
                 actorName: event.actorName,
+                // As on the load itself: what a move was taken without is the
+                // owner's own business, and its client is the last company
+                // that should read it off the trail
+                flags: owner ? readFlags(event.metadata) : [],
                 createdAt: event.createdAt,
             })),
         permissions: permissionsFor(row, role, extras),
@@ -637,6 +662,19 @@ function readText(metadata: unknown, key: string): string | null {
 }
 
 const readAction = (metadata: unknown): string | null => readText(metadata, "action");
+
+/**
+ * What a move was taken without, as its writer comma-joined it. Read back
+ * against the vocabulary rather than trusted: the column is jsonb, and a flag
+ * retired next month must not reach the page as a message key nobody has.
+ */
+function readFlags(metadata: unknown): MovementFlag[] {
+    const raw = readText(metadata, "flags");
+
+    if (!raw) return [];
+
+    return raw.split(",").filter((value): value is MovementFlag => (MOVEMENT_FLAGS as readonly string[]).includes(value));
+}
 
 /**
  * What the caller may do now. Decided here, from the same functions the
@@ -668,11 +706,7 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
     const writeResource = partner ? "order" : "trip";
     const mayWrite = can(writeResource, "update");
     const shape = { execution: row.execution, status: row.status, linked, executorOnPortal: extras.executorOnPortal };
-    const guards = {
-        ...row,
-        sellSettled: legSettled(row.sellTotal, row.sellSettlement),
-        buySettled: !partner || legSettled(row.buyTotal, row.buySettlement),
-    };
+    const guards = guardsOf(row);
 
     return {
         transitions: mayWrite
@@ -681,7 +715,7 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
                 // company to paying somebody — and calling one off unwinds
                 // that; both are above the plain member's role, the same way
                 // offering and cancelling are (procedures.ts mirrors this)
-                if (partner && row.status === "procurement" && (to === "scheduled" || to === "in-transit")) return can("order", "create");
+                if (partner && row.status === "procurement" && (to === "scheduled" || to === "booked" || to === "in-transit")) return can("order", "create");
                 if (partner && to === "cancelled") return can("order", "cancel");
                 return true;
             }).map((to) => {
@@ -690,7 +724,14 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
                 const blocker = transitionBlocker(guards, to, null);
                 const needsNote = blocker === "NOTE_REQUIRED";
 
-                return { to, blocker: needsNote ? transitionBlocker(guards, to, "noted") : blocker, needsNote };
+                return {
+                    to,
+                    blocker: needsNote ? transitionBlocker(guards, to, "noted") : blocker,
+                    needsNote,
+                    // What the move would be taken without, so the dialog can
+                    // say so before the trail records it
+                    flags: movementFlags(guards, to),
+                };
             })
             : [],
         editable: mayWrite
@@ -703,7 +744,7 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
         canConvert: can("order", "create") && (
             partner
                 ? !linked && (row.status === "procurement" || row.status === "declined")
-                : row.status === "procurement" || row.status === "scheduled"
+                : row.status === "procurement" || row.status === "scheduled" || row.status === "booked"
         ),
         canManageCosts: !isTerminal(row.status) && can("trip", "update"),
         canManageDocuments: can("document", "upload"),

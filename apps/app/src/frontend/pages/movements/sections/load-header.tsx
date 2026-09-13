@@ -4,6 +4,7 @@ import { IconArrowLeft } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
 
+import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 
 import type { TrackingAllowance } from "@workspace/domain/subscription"
@@ -60,6 +61,12 @@ export function LoadHeader({
                         <h1 className="font-heading truncate text-2xl font-semibold tracking-tight">{load.ref}</h1>
                         <MovementStatusChip status={load.status} execution={load.execution} />
                         {load.role === "owner" ? <ExecutionChip execution={load.execution} /> : <RoleChip role={load.role} />}
+                        {/* How much of the load is still to be filled in; the cards below say what */}
+                        {load.flags.length > 0 && (
+                            <Badge variant="outline" className="border-destructive/40 text-destructive rounded-full font-normal">
+                                {t("header.flags", { count: load.flags.length })}
+                            </Badge>
+                        )}
                     </div>
 
                     <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-sm">

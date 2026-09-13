@@ -11,7 +11,7 @@ import type { CATEGORIES, FISCAL_REGIME, ROUTE_TYPE, WEIGHT_UNIT } from "@worksp
 import type { MovementRole } from "@workspace/domain/movements/policy";
 import type { EditableGroup } from "@workspace/domain/movements/policy";
 import type { CostTotal, Currency, PaymentStatus } from "@workspace/domain/movements/money";
-import type { TransitionBlocker } from "@workspace/domain/movements/status";
+import type { MovementFlag, TransitionBlocker } from "@workspace/domain/movements/status";
 
 export type {
     CostTotal,
@@ -23,6 +23,7 @@ export type {
     MovementDocumentType,
     MovementEventKind,
     MovementExecution,
+    MovementFlag,
     MovementRole,
     MovementStatus,
     PaymentStatus,
@@ -44,7 +45,17 @@ export type WeightUnit = (typeof WEIGHT_UNIT)[number];
 export const MOVEMENT_SCOPES = ["orders", "trips"] as const;
 export type MovementScope = (typeof MOVEMENT_SCOPES)[number];
 
-export const ORDER_SECTIONS = ["all", "inbox", "procurement", "booked", "in-transit", "delivered", "history"] as const;
+export const ORDER_SECTIONS = [
+    "all",
+    "inbox",
+    "procurement",
+    "awarded",
+    "confirmed",
+    "booked",
+    "in-transit",
+    "delivered",
+    "history",
+] as const;
 export type OrderSection = (typeof ORDER_SECTIONS)[number];
 
 export const TRIP_SECTIONS = ["all", "planning", "scheduled", "in-transit", "delivered", "history"] as const;
@@ -188,16 +199,20 @@ export type MovementEventView = {
     sentTo: string | null;
     /** The company that acted; null when the move was carried up from below */
     actorName: string | null;
+    /** What the load was missing when this move was taken anyway */
+    flags: MovementFlag[];
     createdAt: Date;
 };
 
 /** A move the owner can see on the table, and whether it can be taken now. */
 export type TransitionOption = {
     to: MovementStatus;
-    /** Why the move cannot be taken yet, or null */
+    /** Why the move cannot be taken at all, or null */
     blocker: TransitionBlocker | null;
     /** The move is open, but only with a reason on record */
     needsNote: boolean;
+    /** What the load would still be missing there — proceeding is allowed, and recorded */
+    flags: MovementFlag[];
 };
 
 /** What the caller may do with this load right now, decided server-side. */
@@ -240,6 +255,8 @@ export type MovementDetail = MovementRow & {
     responseNote: string | null;
     /** This row is an executor's copy of an order another company placed */
     hasParent: boolean;
+    /** What the load is missing right now; the owner's own reading, empty for anybody else */
+    flags: MovementFlag[];
     money: MovementMoney;
     costs: MovementCostView[];
     documents: MovementDocumentView[];
@@ -334,16 +351,22 @@ export const isFilteredMovements = (get: Get) => FILTER_KEYS.some((key) => Boole
 export const scopeOf = (load: Pick<MovementRow, "execution" | "role">): MovementScope =>
     load.execution === "own-fleet" && load.role === "owner" ? "trips" : "orders";
 
-/** The section of that list a load sits in right now. */
+/**
+ * The section of that list a load sits in right now. Orders follow the whole
+ * lifecycle a tab at a time; a Trip has nobody to award it to and nothing to
+ * confirm, so agreeing it and booking it are one step there.
+ */
 export function sectionOf(load: Pick<MovementRow, "execution" | "role" | "status">): MovementSection {
     const { status } = load;
 
     if (status === "closed" || status === "cancelled") return "history";
     if (status === "in-transit" || status === "delivered") return status;
 
-    if (scopeOf(load) === "trips") return status === "scheduled" ? "scheduled" : "planning";
+    if (scopeOf(load) === "trips") return status === "scheduled" || status === "booked" ? "scheduled" : "planning";
 
-    if (load.role === "executor" && status === "offered") return "inbox";
+    if (status === "booked") return "booked";
+    if (status === "scheduled") return "confirmed";
+    if (status === "offered") return load.role === "executor" ? "inbox" : "awarded";
 
-    return status === "scheduled" ? "booked" : "procurement";
+    return "procurement";
 }

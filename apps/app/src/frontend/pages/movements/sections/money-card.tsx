@@ -11,7 +11,7 @@ import { Progress } from "@workspace/ui/components/progress"
 import { DetailRow, SectionCard } from "@workspace/ui/customs/detail/section-card"
 import { Dash } from "@workspace/ui/customs/list/table-cells"
 
-import { useMoney } from "@/frontend/pages/movements/components/badges"
+import { MissingValue, useMoney } from "@/frontend/pages/movements/components/badges"
 import { PaymentDialog } from "@/frontend/pages/movements/sections/payment-dialog"
 import type { MarginView, MoneyLeg, MovementDetail } from "@/frontend/pages/movements/types"
 
@@ -29,6 +29,9 @@ export function MoneyCard({ load }: { load: MovementDetail }) {
 
     const { payable, receivable, margin } = load.money
     const owner = load.role === "owner"
+    // A load running without an agreed price is not refused, only flagged —
+    // so the leg that has none says so where the figure would have been
+    const noPrice = load.flags.includes("NO_PRICE")
 
     return (
         <SectionCard
@@ -48,16 +51,23 @@ export function MoneyCard({ load }: { load: MovementDetail }) {
                         settledLabel={t("received")}
                     />
                 )}
-                {payable && (
+                {payable ? (
                     <LegBlock
                         title={t(owner ? "payable.owner" : "payable.client")}
                         leg={payable}
                         settledLabel={t("paid")}
                     />
+                ) : noPrice && (
+                    <div className="bg-muted/40 flex flex-col gap-1 rounded-xl px-4 py-3">
+                        <span className="text-muted-foreground text-xs font-medium">
+                            {t(owner ? "payable.owner" : "payable.client")}
+                        </span>
+                        <MissingValue flag="NO_PRICE" className="text-sm" />
+                    </div>
                 )}
             </div>
 
-            {owner && !receivable && !payable && <p className="text-muted-foreground text-sm">{t("no-legs")}</p>}
+            {owner && !receivable && !payable && !noPrice && <p className="text-muted-foreground text-sm">{t("no-legs")}</p>}
 
             {/* With no price on either side there is no margin to explain */}
             {margin && (receivable || payable) && <MarginBlock margin={margin} />}

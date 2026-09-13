@@ -32,12 +32,17 @@ export type MovementExecution = (typeof MOVEMENT_EXECUTION)[number];
  * executor can answer for itself on the portal. An off-platform partner has
  * nobody to click accept, so the owner goes straight to scheduled or
  * in-transit — see @workspace/domain/movements/status.
+ *
+ * "scheduled" is the load agreed; "booked" is the day, the truck and the
+ * driver arranged for it. The portal labels them "Confirmed" and "Booked";
+ * a Trip shows both as one step, since planning a trip is arranging it.
  */
 export const MOVEMENT_STATUS = [
     "procurement",
     "offered",
     "declined",
     "scheduled",
+    "booked",
     "in-transit",
     "delivered",
     "closed",

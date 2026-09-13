@@ -16,7 +16,7 @@
  */
 import fs from "node:fs";
 
-import { and, count, eq, inArray } from "drizzle-orm";
+import { and, count, desc, eq, inArray } from "drizzle-orm";
 
 import { db } from "@workspace/db/db";
 import {
@@ -27,6 +27,7 @@ import {
     movementLocation,
     movementRoute,
     movementTrackingRequest,
+    type MovementStatus,
 } from "@workspace/db/movements";
 import { notification } from "@workspace/db/notifications";
 import { subscriptionUsage } from "@workspace/db/subscriptions";
@@ -120,6 +121,25 @@ async function expectError(name: string, run: () => Promise<unknown>, message: s
 
 const created: string[] = [];
 
+/**
+ * The flags a load's move into one status was written with, comma-joined the
+ * way the door wrote them — what the trail will have to answer for later.
+ */
+async function flagsOn(movementId: string, toStatus: MovementStatus): Promise<string | null> {
+    const [row] = await db
+        .select({ metadata: movementEvent.metadata })
+        .from(movementEvent)
+        .where(and(
+            eq(movementEvent.movementId, movementId),
+            eq(movementEvent.kind, "status"),
+            eq(movementEvent.toStatus, toStatus),
+        ))
+        .orderBy(desc(movementEvent.createdAt))
+        .limit(1);
+
+    return (row?.metadata as { flags?: string } | null)?.flags ?? null;
+}
+
 async function cleanup() {
     if (created.length === 0) return;
 
@@ -194,7 +214,7 @@ async function main() {
         b.respond({ id: filed.id, expectedVersion: offered.version, decision: "accept" }), "NOT_FOUND");
 
     aDetail = await a.get({ id: filed.id });
-    check("A's order is booked", aDetail.status === "scheduled", aDetail.status);
+    check("A's order is confirmed", aDetail.status === "scheduled", aDetail.status);
     check("A's order is linked to B's truck", aDetail.isLinked);
     check("A's agreed terms froze", !aDetail.permissions.editable.includes("details") && !aDetail.permissions.editable.includes("buy"), aDetail.permissions.editable);
 
@@ -218,6 +238,37 @@ async function main() {
 
     await expectError("A cannot move the destination after acceptance", () =>
         a.update({ id: filed.id, expectedVersion: aDetail.version, destination: origin }), "FIELD_LOCKED");
+
+    console.log("\n— B books the load before it has a rig: flagged, never blocked");
+    const aConfirmed = await a.list({ scope: "orders", section: "confirmed" });
+    check("A's order waits in Confirmed", aConfirmed.items.some((row) => row.id === filed.id), aConfirmed.items.map((row) => row.ref));
+
+    bOwn = await b.get({ id: accepted.id });
+    const booking = bOwn.permissions.transitions.find((option) => option.to === "booked");
+    check("B is offered Book", Boolean(booking), bOwn.permissions.transitions.map((option) => option.to));
+    check("…with nothing standing in the way of it", booking?.blocker === null && !booking.needsNote, booking);
+    check("…but flagged for the driver and the truck it has not named", booking?.flags.join(",") === "NO_DRIVER,NO_TRUCK", booking?.flags);
+    check("…while the load, only confirmed so far, is missing nothing yet", bOwn.flags.length === 0, bOwn.flags);
+
+    const booked = await b.transition({ id: accepted.id, to: "booked", expectedVersion: bOwn.version });
+    check("the move goes through anyway", booked.status === "booked", booked);
+    check("…and the trail records what it went through without", await flagsOn(accepted.id, "booked") === "NO_DRIVER,NO_TRUCK", await flagsOn(accepted.id, "booked"));
+
+    bOwn = await b.get({ id: accepted.id });
+    check("…which is what the load now shows as open", bOwn.flags.join(",") === "NO_DRIVER,NO_TRUCK", bOwn.flags);
+
+    aDetail = await a.get({ id: filed.id });
+    check("A's order followed it into Booked", aDetail.status === "booked", aDetail.status);
+    const carriedUp = aDetail.events.filter((event) => event.kind === "system" && event.toStatus === "booked");
+    check("…carried up once, with nobody named as having done it", carriedUp.length === 1 && carriedUp[0]?.actorName === null, carriedUp);
+    check("…and B's gaps stay B's: A's order shows none", aDetail.flags.length === 0, aDetail.flags);
+    check("…nor does its trail leak them", aDetail.events.every((event) => event.flags.length === 0), aDetail.events);
+    check("…and A, whose truck this is not, may only call it off", aDetail.permissions.transitions.map((option) => option.to).join(",") === "cancelled", aDetail.permissions.transitions);
+
+    const aBooked = await a.list({ scope: "orders", section: "booked" });
+    const aStillConfirmed = await a.list({ scope: "orders", section: "confirmed" });
+    check("…and it moved from Confirmed to Booked", aBooked.items.some((row) => row.id === filed.id)
+        && !aStillConfirmed.items.some((row) => row.id === filed.id), { booked: aBooked.items.map((row) => row.ref), confirmed: aStillConfirmed.items.map((row) => row.ref) });
 
     console.log("\n— B names its driver and the truck leaves");
     const phone = "+258840000999";
@@ -351,6 +402,7 @@ async function hardening() {
     check("A's orders list shows the load once, as its own order", aOrders.items.filter((row) => row.id === accepted.id || row.id === filed.id).map((row) => row.id).join() === filed.id, aOrders.items.map((row) => row.ref));
     const aAsClient = await a.get({ id: accepted.id });
     check("A opening B's row by id reads it as the client, with no phone", aAsClient.role === "client" && aAsClient.driverPhone === null && aAsClient.money.receivable === null, { role: aAsClient.role, phone: aAsClient.driverPhone });
+    check("…and never what B's own paperwork was missing", aAsClient.flags.length === 0 && aAsClient.events.every((event) => event.flags.length === 0), { flags: aAsClient.flags, events: aAsClient.events });
     await expectError("…and cannot move it", () => a.transition({ id: accepted.id, to: "in-transit", expectedVersion: named.version }), "NOT_FOUND");
 
     console.log("\n— one notification per milestone, not one per role");
@@ -397,6 +449,40 @@ async function hardening() {
     const [bothA] = await db.select({ status: movement.status }).from(movement).where(eq(movement.id, second.id));
     const [bothB] = await db.select({ status: movement.status }).from(movement).where(eq(movement.id, secondAccept.id));
     check("otherwise both rows are cancelled together", bothA?.status === "cancelled" && bothB?.status === "cancelled", { bothA, bothB });
+
+    console.log("\n— and once it is booked, from either end");
+    const fourth = await a.create({
+        execution: "partner", carrierOrgId: B.org, origin, destination, cargoDescription: "HARNESS booked cancel",
+        buy: { total: 1200, currency: "MZN" },
+    });
+    created.push(fourth.id);
+    aDetail = await a.get({ id: fourth.id });
+    const fourthOffer = await a.offer({ id: fourth.id, expectedVersion: aDetail.version });
+    const fourthAccept = await b.respond({ id: fourth.id, expectedVersion: fourthOffer.version, decision: "accept" });
+    created.push(fourthAccept.id);
+    const fourthOwn = await b.get({ id: fourthAccept.id });
+    const fourthBooked = await b.transition({ id: fourthAccept.id, to: "booked", expectedVersion: fourthOwn.version });
+    await b.transition({ id: fourthAccept.id, to: "cancelled", expectedVersion: fourthBooked.version, note: "HARNESS truck broke down" });
+    aDetail = await a.get({ id: fourth.id });
+    check("B dropping its booked row hands the load back to A", aDetail.status === "declined", aDetail.status);
+    check("…unlinked, for A to place with somebody else", !aDetail.isLinked, aDetail.isLinked);
+
+    const fifth = await a.create({
+        execution: "partner", carrierOrgId: B.org, origin, destination, cargoDescription: "HARNESS booked cancel from above",
+        buy: { total: 1300, currency: "MZN" },
+    });
+    created.push(fifth.id);
+    aDetail = await a.get({ id: fifth.id });
+    const fifthOffer = await a.offer({ id: fifth.id, expectedVersion: aDetail.version });
+    const fifthAccept = await b.respond({ id: fifth.id, expectedVersion: fifthOffer.version, decision: "accept" });
+    created.push(fifthAccept.id);
+    const fifthOwn = await b.get({ id: fifthAccept.id });
+    await b.transition({ id: fifthAccept.id, to: "booked", expectedVersion: fifthOwn.version });
+    aDetail = await a.get({ id: fifth.id });
+    await a.transition({ id: fifth.id, to: "cancelled", expectedVersion: aDetail.version, note: "HARNESS client changed plans" });
+    const [topA] = await db.select({ status: movement.status }).from(movement).where(eq(movement.id, fifth.id));
+    const [topB] = await db.select({ status: movement.status }).from(movement).where(eq(movement.id, fifthAccept.id));
+    check("A calling off a booked order takes B's booked row with it", topA?.status === "cancelled" && topB?.status === "cancelled", { topA, topB });
 
     console.log("\n— an executor reads its own offer round, and nothing before it");
     const third = await a.create({
@@ -454,6 +540,30 @@ async function hardening() {
     await b.recordPayment({ id: bPartner.id, expectedVersion: repriced.version, leg: "buy", amount: -500, reference: "HARNESS typed 3000, paid 2500" });
     bp = await b.get({ id: bPartner.id });
     check("a correction brings the leg back to partial", bp.money.payable?.settled === 2500 && bp.money.payable.settlement === "partially", bp.money.payable);
+
+    console.log("\n— a load may be filed with nothing on it, and says so");
+    const bare = await a.create({
+        execution: "partner", origin, destination, cargoDescription: "HARNESS flagged", status: "scheduled",
+    });
+    created.push(bare.id);
+    const bareDetail = await a.get({ id: bare.id });
+    check("an order placed with nobody, for no price, is filed all the same", bareDetail.status === "scheduled", bareDetail.status);
+    check("…and its first trail line says what it was filed without", await flagsOn(bare.id, "scheduled") === "NO_CARRIER,NO_PRICE", await flagsOn(bare.id, "scheduled"));
+    check("…as does the load", bareDetail.flags.join(",") === "NO_CARRIER,NO_PRICE", bareDetail.flags);
+
+    console.log("\n— the two moves that still cannot be taken");
+    const rigless = await b.create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS booked", status: "scheduled" });
+    created.push(rigless.id);
+    let riglessDetail = await b.get({ id: rigless.id });
+    check("a trip is scheduled with no driver at all", riglessDetail.status === "scheduled", riglessDetail.status);
+    const riglessBooked = await b.transition({ id: rigless.id, to: "booked", expectedVersion: riglessDetail.version });
+    check("…and booked without one", riglessBooked.status === "booked", riglessBooked);
+    check("…with both gaps on the trail", await flagsOn(rigless.id, "booked") === "NO_DRIVER,NO_TRUCK", await flagsOn(rigless.id, "booked"));
+    await expectError("calling a booked load off still needs a reason", () =>
+        b.transition({ id: rigless.id, to: "cancelled", expectedVersion: riglessBooked.version }), "NOTE_REQUIRED");
+    await b.transition({ id: rigless.id, to: "cancelled", expectedVersion: riglessBooked.version, note: "HARNESS no truck free" });
+    riglessDetail = await b.get({ id: rigless.id });
+    check("…and goes through with one", riglessDetail.status === "cancelled", riglessDetail.status);
 
     console.log("\n— closed books stay closed");
     const own = await b.create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS closed", driverName: "HARNESS Three", driverPhone: "+258840000997", status: "scheduled" });

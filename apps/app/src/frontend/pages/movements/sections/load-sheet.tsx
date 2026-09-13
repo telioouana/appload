@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useForm, useWatch, type Control, type FieldPath } from "react-hook-form"
+import { useForm, useWatch, type Control } from "react-hook-form"
 import { useQuery } from "@tanstack/react-query"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { IconCancel, IconDeviceFloppy, IconLoader2, IconTruck, IconUsersGroup } from "@tabler/icons-react"
@@ -270,10 +270,6 @@ export function LoadSheet({
         if (partnerOnPortal && getValues("status") !== "procurement") setValue("status", "procurement")
     }, [partnerOnPortal, getValues, setValue])
 
-    function refuse(field: FieldPath<LoadForm>, key: LoadMessageField) {
-        form.setError(field, { message: t(`errors.${key}`) })
-    }
-
     function rigInput(values: LoadForm): Partial<CreateMovementInput> {
         if (!asksRig) return {}
 
@@ -290,28 +286,9 @@ export function LoadSheet({
     }
 
     function onCreate(values: LoadForm) {
-        const leaving = values.status !== "procurement"
-
-        // The same rules the server applies to leaving procurement, asked
-        // here so the answer lands on the field rather than in a toast
-        if (leaving && values.execution === "own-fleet" && values.driverId === NONE) {
-            refuse("driverId", "driver")
-            return
-        }
-        if (leaving && values.execution === "own-fleet" && values.driverId === TYPED
-            && (!values.driverName.trim() || !values.phoneNumber.trim())) {
-            refuse(values.driverName.trim() ? "phoneNumber" : "driverName", "driver")
-            return
-        }
-        if (values.execution === "partner" && values.carrierOrgId === NONE && leaving) {
-            refuse("carrierOrgId", "partner")
-            return
-        }
-        if (values.execution === "partner" && leaving && !values.buyTotal.trim()) {
-            refuse("buyTotal", "amount")
-            return
-        }
-
+        // A load filed without a driver, a partner or a price is not refused:
+        // it is filed flagged, and the flags are on the load's page from the
+        // moment it exists. Only the plan still stops a truck going out
         if (values.status === "in-transit") {
             const blocked = planBlock(allowance)
             if (blocked) {
@@ -674,7 +651,7 @@ export function LoadSheet({
                                             label={t("fields.status")}
                                             description={status === "in-transit" ? t("fields.status-in-transit-hint") : t("fields.status-hint")}
                                         >
-                                            {(["procurement", "scheduled", "in-transit"] as const).map((value) => (
+                                            {(["procurement", "scheduled", "booked", "in-transit"] as const).map((value) => (
                                                 <SelectItem key={value} value={value}>
                                                     {t(`statuses.${partner ? "order" : "trip"}.${value}`)}
                                                 </SelectItem>

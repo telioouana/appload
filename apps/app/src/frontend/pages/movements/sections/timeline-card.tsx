@@ -6,7 +6,7 @@ import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useStatusLabel } from "@/frontend/pages/movements/components/badges"
+import { useFlagLabel, useStatusLabel } from "@/frontend/pages/movements/components/badges"
 import type { MovementDetail, MovementEventView } from "@/frontend/pages/movements/types"
 
 /** What a line on the trail can say, by what its writer recorded. */
@@ -58,6 +58,7 @@ function EventLine({ event, load, last }: { event: MovementEventView; load: Move
     const t = useTranslations("App.loads.timeline")
     const f = useFormatter()
     const statusLabel = useStatusLabel()
+    const flagLabel = useFlagLabel()
 
     const headline = (): string => {
         const status = event.toStatus ? statusLabel(event.toStatus, load.execution) : null
@@ -89,6 +90,12 @@ function EventLine({ event, load, last }: { event: MovementEventView; load: Move
 
             <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="text-[13px] font-medium">{headline()}</span>
+                {/* The move went ahead with something still missing; this is what */}
+                {event.flags.length > 0 && (
+                    <span className="text-destructive text-xs">
+                        {t("flags", { list: event.flags.map(flagLabel).join(", ") })}
+                    </span>
+                )}
                 <span className="text-muted-foreground text-xs">
                     {[actor, f.dateTime(event.createdAt, { dateStyle: "medium", timeStyle: "short" })].filter(Boolean).join(" · ")}
                 </span>

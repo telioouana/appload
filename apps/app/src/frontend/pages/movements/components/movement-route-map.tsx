@@ -19,6 +19,7 @@ const PIN_STATUS: Record<MovementStatus, OrderStatus> = {
     "offered": "prospect",
     "declined": "prospect",
     "scheduled": "booked",
+    "booked": "to-loading",
     "in-transit": "on-route",
     "delivered": "delivered",
     "closed": "completed",

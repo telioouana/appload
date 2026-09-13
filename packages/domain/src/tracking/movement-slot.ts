@@ -79,9 +79,10 @@ export async function runMovementTrackingSlot(db: typeof Database, info: SlotInf
         .where(and(
             eq(movement.status, "in-transit"),
             eq(movement.trackingEnabled, true),
-            // Both are set before a movement may leave procurement, so these
-            // only ever restate the invariant — and they keep the nullable
-            // columns honest for the reader and for the partial index
+            // A load may be put on the road with no driver named — that is
+            // flagged, never blocked — and there is nobody to ask where it
+            // is until somebody names one, so it is skipped here rather than
+            // pinged into the void
             isNotNull(movement.driverPhone),
             isNotNull(movement.driverName),
             // Only the row that holds the truck. When A hands a load to B and

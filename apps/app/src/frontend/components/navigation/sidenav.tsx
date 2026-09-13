@@ -6,12 +6,15 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
     type Icon,
+    IconAward,
     IconBell,
     IconBox,
     IconBuildingWarehouse,
     IconCalendarClock,
     IconChartHistogram,
     IconChecks,
+    IconCircleCheck,
+    IconClipboardList,
     IconContainer,
     IconFileInvoice,
     IconHistory,
@@ -46,7 +49,7 @@ import { UNREAD_POLL_MS } from "@/frontend/pages/notifications/types";
 import { sectionsFor } from "@/frontend/pages/orders/types";
 import { useNewLoad } from "@/frontend/pages/movements/hooks/use-new-load";
 import { NewLoadSheet } from "@/frontend/pages/movements/sections/new-load-sheet";
-import { ORDER_SECTIONS, TRIP_SECTIONS } from "@/frontend/pages/movements/types";
+import { ORDER_SECTIONS, TRIP_SECTIONS, type OrderSection } from "@/frontend/pages/movements/types";
 
 import { NavUser } from "./nav-user";
 
@@ -72,12 +75,16 @@ type NavLink = {
     badge?: number;
 };
 
-// A parent group, always open: `match` is only used for active matching; the
-// row itself is never a link.
+// A parent group, always open; the row itself is never a link. It has no path
+// of its own: it reads as current when one of the leaves under it does, which
+// is what lets two groups draw two halves of the same list.
 type NavGroup = {
     Icon: Icon;
     name: string;
-    match: string;
+    /** The React key */
+    id: string;
+    /** A page under the group that belongs to no leaf, so the rail still lights there */
+    match?: string;
     items: NavLink[];
     // No badge of its own on purpose: a count on the parent only says that
     // something below needs a hand, never which page to open. The children
@@ -100,11 +107,18 @@ const ORDER_ICONS: Record<(typeof ORDER_SECTIONS)[number], Icon> = {
     "all": IconList,
     "inbox": IconInbox,
     "procurement": IconSearch,
+    "awarded": IconAward,
+    "confirmed": IconCircleCheck,
     "booked": IconCalendarClock,
     "in-transit": IconTruckDelivery,
     "delivered": IconChecks,
     "history": IconHistory,
 };
+
+// The Orders list is drawn by two groups rather than one: placing the load,
+// then running it. Between them they cover ORDER_SECTIONS exactly once.
+const PROCUREMENT_SECTIONS = ["procurement", "awarded", "confirmed", "booked"] as const satisfies readonly OrderSection[];
+const OPERATIONS_SECTIONS = ["inbox", "in-transit", "delivered", "history", "all"] as const satisfies readonly OrderSection[];
 
 const TRIP_ICONS: Record<(typeof TRIP_SECTIONS)[number], Icon> = {
     "all": IconList,
@@ -175,24 +189,35 @@ export function Sidenav({
         { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", path: "/analytics" },
     ]
 
+    const orderSection = (section: OrderSection): NavLink => ({
+        Icon: ORDER_ICONS[section],
+        name: tl(section),
+        match: `/orders/${section}`,
+        path: { pathname: "/orders/[section]", params: { section } },
+        badge: section === "inbox" ? counts?.inbox : section === "procurement" ? counts?.declined : undefined,
+    })
+
     const ops: NavEntry[] = [
         {
+            Icon: IconClipboardList,
+            name: t("work.procurement"),
+            id: "orders-procurement",
+            items: PROCUREMENT_SECTIONS.map(orderSection),
+        },
+        {
             Icon: IconBox,
-            name: t("work.orders"),
-            match: "/orders",
+            name: t("work.operations"),
+            id: "orders-operations",
+            // A load's own page belongs to no section, so this half of the
+            // list owns it — the rail is never blank while one is open
+            match: "/orders/load",
             // A shipper is never offered work, so it has no inbox to open
-            items: ORDER_SECTIONS.filter((section) => carrier || section !== "inbox").map((section) => ({
-                Icon: ORDER_ICONS[section],
-                name: tl(section),
-                match: `/orders/${section}`,
-                path: { pathname: "/orders/[section]", params: { section } },
-                badge: section === "inbox" ? counts?.inbox : section === "procurement" ? counts?.declined : undefined,
-            })),
+            items: OPERATIONS_SECTIONS.filter((section) => carrier || section !== "inbox").map(orderSection),
         },
         {
             Icon: IconRoute,
             name: t("work.trips"),
-            match: "/trips",
+            id: "trips",
             items: TRIP_SECTIONS.map((section) => ({
                 Icon: TRIP_ICONS[section],
                 name: tl(section),
@@ -205,7 +230,7 @@ export function Sidenav({
             // requests and offers it runs through Appload, and the quotes
             Icon: IconContainer,
             name: t("work.appload"),
-            match: "/appload",
+            id: "appload",
             items: [
                 ...sectionsFor(orgType).map((section) => ({
                     Icon: APPLOAD_ICONS[section],
@@ -235,7 +260,7 @@ export function Sidenav({
             // shipper's moves its own goods between its own sites
             Icon: IconTruck,
             name: t("company.fleet"),
-            match: "/fleet",
+            id: "fleet",
             items: [
                 { Icon: IconTruck, name: t("company.trucks"), match: "/fleet/trucks", path: { pathname: "/fleet/[kind]", params: { kind: "trucks" } } },
                 { Icon: IconContainer, name: t("company.trailers"), match: "/fleet/trailers", path: { pathname: "/fleet/[kind]", params: { kind: "trailers" } } },
@@ -268,10 +293,14 @@ export function Sidenav({
     const isOn = (match: string) => current === match || current.startsWith(`${match}/`)
 
     const renderEntries = (entries: NavEntry[]) => entries.map((item) => {
-        const isActive = isOn(item.match);
+        // A group has nowhere of its own to be: it is current when one of its
+        // own sections is, so two groups over one list light up separately
+        const isActive = "items" in item
+            ? item.items.some((subItem) => isOn(subItem.match)) || (item.match ? isOn(item.match) : false)
+            : isOn(item.match);
 
         return (
-            <SidebarMenuItem key={item.match}>
+            <SidebarMenuItem key={"items" in item ? item.id : item.match}>
                 <SidebarMenuButton
                     // Always wrapping our own element: a Link for a leaf, and a
                     // plain div for a group, which has nothing to toggle and so

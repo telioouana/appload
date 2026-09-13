@@ -1,7 +1,7 @@
 "use client"
 
 import { useSuspenseQuery } from "@tanstack/react-query"
-import { IconCalendarClock, IconInbox, IconSearch, IconSteeringWheel, IconTruckDelivery, IconUsersGroup } from "@tabler/icons-react"
+import { IconCircleCheck, IconInbox, IconSearch, IconSteeringWheel, IconTruckDelivery, IconUsersGroup } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
 
@@ -11,9 +11,9 @@ import { StatTile, type StatTileProps } from "@/frontend/pages/dashboard/compone
 /**
  * The company's own loads at a glance, before anything Appload brokers for
  * it: what partners are waiting on it to answer (a shipper, which is never
- * offered work, sees what it has booked instead), what it is still placing,
- * what its own fleet has still to plan, and what its trucks and its
- * partners' have on the road.
+ * offered work, sees what a partner has confirmed instead), what it is still
+ * drafting, what its own fleet has still to plan, and what its trucks and
+ * its partners' have on the road.
  *
  * Every number is a section of the Orders or Trips list and opens it — the
  * same stats those lists' own tiles read.
@@ -41,12 +41,12 @@ export function LoadsTiles() {
                 href: { pathname: "/orders/[section]", params: { section: "inbox" } },
             }
             : {
-                key: "booked",
-                Icon: IconCalendarClock,
-                label: tiles("booked"),
-                value: count(orders, "booked"),
-                hint: tiles("booked-hint"),
-                href: { pathname: "/orders/[section]", params: { section: "booked" } },
+                key: "confirmed",
+                Icon: IconCircleCheck,
+                label: tiles("confirmed"),
+                value: count(orders, "confirmed"),
+                hint: tiles("confirmed-hint"),
+                href: { pathname: "/orders/[section]", params: { section: "confirmed" } },
             },
         {
             key: "procurement",

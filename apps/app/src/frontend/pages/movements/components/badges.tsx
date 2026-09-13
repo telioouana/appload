@@ -13,6 +13,7 @@ import type {
     Currency,
     Location,
     MovementExecution,
+    MovementFlag,
     MovementPing,
     MovementRole,
     MovementStatus,
@@ -32,6 +33,7 @@ const TONE: Record<MovementStatus, OrderStatusKey> = {
     "offered": "waiting-documents",
     "declined": "cancelled",
     "scheduled": "booked",
+    "booked": "to-loading",
     "in-transit": "on-route",
     "delivered": "delivered",
     "closed": "completed",
@@ -80,6 +82,24 @@ export function RoleChip({ role }: { role: MovementRole }) {
             {t(role)}
         </Badge>
     )
+}
+
+/**
+ * What one missing thing is called. Nothing on a load is ever blocked for
+ * want of a driver, a truck, a partner or a price — it is flagged, and the
+ * flag is the name of what is still to be filled in.
+ */
+export function useFlagLabel() {
+    const t = useTranslations("App.loads.flags")
+
+    return (flag: MovementFlag) => t(flag)
+}
+
+/** Said in red where the value of a flagged field would have been. */
+export function MissingValue({ flag, className }: { flag: MovementFlag; className?: string }) {
+    const label = useFlagLabel()
+
+    return <span className={cn("text-destructive", className)}>{label(flag)}</span>
 }
 
 /** Trip or order — which of the two shapes a load is. */

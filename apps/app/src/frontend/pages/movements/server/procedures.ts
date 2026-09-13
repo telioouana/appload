@@ -34,7 +34,7 @@ import { settlementStatus } from "@workspace/domain/movements/money";
 import { assertExecutor, convertMovement, offerMovement, respondToOffer, withdrawOffer } from "@workspace/domain/movements/offer";
 import { editableGroups, isExecutorOf, movementRole, type EditableGroup } from "@workspace/domain/movements/policy";
 import { movementRef } from "@workspace/domain/movements/refs";
-import { transitionBlocker } from "@workspace/domain/movements/status";
+import { movementFlags } from "@workspace/domain/movements/status";
 import { notify } from "@workspace/domain/notifications";
 import { assertTrackingAllowance, recordTrackingUsage } from "@workspace/domain/subscription";
 import { startConversation } from "@workspace/domain/tracking/conversations";
@@ -536,9 +536,9 @@ export const movementsRouter = createTRPCRouter({
     /**
      * Files a load. Its own truck, or a partner's; for somebody, or for the
      * company itself. It starts in procurement unless the caller says it is
-     * already scheduled or on the road — the same rules as moving it there
-     * later, checked the same way, and "already on the road" is the half that
-     * spends a tracked movement.
+     * already scheduled or on the road — whatever the load is missing at that
+     * status is flagged on its first trail line rather than refused, and
+     * "already on the road" is the half that spends a tracked movement.
      */
     create: tenantProcedure
         .input(CreateMovementBaseSchema)
@@ -599,25 +599,26 @@ export const movementsRouter = createTRPCRouter({
                 createdBy: ctx.tenant.userId,
             };
 
-            if (input.status !== "procurement") {
-                const blocker = transitionBlocker(
-                    {
-                        execution: input.execution,
-                        status: "procurement",
-                        driverName: values.driverName ?? null,
-                        driverPhone: values.driverPhone ?? null,
-                        carrierOrgId: values.carrierOrgId ?? null,
-                        carrierName: values.carrierName ?? null,
-                        buyTotal: values.buyTotal ?? null,
-                        buyCurrency: values.buyCurrency ?? null,
-                        sellSettled: true,
-                        buySettled: true,
-                    },
-                    input.status,
-                );
-
-                if (blocker) throw new TRPCError({ code: "PRECONDITION_FAILED", message: blocker });
-            }
+            // A load filed with gaps is filed anyway; what it was missing on
+            // the day goes on the trail beside who filed it
+            const flags = movementFlags(
+                {
+                    execution: input.execution,
+                    status: input.status,
+                    driverName: values.driverName ?? null,
+                    driverPhone: values.driverPhone ?? null,
+                    carrierOrgId: values.carrierOrgId ?? null,
+                    carrierName: values.carrierName ?? null,
+                    buyTotal: values.buyTotal ?? null,
+                    buyCurrency: values.buyCurrency ?? null,
+                    sellSettled: true,
+                    buySettled: true,
+                    linked: false,
+                    truckPlate: values.truckPlate ?? null,
+                    unapprovedPhotos: 0,
+                },
+                input.status,
+            );
 
             if (input.status === "in-transit") await assertTrackingAllowance(ctx.db, tenantId);
 
@@ -633,7 +634,7 @@ export const movementsRouter = createTRPCRouter({
                 kind: "status",
                 actor: actorOf(ctx.tenant),
                 toStatus: created.status,
-                metadata: { action: "created" },
+                metadata: { action: "created", ...(flags.length > 0 && { flags: flags.join(",") }) },
             });
 
             if (created.status === "in-transit") {
@@ -872,7 +873,7 @@ export const movementsRouter = createTRPCRouter({
                 // Scheduling a partner load out of procurement is placing it —
                 // committing the company to paying somebody — the same act an
                 // offer is, and it takes the same role
-                if (row.status === "procurement" && (input.to === "scheduled" || input.to === "in-transit")) {
+                if (row.status === "procurement" && (input.to === "scheduled" || input.to === "booked" || input.to === "in-transit")) {
                     assertCan(ctx.tenant.role, "order", "create");
                 }
 
@@ -1206,7 +1207,7 @@ export const movementsRouter = createTRPCRouter({
             // truck arrives, and the server holds the same line rather than
             // trusting it — anything else is a send out of Appload's domain on
             // a row that has no confirmation to make.
-            if (row.status !== "scheduled" && row.status !== "in-transit") {
+            if (row.status !== "scheduled" && row.status !== "booked" && row.status !== "in-transit") {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "NOT_SENDABLE" });
             }
 

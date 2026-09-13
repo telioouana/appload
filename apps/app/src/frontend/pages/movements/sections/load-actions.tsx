@@ -2,8 +2,10 @@
 
 import { useRef, useState } from "react"
 import {
+    IconAlertTriangle,
     IconArrowBackUp,
     IconBan,
+    IconCalendarCheck,
     IconCheck,
     IconDots,
     IconFlagCheck,
@@ -35,6 +37,7 @@ import {
 import type { TrackingAllowance } from "@workspace/domain/subscription"
 
 import { PlanDialog, planBlock, type PlanReason } from "@/components/plan-dialog"
+import { useFlagLabel } from "@/frontend/pages/movements/components/badges"
 import { useMovementMutations } from "@/frontend/pages/movements/hooks/use-movement-mutations"
 import { ConvertDialog } from "@/frontend/pages/movements/sections/convert-dialog"
 import { LoadSheet } from "@/frontend/pages/movements/sections/load-sheet"
@@ -47,6 +50,7 @@ import type { MovementDetail, MovementStatus, OrgType, TransitionOption } from "
 const MOVE_ICONS: Partial<Record<MovementStatus, Icon>> = {
     "procurement": IconArrowBackUp,
     "scheduled": IconCalendarClock,
+    "booked": IconCalendarCheck,
     "in-transit": IconTruckDelivery,
     "delivered": IconFlagCheck,
     "closed": IconLock,
@@ -82,6 +86,7 @@ export function LoadActions({
     organizationName: string
 }) {
     const t = useTranslations("App.loads")
+    const flagLabel = useFlagLabel()
     const { permissions } = load
 
     const { withdraw, requestLocation } = useMovementMutations()
@@ -116,7 +121,7 @@ export function LoadActions({
     // from the moment the load is placed with it until the truck arrives
     const canConfirm = permissions.canManageDocuments
         && load.execution === "partner"
-        && (load.status === "scheduled" || load.status === "in-transit")
+        && (load.status === "scheduled" || load.status === "booked" || load.status === "in-transit")
 
     const menu = canEdit || canConfirm || permissions.canRequestLocation || permissions.canConvert
         || permissions.canWithdraw || cancel
@@ -159,19 +164,24 @@ export function LoadActions({
                         >
                             <MoveIcon className="size-4" stroke={1.5} />
                             {t(`actions.to.${option.to}`)}
+                            {/* Still open, only not complete: the move is taken with
+                                the flags on record, and the dialog says which */}
+                            {option.flags.length > 0 && <IconAlertTriangle className="size-4" stroke={1.5} />}
                         </Button>
                     )
 
-                    if (!option.blocker) return <span key={option.to}>{button}</span>
+                    if (!option.blocker && option.flags.length === 0) return <span key={option.to}>{button}</span>
 
-                    // A disabled button takes no pointer events, so the reason
-                    // hangs off a wrapper that does
+                    // A disabled button takes no pointer events, so what is in
+                    // the way — or what is missing — hangs off a wrapper that does
                     return (
                         <Tooltip key={option.to}>
                             <TooltipTrigger asChild>
                                 <span tabIndex={0}>{button}</span>
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-64">{t(`blockers.${option.blocker}`)}</TooltipContent>
+                            <TooltipContent className="max-w-64">
+                                {option.blocker ? t(`blockers.${option.blocker}`) : option.flags.map(flagLabel).join(" · ")}
+                            </TooltipContent>
                         </Tooltip>
                     )
                 })}

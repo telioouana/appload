@@ -35,7 +35,7 @@ import type { NotificationKind } from "@workspace/db/notifications";
 import { legSettled } from "@workspace/domain/movements/money";
 import { isOnPortal, MAX_HOPS, organizationName, parentMovement } from "@workspace/domain/movements/link";
 import { movementRef } from "@workspace/domain/movements/refs";
-import { isTerminal, ownerTargets, transitionBlocker, upstreamStatus } from "@workspace/domain/movements/status";
+import { isTerminal, movementFlags, ownerTargets, transitionBlocker, upstreamStatus } from "@workspace/domain/movements/status";
 import { notify } from "@workspace/domain/notifications";
 import { assertTrackingAllowance, recordTrackingUsage } from "@workspace/domain/subscription";
 import { place } from "@workspace/domain/tracking/slot";
@@ -200,17 +200,24 @@ export async function transitionMovement(
         throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATUS" });
     }
 
-    const blocker = transitionBlocker(
-        {
-            ...row,
-            sellSettled: legSettled(row.sellTotal, row.sellSettlement),
-            buySettled: row.execution === "own-fleet" || legSettled(row.buyTotal, row.buySettlement),
-        },
-        input.to,
-        input.note,
-    );
+    const guards = {
+        ...row,
+        sellSettled: legSettled(row.sellTotal, row.sellSettlement),
+        buySettled: row.execution === "own-fleet" || legSettled(row.buyTotal, row.buySettlement),
+    };
+
+    const blocker = transitionBlocker(guards, input.to, input.note);
 
     if (blocker) throw new TRPCError({ code: "PRECONDITION_FAILED", message: blocker });
+
+    // What the load is still missing at the status it lands on. It does not
+    // stop the move — it goes on the trail, so that the company can see
+    // afterwards that somebody booked a load with no truck named, and who
+    const flags = movementFlags(
+        // Loading photos are Batch C's; nothing reviews any yet
+        { ...guards, linked: row.executionMovementId !== null, unapprovedPhotos: 0 },
+        input.to,
+    );
 
     // Starting a truck is what a plan pays for, checked before anything is
     // written so a refusal never leaves a half-started load behind
@@ -234,6 +241,7 @@ export async function transitionMovement(
         fromStatus: row.status,
         toStatus: input.to,
         note: input.note,
+        ...(flags.length > 0 && { metadata: { flags: flags.join(",") } }),
     });
 
     if (input.to === "in-transit") {
@@ -369,7 +377,7 @@ async function cancelWithExecutor(db: Db, row: Movement, expectedVersion: number
               and exists (
                   select 1 from ${movement} as ${below}
                   where ${below}.id = ${childId}
-                    and ${below}.status in ('procurement', 'offered', 'declined', 'scheduled')
+                    and ${below}.status in ('procurement', 'offered', 'declined', 'scheduled', 'booked')
                   for update
               )
             returning id
