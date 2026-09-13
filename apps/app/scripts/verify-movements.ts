@@ -270,6 +270,37 @@ async function main() {
     check("…and it moved from Confirmed to Booked", aBooked.items.some((row) => row.id === filed.id)
         && !aStillConfirmed.items.some((row) => row.id === filed.id), { booked: aBooked.items.map((row) => row.ref), confirmed: aStillConfirmed.items.map((row) => row.ref) });
 
+    console.log("\n— the warehouse photographs the load, and somebody answers for it");
+    const bm = as(BM.user);
+    await bm.documents.add({
+        movementId: accepted.id,
+        type: "loading-photo",
+        url: "https://files.edgestore.dev/harness/loading-1.jpg",
+        title: "HARNESS loading 1",
+        mimeType: "image/jpeg",
+    });
+
+    bOwn = await b.get({ id: accepted.id });
+    let photo = bOwn.documents.find((document) => document.type === "loading-photo");
+    check("B's member may file a loading photo", Boolean(photo), bOwn.documents.map((document) => document.type));
+    check("…which starts out waiting for somebody", photo?.approvedAt === null && photo.approvedByName === null, photo);
+    let leaving = bOwn.permissions.transitions.find((option) => option.to === "in-transit");
+    check("…and the move onto the road would be taken with it unapproved", leaving?.flags.includes("PHOTOS_UNAPPROVED") ?? false, leaving?.flags);
+
+    await expectError("the member who took it cannot also approve it", () =>
+        bm.documents.approve({ id: photo!.id }), "NOT_ALLOWED");
+
+    await b.documents.approve({ id: photo!.id });
+    bOwn = await b.get({ id: accepted.id });
+    photo = bOwn.documents.find((document) => document.type === "loading-photo");
+    check("B's owner approves it, and the photo says who did", photo?.approvedAt !== null && Boolean(photo?.approvedByName), photo);
+    leaving = bOwn.permissions.transitions.find((option) => option.to === "in-transit");
+    check("…so leaving is no longer a gap", !(leaving?.flags.includes("PHOTOS_UNAPPROVED") ?? true), leaving?.flags);
+    check("…and the trail has the approval on it", bOwn.events.some((event) => event.kind === "document" && event.action === "approved"), bOwn.events.filter((event) => event.kind === "document"));
+
+    await expectError("approving it twice finds nothing left to approve", () =>
+        b.documents.approve({ id: photo!.id }), "NOT_APPROVABLE");
+
     console.log("\n— B names its driver and the truck leaves");
     const phone = "+258840000999";
     const named = await b.update({ id: accepted.id, expectedVersion: bOwn.version, driverName: "HARNESS Driver", driverPhone: phone, truckPlate: "HAR-001-MP" });
@@ -302,7 +333,9 @@ async function main() {
     await db.update(movement).set({ driverPhone: null }).where(eq(movement.id, filed.id));
 
     console.log("\n— the proof of delivery travels up");
-    await b.documents.add({ movementId: accepted.id, type: "pod", url: "https://files.edgestore.dev/harness/pod.pdf", title: "HARNESS POD" });
+    const proof = await b.documents.add({ movementId: accepted.id, type: "pod", url: "https://files.edgestore.dev/harness/pod.pdf", title: "HARNESS POD" });
+    await expectError("a paper that is not a photo is not approvable at all", () =>
+        b.documents.approve({ id: proof.id }), "NOT_APPROVABLE");
     await b.documents.add({ movementId: accepted.id, type: "invoice", leg: "sell", url: "https://files.edgestore.dev/harness/invoice.pdf", title: "HARNESS B invoice" });
     aDetail = await a.get({ id: filed.id });
     const pod = aDetail.documents.find((document) => document.title === "HARNESS POD");
@@ -359,6 +392,22 @@ async function main() {
     await b.transition({ id: accepted.id, to: "closed", expectedVersion: bMoney.version });
     bOwn = await b.get({ id: accepted.id });
     check("B closes its own books once paid", bOwn.status === "closed", bOwn.status);
+
+    console.log("\n— and a truck that leaves on a photo nobody looked at leaves anyway, on the record");
+    const unseen = await b.create({
+        execution: "own-fleet", origin, destination, cargoDescription: "HARNESS unapproved photo",
+        driverName: "HARNESS Four", driverPhone: "+258840000996", truckPlate: "HAR-004-MP", status: "scheduled",
+    });
+    created.push(unseen.id);
+    await b.documents.add({ movementId: unseen.id, type: "loading-photo", url: "https://files.edgestore.dev/harness/loading-2.jpg", title: "HARNESS loading 2", mimeType: "image/jpeg" });
+
+    let unseenDetail = await b.get({ id: unseen.id });
+    check("a load waiting on a photo is not stopped from leaving", unseenDetail.permissions.transitions.some((option) => option.to === "in-transit" && option.blocker === null), unseenDetail.permissions.transitions);
+    await b.transition({ id: unseen.id, to: "in-transit", expectedVersion: unseenDetail.version });
+    check("…and the trail records that it left with the photo unapproved", await flagsOn(unseen.id, "in-transit") === "PHOTOS_UNAPPROVED", await flagsOn(unseen.id, "in-transit"));
+
+    unseenDetail = await b.get({ id: unseen.id });
+    check("…which is what the load shows as open while it runs", unseenDetail.flags.join(",") === "PHOTOS_UNAPPROVED", unseenDetail.flags);
 }
 
 /**

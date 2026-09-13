@@ -394,13 +394,19 @@ export const movementCost = pgTable(
 export type MovementCost = typeof movementCost.$inferSelect;
 export type CreateMovementCost = typeof movementCost.$inferInsert;
 
-/** What a paper attached to a load is. */
+/**
+ * What a paper attached to a load is. "loading-photo" is the odd one out: it
+ * is not paperwork but the warehouse's own record of what went on the truck,
+ * taken at loading and approved by somebody who answers for the load before
+ * it leaves (see `approvedAt` below).
+ */
 export const MOVEMENT_DOCUMENT_TYPE = [
     "pod",
     "cmr",
     "invoice",
     "receipt",
     "evidence",
+    "loading-photo",
     "transport-order",
     "other",
 ] as const;
@@ -435,6 +441,11 @@ export const movementDocument = pgTable(
         // The cost line this paper is the receipt for, when it is one
         costId: text("cost_id").references(() => movementCost.id, { onDelete: "set null" }),
         uploadedBy: text("uploaded_by").references(() => user.id, { onDelete: "set null" }),
+        // Who validated a loading photo, and when. Null on everything else and
+        // on a photo nobody has looked at yet — which is what raises
+        // PHOTOS_UNAPPROVED on a load about to leave (status.ts)
+        approvedAt: timestamp("approved_at"),
+        approvedBy: text("approved_by").references(() => user.id, { onDelete: "set null" }),
         deletedAt: timestamp("deleted_at"),
         deletedBy: text("deleted_by").references(() => user.id, { onDelete: "set null" }),
         createdAt: timestamp("created_at").defaultNow().notNull(),

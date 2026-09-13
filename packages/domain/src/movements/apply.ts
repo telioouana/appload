@@ -32,6 +32,7 @@ import {
 } from "@workspace/db/movements";
 import type { NotificationKind } from "@workspace/db/notifications";
 
+import { unapprovedPhotos } from "@workspace/domain/movements/documents";
 import { legSettled } from "@workspace/domain/movements/money";
 import { isOnPortal, MAX_HOPS, organizationName, parentMovement } from "@workspace/domain/movements/link";
 import { movementRef } from "@workspace/domain/movements/refs";
@@ -212,10 +213,14 @@ export async function transitionMovement(
 
     // What the load is still missing at the status it lands on. It does not
     // stop the move — it goes on the trail, so that the company can see
-    // afterwards that somebody booked a load with no truck named, and who
+    // afterwards that somebody booked a load with no truck named, or sent a
+    // truck out on photos nobody validated, and who
     const flags = movementFlags(
-        // Loading photos are Batch C's; nothing reviews any yet
-        { ...guards, linked: row.executionMovementId !== null, unapprovedPhotos: 0 },
+        {
+            ...guards,
+            linked: row.executionMovementId !== null,
+            unapprovedPhotos: await unapprovedPhotos(db, row.id),
+        },
         input.to,
     );
 

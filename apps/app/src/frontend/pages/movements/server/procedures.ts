@@ -29,6 +29,7 @@ import {
     trackingTemplateText,
 } from "@workspace/comms/infobip";
 import { announce, recordEvent, statusStamps, transitionMovement, type MovementActor } from "@workspace/domain/movements/apply";
+import { unapprovedPhotos } from "@workspace/domain/movements/documents";
 import { isConnected, isOnPortal, terminalMovementId } from "@workspace/domain/movements/link";
 import { settlementStatus } from "@workspace/domain/movements/money";
 import { assertExecutor, convertMovement, offerMovement, respondToOffer, withdrawOffer } from "@workspace/domain/movements/offer";
@@ -63,6 +64,7 @@ import { withinRateLimit } from "@/lib/rate-limit";
 import {
     AddCostBaseSchema,
     AddMovementDocumentBaseSchema,
+    ApproveMovementDocumentBaseSchema,
     ConvertMovementBaseSchema,
     CreateMovementBaseSchema,
     OfferMovementBaseSchema,
@@ -371,7 +373,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
 
     const linked = row.executionMovementId !== null;
 
-    const [names, pings, costs, documents, events, hasParent, executorOnPortal, rigs, terminalProofs, carrierEmail, trailerPlate] = await Promise.all([
+    const [names, pings, costs, documents, events, hasParent, executorOnPortal, rigs, terminalProofs, carrierEmail, trailerPlate, photosWaiting] = await Promise.all([
         loadNames(db, [row.organizationId, row.clientOrgId, row.carrierOrgId]),
         loadPings(db, [trailId]),
         owner ? loadCosts(db, row.id) : Promise.resolve([]),
@@ -383,6 +385,10 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
         linked ? loadTerminalProofs(db, trailId) : Promise.resolve([]),
         owner && row.carrierOrgId ? loadOrgEmail(db, row.carrierOrgId) : Promise.resolve(null),
         owner && row.trailerId ? loadTrailerPlate(db, row.trailerId) : Promise.resolve(null),
+        // Counted on the row the papers are read from, which is the row the
+        // photos are filed against — and only for the company that answers
+        // for them: what a load still lacks is the owner's own reading
+        owner ? unapprovedPhotos(db, row.id) : Promise.resolve(0),
     ]);
 
     return toMovementDetail(row, role, {
@@ -399,6 +405,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
         costs,
         documents,
         events,
+        unapprovedPhotos: photosWaiting,
         orgRole,
     });
 }
@@ -615,6 +622,7 @@ export const movementsRouter = createTRPCRouter({
                     buySettled: true,
                     linked: false,
                     truckPlate: values.truckPlate ?? null,
+                    // A load being filed has no papers on it yet, photos included
                     unapprovedPhotos: 0,
                 },
                 input.status,
@@ -1079,6 +1087,11 @@ export const movementsRouter = createTRPCRouter({
          * who else reads it — a POD (no leg) is everybody's on the load, a
          * sell-leg invoice is the owner's and its client's, a buy-leg receipt
          * the owner's and its partner's.
+         *
+         * A loading photo is one of the load's own: it is what went on the
+         * truck, not a paper between two of the companies, so it never carries
+         * a leg. The server cannot see what was actually uploaded — only the
+         * URL the bucket returned — so an image is expected and not enforced.
          */
         add: tenantProcedure
             .input(AddMovementDocumentBaseSchema)
@@ -1088,6 +1101,10 @@ export const movementsRouter = createTRPCRouter({
                 assertEdgeStoreUrl(input.url);
 
                 if (input.leg === "buy" && row.execution !== "partner") {
+                    throw new TRPCError({ code: "BAD_REQUEST", message: "NO_SUCH_LEG" });
+                }
+
+                if (input.type === "loading-photo" && input.leg) {
                     throw new TRPCError({ code: "BAD_REQUEST", message: "NO_SUCH_LEG" });
                 }
 
@@ -1128,10 +1145,15 @@ export const movementsRouter = createTRPCRouter({
                 // The company on the other side of that paper hears about it —
                 // for a buy-leg paper, only a partner actually on the load: one
                 // merely named in procurement, or asked and then withdrawn from,
-                // cannot open the row, and telling it the row exists is a leak
-                const recipient = input.leg === "buy"
-                    ? (row.carrierOrgId && isExecutorOf(row, row.carrierOrgId) ? row.carrierOrgId : null)
-                    : row.clientOrgId;
+                // cannot open the row, and telling it the row exists is a leak.
+                // A loading photo tells nobody anything: it is the load's own,
+                // the keeper files a whole round of them at once, and they are
+                // already on the row for anyone who opens it
+                const recipient = input.type === "loading-photo"
+                    ? null
+                    : input.leg === "buy"
+                        ? (row.carrierOrgId && isExecutorOf(row, row.carrierOrgId) ? row.carrierOrgId : null)
+                        : row.clientOrgId;
 
                 if (recipient) {
                     await notify(ctx.db, {
@@ -1145,6 +1167,60 @@ export const movementsRouter = createTRPCRouter({
                 }
 
                 return created;
+            }),
+
+        /**
+         * Validates one loading photo: the manager saying that what the
+         * warehouse photographed is what the load is. Approving is above the
+         * role that uploads, and it is the load's own company that does it —
+         * the row this document hangs on is the one holding the truck.
+         *
+         * Nothing about the load moves here. The truck may still leave with
+         * photos nobody looked at; that is the PHOTOS_UNAPPROVED flag on the
+         * status event (status.ts), which records who sent it out that way.
+         */
+        approve: tenantProcedure
+            .input(ApproveMovementDocumentBaseSchema)
+            .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
+                const [document] = await ctx.db
+                    .select({
+                        id: movementDocument.id,
+                        movementId: movementDocument.movementId,
+                        type: movementDocument.type,
+                    })
+                    .from(movementDocument)
+                    .where(and(eq(movementDocument.id, input.id), sql`${movementDocument.deletedAt} is null`))
+                    .limit(1);
+
+                if (!document) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+
+                // The row that holds the truck, and this company's own: a
+                // stranger asking gets the same 404 the load itself gives
+                await loadOwn(ctx.db, document.movementId, ctx.tenant.organizationId);
+                assertCan(ctx.tenant.role, "document", "approve");
+
+                if (document.type !== "loading-photo") {
+                    throw new TRPCError({ code: "BAD_REQUEST", message: "NOT_APPROVABLE" });
+                }
+
+                // Only ever the first approval, so two managers clicking at
+                // once leaves one trail line rather than two
+                const [approved] = await ctx.db
+                    .update(movementDocument)
+                    .set({ approvedAt: new Date(), approvedBy: ctx.tenant.userId })
+                    .where(and(eq(movementDocument.id, document.id), sql`${movementDocument.approvedAt} is null`))
+                    .returning({ id: movementDocument.id });
+
+                if (!approved) throw new TRPCError({ code: "BAD_REQUEST", message: "NOT_APPROVABLE" });
+
+                await recordEvent(ctx.db, {
+                    movementId: document.movementId,
+                    kind: "document",
+                    actor: actorOf(ctx.tenant),
+                    metadata: { action: "approved", type: "loading-photo" },
+                });
+
+                return { id: document.id };
             }),
 
         remove: tenantProcedure

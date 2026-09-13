@@ -85,6 +85,11 @@ export function useMovementMutations() {
         onSuccess: () => { void refresh(); toast.success(t("toasts.document-added")) },
     }))
 
+    const approveDocument = useMutation(trpc.movements.documents.approve.mutationOptions({
+        onSuccess: () => { void refresh(); toast.success(t("documents.photos.approved")) },
+        onError: fail,
+    }))
+
     const sendConfirmation = useMutation(trpc.movements.sendConfirmation.mutationOptions({
         onSuccess: (data) => {
             void refresh()
@@ -126,6 +131,7 @@ export function useMovementMutations() {
         addCost,
         removeCost,
         addDocument,
+        approveDocument,
         sendConfirmation,
         removeDocument,
         requestLocation,

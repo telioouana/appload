@@ -120,6 +120,13 @@
       "when": 1789070623924,
       "tag": "0016_movements",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789340863885,
+      "tag": "0017_movement_document_approval",
+      "breakpoints": true
     }
   ]
 }

@@ -69,6 +69,8 @@ function EventLine({ event, load, last }: { event: MovementEventView; load: Move
         if (event.kind === "document" && event.action === "sent") {
             return t("confirmation-sent", { to: event.sentTo ?? "" })
         }
+        // Who let the load leave with the photos seen is the point of the line
+        if (event.kind === "document" && event.action === "approved") return t("photo-approved")
 
         const key = event.kind === "document" || event.kind === "cost" ? `${event.kind}-${event.action}` : event.action ?? ""
 

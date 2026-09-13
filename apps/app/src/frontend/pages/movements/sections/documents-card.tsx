@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
 import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
+import { cn } from "@workspace/ui/lib/utils"
 
 import { useEdgeStore } from "@workspace/edgestore/client"
 import { movementDocumentPath } from "@workspace/edgestore/path"
@@ -22,15 +23,25 @@ import { movementDocumentPath } from "@workspace/edgestore/path"
 import { movementErrorKey, type MovementErrorMessage } from "@/frontend/pages/movements/lib/errors"
 import { useMovementMutations } from "@/frontend/pages/movements/hooks/use-movement-mutations"
 import { MOVEMENT_DOCUMENT_TYPE } from "@/backend/schemas/movement"
-import type { MovementDetail, MovementDocumentLeg, MovementDocumentType } from "@/frontend/pages/movements/types"
+import type { MovementDetail, MovementDocumentLeg, MovementDocumentType, MovementDocumentView } from "@/frontend/pages/movements/types"
 
 /** What the bucket accepts. */
 const ACCEPTED_FILES = ["application/pdf", "image/jpeg", "image/png"]
+
+/** A photo of the truck being loaded is a photo, whatever the camera calls it. */
+const ACCEPTED_PHOTOS = ["image/jpeg", "image/png"]
+
+/** The loading photos have their own block, so the list below leaves them out. */
+const PHOTO = "loading-photo"
 
 /** "Everyone on the load" — a paper with no leg. */
 const SHARED = "shared"
 
 type Audience = typeof SHARED | MovementDocumentLeg
+
+/** Only a picture can be shown as one; anything else keeps the paper icon. */
+const isImage = (document: MovementDocumentView): boolean =>
+    document.mimeType?.startsWith("image/") ?? /\.(jpe?g|png)(\?|$)/i.test(document.url)
 
 /**
  * The load's papers. Who reads each is decided by the side of the deal it
@@ -38,6 +49,10 @@ type Audience = typeof SHARED | MovementDocumentLeg
  * invoice to the client is between the owner and the client, a receipt from
  * the partner between the owner and the partner. A proof filed on the row
  * with the truck shows here too, and is removed there rather than here.
+ *
+ * The photos of the loading are papers like any other, but they are read as
+ * a set and signed off one by one, so they sit in their own block above the
+ * list rather than scattered through it.
  */
 export function DocumentsCard({ load }: { load: MovementDetail }) {
     const t = useTranslations("App.loads.documents")
@@ -47,6 +62,9 @@ export function DocumentsCard({ load }: { load: MovementDetail }) {
     const [adding, setAdding] = useState(false)
 
     const canManage = load.permissions.canManageDocuments
+
+    const photos = load.documents.filter((document) => document.type === PHOTO)
+    const papers = load.documents.filter((document) => document.type !== PHOTO)
 
     return (
         <SectionCard
@@ -59,11 +77,13 @@ export function DocumentsCard({ load }: { load: MovementDetail }) {
                 </Button>
             ) : undefined}
         >
-            {load.documents.length === 0 ? (
+            {(photos.length > 0 || canManage) && <LoadingPhotos load={load} photos={photos} />}
+
+            {papers.length === 0 ? (
                 <EmptyValue label={t("empty")} />
             ) : (
                 <ul className="flex flex-col divide-y">
-                    {load.documents.map((document) => (
+                    {papers.map((document) => (
                         <li key={document.id} className="flex items-center justify-between gap-3 py-2 text-[13px] first:pt-0 last:pb-0">
                             <div className="flex min-w-0 items-center gap-2.5">
                                 <span className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-lg">
@@ -115,6 +135,96 @@ export function DocumentsCard({ load }: { load: MovementDetail }) {
 }
 
 /**
+ * The photos taken while the truck was loaded.
+ *
+ * The keeper at the client shoots them and anybody on the load may file
+ * them; a manager of the company — an owner or an admin — then says they
+ * are what they should be. The load is never held back for it: leaving
+ * with photos still unapproved only raises a flag, which the status event
+ * records, so the gap has a name and a time on it afterwards.
+ */
+function LoadingPhotos({ load, photos }: { load: MovementDetail; photos: MovementDocumentView[] }) {
+    const t = useTranslations("App.loads.documents")
+
+    const { approveDocument, removeDocument } = useMovementMutations()
+
+    const canApprove = load.permissions.canApproveDocuments
+    const canManage = load.permissions.canManageDocuments
+
+    return (
+        <div className="flex flex-col gap-2">
+            <span className="text-muted-foreground text-xs font-medium">{t("photos.title")}</span>
+
+            {photos.length === 0 ? (
+                <EmptyValue label={t("photos.empty")} />
+            ) : (
+                <ul className="flex flex-col divide-y">
+                    {photos.map((photo) => (
+                        <li key={photo.id} className="flex items-center gap-3 py-2 text-[13px] first:pt-0 last:pb-0">
+                            <a
+                                href={photo.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                aria-label={t("open")}
+                                className="bg-muted size-12 shrink-0 overflow-hidden rounded-lg"
+                            >
+                                {isImage(photo) ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={photo.url} alt="" loading="lazy" className="size-full object-cover" />
+                                ) : (
+                                    <span className="text-muted-foreground flex size-full items-center justify-center">
+                                        <IconFileText className="size-4" stroke={1.5} />
+                                    </span>
+                                )}
+                            </a>
+
+                            <div className="flex min-w-0 flex-col">
+                                <span className="truncate font-medium">{photo.title ?? t(`types.${photo.type}`)}</span>
+                                {/* Whose manager has seen what is the load's own company's business — the same way the flag on the load is */}
+                                {load.role === "owner" && (
+                                    <span className={cn(
+                                        "truncate text-xs",
+                                        photo.approvedAt ? "text-muted-foreground" : "text-amber-600 dark:text-amber-400",
+                                    )}>
+                                        {photo.approvedAt
+                                            ? t("photos.approved-by", { name: photo.approvedByName ?? "" })
+                                            : t("photos.pending")}
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="ml-auto flex shrink-0 items-center gap-1">
+                                {canApprove && !photo.approvedAt && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        disabled={approveDocument.isPending}
+                                        onClick={() => approveDocument.mutate({ id: photo.id })}
+                                    >
+                                        {t("photos.approve")}
+                                    </Button>
+                                )}
+                                {canManage && !photo.fromExecutor && (
+                                    <Button
+                                        size="icon-sm"
+                                        variant="ghost"
+                                        aria-label={t("remove")}
+                                        disabled={removeDocument.isPending}
+                                        onClick={() => removeDocument.mutate({ id: photo.id })}
+                                    >
+                                        <IconTrash className="size-4" stroke={1.5} />
+                                    </Button>
+                                )}
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    )
+}
+
+/**
  * Attaching a paper. The upload lands in EdgeStore first and the document
  * row is written with the URL it returns, so a failed upload never leaves a
  * document pointing nowhere.
@@ -130,13 +240,19 @@ function DocumentDialog({ load, onClose }: { load: MovementDetail; onClose: () =
     const audiences: Audience[] = load.execution === "partner" ? [SHARED, "sell", "buy"] : [SHARED, "sell"]
 
     const [type, setType] = useState<MovementDocumentType>("pod")
-    const [audience, setAudience] = useState<Audience>(SHARED)
+    const [chosen, setChosen] = useState<Audience>(SHARED)
     const [file, setFile] = useState<File | null>(null)
     const [uploading, setUploading] = useState(false)
     const [error, setError] = useState<MovementErrorMessage | "uploadFailed" | null>(null)
     const fileRef = useRef<HTMLInputElement>(null)
 
     const isPending = uploading || addDocument.isPending
+
+    // A loading photo is the load's own record of how it went out: everybody
+    // on it sees the same photos, so there is nothing to choose here
+    const isPhoto = type === PHOTO
+    const audience = isPhoto ? SHARED : chosen
+    const accepted = isPhoto ? ACCEPTED_PHOTOS : ACCEPTED_FILES
 
     async function submit() {
         if (!file || isPending) return
@@ -203,7 +319,7 @@ function DocumentDialog({ load, onClose }: { load: MovementDetail; onClose: () =
 
                     <div className="flex flex-col gap-2">
                         <Label>{t("dialog.audience")}</Label>
-                        <Select value={audience} onValueChange={(value) => setAudience(value as Audience)} disabled={isPending}>
+                        <Select value={audience} onValueChange={(value) => setChosen(value as Audience)} disabled={isPending || isPhoto}>
                             <SelectTrigger className="w-full">
                                 <SelectValue />
                             </SelectTrigger>
@@ -222,11 +338,13 @@ function DocumentDialog({ load, onClose }: { load: MovementDetail; onClose: () =
                                 ref={fileRef}
                                 type="file"
                                 className="hidden"
-                                accept={ACCEPTED_FILES.join(",")}
+                                accept={isPhoto ? "image/*" : ACCEPTED_FILES.join(",")}
+                                // On a phone this is what opens the camera rather than the file tree
+                                capture={isPhoto ? "environment" : undefined}
                                 onChange={(event) => {
                                     const picked = event.target.files?.[0] ?? null
 
-                                    if (picked && !ACCEPTED_FILES.includes(picked.type)) {
+                                    if (picked && !accepted.includes(picked.type)) {
                                         toast.error(t("dialog.format"))
                                         return
                                     }

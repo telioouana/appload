@@ -175,8 +175,8 @@ matching ref clause before the first push, or Vercel will refuse to save
 ### Partner portal
 
 The portal reads and writes the admin's database — one database, two apps.
-Its three migrations go in with the same command as everything else, in one
-run — `0014 → 0015 → 0016` back to back:
+Its migrations go in with the same command as everything else, in one
+run — `0014 → 0015 → 0016 → 0017` back to back:
 
 ```bash
 DATABASE_URL=<prod url> pnpm --filter @workspace/db db:migrate
@@ -216,16 +216,21 @@ deployed ahead of the migration breaks that tab.
   `movement` and deletes `trip.*` notifications, both no-ops on production.
   None of these rows reach the admin, the logbook, the KPIs or the
   commission: a company's own loads are its own.
+- `0017_movement_document_approval` — `movement_document` gains `approved_at`
+  and `approved_by` (FK on `user`, set null), the validation a loading photo
+  waits for before the truck leaves. Additive, nothing to backfill; dev gets
+  it from `node packages/db/scripts/add-movement-document-approval.mjs`.
 
-The shared **dev** database got all three from the idempotent scripts
+The shared **dev** database got all four from the idempotent scripts
 instead — `node packages/db/scripts/create-portal-tables.mjs`,
 `node packages/db/scripts/add-portal-columns.mjs`,
 `node packages/db/scripts/add-subscription-usage.mjs`, then
 `node packages/db/scripts/rename-trip-to-movement.mjs` (moves an existing
 `trip` table across with its rows; a fresh database uses
-`create-movement-tables.mjs` instead). Same rule as every other table:
-scripts on dev, `db:migrate` on production, **never both** against one
-database.
+`create-movement-tables.mjs` instead), and finally
+`node packages/db/scripts/add-movement-document-approval.mjs`. Same rule
+as every other table: scripts on dev, `db:migrate` on production,
+**never both** against one database.
 
 ## 2. Vercel — project + environment
 

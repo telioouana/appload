@@ -344,12 +344,21 @@
             "receipt": "Receipt",
             "evidence": "Evidence",
             "transport-order": "Transport order",
+            "loading-photo": "Loading photo",
             "other": "Other"
         },
         "audience": {
             "shared": "Everyone on the load",
             "sell": "You and the client",
             "buy": "You and the partner"
+        },
+        "photos": {
+            "title": "Loading photos",
+            "pending": "Pending approval",
+            "approved-by": "Approved by {name}",
+            "approve": "Approve",
+            "approved": "Loading photo approved",
+            "empty": "No loading photos yet"
         },
         "dialog": {
             "title": "Add document",
@@ -382,6 +391,7 @@
         "accepted-offer": "Accepted from an offer",
         "moved": "Moved to {status}",
         "confirmation-sent": "Confirmation sent to {to}",
+        "photo-approved": "Loading photo approved",
         "flags": "Proceeded with flags: {list}",
         "from-below": "By the transporter",
         "actions": {
@@ -608,6 +618,7 @@
         "paymentBelowZero": "The correction would take the total paid below zero.",
         "correctionNeedsReference": "A correction needs a reference.",
         "invalidDocument": "The document was not accepted. Upload it again.",
+        "notApprovable": "This photo is already approved, or is not a loading photo.",
         "notTrackable": "Location can only be asked for on a load on the road with a driver.",
         "rateLimited": "You have asked for the location several times already. Try again later.",
         "infobipNotConfigured": "WhatsApp is not set up on this environment.",

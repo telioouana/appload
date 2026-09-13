@@ -182,6 +182,9 @@ export type MovementDocumentView = {
     mimeType: string | null;
     costId: string | null;
     uploadedByName: string | null;
+    /** Loading photos only: when somebody who answers for the load validated it */
+    approvedAt: Date | null;
+    approvedByName: string | null;
     /** A proof filed on the row with the truck, shown here; it is removed there, not here */
     fromExecutor: boolean;
     createdAt: Date;
@@ -225,6 +228,8 @@ export type MovementPermissions = {
     canConvert: boolean;
     canManageCosts: boolean;
     canManageDocuments: boolean;
+    /** Validating a loading photo: the owner of the load, at owner or admin level */
+    canApproveDocuments: boolean;
     canRecordPayment: boolean;
     canRequestLocation: boolean;
 };

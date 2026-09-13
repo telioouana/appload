@@ -92,6 +92,9 @@ export const visibleMovements = (tenantId: string): SQL =>
 
 const ownOrder = alias(movement, "own_order");
 
+/** The second face on a document row: whoever approved a loading photo. */
+const approver = alias(user, "approver");
+
 /**
  * A load another company runs naming this one as its client — unless this
  * company already holds its own order linked to it. When a client places a
@@ -346,7 +349,7 @@ export async function loadTerminalProofs(db: Db, terminalId: string): Promise<Mo
 
     return rows
         .filter((document) => document.leg === null && (document.type === "pod" || document.type === "cmr"))
-        .map((document) => ({ ...document, uploadedByName: null, fromExecutor: true }));
+        .map((document) => ({ ...document, uploadedByName: null, approvedByName: null, fromExecutor: true }));
 }
 
 export type PingState = {
@@ -470,16 +473,16 @@ const headline = (value: MoneyLeg | null) => (value ? { total: value.total, curr
 
 /**
  * What the guards and the flags read off a row: its own columns, whether each
- * leg is settled — an own-fleet load has no partner to pay — and whether the
- * truck is somebody else's. Loading photos are Batch C's; nothing reviews any
- * yet, so there are never any waiting.
+ * leg is settled — an own-fleet load has no partner to pay — whether the truck
+ * is somebody else's, and how many loading photos are still waiting to be
+ * validated (counted where the detail reads the papers from).
  */
-const guardsOf = (row: Movement) => ({
+const guardsOf = (row: Movement, unapprovedPhotos: number) => ({
     ...row,
     sellSettled: legSettled(row.sellTotal, row.sellSettlement),
     buySettled: row.execution === "own-fleet" || legSettled(row.buyTotal, row.buySettlement),
     linked: row.executionMovementId !== null,
-    unapprovedPhotos: 0,
+    unapprovedPhotos,
 });
 
 // ---------------------------------------------------------------------------
@@ -559,6 +562,8 @@ type DetailExtras = {
     executorOnPortal: boolean;
     costs: readonly CostRow[];
     documents: readonly MovementDocumentView[];
+    /** Loading photos nobody has validated on the row the papers are read from */
+    unapprovedPhotos: number;
     events: readonly (Omit<MovementEventView, "action" | "sentTo" | "flags"> & { metadata: unknown; actorOrgId: string | null })[];
     orgRole: OrgRole;
 };
@@ -610,7 +615,7 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
         hasParent: owner && extras.hasParent,
         // What the load is missing as it stands. The owner's own reading of
         // its own books: nobody else is told what its paperwork lacks
-        flags: owner ? movementFlags(guardsOf(row), row.status) : [],
+        flags: owner ? movementFlags(guardsOf(row, extras.unapprovedPhotos), row.status) : [],
         money,
         costs: owner
             ? extras.costs.map((cost) => ({
@@ -625,7 +630,12 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
             }))
             : [],
         documents: [
-            ...extras.documents.filter((document) => legs.includes(document.leg) && inRound(document.createdAt)),
+            // A loading photo carries no leg, so every side reads it — but
+            // whether the load's own manager has looked at it yet, and which
+            // of its people did, is that company's business alone
+            ...extras.documents
+                .filter((document) => legs.includes(document.leg) && inRound(document.createdAt))
+                .map((document) => (owner ? document : { ...document, approvedAt: null, approvedByName: null })),
             ...extras.terminalProofs,
         ],
         events: extras.events
@@ -695,6 +705,7 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
         canConvert: false,
         canManageCosts: false,
         canManageDocuments: false,
+        canApproveDocuments: false,
         canRecordPayment: false,
         canRequestLocation: false,
     };
@@ -706,7 +717,7 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
     const writeResource = partner ? "order" : "trip";
     const mayWrite = can(writeResource, "update");
     const shape = { execution: row.execution, status: row.status, linked, executorOnPortal: extras.executorOnPortal };
-    const guards = guardsOf(row);
+    const guards = guardsOf(row, extras.unapprovedPhotos);
 
     return {
         transitions: mayWrite
@@ -748,6 +759,10 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
         ),
         canManageCosts: !isTerminal(row.status) && can("trip", "update"),
         canManageDocuments: can("document", "upload"),
+        // Anybody on the load files a photo; validating one is answering for
+        // what left the warehouse, and only this company can do it — the
+        // approval is on the row whose truck is being loaded
+        canApproveDocuments: can("document", "approve"),
         canRecordPayment: row.status !== "cancelled" && (row.sellTotal !== null || (partner && row.buyTotal !== null))
             && can("order", "update"),
         canRequestLocation: row.status === "in-transit" && !linked && Boolean(row.driverPhone) && can("trip", "update"),
@@ -790,11 +805,14 @@ export async function loadDocuments(db: Db, movementId: string): Promise<Movemen
             mimeType: movementDocument.mimeType,
             costId: movementDocument.costId,
             uploadedByName: user.name,
+            approvedAt: movementDocument.approvedAt,
+            approvedByName: approver.name,
             createdAt: movementDocument.createdAt,
             deletedAt: movementDocument.deletedAt,
         })
         .from(movementDocument)
         .leftJoin(user, eq(user.id, movementDocument.uploadedBy))
+        .leftJoin(approver, eq(approver.id, movementDocument.approvedBy))
         .where(eq(movementDocument.movementId, movementId))
         .orderBy(desc(movementDocument.createdAt));
 

@@ -8,7 +8,7 @@ export const oac = createAccessControl({
     fleet: ["create", "read", "update", "delete", "list"],
     partner: ["read", "request", "respond", "remove"],
     trip: ["create", "read", "update", "list"],
-    document: ["read", "upload"],
+    document: ["read", "upload", "approve"],
     report: ["read"],
     subscription: ["read"],
 })
@@ -20,7 +20,7 @@ export const owner = oac.newRole({
     fleet: ["create", "read", "update", "delete", "list"],
     partner: ["read", "request", "respond", "remove"],
     trip: ["create", "read", "update", "list"],
-    document: ["read", "upload"],
+    document: ["read", "upload", "approve"],
     report: ["read"],
     subscription: ["read"],
 })
@@ -32,7 +32,7 @@ export const admin = oac.newRole({
     fleet: ["create", "read", "update", "list"],
     partner: ["read", "request", "respond"],
     trip: ["create", "read", "update", "list"],
-    document: ["read", "upload"],
+    document: ["read", "upload", "approve"],
     report: ["read"],
     subscription: ["read"],
 })
@@ -47,6 +47,8 @@ export const member = oac.newRole({
     fleet: ["read", "list"],
     partner: ["read"],
     trip: ["create", "read", "update", "list"],
+    // Anybody files a paper or a loading photo; approving one is answering
+    // for what left the warehouse, and that is the manager's signature
     document: ["read", "upload"],
     report: ["read"],
     subscription: ["read"],

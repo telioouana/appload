@@ -61,6 +61,7 @@ export const MOVEMENT_DOCUMENT_TYPE = [
     "invoice",
     "receipt",
     "evidence",
+    "loading-photo",
     "transport-order",
     "other",
 ] as const satisfies readonly MovementDocumentType[];
@@ -259,6 +260,11 @@ export const AddMovementDocumentBaseSchema = z.object({
     size: z.number().int().positive().optional(),
     mimeType: text(100).optional(),
     costId: z.string().nonempty().optional(),
+});
+
+/** Validating one loading photo. The document says which load it is on. */
+export const ApproveMovementDocumentBaseSchema = z.object({
+    id: z.string().nonempty(),
 });
 
 /**

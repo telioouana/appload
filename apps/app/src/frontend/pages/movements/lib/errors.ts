@@ -43,6 +43,8 @@ export const MOVEMENT_ERROR_KEYS = {
     CORRECTION_NEEDS_REFERENCE: "correctionNeedsReference",
     COST_NOT_FOUND: "notFound",
     INVALID_DOCUMENT_URL: "invalidDocument",
+    // A loading photo two people approved at once, or a paper that is not one
+    NOT_APPROVABLE: "notApprovable",
     // Tracking
     NOT_TRACKABLE: "notTrackable",
     RATE_LIMITED: "rateLimited",

@@ -344,12 +344,21 @@
             "receipt": "Recibo",
             "evidence": "Evidência",
             "transport-order": "Ordem de transporte",
+            "loading-photo": "Foto de carregamento",
             "other": "Outro"
         },
         "audience": {
             "shared": "Todos na carga",
             "sell": "Você e o cliente",
             "buy": "Você e o parceiro"
+        },
+        "photos": {
+            "title": "Fotos de carregamento",
+            "pending": "Por aprovar",
+            "approved-by": "Aprovada por {name}",
+            "approve": "Aprovar",
+            "approved": "Foto de carregamento aprovada",
+            "empty": "Ainda sem fotos de carregamento"
         },
         "dialog": {
             "title": "Adicionar documento",
@@ -382,6 +391,7 @@
         "accepted-offer": "Aceite a partir de uma oferta",
         "moved": "Passou a {status}",
         "confirmation-sent": "Confirmação enviada para {to}",
+        "photo-approved": "Foto de carregamento aprovada",
         "flags": "Avançou com alertas: {list}",
         "from-below": "Pelo transportador",
         "actions": {
@@ -608,6 +618,7 @@
         "paymentBelowZero": "A correção deixaria o total pago abaixo de zero.",
         "correctionNeedsReference": "Uma correção precisa de referência.",
         "invalidDocument": "O documento não foi aceite. Envie-o novamente.",
+        "notApprovable": "Esta foto já foi aprovada, ou não é uma foto de carregamento.",
         "notTrackable": "Só se pede a localização de uma carga em trânsito com motorista.",
         "rateLimited": "Já pediu a localização várias vezes. Tente mais tarde.",
         "infobipNotConfigured": "O WhatsApp não está configurado neste ambiente.",
