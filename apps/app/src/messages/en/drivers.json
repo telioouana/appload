@@ -108,7 +108,11 @@
             "id-card": "ID card"
         },
         "expires": "Valid until {date}",
-        "no-expiry": "No expiry"
+        "no-expiry": "No expiry",
+        "loads": {
+            "title": "Loads",
+            "empty": "This driver has not been named on a load yet."
+        }
     },
     "edit": {
         "title": "Edit driver",

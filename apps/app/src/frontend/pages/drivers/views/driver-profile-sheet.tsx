@@ -10,6 +10,7 @@ import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@workspace/ui/components/sheet"
 
+import { Link } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
 import { initials, Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
@@ -22,6 +23,7 @@ import {
     ProfileHeader,
     ProfileSkeleton,
 } from "@/frontend/pages/fleet/sections/profile-parts"
+import { MovementStatusChip, place as loadPlace } from "@/frontend/pages/movements/components/badges"
 import { EditDriverDialog } from "@/frontend/pages/drivers/sections/edit-driver-dialog"
 import { AssignTruckPopover } from "@/frontend/pages/drivers/sections/assign-truck-popover"
 import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
@@ -103,6 +105,7 @@ function Panel({ id, onClose }: { id: string; onClose: () => void }) {
                     {verified && <Verification profile={data} />}
                     <Assignment profile={data} />
                     {verified && <Documents profile={data} />}
+                    <Loads profile={data} />
                 </div>
             </ProfileBody>
 
@@ -174,6 +177,40 @@ function Assignment({ profile }: { profile: DriverProfile }) {
                     ) : <EmptyValue label={t("values.unassigned")} />}
                 </KeyValue>
             </dl>
+        </ProfileCard>
+    )
+}
+
+/**
+ * The last loads this driver was named on, whichever way they were named —
+ * from the fleet picker or by typing their number. Each is a door into the
+ * load itself; what any of them was worth is read there, not here.
+ */
+function Loads({ profile }: { profile: DriverProfile }) {
+    const t = useTranslations("App.drivers.profile.loads")
+
+    return (
+        <ProfileCard title={t("title")} className="lg:col-span-2">
+            {profile.loads.length === 0 ? (
+                <p className="text-muted-foreground text-[13px]">{t("empty")}</p>
+            ) : (
+                <ul className="flex flex-col gap-2">
+                    {profile.loads.map((load) => (
+                        <li key={load.id} className="flex items-center justify-between gap-3 text-[13px]">
+                            <Link
+                                href={{ pathname: "/orders/load/[loadId]", params: { loadId: load.id } }}
+                                className="flex min-w-0 items-center gap-2"
+                            >
+                                <Mono>{load.ref}</Mono>
+                                <span className="text-muted-foreground truncate">
+                                    {`${loadPlace(load.origin)} → ${loadPlace(load.destination)}`}
+                                </span>
+                            </Link>
+                            <MovementStatusChip status={load.status} execution={load.execution} className="shrink-0" />
+                        </li>
+                    ))}
+                </ul>
+            )}
         </ProfileCard>
     )
 }

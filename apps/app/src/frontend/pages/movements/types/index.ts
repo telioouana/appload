@@ -1,3 +1,4 @@
+import type { MESSAGE_DIRECTION, MESSAGE_STATUS } from "@workspace/db/chats";
 import type { Location } from "@workspace/db/orders";
 import type {
     MovementCostKind,
@@ -232,6 +233,23 @@ export type MovementPermissions = {
     canApproveDocuments: boolean;
     canRecordPayment: boolean;
     canRequestLocation: boolean;
+    /** Reading the driver's WhatsApp thread: the owner of the row with the truck */
+    canReadThread: boolean;
+};
+
+/**
+ * One WhatsApp message between Appload and the load's driver. The thread
+ * hangs off the driver's phone number rather than off the load, and the
+ * portal only ever reads it: the asking is the tracking card's button, the
+ * answering happens in WhatsApp.
+ */
+export type MovementThreadItem = {
+    id: string;
+    direction: (typeof MESSAGE_DIRECTION)[number];
+    body: string;
+    /** How far an outbound send got; inbound messages carry none */
+    status: (typeof MESSAGE_STATUS)[number] | null;
+    createdAt: Date;
 };
 
 export type MovementDetail = MovementRow & {

@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, asc, count, desc, eq, ilike, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 
 import { chatConversation, chatMessage } from "@workspace/db/chats";
 import { partnerConnection } from "@workspace/db/connections";
@@ -109,6 +109,7 @@ import {
     type MovementRow,
     type MovementSection,
     type MovementStats,
+    type MovementThreadItem,
     type PagedResult,
 } from "@/frontend/pages/movements/types";
 
@@ -1403,6 +1404,53 @@ export const movementsRouter = createTRPCRouter({
                 recordedAt: point.recordedAt,
                 source: trailSource(point.source),
             }));
+        }),
+
+    /**
+     * What has been said to this load's driver on WhatsApp, oldest last-100
+     * first. Read-only: the asking is the tracking card's button above, the
+     * answering happens in WhatsApp, and the admin webhook files both.
+     *
+     * A thread hangs off the driver's phone number, not off the load, so only
+     * the row that holds the truck reads one — a linked order's driver is the
+     * executor's to talk to, and its number is not shown here either.
+     *
+     * Two things keep a number typed here from becoming a window on somebody
+     * else's exchange. The thread is taken from `conversationId`, which only
+     * this row's own asking — the button below, or the tracking cron on it —
+     * ever stamps: a phone number is free-form tenant input, `chat_conversation`
+     * is one row per number for the whole platform, and matching on the digits
+     * alone would hand over another company's driver, or ops' own, to whoever
+     * typed the number. And the reading starts at `startedAt`, because the same
+     * owner-driver runs for more than one company over their life and the load
+     * references, plates and lanes in those messages are each asker's business:
+     * what was said before this load rolled was not said about it.
+     */
+    thread: tenantProcedure
+        .input(z.object({ id: z.string().nonempty() }))
+        .query(async ({ ctx, input }): Promise<MovementThreadItem[]> => {
+            const row = await loadOwn(ctx.db, input.id, ctx.tenant.organizationId);
+            assertCan(ctx.tenant.role, "trip", "read");
+
+            if (row.executionMovementId || !row.conversationId || !row.startedAt) return [];
+
+            const messages = await ctx.db
+                .select({
+                    id: chatMessage.id,
+                    direction: chatMessage.direction,
+                    body: chatMessage.body,
+                    status: chatMessage.status,
+                    createdAt: chatMessage.createdAt,
+                })
+                .from(chatMessage)
+                .where(and(
+                    eq(chatMessage.conversationId, row.conversationId),
+                    gte(chatMessage.createdAt, row.startedAt),
+                ))
+                .orderBy(desc(chatMessage.createdAt))
+                .limit(100);
+
+            return messages.reverse();
         }),
 
     /**

@@ -18,6 +18,7 @@ import fs from "node:fs";
 
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 
+import { chatConversation, chatMessage } from "@workspace/db/chats";
 import { db } from "@workspace/db/db";
 import {
     movement,
@@ -43,6 +44,7 @@ import { createCallerFactory } from "@workspace/trpc/init";
 import { analyticsRouter } from "@/frontend/pages/analytics/server/procedures";
 import { mapRouter } from "@/frontend/pages/map/server/procedures";
 import { movementsRouter } from "@/frontend/pages/movements/server/procedures";
+import { searchRouter } from "@/frontend/pages/search/server/procedures";
 import { meRouter } from "@/frontend/pages/settings/server/procedures";
 
 process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
@@ -52,6 +54,7 @@ const createCaller = createCallerFactory(movementsRouter);
 const createAnalyticsCaller = createCallerFactory(analyticsRouter);
 const createMapCaller = createCallerFactory(mapRouter);
 const createMeCaller = createCallerFactory(meRouter);
+const createSearchCaller = createCallerFactory(searchRouter);
 
 const contextFor = (userId: string) => ({
     authApi: undefined as never,
@@ -81,6 +84,7 @@ const loadsLine = async (userId: string, currency: string) => {
     };
 };
 const meFor = (userId: string) => createMeCaller(contextFor(userId));
+const searchFor = (userId: string) => createSearchCaller(contextFor(userId));
 
 const as = (userId: string) =>
     createCaller({
@@ -120,6 +124,49 @@ async function expectError(name: string, run: () => Promise<unknown>, message: s
 }
 
 const created: string[] = [];
+/** The chat rows the harness wrote itself, and only those, to delete again. */
+const saidHere: string[] = [];
+const threadsHere: string[] = [];
+
+/**
+ * The conversation and outbound message a location request leaves behind,
+ * written straight to the tables so the check costs nothing at Infobip, and
+ * the conversation stamped on the row that asked — the only link the thread
+ * read trusts. A driver who already has a thread keeps it — only what this
+ * run adds is cleaned up.
+ */
+async function simulateRequest(driverPhone: string, driverName: string, movementId: string): Promise<string> {
+    const digits = normalizePhone(driverPhone);
+
+    const [existing] = await db
+        .select({ id: chatConversation.id })
+        .from(chatConversation)
+        .where(eq(chatConversation.driverPhone, digits))
+        .limit(1);
+
+    let conversationId = existing?.id;
+
+    if (!conversationId) {
+        const [opened] = await db
+            .insert(chatConversation)
+            .values({ driverName, driverPhone: digits })
+            .returning({ id: chatConversation.id });
+
+        conversationId = opened!.id;
+        threadsHere.push(conversationId);
+    }
+
+    const [message] = await db
+        .insert(chatMessage)
+        .values({ conversationId, direction: "outbound", body: "HARNESS where are you now?", status: "sent" })
+        .returning({ id: chatMessage.id });
+
+    saidHere.push(message!.id);
+
+    await db.update(movement).set({ conversationId }).where(eq(movement.id, movementId));
+
+    return message!.id;
+}
 
 /**
  * The flags a load's move into one status was written with, comma-joined the
@@ -141,6 +188,9 @@ async function flagsOn(movementId: string, toStatus: MovementStatus): Promise<st
 }
 
 async function cleanup() {
+    if (saidHere.length > 0) await db.delete(chatMessage).where(inArray(chatMessage.id, saidHere));
+    if (threadsHere.length > 0) await db.delete(chatConversation).where(inArray(chatConversation.id, threadsHere));
+
     if (created.length === 0) return;
 
     await db.delete(notification).where(and(eq(notification.entityType, "movement"), inArray(notification.entityId, created)));
@@ -330,6 +380,22 @@ async function main() {
     await db.update(movement).set({ driverPhone: phone }).where(eq(movement.id, filed.id));
     const pinOwner = await resolveMovementForConversation(db, { conversationId: "harness-no-thread", driverPhone: normalizePhone(phone) });
     check("a pin on that phone lands on B's row, not nowhere", pinOwner?.id === accepted.id, pinOwner);
+
+    console.log("\n— the driver's thread, read on the row that holds the truck");
+    // What requestLocation writes, without spending a WhatsApp send: the
+    // conversation keyed by the driver's number, stamped on B's row, and
+    // the question on it
+    const asked = await simulateRequest(phone, "HARNESS Driver", accepted.id);
+
+    const aThread = await a.thread({ id: filed.id });
+    check("A's order reads no thread: the driver is B's to talk to", aThread.length === 0, aThread);
+    await expectError("…and B's own row is not A's to open at all", () => a.thread({ id: accepted.id }), "NOT_FOUND");
+
+    const bThread = await b.thread({ id: accepted.id });
+    const lastSaid = bThread.at(-1);
+    check("B reads what was asked of its driver, through the conversation its own asking stamped",
+        lastSaid?.id === asked && lastSaid.direction === "outbound" && lastSaid.status === "sent", bThread);
+
     await db.update(movement).set({ driverPhone: null }).where(eq(movement.id, filed.id));
 
     console.log("\n— the proof of delivery travels up");
@@ -645,8 +711,42 @@ async function startedFor(organizationId: string): Promise<number> {
     return row?.value ?? 0;
 }
 
+/**
+ * The palette reaches across the portal and never across tenants: it answers
+ * the loads a company's own lists hold — once each, so a load a partner
+ * accepted is not both its own order and the partner's row — and answers a
+ * company with no part in any of them nothing at all.
+ */
+async function palette() {
+    const a = as(A.user);
+    const b = as(B.user);
+
+    console.log("\n— the ⌘K palette");
+    const order = await a.create({
+        execution: "partner", carrierOrgId: B.org, origin, destination,
+        cargoDescription: "HARNESS palette", buy: { total: 41000, currency: "MZN" },
+    });
+    created.push(order.id);
+
+    const aDetail = await a.get({ id: order.id });
+    const offered = await a.offer({ id: order.id, expectedVersion: aDetail.version });
+    const executorRow = await b.respond({ id: order.id, expectedVersion: offered.version, decision: "accept" });
+    created.push(executorRow.id);
+
+    const mine = await searchFor(A.user).global({ query: "HARNESS" });
+    const ids = mine.loads.map((load) => load.id);
+    check("A's palette finds its own order and never B's row for it",
+        ids.includes(order.id) && !ids.includes(executorRow.id), mine.loads.map((load) => load.ref));
+
+    const stranger = await searchFor(C.user).global({ query: "HARNESS" });
+    check("a stranger's palette finds nothing at all",
+        stranger.loads.length === 0 && stranger.partners.length === 0
+        && stranger.drivers.length === 0 && stranger.vehicles.length === 0, stranger);
+}
+
 main()
     .then(hardening)
+    .then(palette)
     .catch((error) => {
         console.error("\nharness crashed:", error);
         results.push({ name: "harness ran to the end", ok: false, detail: String(error) });

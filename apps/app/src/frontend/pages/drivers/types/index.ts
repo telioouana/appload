@@ -2,6 +2,7 @@ import { FLEET_STATUS, KYC_STATUS } from "@workspace/db/types";
 import type { KycStatus } from "@workspace/db/types";
 
 import type { DocProgress, FleetStatus, PagedResult, SortDir, StatusCounts } from "@/frontend/pages/fleet/types";
+import type { Location, MovementExecution, MovementStatus } from "@/frontend/pages/movements/types";
 
 export type { DocProgress, PagedResult };
 
@@ -70,10 +71,26 @@ export type DriverDocument = {
     expiresAt: string | null;
 };
 
+/**
+ * A load this driver was named on, as the profile lists it: where it goes
+ * and how far along it is, and nothing of what it is worth — a driver's
+ * page is a fleet page, not a money one.
+ */
+export type DriverLoad = {
+    id: string;
+    ref: string;
+    status: MovementStatus;
+    execution: MovementExecution;
+    origin: Location;
+    destination: Location;
+};
+
 export type DriverProfile = DriverRow & {
     createdAt: Date;
     documents: DriverDocument[];
     truck: { id: string; regPlate: string; brand: string; model: string } | null;
+    /** The five most recent loads this driver was named on */
+    loads: DriverLoad[];
 };
 
 // ---------------------------------------------------------------------------

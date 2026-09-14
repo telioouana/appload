@@ -6,9 +6,11 @@ import { auth } from "@workspace/auth/server"
 import { getTenantGates } from "@workspace/trpc/tenant-gate"
 
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@workspace/ui/components/sidebar"
+import { CommandPaletteProvider } from "@workspace/ui/customs/list/command"
 
 import { Sidenav } from "@/frontend/components/navigation/sidenav"
 import { AccessDenied } from "@/frontend/components/access-denied"
+import { CommandPalette } from "@/frontend/components/command-palette"
 import { NotificationBell } from "@/frontend/components/notifications/notification-bell"
 
 export default async function Layout({
@@ -58,9 +60,17 @@ export default async function Layout({
                 </header>
 
                 <main className="mx-4 flex-1 min-h-0 flex flex-col overflow-hidden">
-                    {children}
+                    {/* The shared list header shows its ⌘K hint inside this and
+                        nowhere else, so the chip and the palette below it are
+                        mounted or absent together */}
+                    <CommandPaletteProvider>
+                        {children}
+                    </CommandPaletteProvider>
                 </main>
             </SidebarInset>
+
+            {/* ⌘K search, one instance for the whole portal */}
+            <CommandPalette />
         </SidebarProvider>
     )
 }

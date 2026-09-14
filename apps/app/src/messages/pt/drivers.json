@@ -108,7 +108,11 @@
             "id-card": "Bilhete de identidade"
         },
         "expires": "Válido até {date}",
-        "no-expiry": "Sem validade"
+        "no-expiry": "Sem validade",
+        "loads": {
+            "title": "Cargas",
+            "empty": "Este motorista ainda não foi indicado em nenhuma carga."
+        }
     },
     "edit": {
         "title": "Editar motorista",

@@ -4,6 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 
 import { driver, truck } from "@workspace/db/fleet";
+import { movement } from "@workspace/db/movements";
 import { user } from "@workspace/db/users";
 import { FLEET_STATUS, KYC_STATUS } from "@workspace/db/types";
 import type { KycStatus } from "@workspace/db/types";
@@ -13,7 +14,9 @@ import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 import type { OrgAction } from "@workspace/auth/organization-permissions";
 
+import { normalizePhone } from "@workspace/comms/phone";
 import { docProgress, today } from "@workspace/domain/kyc/derive";
+import { movementRef } from "@workspace/domain/movements/refs";
 
 import { uniqueViolationConstraint } from "@workspace/db/errors";
 import { RegisterDriverBaseSchema } from "@/backend/schemas/register-driver";
@@ -26,6 +29,7 @@ import {
     isPlaceholderEmail,
     ISSUE_STATUSES,
     STATUS_FILTERS,
+    type DriverLoad,
     type DriverProfile,
     type DriverRow,
     type DriverStats,
@@ -166,7 +170,10 @@ export const driversRouter = createTRPCRouter({
 
             if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
 
-            const documents = await currentDocuments(ctx.db, "driver", row.id);
+            const [documents, loads] = await Promise.all([
+                currentDocuments(ctx.db, "driver", row.id),
+                driverLoads(ctx.db, ctx.tenant.organizationId, row.id, row.phoneNumber),
+            ]);
 
             return {
                 id: row.id,
@@ -189,6 +196,7 @@ export const driversRouter = createTRPCRouter({
                 truck: row.truckId && row.plate
                     ? { id: row.truckId, regPlate: row.plate, brand: row.truckBrand ?? "", model: row.truckModel ?? "" }
                     : null,
+                loads,
             };
         }),
 
@@ -367,6 +375,50 @@ export const driversRouter = createTRPCRouter({
 // ---------------------------------------------------------------------------
 // Reads
 // ---------------------------------------------------------------------------
+
+/**
+ * The loads this driver was last named on, this company's own only.
+ *
+ * Two ways of naming the same person: a load filed from the fleet picker
+ * carries the driver's id, one typed in a hurry carries only a phone number
+ * — matched digits to digits, since the load stores E.164 and a driver's
+ * account may not. No money column is read here at all: the driver's page
+ * says where its loads went, never what they were worth.
+ */
+async function driverLoads(db: Db, carrierId: string, driverId: string, phone: string | null): Promise<DriverLoad[]> {
+    const digits = phone ? normalizePhone(phone) : "";
+
+    const named = digits
+        ? or(
+            eq(movement.driverId, driverId),
+            eq(sql`regexp_replace(coalesce(${movement.driverPhone}, ''), '\\D', '', 'g')`, digits),
+        )!
+        : eq(movement.driverId, driverId);
+
+    const rows = await db
+        .select({
+            id: movement.id,
+            seq: movement.seq,
+            status: movement.status,
+            execution: movement.execution,
+            origin: movement.origin,
+            destination: movement.destination,
+        })
+        .from(movement)
+        // Always first, and never overridable from input: this is the tenant gate
+        .where(and(eq(movement.organizationId, carrierId), named))
+        .orderBy(desc(movement.createdAt))
+        .limit(5);
+
+    return rows.map((row) => ({
+        id: row.id,
+        ref: movementRef(row.seq, row.execution),
+        status: row.status,
+        execution: row.execution,
+        origin: row.origin,
+        destination: row.destination,
+    }));
+}
 
 const direction = (dir: "asc" | "desc") => (dir === "desc" ? desc : asc);
 

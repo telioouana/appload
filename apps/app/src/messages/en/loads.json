@@ -384,6 +384,18 @@
         "empty": "No positions yet",
         "unnamed": "Unnamed place"
     },
+    "thread": {
+        "title": "Driver messages",
+        "empty": "No messages with the driver yet",
+        "footer": "Messages are sent from the tracking above and answered on WhatsApp.",
+        "status": {
+            "pending": "Sending",
+            "sent": "Sent",
+            "delivered": "Delivered",
+            "read": "Read",
+            "failed": "Not delivered"
+        }
+    },
     "timeline": {
         "title": "History",
         "empty": "Nothing has happened yet",

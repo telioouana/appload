@@ -384,6 +384,18 @@
         "empty": "Ainda sem posições",
         "unnamed": "Local sem nome"
     },
+    "thread": {
+        "title": "Mensagens com o motorista",
+        "empty": "Ainda não há mensagens com o motorista",
+        "footer": "As mensagens saem do acompanhamento acima e são respondidas no WhatsApp.",
+        "status": {
+            "pending": "A enviar",
+            "sent": "Enviada",
+            "delivered": "Entregue",
+            "read": "Lida",
+            "failed": "Não entregue"
+        }
+    },
     "timeline": {
         "title": "Histórico",
         "empty": "Ainda nada aconteceu",

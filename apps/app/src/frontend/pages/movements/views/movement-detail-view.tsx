@@ -11,6 +11,7 @@ import { LoadHeader } from "@/frontend/pages/movements/sections/load-header"
 import { MoneyCard } from "@/frontend/pages/movements/sections/money-card"
 import { PartiesCard } from "@/frontend/pages/movements/sections/parties-card"
 import { RouteCard } from "@/frontend/pages/movements/sections/route-card"
+import { ThreadCard } from "@/frontend/pages/movements/sections/thread-card"
 import { TimelineCard } from "@/frontend/pages/movements/sections/timeline-card"
 import { TrackingCard } from "@/frontend/pages/movements/sections/tracking-card"
 
@@ -70,6 +71,9 @@ export function MovementDetailView({ loadId }: { loadId: string }) {
 
                 <div className="container-snap flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pb-2">
                     <TrackingCard load={load} />
+
+                    {/* What the driver has said back, under the card that asks */}
+                    {load.permissions.canReadThread && <ThreadCard load={load} />}
 
                     <TimelineCard load={load} />
                 </div>

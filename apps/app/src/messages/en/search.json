@@ -1,0 +1,31 @@
+{
+    "title": "Search",
+    "description": "Find a load, a partner, a driver or a plate",
+    "placeholder": "Search loads, partners, drivers, plates",
+    "typing": "Type at least two characters",
+    "empty": "Nothing found",
+    "groups": {
+        "loads": "Loads",
+        "partners": "Partners",
+        "drivers": "Drivers",
+        "vehicles": "Vehicles",
+        "actions": "Actions"
+    },
+    "actions": {
+        "orders": "Search in orders",
+        "trips": "Search in trips",
+        "partners": "Search in partners",
+        "drivers": "Search in drivers",
+        "fleet": "Search in fleet"
+    },
+    "kind": {
+        "truck": "Truck",
+        "trailer": "Trailer",
+        "link": "Link"
+    },
+    "hints": {
+        "move": "move",
+        "open": "open",
+        "close": "close"
+    }
+}

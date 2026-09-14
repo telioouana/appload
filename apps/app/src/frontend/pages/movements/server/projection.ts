@@ -708,6 +708,7 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
         canApproveDocuments: false,
         canRecordPayment: false,
         canRequestLocation: false,
+        canReadThread: false,
     };
 
     if (role !== "owner") return none;
@@ -766,6 +767,11 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
         canRecordPayment: row.status !== "cancelled" && (row.sellTotal !== null || (partner && row.buyTotal !== null))
             && can("order", "update"),
         canRequestLocation: row.status === "in-transit" && !linked && Boolean(row.driverPhone) && can("trip", "update"),
+        // Reading follows the phone: whoever may see the number may see what
+        // was said to it, and a linked order's driver belongs to the executor
+        // Only a conversation this row's own asking stamped is readable, so
+        // the card is offered on that, not on a typed number
+        canReadThread: !linked && Boolean(row.conversationId),
     };
 }
 

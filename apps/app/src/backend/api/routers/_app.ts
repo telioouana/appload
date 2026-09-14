@@ -21,6 +21,7 @@ import { partnersCatalog } from "@/frontend/pages/partners/server/activity"
 import { partnersRouter } from "@/frontend/pages/partners/server/procedures"
 import { quotesCatalog } from "@/frontend/pages/quotes/server/activity"
 import { quotesRouter } from "@/frontend/pages/quotes/server/procedures"
+import { searchRouter } from "@/frontend/pages/search/server/procedures"
 import { meRouter } from "@/frontend/pages/settings/server/procedures"
 
 // Module scope: runs on every cold start before any request is handled, so
@@ -52,6 +53,7 @@ export const appRouter = createTRPCRouter({
     orders: ordersRouter,
     partners: partnersRouter,
     quotes: quotesRouter,
+    search: searchRouter,
 });
 
 // export type definition of API
