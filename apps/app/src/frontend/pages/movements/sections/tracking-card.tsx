@@ -64,7 +64,15 @@ export function TrackingCard({ load }: { load: MovementDetail }) {
                 <ol className="flex flex-col gap-2">
                     {[...points].reverse().map((point) => (
                         <li key={point.id} className="flex items-baseline justify-between gap-4 text-[13px]">
-                            <span className="min-w-0 truncate">{point.placeName ?? t("unnamed")}</span>
+                            <span className="flex min-w-0 items-baseline gap-1.5">
+                                <span className="min-w-0 truncate">{point.placeName ?? t("unnamed")}</span>
+                                {/* An address the driver picked or searched is not proof of where the truck stood */}
+                                {point.picked && (
+                                    <span className="bg-muted shrink-0 rounded-full px-1.5 py-px text-[11px] leading-4 text-amber-600 dark:text-amber-400">
+                                        {t("picked")}
+                                    </span>
+                                )}
+                            </span>
                             <span className="text-muted-foreground shrink-0 tabular-nums">
                                 {f.dateTime(point.recordedAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                             </span>

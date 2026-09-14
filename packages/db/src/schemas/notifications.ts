@@ -31,7 +31,7 @@ export const NOTIFICATION_KIND = [
     "movement.delivered",
     "movement.cancelled",
     "movement.withdrawn",
-    "movement.no-response",
+    "movement.location-alert",
     "movement.document",
     "subscription.changed",
 ] as const;
@@ -58,10 +58,9 @@ export type NotificationParams = Record<string, string | number | boolean | null
  * `entityType`/`entityId` say what to link to.
  *
  * `dedupeKey` is what makes materialization idempotent: rows derived from the
- * order trail carry "history:<order_history.id>", the movement no-response
- * sweep carries "movement:<id>:<slotDate>:<slot>", and direct writes leave it
- * null. The
- * partial unique index on (user, dedupeKey) lets the same sweep run twice
+ * order trail carry "history:<order_history.id>", the tracking review carries
+ * "movement:<id>:<slotDate>:<slot>:alert", and direct writes leave it null.
+ * The partial unique index on (user, dedupeKey) lets the same sweep run twice
  * without doubling anyone's inbox, while null keys stay unconstrained.
  *
  * Both FKs cascade: a notification is a copy of something that already

@@ -15,8 +15,8 @@ import {
 import { normalizePhone } from "@workspace/comms/phone";
 
 import { movementRef } from "@workspace/domain/movements/refs";
-import { notify } from "@workspace/domain/notifications";
 import { startConversation } from "@workspace/domain/tracking/conversations";
+import { REVIEW_AFTER_MINUTES, reviewMovementSlot } from "@workspace/domain/tracking/movement-review";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 import {
     BATCH_SIZE,
@@ -35,7 +35,9 @@ export type MovementSlotRunSummary = {
     resent: number;
     skipped: number;
     failed: number;
-    notified: number;
+    /** What the end-of-window review judged, 0 on every earlier tick */
+    reviewed: number;
+    alerts: number;
 };
 
 /**
@@ -48,14 +50,25 @@ export type MovementSlotRunSummary = {
  * Two things have no equivalent on the order side. A driver Admin is already
  * chasing for a live order is left alone: one phone, one thread, and two
  * systems asking the same question twice an hour is how a driver learns to
- * ignore us. And a slot whose attempts run out tells the tenant, because
- * nobody in the portal is watching a cron log.
+ * ignore us. And on the window's last ticks the slot is reviewed and the
+ * tenant told what its drivers actually reported, because nobody in the
+ * portal is watching a cron log.
  */
 export async function runMovementTrackingSlot(db: typeof Database, info: SlotInfo): Promise<MovementSlotRunSummary> {
     const summary: MovementSlotRunSummary = {
-        slot: info, eligible: 0, sent: 0, resent: 0, skipped: 0, failed: 0, notified: 0,
+        slot: info, eligible: 0, sent: 0, resent: 0, skipped: 0, failed: 0, reviewed: 0, alerts: 0,
     };
     const now = new Date();
+
+    // Before this tick's own sends, never after: a request written seconds ago
+    // has had no chance of an answer, and judging it would alert on our own
+    // timing rather than on the driver's silence
+    if (info.minutesIntoSlot >= REVIEW_AFTER_MINUTES) {
+        const review = await reviewMovementSlot(db, info);
+
+        summary.reviewed = review.reviewed;
+        summary.alerts = review.alerts;
+    }
 
     // The phones Admin's own cron is pinging for a live order — read before
     // the batch rather than filtered out of it afterwards, so a fleet whose
@@ -128,11 +141,6 @@ export async function runMovementTrackingSlot(db: typeof Database, info: SlotInf
 
         if (decision.action === "skip") {
             summary.skipped++;
-
-            if (decision.exhausted && await raiseNoResponse(db, row, info)) {
-                summary.notified++;
-            }
-
             continue;
         }
 
@@ -151,25 +159,6 @@ export async function runMovementTrackingSlot(db: typeof Database, info: SlotInf
     }
 
     return summary;
-}
-
-/**
- * Tells the tenant its driver went quiet for a whole slot. The dedupe key is
- * the slot, not the tick, so every later tick of the same slot writes nothing
- * and the tenant hears about it once.
- */
-async function raiseNoResponse(db: typeof Database, row: Movement, info: SlotInfo): Promise<boolean> {
-    const written = await notify(db, {
-        organizationId: row.organizationId,
-        kind: "movement.no-response",
-        entityType: "movement",
-        entityId: row.id,
-        params: { ref: movementRef(row.seq, row.execution), driverName: row.driverName },
-        email: true,
-        dedupeKey: `movement:${row.id}:${info.slotDate}:${info.slot}`,
-    });
-
-    return written > 0;
 }
 
 /**

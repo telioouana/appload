@@ -127,6 +127,13 @@
       "when": 1789340863885,
       "tag": "0017_movement_document_approval",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789347676507,
+      "tag": "0018_movement_tracking_alert",
+      "breakpoints": true
     }
   ]
 }

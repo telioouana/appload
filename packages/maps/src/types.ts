@@ -26,6 +26,12 @@ export type TrailPoint = {
     placeName: string | null
     recordedAt: Date
     source: "whatsapp" | "manual"
+    /**
+     * The driver picked or searched an address instead of sharing the live
+     * position: WhatsApp only sends a name with a chosen place, so a named
+     * ping is one nobody can be sure the truck was standing on.
+     */
+    picked: boolean
 }
 
 export type MapOrder = {

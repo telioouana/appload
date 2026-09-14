@@ -67,6 +67,7 @@ const toPoint = (ping: PingRow): TrailPoint => ({
     placeName: ping.placeName,
     recordedAt: ping.recordedAt,
     source: trailSource(ping.source),
+    picked: ping.placeName !== null,
 });
 
 export const mapRouter = createTRPCRouter({

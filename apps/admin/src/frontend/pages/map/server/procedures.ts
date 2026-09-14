@@ -157,6 +157,7 @@ export const mapRouter = createTRPCRouter({
                 placeName: point.placeName,
                 recordedAt: point.recordedAt,
                 source: trailSource(point.source),
+                picked: point.placeName !== null,
             }));
         }),
 
@@ -251,6 +252,7 @@ export const mapRouter = createTRPCRouter({
                         placeName: ping.placeName,
                         recordedAt: ping.recordedAt,
                         source: trailSource(ping.source),
+                        picked: ping.placeName !== null,
                     }
                     : null,
                 pingCount: countByOrder.get(row.id) ?? 0,

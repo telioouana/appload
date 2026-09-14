@@ -24,7 +24,7 @@ export const KINDS_BY_FAMILY: Record<KindFamily, NotificationKind[]> = {
         "movement.delivered",
         "movement.cancelled",
         "movement.withdrawn",
-        "movement.no-response",
+        "movement.location-alert",
         "movement.document",
     ],
     // Appload's brokerage
@@ -52,13 +52,25 @@ export type KindMessageKey = Dashed<NotificationKind>;
 export const kindMessageKey = (kind: NotificationKind): KindMessageKey => kind.replace(".", "-") as KindMessageKey;
 
 /**
+ * ICU refuses a dash inside a `select` key, so a code a message branches on
+ * reaches the catalog as one word: the location alert records its issue as
+ * "short-distance" and the copy selects on `shortDistance`.
+ */
+const selector = (code: string) => code.replace(/-(\w)/g, (_, letter: string) => letter.toUpperCase());
+
+/**
  * A row's params as ICU values. ICU knows strings and numbers; a param a
  * writer left empty (an optional note, a partner with no name on file)
  * becomes an empty slot rather than the word "null" on someone's screen.
  */
 export function icuValues(params: NotificationParams): Record<string, string | number> {
     return Object.fromEntries(
-        Object.entries(params).map(([key, value]) => [key, typeof value === "number" ? value : String(value ?? "")]),
+        Object.entries(params).map(([key, value]) => {
+            if (typeof value === "number") return [key, value];
+
+            const text = String(value ?? "");
+            return [key, key === "issue" ? selector(text) : text];
+        }),
     );
 }
 

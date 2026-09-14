@@ -68,7 +68,7 @@
         "movement-delivered": "Load delivered",
         "movement-cancelled": "Load cancelled",
         "movement-withdrawn": "Offer withdrawn",
-        "movement-no-response": "Driver silent",
+        "movement-location-alert": "Location alert",
         "movement-document": "Document added",
         "subscription-changed": "Plan changed"
     },
@@ -96,7 +96,7 @@
         "movement-delivered": "Load {ref} arrived in {destination}.",
         "movement-cancelled": "Load {ref} ({origin} → {destination}) was cancelled.",
         "movement-withdrawn": "{organizationName} withdrew the offer of load {ref} ({origin} → {destination}).",
-        "movement-no-response": "{driverName} did not answer the location request for load {ref}.",
+        "movement-location-alert": "{issue, select, noLocation{{driverName} sent no location for load {ref} this round.} shortDistance{{driverName} moved less than 20 km since the last position on load {ref}.} pickedAddress{{driverName} sent a chosen address instead of the live position on load {ref}.} other{{driverName} did not send a valid position for load {ref}.}}{streak, plural, =1 {} =2 {{audience, select, client{ Second round in a row — the transporter was told too.} other{ Second round in a row — the client was told too.}}} other {{audience, select, client{ {streak} rounds in a row — the transporter was told too.} other{ {streak} rounds in a row — the client was told too.}}}}",
         "movement-document": "{type, select, pod {A proof of delivery} cmr {A CMR} invoice {An invoice} receipt {A receipt} other {A document}} was added to load {ref}.",
         "subscription-changed": "{plan, select, starter{Your company moved to the Starter plan.} business{Your company moved to the Business plan.} enterprise{Your company moved to the Enterprise plan.} other{Your company has no active plan.}}"
     },

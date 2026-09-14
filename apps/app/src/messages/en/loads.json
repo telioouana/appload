@@ -382,7 +382,8 @@
         "linked": "The partner tracks its own truck; positions show here as they arrive.",
         "disabled": "Tracking is switched off for this load.",
         "empty": "No positions yet",
-        "unnamed": "Unnamed place"
+        "unnamed": "Unnamed place",
+        "picked": "picked address"
     },
     "thread": {
         "title": "Driver messages",

@@ -21,6 +21,11 @@ export const maxDuration = 60;
  * chain each trip is comes from the database, so extra ticks are no-ops and
  * a missed tick heals on the next one. Outside both windows the run is a
  * no-op, which makes the route safe to hit manually at any time.
+ *
+ * The window's last ticks also review the slot they are closing — the
+ * `reviewed` and `alerts` counts below are how many loads were judged and how
+ * many drivers came back with nothing, no movement, or a chosen address. They
+ * are 0 on every earlier tick.
  */
 async function handle(request: NextRequest) {
     if (!await authorizeCron(request)) {

@@ -44,7 +44,26 @@ const MINUTE_MS = 60_000;
 export type SlotInfo = {
     slotDate: string;
     slot: TrackingSlot;
+    /**
+     * Minutes since the window opened (`slotStart`). The attempt chain never
+     * looks at it — it is what lets a caller tell an early tick from one of
+     * the window's last, which is where the portal reviews the slot it just
+     * finished.
+     */
+    minutesIntoSlot: number;
 };
+
+/**
+ * When each window opens, in Maputo minutes of the day — five minutes ahead
+ * of the business hour, so an early tick still counts as the same slot.
+ */
+const SLOT_WINDOWS = [
+    { slot: "morning" as const, start: 7 * 60 + 55 },
+    { slot: "afternoon" as const, start: 16 * 60 + 55 },
+];
+
+/** How long a window stays open: long enough for all three attempts to fit. */
+const SLOT_WINDOW_MINUTES = 110;
 
 /**
  * Which slot (if any) the current time falls in. The window is deliberately
@@ -58,20 +77,25 @@ export function currentSlotInfo(now: Date = new Date()): SlotInfo | null {
     const slotDate = local.toISOString().slice(0, 10);
     const minutesOfDay = local.getUTCHours() * 60 + local.getUTCMinutes();
 
-    for (const { slot, start } of [
-        { slot: "morning" as const, start: 8 * 60 },
-        { slot: "afternoon" as const, start: 17 * 60 },
-    ]) {
-        const offset = minutesOfDay - start;
+    for (const { slot, start } of SLOT_WINDOWS) {
+        const minutesIntoSlot = minutesOfDay - start;
 
-        // -5 min of tolerance for an early tick, and long enough after the
-        // start for all three attempts to still fit
-        if (offset >= -5 && offset <= 105) {
-            return { slotDate, slot };
+        if (minutesIntoSlot >= 0 && minutesIntoSlot <= SLOT_WINDOW_MINUTES) {
+            return { slotDate, slot, minutesIntoSlot };
         }
     }
 
     return null;
+}
+
+/**
+ * The instant a slot's window opened — 07:55 or 16:55 Maputo on its own
+ * calendar date. What "the positions this slot produced" is measured from.
+ */
+export function slotStart(info: SlotInfo): Date {
+    const opens = SLOT_WINDOWS.find((candidate) => candidate.slot === info.slot)?.start ?? 0;
+
+    return new Date(Date.parse(`${info.slotDate}T00:00:00Z`) + opens * MINUTE_MS - MAPUTO_OFFSET_MS);
 }
 
 /**
@@ -101,15 +125,11 @@ export const smsText = (driverName: string, row: Order) =>
  * scheduler stays dumb. Generic over the row because orders and trips keep
  * their attempts in separate tables that differ only in what they point at,
  * and both must answer to one decision table.
- *
- * `exhausted` separates a slot that is over from one that is merely waiting
- * out the gap: the portal's trip runner turns the first into a no-response
- * notification, the order runner has no use for it.
  */
 type AttemptRow = { attempt: number; status: TrackingStatus; createdAt: Date };
 
 type Decision<Row extends AttemptRow> =
-    | { action: "skip"; exhausted: boolean }
+    | { action: "skip" }
     | { action: "send"; attempt: number }
     | { action: "resend"; row: Row };
 
@@ -120,7 +140,7 @@ export function decideNextAttempt<Row extends AttemptRow>(rows: Row[], now: Date
 
     // The driver answered — nothing more to ask for this slot
     if (rows.some((row) => row.status === "responded")) {
-        return { action: "skip", exhausted: false };
+        return { action: "skip" };
     }
 
     const latest = rows.reduce((newest, row) => (row.attempt > newest.attempt ? row : newest));
@@ -134,18 +154,18 @@ export function decideNextAttempt<Row extends AttemptRow>(rows: Row[], now: Date
 
     // Too soon — this is what makes duplicate ticks harmless
     if (ageMinutes < ATTEMPT_GAP_MINUTES) {
-        return { action: "skip", exhausted: false };
+        return { action: "skip" };
     }
 
     if (latest.attempt >= MAX_ATTEMPTS) {
-        return { action: "skip", exhausted: true };
+        return { action: "skip" };
     }
 
     // Escalating to SMS is only worth it when WhatsApp never landed. A
     // delivered message that simply went unanswered means the driver is
     // reachable and chose not to reply.
     if (latest.attempt === MAX_ATTEMPTS - 1 && latest.status === "delivered") {
-        return { action: "skip", exhausted: true };
+        return { action: "skip" };
     }
 
     return { action: "send", attempt: latest.attempt + 1 };

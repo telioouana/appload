@@ -336,6 +336,53 @@ export const movementTrackingRequest = pgTable(
 export type MovementTrackingRequest = typeof movementTrackingRequest.$inferSelect;
 export type CreateMovementTrackingRequest = typeof movementTrackingRequest.$inferInsert;
 
+/**
+ * What was wrong with a slot's tracking. "no-location" is the driver who
+ * never answered; "short-distance" the one who answered from where he already
+ * was; "picked-address" the one who chose a place off his phone's list
+ * instead of sharing where the truck actually is — the only one of the three
+ * that looks like compliance from a distance, which is why it is named.
+ */
+export const TRACKING_ALERT_ISSUE = ["no-location", "short-distance", "picked-address"] as const;
+export type TrackingAlertIssue = (typeof TRACKING_ALERT_ISSUE)[number];
+
+/**
+ * One row per slot a movement's tracking failed in, written once the window
+ * has closed. It exists to be read by the NEXT slot's review: `streak` counts
+ * consecutive failing slots (morning follows the previous day's afternoon),
+ * and two in a row is what takes the alert past the transporter's owners to
+ * the client.
+ *
+ * The unique index on (movement, slotDate, slot) is the whole idempotency
+ * story — the review runs on every one of the window's last ticks and only
+ * the first one writes, so nobody is told twice. `restrict` on the movement,
+ * like every other tracking row: an alert is evidence of how a load was run.
+ */
+export const movementTrackingAlert = pgTable(
+    "movement_tracking_alert",
+    {
+        id: text("id")
+            .primaryKey()
+            .$defaultFn(() => crypto.randomUUID()),
+        movementId: text("movement_id")
+            .notNull()
+            .references(() => movement.id, { onDelete: "restrict" }),
+        // Local Maputo calendar date + slot, the same pair the request rows use
+        slotDate: text("slot_date").notNull(),
+        slot: text("slot", { enum: TRACKING_SLOT }).notNull(),
+        issue: text("issue", { enum: TRACKING_ALERT_ISSUE }).notNull(),
+        // 1 on the first failing slot, +1 for each consecutive one after it
+        streak: integer("streak").notNull(),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+    },
+    (table) => [
+        uniqueIndex("movement_tracking_alert_slot_uidx").on(table.movementId, table.slotDate, table.slot),
+    ],
+);
+
+export type MovementTrackingAlert = typeof movementTrackingAlert.$inferSelect;
+export type CreateMovementTrackingAlert = typeof movementTrackingAlert.$inferInsert;
+
 /** What a cost line is for. Text + TS const so the list grows without an ALTER TYPE. */
 export const MOVEMENT_COST_KIND = [
     "fuel",

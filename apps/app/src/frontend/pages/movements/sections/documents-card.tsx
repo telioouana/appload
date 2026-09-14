@@ -186,9 +186,13 @@ function LoadingPhotos({ load, photos }: { load: MovementDetail; photos: Movemen
                                         "truncate text-xs",
                                         photo.approvedAt ? "text-muted-foreground" : "text-amber-600 dark:text-amber-400",
                                     )}>
-                                        {photo.approvedAt
-                                            ? t("photos.approved-by", { name: photo.approvedByName ?? "" })
-                                            : t("photos.pending")}
+                                        {!photo.approvedAt
+                                            ? t("photos.pending")
+                                            // The approver's account may be gone by now (approved_by is set
+                                            // null with it): the photo stays approved, just by nobody named
+                                            : photo.approvedByName
+                                                ? t("photos.approved-by", { name: photo.approvedByName })
+                                                : t("photos.approved")}
                                     </span>
                                 )}
                             </div>
@@ -305,7 +309,18 @@ function DocumentDialog({ load, onClose }: { load: MovementDetail; onClose: () =
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2">
                         <Label>{t("dialog.type")}</Label>
-                        <Select value={type} onValueChange={(value) => setType(value as MovementDocumentType)} disabled={isPending}>
+                        <Select
+                            value={type}
+                            onValueChange={(value) => {
+                                const next = value as MovementDocumentType
+                                setType(next)
+                                // A file picked for a paper does not carry over to a photo: the
+                                // mime guard only runs when a file is picked, not when the type moves
+                                const allowed = next === PHOTO ? ACCEPTED_PHOTOS : ACCEPTED_FILES
+                                if (file && !allowed.includes(file.type)) setFile(null)
+                            }}
+                            disabled={isPending}
+                        >
                             <SelectTrigger className="w-full">
                                 <SelectValue />
                             </SelectTrigger>

@@ -1403,6 +1403,7 @@ export const movementsRouter = createTRPCRouter({
                 placeName: point.placeName,
                 recordedAt: point.recordedAt,
                 source: trailSource(point.source),
+                picked: point.placeName !== null,
             }));
         }),
 

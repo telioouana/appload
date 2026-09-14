@@ -382,7 +382,8 @@
         "linked": "O parceiro acompanha o próprio camião; as posições aparecem aqui à medida que chegam.",
         "disabled": "O acompanhamento está desligado para esta carga.",
         "empty": "Ainda sem posições",
-        "unnamed": "Local sem nome"
+        "unnamed": "Local sem nome",
+        "picked": "endereço escolhido"
     },
     "thread": {
         "title": "Mensagens com o motorista",

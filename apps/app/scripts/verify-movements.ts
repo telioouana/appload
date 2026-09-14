@@ -18,7 +18,7 @@ import fs from "node:fs";
 
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 
-import { chatConversation, chatMessage } from "@workspace/db/chats";
+import { chatConversation, chatMessage, type TrackingStatus } from "@workspace/db/chats";
 import { db } from "@workspace/db/db";
 import {
     movement,
@@ -27,6 +27,7 @@ import {
     movementEvent,
     movementLocation,
     movementRoute,
+    movementTrackingAlert,
     movementTrackingRequest,
     type MovementStatus,
 } from "@workspace/db/movements";
@@ -36,7 +37,9 @@ import { activityLog } from "@workspace/db/activity-log";
 import { member } from "@workspace/db/users";
 import { ownerTargets } from "@workspace/domain/movements/status";
 import { normalizePhone } from "@workspace/comms/phone";
+import { reviewMovementSlot } from "@workspace/domain/tracking/movement-review";
 import { resolveMovementForConversation } from "@workspace/domain/tracking/movements";
+import { MAX_ATTEMPTS, channelFor, slotStart, type SlotInfo } from "@workspace/domain/tracking/slot";
 import { getStaffGates } from "@workspace/trpc/staff-gate";
 import { getTenantGates } from "@workspace/trpc/tenant-gate";
 import { createCallerFactory } from "@workspace/trpc/init";
@@ -196,7 +199,7 @@ async function cleanup() {
     await db.delete(notification).where(and(eq(notification.entityType, "movement"), inArray(notification.entityId, created)));
     await db.delete(subscriptionUsage).where(and(eq(subscriptionUsage.entityType, "movement"), inArray(subscriptionUsage.entityId, created)));
     await db.delete(activityLog).where(eq(activityLog.sessionId, SESSION_ID));
-    for (const table of [movementEvent, movementCost, movementDocument, movementLocation, movementTrackingRequest, movementRoute]) {
+    for (const table of [movementEvent, movementCost, movementDocument, movementLocation, movementTrackingAlert, movementTrackingRequest, movementRoute]) {
         await db.delete(table).where(inArray(table.movementId, created));
     }
     await db.update(movement).set({ executionMovementId: null }).where(inArray(movement.id, created));
@@ -744,9 +747,163 @@ async function palette() {
         && stranger.drivers.length === 0 && stranger.vehicles.length === 0, stranger);
 }
 
+/**
+ * Claire's rule, once a slot's window has closed: the driver who sent nothing,
+ * the one who barely moved and the one who picked a place off his phone all
+ * get their own company's owners told — and the client too, the second round
+ * running. Driven on invented slot dates so it never collides with a real
+ * window, and on B's own truck, for A as its client.
+ */
+async function reviewedSlots() {
+    const b = as(B.user);
+
+    console.log("\n— the end-of-slot review");
+    const load = await b.create({
+        execution: "own-fleet", origin, destination, cargoDescription: "HARNESS review",
+        driverName: "HARNESS Quiet", driverPhone: "+258840000996", status: "scheduled",
+    });
+    created.push(load.id);
+
+    // On the road, for a client that is on the portal — which is what lets the
+    // second bad round in a row reach A as well
+    await db.update(movement).set({ status: "in-transit", clientOrgId: A.org }).where(eq(movement.id, load.id));
+
+    const quiet: SlotInfo = { slotDate: "2099-03-01", slot: "morning", minutesIntoSlot: 95 };
+    const picked: SlotInfo = { slotDate: "2099-03-02", slot: "morning", minutesIntoSlot: 95 };
+    const parked: SlotInfo = { slotDate: "2099-03-02", slot: "afternoon", minutesIntoSlot: 95 };
+
+    /**
+     * The driver was reached in this slot and his chain is spent: what makes
+     * the slot reviewable at all. The status is the shape the webhook would
+     * have left behind — a driver who replied at all closes every open request
+     * on the thread, so only the one who stayed silent still reads "sent".
+     *
+     * Written as the last attempt, and dated an hour ago rather than at the
+     * invented slot's own instant: the review refuses to judge a chain that
+     * still owes the driver an attempt or whose last one went out minutes ago,
+     * and 2099 is in the future.
+     */
+    const asked = (info: SlotInfo, status: TrackingStatus) =>
+        db.insert(movementTrackingRequest).values({
+            movementId: load.id, slotDate: info.slotDate, slot: info.slot,
+            attempt: MAX_ATTEMPTS, channel: channelFor(MAX_ATTEMPTS), status,
+            scheduledFor: slotStart(info), createdAt: new Date(Date.now() - 60 * 60_000),
+        });
+
+    /** A position half an hour into the slot; `placeName` set is a chosen address. */
+    const pinged = (info: SlotInfo, lat: number, lng: number, placeName: string | null) =>
+        db.insert(movementLocation).values({
+            movementId: load.id, latitude: lat, longitude: lng, placeName,
+            recordedAt: new Date(slotStart(info).getTime() + 30 * 60_000),
+        });
+
+    const alertOn = async (info: SlotInfo, movementId = load.id) => {
+        const [row] = await db
+            .select({ issue: movementTrackingAlert.issue, streak: movementTrackingAlert.streak })
+            .from(movementTrackingAlert)
+            .where(and(
+                eq(movementTrackingAlert.movementId, movementId),
+                eq(movementTrackingAlert.slotDate, info.slotDate),
+                eq(movementTrackingAlert.slot, info.slot),
+            ));
+        return row;
+    };
+
+    /** Alert rows in one person's inbox for this load. */
+    const inboxOf = async (userId: string) => {
+        const [row] = await db
+            .select({ value: count() })
+            .from(notification)
+            .where(and(
+                eq(notification.userId, userId),
+                eq(notification.entityId, load.id),
+                eq(notification.kind, "movement.location-alert"),
+            ));
+        return row?.value ?? 0;
+    };
+
+    /** Alert rows across a whole company. */
+    const heardAt = async (organizationId: string) => {
+        const [row] = await db
+            .select({ value: count() })
+            .from(notification)
+            .where(and(
+                eq(notification.organizationId, organizationId),
+                eq(notification.entityId, load.id),
+                eq(notification.kind, "movement.location-alert"),
+            ));
+        return row?.value ?? 0;
+    };
+
+    console.log(`  before: B owner ${await inboxOf(B.user)}, B member ${await inboxOf(BM.user)}, A ${await heardAt(A.org)}`);
+
+    await asked(quiet, "sent");
+    let run = await reviewMovementSlot(db, quiet);
+    check("a slot the driver never answered raises one alert", run.reviewed === 1 && run.alerts === 1, run);
+    check("…filed as no-location, first round", (await alertOn(quiet))?.issue === "no-location" && (await alertOn(quiet))?.streak === 1, await alertOn(quiet));
+    check("…in B's owner's inbox", await inboxOf(B.user) === 1);
+    check("…and nowhere else: not B's member, not the client", await inboxOf(BM.user) === 0 && await heardAt(A.org) === 0,
+        { member: await inboxOf(BM.user), client: await heardAt(A.org) });
+
+    await asked(picked, "responded");
+    await pinged(picked, -15.1165, 39.2666, "Nampula, Mozambique");
+    run = await reviewMovementSlot(db, picked);
+    check("a chosen address is not a position", (await alertOn(picked))?.issue === "picked-address" && run.alerts === 1, await alertOn(picked));
+    check("…and starts its own round, the slot before it having been answered", (await alertOn(picked))?.streak === 1, await alertOn(picked));
+    check("…still the owner's business alone", await inboxOf(B.user) === 2 && await heardAt(A.org) === 0,
+        { owner: await inboxOf(B.user), client: await heardAt(A.org) });
+
+    await asked(parked, "responded");
+    await pinged(parked, -15.1650, 39.2840, null);
+    run = await reviewMovementSlot(db, parked);
+    check("six kilometres in half a day is standing still", (await alertOn(parked))?.issue === "short-distance" && run.alerts === 1, await alertOn(parked));
+    check("…the second round running", (await alertOn(parked))?.streak === 2, await alertOn(parked));
+    check("…so the client is told too, every member of it", await heardAt(A.org) === await membersOf(A.org),
+        { client: await heardAt(A.org), members: await membersOf(A.org) });
+    check("…and B's member still hears nothing", await inboxOf(BM.user) === 0);
+
+    const ownerBefore = await inboxOf(B.user);
+    const clientBefore = await heardAt(A.org);
+    run = await reviewMovementSlot(db, parked);
+    check("a later tick of the same window judges it again and writes nothing", run.reviewed === 1 && run.alerts === 0, run);
+    check("…so nobody is told twice", await inboxOf(B.user) === ownerBefore && await heardAt(A.org) === clientBefore,
+        { owner: await inboxOf(B.user), client: await heardAt(A.org) });
+
+    // A round that follows the *previous day's* afternoon: the half of the
+    // streak the same-day pair above never exercises, and the one a wrong day
+    // offset would silently get away with
+    const silent: SlotInfo = { slotDate: "2099-03-03", slot: "afternoon", minutesIntoSlot: 95 };
+    const morningAfter: SlotInfo = { slotDate: "2099-03-04", slot: "morning", minutesIntoSlot: 95 };
+
+    await asked(silent, "sent");
+    await reviewMovementSlot(db, silent);
+    check("an afternoon of its own opens a fresh round", (await alertOn(silent))?.streak === 1, await alertOn(silent));
+
+    // A second load of B's on the road that nobody asked anything this slot:
+    // silence nobody asked for is not the driver's, so it must be left out of
+    // the review altogether
+    const unasked = await b.create({
+        execution: "own-fleet", origin, destination, cargoDescription: "HARNESS review unasked",
+        driverName: "HARNESS Unasked", driverPhone: "+258840000995", status: "scheduled",
+    });
+    created.push(unasked.id);
+    await db.update(movement).set({ status: "in-transit", clientOrgId: A.org }).where(eq(movement.id, unasked.id));
+
+    await asked(morningAfter, "sent");
+    run = await reviewMovementSlot(db, morningAfter);
+    check("the morning after carries the afternoon's round across midnight",
+        (await alertOn(morningAfter))?.streak === 2, await alertOn(morningAfter));
+    check("…and the load nobody asked is neither judged nor alerted",
+        run.reviewed === 1 && await alertOn(morningAfter, unasked.id) === undefined,
+        { run, unasked: await alertOn(morningAfter, unasked.id) });
+
+    console.log(`  after: B owner ${await inboxOf(B.user)}, B member ${await inboxOf(BM.user)}, A ${await heardAt(A.org)}`);
+}
+
 main()
     .then(hardening)
     .then(palette)
+    .then(reviewedSlots)
     .catch((error) => {
         console.error("\nharness crashed:", error);
         results.push({ name: "harness ran to the end", ok: false, detail: String(error) });

@@ -11,6 +11,7 @@
         "@workspace/auth": "workspace:*",
         "@workspace/comms": "workspace:*",
         "@workspace/db": "workspace:*",
+        "@workspace/maps": "workspace:*",
         "drizzle-orm": "0.45.2",
         "pdf-lib": "^1.17.1",
         "server-only": "^0.0.1",
