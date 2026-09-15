@@ -303,10 +303,7 @@
                     "team": "Team",
                     "partners": "Partners",
                     "my-transporters": "My transporters",
-                    "analytics": "Analytics",
-                    "trucks": "Trucks",
-                    "trailers": "Trailers",
-                    "links": "Links"
+                    "analytics": "Analytics"
                 },
                 "new-load": "New load"
             },

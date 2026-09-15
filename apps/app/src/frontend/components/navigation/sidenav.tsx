@@ -8,7 +8,6 @@ import {
     type Icon,
     IconBell,
     IconBox,
-    IconBuildingStore,
     IconBuildingWarehouse,
     IconCalendarCheck,
     IconCalendarClock,
@@ -19,7 +18,6 @@ import {
     IconGavel,
     IconHistory,
     IconLayoutDashboard,
-    IconLink,
     IconList,
     IconLockOpen,
     IconMap2,
@@ -29,7 +27,6 @@ import {
     IconSteeringWheel,
     IconTruck,
     IconTruckDelivery,
-    IconUserPlus,
     IconUsers,
     IconUsersGroup,
 } from "@tabler/icons-react";
@@ -50,7 +47,6 @@ import { sectionsFor } from "@/frontend/pages/orders/types";
 import { useNewLoad } from "@/frontend/pages/movements/hooks/use-new-load";
 import { NewLoadSheet } from "@/frontend/pages/movements/sections/new-load-sheet";
 import { ORDER_SECTIONS, TRIP_SECTIONS } from "@/frontend/pages/movements/types";
-import type { PartnerListKind } from "@/frontend/pages/partners/types";
 
 import { NavUser } from "./nav-user";
 
@@ -124,12 +120,6 @@ const TRIP_ICONS: Record<(typeof TRIP_SECTIONS)[number], Icon> = {
     "history": IconHistory,
 };
 
-const PARTNER_ICONS: Record<PartnerListKind, Icon> = {
-    "clients": IconBuildingStore,
-    "transporters": IconTruck,
-    "requests": IconUserPlus,
-};
-
 const APPLOAD_ICONS: Record<ReturnType<typeof sectionsFor>[number], Icon> = {
     "all": IconList,
     "requests": IconLockOpen,
@@ -154,7 +144,6 @@ export function Sidenav({
 }: React.ComponentProps<typeof Sidebar> & { orgType: "shipper" | "carrier" }) {
     const t = useTranslations("App.shell.sidebar")
     const tl = useTranslations("App.loads.sections")
-    const tp = useTranslations("App.partners.tabs")
     const to = useTranslations("App.orders.sections")
     const g = useTranslations("General")
     const pathname = usePathname()
@@ -253,41 +242,26 @@ export function Sidenav({
     ]
 
     const company: NavEntry[] = [
-        // Who the company works with comes first. A shipper only ever
-        // connects to transporters, so its partners are one list, requests
-        // reached from inside it; a carrier has clients and transporters
-        // both, and the requests get a leaf of their own
-        carrier
-            ? {
-                Icon: IconBuildingWarehouse,
-                name: t("company.partners"),
-                id: "partners",
-                items: (["clients", "transporters", "requests"] as const).map((kind) => ({
-                    Icon: PARTNER_ICONS[kind],
-                    name: tp(kind),
-                    match: `/partners/${kind}`,
-                    path: { pathname: "/partners/[kind]", params: { kind } },
-                    badge: kind === "requests" ? counts?.partners : undefined,
-                })),
-            }
-            : {
-                Icon: IconBuildingWarehouse,
-                name: t("company.my-transporters"),
-                match: "/partners",
-                path: { pathname: "/partners/[kind]", params: { kind: "transporters" } },
-                badge: counts?.partners,
-            },
+        // Who the company works with comes first: one row, and the kinds
+        // (clients, transporters, requests) are the pills on the page itself.
+        // A shipper only ever connects to transporters, so its row is named
+        // for them; a carrier's opens on its clients. The badge is the pending
+        // requests either way — the page it opens carries the Requests pill
+        {
+            Icon: IconBuildingWarehouse,
+            name: carrier ? t("company.partners") : t("company.my-transporters"),
+            match: "/partners",
+            path: { pathname: "/partners/[kind]", params: { kind: carrier ? "clients" : "transporters" } },
+            badge: counts?.partners,
+        },
         {
             // Every company may keep a fleet: a carrier's is what it sells, a
-            // shipper's moves its own goods between its own sites
+            // shipper's moves its own goods between its own sites. One row;
+            // trucks, trailers and links are the pills on the page
             Icon: IconTruck,
             name: t("company.fleet"),
-            id: "fleet",
-            items: [
-                { Icon: IconTruck, name: t("company.trucks"), match: "/fleet/trucks", path: { pathname: "/fleet/[kind]", params: { kind: "trucks" } } },
-                { Icon: IconContainer, name: t("company.trailers"), match: "/fleet/trailers", path: { pathname: "/fleet/[kind]", params: { kind: "trailers" } } },
-                { Icon: IconLink, name: t("company.links"), match: "/fleet/links", path: { pathname: "/fleet/[kind]", params: { kind: "links" } } },
-            ],
+            match: "/fleet",
+            path: { pathname: "/fleet/[kind]", params: { kind: "trucks" } },
         },
         { Icon: IconUsers, name: t("company.drivers"), match: "/drivers", path: "/drivers" },
         // The people who sign in for the company, which is the members tab
