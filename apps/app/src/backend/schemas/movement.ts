@@ -7,7 +7,7 @@ import type {
     MovementExecution,
     MovementStatus,
 } from "@workspace/db/movements";
-import { CATEGORIES, CURRENCY, FISCAL_REGIME, ROUTE_TYPE, WEIGHT_UNIT } from "@workspace/db/types";
+import { CATEGORIES, CURRENCY, DISPUTE_REASON, FISCAL_REGIME, ROUTE_TYPE, WEIGHT_UNIT } from "@workspace/db/types";
 import { toE164 } from "@workspace/ui/lib/phone";
 
 /**
@@ -27,18 +27,32 @@ export const MOVEMENT_EXECUTION = ["own-fleet", "partner"] as const satisfies re
 
 export const MOVEMENT_STATUS = [
     "procurement",
+    "prospect",
     "offered",
     "declined",
     "scheduled",
     "booked",
-    "in-transit",
+    "at-loading",
+    "loading",
+    "waiting-documents",
+    "on-route",
+    "stopped",
+    "issue",
+    "at-border",
+    "at-offloading",
+    "offloading",
     "delivered",
     "closed",
     "cancelled",
 ] as const satisfies readonly MovementStatus[];
 
-/** Where a new load may start: a load is never created offered, declined or finished. */
-export const CREATE_STATUS = ["procurement", "scheduled", "booked", "in-transit"] as const satisfies readonly MovementStatus[];
+/**
+ * Where a new load may start. Never offered or declined — those are an
+ * offer's, and the partner's answer to it — never stopped or with an issue,
+ * which are something that happens to a load already on its way, and never
+ * finished. A load already under way is filed at the loading site.
+ */
+export const CREATE_STATUS = ["procurement", "prospect", "scheduled", "booked", "at-loading"] as const satisfies readonly MovementStatus[];
 
 export const MOVEMENT_COST_KIND = [
     "fuel",
@@ -279,6 +293,22 @@ export const SendConfirmationBaseSchema = z.object({
     to: z.email(),
     cc: z.array(z.email()).max(5).default([]),
     message: text(TEXT_MAX).optional(),
+});
+
+/**
+ * Opening a dispute on a load. The description is shown as written to every
+ * company on the load, so it is required and kept to what a note can hold.
+ */
+export const OpenDisputeBaseSchema = z.object({
+    movementId: z.string().nonempty(),
+    reason: z.enum(DISPUTE_REASON),
+    description: text(NOTES_MAX).min(1),
+});
+
+/** Resolving one: the note that says how is what the other companies read. */
+export const ResolveDisputeBaseSchema = z.object({
+    id: z.string().nonempty(),
+    resolution: text(NOTES_MAX).min(1),
 });
 
 export const RecordPaymentBaseSchema = z.object({

@@ -55,8 +55,8 @@ export function SendRequestsDialog({
     const term = useDebouncedValue(query).trim()
 
     const { data, isFetching } = useQuery(trpc.partners.list.queryOptions({
-        relation: "client-carrier",
-        status: "accepted",
+        // A shipper's transporters: its accepted `client-carrier` connections
+        kind: "transporters",
         query: term || undefined,
         page: 1,
         pageSize: 100,

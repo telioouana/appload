@@ -11,10 +11,10 @@ import { Link } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
 
 /**
- * The company's own fleet, in two numbers: what is moving, and whose driver
- * was asked for a position today and has not answered. Both open the trips
- * list already narrowed to exactly what they counted — the same stats the
- * list's own tiles read.
+ * The company's own fleet, in two numbers: what is in progress, and whose
+ * driver was asked for a position today and has not answered. Both open the
+ * trips list already narrowed to exactly what they counted — the same stats
+ * the list's own tiles read.
  */
 export function TripsTile() {
     const t = useTranslations("App.dashboard")
@@ -23,13 +23,13 @@ export function TripsTile() {
 
     const { data } = useSuspenseQuery(trpc.movements.stats.queryOptions({ scope: "trips" }))
 
-    const onTheRoad = data.bySection["in-transit"] ?? 0
+    const inProgress = data.bySection["in-progress"] ?? 0
 
     const figures = [
         {
-            key: "in-transit",
-            label: t("trips.in-transit"),
-            value: onTheRoad,
+            key: "in-progress",
+            label: t("trips.in-progress"),
+            value: inProgress,
             query: undefined,
             warn: false,
         },
@@ -60,7 +60,7 @@ export function TripsTile() {
                 {figures.map((figure) => (
                     <Link
                         key={figure.key}
-                        href={{ pathname: "/trips/[section]", params: { section: "in-transit" }, query: figure.query }}
+                        href={{ pathname: "/trips/[section]", params: { section: "in-progress" }, query: figure.query }}
                         className="hover:bg-muted/50 flex flex-col rounded-xl px-1 py-0.5 transition-colors"
                     >
                         <span className="text-muted-foreground truncate text-xs font-medium">{figure.label}</span>

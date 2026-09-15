@@ -2,21 +2,30 @@
 
 import { useRef, useState } from "react"
 import {
+    IconAlertOctagon,
     IconAlertTriangle,
     IconArrowBackUp,
     IconBan,
     IconCalendarCheck,
     IconCheck,
     IconDots,
+    IconFileTime,
     IconFlagCheck,
+    IconForklift,
+    IconGavel,
+    IconInvoice,
     IconLock,
     IconMail,
     IconMapPinShare,
+    IconNavigationPause,
     IconPencil,
+    IconRoute,
     IconSend,
     IconTransfer,
     IconTruckDelivery,
+    IconTruckLoading,
     IconCalendarClock,
+    IconUrgent,
     IconX,
     type Icon,
 } from "@tabler/icons-react"
@@ -37,24 +46,37 @@ import {
 import type { TrackingAllowance } from "@workspace/domain/subscription"
 
 import { PlanDialog, planBlock, type PlanReason } from "@/components/plan-dialog"
-import { useFlagLabel } from "@/frontend/pages/movements/components/badges"
+import { useFlagLabel, useMoveLabel } from "@/frontend/pages/movements/components/badges"
 import { useMovementMutations } from "@/frontend/pages/movements/hooks/use-movement-mutations"
 import { ConvertDialog } from "@/frontend/pages/movements/sections/convert-dialog"
 import { LoadSheet } from "@/frontend/pages/movements/sections/load-sheet"
 import { OfferDialog } from "@/frontend/pages/movements/sections/offer-dialog"
+import { OpenDisputeDialog } from "@/frontend/pages/movements/sections/open-dispute-dialog"
 import { RespondDialog } from "@/frontend/pages/movements/sections/respond-dialog"
 import { SendConfirmationDialog } from "@/frontend/pages/movements/sections/send-confirmation-dialog"
 import { TransitionDialog } from "@/frontend/pages/movements/sections/transition-dialog"
-import type { MovementDetail, MovementStatus, OrgType, TransitionOption } from "@/frontend/pages/movements/types"
+import { isInProgress, type MovementDetail, type MovementStatus, type OrgType, type TransitionOption } from "@/frontend/pages/movements/types"
 
 const MOVE_ICONS: Partial<Record<MovementStatus, Icon>> = {
     "procurement": IconArrowBackUp,
+    "prospect": IconInvoice,
     "scheduled": IconCalendarClock,
     "booked": IconCalendarCheck,
-    "in-transit": IconTruckDelivery,
+    "at-loading": IconTruckLoading,
+    "loading": IconForklift,
+    "waiting-documents": IconFileTime,
+    "on-route": IconRoute,
+    "stopped": IconNavigationPause,
+    "issue": IconAlertOctagon,
+    "at-border": IconUrgent,
+    "at-offloading": IconTruckLoading,
+    "offloading": IconForklift,
     "delivered": IconFlagCheck,
     "closed": IconLock,
 }
+
+/** The moves that ask for a reason — a truck held up, a load called off — so they wait in the menu. */
+const MENU_MOVES: readonly MovementStatus[] = ["stopped", "issue", "cancelled"]
 
 type Open =
     | { kind: "transition"; option: TransitionOption }
@@ -62,17 +84,22 @@ type Open =
     | { kind: "respond"; decision: "accept" | "decline" }
     | { kind: "convert" }
     | { kind: "confirmation" }
+    | { kind: "dispute" }
     | { kind: "edit" }
     | null
 
 /**
  * Everything the reader can do to a load, from what the server said it may
- * do (`permissions`) — never from a rule restated here. The moves forward
- * are buttons; the rest, and calling the load off, sit behind the menu.
+ * do (`permissions`) — never from a rule restated here. The moves on are
+ * buttons: the first one that is not a step back to the draft is filled in
+ * (for a truck held up, that is resuming where it stopped), every other one
+ * outlined. Saying a truck is stopped or in trouble, opening a dispute and
+ * calling the load off each ask for a reason, and sit behind the menu with
+ * the rest.
  *
- * Putting a truck on the road, offering a load and accepting one are what a
- * plan pays for, so those consult the allowance before opening anything and
- * answer a server refusal with the same dialog.
+ * Starting a load, offering one and accepting one are what a plan pays for,
+ * so those consult the allowance before opening anything and answer a server
+ * refusal with the same dialog.
  */
 export function LoadActions({
     load,
@@ -87,6 +114,7 @@ export function LoadActions({
 }) {
     const t = useTranslations("App.loads")
     const flagLabel = useFlagLabel()
+    const moveLabel = useMoveLabel()
     const { permissions } = load
 
     const { withdraw, requestLocation } = useMovementMutations()
@@ -114,17 +142,21 @@ export function LoadActions({
         setOpen(next)
     }
 
-    const forward = permissions.transitions.filter((option) => option.to !== "cancelled")
+    const forward = permissions.transitions.filter((option) => !MENU_MOVES.includes(option.to))
+    const interruptions = permissions.transitions.filter((option) => option.to === "stopped" || option.to === "issue")
     const cancel = permissions.transitions.find((option) => option.to === "cancelled")
+    // The first move on that is not a step back is the one the load waits for
+    const primary = forward.find((option) => option.to !== "procurement")
     const canEdit = permissions.editable.length > 0
     // The confirmation is what the partner works from, so it is worth sending
     // from the moment the load is placed with it until the truck arrives
     const canConfirm = permissions.canManageDocuments
         && load.execution === "partner"
-        && (load.status === "scheduled" || load.status === "booked" || load.status === "in-transit")
+        && (load.status === "scheduled" || load.status === "booked" || isInProgress(load.status))
 
-    const menu = canEdit || canConfirm || permissions.canRequestLocation || permissions.canConvert
-        || permissions.canWithdraw || cancel
+    const tools = canEdit || canConfirm || permissions.canRequestLocation || permissions.canConvert || permissions.canWithdraw
+    const trouble = interruptions.length > 0 || permissions.canOpenDispute
+    const menu = tools || trouble || cancel
 
     return (
         <>
@@ -151,19 +183,19 @@ export function LoadActions({
 
                 {forward.map((option) => {
                     const MoveIcon = MOVE_ICONS[option.to] ?? IconTruckDelivery
-                    const onClick = () => option.to === "in-transit"
+                    const onClick = () => option.startsTracking
                         ? gated({ kind: "transition", option })
                         : setOpen({ kind: "transition", option })
 
                     const button = (
                         <Button
                             size="sm"
-                            variant={option.to === "procurement" ? "outline" : "default"}
+                            variant={option === primary ? "default" : "outline"}
                             disabled={option.blocker !== null}
                             onClick={onClick}
                         >
                             <MoveIcon className="size-4" stroke={1.5} />
-                            {t(`actions.to.${option.to}`)}
+                            {moveLabel(load.status, option.to)}
                             {/* Still open, only not complete: the move is taken with
                                 the flags on record, and the dialog says which */}
                             {option.flags.length > 0 && <IconAlertTriangle className="size-4" stroke={1.5} />}
@@ -242,9 +274,38 @@ export function LoadActions({
                                 </DropdownMenuItem>
                             )}
 
+                            {trouble && (
+                                <>
+                                    {tools && <DropdownMenuSeparator />}
+
+                                    {/* Each asks for a reason, which the dialog collects */}
+                                    {interruptions.map((option) => {
+                                        const MoveIcon = MOVE_ICONS[option.to] ?? IconAlertTriangle
+
+                                        return (
+                                            <DropdownMenuItem
+                                                key={option.to}
+                                                disabled={option.blocker !== null}
+                                                onSelect={() => openFromMenu({ kind: "transition", option })}
+                                            >
+                                                <MoveIcon stroke={1.5} />
+                                                {t(`actions.to.${option.to}`)}
+                                            </DropdownMenuItem>
+                                        )
+                                    })}
+
+                                    {permissions.canOpenDispute && (
+                                        <DropdownMenuItem onSelect={() => openFromMenu({ kind: "dispute" })}>
+                                            <IconGavel stroke={1.5} />
+                                            {t("actions.open-dispute")}
+                                        </DropdownMenuItem>
+                                    )}
+                                </>
+                            )}
+
                             {cancel && (
                                 <>
-                                    <DropdownMenuSeparator />
+                                    {(tools || trouble) && <DropdownMenuSeparator />}
                                     <DropdownMenuItem
                                         variant="destructive"
                                         disabled={cancel.blocker !== null}
@@ -276,6 +337,8 @@ export function LoadActions({
             )}
 
             {open?.kind === "convert" && <ConvertDialog load={load} onClose={close} />}
+
+            {open?.kind === "dispute" && <OpenDisputeDialog load={load} onClose={close} />}
 
             {open?.kind === "confirmation" && (
                 <SendConfirmationDialog load={load} companyName={organizationName} onClose={close} />

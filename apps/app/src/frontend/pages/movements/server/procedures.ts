@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, asc, count, desc, eq, gte, ilike, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 
 import { chatConversation, chatMessage } from "@workspace/db/chats";
 import { partnerConnection } from "@workspace/db/connections";
@@ -16,6 +16,7 @@ import {
     movementRoute,
     type CreateMovement,
     type Movement,
+    type MovementDispute,
 } from "@workspace/db/movements";
 import { organization, user } from "@workspace/db/users";
 
@@ -29,13 +30,14 @@ import {
     trackingTemplateText,
 } from "@workspace/comms/infobip";
 import { announce, recordEvent, statusStamps, transitionMovement, type MovementActor } from "@workspace/domain/movements/apply";
+import { activeDisputeFor, openDispute, resolveDispute } from "@workspace/domain/movements/disputes";
 import { unapprovedPhotos } from "@workspace/domain/movements/documents";
-import { isConnected, isOnPortal, terminalMovementId } from "@workspace/domain/movements/link";
+import { isConnected, isOnPortal, organizationName, terminalMovementId } from "@workspace/domain/movements/link";
 import { settlementStatus } from "@workspace/domain/movements/money";
 import { assertExecutor, convertMovement, offerMovement, respondToOffer, withdrawOffer } from "@workspace/domain/movements/offer";
 import { editableGroups, isExecutorOf, movementRole, type EditableGroup } from "@workspace/domain/movements/policy";
 import { movementRef } from "@workspace/domain/movements/refs";
-import { movementFlags } from "@workspace/domain/movements/status";
+import { entersInProgress, isInProgress, isTerminal, movementFlags } from "@workspace/domain/movements/status";
 import { notify } from "@workspace/domain/notifications";
 import { assertTrackingAllowance, recordTrackingUsage } from "@workspace/domain/subscription";
 import { startConversation } from "@workspace/domain/tracking/conversations";
@@ -67,8 +69,11 @@ import {
     ApproveMovementDocumentBaseSchema,
     ConvertMovementBaseSchema,
     CreateMovementBaseSchema,
+    MOVEMENT_STATUS,
     OfferMovementBaseSchema,
+    OpenDisputeBaseSchema,
     RecordPaymentBaseSchema,
+    ResolveDisputeBaseSchema,
     RespondOfferBaseSchema,
     SendConfirmationBaseSchema,
     TransitionMovementBaseSchema,
@@ -81,6 +86,8 @@ import { assertEdgeStoreUrl } from "@/frontend/pages/orders/server/projection";
 import {
     hasParentRow,
     loadCosts,
+    loadDisputed,
+    loadDisputes,
     loadDocuments,
     loadEvents,
     loadNames,
@@ -91,8 +98,11 @@ import {
     loadTerminalRigs,
     loadTrailerPlate,
     loadVisible,
+    partnerMoveNeeds,
+    received,
     sectionPredicate,
     silentToday,
+    statusFilter,
     toMovementDetail,
     toMovementRow,
     trailIds,
@@ -134,7 +144,7 @@ const actorOf = (tenant: { organizationId: string; userId: string }): MovementAc
  * trip, one it hands to a partner is an order, and placing a load with
  * somebody commits the company to paying them.
  */
-function assertCan(role: OrgRole, resource: "trip" | "order" | "offer" | "document", action: string): void {
+function assertCan(role: OrgRole, resource: "trip" | "order" | "offer" | "document" | "dispute", action: string): void {
     if (!isOrgAuthorized(role, resource, [action] as never)) {
         throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
     }
@@ -274,6 +284,8 @@ const FIELD_GROUP: Partial<Record<keyof UpdateMovementInput, EditableGroup>> = {
 const ListInput = z.object({
     scope: z.enum(MOVEMENT_SCOPES),
     section: z.enum([...new Set([...ORDER_SECTIONS, ...TRIP_SECTIONS])] as [MovementSection, ...MovementSection[]]).default("all"),
+    /** One of the section's tabs; the page's parser only ever sends those */
+    status: z.enum(MOVEMENT_STATUS).optional(),
     search: z.string().trim().max(120).optional(),
     /** The tile: asked for a position today and still silent */
     silent: z.literal(true).optional(),
@@ -324,15 +336,28 @@ async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<
     const roles = rows.map((row) => ({ row, role: roleOrThrow(row, tenantId) }));
     const trails = await trailIds(db, rows);
     const linkedTerminals = rows.filter((row) => row.executionMovementId).map((row) => trails.get(row.id) ?? row.id);
-    const [names, pings, rigs] = await Promise.all([
+    const [names, pings, rigs, disputed] = await Promise.all([
         loadNames(db, rows.flatMap((row) => [row.organizationId, row.clientOrgId, row.carrierOrgId])),
         loadPings(db, [...trails.values()]),
         loadTerminalRigs(db, linkedTerminals),
+        loadDisputed(db, rows.map((row) => row.id)),
     ]);
 
     return roles.map(({ row, role }) => {
         const trailId = trails.get(row.id) ?? row.id;
-        return toMovementRow(row, role, { names, pings, trailId, terminalRig: rigs.get(trailId) ?? null });
+        return toMovementRow(row, role, {
+            names,
+            pings,
+            trailId,
+            terminalRig: rigs.get(trailId) ?? null,
+            // An executor reads a dispute only from its own offer round, which
+            // takes the trail to tell. It never needs to here: the only rows a
+            // list shows an executor are offers waiting on its answer, and any
+            // dispute on one of those is older than the offer — none is ever
+            // opened on a load still being asked about. The detail page,
+            // which reads the trail, is exact
+            inDispute: role !== "executor" && disputed.has(row.id),
+        });
     });
 }
 
@@ -374,12 +399,13 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
 
     const linked = row.executionMovementId !== null;
 
-    const [names, pings, costs, documents, events, hasParent, executorOnPortal, rigs, terminalProofs, carrierEmail, trailerPlate, photosWaiting] = await Promise.all([
+    const [names, pings, costs, documents, events, disputes, hasParent, executorOnPortal, rigs, terminalProofs, carrierEmail, trailerPlate, photosWaiting] = await Promise.all([
         loadNames(db, [row.organizationId, row.clientOrgId, row.carrierOrgId]),
         loadPings(db, [trailId]),
         owner ? loadCosts(db, row.id) : Promise.resolve([]),
         loadDocuments(db, row.id),
         loadEvents(db, row.id),
+        loadDisputes(db, row),
         owner ? hasParentRow(db, row.id) : Promise.resolve(false),
         row.execution === "partner" ? isOnPortal(db, row.carrierOrgId) : Promise.resolve(false),
         linked ? loadTerminalRigs(db, [trailId]) : Promise.resolve(new Map()),
@@ -406,9 +432,77 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
         costs,
         documents,
         events,
+        disputes,
         unapprovedPhotos: photosWaiting,
         orgRole,
     });
+}
+
+/**
+ * Tells every company on a disputed load but the one that acted — once each,
+ * on its own row: the row it owns, else the row naming it as client, else the
+ * row it carries. The link and the reference are that row's, and so is the
+ * naming rule (projection.ts): the acting company is named to the companies
+ * on a row it owns, and to the owner of a row it is the client or carrier of;
+ * anybody else reads that a company on the load did it.
+ *
+ * Who is told was decided when the dispute was opened (`partyOrgIds`) and is
+ * never worked out again from the rows as they stand: an owner handed its load
+ * back places it with the next carrier, and that carrier must not be told —
+ * when it resolves — about a dispute its own page deliberately hides from it.
+ * A company that has since lost every role on the chain has no row left to be
+ * told on, and is passed over.
+ */
+async function announceDispute(
+    db: Db,
+    kind: "movement.dispute-opened" | "movement.dispute-resolved",
+    dispute: MovementDispute,
+    rowIds: readonly string[],
+    actorOrgId: string,
+): Promise<void> {
+    const rows = await db.select().from(movement).where(inArray(movement.id, [...rowIds]));
+    const parties = new Set(dispute.partyOrgIds);
+    const recipients = new Map<string, { row: Movement; rank: number }>();
+
+    const consider = (organizationId: string | null, row: Movement, rank: number) => {
+        if (!organizationId || organizationId === actorOrgId || !parties.has(organizationId)) return;
+
+        const current = recipients.get(organizationId);
+        if (!current || rank < current.rank) recipients.set(organizationId, { row, rank });
+    };
+
+    for (const row of rows) {
+        consider(row.organizationId, row, 0);
+        consider(row.clientOrgId, row, 1);
+        // A carrier is on a row only while it is actually involved in it
+        if (row.carrierOrgId && isExecutorOf(row, row.carrierOrgId)) consider(row.carrierOrgId, row, 2);
+    }
+
+    const actorName = await organizationName(db, actorOrgId);
+
+    for (const [organizationId, { row }] of recipients) {
+        const named = actorOrgId === row.organizationId
+            || (organizationId === row.organizationId && (actorOrgId === row.clientOrgId || actorOrgId === row.carrierOrgId));
+
+        await notify(db, {
+            organizationId,
+            kind,
+            // A dispute opened is somebody's problem today; one resolved is news
+            email: kind === "movement.dispute-opened",
+            entityType: "movement",
+            entityId: row.id,
+            params: {
+                ref: movementRef(row.seq, row.execution),
+                origin: place(row.origin),
+                destination: place(row.destination),
+                reason: dispute.reason,
+                organizationName: named ? actorName : "",
+                // What the copy selects its unnamed wording on: ICU has no
+                // branch for an empty name
+                named,
+            },
+        });
+    }
 }
 
 export const movementsRouter = createTRPCRouter({
@@ -420,6 +514,7 @@ export const movementsRouter = createTRPCRouter({
             const where = and(
                 visibleMovements(tenantId),
                 sectionPredicate(input.scope, input.section, tenantId),
+                input.status ? statusFilter(input.status) : undefined,
                 input.search ? searchWhere(input.search, tenantId) : undefined,
                 input.silent ? silentToday(tenantId, new Date()) : undefined,
             );
@@ -444,8 +539,10 @@ export const movementsRouter = createTRPCRouter({
         }),
 
     /**
-     * The counts behind one list's tabs, in one scan per section of exactly
-     * the predicate its tab opens — so a number always agrees with its list.
+     * The counts behind one list's sections and tabs, each of exactly the
+     * predicate its link opens — so a number always agrees with its list. The
+     * sections in one scan; the statuses in a scan of their own, grouped over
+     * the whole list, since a section and a status can share a name.
      */
     stats: tenantProcedure
         .input(z.object({ scope: z.enum(MOVEMENT_SCOPES) }))
@@ -465,17 +562,31 @@ export const movementsRouter = createTRPCRouter({
                 silentToday(tenantId, new Date()),
             )})::int`.mapWith(Number);
 
-            const [row] = await ctx.db
-                .select(select as Record<string, SQL<number>>)
-                .from(movement)
-                .where(visibleMovements(tenantId));
+            if (input.scope === "trips") {
+                select.received = sql<number>`count(*) filter (where ${received(tenantId)})::int`.mapWith(Number);
+            }
 
-            const bySection = Object.fromEntries(sections.map((section) => [section, Number(row?.[section] ?? 0)]));
+            const [[row], statuses] = await Promise.all([
+                ctx.db
+                    .select(select as Record<string, SQL<number>>)
+                    .from(movement)
+                    .where(visibleMovements(tenantId)),
+                ctx.db
+                    .select({ status: movement.status, value: count() })
+                    .from(movement)
+                    .where(and(visibleMovements(tenantId), sectionPredicate(input.scope, "all", tenantId)))
+                    .groupBy(movement.status),
+            ]);
+
+            const bySection: MovementStats["bySection"] = Object.fromEntries(
+                sections.map((section) => [section, Number(row?.[section] ?? 0)]),
+            );
 
             return {
                 total: bySection.all ?? 0,
                 bySection,
-                inbox: input.scope === "orders" ? bySection.inbox ?? 0 : 0,
+                byStatus: Object.fromEntries(statuses.map((entry) => [entry.status, entry.value])),
+                received: Number(row?.received ?? 0),
                 silent: Number(row?.silent ?? 0),
             };
         }),
@@ -544,9 +655,10 @@ export const movementsRouter = createTRPCRouter({
     /**
      * Files a load. Its own truck, or a partner's; for somebody, or for the
      * company itself. It starts in procurement unless the caller says it is
-     * already scheduled or on the road — whatever the load is missing at that
-     * status is flagged on its first trail line rather than refused, and
-     * "already on the road" is the half that spends a tracked movement.
+     * already quoted, agreed, booked or at the loading site — whatever the
+     * load is missing at that status is flagged on its first trail line
+     * rather than refused, and "already at the loading site" is the one that
+     * spends a tracked movement.
      */
     create: tenantProcedure
         .input(CreateMovementBaseSchema)
@@ -621,19 +733,24 @@ export const movementsRouter = createTRPCRouter({
                     buyCurrency: values.buyCurrency ?? null,
                     sellSettled: true,
                     buySettled: true,
+                    // Nobody can have disputed a load that does not exist yet
+                    disputeOpen: false,
                     linked: false,
                     truckPlate: values.truckPlate ?? null,
                     // A load being filed has no papers on it yet, photos included
                     unapprovedPhotos: 0,
+                    resumeStatus: null,
                 },
                 input.status,
             );
 
-            if (input.status === "in-transit") await assertTrackingAllowance(ctx.db, tenantId);
+            const starts = entersInProgress(null, input.status);
+
+            if (starts) await assertTrackingAllowance(ctx.db, tenantId);
 
             const [created] = await ctx.db
                 .insert(movement)
-                .values({ ...values, ...statusStamps(input.status, new Date()) })
+                .values({ ...values, ...statusStamps(null, input.status, new Date()) })
                 .returning();
 
             if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
@@ -646,14 +763,14 @@ export const movementsRouter = createTRPCRouter({
                 metadata: { action: "created", ...(flags.length > 0 && { flags: flags.join(",") }) },
             });
 
-            if (created.status === "in-transit") {
+            if (starts) {
                 await recordTrackingUsage(ctx.db, {
                     organizationIds: [tenantId],
                     entityType: "movement",
                     entityId: created.id,
                 });
 
-                await announce(ctx.db, created, { actorOrgId: tenantId, notifyOwner: false, notifyExecutor: false });
+                await announce(ctx.db, created, { from: null, actorOrgId: tenantId, notifyOwner: false, notifyExecutor: false });
             }
 
             return { id: created.id, ref: movementRef(created.seq, created.execution) };
@@ -684,10 +801,12 @@ export const movementsRouter = createTRPCRouter({
                 ? input.carrierOrgId
                 : input.carrierName ? null : row.carrierOrgId;
 
-            const [hasParent, onPortalNow, executorOnPortal] = await Promise.all([
+            const [hasParent, onPortalNow, executorOnPortal, dispute] = await Promise.all([
                 hasParentRow(ctx.db, row.id),
                 partner ? isOnPortal(ctx.db, row.carrierOrgId) : Promise.resolve(false),
                 partner ? isOnPortal(ctx.db, nextCarrierOrgId) : Promise.resolve(false),
+                // A dispute anywhere on the chain holds this row's client
+                activeDisputeFor(ctx.db, row.id),
             ]);
 
             // What may change is judged on the load as it stands now; what the
@@ -698,6 +817,7 @@ export const movementsRouter = createTRPCRouter({
                 linked: row.executionMovementId !== null,
                 hasParent,
                 executorOnPortal: onPortalNow,
+                disputeOpen: dispute !== null,
             });
 
             const touched = (Object.keys(input) as (keyof UpdateMovementInput)[])
@@ -715,9 +835,11 @@ export const movementsRouter = createTRPCRouter({
 
             // Who the partner is changes only before anybody was asked:
             // swapping it on a scheduled load would leave an order half
-            // placed with one company and half with another
+            // placed with one company and half with another. A quote set by
+            // hand asked nobody on the portal, and the change below takes it
+            // back to procurement
             if ((input.carrierOrgId !== undefined || input.carrierName !== undefined)
-                && row.status !== "procurement" && row.status !== "declined") {
+                && row.status !== "procurement" && row.status !== "prospect" && row.status !== "declined") {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "FIELD_LOCKED" });
             }
 
@@ -878,17 +1000,10 @@ export const movementsRouter = createTRPCRouter({
             const row = await loadOwn(ctx.db, input.id, ctx.tenant.organizationId);
             assertCan(ctx.tenant.role, writeResource(row), "update");
 
-            if (row.execution === "partner") {
-                // Scheduling a partner load out of procurement is placing it —
-                // committing the company to paying somebody — the same act an
-                // offer is, and it takes the same role
-                if (row.status === "procurement" && (input.to === "scheduled" || input.to === "booked" || input.to === "in-transit")) {
-                    assertCan(ctx.tenant.role, "order", "create");
-                }
-
-                // And calling one off takes the role that cancels orders
-                if (input.to === "cancelled") assertCan(ctx.tenant.role, "order", "cancel");
-            }
+            // Placing a partner load takes the role an offer takes, and calling
+            // one off the role that cancels orders (the buttons ask the same)
+            const needs = row.execution === "partner" ? partnerMoveNeeds(row.status, input.to) : null;
+            if (needs) assertCan(ctx.tenant.role, "order", needs);
 
             const updated = await transitionMovement(ctx.db, actorOf(ctx.tenant), input);
             return { id: updated.id, status: updated.status, version: updated.version };
@@ -1257,6 +1372,68 @@ export const movementsRouter = createTRPCRouter({
             }),
     }),
 
+    disputes: createTRPCRouter({
+        /**
+         * Says something went wrong with the load — theft, loss, damage or
+         * anything else. Any company on it may, at any role: the dispute
+         * covers the load in every company's books up and down its chain,
+         * bar the rows an earlier dispute already holds (disputes.ts), and
+         * until the company that opened it resolves it none of the companies
+         * it covers can close theirs. Refused while the load is still only
+         * being asked about, and once it is over — the same line the button
+         * is drawn on.
+         */
+        open: tenantProcedure
+            .input(OpenDisputeBaseSchema)
+            .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
+                const { row } = await loadVisible(ctx.db, input.movementId, ctx.tenant.organizationId);
+                assertCan(ctx.tenant.role, "dispute", "open");
+
+                // The door refuses a load still being asked about; a load that
+                // is over has no books left for a dispute to hold open
+                if (isTerminal(row.status)) {
+                    throw new TRPCError({ code: "BAD_REQUEST", message: "DISPUTE_INVALID_LOAD" });
+                }
+
+                const { dispute, rowIds } = await openDispute(ctx.db, actorOf(ctx.tenant), input);
+
+                await recordEvent(ctx.db, {
+                    movementId: dispute.movementId,
+                    kind: "dispute",
+                    actor: actorOf(ctx.tenant),
+                    metadata: { action: "opened", disputeId: dispute.id, reason: dispute.reason },
+                });
+
+                await announceDispute(ctx.db, "movement.dispute-opened", dispute, rowIds, ctx.tenant.organizationId);
+
+                return { id: dispute.id };
+            }),
+
+        /**
+         * Declares a dispute settled, with the note that says how. Only the
+         * company that opened it, and above the plain member's role: it
+         * releases every company's books on the load at once.
+         */
+        resolve: tenantProcedure
+            .input(ResolveDisputeBaseSchema)
+            .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
+                assertCan(ctx.tenant.role, "dispute", "resolve");
+
+                const { dispute, rowIds } = await resolveDispute(ctx.db, actorOf(ctx.tenant), input);
+
+                await recordEvent(ctx.db, {
+                    movementId: dispute.movementId,
+                    kind: "dispute",
+                    actor: actorOf(ctx.tenant),
+                    metadata: { action: "resolved", disputeId: dispute.id, reason: dispute.reason },
+                });
+
+                await announceDispute(ctx.db, "movement.dispute-resolved", dispute, rowIds, ctx.tenant.organizationId);
+
+                return { id: dispute.id };
+            }),
+    }),
+
     /**
      * Emails the partner the confirmation of the load it was given: the
      * transport-order template, filled and uploaded by the browser before it
@@ -1284,7 +1461,7 @@ export const movementsRouter = createTRPCRouter({
             // truck arrives, and the server holds the same line rather than
             // trusting it — anything else is a send out of Appload's domain on
             // a row that has no confirmation to make.
-            if (row.status !== "scheduled" && row.status !== "booked" && row.status !== "in-transit") {
+            if (row.status !== "scheduled" && row.status !== "booked" && !isInProgress(row.status)) {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "NOT_SENDABLE" });
             }
 
@@ -1425,7 +1602,7 @@ export const movementsRouter = createTRPCRouter({
      * typed the number. And the reading starts at `startedAt`, because the same
      * owner-driver runs for more than one company over their life and the load
      * references, plates and lanes in those messages are each asker's business:
-     * what was said before this load rolled was not said about it.
+     * what was said before this load started was not said about it.
      */
     thread: tenantProcedure
         .input(z.object({ id: z.string().nonempty() }))
@@ -1545,7 +1722,10 @@ export const movementsRouter = createTRPCRouter({
             const row = await loadOwn(ctx.db, input.id, tenantId);
             assertCan(ctx.tenant.role, "trip", "update");
 
-            if (row.status !== "in-transit" || row.executionMovementId) {
+            // A driver is only somewhere worth asking about while the load is in
+            // progress — booked, nobody has gone to it yet; delivered, the
+            // position is somebody else's next job
+            if (!isInProgress(row.status) || row.executionMovementId) {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "NOT_TRACKABLE" });
             }
 

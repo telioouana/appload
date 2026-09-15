@@ -15,6 +15,7 @@ import { FilterToggle } from "@workspace/ui/customs/list/filter-controls"
 
 import { useRouter } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
+import { useStatusLabel } from "@/frontend/pages/movements/components/badges"
 import { useMovementColumns } from "@/frontend/pages/movements/columns/movement-columns"
 import { useMovementsList } from "@/frontend/pages/movements/hooks/use-movements-list"
 import { useNewLoad } from "@/frontend/pages/movements/hooks/use-new-load"
@@ -23,6 +24,7 @@ import {
     DEFAULT_SORT,
     MOVEMENT_SORTS,
     PAGE_SIZES,
+    STATUS_TABS,
     isFilteredMovements,
     movementsListInput,
     type MovementRow,
@@ -34,9 +36,15 @@ import {
  * The list card for one section of either list. Every row opens the one
  * shared load page — a trip that is handed to a partner later keeps its
  * address.
+ *
+ * The sections that hold several statuses cut by status in the toolbar: a
+ * fixed set of tabs, zero counts included, so a tab never appears or vanishes
+ * as loads move. The nine stages of a load in progress are too many to line
+ * up, so there they are a menu.
  */
 export function MovementsDataView({ scope, section }: { scope: MovementScope; section: MovementSection }) {
     const t = useTranslations("App.loads")
+    const statusLabel = useStatusLabel()
     const trpc = useTRPC()
     const router = useRouter()
 
@@ -67,8 +75,17 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
         storageKey: `appload.portal.${scope}.columns`,
     })
 
-    // The inbox holds what partners sent; there is nothing to file from it
-    const canFile = section !== "inbox"
+    // The sections are routes, so their tabs are links in the page header;
+    // the toolbar's tabs are the statuses inside the one on screen. A
+    // prospect waits on an answer whether it was asked by hand or offered on
+    // the portal, so its tab counts both
+    const statuses = STATUS_TABS[section] ?? []
+    const statusCount = (status: (typeof statuses)[number]) =>
+        (stats.byStatus[status] ?? 0) + (status === "prospect" ? stats.byStatus.offered ?? 0 : 0)
+    const tabs = statuses.length === 0 ? [] : [
+        { value: "all", label: t("tabs.all"), count: stats.bySection[section] ?? 0 },
+        ...statuses.map((status) => ({ value: status, label: statusLabel(status), count: statusCount(status) })),
+    ]
 
     const chips = get("silent") === "1"
         ? [{ key: "silent", label: t("filters.tracking"), value: t("filters.silent") }]
@@ -78,9 +95,7 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
         <ListCard>
             <ListToolbar
                 table={table}
-                // The sections are routes, so their tabs are links in the page
-                // header; the toolbar keeps the controls that write the query
-                tabs={{ param: "section", items: [] }}
+                tabs={{ param: "status", items: tabs, as: section === "in-progress" ? "menu" : "tabs" }}
                 filterCount={chips.length}
                 activeFilters={chips}
                 filters={
@@ -111,11 +126,9 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
                     isFiltered={isFilteredMovements(get)}
                     empty={{
                         title: t(`data.empty.${scope}`),
-                        description: section === "inbox" ? t("data.empty-inbox") : t(`data.empty-description.${scope}`),
+                        description: section === "disputes" ? t("data.empty-disputes") : t(`data.empty-description.${scope}`),
                         filtered: t("data.no-results"),
-                        action: canFile
-                            ? <Button onClick={() => openNewLoad(scope === "trips" ? "own-fleet" : "partner")}>{t(`actions.new.${scope}`)}</Button>
-                            : undefined,
+                        action: <Button onClick={() => openNewLoad(scope === "trips" ? "own-fleet" : "partner")}>{t(`actions.new.${scope}`)}</Button>,
                     }}
                 />
             </div>

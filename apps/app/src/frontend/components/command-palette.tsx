@@ -19,13 +19,14 @@ import { useRouter } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
 import { SLUG_FOR_KIND, type KindSlug } from "@/frontend/pages/fleet/types"
 import { LaneCell, MovementStatusChip } from "@/frontend/pages/movements/components/badges"
+import type { PartnerListKind } from "@/frontend/pages/partners/types"
 
 /** Everywhere the palette can send the reader. */
 type PaletteLink =
     | { pathname: "/orders/load/[loadId]"; params: { loadId: string } }
     | { pathname: "/orders/[section]"; params: { section: string }; query: { search: string } }
     | { pathname: "/trips/[section]"; params: { section: string }; query: { search: string } }
-    | { pathname: "/partners"; query: { id: string } | { search: string } }
+    | { pathname: "/partners/[kind]"; params: { kind: PartnerListKind }; query: { id: string } | { search: string } }
     | { pathname: "/drivers"; query: { id: string } | { search: string } }
     | { pathname: "/fleet/[kind]"; params: { kind: KindSlug }; query: { id: string } | { search: string } }
 
@@ -35,12 +36,16 @@ type PaletteLink =
  * company opens the portal for, and everything else is how one is run.
  *
  * Mounted once in the protected layout; the list pages' search boxes open it
- * through a window event, so they need no shared state.
+ * through a window event, so they need no shared state. The company type
+ * comes from the layout, like the rail's, rather than from a session query
+ * observed above the pages' hydration.
  */
-export function CommandPalette() {
+export function CommandPalette({ orgType }: { orgType: "shipper" | "carrier" }) {
     const t = useTranslations("App.search")
     const trpc = useTRPC()
     const router = useRouter()
+
+    const carrier = orgType === "carrier"
 
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState("")
@@ -110,7 +115,7 @@ export function CommandPalette() {
                                         <span className="truncate font-medium">{load.ref}</span>
                                         <LaneCell origin={load.origin} destination={load.destination} />
                                     </span>
-                                    <MovementStatusChip status={load.status} execution={load.execution} />
+                                    <MovementStatusChip status={load.status} />
                                 </CommandItem>
                             ))}
                         </CommandGroup>
@@ -122,7 +127,12 @@ export function CommandPalette() {
                                 <CommandItem
                                     key={partner.id}
                                     value={`partner-${partner.id}`}
-                                    onSelect={() => go({ pathname: "/partners", query: { id: partner.id } })}
+                                    // A shipper is a carrier's client; every other partner is a transporter
+                                    onSelect={() => go({
+                                        pathname: "/partners/[kind]",
+                                        params: { kind: carrier && partner.type === "shipper" ? "clients" : "transporters" },
+                                        query: { id: partner.id },
+                                    })}
                                     className="gap-3"
                                 >
                                     <Avatar className="size-7">
@@ -192,10 +202,17 @@ export function CommandPalette() {
                                 <IconRoute className="size-4" stroke={1.5} />
                                 {t("actions.trips")}
                             </CommandItem>
-                            <CommandItem value="search-partners" onSelect={() => go({ pathname: "/partners", query: { search: term } })} className="gap-3">
+                            {/* A carrier's partners are two lists, its clients and its transporters */}
+                            <CommandItem value="search-partners" onSelect={() => go({ pathname: "/partners/[kind]", params: { kind: carrier ? "clients" : "transporters" }, query: { search: term } })} className="gap-3">
                                 <IconBuilding className="size-4" stroke={1.5} />
                                 {t("actions.partners")}
                             </CommandItem>
+                            {carrier && (
+                                <CommandItem value="search-transporters" onSelect={() => go({ pathname: "/partners/[kind]", params: { kind: "transporters" }, query: { search: term } })} className="gap-3">
+                                    <IconTruck className="size-4" stroke={1.5} />
+                                    {t("actions.transporters")}
+                                </CommandItem>
+                            )}
                             <CommandItem value="search-drivers" onSelect={() => go({ pathname: "/drivers", query: { search: term } })} className="gap-3">
                                 <IconSteeringWheel className="size-4" stroke={1.5} />
                                 {t("actions.drivers")}

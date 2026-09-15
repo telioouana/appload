@@ -5,7 +5,6 @@ import { TRPCError } from "@trpc/server";
 import { order, type Order } from "@workspace/db/orders";
 import { orderLocation, orderRoute } from "@workspace/db/tracking";
 import { movement, movementLocation } from "@workspace/db/movements";
-import type { OrderStatus } from "@workspace/db/types";
 
 import { movementRole } from "@workspace/domain/movements/policy";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
@@ -19,14 +18,8 @@ import type { OrderRouteDto, TrailPoint } from "@workspace/maps/types";
 
 import { loadVisibleOrder, ownsOrder, scopeOf, type Db, type TenantScope } from "@/frontend/pages/orders/server/projection";
 import { loadNames, loadTerminalRigs, onTheMap, toMovementRow, trailIds } from "@/frontend/pages/movements/server/projection";
+import { movementTone } from "@/frontend/pages/movements/types";
 import type { MapEntity } from "@/frontend/pages/map/types";
-
-/**
- * A company's own load only reaches the map while it is in transit, which is
- * the same thing an order's "on-route" says — and the pin, the icon and the
- * badge are all keyed on the order vocabulary.
- */
-const LOAD_PIN_STATUS: OrderStatus = "on-route";
 
 /** The map reads its own newest pings below; the row projection is only asked for names and the rig. */
 const NO_PING_STATE = { last: new Map(), counts: new Map() };
@@ -72,10 +65,10 @@ const toPoint = (ping: PingRow): TrailPoint => ({
 
 export const mapRouter = createTRPCRouter({
     /**
-     * Everything of this tenant's that is on the road right now: the Appload
-     * orders it is a party to in a tracked status, and its own loads — the
-     * ones it runs and the ones moved for it — each at its latest known
-     * position.
+     * Everything of this tenant's that has a truck on it right now: the
+     * Appload orders it is a party to in a tracked status, and its own loads
+     * in progress — the ones it runs and the ones moved for it — each at its
+     * latest known position.
      *
      * A load handed to a partner on the portal has no pings of its own: its
      * truck reports on the partner's row, so the pin is that row's newest
@@ -206,7 +199,8 @@ export const mapRouter = createTRPCRouter({
                 href: { pathname: "/orders/load/[loadId]", params: { loadId: row.id } },
                 // Whoever else is on the load, from where the reader stands
                 counterpartyName: party?.name ?? null,
-                status: LOAD_PIN_STATUS,
+                // The stage the truck is at, in the colour its chip is drawn in
+                status: movementTone(row.status),
                 origin: row.origin,
                 destination: row.destination,
                 driverName: view.driverName,

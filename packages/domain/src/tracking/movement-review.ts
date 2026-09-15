@@ -14,6 +14,7 @@ import { member } from "@workspace/db/users";
 import { haversineMeters } from "@workspace/maps/lib/geometry";
 
 import { movementRef } from "@workspace/domain/movements/refs";
+import { IN_PROGRESS_STATUSES } from "@workspace/domain/movements/status";
 import { notify } from "@workspace/domain/notifications";
 import {
     ATTEMPT_GAP_MINUTES,
@@ -45,7 +46,7 @@ import {
  */
 export const REVIEW_AFTER_MINUTES = 90;
 
-/** Under this much ground covered since the last position, the truck did not move. */
+/** Under this much ground covered since the last position, a truck on route did not move. */
 export const SHORT_DISTANCE_METERS = 20_000;
 
 /**
@@ -127,7 +128,7 @@ export async function reviewMovementSlot(
         // Silence only means something once the chain is over. With another
         // attempt still due — or the last one written minutes ago — "no
         // location" is our own schedule talking rather than the driver's
-        // silence: a load that went on the road late in the window would
+        // silence: a load that started late in the window would
         // otherwise be judged on a single fifteen-minute-old ping.
         if ((now.getTime() - latest.createdAt.getTime()) / 60_000 < ATTEMPT_GAP_MINUTES) {
             continue;
@@ -154,7 +155,7 @@ export async function reviewMovementSlot(
         .from(movement)
         .where(and(
             inArray(movement.id, [...threads.keys()]),
-            eq(movement.status, "in-transit"),
+            inArray(movement.status, IN_PROGRESS_STATUSES),
             eq(movement.trackingEnabled, true),
             isNotNull(movement.driverPhone),
             isNotNull(movement.driverName),
@@ -227,7 +228,7 @@ export async function reviewMovementSlot(
 
         reviewed++;
 
-        const issue = await issueFor(db, row.id, start);
+        const issue = await issueFor(db, row, start);
 
         if (!issue) {
             continue;
@@ -242,7 +243,7 @@ export async function reviewMovementSlot(
 }
 
 /** What was wrong with one movement's slot, or null when nothing was. */
-async function issueFor(db: typeof Database, movementId: string, start: Date): Promise<TrackingAlertIssue | null> {
+async function issueFor(db: typeof Database, row: Movement, start: Date): Promise<TrackingAlertIssue | null> {
     const [latest] = await db
         .select({
             latitude: movementLocation.latitude,
@@ -251,7 +252,7 @@ async function issueFor(db: typeof Database, movementId: string, start: Date): P
         })
         .from(movementLocation)
         .where(and(
-            eq(movementLocation.movementId, movementId),
+            eq(movementLocation.movementId, row.id),
             gte(movementLocation.recordedAt, start),
         ))
         .orderBy(desc(movementLocation.recordedAt))
@@ -267,11 +268,18 @@ async function issueFor(db: typeof Database, movementId: string, start: Date): P
         return "picked-address";
     }
 
+    // Only a truck on the road is expected to cover ground: one at the
+    // loading site, at the border, offloading or held up stands still by
+    // definition, and telling its client it barely moved would be noise
+    if (row.status !== "on-route") {
+        return null;
+    }
+
     const [previous] = await db
         .select({ latitude: movementLocation.latitude, longitude: movementLocation.longitude })
         .from(movementLocation)
         .where(and(
-            eq(movementLocation.movementId, movementId),
+            eq(movementLocation.movementId, row.id),
             lt(movementLocation.recordedAt, start),
         ))
         .orderBy(desc(movementLocation.recordedAt))

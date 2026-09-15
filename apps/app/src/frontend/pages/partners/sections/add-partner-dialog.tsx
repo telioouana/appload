@@ -32,10 +32,13 @@ import { partnerKind, relationsFor, SEARCH_MIN_CHARS, type OrgType, type Partner
  */
 export function AddPartnerDialog({
     orgType,
+    initialRelation,
     open,
     onOpenChange,
 }: {
     orgType: OrgType
+    /** The relation the pills start on; a carrier can still switch */
+    initialRelation: ConnectionRelation
     open: boolean
     onOpenChange: (open: boolean) => void
 }) {
@@ -44,17 +47,25 @@ export function AddPartnerDialog({
             <DialogContent className="sm:max-w-xl">
                 {/* Mounted only while open, so a reopened dialog starts at the
                     search step rather than where it was left */}
-                {open && <AddPartnerFlow orgType={orgType} onDone={() => onOpenChange(false)} />}
+                {open && <AddPartnerFlow orgType={orgType} initialRelation={initialRelation} onDone={() => onOpenChange(false)} />}
             </DialogContent>
         </Dialog>
     )
 }
 
-function AddPartnerFlow({ orgType, onDone }: { orgType: OrgType; onDone: () => void }) {
+function AddPartnerFlow({
+    orgType,
+    initialRelation,
+    onDone,
+}: {
+    orgType: OrgType
+    initialRelation: ConnectionRelation
+    onDone: () => void
+}) {
     const t = useTranslations("App.partners")
 
     const relations = relationsFor(orgType)
-    const [relation, setRelation] = useState<ConnectionRelation>(relations[0] as ConnectionRelation)
+    const [relation, setRelation] = useState<ConnectionRelation>(initialRelation)
     const [step, setStep] = useState<"search" | "register">("search")
 
     return (

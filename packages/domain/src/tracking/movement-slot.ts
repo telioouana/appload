@@ -15,6 +15,7 @@ import {
 import { normalizePhone } from "@workspace/comms/phone";
 
 import { movementRef } from "@workspace/domain/movements/refs";
+import { IN_PROGRESS_STATUSES } from "@workspace/domain/movements/status";
 import { startConversation } from "@workspace/domain/tracking/conversations";
 import { REVIEW_AFTER_MINUTES, reviewMovementSlot } from "@workspace/domain/tracking/movement-review";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
@@ -90,12 +91,14 @@ export async function runMovementTrackingSlot(db: typeof Database, info: SlotInf
         .select()
         .from(movement)
         .where(and(
-            eq(movement.status, "in-transit"),
+            // From the loading site to offloading, stops included: a truck
+            // held up is exactly the one somebody wants a position from
+            inArray(movement.status, IN_PROGRESS_STATUSES),
             eq(movement.trackingEnabled, true),
-            // A load may be put on the road with no driver named — that is
-            // flagged, never blocked — and there is nobody to ask where it
-            // is until somebody names one, so it is skipped here rather than
-            // pinged into the void
+            // A load may be started with no driver named — that is flagged,
+            // never blocked — and there is nobody to ask where it is until
+            // somebody names one, so it is skipped here rather than pinged
+            // into the void
             isNotNull(movement.driverPhone),
             isNotNull(movement.driverName),
             // Only the row that holds the truck. When A hands a load to B and
@@ -107,7 +110,7 @@ export async function runMovementTrackingSlot(db: typeof Database, info: SlotInf
                 ? notInArray(sql`regexp_replace(${movement.driverPhone}, '\\D', '', 'g')`, pingedByAdmin)
                 : undefined,
         ))
-        // Oldest departure first: without an order the batch is whatever the
+        // Oldest start first: without an order the batch is whatever the
         // scan happens to yield, so which movements a tick covered could
         // not be reasoned about afterwards
         .orderBy(asc(movement.startedAt))

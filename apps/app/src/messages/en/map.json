@@ -9,7 +9,7 @@
     "error": "The map could not be loaded",
     "empty": {
         "title": "Nothing on the move",
-        "description": "Orders and trips appear here as soon as they are in transit"
+        "description": "Orders and trips appear here as soon as they are in progress"
     },
     "list": {
         "no-location": "No location yet",

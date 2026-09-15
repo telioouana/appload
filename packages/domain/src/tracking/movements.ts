@@ -14,6 +14,8 @@ import type { db as Database } from "@workspace/db/db";
 import type { DeliveryReport } from "@workspace/comms/infobip";
 import { normalizePhone } from "@workspace/comms/phone";
 
+import { IN_PROGRESS_STATUSES } from "@workspace/domain/movements/status";
+
 /**
  * The movement a conversation's pin belongs to. Runs only after the order
  * attribution came back empty: an Appload order always wins, because its
@@ -52,9 +54,10 @@ export async function resolveMovementForConversation(
         })
         .from(movement)
         .where(and(
-            eq(movement.status, "in-transit"),
-            // In transit only: a delivered movement keeps its thread, and the
-            // driver's next job must not land on the finished one
+            // In progress only, stops included: a booked load has no truck at
+            // it yet, and a delivered one keeps its thread — the driver's
+            // next job must not land on the finished one
+            inArray(movement.status, IN_PROGRESS_STATUSES),
             eq(movement.trackingEnabled, true),
             isNotNull(movement.driverPhone),
             // Only the row that actually holds the truck — see above

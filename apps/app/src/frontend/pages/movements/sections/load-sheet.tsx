@@ -33,6 +33,7 @@ import { PlanDialog, planBlock, planRefusal, type PlanReason } from "@/component
 import { movementErrorKey, type MovementErrorMessage } from "@/frontend/pages/movements/lib/errors"
 import { useMovementMutations } from "@/frontend/pages/movements/hooks/use-movement-mutations"
 import {
+    CREATE_STATUS,
     LoadFormSchema,
     NONE,
     TYPED,
@@ -288,8 +289,9 @@ export function LoadSheet({
     function onCreate(values: LoadForm) {
         // A load filed without a driver, a partner or a price is not refused:
         // it is filed flagged, and the flags are on the load's page from the
-        // moment it exists. Only the plan still stops a truck going out
-        if (values.status === "in-transit") {
+        // moment it exists. Only the plan still stops one filed with its
+        // truck already at the loading site, which starts it
+        if (values.status === "at-loading") {
             const blocked = planBlock(allowance)
             if (blocked) {
                 setPlanReason(blocked)
@@ -649,9 +651,9 @@ export function LoadSheet({
                                             control={control}
                                             isPending={isPending}
                                             label={t("fields.status")}
-                                            description={status === "in-transit" ? t("fields.status-in-transit-hint") : t("fields.status-hint")}
+                                            description={status === "at-loading" ? t("fields.status-at-loading-hint") : t("fields.status-hint")}
                                         >
-                                            {(["procurement", "scheduled", "booked", "in-transit"] as const).map((value) => (
+                                            {CREATE_STATUS.map((value) => (
                                                 <SelectItem key={value} value={value}>
                                                     {t(`statuses.${partner ? "order" : "trip"}.${value}`)}
                                                 </SelectItem>

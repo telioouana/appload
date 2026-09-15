@@ -18,22 +18,22 @@ import { usePartnerColumns } from "@/frontend/pages/partners/columns/partner-col
 import { RequestsList } from "@/frontend/pages/partners/sections/requests-list"
 import { PartnerProfileSheet } from "@/frontend/pages/partners/views/partner-profile-sheet"
 import {
-    currentTab,
     isFilteredList,
     PAGE_SIZES,
     partnersListInput,
+    type PartnerListKind,
     type PartnerRow,
 } from "@/frontend/pages/partners/types"
 
 const DEFAULT_SORT = "partner"
 
 /**
- * The list card. Which of its two shapes it takes comes from the tab: the
+ * The list card. Which of its two shapes it takes comes from the kind: the
  * connected partners are a table, and the requests are cards with the
  * buttons that decide them. Both read the same paged query, so the tiles,
- * the tabs and the footer always agree.
+ * the pills and the footer always agree.
  */
-export function PartnersDataView() {
+export function PartnersDataView({ kind }: { kind: PartnerListKind }) {
     const t = useTranslations("App.partners")
     const trpc = useTRPC()
 
@@ -44,14 +44,12 @@ export function PartnersDataView() {
     const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
     const orgType = session.organization.type
 
-    const input = partnersListInput(get)
+    const input = partnersListInput(kind, get)
     const { data } = useSuspenseQuery(trpc.partners.list.queryOptions(input))
     const isRefreshing = useIsFetching({ queryKey: trpc.partners.list.pathKey() }) > 0
 
     const { id: openId, open } = useEntitySheet()
     const onOpen = useCallback((row: PartnerRow) => open(row.id), [open])
-
-    const tab = currentTab(get, orgType)
 
     const sort = { key: get("sort") ?? DEFAULT_SORT, dir: get("dir") === "desc" ? "desc" as const : "asc" as const }
 
@@ -74,7 +72,7 @@ export function PartnersDataView() {
         <>
             <ListCard>
                 <div className={cn("flex min-h-0 flex-1 flex-col transition-opacity", isRefreshing && "opacity-60")}>
-                    {tab === "requests" ? (
+                    {kind === "requests" ? (
                         <RequestsList items={data.items} orgType={orgType} onOpen={onOpen} />
                     ) : (
                         <DataTable
@@ -87,7 +85,8 @@ export function PartnersDataView() {
                             activeRowId={openId}
                             empty={{
                                 title: t("data.empty"),
-                                description: t(`data.empty-${tab}`),
+                                // A carrier's transporters are the ones it subcontracts, which asks for other words
+                                description: kind === "clients" ? t("data.empty-clients") : t(`data.empty-transporters.${orgType}`),
                                 filtered: t("data.no-results"),
                             }}
                         />

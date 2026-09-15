@@ -5,38 +5,34 @@
     },
     "sections": {
         "all": "Tudo",
-        "inbox": "Recebidos",
-        "procurement": "Rascunho",
-        "awarded": "Adjudicado",
-        "confirmed": "Confirmado",
+        "procurement": "Procura",
         "booked": "Agendado",
         "planning": "Em planeamento",
         "scheduled": "Agendadas",
-        "in-transit": "Em curso",
+        "in-progress": "Em curso",
         "delivered": "Entregues",
+        "disputes": "Disputas",
         "history": "Histórico"
     },
     "titles": {
         "all-orders": "Todos os pedidos",
         "all-trips": "Todas as viagens",
-        "inbox": "Cargas oferecidas por parceiros",
-        "procurement": "Rascunho",
-        "awarded": "Adjudicado",
-        "confirmed": "Confirmado",
+        "procurement": "Procura",
         "booked": "Agendado",
         "planning": "Viagens em planeamento",
         "scheduled": "Viagens agendadas",
-        "in-transit": "Em curso",
+        "in-progress": "Em curso",
         "delivered": "Entregues",
+        "disputes": "Cargas em disputa",
         "history": "Histórico"
     },
     "description": {
         "orders": {
-            "carrier": "As cargas que entregou a parceiros, as que parceiros lhe ofereceram e as que alguém transporta para si",
+            "carrier": "As cargas que entregou a parceiros e as que alguém transporta para si",
             "shipper": "As cargas que os seus transportadores movimentam para si, dentro ou fora da Appload"
         },
         "trips": {
-            "carrier": "As cargas que a sua própria frota transporta",
+            "carrier": "As cargas que a sua própria frota transporta e as que parceiros lhe ofereceram",
             "shipper": "As cargas que os seus próprios camiões transportam entre os seus locais"
         }
     },
@@ -45,16 +41,27 @@
         "clear": "Limpar pesquisa"
     },
     "status": {
-        "planning": "Em planeamento",
         "procurement": "Rascunho",
-        "offered": "Adjudicado",
-        "declined": "Recusado",
+        "prospect": "Prospectiva",
+        "offered": "Prospectiva",
+        "declined": "Recusada",
         "scheduled": "Confirmado",
         "booked": "Agendado",
-        "in-transit": "Em curso",
+        "at-loading": "No local de carregamento",
+        "loading": "Em carregamento",
+        "waiting-documents": "À espera de documentos",
+        "on-route": "Em trânsito",
+        "stopped": "Parado",
+        "issue": "Com problema",
+        "at-border": "Na fronteira",
+        "at-offloading": "No local de descarregamento",
+        "offloading": "Em descarregamento",
         "delivered": "Entregue",
-        "closed": "Fechado",
-        "cancelled": "Cancelado"
+        "closed": "Fechada",
+        "cancelled": "Cancelada"
+    },
+    "tabs": {
+        "all": "Todas"
     },
     "flags": {
         "NO_DRIVER": "Sem motorista",
@@ -98,16 +105,20 @@
         "no-pings": "Sem posições"
     },
     "tiles": {
-        "inbox": "Oferecidos a si",
-        "inbox-hint": "Cargas de parceiros à espera da sua resposta",
+        "received": "Oferecidas a si",
+        "received-hint": "Cargas de parceiros à espera da sua resposta",
         "confirmed": "Confirmados",
-        "confirmed-hint": "Com transportador e à espera de sair",
-        "procurement": "Rascunhos",
-        "procurement-hint": "Ainda sem oferta feita",
+        "confirmed-hint": "Acordados com um parceiro, ainda por agendar",
+        "procurement": "Em procura",
+        "procurement-hint": "Ainda por agendar",
+        "booked": "Agendados",
+        "booked-hint": "À espera do camião no local de carregamento",
+        "planning": "Em planeamento",
+        "planning-hint": "Ainda por agendar",
         "scheduled": "Agendadas",
-        "scheduled-hint": "Prontas para sair",
-        "in-transit": "Em trânsito",
-        "in-transit-hint": "Camiões na estrada agora",
+        "scheduled-hint": "Com motorista e data definidos",
+        "in-progress": "Em curso",
+        "in-progress-hint": "Do local de carregamento ao descarregamento",
         "delivered": "Entregues",
         "delivered-hint": "Chegaram e aguardam fecho de contas",
         "silent": "Sem resposta hoje",
@@ -121,7 +132,7 @@
     "filters": {
         "tracking": "Localização",
         "silent": "Sem resposta hoje",
-        "silent-hint": "Na estrada, a quem pedimos a posição hoje e que ainda não respondeu"
+        "silent-hint": "Em curso, a quem pedimos a posição hoje e que ainda não respondeu"
     },
     "data": {
         "empty": {
@@ -132,7 +143,7 @@
             "orders": "Registe uma carga que um parceiro vai transportar e acompanhe-a daqui.",
             "trips": "Registe uma carga da sua própria frota e acompanhe-a daqui."
         },
-        "empty-inbox": "Quando um parceiro lhe oferecer uma carga no portal, ela aparece aqui para aceitar ou recusar.",
+        "empty-disputes": "Quando uma empresa numa carga abrir uma disputa sobre ela, a carga aparece aqui até a disputa ser resolvida.",
         "no-results": "Nenhuma carga corresponde à pesquisa.",
         "error": "Não foi possível carregar as cargas. Tente novamente."
     },
@@ -149,17 +160,28 @@
         "more": "Mais ações",
         "send-confirmation": "Enviar confirmação",
         "request-location": "Pedir localização",
+        "open-dispute": "Abrir uma disputa",
+        "resume": "Retomar: {status}",
         "convert": {
             "to-partner": "Entregar a um parceiro",
             "to-own-fleet": "Fazer com a própria frota"
         },
         "to": {
-            "procurement": "Voltar à procura",
+            "procurement": "Voltar a rascunho",
+            "prospect": "Marcar como prospectiva",
             "offered": "Oferecer",
             "declined": "Recusar",
             "scheduled": "Confirmar",
             "booked": "Agendar",
-            "in-transit": "Pôr a caminho",
+            "at-loading": "Chegou ao local de carregamento",
+            "loading": "Iniciar carregamento",
+            "waiting-documents": "À espera de documentos",
+            "on-route": "Pôr em trânsito",
+            "stopped": "Marcar como parado",
+            "issue": "Reportar um problema",
+            "at-border": "Chegou à fronteira",
+            "at-offloading": "Chegou ao local de descarregamento",
+            "offloading": "Iniciar descarregamento",
             "delivered": "Marcar como entregue",
             "closed": "Fechar",
             "cancelled": "Cancelar a carga"
@@ -167,6 +189,7 @@
     },
     "blockers": {
         "NOTE_REQUIRED": "É necessário indicar o motivo.",
+        "DISPUTE_OPEN": "Só pode fechar quando a disputa sobre ela estiver resolvida.",
         "UNSETTLED": "Só pode fechar quando os pagamentos estiverem liquidados."
     },
     "dialogs": {
@@ -178,8 +201,8 @@
         "description": "{ref} passa de {from} para {to}.",
         "flagged-title": "A avançar com {count, plural, one {# alerta} other {# alertas}}",
         "consequence": {
-            "in-transit": "O motorista começa a receber pedidos de localização por WhatsApp, e a carga conta para o plano deste mês.",
-            "in-transit-undriven": "A carga conta para o plano deste mês, mas sem motorista indicado não há a quem pedir a localização — indique um e os pedidos começam.",
+            "starts-tracking": "O acompanhamento começa: o motorista passa a receber pedidos de localização por WhatsApp, e a carga conta para o plano deste mês.",
+            "starts-tracking-undriven": "A carga conta para o plano deste mês, mas sem motorista indicado não há a quem pedir a localização — indique um e os pedidos começam.",
             "cancelled": "Quem estiver ligado a esta carga é avisado, e um parceiro que já a tenha aceite fica com ela cancelada também.",
             "closed": "Uma carga fechada deixa de poder ser alterada."
         },
@@ -382,6 +405,7 @@
         "linked": "O parceiro acompanha o próprio camião; as posições aparecem aqui à medida que chegam.",
         "disabled": "O acompanhamento está desligado para esta carga.",
         "empty": "Ainda sem posições",
+        "not-started": "As posições começam a chegar quando o camião estiver no local de carregamento",
         "unnamed": "Local sem nome",
         "picked": "endereço escolhido"
     },
@@ -405,6 +429,8 @@
         "moved": "Passou a {status}",
         "confirmation-sent": "Confirmação enviada para {to}",
         "photo-approved": "Foto de carregamento aprovada",
+        "dispute-opened": "Disputa aberta",
+        "dispute-resolved": "Disputa resolvida",
         "flags": "Avançou com alertas: {list}",
         "from-below": "Pelo transportador",
         "actions": {
@@ -430,10 +456,11 @@
             "cost": "Custo",
             "document": "Documento",
             "note": "Nota",
-            "system": "Atualização automática"
+            "system": "Atualização automática",
+            "dispute": "Disputa"
         },
         "codes": {
-            "EXECUTOR_WITHDREW": "O transportador desistiu antes de sair; a carga pode ser entregue a outro parceiro.",
+            "EXECUTOR_WITHDREW": "O transportador desistiu antes de o camião chegar ao local de carregamento; a carga pode ser entregue a outro parceiro.",
             "CLIENT_CANCELLED": "O cliente cancelou a carga."
         }
     },
@@ -447,7 +474,7 @@
         "fields": {
             "loading": "Carregamento",
             "due": "Entrega prevista",
-            "started": "Saiu a",
+            "started": "Iniciada a",
             "delivered": "Entregue a",
             "category": "Categoria",
             "weight": "Peso",
@@ -545,7 +572,7 @@
             "plate-placeholder": "AAA-000-MC",
             "status": "Em que ponto está",
             "status-hint": "Pode avançar mais tarde a partir da página da carga",
-            "status-in-transit-hint": "O motorista começa a receber pedidos de localização e a carga conta para o plano deste mês",
+            "status-at-loading-hint": "O acompanhamento começa: o motorista passa a receber pedidos de localização e a carga conta para o plano deste mês",
             "sell-invoice": "N.º da fatura ao cliente",
             "buy-invoice": "N.º da fatura do parceiro",
             "notes": "Notas",
@@ -556,15 +583,17 @@
         "statuses": {
             "order": {
                 "procurement": "Ainda à procura de parceiro",
-                "scheduled": "Já confirmado com o parceiro",
-                "booked": "Confirmado e já agendado",
-                "in-transit": "Já a caminho"
+                "prospect": "Cotada, à espera da resposta",
+                "scheduled": "Acordada com o parceiro",
+                "booked": "Acordada e já agendada",
+                "at-loading": "Já no local de carregamento"
             },
             "trip": {
                 "procurement": "Ainda em planeamento",
+                "prospect": "Cotada ao cliente, à espera",
                 "scheduled": "Confirmada",
-                "booked": "Agendada",
-                "in-transit": "Já a caminho"
+                "booked": "Motorista e data definidos",
+                "at-loading": "Já no local de carregamento"
             }
         },
         "errors": {
@@ -595,16 +624,61 @@
         "document-added": "Documento adicionado",
         "document-removed": "Documento removido",
         "requested": "Pedido de localização enviado ao motorista",
+        "dispute-opened": "Disputa aberta",
+        "dispute-resolved": "Disputa resolvida",
         "status": {
-            "procurement": "A carga voltou à procura",
+            "procurement": "A carga voltou a rascunho",
+            "prospect": "Carga marcada como prospectiva",
             "offered": "Carga oferecida",
             "declined": "Carga recusada",
             "scheduled": "Carga confirmada",
             "booked": "Carga agendada",
-            "in-transit": "Carga a caminho",
+            "at-loading": "Camião no local de carregamento",
+            "loading": "Carregamento iniciado",
+            "waiting-documents": "À espera de documentos",
+            "on-route": "Carga em trânsito",
+            "stopped": "Carga marcada como parada",
+            "issue": "Problema reportado",
+            "at-border": "Carga na fronteira",
+            "at-offloading": "Camião no local de descarregamento",
+            "offloading": "Descarregamento iniciado",
             "delivered": "Carga entregue",
             "closed": "Carga fechada",
             "cancelled": "Carga cancelada"
+        }
+    },
+    "disputes": {
+        "chip": "Em disputa",
+        "reasons": {
+            "theft": "Roubo",
+            "loss": "Perda",
+            "damage": "Dano",
+            "other": "Outro"
+        },
+        "banner": {
+            "open": "Esta carga está em disputa",
+            "resolved": "Disputa resolvida",
+            "opened": "{reason} · aberta por {name} a {date}",
+            "opened-unnamed": "{reason} · aberta por uma empresa nesta carga a {date}",
+            "resolution": "Resolvida a {date}: {resolution}",
+            "resolve": "Resolver"
+        },
+        "open": {
+            "title": "Abrir uma disputa",
+            "description": "Algo correu mal com {ref}. A carga não pode ser fechada até a disputa ser resolvida, e só a sua empresa a pode resolver.",
+            "reason": "Motivo",
+            "reason-placeholder": "Escolha o motivo",
+            "details": "O que aconteceu",
+            "details-placeholder": "O que aconteceu, quando e o que foi afetado",
+            "shared": "Os dois lados vão ver isto: todas as empresas nesta carga leem o texto tal como o escrever.",
+            "submit": "Abrir disputa"
+        },
+        "resolve": {
+            "title": "Resolver a disputa",
+            "description": "Indique como foi resolvida. Todas as empresas nesta carga leem a resolução, e a carga volta a poder ser fechada.",
+            "resolution": "Como foi resolvida",
+            "resolution-placeholder": "O que ficou acordado",
+            "submit": "Resolver"
         }
     },
     "errors": {
@@ -619,20 +693,23 @@
         "notACarrier": "Só um transportador pode receber uma carga.",
         "ownFleetHasNoCarrier": "Uma viagem da própria frota não tem parceiro nem valor a pagar.",
         "rigIsThePartners": "O parceiro está no portal e indica o próprio motorista e camião.",
-        "executorDeparted": "O transportador já saiu com a carga; só ele a pode cancelar agora.",
+        "executorDeparted": "O camião do transportador já está com a carga; só ele a pode cancelar agora.",
         "rigNotRegistered": "O motorista ou o camião escolhido não é da sua frota.",
         "noDriver": "Indique o nome e o telefone do motorista primeiro.",
         "noCarrier": "Indique o parceiro que vai transportar a carga primeiro.",
         "noPrice": "Indique quanto vai pagar ao parceiro primeiro.",
         "noteRequired": "É necessário indicar o motivo.",
         "unsettled": "Só pode fechar quando os pagamentos estiverem liquidados.",
+        "disputeOpen": "Só pode fechar quando a disputa sobre ela estiver resolvida.",
+        "disputeExists": "Esta carga já está em disputa.",
+        "disputeInvalidLoad": "Só se pode abrir uma disputa numa carga já acordada.",
         "noSuchLeg": "Esta carga não tem esse valor registado.",
         "legHasPayments": "Já há pagamentos registados neste valor; não pode ser removido nem mudar de moeda.",
         "paymentBelowZero": "A correção deixaria o total pago abaixo de zero.",
         "correctionNeedsReference": "Uma correção precisa de referência.",
         "invalidDocument": "O documento não foi aceite. Envie-o novamente.",
         "notApprovable": "Esta foto já foi aprovada, ou não é uma foto de carregamento.",
-        "notTrackable": "Só se pede a localização de uma carga em trânsito com motorista.",
+        "notTrackable": "Só se pede a localização de uma carga em curso com motorista.",
         "rateLimited": "Já pediu a localização várias vezes. Tente mais tarde.",
         "infobipNotConfigured": "O WhatsApp não está configurado neste ambiente.",
         "subscriptionRequired": "É necessário um plano para acompanhar cargas.",

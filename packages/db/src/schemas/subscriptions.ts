@@ -17,7 +17,7 @@ export type UsageEntity = (typeof USAGE_ENTITY)[number];
 
 /**
  * One tracked movement, billed to one organization for one calendar month:
- * an order that got dispatched, a movement that went in transit. Both parties
+ * an order that got dispatched, a movement that entered progress. Both parties
  * of an order get their own row, since each spends its own allowance.
  *
  * The unique index is what makes counting idempotent: a re-dispatch after an

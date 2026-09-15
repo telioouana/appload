@@ -5,38 +5,34 @@
     },
     "sections": {
         "all": "All",
-        "inbox": "Inbox",
-        "procurement": "Draft",
-        "awarded": "Awarded",
-        "confirmed": "Confirmed",
+        "procurement": "Procurement",
         "booked": "Booked",
         "planning": "Planning",
-        "scheduled": "Scheduled",
-        "in-transit": "In progress",
+        "scheduled": "Schedule",
+        "in-progress": "In progress",
         "delivered": "Delivered",
+        "disputes": "Disputes",
         "history": "History"
     },
     "titles": {
         "all-orders": "All orders",
         "all-trips": "All trips",
-        "inbox": "Loads partners offered you",
-        "procurement": "Draft",
-        "awarded": "Awarded",
-        "confirmed": "Confirmed",
+        "procurement": "Procurement",
         "booked": "Booked",
         "planning": "Trips being planned",
         "scheduled": "Scheduled trips",
-        "in-transit": "In progress",
+        "in-progress": "In progress",
         "delivered": "Delivered",
+        "disputes": "Loads in dispute",
         "history": "History"
     },
     "description": {
         "orders": {
-            "carrier": "The loads you handed to partners, the ones partners offered you, and the ones somebody moves for you",
+            "carrier": "The loads you handed to partners, and the ones somebody moves for you",
             "shipper": "The loads your transporters move for you, inside or outside Appload"
         },
         "trips": {
-            "carrier": "The loads your own fleet moves",
+            "carrier": "The loads your own fleet moves, and the ones partners offered you",
             "shipper": "The loads your own trucks move between your sites"
         }
     },
@@ -45,16 +41,27 @@
         "clear": "Clear search"
     },
     "status": {
-        "planning": "Planning",
         "procurement": "Draft",
-        "offered": "Awarded",
+        "prospect": "Prospect",
+        "offered": "Prospect",
         "declined": "Declined",
         "scheduled": "Confirmed",
         "booked": "Booked",
-        "in-transit": "In progress",
+        "at-loading": "At loading site",
+        "loading": "Loading",
+        "waiting-documents": "Waiting for documents",
+        "on-route": "On route",
+        "stopped": "Stopped",
+        "issue": "With issue",
+        "at-border": "At border",
+        "at-offloading": "At offloading site",
+        "offloading": "Offloading",
         "delivered": "Delivered",
         "closed": "Closed",
         "cancelled": "Cancelled"
+    },
+    "tabs": {
+        "all": "All"
     },
     "flags": {
         "NO_DRIVER": "No driver",
@@ -98,16 +105,20 @@
         "no-pings": "No positions"
     },
     "tiles": {
-        "inbox": "Offered to you",
-        "inbox-hint": "Partners' loads waiting on your answer",
+        "received": "Offered to you",
+        "received-hint": "Partners' loads waiting on your answer",
         "confirmed": "Confirmed",
-        "confirmed-hint": "With a transporter, waiting to leave",
-        "procurement": "Drafts",
-        "procurement-hint": "Not offered to anybody yet",
-        "scheduled": "Scheduled",
-        "scheduled-hint": "Ready to leave",
-        "in-transit": "On the road",
-        "in-transit-hint": "Trucks moving right now",
+        "confirmed-hint": "Agreed with a partner, not booked in yet",
+        "procurement": "Procurement",
+        "procurement-hint": "Not booked in yet",
+        "booked": "Booked",
+        "booked-hint": "Waiting for the truck at the loading site",
+        "planning": "Planning",
+        "planning-hint": "Not booked in yet",
+        "scheduled": "Schedule",
+        "scheduled-hint": "Driver and date set",
+        "in-progress": "In progress",
+        "in-progress-hint": "From the loading site to offloading",
         "delivered": "Delivered",
         "delivered-hint": "Arrived, waiting for the books to close",
         "silent": "Silent today",
@@ -121,7 +132,7 @@
     "filters": {
         "tracking": "Tracking",
         "silent": "Silent today",
-        "silent-hint": "On the road, asked for a position today and not answered yet"
+        "silent-hint": "In progress, asked for a position today and not answered yet"
     },
     "data": {
         "empty": {
@@ -132,7 +143,7 @@
             "orders": "File a load a partner will move, and follow it from here.",
             "trips": "File a load for your own fleet, and follow it from here."
         },
-        "empty-inbox": "When a partner offers you a load on the portal, it shows up here for you to accept or decline.",
+        "empty-disputes": "When a company on a load opens a dispute on it, the load shows up here until the dispute is resolved.",
         "no-results": "No load matches the search.",
         "error": "The loads could not be loaded. Try again."
     },
@@ -149,17 +160,28 @@
         "more": "More actions",
         "send-confirmation": "Send confirmation",
         "request-location": "Ask for location",
+        "open-dispute": "Open a dispute",
+        "resume": "Resume: {status}",
         "convert": {
             "to-partner": "Hand to a partner",
             "to-own-fleet": "Run on own fleet"
         },
         "to": {
-            "procurement": "Back to procurement",
+            "procurement": "Back to draft",
+            "prospect": "Mark as prospect",
             "offered": "Offer",
             "declined": "Decline",
             "scheduled": "Confirm",
             "booked": "Book",
-            "in-transit": "Put on the road",
+            "at-loading": "Arrived at loading site",
+            "loading": "Start loading",
+            "waiting-documents": "Wait for documents",
+            "on-route": "Put on route",
+            "stopped": "Report stopped",
+            "issue": "Report an issue",
+            "at-border": "Arrived at the border",
+            "at-offloading": "Arrived at offloading site",
+            "offloading": "Start offloading",
             "delivered": "Mark delivered",
             "closed": "Close",
             "cancelled": "Cancel the load"
@@ -167,6 +189,7 @@
     },
     "blockers": {
         "NOTE_REQUIRED": "A reason is required.",
+        "DISPUTE_OPEN": "It can only be closed once the dispute on it is resolved.",
         "UNSETTLED": "It can only be closed once the payments are settled."
     },
     "dialogs": {
@@ -178,8 +201,8 @@
         "description": "{ref} goes from {from} to {to}.",
         "flagged-title": "Proceeding with {count, plural, one {# flag} other {# flags}}",
         "consequence": {
-            "in-transit": "The driver starts getting location requests on WhatsApp, and the load counts towards this month's plan.",
-            "in-transit-undriven": "The load counts towards this month's plan, but with no driver named nobody can be asked where it is — name one and the location requests start.",
+            "starts-tracking": "Tracking starts: the driver gets location requests on WhatsApp, and the load counts towards this month's plan.",
+            "starts-tracking-undriven": "The load counts towards this month's plan, but with no driver named nobody can be asked where it is — name one and the location requests start.",
             "cancelled": "Everyone on this load is told, and a partner that already accepted it has it cancelled too.",
             "closed": "A closed load can no longer be changed."
         },
@@ -382,6 +405,7 @@
         "linked": "The partner tracks its own truck; positions show here as they arrive.",
         "disabled": "Tracking is switched off for this load.",
         "empty": "No positions yet",
+        "not-started": "Positions start arriving once the truck is at the loading site",
         "unnamed": "Unnamed place",
         "picked": "picked address"
     },
@@ -405,6 +429,8 @@
         "moved": "Moved to {status}",
         "confirmation-sent": "Confirmation sent to {to}",
         "photo-approved": "Loading photo approved",
+        "dispute-opened": "Dispute opened",
+        "dispute-resolved": "Dispute resolved",
         "flags": "Proceeded with flags: {list}",
         "from-below": "By the transporter",
         "actions": {
@@ -430,10 +456,11 @@
             "cost": "Cost",
             "document": "Document",
             "note": "Note",
-            "system": "Automatic update"
+            "system": "Automatic update",
+            "dispute": "Dispute"
         },
         "codes": {
-            "EXECUTOR_WITHDREW": "The transporter pulled out before leaving; the load can go to another partner.",
+            "EXECUTOR_WITHDREW": "The transporter pulled out before its truck reached the loading site; the load can go to another partner.",
             "CLIENT_CANCELLED": "The client cancelled the load."
         }
     },
@@ -447,7 +474,7 @@
         "fields": {
             "loading": "Loading",
             "due": "Due",
-            "started": "Left",
+            "started": "Started",
             "delivered": "Delivered",
             "category": "Category",
             "weight": "Weight",
@@ -545,7 +572,7 @@
             "plate-placeholder": "AAA-000-MC",
             "status": "Where it stands",
             "status-hint": "You can move it on later from the load's page",
-            "status-in-transit-hint": "The driver starts getting location requests and the load counts towards this month's plan",
+            "status-at-loading-hint": "Tracking starts: the driver gets location requests and the load counts towards this month's plan",
             "sell-invoice": "Invoice number to the client",
             "buy-invoice": "Partner's invoice number",
             "notes": "Notes",
@@ -556,15 +583,17 @@
         "statuses": {
             "order": {
                 "procurement": "Still looking for a partner",
-                "scheduled": "Already agreed with the partner",
+                "prospect": "Quoted, waiting for the answer",
+                "scheduled": "Agreed with the partner",
                 "booked": "Agreed and booked in",
-                "in-transit": "Already on the road"
+                "at-loading": "Already at the loading site"
             },
             "trip": {
                 "procurement": "Still being planned",
+                "prospect": "Quoted to the client, waiting",
                 "scheduled": "Confirmed",
-                "booked": "Scheduled",
-                "in-transit": "Already on the road"
+                "booked": "Driver and date set",
+                "at-loading": "Already at the loading site"
             }
         },
         "errors": {
@@ -595,16 +624,61 @@
         "document-added": "Document added",
         "document-removed": "Document removed",
         "requested": "Location request sent to the driver",
+        "dispute-opened": "Dispute opened",
+        "dispute-resolved": "Dispute resolved",
         "status": {
-            "procurement": "The load is back in procurement",
+            "procurement": "The load is back in draft",
+            "prospect": "Load marked as prospect",
             "offered": "Load offered",
             "declined": "Load declined",
             "scheduled": "Load confirmed",
             "booked": "Load booked",
-            "in-transit": "Load on the road",
+            "at-loading": "Truck at the loading site",
+            "loading": "Loading started",
+            "waiting-documents": "Waiting for documents",
+            "on-route": "Load on route",
+            "stopped": "Load marked stopped",
+            "issue": "Issue reported",
+            "at-border": "Load at the border",
+            "at-offloading": "Truck at the offloading site",
+            "offloading": "Offloading started",
             "delivered": "Load delivered",
             "closed": "Load closed",
             "cancelled": "Load cancelled"
+        }
+    },
+    "disputes": {
+        "chip": "In dispute",
+        "reasons": {
+            "theft": "Theft",
+            "loss": "Loss",
+            "damage": "Damage",
+            "other": "Other"
+        },
+        "banner": {
+            "open": "This load is in dispute",
+            "resolved": "Dispute resolved",
+            "opened": "{reason} · opened by {name} on {date}",
+            "opened-unnamed": "{reason} · opened by a company on this load on {date}",
+            "resolution": "Resolved on {date}: {resolution}",
+            "resolve": "Resolve"
+        },
+        "open": {
+            "title": "Open a dispute",
+            "description": "Something went wrong with {ref}. The load cannot be closed until the dispute is resolved, and only your company can resolve it.",
+            "reason": "Reason",
+            "reason-placeholder": "Pick a reason",
+            "details": "What happened",
+            "details-placeholder": "What happened, when, and what is affected",
+            "shared": "Both sides will see this: every company on this load reads it word for word.",
+            "submit": "Open dispute"
+        },
+        "resolve": {
+            "title": "Resolve the dispute",
+            "description": "Say how it was settled. Every company on this load reads it, and the load can be closed again.",
+            "resolution": "How it was settled",
+            "resolution-placeholder": "What was agreed",
+            "submit": "Resolve"
         }
     },
     "errors": {
@@ -619,20 +693,23 @@
         "notACarrier": "Only a transporter can be given a load.",
         "ownFleetHasNoCarrier": "A trip on your own fleet has no partner and nothing to pay.",
         "rigIsThePartners": "The partner is on the portal and names its own driver and truck.",
-        "executorDeparted": "The transporter has already left with the load; only they can cancel it now.",
+        "executorDeparted": "The transporter's truck is already on the load; only they can cancel it now.",
         "rigNotRegistered": "The driver or truck picked is not in your fleet.",
         "noDriver": "Name the driver and their phone first.",
         "noCarrier": "Name the partner that will move the load first.",
         "noPrice": "Record what you will pay the partner first.",
         "noteRequired": "A reason is required.",
         "unsettled": "It can only be closed once the payments are settled.",
+        "disputeOpen": "It can only be closed once the dispute on it is resolved.",
+        "disputeExists": "This load is already in a dispute.",
+        "disputeInvalidLoad": "A dispute can only be opened once the load is agreed.",
         "noSuchLeg": "This load has no such amount recorded.",
         "legHasPayments": "Payments are already recorded against this amount; it cannot be removed or change currency.",
         "paymentBelowZero": "The correction would take the total paid below zero.",
         "correctionNeedsReference": "A correction needs a reference.",
         "invalidDocument": "The document was not accepted. Upload it again.",
         "notApprovable": "This photo is already approved, or is not a loading photo.",
-        "notTrackable": "Location can only be asked for on a load on the road with a driver.",
+        "notTrackable": "Location can only be asked for on a load in progress with a driver.",
         "rateLimited": "You have asked for the location several times already. Try again later.",
         "infobipNotConfigured": "WhatsApp is not set up on this environment.",
         "subscriptionRequired": "A plan is needed to track loads.",

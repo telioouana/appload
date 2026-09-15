@@ -34,9 +34,9 @@ export type MapEntity = {
     counterpartyName: string | null;
     /**
      * The order-status vocabulary, because the pin colour, the icon and the
-     * badge all read it off the same `--status-*` variables. A load is drawn
-     * as "on-route": in transit is the only state that reaches the map, and
-     * it is the same truck on the same road.
+     * badge all read it off the same `--status-*` variables. A load reaches
+     * the map only while it is in progress, and is drawn in its chip's tone
+     * (`movementTone`): the truck's chain is the order's, stage for stage.
      */
     status: OrderStatus;
     origin: Location;

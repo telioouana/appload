@@ -1,66 +1,45 @@
 "use client"
 
-import { useSearchParams } from "next/navigation"
-
 import { useTranslations } from "@workspace/i18n"
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { useListParams } from "@workspace/ui/hooks/use-list-params"
-import { currentTab, tabsFor, type OrgType, type PartnerStats, type PartnerTab } from "@/frontend/pages/partners/types"
+import { Link } from "@/i18n/navigation"
+import { countForKind, kindsFor, type OrgType, type PartnerListKind, type PartnerStats } from "@/frontend/pages/partners/types"
 
 /**
- * The page's own slice of the connection table, under the title rather than
- * inside the list card: the requests tab is not a filter of the same rows,
- * it is a different thing to do.
- *
- * Switching tabs drops the page, the open profile, the ticked rows and the
- * direction tile — everything that only made sense for the list being left.
+ * The organization's lists, under the title rather than inside the list card:
+ * the requests list is not a filter of the same rows, it is a different thing
+ * to do. The lists are routes, so this is a set of links — each one is
+ * addressable, and following one starts the list clean instead of carrying
+ * the page, the open profile or a direction into it.
  */
-export function PartnersTabs({ orgType, stats }: { orgType: OrgType; stats: PartnerStats }) {
+export function PartnersTabs({ orgType, kind, stats }: { orgType: OrgType; kind: PartnerListKind; stats: PartnerStats }) {
     const t = useTranslations("App.partners.tabs")
-    const searchParams = useSearchParams()
-    const { set } = useListParams()
-
-    const tabs = tabsFor(orgType)
-    const active = currentTab((key) => searchParams.get(key), orgType)
-
-    const count = (tab: PartnerTab) =>
-        tab === "requests" ? stats.incoming + stats.outgoing
-            : tab === "subcontractors" ? stats.accepted.subcontract
-                : stats.accepted["client-carrier"]
 
     return (
-        <div role="radiogroup" className="bg-muted mt-2 flex w-fit gap-0.5 rounded-full p-1">
-            {tabs.map((tab) => {
-                const selected = tab === active
+        <div className="bg-muted mt-2 flex w-fit gap-0.5 rounded-full p-1">
+            {kindsFor(orgType).map((value) => {
+                const active = value === kind
 
                 return (
-                    <button
-                        key={tab}
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        onClick={() => set([
-                            { key: "tab", value: tab === tabs[0] ? null : tab },
-                            { key: "direction", value: null },
-                            { key: "page", value: null },
-                            { key: "id", value: null },
-                            { key: "sel", value: null },
-                        ])}
+                    <Link
+                        key={value}
+                        href={{ pathname: "/partners/[kind]", params: { kind: value } }}
+                        aria-current={active ? "page" : undefined}
                         className={cn(
-                            "text-muted-foreground flex h-7 cursor-pointer items-center gap-1.5 rounded-full px-3 text-[13px] transition-colors",
-                            selected && "bg-background text-foreground font-medium shadow-sm",
+                            "text-muted-foreground flex h-7 items-center gap-1.5 rounded-full px-3 text-[13px] transition-colors",
+                            active && "bg-background text-foreground font-medium shadow-sm",
                         )}
                     >
-                        {t(tab)}
+                        {t(value)}
                         <span className={cn(
                             "text-muted-foreground rounded-full text-[11px] tabular-nums",
-                            selected && "text-primary",
+                            active && "text-primary",
                         )}>
-                            {count(tab).toLocaleString()}
+                            {countForKind(orgType, value, stats).toLocaleString()}
                         </span>
-                    </button>
+                    </Link>
                 )
             })}
         </div>

@@ -176,7 +176,7 @@ matching ref clause before the first push, or Vercel will refuse to save
 
 The portal reads and writes the admin's database — one database, two apps.
 Its migrations go in with the same command as everything else, in one
-run — `0014 → 0015 → 0016 → 0017 → 0018` back to back:
+run — `0014 → 0015 → 0016 → 0017 → 0018 → 0019` back to back:
 
 ```bash
 DATABASE_URL=<prod url> pnpm --filter @workspace/db db:migrate
@@ -187,6 +187,15 @@ that carries this branch**, whichever comes first. The admin release is the
 easy one to forget: the partner profile's Portal tab reads
 `organization_claim` and the new `organization` columns, so an admin
 deployed ahead of the migration breaks that tab.
+
+`0019` couples the two apps the other way round too. Its data half turns
+every `in-transit` movement into `on-route`, and the new tracking predicates
+read the in-progress statuses instead of `in-transit` — in both apps, because
+the Infobip webhook that attributes a driver's pin to a movement lives in the
+admin. An admin still reading `in-transit` after the migration stops
+attributing pins to portal loads; a portal on the new predicates before it
+tracks nothing that was already on the road. So at release: `db:migrate`,
+then push `prod/admin` and the portal back to back.
 
 - `0014_portal` — the portal's own tables (`partner_connection`,
   `organization_claim`, `order_request`, `quote`, `trip` with
@@ -226,16 +235,27 @@ deployed ahead of the migration breaks that tab.
   about it too. Additive, nothing to backfill — an alert judges a window that
   has already closed; dev gets it from
   `node packages/db/scripts/create-movement-tracking-alert.mjs`.
+- `0019_movement_chain_disputes` — the portal's load chain and its disputes.
+  `movement` gains `resume_status` (where a stopped load, or one with an
+  issue, goes back to); `movement_dispute` and `movement_dispute_row` (the
+  rows of a subcontract chain one dispute covers, with a partial unique index
+  that allows one open dispute per row) are new; `movement_driver_phone_idx`
+  is recreated over the in-progress statuses. The data half maps the removed
+  `in-transit` status to `on-route` on `movement.status` and on both status
+  columns of `movement_event` — see the coupling note above. Dev gets it from
+  `node packages/db/scripts/add-movement-chain-disputes.mjs`, which ends by
+  printing the `in-transit` rows left (must be 0).
 
-The shared **dev** database got all five from the idempotent scripts
+The shared **dev** database got all six from the idempotent scripts
 instead — `node packages/db/scripts/create-portal-tables.mjs`,
 `node packages/db/scripts/add-portal-columns.mjs`,
 `node packages/db/scripts/add-subscription-usage.mjs`, then
 `node packages/db/scripts/rename-trip-to-movement.mjs` (moves an existing
 `trip` table across with its rows; a fresh database uses
 `create-movement-tables.mjs` instead), then
-`node packages/db/scripts/add-movement-document-approval.mjs` and finally
-`node packages/db/scripts/create-movement-tracking-alert.mjs`. Same rule
+`node packages/db/scripts/add-movement-document-approval.mjs`,
+`node packages/db/scripts/create-movement-tracking-alert.mjs` and finally
+`node packages/db/scripts/add-movement-chain-disputes.mjs`. Same rule
 as every other table: scripts on dev, `db:migrate` on production,
 **never both** against one database.
 

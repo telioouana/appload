@@ -13,8 +13,9 @@ import { movementErrorKey } from "@/frontend/pages/movements/lib/errors"
  * The load mutations the lists, the detail page and the dialogs share.
  *
  * Every success refreshes the whole movements tree — a move changes a row's
- * section, two tiles and the page it is shown on — and the rail's counts,
- * which read the same rows.
+ * section, two tiles and the page it is shown on; a dispute changes the
+ * Disputes sections and their counts — and the rail's counts, which read the
+ * same rows.
  *
  * Moves that start tracking are what a plan pays for: when the server
  * answers with one of the two plan codes the caller opens the plan dialog
@@ -104,6 +105,14 @@ export function useMovementMutations() {
         onError: fail,
     }))
 
+    const openDispute = useMutation(trpc.movements.disputes.open.mutationOptions({
+        onSuccess: () => { void refresh(); toast.success(t("toasts.dispute-opened")) },
+    }))
+
+    const resolveDispute = useMutation(trpc.movements.disputes.resolve.mutationOptions({
+        onSuccess: () => { void refresh(); toast.success(t("toasts.dispute-resolved")) },
+    }))
+
     const requestLocation = useMutation(trpc.movements.requestLocation.mutationOptions({
         onSuccess: (data) => {
             void refresh()
@@ -134,6 +143,8 @@ export function useMovementMutations() {
         approveDocument,
         sendConfirmation,
         removeDocument,
+        openDispute,
+        resolveDispute,
         requestLocation,
         refresh,
         fail,

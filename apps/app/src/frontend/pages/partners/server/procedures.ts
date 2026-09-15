@@ -7,7 +7,7 @@ import { order } from "@workspace/db/orders";
 import { organization } from "@workspace/db/users";
 import type { db as Database } from "@workspace/db/db";
 import { AddressSchema, type Address } from "@workspace/db/types";
-import { CONNECTION_RELATION, CONNECTION_STATUS, partnerConnection, type ConnectionRelation, type ConnectionStatus } from "@workspace/db/connections";
+import { CONNECTION_RELATION, partnerConnection, type ConnectionRelation, type ConnectionStatus } from "@workspace/db/connections";
 
 import { notify } from "@workspace/domain/notifications";
 import { isValid, today } from "@workspace/domain/kyc/derive";
@@ -21,8 +21,11 @@ import { ConnectionRequestBaseSchema, NUIT_RE, RegisterPartnerBaseSchema } from 
 import {
     counterpartType,
     CONNECTION_DIRECTIONS,
+    kindsFor,
     PAGE_SIZES,
+    PARTNER_LIST_KINDS,
     PARTNER_SORTS,
+    relationForKind,
     SEARCH_MIN_CHARS,
     type ConnectionDirection,
     type OrgType,
@@ -554,11 +557,16 @@ export const partnersRouter = createTRPCRouter({
             }
         }),
 
-    /** The tenant's connections, one page at a time, joined to the other company. */
+    /**
+     * One of the page's lists, one page at a time, joined to the other
+     * company. The kind names the list and the tenant's type decides what it
+     * holds (`relationForKind`): accepted connections of one relation, or
+     * every pending request. A shipper has no clients, so that list is not
+     * found rather than an empty one.
+     */
     list: tenantProcedure
         .input(z.object({
-            relation: z.enum(CONNECTION_RELATION).optional(),
-            status: z.enum(CONNECTION_STATUS).optional(),
+            kind: z.enum(PARTNER_LIST_KINDS),
             direction: z.enum(CONNECTION_DIRECTIONS).optional(),
             query: z.string().optional(),
             sort: z.enum(PARTNER_SORTS).optional(),
@@ -569,10 +577,18 @@ export const partnersRouter = createTRPCRouter({
         .query(async ({ ctx, input }): Promise<PagedResult<PartnerRow>> => {
             const tenantId = ctx.tenant.organizationId;
 
-            const filters: (SQL | undefined)[] = [tenantSideFilter(tenantId)];
+            if (!kindsFor(ctx.tenant.orgType).includes(input.kind)) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+            }
 
-            if (input.relation) filters.push(eq(partnerConnection.relation, input.relation));
-            if (input.status) filters.push(eq(partnerConnection.status, input.status));
+            const relation = relationForKind(ctx.tenant.orgType, input.kind);
+
+            const filters: (SQL | undefined)[] = [
+                tenantSideFilter(tenantId),
+                eq(partnerConnection.status, relation ? "accepted" : "pending"),
+            ];
+
+            if (relation) filters.push(eq(partnerConnection.relation, relation));
             if (input.direction === "incoming") filters.push(eq(partnerConnection.targetOrgId, tenantId));
             if (input.direction === "outgoing") filters.push(eq(partnerConnection.requesterOrgId, tenantId));
 
@@ -712,7 +728,7 @@ export const partnersRouter = createTRPCRouter({
             };
         }),
 
-    /** The three numbers above the table: what is connected and what is waiting. */
+    /** The page's counts — the pills, the header and the tiles: what is connected and what is waiting. */
     stats: tenantProcedure.query(async ({ ctx }): Promise<PartnerStats> => {
         const tenantId = ctx.tenant.organizationId;
 

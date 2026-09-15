@@ -26,6 +26,8 @@ export const KINDS_BY_FAMILY: Record<KindFamily, NotificationKind[]> = {
         "movement.withdrawn",
         "movement.location-alert",
         "movement.document",
+        "movement.dispute-opened",
+        "movement.dispute-resolved",
     ],
     // Appload's brokerage
     orders: ["order.requested", "order.quoted", "order.booked", "order.status", "order.cancelled", "order.document"],

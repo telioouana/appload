@@ -29,10 +29,10 @@ const isNoteCode = (value: string): value is NoteCode => (NOTE_CODES as readonly
 
 /**
  * What has happened to the load, newest first, as far as the reader may
- * read it: its moves, the offer round it is part of, the papers, and — for
- * the owner — the money and the costs. A move carried up from the row with
- * the truck names nobody, since the company that made it may be one the
- * reader was never told about.
+ * read it: its moves, the offer round it is part of, the papers, a dispute
+ * opened or resolved on it, and — for the owner — the money and the costs.
+ * A move carried up from the row with the truck names nobody, since the
+ * company that made it may be one the reader was never told about.
  */
 export function TimelineCard({ load }: { load: MovementDetail }) {
     const t = useTranslations("App.loads.timeline")
@@ -46,7 +46,7 @@ export function TimelineCard({ load }: { load: MovementDetail }) {
             ) : (
                 <ol className="flex flex-col">
                     {events.map((event, index) => (
-                        <EventLine key={event.id} event={event} load={load} last={index === events.length - 1} />
+                        <EventLine key={event.id} event={event} last={index === events.length - 1} />
                     ))}
                 </ol>
             )}
@@ -54,18 +54,21 @@ export function TimelineCard({ load }: { load: MovementDetail }) {
     )
 }
 
-function EventLine({ event, load, last }: { event: MovementEventView; load: MovementDetail; last: boolean }) {
+function EventLine({ event, last }: { event: MovementEventView; last: boolean }) {
     const t = useTranslations("App.loads.timeline")
     const f = useFormatter()
     const statusLabel = useStatusLabel()
     const flagLabel = useFlagLabel()
 
     const headline = (): string => {
-        const status = event.toStatus ? statusLabel(event.toStatus, load.execution) : null
+        const status = event.toStatus ? statusLabel(event.toStatus) : null
 
         if (event.action === "created" && status) return t("created", { status })
         if (event.action === "accepted-offer") return t("accepted-offer")
         if ((event.kind === "status" || event.kind === "system") && status) return t("moved", { status })
+        if (event.kind === "dispute" && (event.action === "opened" || event.action === "resolved")) {
+            return t(`dispute-${event.action}`)
+        }
         if (event.kind === "document" && event.action === "sent") {
             return t("confirmation-sent", { to: event.sentTo ?? "" })
         }
@@ -87,7 +90,9 @@ function EventLine({ event, load, last }: { event: MovementEventView; load: Move
             {!last && <span className="bg-border absolute top-3 bottom-0 left-[5px] w-px" aria-hidden />}
             <span className={cn(
                 "mt-1.5 size-[11px] shrink-0 rounded-full border-2",
-                event.kind === "status" || event.kind === "system" ? "border-primary bg-primary/20" : "border-muted-foreground/40 bg-background",
+                event.kind === "status" || event.kind === "system" ? "border-primary bg-primary/20"
+                    : event.kind === "dispute" ? "border-destructive bg-destructive/20"
+                        : "border-muted-foreground/40 bg-background",
             )} />
 
             <div className="flex min-w-0 flex-col gap-0.5">

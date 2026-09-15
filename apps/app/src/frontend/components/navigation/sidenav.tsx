@@ -6,19 +6,18 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
     type Icon,
-    IconAward,
     IconBell,
     IconBox,
+    IconBuildingStore,
     IconBuildingWarehouse,
+    IconCalendarCheck,
     IconCalendarClock,
     IconChartHistogram,
     IconChecks,
-    IconCircleCheck,
-    IconClipboardList,
     IconContainer,
     IconFileInvoice,
+    IconGavel,
     IconHistory,
-    IconInbox,
     IconLayoutDashboard,
     IconLink,
     IconList,
@@ -30,6 +29,7 @@ import {
     IconSteeringWheel,
     IconTruck,
     IconTruckDelivery,
+    IconUserPlus,
     IconUsers,
     IconUsersGroup,
 } from "@tabler/icons-react";
@@ -49,7 +49,8 @@ import { UNREAD_POLL_MS } from "@/frontend/pages/notifications/types";
 import { sectionsFor } from "@/frontend/pages/orders/types";
 import { useNewLoad } from "@/frontend/pages/movements/hooks/use-new-load";
 import { NewLoadSheet } from "@/frontend/pages/movements/sections/new-load-sheet";
-import { ORDER_SECTIONS, TRIP_SECTIONS, type OrderSection } from "@/frontend/pages/movements/types";
+import { ORDER_SECTIONS, TRIP_SECTIONS } from "@/frontend/pages/movements/types";
+import type { PartnerListKind } from "@/frontend/pages/partners/types";
 
 import { NavUser } from "./nav-user";
 
@@ -76,8 +77,8 @@ type NavLink = {
 };
 
 // A parent group, always open; the row itself is never a link. It has no path
-// of its own: it reads as current when one of the leaves under it does, which
-// is what lets two groups draw two halves of the same list.
+// of its own: it reads as current when one of the leaves under it does, or
+// when a page under it that belongs to no leaf is open.
 type NavGroup = {
     Icon: Icon;
     name: string;
@@ -105,28 +106,28 @@ function ReviewBadge({ count }: { count?: number }) {
 
 const ORDER_ICONS: Record<(typeof ORDER_SECTIONS)[number], Icon> = {
     "all": IconList,
-    "inbox": IconInbox,
     "procurement": IconSearch,
-    "awarded": IconAward,
-    "confirmed": IconCircleCheck,
-    "booked": IconCalendarClock,
-    "in-transit": IconTruckDelivery,
+    "booked": IconCalendarCheck,
+    "in-progress": IconTruckDelivery,
     "delivered": IconChecks,
+    "disputes": IconGavel,
     "history": IconHistory,
 };
-
-// The Orders list is drawn by two groups rather than one: placing the load,
-// then running it. Between them they cover ORDER_SECTIONS exactly once.
-const PROCUREMENT_SECTIONS = ["procurement", "awarded", "confirmed", "booked"] as const satisfies readonly OrderSection[];
-const OPERATIONS_SECTIONS = ["inbox", "in-transit", "delivered", "history", "all"] as const satisfies readonly OrderSection[];
 
 const TRIP_ICONS: Record<(typeof TRIP_SECTIONS)[number], Icon> = {
     "all": IconList,
     "planning": IconSteeringWheel,
     "scheduled": IconCalendarClock,
-    "in-transit": IconTruckDelivery,
+    "in-progress": IconTruckDelivery,
     "delivered": IconChecks,
+    "disputes": IconGavel,
     "history": IconHistory,
+};
+
+const PARTNER_ICONS: Record<PartnerListKind, Icon> = {
+    "clients": IconBuildingStore,
+    "transporters": IconTruck,
+    "requests": IconUserPlus,
 };
 
 const APPLOAD_ICONS: Record<ReturnType<typeof sectionsFor>[number], Icon> = {
@@ -142,8 +143,8 @@ const APPLOAD_ICONS: Record<ReturnType<typeof sectionsFor>[number], Icon> = {
 /**
  * The portal's rail, in the admin's shape: an unlabelled group for reading
  * the business, Operations for the day's work with the one button that
- * files a load, Company for what it owns and who it works with, and the
- * account menu at the foot. The three lists of loads are always open, each
+ * files a load, My company for who it works with and what it owns, and the
+ * account menu at the foot. Both lists of loads are always open, each
  * section one click away from anywhere, and a count sits on exactly the
  * section that needs the company.
  */
@@ -153,6 +154,7 @@ export function Sidenav({
 }: React.ComponentProps<typeof Sidebar> & { orgType: "shipper" | "carrier" }) {
     const t = useTranslations("App.shell.sidebar")
     const tl = useTranslations("App.loads.sections")
+    const tp = useTranslations("App.partners.tabs")
     const to = useTranslations("App.orders.sections")
     const g = useTranslations("General")
     const pathname = usePathname()
@@ -189,30 +191,23 @@ export function Sidenav({
         { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", path: "/analytics" },
     ]
 
-    const orderSection = (section: OrderSection): NavLink => ({
-        Icon: ORDER_ICONS[section],
-        name: tl(section),
-        match: `/orders/${section}`,
-        path: { pathname: "/orders/[section]", params: { section } },
-        badge: section === "inbox" ? counts?.inbox : section === "procurement" ? counts?.declined : undefined,
-    })
-
     const ops: NavEntry[] = [
         {
-            Icon: IconClipboardList,
-            name: t("work.procurement"),
-            id: "orders-procurement",
-            items: PROCUREMENT_SECTIONS.map(orderSection),
-        },
-        {
             Icon: IconBox,
-            name: t("work.operations"),
-            id: "orders-operations",
-            // A load's own page belongs to no section, so this half of the
-            // list owns it — the rail is never blank while one is open
+            name: t("work.orders"),
+            id: "orders",
+            // A load's own page belongs to no section, so the Orders group
+            // owns it — the rail is never blank while one is open
             match: "/orders/load",
-            // A shipper is never offered work, so it has no inbox to open
-            items: OPERATIONS_SECTIONS.filter((section) => carrier || section !== "inbox").map(orderSection),
+            items: ORDER_SECTIONS.map((section) => ({
+                Icon: ORDER_ICONS[section],
+                name: tl(section),
+                match: `/orders/${section}`,
+                path: { pathname: "/orders/[section]", params: { section } },
+                // Turned down by a partner and waiting to be placed again,
+                // or held by a dispute
+                badge: section === "procurement" ? counts?.declined : section === "disputes" ? counts?.disputes.orders : undefined,
+            })),
         },
         {
             Icon: IconRoute,
@@ -223,6 +218,9 @@ export function Sidenav({
                 name: tl(section),
                 match: `/trips/${section}`,
                 path: { pathname: "/trips/[section]", params: { section } },
+                // Loads partners offered the company, waiting on its answer,
+                // or held by a dispute
+                badge: section === "planning" ? counts?.received : section === "disputes" ? counts?.disputes.trips : undefined,
             })),
         },
         ...(SHOW_APPLOAD ? [{
@@ -255,6 +253,30 @@ export function Sidenav({
     ]
 
     const company: NavEntry[] = [
+        // Who the company works with comes first. A shipper only ever
+        // connects to transporters, so its partners are one list, requests
+        // reached from inside it; a carrier has clients and transporters
+        // both, and the requests get a leaf of their own
+        carrier
+            ? {
+                Icon: IconBuildingWarehouse,
+                name: t("company.partners"),
+                id: "partners",
+                items: (["clients", "transporters", "requests"] as const).map((kind) => ({
+                    Icon: PARTNER_ICONS[kind],
+                    name: tp(kind),
+                    match: `/partners/${kind}`,
+                    path: { pathname: "/partners/[kind]", params: { kind } },
+                    badge: kind === "requests" ? counts?.partners : undefined,
+                })),
+            }
+            : {
+                Icon: IconBuildingWarehouse,
+                name: t("company.my-transporters"),
+                match: "/partners",
+                path: { pathname: "/partners/[kind]", params: { kind: "transporters" } },
+                badge: counts?.partners,
+            },
         {
             // Every company may keep a fleet: a carrier's is what it sells, a
             // shipper's moves its own goods between its own sites
@@ -271,13 +293,6 @@ export function Sidenav({
         // The people who sign in for the company, which is the members tab
         // of the settings page rather than a page of its own
         { Icon: IconUsersGroup, name: t("company.team"), match: "/settings", path: { pathname: "/settings", query: { tab: "members" } } },
-        {
-            Icon: IconBuildingWarehouse,
-            name: t("company.partners"),
-            match: "/partners",
-            path: "/partners",
-            badge: counts?.partners,
-        },
     ]
 
     // With localized pathnames next-intl hands back the route template

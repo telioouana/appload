@@ -9,7 +9,7 @@
     "error": "Não foi possível carregar o mapa",
     "empty": {
         "title": "Nada em movimento",
-        "description": "Os pedidos e as viagens aparecem aqui assim que estiverem em trânsito"
+        "description": "Os pedidos e as viagens aparecem aqui assim que estiverem em curso"
     },
     "list": {
         "no-location": "Ainda sem localização",

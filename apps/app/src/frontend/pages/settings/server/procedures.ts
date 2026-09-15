@@ -33,6 +33,7 @@ import type { db as Database } from "@workspace/db/db";
 
 import { ChangePasswordBaseSchema } from "@/backend/schemas/settings";
 import { UpdateCompanyBaseSchema } from "@/backend/schemas/company";
+import { sectionPredicate, visibleMovements } from "@/frontend/pages/movements/server/projection";
 import { myRequest, visibleOrders } from "@/frontend/pages/orders/server/projection";
 
 type Db = typeof Database;
@@ -40,13 +41,15 @@ type Db = typeof Database;
 /**
  * The numbers on the rail, each for the one list it leads to: work partners
  * offered this company and are waiting on, its own orders a partner turned
- * down (to place again), connection requests it has not answered, and the
- * brokerage's own queue — a carrier's unanswered requests and booked orders
- * with nobody driving, a shipper's offers to decide.
+ * down (to place again), the loads a dispute holds on each list, connection
+ * requests it has not answered, and the brokerage's own queue — a carrier's
+ * unanswered requests and booked orders with nobody driving, a shipper's
+ * offers to decide.
  */
 export type RailCounts = {
-    inbox: number;
+    received: number;
     declined: number;
+    disputes: { orders: number; trips: number };
     partners: number;
     appload: { newRequests: number; toDispatch: number; offersToReview: number };
 };
@@ -256,9 +259,10 @@ export const meRouter = createTRPCRouter({
 
     /**
      * The rail's badges in one small read. Each counts rows the page its
-     * entry opens will show — the Orders inbox, the turned-down loads inside
-     * Orders' procurement section, the incoming requests on Partners — so a
-     * badge never promises a row the page does not have.
+     * entry opens will show — the offers inside Trips' planning section, the
+     * turned-down loads inside Orders' procurement section, each list's
+     * disputes, the incoming requests on Partners — so a badge never promises
+     * a row the page does not have.
      *
      * Its own read, never the pages' stats: the rail mounts above every
      * page's hydration boundary, and a query it observed first would be
@@ -271,10 +275,10 @@ export const meRouter = createTRPCRouter({
         const shipper = ctx.tenant.orgType === "shipper";
         const zero = sql<number>`0`.mapWith(Number);
 
-        const [loads, connections, brokerage] = await Promise.all([
+        const [loads, disputes, connections, brokerage] = await Promise.all([
             ctx.db
                 .select({
-                    inbox: sql<number>`count(*) filter (where ${movement.carrierOrgId} = ${tenantId} and ${movement.status} = 'offered')::int`,
+                    received: sql<number>`count(*) filter (where ${movement.carrierOrgId} = ${tenantId} and ${movement.status} = 'offered')::int`,
                     declined: sql<number>`count(*) filter (where ${movement.organizationId} = ${tenantId} and ${movement.status} = 'declined')::int`,
                 })
                 .from(movement)
@@ -282,6 +286,15 @@ export const meRouter = createTRPCRouter({
                     or(eq(movement.organizationId, tenantId), eq(movement.carrierOrgId, tenantId)),
                     sql`${movement.status} in ('offered', 'declined')`,
                 ))
+                .then((rows) => rows[0]),
+            // The Disputes sections' own predicates, so each badge is its list
+            ctx.db
+                .select({
+                    orders: sql<number>`count(*) filter (where ${sectionPredicate("orders", "disputes", tenantId)})::int`,
+                    trips: sql<number>`count(*) filter (where ${sectionPredicate("trips", "disputes", tenantId)})::int`,
+                })
+                .from(movement)
+                .where(visibleMovements(tenantId))
                 .then((rows) => rows[0]),
             ctx.db
                 .select({ incoming: sql<number>`count(*)::int` })
@@ -304,8 +317,9 @@ export const meRouter = createTRPCRouter({
         ]);
 
         return {
-            inbox: Number(loads?.inbox ?? 0),
+            received: Number(loads?.received ?? 0),
             declined: Number(loads?.declined ?? 0),
+            disputes: { orders: Number(disputes?.orders ?? 0), trips: Number(disputes?.trips ?? 0) },
             partners: Number(connections?.incoming ?? 0),
             appload: {
                 newRequests: Number(brokerage?.newRequests ?? 0),

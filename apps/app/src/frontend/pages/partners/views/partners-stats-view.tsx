@@ -1,27 +1,27 @@
 "use client"
 
 import { useSuspenseQuery } from "@tanstack/react-query"
-import { IconInbox, IconSend, IconUsersGroup } from "@tabler/icons-react"
+import { IconInbox, IconSend } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
 
+import { Link } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
 import { AttentionTiles, type AttentionTile } from "@workspace/ui/customs/list/attention-tiles"
-import { tabsFor } from "@/frontend/pages/partners/types"
+import type { PartnerListKind } from "@/frontend/pages/partners/types"
 
 /**
- * The work queue above the list: requests waiting on an answer, requests
- * waiting on someone else, and everyone already connected. Each tile opens
- * exactly the rows it counted.
+ * The work queue above the list: requests waiting on an answer, and requests
+ * waiting on someone else. On the requests list each tile filters it to
+ * exactly the rows it counted; on the other lists the same tiles are links
+ * into that slice of the requests, since a direction means nothing on a list
+ * of connected partners.
  */
-export function PartnersStatsView() {
+export function PartnersStatsView({ kind }: { kind: PartnerListKind }) {
     const t = useTranslations("App.partners.tiles")
     const trpc = useTRPC()
 
-    const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
     const { data: stats } = useSuspenseQuery(trpc.partners.stats.queryOptions())
-
-    const connectedTab = tabsFor(session.organization.type)[0] as string
 
     const tiles: AttentionTile[] = [
         {
@@ -38,16 +38,34 @@ export function PartnersStatsView() {
             hint: t("outgoing-hint"),
             Icon: IconSend,
         },
-        {
-            filter: { key: "tab", value: connectedTab },
-            label: t("connected"),
-            value: stats.accepted["client-carrier"] + stats.accepted.subcontract,
-            hint: t("connected-hint"),
-            Icon: IconUsersGroup,
-        },
     ]
 
-    // The open profile belongs to the list being left, and the direction
-    // tiles are a slice of the requests tab rather than of the current one
-    return <AttentionTiles tiles={tiles} reset={["id", "sel", "tab"]} />
+    // The open profile and the ticked rows belong to the list before it was narrowed
+    if (kind === "requests") return <AttentionTiles tiles={tiles} reset={["id", "sel"]} />
+
+    // The same tile face as AttentionTiles, never active: nothing on this
+    // list is the slice it opens
+    return (
+        <div className="grid grid-cols-2 gap-3 px-2 xl:grid-cols-4">
+            {tiles.map((tile) => (
+                <Link
+                    key={tile.filter.value}
+                    href={{ pathname: "/partners/[kind]", params: { kind: "requests" }, query: { direction: tile.filter.value } }}
+                    className="bg-card ring-foreground/5 hover:ring-primary/40 focus-visible:ring-ring/50 flex items-center gap-3 rounded-2xl px-4 py-3 text-left ring-1 transition-colors outline-none focus-visible:ring-3"
+                >
+                    <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-xl">
+                        <tile.Icon className="size-4" stroke={1.5} />
+                    </span>
+
+                    <span className="flex min-w-0 flex-col">
+                        <span className="text-muted-foreground truncate text-xs font-medium">{tile.label}</span>
+                        <span className="text-xl leading-tight font-semibold tracking-tight tabular-nums">
+                            {tile.value.toLocaleString()}
+                        </span>
+                        {tile.hint && <span className="text-muted-foreground truncate text-xs">{tile.hint}</span>}
+                    </span>
+                </Link>
+            ))}
+        </div>
+    )
 }

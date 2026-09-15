@@ -287,10 +287,9 @@
         "shell": {
             "sidebar": {
                 "work": {
-                    "label": "Operação",
+                    "label": "Operações",
                     "dashboard": "Painel",
-                    "procurement": "Procurement",
-                    "operations": "Operações",
+                    "orders": "Pedidos",
                     "quotes": "Cotações",
                     "trips": "Viagens",
                     "map": "Mapa",
@@ -302,7 +301,8 @@
                     "fleet": "Frota",
                     "drivers": "Motoristas",
                     "team": "Equipa",
-                    "partners": "Fornecedores / parceiros",
+                    "partners": "Parceiros",
+                    "my-transporters": "As minhas transportadoras",
                     "analytics": "Análises",
                     "trucks": "Camiões",
                     "trailers": "Reboques",
@@ -369,22 +369,22 @@
                 "silent-orders": "Motoristas de parceiros sem resposta hoje"
             },
             "road": {
-                "title": "Na estrada agora",
+                "title": "Em curso agora",
                 "empty-title": "Nada em movimento",
-                "empty-description": "Os pedidos e as viagens aparecem aqui assim que estiverem em trânsito"
+                "empty-description": "Os pedidos e as viagens aparecem aqui assim que estiverem em curso"
             },
             "trips": {
                 "title": "Frota própria",
-                "in-transit": "Em trânsito",
+                "in-progress": "Em curso",
                 "no-response": "Sem resposta hoje"
             },
             "loads": {
                 "appload": "Appload",
                 "planning": "Viagens por planear",
-                "planning-hint": "Ainda sem motorista ou camião",
-                "own-road": "Frota própria a caminho",
-                "own-road-hint": "Os seus camiões na estrada agora",
-                "partner-road": "Parceiros a caminho",
+                "planning-hint": "Ainda por agendar",
+                "own-road": "Frota própria em curso",
+                "own-road-hint": "Os seus camiões com cargas em curso",
+                "partner-road": "Parceiros em curso",
                 "partner-road-hint": "Cargas que parceiros transportam para si",
                 "latest": {
                     "title": "Últimas cargas",

@@ -35,7 +35,7 @@ export function ContractChip({ state }: { state: PartnerContractState }) {
     return <StatusBadge label={t(state)} status={CONTRACT_TONE[state]} />
 }
 
-/** What the other company is to this one: client, transporter or subcontractor. */
+/** What the other company is to this one: client or transporter. */
 export function RelationChip({ relation, orgType }: { relation: ConnectionRelation; orgType: OrgType }) {
     const t = useTranslations("App.partners.kind")
 

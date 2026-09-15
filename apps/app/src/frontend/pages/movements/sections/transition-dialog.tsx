@@ -15,16 +15,18 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { planRefusal, type PlanReason } from "@/components/plan-dialog"
 import { movementErrorKey, type MovementErrorMessage } from "@/frontend/pages/movements/lib/errors"
 import { useMovementMutations } from "@/frontend/pages/movements/hooks/use-movement-mutations"
-import { useFlagLabel, useStatusLabel } from "@/frontend/pages/movements/components/badges"
+import { useFlagLabel, useMoveLabel, useStatusLabel } from "@/frontend/pages/movements/components/badges"
 import type { MovementDetail, TransitionOption } from "@/frontend/pages/movements/types"
 
 /** Mirrors TEXT_MAX on the transition schema. */
 const NOTE_MAX = 500
 
 /**
- * Taking one move. Every move is confirmed — a load that left cannot un-leave
- * — and calling one off after it was scheduled asks for the reason, which
- * goes on the trail every company on the load reads.
+ * Taking one move. Every move is confirmed — a truck that loaded cannot
+ * un-load — and the moves the server marks as needing a reason ask for it:
+ * calling a load off after it was scheduled, saying a truck is stopped or
+ * has an issue, or which of the two it now is. The reason goes on the trail
+ * every company on the load reads.
  *
  * A move with something still missing is never refused, only flagged: the
  * dialog names what is missing, offers a line to say why it goes ahead
@@ -43,6 +45,7 @@ export function TransitionDialog({
 }) {
     const t = useTranslations("App.loads")
     const statusLabel = useStatusLabel()
+    const moveLabel = useMoveLabel()
     const flagLabel = useFlagLabel()
 
     const { transition } = useMovementMutations()
@@ -53,11 +56,11 @@ export function TransitionDialog({
     const cancelling = option.to === "cancelled"
     const flagged = option.flags.length > 0
     // The moves that set something off beyond the status: the plan and the
-    // driver's messages, the chain below, the books. A load that leaves with
+    // driver's messages, the chain below, the books. A load that starts with
     // nobody named gets only half of that — there is no phone to ask — and
     // the dialog says so rather than promising messages that never go out
-    const consequence = option.to === "in-transit"
-        ? option.flags.includes("NO_DRIVER") ? "in-transit-undriven" : "in-transit"
+    const consequence = option.startsTracking
+        ? option.flags.includes("NO_DRIVER") ? "starts-tracking-undriven" : "starts-tracking"
         : option.to === "cancelled" || option.to === "closed" ? option.to : null
     const missingNote = option.needsNote && note.trim().length === 0
 
@@ -87,12 +90,12 @@ export function TransitionDialog({
         <Dialog open onOpenChange={(next) => { if (!next && !transition.isPending) onClose() }}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>{t(`actions.to.${option.to}`)}</DialogTitle>
+                    <DialogTitle>{moveLabel(load.status, option.to)}</DialogTitle>
                     <DialogDescription>
                         {t("transition.description", {
                             ref: load.ref,
-                            from: statusLabel(load.status, load.execution),
-                            to: statusLabel(option.to, load.execution),
+                            from: statusLabel(load.status),
+                            to: statusLabel(option.to),
                         })}
                     </DialogDescription>
                 </DialogHeader>

@@ -9,12 +9,16 @@ import { trailer } from "@workspace/db/fleet";
 import {
     movement,
     movementCost,
+    movementDispute,
+    movementDisputeRow,
     movementDocument,
     movementEvent,
     movementLocation,
     movementTrackingRequest,
     type Movement,
+    type MovementDispute,
     type MovementEventKind,
+    type MovementStatus,
 } from "@workspace/db/movements";
 import { organization, user } from "@workspace/db/users";
 
@@ -23,7 +27,18 @@ import { terminalMovementId } from "@workspace/domain/movements/link";
 import { costTotals, exVat, legSettled, margin } from "@workspace/domain/movements/money";
 import { editableGroups, movementRole, type MovementRole } from "@workspace/domain/movements/policy";
 import { movementRef } from "@workspace/domain/movements/refs";
-import { isTerminal, MOVEMENT_FLAGS, movementFlags, ownerTargets, transitionBlocker } from "@workspace/domain/movements/status";
+import {
+    entersInProgress,
+    IN_PROGRESS_STATUSES,
+    isAskable,
+    isInProgress,
+    isTerminal,
+    MOVEMENT_FLAGS,
+    movementFlags,
+    ownerTargets,
+    PROCUREMENT_STATUSES,
+    transitionBlocker,
+} from "@workspace/domain/movements/status";
 import { MAPUTO_OFFSET_MS } from "@workspace/domain/tracking/slot";
 
 import type {
@@ -31,6 +46,7 @@ import type {
     MoneyLeg,
     MovementCostView,
     MovementDetail,
+    MovementDisputeView,
     MovementDocumentView,
     MovementEventView,
     MovementFlag,
@@ -67,6 +83,12 @@ import type {
  * use this feature at all depends on that not happening. And each company's
  * partners are its own asset — a client never learns who its transporter
  * handed the load to, an executor never learns who the load is for.
+ *
+ * A dispute is the one thing every company on a load reads in full, because
+ * it covers the load in all their books: its reason and description go to
+ * every covered row. Who opened it follows the partner rule above — named
+ * only when the reader is that company, the opener owns the row being read,
+ * or the reader owns the row and the opener is its own client or carrier.
  */
 
 type Db = typeof Database;
@@ -121,14 +143,15 @@ const forMe = (tenantId: string): SQL =>
     ) as SQL;
 
 /**
- * The loads a company has a truck on the road for, once each: its own rows,
- * and the ones moved for it that it does not already hold an order for. The
- * rows it was only offered stay off — a partner that accepted works the load
- * from its own row, which this already includes.
+ * The loads a company has a truck on, once each: in progress — from the
+ * loading site to offloading, stops included — on its own rows, and on the
+ * ones moved for it that it does not already hold an order for. The rows it
+ * was only offered stay off — a partner that accepted works the load from
+ * its own row, which this already includes.
  */
 export const onTheMap = (tenantId: string): SQL =>
     and(
-        eq(movement.status, "in-transit"),
+        inArray(movement.status, IN_PROGRESS_STATUSES),
         or(eq(movement.organizationId, tenantId), forMe(tenantId)),
     ) as SQL;
 
@@ -145,7 +168,7 @@ const startOfDay = (now: Date) => new Date(Date.parse(`${slotDateToday(now)}T00:
  * Loads whose driver this company asked for a position today and who has
  * not answered: a request the cron sent (or saw delivered) under today's
  * slot date, and no pin since midnight. Only the rows the company pings
- * itself — on the road, and not handed to a partner who tracks its own
+ * itself — in progress, and not handed to a partner who tracks its own
  * truck; how a partner's driver answers the partner is the partner's
  * business.
  *
@@ -157,7 +180,7 @@ const startOfDay = (now: Date) => new Date(Date.parse(`${slotDateToday(now)}T00:
 export const silentToday = (tenantId: string, now: Date): SQL =>
     and(
         eq(movement.organizationId, tenantId),
-        eq(movement.status, "in-transit"),
+        inArray(movement.status, IN_PROGRESS_STATUSES),
         isNull(movement.executionMovementId),
         sql`exists (
             select 1 from ${movementTrackingRequest} where ${and(
@@ -178,28 +201,41 @@ export const silentToday = (tenantId: string, now: Date): SQL =>
 const orderBase = (tenantId: string): SQL =>
     or(and(eq(movement.execution, "partner"), eq(movement.organizationId, tenantId)), forMe(tenantId)) as SQL;
 
-/** Loads partners have offered this company and are waiting on. */
-const inbox = (tenantId: string): SQL =>
+/**
+ * Loads partners have offered this company and are waiting on. On Trips,
+ * because answering one is planning work for its own truck.
+ */
+export const received = (tenantId: string): SQL =>
     and(eq(movement.carrierOrgId, tenantId), eq(movement.status, "offered")) as SQL;
 
 /** Loads this company's own fleet moves. */
 const tripBase = (tenantId: string): SQL =>
     and(eq(movement.execution, "own-fleet"), eq(movement.organizationId, tenantId)) as SQL;
 
+/**
+ * A load covered by an open dispute, wherever on its chain the dispute was
+ * opened — read off the rows the dispute pinned. The condition goes in as a
+ * drizzle expression for the same reason `silentToday`'s do.
+ */
+export const inDispute = (): SQL =>
+    sql`exists (
+        select 1 from ${movementDisputeRow} where ${and(
+            eq(movementDisputeRow.movementId, movement.id),
+            eq(movementDisputeRow.open, true),
+        )}
+    )`;
+
 /** One section of one list. Unknown sections read as "all" of the list. */
 export function sectionPredicate(scope: MovementScope, section: MovementSection, tenantId: string): SQL {
     if (scope === "orders") {
-        if (section === "inbox") return inbox(tenantId);
-
         const base = orderBase(tenantId);
 
         switch (section) {
-            case "procurement": return and(base, inArray(movement.status, ["procurement", "declined"])) as SQL;
-            case "awarded": return and(base, eq(movement.status, "offered")) as SQL;
-            case "confirmed": return and(base, eq(movement.status, "scheduled")) as SQL;
+            case "procurement": return and(base, inArray(movement.status, PROCUREMENT_STATUSES)) as SQL;
             case "booked": return and(base, eq(movement.status, "booked")) as SQL;
-            case "in-transit": return and(base, eq(movement.status, "in-transit")) as SQL;
+            case "in-progress": return and(base, inArray(movement.status, IN_PROGRESS_STATUSES)) as SQL;
             case "delivered": return and(base, eq(movement.status, "delivered")) as SQL;
+            case "disputes": return and(base, inDispute()) as SQL;
             case "history": return and(base, inArray(movement.status, ["closed", "cancelled"])) as SQL;
             default: return base;
         }
@@ -208,15 +244,27 @@ export function sectionPredicate(scope: MovementScope, section: MovementSection,
     const base = tripBase(tenantId);
 
     switch (section) {
-        case "planning": return and(base, eq(movement.status, "procurement")) as SQL;
-        // A trip has nothing to confirm with anybody: agreed and booked are one tab
-        case "scheduled": return and(base, inArray(movement.status, ["scheduled", "booked"])) as SQL;
-        case "in-transit": return and(base, eq(movement.status, "in-transit")) as SQL;
+        // An offer waiting on this company's answer is planning too, until it
+        // is answered — a yes becomes a row of its own in `base`
+        case "planning": return or(
+            and(base, inArray(movement.status, ["procurement", "prospect", "scheduled"])),
+            received(tenantId),
+        ) as SQL;
+        case "scheduled": return and(base, eq(movement.status, "booked")) as SQL;
+        case "in-progress": return and(base, inArray(movement.status, IN_PROGRESS_STATUSES)) as SQL;
         case "delivered": return and(base, eq(movement.status, "delivered")) as SQL;
+        case "disputes": return and(base, inDispute()) as SQL;
         case "history": return and(base, inArray(movement.status, ["closed", "cancelled"])) as SQL;
-        default: return base;
+        default: return or(base, received(tenantId)) as SQL;
     }
 }
+
+/**
+ * A list narrowed to one of its section's tabs. "prospect" is the wait for an
+ * answer however it was asked — set by hand, or offered on the portal.
+ */
+export const statusFilter = (status: MovementStatus): SQL =>
+    status === "prospect" ? inArray(movement.status, ["prospect", "offered"]) : eq(movement.status, status);
 
 // ---------------------------------------------------------------------------
 // Loading
@@ -474,15 +522,17 @@ const headline = (value: MoneyLeg | null) => (value ? { total: value.total, curr
 /**
  * What the guards and the flags read off a row: its own columns, whether each
  * leg is settled — an own-fleet load has no partner to pay — whether the truck
- * is somebody else's, and how many loading photos are still waiting to be
- * validated (counted where the detail reads the papers from).
+ * is somebody else's, how many loading photos are still waiting to be
+ * validated (counted where the detail reads the papers from), and whether a
+ * dispute still holds its books open.
  */
-const guardsOf = (row: Movement, unapprovedPhotos: number) => ({
+const guardsOf = (row: Movement, unapprovedPhotos: number, disputeOpen: boolean) => ({
     ...row,
     sellSettled: legSettled(row.sellTotal, row.sellSettlement),
     buySettled: row.execution === "own-fleet" || legSettled(row.buyTotal, row.buySettlement),
     linked: row.executionMovementId !== null,
     unapprovedPhotos,
+    disputeOpen,
 });
 
 // ---------------------------------------------------------------------------
@@ -495,7 +545,14 @@ const party = (id: string | null, fallback: string | null, names: Map<string, st
 export function toMovementRow(
     row: Movement,
     role: MovementRole,
-    ctx: { names: Map<string, string>; pings: PingState; trailId: string; terminalRig?: TerminalRig | null },
+    ctx: {
+        names: Map<string, string>;
+        pings: PingState;
+        trailId: string;
+        terminalRig?: TerminalRig | null;
+        /** Read by whoever shows it: the list (`loadDisputed`) and the detail */
+        inDispute?: boolean;
+    },
 ): MovementRow {
     const owner = role === "owner";
     // The list shows headlines only; costs are not read for it, and the
@@ -524,6 +581,7 @@ export function toMovementRow(
         payable: headline(money.payable),
         receivable: headline(money.receivable),
         isLinked: owner && row.executionMovementId !== null,
+        inDispute: ctx.inDispute ?? false,
         lastPing: ctx.pings.last.get(ctx.trailId) ?? null,
         pingCount: ctx.pings.counts.get(ctx.trailId) ?? 0,
         version: row.version,
@@ -535,15 +593,33 @@ export function toMovementRow(
 const documentLegsFor = (role: MovementRole): readonly ("sell" | "buy" | null)[] =>
     role === "owner" ? ["sell", "buy", null] : role === "executor" ? ["buy", null] : ["sell", null];
 
-/** Which trail lines a role may read. Money and costs are the owner's. */
+/**
+ * Which trail lines a role may read. Money and costs are the owner's; a
+ * dispute is everybody's on the load, and who opened it is still cut by
+ * `nameable` below.
+ */
 const eventKindsFor = (role: MovementRole): readonly MovementEventKind[] =>
     role === "owner"
-        ? ["status", "offer", "update", "money", "cost", "document", "note", "system"]
+        ? ["status", "offer", "update", "money", "cost", "document", "note", "system", "dispute"]
         : role === "executor"
             // The offer and its answer are between the two of them
-            ? ["status", "offer", "system"]
+            ? ["status", "offer", "system", "dispute"]
             // A client follows the load, not how its transporter sourced it
-            : ["status", "system"];
+            : ["status", "system", "dispute"];
+
+/** A dispute covering the row a detail is read for, with what naming its opener needs. */
+export type DisputeRow = Pick<
+    MovementDispute,
+    "id" | "openedByOrgId" | "reason" | "description" | "status" | "resolution" | "openedAt" | "resolvedAt"
+> & {
+    openerName: string;
+    /**
+     * Opened on a row above this one in the chain. A chain's rows are created
+     * top down — each executor's row at the moment it accepts — so this holds
+     * even after a back-out has unlinked the two.
+     */
+    fromAbove: boolean;
+};
 
 type DetailExtras = {
     /** The company reading — an executor's view is cut to its own offer round */
@@ -565,6 +641,8 @@ type DetailExtras = {
     /** Loading photos nobody has validated on the row the papers are read from */
     unapprovedPhotos: number;
     events: readonly (Omit<MovementEventView, "action" | "sentTo" | "flags"> & { metadata: unknown; actorOrgId: string | null })[];
+    /** Every dispute covering the row, newest first */
+    disputes: readonly DisputeRow[];
     orgRole: OrgRole;
 };
 
@@ -592,8 +670,22 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
     const nameable = (actorOrgId: string | null) =>
         owner || actorOrgId === null || actorOrgId === extras.tenantId || actorOrgId === row.organizationId;
 
+    // Whether a dispute holds the row, whoever opened it and whenever: what
+    // closing and opening another are decided on, the way the doors decide
+    const disputeOpen = extras.disputes.some((dispute) => dispute.status === "open");
+    // The one the page shows. A load handed back and placed again keeps the
+    // dispute pinned to it, and the next executor is not told of it — the
+    // same round that cuts its trail cuts this
+    const readable = extras.disputes.filter((dispute) => inRound(dispute.openedAt));
+    const dispute = readable.find((entry) => entry.status === "open")
+        ?? readable.find((entry) => entry.status === "resolved")
+        ?? null;
+    // What this caller may be told the row is under: a chip for a dispute it
+    // cannot read would be telling it that dispute exists
+    const disputeVisible = dispute?.status === "open";
+
     return {
-        ...toMovementRow(row, role, extras),
+        ...toMovementRow(row, role, { ...extras, inDispute: disputeVisible }),
         route: row.route,
         category: row.category,
         weight: num(row.weight),
@@ -615,7 +707,7 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
         hasParent: owner && extras.hasParent,
         // What the load is missing as it stands. The owner's own reading of
         // its own books: nobody else is told what its paperwork lacks
-        flags: owner ? movementFlags(guardsOf(row, extras.unapprovedPhotos), row.status) : [],
+        flags: owner ? movementFlags(guardsOf(row, extras.unapprovedPhotos, disputeOpen), row.status) : [],
         money,
         costs: owner
             ? extras.costs.map((cost) => ({
@@ -657,8 +749,46 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
                 flags: owner ? readFlags(event.metadata) : [],
                 createdAt: event.createdAt,
             })),
-        permissions: permissionsFor(row, role, extras),
+        dispute: dispute && disputeView(dispute, row, role, extras),
+        permissions: permissionsFor(row, role, extras, disputeOpen),
         updatedAt: row.updatedAt,
+    };
+}
+
+/**
+ * A dispute as this caller may read it. The opener is placed by its relation
+ * to the row being read, and named only under the partner rule in the header:
+ * the caller's own company, the row's owner, or — to the row's owner — its
+ * own client or carrier. A company further along the chain is only "a
+ * company on this load": above the row it stands where the client does,
+ * below it where the executor does.
+ */
+function disputeView(dispute: DisputeRow, row: Movement, role: MovementRole, extras: DetailExtras): MovementDisputeView {
+    const opener = dispute.openedByOrgId;
+    const side = opener === extras.tenantId
+        ? "you"
+        : opener === row.organizationId
+            ? "owner"
+            : opener === row.carrierOrgId
+                ? "executor"
+                : opener === row.clientOrgId || dispute.fromAbove ? "client" : "executor";
+    const named = opener === extras.tenantId
+        || opener === row.organizationId
+        || (role === "owner" && (opener === row.clientOrgId || opener === row.carrierOrgId));
+
+    return {
+        id: dispute.id,
+        reason: dispute.reason,
+        description: dispute.description,
+        status: dispute.status,
+        openedAt: dispute.openedAt,
+        openedBy: { side, name: named ? dispute.openerName : null },
+        resolution: dispute.resolution,
+        resolvedAt: dispute.resolvedAt,
+        // Settling it speaks for the company that raised it, at a manager's role
+        canResolve: dispute.status === "open"
+            && opener === extras.tenantId
+            && isOrgAuthorized(extras.orgRole, "dispute", ["resolve"]),
     };
 }
 
@@ -687,13 +817,38 @@ function readFlags(metadata: unknown): MovementFlag[] {
 }
 
 /**
+ * What a move on a partner load takes beyond `order:update`, or null. Taking
+ * a draft or a quote forward — to a quote, an agreement, a booking or a truck
+ * on it — is placing the load, committing the company to paying somebody,
+ * and calling one off unwinds that; both are above the plain member's role,
+ * the same way offering is. Taking a quote or a refusal back to the draft is
+ * only updating it. The door (procedures.ts) and the buttons both ask here.
+ */
+export function partnerMoveNeeds(from: MovementStatus, to: MovementStatus): "create" | "cancel" | null {
+    if (to === "cancelled") return "cancel";
+
+    if ((from === "procurement" || from === "prospect")
+        && (to === "prospect" || to === "scheduled" || to === "booked" || isInProgress(to))) {
+        return "create";
+    }
+
+    return null;
+}
+
+/**
  * What the caller may do now. Decided here, from the same functions the
  * doors enforce, so a button on the page is a promise the server keeps —
  * and it includes the member's own role in the company, since a button the
  * company could press but this member cannot is still a button that fails.
  */
-function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras): MovementPermissions {
-    const can = (resource: "trip" | "order" | "offer" | "document", action: string) =>
+function permissionsFor(
+    row: Movement,
+    role: MovementRole,
+    extras: DetailExtras,
+    /** A dispute holds the row, whoever opened it: what the doors decide on */
+    disputeOpen: boolean,
+): MovementPermissions {
+    const can = (resource: "trip" | "order" | "offer" | "document" | "dispute", action: string) =>
         isOrgAuthorized(extras.orgRole, resource, [action] as never);
 
     const none: MovementPermissions = {
@@ -709,6 +864,15 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
         canRecordPayment: false,
         canRequestLocation: false,
         canReadThread: false,
+        // Every company on the load, whatever its role: once somebody has
+        // committed to moving it and until its books are over, and one
+        // dispute at a time — the pin itself, whoever may read it, since the
+        // door turns a second dispute on a held row down whatever the caller
+        // knows of the first, and a button that can only fail would announce
+        // the very dispute the page keeps from it. A caller handed the load
+        // after one was raised still raises its own on the row it runs: that
+        // row is its own, and carries no pin
+        canOpenDispute: !isAskable(row.status) && !isTerminal(row.status) && !disputeOpen && can("dispute", "open"),
     };
 
     if (role !== "owner") return none;
@@ -717,19 +881,21 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
     const linked = row.executionMovementId !== null;
     const writeResource = partner ? "order" : "trip";
     const mayWrite = can(writeResource, "update");
-    const shape = { execution: row.execution, status: row.status, linked, executorOnPortal: extras.executorOnPortal };
-    const guards = guardsOf(row, extras.unapprovedPhotos);
+    const shape = {
+        execution: row.execution,
+        status: row.status,
+        route: row.route,
+        resumeStatus: row.resumeStatus,
+        linked,
+        executorOnPortal: extras.executorOnPortal,
+    };
+    const guards = guardsOf(row, extras.unapprovedPhotos, disputeOpen);
 
     return {
         transitions: mayWrite
             ? ownerTargets(shape).filter((to) => {
-                // Scheduling a partner load is placing it — committing the
-                // company to paying somebody — and calling one off unwinds
-                // that; both are above the plain member's role, the same way
-                // offering and cancelling are (procedures.ts mirrors this)
-                if (partner && row.status === "procurement" && (to === "scheduled" || to === "booked" || to === "in-transit")) return can("order", "create");
-                if (partner && to === "cancelled") return can("order", "cancel");
-                return true;
+                const needs = partner ? partnerMoveNeeds(row.status, to) : null;
+                return needs === null || can("order", needs);
             }).map((to) => {
                 // A reason is typed in the dialog that takes the move, so it
                 // is reported as a field to ask for, never as a blocker
@@ -741,13 +907,15 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
                     blocker: needsNote ? transitionBlocker(guards, to, "noted") : blocker,
                     needsNote,
                     // What the move would be taken without, so the dialog can
-                    // say so before the trail records it
+                    // say so before the trail records it — an interruption
+                    // judged at the stage it interrupts (status.ts)
                     flags: movementFlags(guards, to),
+                    startsTracking: entersInProgress(row.status, to),
                 };
             })
             : [],
         editable: mayWrite
-            ? editableGroups({ ...shape, hasParent: extras.hasParent })
+            ? editableGroups({ ...shape, hasParent: extras.hasParent, disputeOpen })
             : [],
         canOffer: partner && !linked && extras.executorOnPortal
             && (row.status === "procurement" || row.status === "declined") && can("order", "create"),
@@ -755,8 +923,8 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
         canRespond: false,
         canConvert: can("order", "create") && (
             partner
-                ? !linked && (row.status === "procurement" || row.status === "declined")
-                : row.status === "procurement" || row.status === "scheduled" || row.status === "booked"
+                ? !linked && (row.status === "procurement" || row.status === "prospect" || row.status === "declined")
+                : row.status === "procurement" || row.status === "prospect" || row.status === "scheduled" || row.status === "booked"
         ),
         canManageCosts: !isTerminal(row.status) && can("trip", "update"),
         canManageDocuments: can("document", "upload"),
@@ -766,12 +934,13 @@ function permissionsFor(row: Movement, role: MovementRole, extras: DetailExtras)
         canApproveDocuments: can("document", "approve"),
         canRecordPayment: row.status !== "cancelled" && (row.sellTotal !== null || (partner && row.buyTotal !== null))
             && can("order", "update"),
-        canRequestLocation: row.status === "in-transit" && !linked && Boolean(row.driverPhone) && can("trip", "update"),
+        canRequestLocation: isInProgress(row.status) && !linked && Boolean(row.driverPhone) && can("trip", "update"),
         // Reading follows the phone: whoever may see the number may see what
         // was said to it, and a linked order's driver belongs to the executor
         // Only a conversation this row's own asking stamped is readable, so
         // the card is offered on that, not on a typed number
         canReadThread: !linked && Boolean(row.conversationId),
+        canOpenDispute: none.canOpenDispute,
     };
 }
 
@@ -857,4 +1026,46 @@ export async function hasParentRow(db: Db, movementId: string): Promise<boolean>
         .limit(1);
 
     return Boolean(row);
+}
+
+const openedOn = alias(movement, "opened_on");
+
+/** Every dispute covering a row, newest first — toMovementDetail decides which one, and how much of it, is read. */
+export async function loadDisputes(db: Db, row: Movement): Promise<DisputeRow[]> {
+    const rows = await db
+        .select({
+            id: movementDispute.id,
+            openedByOrgId: movementDispute.openedByOrgId,
+            openerName: organization.name,
+            reason: movementDispute.reason,
+            description: movementDispute.description,
+            status: movementDispute.status,
+            resolution: movementDispute.resolution,
+            openedAt: movementDispute.openedAt,
+            resolvedAt: movementDispute.resolvedAt,
+            openedOnCreatedAt: openedOn.createdAt,
+        })
+        .from(movementDisputeRow)
+        .innerJoin(movementDispute, eq(movementDispute.id, movementDisputeRow.disputeId))
+        .innerJoin(organization, eq(organization.id, movementDispute.openedByOrgId))
+        .innerJoin(openedOn, eq(openedOn.id, movementDispute.movementId))
+        .where(eq(movementDisputeRow.movementId, row.id))
+        .orderBy(desc(movementDispute.openedAt));
+
+    return rows.map(({ openedOnCreatedAt, ...dispute }) => ({ ...dispute, fromAbove: openedOnCreatedAt < row.createdAt }));
+}
+
+/**
+ * The rows of a page an open dispute covers. Raw: the list decides who may
+ * be told (procedures.ts `projectRows`).
+ */
+export async function loadDisputed(db: Db, ids: readonly string[]): Promise<Set<string>> {
+    if (ids.length === 0) return new Set();
+
+    const rows = await db
+        .select({ id: movement.id })
+        .from(movement)
+        .where(and(inArray(movement.id, [...ids]), inDispute()));
+
+    return new Set(rows.map((row) => row.id));
 }

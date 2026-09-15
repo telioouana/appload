@@ -1,25 +1,30 @@
 import type { MESSAGE_DIRECTION, MESSAGE_STATUS } from "@workspace/db/chats";
 import type { Location } from "@workspace/db/orders";
 import type {
+    MOVEMENT_IN_PROGRESS_STATUSES,
     MovementCostKind,
+    MovementDisputeStatus,
     MovementDocumentLeg,
     MovementDocumentType,
     MovementEventKind,
     MovementExecution,
     MovementStatus,
 } from "@workspace/db/movements";
-import type { CATEGORIES, FISCAL_REGIME, ROUTE_TYPE, WEIGHT_UNIT } from "@workspace/db/types";
+import type { CATEGORIES, DisputeReason, FISCAL_REGIME, ROUTE_TYPE, WEIGHT_UNIT } from "@workspace/db/types";
 import type { MovementRole } from "@workspace/domain/movements/policy";
 import type { EditableGroup } from "@workspace/domain/movements/policy";
 import type { CostTotal, Currency, PaymentStatus } from "@workspace/domain/movements/money";
 import type { MovementFlag, TransitionBlocker } from "@workspace/domain/movements/status";
+import type { OrderStatusKey } from "@workspace/ui/customs/badge/status-badge";
 
 export type {
     CostTotal,
     Currency,
+    DisputeReason,
     EditableGroup,
     Location,
     MovementCostKind,
+    MovementDisputeStatus,
     MovementDocumentLeg,
     MovementDocumentType,
     MovementEventKind,
@@ -27,6 +32,7 @@ export type {
     MovementFlag,
     MovementRole,
     MovementStatus,
+    OrderStatusKey,
     PaymentStatus,
     TransitionBlocker,
 };
@@ -39,30 +45,83 @@ export type WeightUnit = (typeof WEIGHT_UNIT)[number];
 // ---------------------------------------------------------------------------
 // The two lists. One table, two pages: Orders is every load somebody else
 // moves for this company — the ones it placed with a partner, and the ones a
-// transporter on the portal filed naming it as the client — plus the loads
-// partners have offered it. Trips is every load its own fleet moves.
+// transporter on the portal filed naming it as the client. Trips is every
+// load its own fleet moves, plus the loads partners have offered it.
 // ---------------------------------------------------------------------------
 
 export const MOVEMENT_SCOPES = ["orders", "trips"] as const;
 export type MovementScope = (typeof MOVEMENT_SCOPES)[number];
 
-export const ORDER_SECTIONS = [
-    "all",
-    "inbox",
-    "procurement",
-    "awarded",
-    "confirmed",
-    "booked",
-    "in-transit",
-    "delivered",
-    "history",
-] as const;
+export const ORDER_SECTIONS = ["all", "procurement", "booked", "in-progress", "delivered", "disputes", "history"] as const;
 export type OrderSection = (typeof ORDER_SECTIONS)[number];
 
-export const TRIP_SECTIONS = ["all", "planning", "scheduled", "in-transit", "delivered", "history"] as const;
+export const TRIP_SECTIONS = ["all", "planning", "scheduled", "in-progress", "delivered", "disputes", "history"] as const;
 export type TripSection = (typeof TRIP_SECTIONS)[number];
 
 export type MovementSection = OrderSection | TripSection;
+
+/**
+ * A truck on the load, from the loading site to offloading, in chain order.
+ * Restated rather than imported, because this module ships to the browser and
+ * the schema builds drizzle tables at import time; the tuple type pins it to
+ * the schema's own list, so the two cannot drift.
+ */
+export const IN_PROGRESS_STATUSES = [
+    "at-loading",
+    "loading",
+    "waiting-documents",
+    "on-route",
+    "stopped",
+    "issue",
+    "at-border",
+    "at-offloading",
+    "offloading",
+] as const satisfies typeof MOVEMENT_IN_PROGRESS_STATUSES;
+
+export const isInProgress = (status: MovementStatus): boolean =>
+    (IN_PROGRESS_STATUSES as readonly MovementStatus[]).includes(status);
+
+/**
+ * The statuses a section's tabs narrow it to, in tab order, after the "all"
+ * tab (which is no param at all). "prospect" stands for prospect and offered
+ * both — the same wait for an answer, asked by hand or through the portal —
+ * and the list reads it that way. A section with no entry has no tabs.
+ */
+export const STATUS_TABS: Partial<Record<MovementSection, readonly MovementStatus[]>> = {
+    procurement: ["procurement", "prospect", "scheduled", "declined"],
+    planning: ["procurement", "prospect", "scheduled"],
+    "in-progress": IN_PROGRESS_STATUSES,
+};
+
+/**
+ * The colour a status is drawn in. The tokens live on the order vocabulary,
+ * so each load status borrows the order status that means the same thing —
+ * one pairing for the chip, the route map's pin and the overview map, so a
+ * chip and a pin of one colour always agree. The truck's own chain is the
+ * order's chain, stage for stage.
+ */
+const TONE: Record<MovementStatus, OrderStatusKey> = {
+    "procurement": "prospect",
+    "prospect": "prospect",
+    "offered": "prospect",
+    "declined": "cancelled",
+    "scheduled": "booked",
+    "booked": "to-loading",
+    "at-loading": "at-loading",
+    "loading": "loading",
+    "waiting-documents": "waiting-documents",
+    "on-route": "on-route",
+    "stopped": "stopped",
+    "issue": "issue",
+    "at-border": "at-border",
+    "at-offloading": "at-offloading",
+    "offloading": "offloading",
+    "delivered": "delivered",
+    "closed": "completed",
+    "cancelled": "cancelled",
+};
+
+export const movementTone = (status: MovementStatus): OrderStatusKey => TONE[status];
 
 export const MOVEMENT_SORTS = ["newest", "loading", "delivery"] as const;
 export type MovementSort = (typeof MOVEMENT_SORTS)[number];
@@ -156,6 +215,8 @@ export type MovementRow = {
     receivable: { total: number; currency: Currency } | null;
     /** Owner only: an executor on the portal holds the truck */
     isLinked: boolean;
+    /** Covered by an open dispute, as far as the caller may know (see projection.ts) */
+    inDispute: boolean;
     lastPing: MovementPing | null;
     pingCount: number;
     version: number;
@@ -217,6 +278,8 @@ export type TransitionOption = {
     needsNote: boolean;
     /** What the load would still be missing there — proceeding is allowed, and recorded */
     flags: MovementFlag[];
+    /** The move puts a truck on the load: tracking starts, and the plan pays for it */
+    startsTracking: boolean;
 };
 
 /** What the caller may do with this load right now, decided server-side. */
@@ -235,6 +298,27 @@ export type MovementPermissions = {
     canRequestLocation: boolean;
     /** Reading the driver's WhatsApp thread: the owner of the row with the truck */
     canReadThread: boolean;
+    /** Saying something went wrong with the load: any company on it, whatever its role */
+    canOpenDispute: boolean;
+};
+
+/**
+ * The dispute on a load, as the caller may read it. The description is shown
+ * verbatim to every company on a covered row; who opened it is named only
+ * where the caller may know that company (projection.ts).
+ */
+export type MovementDisputeView = {
+    id: string;
+    reason: DisputeReason;
+    description: string;
+    status: MovementDisputeStatus;
+    openedAt: Date;
+    /** The opener's relation to this row, and its name when the caller may know it */
+    openedBy: { side: "you" | "owner" | "client" | "executor"; name: string | null };
+    resolution: string | null;
+    resolvedAt: Date | null;
+    /** Only the company that opened it, at a role that may declare it settled */
+    canResolve: boolean;
 };
 
 /**
@@ -284,6 +368,8 @@ export type MovementDetail = MovementRow & {
     costs: MovementCostView[];
     documents: MovementDocumentView[];
     events: MovementEventView[];
+    /** The open dispute on the load, else the latest resolved one, else null */
+    dispute: MovementDisputeView | null;
     permissions: MovementPermissions;
     updatedAt: Date;
 };
@@ -298,10 +384,12 @@ export type LoadFormOptions = {
 
 export type MovementStats = {
     total: number;
-    bySection: Record<string, number>;
-    /** Orders only: loads partners have offered this company, awaiting its answer */
-    inbox: number;
-    /** On the road, asked for a position today, and silent since midnight */
+    bySection: Partial<Record<MovementSection, number>>;
+    /** Every status across the whole list, behind the tabs inside a section */
+    byStatus: Partial<Record<MovementStatus, number>>;
+    /** Trips only: loads partners have offered this company, awaiting its answer */
+    received: number;
+    /** In progress, asked for a position today, and silent since midnight */
     silent: number;
 };
 
@@ -349,6 +437,8 @@ const parsePageSize = (value: string | null): number => {
 export const movementsListInput = (scope: MovementScope, section: MovementSection, get: Get) => ({
     scope,
     section,
+    /** A tab inside the section; "all", or a status that is not one of its tabs, is no filter */
+    status: oneOf(get("status"), STATUS_TABS[section] ?? []),
     search: get("search")?.trim() || undefined,
     /** Asked for a position today and still silent — the tile's filter */
     silent: get("silent") === "1" ? (true as const) : undefined,
@@ -361,35 +451,36 @@ export const movementsListInput = (scope: MovementScope, section: MovementSectio
 export type MovementsListInput = ReturnType<typeof movementsListInput>;
 
 /** Every URL key a filter control owns, so "nothing yet" is told from "nothing matched". */
-export const FILTER_KEYS = ["search", "silent"] as const;
+export const FILTER_KEYS = ["search", "status", "silent"] as const;
 
 export const isFilteredMovements = (get: Get) => FILTER_KEYS.some((key) => Boolean(get(key)));
 
 /**
  * Which of the two lists a load belongs to, for the caller: a load its own
- * fleet moves is a trip; everything else it can see — a load it placed with
- * a partner, one a partner offered it, one somebody moves for it — is on
- * Orders. The detail page's way back is decided from this.
+ * fleet moves is a trip, and so is work a partner offered it — the truck it
+ * answers with is its own; everything else it can see — a load it placed
+ * with a partner, one somebody moves for it — is on Orders. The detail
+ * page's way back is decided from this.
  */
-export const scopeOf = (load: Pick<MovementRow, "execution" | "role">): MovementScope =>
-    load.execution === "own-fleet" && load.role === "owner" ? "trips" : "orders";
+export const scopeOf = (load: Pick<MovementRow, "execution" | "role" | "status">): MovementScope =>
+    (load.execution === "own-fleet" && load.role === "owner") || load.role === "executor" ? "trips" : "orders";
 
 /**
- * The section of that list a load sits in right now. Orders follow the whole
- * lifecycle a tab at a time; a Trip has nobody to award it to and nothing to
- * confirm, so agreeing it and booking it are one step there.
+ * The section of that list a load sits in right now; never "disputes", which
+ * cuts across the statuses. An offer waiting on the caller's answer is being
+ * planned; once answered, the executor works the load from its own row, and
+ * the order it was offered lives in no section of its lists.
  */
 export function sectionOf(load: Pick<MovementRow, "execution" | "role" | "status">): MovementSection {
     const { status } = load;
+    const trips = scopeOf(load) === "trips";
 
+    if (load.role === "executor") return status === "offered" ? "planning" : "all";
     if (status === "closed" || status === "cancelled") return "history";
-    if (status === "in-transit" || status === "delivered") return status;
+    if (status === "delivered") return "delivered";
+    if (isInProgress(status)) return "in-progress";
+    if (status === "booked") return trips ? "scheduled" : "booked";
+    if (!trips) return "procurement";
 
-    if (scopeOf(load) === "trips") return status === "scheduled" || status === "booked" ? "scheduled" : "planning";
-
-    if (status === "booked") return "booked";
-    if (status === "scheduled") return "confirmed";
-    if (status === "offered") return load.role === "executor" ? "inbox" : "awarded";
-
-    return "procurement";
+    return status === "procurement" || status === "prospect" || status === "scheduled" ? "planning" : "all";
 }

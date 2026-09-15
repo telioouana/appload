@@ -17,9 +17,10 @@ import { useMovementMutations } from "@/frontend/pages/movements/hooks/use-movem
 import type { MovementDetail } from "@/frontend/pages/movements/types"
 
 /**
- * Where the truck has reported from. A load handed to a partner on the
- * portal is tracked by that partner — its driver is asked once, by the
- * company that employs them — and the positions show here as they arrive.
+ * Where the truck has reported from, from the moment it reaches the loading
+ * site until it is delivered. A load handed to a partner on the portal is
+ * tracked by that partner — its driver is asked once, by the company that
+ * employs them — and the positions show here as they arrive.
  */
 export function TrackingCard({ load }: { load: MovementDetail }) {
     const t = useTranslations("App.loads.tracking")
@@ -59,7 +60,9 @@ export function TrackingCard({ load }: { load: MovementDetail }) {
             {!load.trackingEnabled && <p className="text-muted-foreground text-xs">{t("disabled")}</p>}
 
             {points.length === 0 ? (
-                <EmptyValue label={t("empty")} />
+                // Tracking starts when the truck reaches the loading site, so
+                // before that there is nothing to wait for yet
+                <EmptyValue label={load.startedAt ? t("empty") : t("not-started")} />
             ) : (
                 <ol className="flex flex-col gap-2">
                     {[...points].reverse().map((point) => (

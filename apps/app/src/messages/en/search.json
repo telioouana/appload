@@ -15,6 +15,7 @@
         "orders": "Search in orders",
         "trips": "Search in trips",
         "partners": "Search in partners",
+        "transporters": "Search in transporters",
         "drivers": "Search in drivers",
         "fleet": "Search in fleet"
     },

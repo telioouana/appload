@@ -139,7 +139,7 @@ export function DocumentsCard({ load }: { load: MovementDetail }) {
  *
  * The keeper at the client shoots them and anybody on the load may file
  * them; a manager of the company — an owner or an admin — then says they
- * are what they should be. The load is never held back for it: leaving
+ * are what they should be. The load is never held back for it: loading
  * with photos still unapproved only raises a flag, which the status event
  * records, so the gap has a name and a time on it afterwards.
  */

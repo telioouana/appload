@@ -369,9 +369,9 @@ export async function respondToOffer(
  * the job itself — or a partner's load taken back in-house. Same row, same
  * reference number, same trail and costs; only who moves it changes.
  *
- * Only before the truck has left. The rig the owner had named was its own,
- * so it is cleared when a partner takes over; the partner and its price are
- * cleared when the owner takes it back.
+ * Only before the truck reaches the loading site. The rig the owner had
+ * named was its own, so it is cleared when a partner takes over; the partner
+ * and its price are cleared when the owner takes it back.
  */
 export async function convertMovement(
     db: Db,
@@ -423,14 +423,14 @@ export async function convertMovement(
             };
 
     if (input.to === "partner") {
-        if (row.status !== "procurement" && row.status !== "scheduled" && row.status !== "booked") {
+        if (row.status !== "procurement" && row.status !== "prospect" && row.status !== "scheduled" && row.status !== "booked") {
             throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATUS" });
         }
 
         if (input.carrierOrgId) await assertExecutor(db, actor.organizationId, input.carrierOrgId);
     } else {
         // Back in-house only while nobody else holds it: not offered, not linked
-        if ((row.status !== "procurement" && row.status !== "declined") || row.executionMovementId) {
+        if ((row.status !== "procurement" && row.status !== "prospect" && row.status !== "declined") || row.executionMovementId) {
             throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATUS" });
         }
 

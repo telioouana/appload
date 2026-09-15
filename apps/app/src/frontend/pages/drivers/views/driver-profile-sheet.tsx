@@ -206,7 +206,7 @@ function Loads({ profile }: { profile: DriverProfile }) {
                                     {`${loadPlace(load.origin)} → ${loadPlace(load.destination)}`}
                                 </span>
                             </Link>
-                            <MovementStatusChip status={load.status} execution={load.execution} className="shrink-0" />
+                            <MovementStatusChip status={load.status} className="shrink-0" />
                         </li>
                     ))}
                 </ul>

@@ -19,6 +19,9 @@ export const routing = defineRouting({
         "/partners": {
             pt: "/parceiros"
         },
+        "/partners/[kind]": {
+            pt: "/parceiros/[kind]"
+        },
         "/fleet/[kind]": {
             pt: "/frota/[kind]"
         },

@@ -1,5 +1,10 @@
 {
     "title": "Partners",
+    "titles": {
+        "clients": "Clients",
+        "transporters": "Transporters",
+        "requests": "Partner requests"
+    },
     "description": {
         "shipper": "The transporters you work with, and the requests waiting on an answer.",
         "carrier": "The clients you carry for, the carriers you subcontract, and the requests waiting on an answer."
@@ -11,16 +16,13 @@
     "tabs": {
         "clients": "Clients",
         "transporters": "Transporters",
-        "subcontractors": "Subcontractors",
         "requests": "Requests"
     },
     "tiles": {
         "incoming": "Waiting on you",
         "incoming-hint": "Requests to accept or decline",
         "outgoing": "Waiting on them",
-        "outgoing-hint": "Requests you sent",
-        "connected": "Connected",
-        "connected-hint": "Companies you can work with"
+        "outgoing-hint": "Requests you sent"
     },
     "columns": {
         "partner": "Company",
@@ -32,8 +34,7 @@
     },
     "kind": {
         "client": "Client",
-        "transporter": "Transporter",
-        "subcontractor": "Subcontractor"
+        "transporter": "Transporter"
     },
     "direction": {
         "incoming": "Received",
@@ -78,9 +79,10 @@
     "data": {
         "empty": "No partners yet",
         "empty-clients": "Add the companies whose cargo you carry and their orders will reach you here.",
-        "empty-transporters": "Add the carriers you ship with and you can send them orders straight away.",
-        "empty-subcontractors": "Add the carriers you subcontract and you can pass them loads you cannot cover.",
-        "empty-requests": "Nothing is waiting on an answer.",
+        "empty-transporters": {
+            "shipper": "Add the carriers you ship with and you can send them orders straight away.",
+            "carrier": "Add the transporters you subcontract and you can pass them loads you cannot cover."
+        },
         "no-results": "No company matches this search",
         "error": "The partner list could not be loaded."
     },
@@ -120,7 +122,6 @@
         "search": {
             "client": "Search for a client by name",
             "transporter": "Search for a transporter by name",
-            "subcontractor": "Search for a carrier by name",
             "hint": "Type at least two letters of the company name.",
             "empty": "No company matches this search."
         },
@@ -147,7 +148,6 @@
             "name": {
                 "client": "Client name",
                 "transporter": "Transporter name",
-                "subcontractor": "Carrier name",
                 "placeholder": "Company name as registered",
                 "error": "Enter the company name"
             },

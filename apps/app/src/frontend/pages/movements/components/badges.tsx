@@ -1,22 +1,23 @@
 "use client"
 
-import { IconArrowNarrowRight, IconMapPinOff } from "@tabler/icons-react"
+import { IconArrowNarrowRight, IconGavel, IconMapPinOff } from "@tabler/icons-react"
 
 import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
 
 import { Badge } from "@workspace/ui/components/badge"
-import { StatusBadge, type OrderStatusKey } from "@workspace/ui/customs/badge/status-badge"
+import { StatusBadge } from "@workspace/ui/customs/badge/status-badge"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { cn } from "@workspace/ui/lib/utils"
 
-import type {
-    Currency,
-    Location,
-    MovementExecution,
-    MovementFlag,
-    MovementPing,
-    MovementRole,
-    MovementStatus,
+import {
+    movementTone,
+    type Currency,
+    type Location,
+    type MovementExecution,
+    type MovementFlag,
+    type MovementPing,
+    type MovementRole,
+    type MovementStatus,
 } from "@/frontend/pages/movements/types"
 
 /** How a place reads in a cell: the province, or the first line of the address. */
@@ -24,48 +25,57 @@ export const place = (location: Location) =>
     location.state || location.address.split(",")[0]?.trim() || location.address
 
 /**
- * The colour tokens live on the order vocabulary, so each load status
- * borrows the order status that means the same thing — the same pairing the
- * map pins use, so a chip and a pin of one colour always agree.
- */
-const TONE: Record<MovementStatus, OrderStatusKey> = {
-    "procurement": "prospect",
-    "offered": "waiting-documents",
-    "declined": "cancelled",
-    "scheduled": "booked",
-    "booked": "to-loading",
-    "in-transit": "on-route",
-    "delivered": "delivered",
-    "closed": "completed",
-    "cancelled": "cancelled",
-}
-
-export const pinStatus = (status: MovementStatus): OrderStatusKey => TONE[status]
-
-/**
- * The label for a status. One stored value, two words: a trip still waiting
- * for its driver and truck is being planned, an order still waiting for its
- * partner is being sourced.
+ * The label for a status: one word per stored value, the same on a chip, a
+ * tab and a trail line, whichever list the load is on. "Planning" names a
+ * section of Trips, never a status.
  */
 export function useStatusLabel() {
     const t = useTranslations("App.loads.status")
 
-    return (status: MovementStatus, execution: MovementExecution) =>
-        status === "procurement" && execution === "own-fleet" ? t("planning") : t(status)
+    return (status: MovementStatus) => t(status)
 }
 
-export function MovementStatusChip({
-    status,
-    execution,
-    className,
-}: {
-    status: MovementStatus
-    execution: MovementExecution
-    className?: string
-}) {
+/**
+ * What taking a move is called. Leaving a stop or an issue is resuming the
+ * stage the truck was held up at, and says so, rather than reading as if
+ * the truck reached that stage again.
+ */
+export function useMoveLabel() {
+    const t = useTranslations("App.loads.actions")
     const label = useStatusLabel()
 
-    return <StatusBadge status={TONE[status]} label={label(status, execution)} className={cn("text-xs", className)} />
+    return (from: MovementStatus, to: MovementStatus) => {
+        const held = from === "stopped" || from === "issue"
+        const resumes = held && to !== "stopped" && to !== "issue" && to !== "cancelled"
+
+        return resumes ? t("resume", { status: label(to) }) : t(`to.${to}`)
+    }
+}
+
+/**
+ * The colour tokens live on the order vocabulary, so each load status
+ * borrows the order status that means the same thing (`movementTone`) — the
+ * same pairing the map pins use, so a chip and a pin of one colour agree.
+ */
+export function MovementStatusChip({ status, className }: { status: MovementStatus; className?: string }) {
+    const label = useStatusLabel()
+
+    return <StatusBadge status={movementTone(status)} label={label(status)} className={cn("text-xs", className)} />
+}
+
+/**
+ * A company on the load says something went wrong with it. Not a status: the
+ * load keeps its own, and this sits beside it until the dispute is resolved.
+ */
+export function InDisputeChip() {
+    const t = useTranslations("App.loads.disputes")
+
+    return (
+        <Badge variant="outline" className="border-destructive/40 text-destructive gap-1 rounded-full font-normal">
+            <IconGavel className="size-3" stroke={1.5} />
+            {t("chip")}
+        </Badge>
+    )
 }
 
 /**

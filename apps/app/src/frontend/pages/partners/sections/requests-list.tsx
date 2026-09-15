@@ -14,7 +14,7 @@ import { usePartnerMutations } from "@/frontend/pages/partners/hooks/use-partner
 import type { OrgType, PartnerRow } from "@/frontend/pages/partners/types"
 
 /**
- * The requests tab: what is waiting on an answer, split by who has to give
+ * The requests list: what is waiting on an answer, split by who has to give
  * it. Incoming rows carry the two buttons that decide them; outgoing rows
  * carry the only thing their sender can still do.
  *

@@ -6,6 +6,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
 import { CostsCard } from "@/frontend/pages/movements/sections/costs-card"
+import { DisputeBanner } from "@/frontend/pages/movements/sections/dispute-banner"
 import { DocumentsCard } from "@/frontend/pages/movements/sections/documents-card"
 import { LoadHeader } from "@/frontend/pages/movements/sections/load-header"
 import { MoneyCard } from "@/frontend/pages/movements/sections/money-card"
@@ -16,11 +17,11 @@ import { TimelineCard } from "@/frontend/pages/movements/sections/timeline-card"
 import { TrackingCard } from "@/frontend/pages/movements/sections/tracking-card"
 
 /**
- * One load on one page: where it goes and what it carries, who is on it,
- * what it is worth to the reader, what it cost to run, the papers, where the
- * truck is and what has happened. This file owns the queries and hands each
- * block what it renders; what the reader may see and do was decided by the
- * server, role by role.
+ * One load on one page: a dispute on it first, then where it goes and what
+ * it carries, who is on it, what it is worth to the reader, what it cost to
+ * run, the papers, where the truck is and what has happened. This file owns
+ * the queries and hands each block what it renders; what the reader may see
+ * and do was decided by the server, role by role.
  */
 export function MovementDetailView({ loadId }: { loadId: string }) {
     const t = useTranslations("App.loads.detail")
@@ -44,6 +45,8 @@ export function MovementDetailView({ loadId }: { loadId: string }) {
                 allowance={session.allowance}
                 organizationName={session.organization.name}
             />
+
+            {load.dispute && <DisputeBanner dispute={load.dispute} />}
 
             {/* From lg up the page itself does not scroll: the left column
                 does, so the tracking on the right stays where it was. Below

@@ -7,16 +7,17 @@ import { useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
 import { StatTile, type StatTileProps } from "@/frontend/pages/dashboard/components/stat-tile"
+import type { MovementSection } from "@/frontend/pages/movements/types"
 
 /**
  * The company's own loads at a glance, before anything Appload brokers for
  * it: what partners are waiting on it to answer (a shipper, which is never
- * offered work, sees what a partner has confirmed instead), what it is still
- * drafting, what its own fleet has still to plan, and what its trucks and
- * its partners' have on the road.
+ * offered work, sees what it has agreed with a partner and not booked in
+ * yet instead), what it is still placing, what its own fleet has still to
+ * plan, and what its trucks and its partners' have in progress.
  *
- * Every number is a section of the Orders or Trips list and opens it — the
- * same stats those lists' own tiles read.
+ * Every number is a section of the Orders or Trips list, or one status tab
+ * of one, and opens it — the same stats those lists' own tiles and tabs read.
  */
 export function LoadsTiles() {
     const t = useTranslations("App.dashboard.loads")
@@ -28,25 +29,28 @@ export function LoadsTiles() {
     const { data: trips } = useSuspenseQuery(trpc.movements.stats.queryOptions({ scope: "trips" }))
 
     const carrier = session.organization.type === "carrier"
-    const count = (stats: typeof orders, section: string) => stats.bySection[section] ?? 0
+    const count = (stats: typeof orders, section: MovementSection) => stats.bySection[section] ?? 0
 
     const row: Array<StatTileProps & { key: string }> = [
         carrier
             ? {
-                key: "inbox",
+                // Offers wait in Planning, under the Prospect tab, until
+                // answered — alongside the company's own hand-set quotes, so
+                // the tab may hold more than this counts
+                key: "received",
                 Icon: IconInbox,
-                label: tiles("inbox"),
-                value: count(orders, "inbox"),
-                hint: tiles("inbox-hint"),
-                href: { pathname: "/orders/[section]", params: { section: "inbox" } },
+                label: tiles("received"),
+                value: trips.received,
+                hint: tiles("received-hint"),
+                href: { pathname: "/trips/[section]", params: { section: "planning" }, query: { status: "prospect" } },
             }
             : {
                 key: "confirmed",
                 Icon: IconCircleCheck,
                 label: tiles("confirmed"),
-                value: count(orders, "confirmed"),
+                value: orders.byStatus.scheduled ?? 0,
                 hint: tiles("confirmed-hint"),
-                href: { pathname: "/orders/[section]", params: { section: "confirmed" } },
+                href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { status: "scheduled" } },
             },
         {
             key: "procurement",
@@ -68,17 +72,17 @@ export function LoadsTiles() {
             key: "own-road",
             Icon: IconTruckDelivery,
             label: t("own-road"),
-            value: count(trips, "in-transit"),
+            value: count(trips, "in-progress"),
             hint: t("own-road-hint"),
-            href: { pathname: "/trips/[section]", params: { section: "in-transit" } },
+            href: { pathname: "/trips/[section]", params: { section: "in-progress" } },
         },
         {
             key: "partner-road",
             Icon: IconUsersGroup,
             label: t("partner-road"),
-            value: count(orders, "in-transit"),
+            value: count(orders, "in-progress"),
             hint: t("partner-road-hint"),
-            href: { pathname: "/orders/[section]", params: { section: "in-transit" } },
+            href: { pathname: "/orders/[section]", params: { section: "in-progress" } },
         },
     ]
 

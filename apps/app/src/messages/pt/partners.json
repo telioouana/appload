@@ -1,5 +1,10 @@
 {
     "title": "Parceiros",
+    "titles": {
+        "clients": "Clientes",
+        "transporters": "Transportadoras",
+        "requests": "Solicitações de parceria"
+    },
     "description": {
         "shipper": "As transportadoras com quem trabalha e as solicitações à espera de resposta.",
         "carrier": "Os clientes que transporta, as transportadoras que subcontrata e as solicitações à espera de resposta."
@@ -11,16 +16,13 @@
     "tabs": {
         "clients": "Clientes",
         "transporters": "Transportadoras",
-        "subcontractors": "Subcontratadas",
         "requests": "Solicitações"
     },
     "tiles": {
         "incoming": "À sua espera",
         "incoming-hint": "Solicitações para aceitar ou recusar",
         "outgoing": "À espera deles",
-        "outgoing-hint": "Solicitações que enviou",
-        "connected": "Ligados",
-        "connected-hint": "Empresas com quem já pode trabalhar"
+        "outgoing-hint": "Solicitações que enviou"
     },
     "columns": {
         "partner": "Empresa",
@@ -32,8 +34,7 @@
     },
     "kind": {
         "client": "Cliente",
-        "transporter": "Transportadora",
-        "subcontractor": "Subcontratada"
+        "transporter": "Transportadora"
     },
     "direction": {
         "incoming": "Recebida",
@@ -78,9 +79,10 @@
     "data": {
         "empty": "Ainda sem parceiros",
         "empty-clients": "Adicione as empresas cuja carga transporta e os pedidos delas chegam aqui.",
-        "empty-transporters": "Adicione as transportadoras com quem envia carga e já lhes pode mandar pedidos.",
-        "empty-subcontractors": "Adicione as transportadoras que subcontrata e já lhes pode passar as cargas que não consegue cobrir.",
-        "empty-requests": "Não há nada à espera de resposta.",
+        "empty-transporters": {
+            "shipper": "Adicione as transportadoras com quem envia carga e já lhes pode mandar pedidos.",
+            "carrier": "Adicione as transportadoras que subcontrata e já lhes pode passar as cargas que não consegue cobrir."
+        },
         "no-results": "Nenhuma empresa corresponde a esta pesquisa",
         "error": "Não foi possível carregar a lista de parceiros."
     },
@@ -120,7 +122,6 @@
         "search": {
             "client": "Procurar um cliente pelo nome",
             "transporter": "Procurar uma transportadora pelo nome",
-            "subcontractor": "Procurar uma transportadora pelo nome",
             "hint": "Escreva pelo menos duas letras do nome da empresa.",
             "empty": "Nenhuma empresa corresponde a esta pesquisa."
         },
@@ -147,7 +148,6 @@
             "name": {
                 "client": "Nome do cliente",
                 "transporter": "Nome da transportadora",
-                "subcontractor": "Nome da transportadora",
                 "placeholder": "Nome da empresa tal como registada",
                 "error": "Indique o nome da empresa"
             },

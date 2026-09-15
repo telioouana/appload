@@ -287,10 +287,9 @@
         "shell": {
             "sidebar": {
                 "work": {
-                    "label": "Work",
+                    "label": "Operations",
                     "dashboard": "Dashboard",
-                    "procurement": "Procurement",
-                    "operations": "Operations",
+                    "orders": "Orders",
                     "quotes": "Quotes",
                     "trips": "Trips",
                     "map": "Map",
@@ -302,7 +301,8 @@
                     "fleet": "Fleet",
                     "drivers": "Drivers",
                     "team": "Team",
-                    "partners": "Suppliers / partners",
+                    "partners": "Partners",
+                    "my-transporters": "My transporters",
                     "analytics": "Analytics",
                     "trucks": "Trucks",
                     "trailers": "Trailers",
@@ -369,22 +369,22 @@
                 "silent-orders": "Partners' drivers silent today"
             },
             "road": {
-                "title": "On the road now",
+                "title": "In progress now",
                 "empty-title": "Nothing moving",
-                "empty-description": "Orders and trips appear here as soon as they are in transit"
+                "empty-description": "Orders and trips appear here as soon as they are in progress"
             },
             "trips": {
                 "title": "Own fleet",
-                "in-transit": "In transit",
+                "in-progress": "In progress",
                 "no-response": "No answer today"
             },
             "loads": {
                 "appload": "Appload",
                 "planning": "Trips to plan",
-                "planning-hint": "No driver or truck yet",
-                "own-road": "Own fleet on the road",
-                "own-road-hint": "Your trucks moving right now",
-                "partner-road": "Partners on the road",
+                "planning-hint": "Not booked in yet",
+                "own-road": "Own fleet in progress",
+                "own-road-hint": "Your trucks on a load right now",
+                "partner-road": "Partners in progress",
                 "partner-road-hint": "Loads partners are moving for you",
                 "latest": {
                     "title": "Latest loads",

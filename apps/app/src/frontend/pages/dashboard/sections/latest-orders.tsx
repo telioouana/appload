@@ -113,7 +113,7 @@ export function LatestOrders() {
                                                 {row.expectedLoadingDate ? f.dateTime(row.expectedLoadingDate, { dateStyle: "medium" }) : <Dash />}
                                             </TableCell>
                                             <TableCell className="px-2 py-2.5">
-                                                <MovementStatusChip status={row.status} execution={row.execution} />
+                                                <MovementStatusChip status={row.status} />
                                             </TableCell>
                                             <TableCell className="px-2 py-2.5 text-right text-[13px] tabular-nums">
                                                 {figure ? loadMoney(figure.total, figure.currency) : <Dash />}

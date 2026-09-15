@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, check, doublePrecision, index, integer, jsonb, numeric, pgTable, serial, text, timestamp, uniqueIndex, type AnyPgColumn } from "drizzle-orm/pg-core";
+import { boolean, check, doublePrecision, index, integer, jsonb, numeric, pgTable, primaryKey, serial, text, timestamp, uniqueIndex, type AnyPgColumn } from "drizzle-orm/pg-core";
 
 // Direct module imports, never the schema barrel: going through it would pull
 // in modules that depend on this one and crash at runtime (TDZ)
@@ -7,6 +7,7 @@ import { TRACKING_CHANNEL, TRACKING_SLOT, TRACKING_STATUS, chatConversation, cha
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import { Location, categoriesEnum, currencyEnum, fiscalRegimeEnum, paymentStatusEnum, routeTypeEnum, weightUnitEnum } from "@workspace/db/orders";
 import { LOCATION_SOURCE, ROUTE_SOURCE } from "@workspace/db/tracking";
+import { DISPUTE_REASON } from "@workspace/db/types";
 import { organization, user } from "@workspace/db/users";
 
 /**
@@ -24,31 +25,61 @@ export type MovementExecution = (typeof MOVEMENT_EXECUTION)[number];
  * extending it would mean an ALTER TYPE on a type the admin filters on.
  *
  * "procurement" is the first status — the load exists and nobody has
- * committed to moving it yet. On an Order that reads as sourcing a partner;
- * on a Trip it means no driver and truck are named yet, and the portal labels
- * it "planning" there from this same stored value.
+ * committed to moving it yet; the portal labels it "Draft" on both shapes.
  *
- * "offered" and "declined" are only reachable on a partner execution whose
- * executor can answer for itself on the portal. An off-platform partner has
- * nobody to click accept, so the owner goes straight to scheduled or
- * in-transit — see @workspace/domain/movements/status.
+ * "prospect" is a load quoted and waiting for the answer, set by hand where
+ * nobody on the portal can give it: a partner off the platform, or the
+ * client of a Trip. "offered" and "declined" are the same wait and its no
+ * when the partner can answer for itself on the portal — only reachable
+ * through the offer, see @workspace/domain/movements/offer.
  *
  * "scheduled" is the load agreed; "booked" is the day, the truck and the
- * driver arranged for it. The portal labels them "Confirmed" and "Booked";
- * a Trip shows both as one step, since planning a trip is arranging it.
+ * driver arranged for it. The portal labels them "Confirmed" and "Booked".
+ *
+ * From "at-loading" to "offloading" the load is in progress, the chain the
+ * admin's order statuses use (MOVEMENT_IN_PROGRESS_STATUSES). "stopped" and
+ * "issue" interrupt it, and the row remembers where in `resumeStatus`.
  */
 export const MOVEMENT_STATUS = [
     "procurement",
+    "prospect",
     "offered",
     "declined",
     "scheduled",
     "booked",
-    "in-transit",
+    "at-loading",
+    "loading",
+    "waiting-documents",
+    "on-route",
+    "stopped",
+    "issue",
+    "at-border",
+    "at-offloading",
+    "offloading",
     "delivered",
     "closed",
     "cancelled",
 ] as const;
 export type MovementStatus = (typeof MOVEMENT_STATUS)[number];
+
+/**
+ * The statuses a load is in progress in, in chain order: from the truck at
+ * the loading site to the truck offloading, the two interruptions included.
+ * Tracking runs, and a plan is billed, from the moment a load enters this set.
+ * Exported here rather than from the domain because the db package cannot
+ * import the domain; `movement_driver_phone_idx` below spells the same list.
+ */
+export const MOVEMENT_IN_PROGRESS_STATUSES = [
+    "at-loading",
+    "loading",
+    "waiting-documents",
+    "on-route",
+    "stopped",
+    "issue",
+    "at-border",
+    "at-offloading",
+    "offloading",
+] as const satisfies readonly MovementStatus[];
 
 /**
  * One load a portal tenant is responsible for, with no Appload order behind
@@ -86,6 +117,10 @@ export const movement = pgTable(
             .references(() => organization.id),
         execution: text("execution", { enum: MOVEMENT_EXECUTION }).default("own-fleet").notNull(),
         status: text("status", { enum: MOVEMENT_STATUS }).default("procurement").notNull(),
+        // Where a stopped load, or one with an issue, goes back to: written
+        // when the load is interrupted, kept across stopped ↔ issue, cleared
+        // by any move that is not an interruption
+        resumeStatus: text("resume_status", { enum: MOVEMENT_STATUS }),
 
         // --- who it is for: the sell side ------------------------------------
         // An organization when the client is on the platform or was registered
@@ -184,15 +219,18 @@ export const movement = pgTable(
     },
     (table) => [
         index("movement_organization_status_idx").on(table.organizationId, table.status),
-        // The executor's inbox: what has been offered to this company
+        // What has been offered to this company, and every load it executes
         index("movement_carrier_status_idx").on(table.carrierOrgId, table.status),
         index("movement_client_status_idx").on(table.clientOrgId, table.status),
-        // The tracking cron's working set: who is on the road with nobody
+        // The tracking cron's working set: loads in progress with nobody
         // downstream reporting for them. The link clause is the whole reason a
-        // subcontracted driver is asked once instead of once per company
+        // subcontracted driver is asked once instead of once per company. The
+        // status list is typed out, never built from
+        // MOVEMENT_IN_PROGRESS_STATUSES: drizzle-kit would write an
+        // interpolated list into the migration as $1..$9 placeholders
         index("movement_driver_phone_idx")
             .on(table.driverPhone)
-            .where(sql`${table.status} = 'in-transit' and ${table.executionMovementId} is null`),
+            .where(sql`status in ('at-loading','loading','waiting-documents','on-route','stopped','issue','at-border','at-offloading','offloading') and execution_movement_id is null`),
         // One executor movement answers at most one order: without this a
         // partner could point two of my orders at the same truck
         uniqueIndex("movement_execution_uidx")
@@ -444,8 +482,8 @@ export type CreateMovementCost = typeof movementCost.$inferInsert;
 /**
  * What a paper attached to a load is. "loading-photo" is the odd one out: it
  * is not paperwork but the warehouse's own record of what went on the truck,
- * taken at loading and approved by somebody who answers for the load before
- * it leaves (see `approvedAt` below).
+ * taken at the loading site and approved by somebody who answers for the
+ * load before loading starts (see `approvedAt` below).
  */
 export const MOVEMENT_DOCUMENT_TYPE = [
     "pod",
@@ -490,7 +528,7 @@ export const movementDocument = pgTable(
         uploadedBy: text("uploaded_by").references(() => user.id, { onDelete: "set null" }),
         // Who validated a loading photo, and when. Null on everything else and
         // on a photo nobody has looked at yet — which is what raises
-        // PHOTOS_UNAPPROVED on a load about to leave (status.ts)
+        // PHOTOS_UNAPPROVED on a load past the loading site (status.ts)
         approvedAt: timestamp("approved_at"),
         approvedBy: text("approved_by").references(() => user.id, { onDelete: "set null" }),
         deletedAt: timestamp("deleted_at"),
@@ -513,6 +551,7 @@ export const MOVEMENT_EVENT_KIND = [
     "document",
     "note",
     "system",
+    "dispute",
 ] as const;
 export type MovementEventKind = (typeof MOVEMENT_EVENT_KIND)[number];
 
@@ -550,3 +589,88 @@ export const movementEvent = pgTable(
 
 export type MovementEvent = typeof movementEvent.$inferSelect;
 export type CreateMovementEvent = typeof movementEvent.$inferInsert;
+
+/** Where a dispute on a load stands. */
+export const MOVEMENT_DISPUTE_STATUS = ["open", "resolved"] as const;
+export type MovementDisputeStatus = (typeof MOVEMENT_DISPUTE_STATUS)[number];
+
+/**
+ * A dispute on a portal load — theft, loss, damage or anything else that puts
+ * what happened to the cargo in question. Not a status, the same idea as
+ * `order_dispute`: the load keeps its own status while the dispute is open,
+ * and it cannot be closed until the company that opened it resolves it.
+ *
+ * `movementId` is the row it was opened on. The rows it covers are in
+ * `movement_dispute_row`, because a subcontract chain is one load in several
+ * companies' books. `restrict` on the movement, like every row that is
+ * evidence of how a load was run.
+ */
+export const movementDispute = pgTable(
+    "movement_dispute",
+    {
+        id: text("id")
+            .primaryKey()
+            .$defaultFn(() => crypto.randomUUID()),
+        movementId: text("movement_id")
+            .notNull()
+            .references(() => movement.id, { onDelete: "restrict" }),
+        // The company that opened it, and the only one that may resolve it
+        openedByOrgId: text("opened_by_org_id")
+            .notNull()
+            .references(() => organization.id),
+        openedBy: text("opened_by").references(() => user.id, { onDelete: "set null" }),
+        // Every company holding a movement role on a covered row the moment it
+        // was opened — who is told, then and again at resolve time. Pinned
+        // rather than re-read, so a carrier that arrives in a later offer
+        // round is never told about a dispute it is not allowed to read
+        partyOrgIds: text("party_org_ids").array().notNull().default([]),
+        reason: text("reason", { enum: DISPUTE_REASON }).notNull(),
+        // Shown verbatim to every company on a covered row
+        description: text("description").notNull(),
+        status: text("status", { enum: MOVEMENT_DISPUTE_STATUS }).default("open").notNull(),
+        resolution: text("resolution"),
+        resolvedBy: text("resolved_by").references(() => user.id, { onDelete: "set null" }),
+        openedAt: timestamp("opened_at").defaultNow().notNull(),
+        resolvedAt: timestamp("resolved_at"),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+        updatedAt: timestamp("updated_at")
+            .defaultNow()
+            .$onUpdate(() => /* @__PURE__ */ new Date())
+            .notNull(),
+    },
+    (table) => [index("movement_dispute_movement_idx").on(table.movementId)],
+);
+
+export type MovementDispute = typeof movementDispute.$inferSelect;
+export type CreateMovementDispute = typeof movementDispute.$inferInsert;
+
+/**
+ * The rows one dispute covers: the row it was opened on and every row linked
+ * to it up and down the subcontract chain that no other dispute holds yet,
+ * pinned when it was opened — a back-out that later unlinks a parent leaves
+ * them as they are.
+ *
+ * `open` repeats the dispute's status on each row so the partial unique index
+ * can say "one open dispute per row". A second open on the row it is opened on
+ * is a unique violation rather than a race, which matters because neon-http
+ * has no transactions to check-then-insert in.
+ */
+export const movementDisputeRow = pgTable(
+    "movement_dispute_row",
+    {
+        disputeId: text("dispute_id")
+            .notNull()
+            .references(() => movementDispute.id, { onDelete: "cascade" }),
+        movementId: text("movement_id")
+            .notNull()
+            .references(() => movement.id, { onDelete: "restrict" }),
+        open: boolean("open").default(true).notNull(),
+    },
+    (table) => [
+        primaryKey({ columns: [table.disputeId, table.movementId] }),
+        uniqueIndex("movement_dispute_row_open_uidx").on(table.movementId).where(sql`${table.open}`),
+    ],
+);
+
+export type MovementDisputeRow = typeof movementDisputeRow.$inferSelect;
+export type CreateMovementDisputeRow = typeof movementDisputeRow.$inferInsert;

@@ -59,7 +59,7 @@ export function LoadHeader({
 
                     <div className="flex flex-wrap items-center gap-2.5">
                         <h1 className="font-heading truncate text-2xl font-semibold tracking-tight">{load.ref}</h1>
-                        <MovementStatusChip status={load.status} execution={load.execution} />
+                        <MovementStatusChip status={load.status} />
                         {load.role === "owner" ? <ExecutionChip execution={load.execution} /> : <RoleChip role={load.role} />}
                         {/* How much of the load is still to be filled in; the cards below say what */}
                         {load.flags.length > 0 && (

@@ -27,19 +27,19 @@ const VEHICLE_TABLE = { truck, trailer, link } as const;
 
 /**
  * The loads the company's own Orders and Trips pages list: its own rows, the
- * ones a partner moves for it, and the offers waiting in its inbox.
+ * ones a partner moves for it, and the offers waiting on its answer (which
+ * Trips lists with its own).
  *
  * `visibleMovements` is the wider gate — it also holds the counterpart row of
  * every linked load, which is how the client can read the trip its partner
  * runs — but searching it would answer one load twice, once from each side.
- * The three section predicates are the same rows the lists de-duplicate to,
- * and each is a strict subset of `visibleMovements`, so nothing is widened.
+ * The two lists' predicates are the same rows the lists de-duplicate to, and
+ * each is a strict subset of `visibleMovements`, so nothing is widened.
  */
 const searchableLoads = (tenantId: string): SQL =>
     or(
         sectionPredicate("orders", "all", tenantId),
         sectionPredicate("trips", "all", tenantId),
-        sectionPredicate("orders", "inbox", tenantId),
     ) as SQL;
 
 /**

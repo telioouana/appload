@@ -75,6 +75,8 @@ export type EditInput = {
     hasParent: boolean;
     /** Partner execution only */
     executorOnPortal: boolean;
+    /** A dispute covering this row holds its books open (disputes.ts) */
+    disputeOpen: boolean;
 };
 
 export function editableGroups(row: EditInput): EditableGroup[] {
@@ -86,7 +88,11 @@ export function editableGroups(row: EditInput): EditableGroup[] {
     const offerInFlight = row.status === "offered";
 
     if (!agreed && !offerInFlight) groups.push("details");
-    if (!row.hasParent) groups.push("client");
+    // The client a dispute was opened by, or told about, is the client it
+    // stays with: swapping it would leave whoever raised it off the load, with
+    // nobody able to reach the dispute and settle it, and a load nobody can
+    // close
+    if (!row.hasParent && !row.disputeOpen) groups.push("client");
     if (!row.hasParent && !offerInFlight) groups.push("sellAmounts");
 
     // A partner that joined the portal after its load had already left is
@@ -98,7 +104,7 @@ export function editableGroups(row: EditInput): EditableGroup[] {
         // change only while nobody has been asked; off it, the owner is the
         // only one who can record that a price was renegotiated
         const open = asksPartner
-            ? row.status === "procurement" || row.status === "declined"
+            ? row.status === "procurement" || row.status === "prospect" || row.status === "declined"
             : !row.linked;
 
         if (open && !offerInFlight) groups.push("buy");

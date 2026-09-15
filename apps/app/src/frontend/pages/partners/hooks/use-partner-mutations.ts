@@ -37,10 +37,10 @@ export const partnerErrorCode = (error: unknown): PartnerErrorCode =>
     domainErrorCode(error, PARTNER_ERROR_CODES, "UNKNOWN")
 
 /**
- * The four connection mutations the list, the requests tab and the profile
+ * The four connection mutations the list, the requests list and the profile
  * panel share. Each refreshes every partners query on success: answering a
- * request moves a row between tabs and changes two of the three tiles, so
- * the counts and the lists have to refetch together.
+ * request moves a row between lists and changes the tiles and the pill
+ * counts, so the counts and the lists have to refetch together.
  */
 export function usePartnerMutations() {
     const t = useTranslations("App.partners")

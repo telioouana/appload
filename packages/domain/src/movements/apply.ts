@@ -25,6 +25,7 @@ import { and, eq, sql } from "drizzle-orm";
 import type { db as Database } from "@workspace/db/db";
 import {
     movement,
+    movementDisputeRow,
     movementEvent,
     type Movement,
     type MovementEventKind,
@@ -36,7 +37,16 @@ import { unapprovedPhotos } from "@workspace/domain/movements/documents";
 import { legSettled } from "@workspace/domain/movements/money";
 import { isOnPortal, MAX_HOPS, organizationName, parentMovement } from "@workspace/domain/movements/link";
 import { movementRef } from "@workspace/domain/movements/refs";
-import { isTerminal, movementFlags, ownerTargets, transitionBlocker, upstreamStatus } from "@workspace/domain/movements/status";
+import {
+    entersInProgress,
+    isInProgress,
+    isInterrupt,
+    isTerminal,
+    movementFlags,
+    ownerTargets,
+    transitionBlocker,
+    upstreamStatus,
+} from "@workspace/domain/movements/status";
 import { notify } from "@workspace/domain/notifications";
 import { assertTrackingAllowance, recordTrackingUsage } from "@workspace/domain/subscription";
 import { place } from "@workspace/domain/tracking/slot";
@@ -72,22 +82,48 @@ export async function recordEvent(
     });
 }
 
-/** What a status stamps on the row besides itself. */
-export function statusStamps(to: MovementStatus, now: Date): Partial<typeof movement.$inferInsert> {
+/**
+ * What a move stamps on the row besides its status, read against the row as it
+ * was before the move (null on create).
+ */
+export function statusStamps(
+    prev: { status: MovementStatus; startedAt: Date | null; resumeStatus: MovementStatus | null } | null,
+    to: MovementStatus,
+    now: Date,
+): Partial<typeof movement.$inferInsert> {
+    const stamps: Partial<typeof movement.$inferInsert> = {};
+
+    // The day the truck first reached the load, once: a resume after a stop
+    // is the same load carrying on, not a new start
+    if (entersInProgress(prev?.status ?? null, to) && !prev?.startedAt) {
+        stamps.startedAt = now;
+    }
+
+    // An interruption remembers the stage it interrupted, and keeps it when a
+    // stop turns out to be an issue or the other way round; any other move
+    // leaves nothing to resume
+    if (!isInterrupt(to)) {
+        stamps.resumeStatus = null;
+    } else if (prev && !isInterrupt(prev.status)) {
+        stamps.resumeStatus = prev.status;
+    }
+
     switch (to) {
-        case "in-transit": return { startedAt: now };
         // A truck that arrived, or a load that will never leave, has nothing
         // left to report — the cron stops asking the moment this is written
-        case "delivered": return { deliveredAt: now, trackingEnabled: false };
-        case "cancelled": return { trackingEnabled: false };
-        case "closed": return { closedAt: now };
-        default: return {};
+        case "delivered": return { ...stamps, deliveredAt: now, trackingEnabled: false };
+        case "cancelled": return { ...stamps, trackingEnabled: false };
+        case "closed": return { ...stamps, closedAt: now };
+        default: return stamps;
     }
 }
 
-/** The notification a status is, when it is one anybody else hears about. */
+/**
+ * The notification a status is, when it is one anybody else hears about.
+ * Starting is not a status but a move — into progress from outside it — so
+ * announce decides that one itself.
+ */
 const KIND_FOR: Partial<Record<MovementStatus, NotificationKind>> = {
-    "in-transit": "movement.started",
     "delivered": "movement.delivered",
     "cancelled": "movement.cancelled",
     "declined": "movement.declined",
@@ -107,13 +143,17 @@ const EMAIL_KINDS: readonly NotificationKind[] = ["movement.cancelled", "movemen
  * Tells the other companies on a load that it moved. The client of the row,
  * when there is one and it did not do this itself; the owner, when the move
  * came from below; the executor, when an offer in front of it was called off.
+ *
+ * `from` is the status the row left (null on create): the load started only
+ * when it entered progress from outside, so a resume after a stop, or a step
+ * along the truck's chain, tells nobody anything.
  */
 export async function announce(
     db: Db,
     row: Movement,
-    opts: { actorOrgId: string | null; notifyOwner: boolean; notifyExecutor: boolean },
+    opts: { from: MovementStatus | null; actorOrgId: string | null; notifyOwner: boolean; notifyExecutor: boolean },
 ): Promise<void> {
-    const kind = KIND_FOR[row.status];
+    const kind = entersInProgress(opts.from, row.status) ? "movement.started" : KIND_FOR[row.status];
     if (!kind) return;
 
     // An executor's own row names the company that placed the order as its
@@ -193,6 +233,8 @@ export async function transitionMovement(
     const targets = ownerTargets({
         execution: row.execution,
         status: row.status,
+        route: row.route,
+        resumeStatus: row.resumeStatus,
         linked: row.executionMovementId !== null,
         executorOnPortal,
     });
@@ -201,10 +243,19 @@ export async function transitionMovement(
         throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATUS" });
     }
 
+    // Read off the rows the dispute pinned when it was opened, so a dispute
+    // opened anywhere on the chain holds this row's books open too
+    const [disputed] = await db
+        .select({ disputeId: movementDisputeRow.disputeId })
+        .from(movementDisputeRow)
+        .where(and(eq(movementDisputeRow.movementId, row.id), eq(movementDisputeRow.open, true)))
+        .limit(1);
+
     const guards = {
         ...row,
         sellSettled: legSettled(row.sellTotal, row.sellSettlement),
         buySettled: row.execution === "own-fleet" || legSettled(row.buyTotal, row.buySettlement),
+        disputeOpen: Boolean(disputed),
     };
 
     const blocker = transitionBlocker(guards, input.to, input.note);
@@ -225,8 +276,12 @@ export async function transitionMovement(
     );
 
     // Starting a truck is what a plan pays for, checked before anything is
-    // written so a refusal never leaves a half-started load behind
-    if (input.to === "in-transit") {
+    // written so a refusal never leaves a half-started load behind. Only the
+    // start is charged: a load already in progress, stopped or not, stays
+    // movable when the month runs out under it
+    const starts = entersInProgress(row.status, input.to);
+
+    if (starts) {
         await assertTrackingAllowance(db, actor.organizationId);
     }
 
@@ -249,7 +304,7 @@ export async function transitionMovement(
         ...(flags.length > 0 && { metadata: { flags: flags.join(",") } }),
     });
 
-    if (input.to === "in-transit") {
+    if (starts) {
         await recordTrackingUsage(db, {
             organizationIds: [actor.organizationId],
             entityType: "movement",
@@ -258,6 +313,7 @@ export async function transitionMovement(
     }
 
     await announce(db, updated, {
+        from: row.status,
         actorOrgId: actor.organizationId,
         notifyOwner: false,
         // An offer in front of a partner was taken off the table
@@ -278,9 +334,9 @@ export async function transitionMovement(
 
 /**
  * Carries a row's milestone to the order it executes, and on up the chain.
- * No allowance is asserted on the way: the truck is already rolling, and a
- * load must stay movable when some company's month runs out under it — each
- * row above is still billed once, as it passes into transit, because each
+ * No allowance is asserted on the way: the truck is already on the load, and
+ * a load must stay movable when some company's month runs out under it — each
+ * row above is still billed once, as it enters progress, because each
  * company is separately having a truck watched on its behalf.
  */
 export async function propagateUp(db: Db, child: Movement, now: Date, hop = 0): Promise<void> {
@@ -300,9 +356,12 @@ export async function propagateUp(db: Db, child: Movement, now: Date, hop = 0): 
         .set({
             status: next.status,
             version: sql`${movement.version} + 1`,
-            ...statusStamps(next.status, now),
-            // The executor backed out before leaving: the load goes back to
-            // its owner to place again, which needs the link released
+            ...statusStamps(parent, next.status, now),
+            // Where the truck resumes is the truck's, and the truck is below
+            resumeStatus: child.resumeStatus,
+            // The executor backed out before its truck reached the loading
+            // site: the load goes back to its owner to place again, which
+            // needs the link released
             ...(next.unlink && { executionMovementId: null, respondedAt: now }),
         })
         .where(and(
@@ -326,7 +385,7 @@ export async function propagateUp(db: Db, child: Movement, now: Date, hop = 0): 
         note: next.unlink ? "EXECUTOR_WITHDREW" : null,
     });
 
-    if (next.status === "in-transit") {
+    if (entersInProgress(parent.status, next.status)) {
         await recordTrackingUsage(db, {
             organizationIds: [parent.organizationId],
             entityType: "movement",
@@ -334,7 +393,12 @@ export async function propagateUp(db: Db, child: Movement, now: Date, hop = 0): 
         });
     }
 
-    await announce(db, moved, { actorOrgId: child.organizationId, notifyOwner: true, notifyExecutor: false });
+    await announce(db, moved, {
+        from: parent.status,
+        actorOrgId: child.organizationId,
+        notifyOwner: true,
+        notifyExecutor: false,
+    });
 
     if (!next.unlink) await propagateUp(db, moved, now, hop + 1);
 }
@@ -349,7 +413,7 @@ async function moveOne(
 ): Promise<Movement> {
     const [updated] = await db
         .update(movement)
-        .set({ status: to, version: sql`${movement.version} + 1`, ...statusStamps(to, now) })
+        .set({ status: to, version: sql`${movement.version} + 1`, ...statusStamps(row, to, now) })
         .where(and(eq(movement.id, row.id), eq(movement.version, expectedVersion)))
         .returning();
 
@@ -363,10 +427,10 @@ async function moveOne(
  *
  * Done as two separate writes, an owner calling the load off and the
  * executor starting its truck in the same moment could each win their own
- * row: the order cancelled, its client told so, and a truck on the road for
- * it. Here the executor's row is locked first and only cancelled — together
- * with the order — while it has not left. If the truck got away first,
- * nothing is written at all and the owner is told the executor departed.
+ * row: the order cancelled, its client told so, and a truck at the loading
+ * site for it. Here the executor's row is locked first and only cancelled —
+ * together with the order — while it has not started. If the truck got there
+ * first, nothing is written at all and the owner is told the executor departed.
  */
 async function cancelWithExecutor(db: Db, row: Movement, expectedVersion: number, now: Date): Promise<Movement> {
     const childId = row.executionMovementId!;
@@ -382,7 +446,7 @@ async function cancelWithExecutor(db: Db, row: Movement, expectedVersion: number
               and exists (
                   select 1 from ${movement} as ${below}
                   where ${below}.id = ${childId}
-                    and ${below}.status in ('procurement', 'offered', 'declined', 'scheduled', 'booked')
+                    and ${below}.status in ('procurement', 'prospect', 'offered', 'declined', 'scheduled', 'booked')
                   for update
               )
             returning id
@@ -398,7 +462,7 @@ async function cancelWithExecutor(db: Db, row: Movement, expectedVersion: number
     if (!result.rows[0]?.parent_id) {
         const [child] = await db.select({ status: movement.status }).from(movement).where(eq(movement.id, childId)).limit(1);
 
-        if (child && (child.status === "in-transit" || child.status === "delivered")) {
+        if (child && (isInProgress(child.status) || child.status === "delivered")) {
             throw new TRPCError({ code: "PRECONDITION_FAILED", message: "EXECUTOR_DEPARTED" });
         }
 
@@ -444,7 +508,7 @@ async function executorCancelled(db: Db, parent: Movement, childId: string, now:
 
 /**
  * Calls off the rows further below, when the executor had itself handed the
- * load on. Only rows that have not left: a truck already on the road has
+ * load on. Only rows that have not started: a truck already on the load has
  * decided the question for its own row.
  */
 async function cancelDown(db: Db, parent: Movement, now: Date, hop = 0): Promise<void> {
@@ -456,11 +520,11 @@ async function cancelDown(db: Db, parent: Movement, now: Date, hop = 0): Promise
         .where(eq(movement.id, parent.executionMovementId))
         .limit(1);
 
-    if (!child || isTerminal(child.status) || child.status === "in-transit" || child.status === "delivered") return;
+    if (!child || isTerminal(child.status) || isInProgress(child.status) || child.status === "delivered") return;
 
     const [moved] = await db
         .update(movement)
-        .set({ status: "cancelled", version: sql`${movement.version} + 1`, ...statusStamps("cancelled", now) })
+        .set({ status: "cancelled", version: sql`${movement.version} + 1`, ...statusStamps(child, "cancelled", now) })
         .where(and(eq(movement.id, child.id), eq(movement.status, child.status)))
         .returning();
 

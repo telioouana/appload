@@ -8,7 +8,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import { Scroller } from "@workspace/ui/customs/list/scroller"
 
 import { Link } from "@/i18n/navigation"
-import { sectionsOf, type MovementScope, type MovementSection, type MovementStats } from "@/frontend/pages/movements/types"
+import { sectionsOf, type MovementScope, type MovementSection, type MovementStats, type MovementStatus } from "@/frontend/pages/movements/types"
 
 /** The typed link to one section of one of the two lists. */
 export const sectionHref = (scope: MovementScope, section: MovementSection) =>
@@ -72,8 +72,10 @@ export function SectionLinks({
 
 export type SectionTile = {
     section: MovementSection
-    /** The silent-drivers tile: the on-the-road section, narrowed to who has not answered today */
+    /** The silent-drivers tile: the in-progress section, narrowed to who has not answered today */
     silent?: true
+    /** A tile for one status tab of the section, opened with that tab selected */
+    status?: MovementStatus
     label: string
     value: number
     hint?: string
@@ -82,13 +84,17 @@ export type SectionTile = {
 
 /**
  * The work queue above the table. A section IS the filter on these pages, so
- * each tile is a link to one, and the count it shows is the count the page
- * it opens will hold — both read the same stats.
+ * each tile is a link to one — or to one status tab of one — and the count it
+ * shows is the count the page it opens will hold, both read from the same
+ * stats. The one exception is the transporter's offers tile, which counts the
+ * offers it must answer and opens on a tab that lists its own quotes too: a
+ * tile may open on more than it counted, never on less.
  */
 export function SectionTiles({
     scope,
     section,
     silent,
+    status,
     tiles,
 }: {
     scope: MovementScope
@@ -96,17 +102,20 @@ export function SectionTiles({
     section: MovementSection
     /** Whether the silent filter is on, which the silent tile also depends on */
     silent: boolean
+    /** The status tab on screen, which a status tile also depends on */
+    status: string | null
     tiles: SectionTile[]
 }) {
     return (
-        <div className="grid grid-cols-2 gap-3 px-2 xl:grid-cols-4">
+        <div className={cn("grid grid-cols-2 gap-3 px-2", tiles.length > 4 ? "xl:grid-cols-5" : "xl:grid-cols-4")}>
             {tiles.map((tile) => {
-                const active = tile.section === section && Boolean(tile.silent) === silent
+                const active = tile.section === section && Boolean(tile.silent) === silent && (tile.status ?? null) === status
+                const query = { ...(tile.silent && { silent: "1" }), ...(tile.status && { status: tile.status }) }
 
                 return (
                     <Link
-                        key={`${tile.section}${tile.silent ? "-silent" : ""}`}
-                        href={{ ...sectionHref(scope, tile.section), query: tile.silent ? { silent: "1" } : undefined }}
+                        key={`${tile.section}${tile.silent ? "-silent" : ""}${tile.status ? `-${tile.status}` : ""}`}
+                        href={{ ...sectionHref(scope, tile.section), query: Object.keys(query).length > 0 ? query : undefined }}
                         aria-current={active ? "page" : undefined}
                         className={cn(
                             "bg-card ring-foreground/5 flex items-center gap-3 rounded-2xl px-4 py-3 text-left ring-1 transition-colors",

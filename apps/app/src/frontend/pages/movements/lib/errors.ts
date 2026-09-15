@@ -27,10 +27,15 @@ export const MOVEMENT_ERROR_KEYS = {
     TRUCK_NOT_REGISTERED: "rigNotRegistered",
     TRAILER_NOT_REGISTERED: "rigNotRegistered",
     LINK_NOT_REGISTERED: "rigNotRegistered",
-    // The two moves that cannot be taken at all (status.ts). Everything else
-    // a load lacks is a flag the user may proceed past, not an error
+    // The moves that cannot be taken at all (status.ts). Everything else a
+    // load lacks is a flag the user may proceed past, not an error
     NOTE_REQUIRED: "noteRequired",
+    DISPUTE_OPEN: "disputeOpen",
     UNSETTLED: "unsettled",
+    // A dispute already holds the load somewhere on its chain, or the load
+    // is not one a dispute can be opened on (disputes.ts)
+    DISPUTE_EXISTS: "disputeExists",
+    DISPUTE_INVALID_LOAD: "disputeInvalidLoad",
     // What an offer to a partner on the portal still insists on (offer.ts),
     // and what asking a driver where they are needs (requestLocation)
     NO_CARRIER: "noCarrier",

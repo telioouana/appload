@@ -33,6 +33,8 @@ export const NOTIFICATION_KIND = [
     "movement.withdrawn",
     "movement.location-alert",
     "movement.document",
+    "movement.dispute-opened",
+    "movement.dispute-resolved",
     "subscription.changed",
 ] as const;
 

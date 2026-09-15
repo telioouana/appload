@@ -81,8 +81,7 @@ export function NewQuoteSheet({ open, onOpenChange }: { open: boolean; onOpenCha
     // it again server-side
     const { data: clients, isPending: loadingClients } = useQuery({
         ...trpc.partners.list.queryOptions({
-            relation: "client-carrier",
-            status: "accepted",
+            kind: "clients",
             sort: "partner",
             dir: "asc",
             page: 1,

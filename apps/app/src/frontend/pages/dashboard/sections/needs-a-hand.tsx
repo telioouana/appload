@@ -93,7 +93,8 @@ export function NeedsAHand() {
     const partners = useQuery({ ...trpc.partners.stats.queryOptions(), staleTime: 60_000 })
 
     // The company's own lists' counts, the tiles above read the same; the
-    // turned-down loads are a slice of procurement only the rail counts
+    // offers waiting on an answer and the turned-down loads are the rail's
+    // counts, the same numbers its badges show
     const { data: ownOrders } = useSuspenseQuery(trpc.movements.stats.queryOptions({ scope: "orders" }))
     const { data: ownTrips } = useSuspenseQuery(trpc.movements.stats.queryOptions({ scope: "trips" }))
     const rail = useQuery({ ...trpc.me.railCounts.queryOptions(), staleTime: 60_000 })
@@ -150,8 +151,8 @@ export function NeedsAHand() {
             key: "offered",
             Icon: IconInbox,
             label: t("queue.offered"),
-            count: ownOrders.inbox,
-            href: { pathname: "/orders/[section]", params: { section: "inbox" } },
+            count: rail.isError ? 0 : rail.data?.received,
+            href: { pathname: "/trips/[section]", params: { section: "planning" }, query: { status: "prospect" } },
             tone: "warn",
         },
         {
@@ -159,7 +160,7 @@ export function NeedsAHand() {
             Icon: IconRepeat,
             label: t("queue.declined"),
             count: rail.isError ? 0 : rail.data?.declined,
-            href: { pathname: "/orders/[section]", params: { section: "procurement" } },
+            href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { status: "declined" } },
             tone: "warn",
         },
         {
@@ -167,14 +168,14 @@ export function NeedsAHand() {
             Icon: IconMapPinExclamation,
             label: t("queue.silent-trips"),
             count: ownTrips.silent,
-            href: { pathname: "/trips/[section]", params: { section: "in-transit" }, query: { silent: "1" } },
+            href: { pathname: "/trips/[section]", params: { section: "in-progress" }, query: { silent: "1" } },
         },
         {
             key: "silent-orders",
             Icon: IconMapPinExclamation,
             label: t("queue.silent-orders"),
             count: ownOrders.silent,
-            href: { pathname: "/orders/[section]", params: { section: "in-transit" }, query: { silent: "1" } },
+            href: { pathname: "/orders/[section]", params: { section: "in-progress" }, query: { silent: "1" } },
         },
     ]
 
@@ -188,7 +189,7 @@ export function NeedsAHand() {
             // A count that failed to arrive is treated as nothing to do: the
             // row drops out rather than pulsing forever
             count: partners.isError ? 0 : partners.data?.incoming,
-            href: { pathname: "/partners", query: { tab: "requests" } },
+            href: { pathname: "/partners/[kind]", params: { kind: "requests" } },
             tone: "warn",
         },
     ]

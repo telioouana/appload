@@ -6,8 +6,8 @@ import "server-only";
  * One question so far: how many loading photos are still waiting for
  * somebody to validate them. The warehouse keeper at the client photographs
  * what goes on the truck and the manager who answers for the load approves
- * each one before it leaves; a truck that leaves with photos nobody looked at
- * still leaves (PHOTOS_UNAPPROVED is a flag, never a blocker — see
+ * each one before loading starts; a truck that loads with photos nobody
+ * looked at still loads (PHOTOS_UNAPPROVED is a flag, never a blocker — see
  * status.ts), and this is the number that raises it.
  *
  * It lives here rather than in status.ts because it is a read, and status.ts

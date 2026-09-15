@@ -10,24 +10,36 @@ export const CONNECTION_DIRECTIONS = ["incoming", "outgoing"] as const;
 export type ConnectionDirection = (typeof CONNECTION_DIRECTIONS)[number];
 
 /**
- * The page's tabs. A shipper only ever connects to carriers, so it has one
- * list; a carrier has two, because the same connection table holds both the
- * clients it works for and the carriers it subcontracts to.
- *
- * "clients" and "transporters" are the same filter seen from either side
- * (relation `client-carrier`, accepted), which is what lets the URL parser
- * below resolve a missing `tab` without knowing the organization's type.
+ * The page's lists, one route each (`/partners/[kind]`). A shipper only ever
+ * connects to carriers, so it has one list of partners; a carrier has two,
+ * because the same connection table holds both the clients it works for and
+ * the carriers it subcontracts to. The segment is the same English slug in
+ * both locales.
  */
-export const PARTNER_TABS = ["clients", "transporters", "subcontractors", "requests"] as const;
-export type PartnerTab = (typeof PARTNER_TABS)[number];
+export const PARTNER_LIST_KINDS = ["clients", "transporters", "requests"] as const;
+export type PartnerListKind = (typeof PARTNER_LIST_KINDS)[number];
 
-/** The tabs an organization type has; the first is what an absent `tab` means. */
-export const tabsFor = (orgType: OrgType): PartnerTab[] =>
-    orgType === "carrier" ? ["clients", "subcontractors", "requests"] : ["transporters", "requests"];
+/** The lists an organization type has; the first is where `/partners` lands. */
+export const kindsFor = (orgType: OrgType): PartnerListKind[] =>
+    orgType === "carrier" ? ["clients", "transporters", "requests"] : ["transporters", "requests"];
 
-/** What a tab is a list of; "requests" is both relations, so it has none. */
-export const relationForTab = (tab: PartnerTab): ConnectionRelation | undefined =>
-    tab === "requests" ? undefined : tab === "subcontractors" ? "subcontract" : "client-carrier";
+/** The list a route segment names, or null for anything else. */
+export const kindFromSlug = (slug: string): PartnerListKind | null =>
+    (PARTNER_LIST_KINDS as readonly string[]).includes(slug) ? (slug as PartnerListKind) : null;
+
+/**
+ * What a list holds, seen from `orgType`: a carrier's transporters are the
+ * carriers it subcontracts, a shipper's are its `client-carrier` partners.
+ * "requests" is both relations, so it has none.
+ */
+export const relationForKind = (orgType: OrgType, kind: PartnerListKind): ConnectionRelation | undefined =>
+    kind === "requests" ? undefined
+        : kind === "transporters" && orgType === "carrier" ? "subcontract"
+            : "client-carrier";
+
+/** The list an accepted connection belongs to, seen from `orgType`. */
+export const kindForRelation = (orgType: OrgType, relation: ConnectionRelation): PartnerListKind =>
+    relation === "client-carrier" && orgType === "carrier" ? "clients" : "transporters";
 
 /** The counterpart's organization type for a relation, seen from `orgType`. */
 export const counterpartType = (orgType: OrgType, relation: ConnectionRelation): OrgType =>
@@ -37,12 +49,14 @@ export const counterpartType = (orgType: OrgType, relation: ConnectionRelation):
  * What the other company is to this one, in one word. The same relation
  * reads differently from each side — a `client-carrier` row is a client to
  * the carrier and a transporter to the shipper — so every label the page
- * shows is chosen from the tenant's own point of view.
+ * shows is chosen from the tenant's own point of view. A carrier's
+ * subcontractors are transporters too: the word names what the company is,
+ * and the list it sits in already says how the two work together.
  */
-export type PartnerKind = "client" | "transporter" | "subcontractor";
+export type PartnerKind = "client" | "transporter";
 
 export const partnerKind = (orgType: OrgType, relation: ConnectionRelation): PartnerKind =>
-    relation === "subcontract" ? "subcontractor" : orgType === "carrier" ? "client" : "transporter";
+    kindForRelation(orgType, relation) === "clients" ? "client" : "transporter";
 
 /** Which relations this organization type may ask for. */
 export const relationsFor = (orgType: OrgType): ConnectionRelation[] =>
@@ -85,7 +99,7 @@ export type PartnerRow = {
     relation: ConnectionRelation;
     status: ConnectionStatus;
     direction: ConnectionDirection;
-    /** The note the requester attached, shown on the requests tab */
+    /** The note the requester attached, shown on the requests list */
     message: string | null;
     respondedAt: Date | null;
     createdAt: Date;
@@ -114,6 +128,13 @@ export type PartnerStats = {
     incoming: number;
     /** Pending requests this tenant sent */
     outgoing: number;
+};
+
+/** How many rows a list holds, from the stats — what its pill and the header count show. */
+export const countForKind = (orgType: OrgType, kind: PartnerListKind, stats: PartnerStats): number => {
+    const relation = relationForKind(orgType, kind);
+
+    return relation ? stats.accepted[relation] : stats.incoming + stats.outgoing;
 };
 
 /**
@@ -161,9 +182,10 @@ export type PartnerProfile = {
 };
 
 // ---------------------------------------------------------------------------
-// URL parsing. The URL is the state store: the tabs and the table write these
-// params, the data view reads them, and the RSC prefetch builds the same input
-// from the same parser so the first page hydrates instead of refetching.
+// URL parsing. The URL is the state store: the route names the list, the
+// tiles and the table write these params, the data view reads them, and the
+// RSC prefetch builds the same input from the same parser so the first page
+// hydrates instead of refetching.
 // ---------------------------------------------------------------------------
 
 type Get = (key: string) => string | null;
@@ -186,40 +208,22 @@ const parseDir = (value: string | null): SortDir => (value === "desc" ? "desc" :
 const text = (value: string | null): string | undefined => value?.trim() || undefined;
 
 /**
- * The tab the params ask for, without knowing the organization type: an
- * unknown or absent `tab` is the client-carrier list, which is the default
- * for both types. A `direction` tile always means the requests tab.
+ * The list query for one kind. The server resolves the relation and the
+ * connection status from the kind and the tenant's type, so the URL only
+ * carries what narrows the list; `direction` is a slice of the requests and
+ * means nothing on the other lists.
  */
-const parseTab = (get: Get): PartnerTab => {
-    if (get("direction")) return "requests";
-
-    return oneOf(get("tab"), PARTNER_TABS) ?? "clients";
-};
-
-export const partnersListInput = (get: Get) => {
-    const tab = parseTab(get);
-
-    return {
-        relation: relationForTab(tab),
-        status: (tab === "requests" ? "pending" : "accepted") as ConnectionStatus,
-        direction: tab === "requests" ? oneOf(get("direction"), CONNECTION_DIRECTIONS) : undefined,
-        query: text(get("search")),
-        sort: oneOf(get("sort"), PARTNER_SORTS),
-        dir: parseDir(get("dir")),
-        page: parsePage(get("page")),
-        pageSize: parsePageSize(get("size")),
-    };
-};
+export const partnersListInput = (kind: PartnerListKind, get: Get) => ({
+    kind,
+    direction: kind === "requests" ? oneOf(get("direction"), CONNECTION_DIRECTIONS) : undefined,
+    query: text(get("search")),
+    sort: oneOf(get("sort"), PARTNER_SORTS),
+    dir: parseDir(get("dir")),
+    page: parsePage(get("page")),
+    pageSize: parsePageSize(get("size")),
+});
 
 export type PartnersListInput = ReturnType<typeof partnersListInput>;
 
-/** The tab to highlight, which needs the organization's own type. */
-export const currentTab = (get: Get, orgType: OrgType): PartnerTab => {
-    const tabs = tabsFor(orgType);
-    const asked = parseTab(get);
-
-    return tabs.includes(asked) ? asked : (tabs[0] as PartnerTab);
-};
-
-/** Whether anything narrows the list beyond its tab. */
+/** Whether anything narrows the list beyond its kind. */
 export const isFilteredList = (get: Get) => Boolean(get("search") || get("direction"));

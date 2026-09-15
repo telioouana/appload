@@ -8,8 +8,8 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
 
-import { LaneCell, LastPingCell, LoadDate, Money, MovementStatusChip, RoleChip } from "@/frontend/pages/movements/components/badges"
-import type { MovementRow, MovementScope, OrgType } from "@/frontend/pages/movements/types"
+import { InDisputeChip, LaneCell, LastPingCell, LoadDate, Money, MovementStatusChip, RoleChip } from "@/frontend/pages/movements/components/badges"
+import { isInProgress, type MovementRow, type MovementScope, type OrgType } from "@/frontend/pages/movements/types"
 
 /**
  * Who else is on a row, from where the reader stands: the partner moving a
@@ -50,11 +50,13 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                 id: "status",
                 header: t("columns.status"),
                 enableHiding: false,
-                size: 170,
+                // Room for the in-dispute chip beside the status
+                size: 210,
                 meta: { label: t("columns.status") },
                 cell: ({ row }) => (
                     <span className="flex min-w-0 items-center gap-1.5">
-                        <MovementStatusChip status={row.original.status} execution={row.original.execution} />
+                        <MovementStatusChip status={row.original.status} />
+                        {row.original.inDispute && <InDisputeChip />}
                         <RoleChip role={row.original.role} />
                     </span>
                 ),
@@ -109,7 +111,8 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                         return <LoadDate value={deliveredAt} empty={t("values.no-date")} />
                     }
 
-                    const left = status === "in-transit" ? startedAt : expectedLoadingDate
+                    // A load in progress shows when its truck reached the loading site
+                    const left = isInProgress(status) ? startedAt : expectedLoadingDate
 
                     return (
                         <div className="flex min-w-0 flex-col gap-0.5">

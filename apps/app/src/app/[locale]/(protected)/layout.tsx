@@ -70,7 +70,7 @@ export default async function Layout({
             </SidebarInset>
 
             {/* ⌘K search, one instance for the whole portal */}
-            <CommandPalette />
+            <CommandPalette orgType={tenant.orgType} />
         </SidebarProvider>
     )
 }
