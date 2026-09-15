@@ -57,6 +57,7 @@ import type {
     MovementRow,
     MovementScope,
     MovementSection,
+    OrgType,
 } from "@/frontend/pages/movements/types";
 
 /**
@@ -225,7 +226,10 @@ export const inDispute = (): SQL =>
         )}
     )`;
 
-/** One section of one list. Unknown sections read as "all" of the list. */
+/**
+ * One section of one tab's list — the same seven sections on either tab,
+ * each read against that tab's base. Unknown sections read as "all".
+ */
 export function sectionPredicate(scope: MovementScope, section: MovementSection, tenantId: string): SQL {
     if (scope === "orders") {
         const base = orderBase(tenantId);
@@ -244,13 +248,15 @@ export function sectionPredicate(scope: MovementScope, section: MovementSection,
     const base = tripBase(tenantId);
 
     switch (section) {
-        // An offer waiting on this company's answer is planning too, until it
-        // is answered — a yes becomes a row of its own in `base`
-        case "planning": return or(
+        // An offer waiting on this company's answer is procurement too, until
+        // it is answered — a yes becomes a row of its own in `base`. A truck
+        // of one's own is never offered or declined, so its procurement is
+        // the draft, the quote and the agreement
+        case "procurement": return or(
             and(base, inArray(movement.status, ["procurement", "prospect", "scheduled"])),
             received(tenantId),
         ) as SQL;
-        case "scheduled": return and(base, eq(movement.status, "booked")) as SQL;
+        case "booked": return and(base, eq(movement.status, "booked")) as SQL;
         case "in-progress": return and(base, inArray(movement.status, IN_PROGRESS_STATUSES)) as SQL;
         case "delivered": return and(base, eq(movement.status, "delivered")) as SQL;
         case "disputes": return and(base, inDispute()) as SQL;
@@ -646,6 +652,8 @@ type DetailExtras = {
     /** Every dispute covering the row, newest first */
     disputes: readonly DisputeRow[];
     orgRole: OrgRole;
+    /** What kind of company is reading: a transporter's own trucks come from its clients' orders */
+    orgType: OrgType;
 };
 
 export function toMovementDetail(row: Movement, role: MovementRole, extras: DetailExtras): MovementDetail {
@@ -923,9 +931,13 @@ function permissionsFor(
             && (row.status === "procurement" || row.status === "declined") && can("order", "create"),
         canWithdraw: row.status === "offered" && can("order", "update"),
         canRespond: false,
+        // Taking a partner's load in-house is filing a trip of one's own,
+        // which a transporter never does by hand: its trucks are put on its
+        // clients' orders by accepting them (procedures.ts create, convert)
         canConvert: can("order", "create") && (
             partner
-                ? !linked && (row.status === "procurement" || row.status === "prospect" || row.status === "declined")
+                ? extras.orgType !== "carrier" && !linked
+                    && (row.status === "procurement" || row.status === "prospect" || row.status === "declined")
                 : row.status === "procurement" || row.status === "prospect" || row.status === "scheduled" || row.status === "booked"
         ),
         canManageCosts: !isTerminal(row.status) && can("trip", "update"),

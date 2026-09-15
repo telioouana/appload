@@ -59,9 +59,10 @@ import {
     movementsListInput,
     movementTone,
     scopeOf,
+    SECTIONS,
     sectionOf,
-    sectionsOf,
     STATUS_TABS,
+    tabOfScope,
 } from "@/frontend/pages/movements/types";
 import { partnersRouter } from "@/frontend/pages/partners/server/procedures";
 import { countForKind, kindsFor, relationForKind } from "@/frontend/pages/partners/types";
@@ -264,6 +265,48 @@ async function walk(
 }
 
 /**
+ * B's own truck on a load — the only way a transporter gets one (§3 of the
+ * tabs contract: unless the company is a client, its own trips come from its
+ * clients' orders). A files the order with B and offers it, B accepts and
+ * lands on scheduled in a row of its own, then names its rig and moves the
+ * row on to where the check wants it. Returns B's row and A's order above it.
+ */
+async function ownTrip(input: {
+    cargoDescription: string;
+    status?: "scheduled" | "booked" | "at-loading";
+    route?: "national" | "regional";
+    driverName?: string;
+    driverPhone?: string;
+    truckPlate?: string;
+}): Promise<{ id: string; order: string }> {
+    const a = as(A.user);
+    const b = as(B.user);
+    const { cargoDescription, status = "scheduled", route, ...rig } = input;
+
+    const order = await a.create({
+        execution: "partner", carrierOrgId: B.org, origin, destination, route, cargoDescription,
+        buy: { total: 1000, currency: "MZN" },
+    });
+    created.push(order.id);
+    const placed = await a.get({ id: order.id });
+    const offered = await a.offer({ id: order.id, expectedVersion: placed.version });
+    const accepted = await b.respond({ id: order.id, expectedVersion: offered.version, decision: "accept" });
+    created.push(accepted.id);
+
+    if (Object.values(rig).some(Boolean)) {
+        const { version } = await b.get({ id: accepted.id });
+        await b.update({ id: accepted.id, expectedVersion: version, ...rig });
+    }
+
+    await walk(b, accepted.id, status === "booked" ? ["booked"] : status === "at-loading" ? ["booked", "at-loading"] : []);
+
+    return { id: accepted.id, order: order.id };
+}
+
+/** The URL of a section page as `movementsListInput` reads it. */
+const query = (entries: Record<string, string>) => (key: string) => entries[key] ?? null;
+
+/**
  * Spends what is left of a company's month with usage rows that bill no load,
  * so the allowance reads zero without touching its plan. Released again by the
  * check that needed it, and by the cleanup in case that check never got there.
@@ -380,9 +423,9 @@ async function main() {
     console.log("\n— A offers it");
     const offered = await a.offer({ id: filed.id, expectedVersion: aDetail.version, message: "HARNESS please confirm by Friday" });
 
-    const planning = await b.list({ scope: "trips", section: "planning" });
+    const planning = await b.list({ scope: "trips", section: "procurement" });
     const offeredRow = planning.items.find((row) => row.id === filed.id);
-    check("it lands in B's Trips ▸ Planning", Boolean(offeredRow), planning.items.map((row) => row.ref));
+    check("it lands in B's My trucks ▸ Procurement", Boolean(offeredRow), planning.items.map((row) => row.ref));
     check("…where B is the executor", offeredRow?.role === "executor", offeredRow?.role);
     check("…and sees who is asking", offeredRow?.owner?.id === A.org, offeredRow?.owner);
     check("…but not A's client nor any carrier", offeredRow?.client === null && offeredRow?.carrier === null, offeredRow);
@@ -605,11 +648,10 @@ async function main() {
     check("B closes its own books once paid", bOwn.status === "closed", bOwn.status);
 
     console.log("\n— and a truck that loads on a photo nobody looked at loads anyway, on the record");
-    const unseen = await b.create({
-        execution: "own-fleet", origin, destination, cargoDescription: "HARNESS unapproved photo",
-        driverName: "HARNESS Four", driverPhone: "+258840000996", truckPlate: "HAR-004-MP", status: "scheduled",
+    const unseen = await ownTrip({
+        cargoDescription: "HARNESS unapproved photo",
+        driverName: "HARNESS Four", driverPhone: "+258840000996", truckPlate: "HAR-004-MP",
     });
-    created.push(unseen.id);
     await b.documents.add({ movementId: unseen.id, type: "loading-photo", url: "https://files.edgestore.dev/harness/loading-2.jpg", title: "HARNESS loading 2", mimeType: "image/jpeg" });
 
     await walk(b, unseen.id, ["at-loading"]);
@@ -649,8 +691,8 @@ async function hardening() {
     const railB = await meFor(B.user).railCounts();
     check("B's rail counts the offer as received", railB.received >= 1, railB);
 
-    const probe = await b.list({ scope: "trips", section: "planning", search: "ACME-PO" });
-    check("searching Trips ▸ Planning by A's client reference finds nothing", !probe.items.some((row) => row.id === filed.id), probe.items.map((row) => row.ref));
+    const probe = await b.list({ scope: "trips", section: "procurement", search: "ACME-PO" });
+    check("searching My trucks ▸ Procurement by A's client reference finds nothing", !probe.items.some((row) => row.id === filed.id), probe.items.map((row) => row.ref));
 
     const accepted = await b.respond({ id: filed.id, expectedVersion: offered.version, decision: "accept" });
     created.push(accepted.id);
@@ -792,8 +834,20 @@ async function hardening() {
     check("re-splitting a paid leg keeps it settled", bp.money.payable?.settlement === "completed" && bp.money.payable.settled === 3000, bp.money.payable);
     await expectError("moving a paid leg to another currency is refused", () =>
         b.update({ id: bPartner.id, expectedVersion: repriced.version, buy: { total: 150, currency: "USD" } }), "LEG_HAS_PAYMENTS");
-    await expectError("so is converting it back in-house", () =>
-        b.convert({ id: bPartner.id, expectedVersion: repriced.version, to: "own-fleet" }), "LEG_HAS_PAYMENTS");
+    await expectError("and B, a transporter, cannot take it in-house at all", () =>
+        b.convert({ id: bPartner.id, expectedVersion: repriced.version, to: "own-fleet" }), "OWN_TRIPS_COME_FROM_CLIENTS");
+
+    // The paid-leg guard on the conversion itself, on the one company that
+    // may convert: a client with trucks of its own
+    const aPartner = await a.create({
+        execution: "partner", carrierName: "HARNESS Paid Lda", origin, destination, cargoDescription: "HARNESS paid convert",
+        buy: { total: 900, currency: "MZN" },
+    });
+    created.push(aPartner.id);
+    const ap = await a.get({ id: aPartner.id });
+    const apPaid = await a.recordPayment({ id: aPartner.id, expectedVersion: ap.version, leg: "buy", amount: 900 });
+    await expectError("so is converting a paid load back in-house", () =>
+        a.convert({ id: aPartner.id, expectedVersion: apPaid.version, to: "own-fleet" }), "LEG_HAS_PAYMENTS");
     await expectError("a correction needs a reference", () =>
         b.recordPayment({ id: bPartner.id, expectedVersion: repriced.version, leg: "buy", amount: -500 }), "CORRECTION_NEEDS_REFERENCE");
     await expectError("and cannot take the leg below zero", () =>
@@ -813,8 +867,7 @@ async function hardening() {
     check("…as does the load", bareDetail.flags.join(",") === "NO_CARRIER,NO_PRICE", bareDetail.flags);
 
     console.log("\n— the two moves that still cannot be taken");
-    const rigless = await b.create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS booked", status: "scheduled" });
-    created.push(rigless.id);
+    const rigless = await ownTrip({ cargoDescription: "HARNESS booked" });
     let riglessDetail = await b.get({ id: rigless.id });
     check("a trip is scheduled with no driver at all", riglessDetail.status === "scheduled", riglessDetail.status);
     const riglessBooked = await b.transition({ id: rigless.id, to: "booked", expectedVersion: riglessDetail.version });
@@ -827,8 +880,7 @@ async function hardening() {
     check("…and goes through with one", riglessDetail.status === "cancelled", riglessDetail.status);
 
     console.log("\n— closed books stay closed");
-    const own = await b.create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS closed", driverName: "HARNESS Three", driverPhone: "+258840000997", status: "scheduled" });
-    created.push(own.id);
+    const own = await ownTrip({ cargoDescription: "HARNESS closed", driverName: "HARNESS Three", driverPhone: "+258840000997" });
     const cost = await b.costs.add({ movementId: own.id, kind: "fuel", amount: 100, currency: "MZN" });
     let o = await b.get({ id: own.id });
     const cancelled = await b.transition({ id: own.id, to: "cancelled", expectedVersion: o.version, note: "HARNESS" });
@@ -901,15 +953,11 @@ async function reviewedSlots() {
     const b = as(B.user);
 
     console.log("\n— the end-of-slot review");
-    const load = await b.create({
-        execution: "own-fleet", origin, destination, cargoDescription: "HARNESS review",
-        driverName: "HARNESS Quiet", driverPhone: "+258840000996", status: "scheduled",
-    });
-    created.push(load.id);
+    // B's truck on A's order: A, on the portal, is the client the second bad
+    // round in a row reaches
+    const load = await ownTrip({ cargoDescription: "HARNESS review", driverName: "HARNESS Quiet", driverPhone: "+258840000996" });
 
-    // On route, for a client that is on the portal — which is what lets the
-    // second bad round in a row reach A as well
-    await db.update(movement).set({ status: "on-route", clientOrgId: A.org }).where(eq(movement.id, load.id));
+    await db.update(movement).set({ status: "on-route" }).where(eq(movement.id, load.id));
 
     const quiet: SlotInfo = { slotDate: "2099-03-01", slot: "morning", minutesIntoSlot: 95 };
     const picked: SlotInfo = { slotDate: "2099-03-02", slot: "morning", minutesIntoSlot: 95 };
@@ -1025,12 +1073,8 @@ async function reviewedSlots() {
     // A second load of B's on route that nobody asked anything this slot:
     // silence nobody asked for is not the driver's, so it must be left out of
     // the review altogether
-    const unasked = await b.create({
-        execution: "own-fleet", origin, destination, cargoDescription: "HARNESS review unasked",
-        driverName: "HARNESS Unasked", driverPhone: "+258840000995", status: "scheduled",
-    });
-    created.push(unasked.id);
-    await db.update(movement).set({ status: "on-route", clientOrgId: A.org }).where(eq(movement.id, unasked.id));
+    const unasked = await ownTrip({ cargoDescription: "HARNESS review unasked", driverName: "HARNESS Unasked", driverPhone: "+258840000995" });
+    await db.update(movement).set({ status: "on-route" }).where(eq(movement.id, unasked.id));
 
     await asked(morningAfter, "sent");
     run = await reviewMovementSlot(db, morningAfter);
@@ -1049,11 +1093,7 @@ async function reviewedSlots() {
     const judged: Record<"on-route" | "at-border", string> = { "on-route": "", "at-border": "" };
 
     for (const [status, driverPhone] of [["on-route", "+258840000996"], ["at-border", "+258840000995"]] as const) {
-        const twin = await b.create({
-            execution: "own-fleet", origin, destination, cargoDescription: `HARNESS review ${status}`,
-            driverName: "HARNESS Twin", driverPhone, status: "scheduled",
-        });
-        created.push(twin.id);
+        const twin = await ownTrip({ cargoDescription: `HARNESS review ${status}`, driverName: "HARNESS Twin", driverPhone });
         judged[status] = twin.id;
 
         await db.update(movement).set({ status }).where(eq(movement.id, twin.id));
@@ -1094,11 +1134,7 @@ async function manualChain() {
     const b = as(B.user);
 
     console.log("\n— §11.1 the manual chain end to end, with its stamps");
-    const trip = await b.create({
-        execution: "own-fleet", origin, destination, cargoDescription: "HARNESS chain",
-        driverName: "HARNESS Chain", truckPlate: "HAR-011-MP", status: "booked",
-    });
-    created.push(trip.id);
+    const trip = await ownTrip({ cargoDescription: "HARNESS chain", driverName: "HARNESS Chain", truckPlate: "HAR-011-MP", status: "booked" });
 
     let detail = await b.get({ id: trip.id });
     const start = detail.permissions.transitions.find((option) => option.to === "at-loading");
@@ -1177,18 +1213,12 @@ async function quota() {
     const b = as(B.user);
 
     console.log("\n— §11.3 a spent allowance refuses a start, never a load already in progress");
-    const running = await b.create({
-        execution: "own-fleet", origin, destination, cargoDescription: "HARNESS quota running",
-        driverName: "HARNESS Quota", truckPlate: "HAR-013-MP", status: "booked",
-    });
-    created.push(running.id);
-    await walk(b, running.id, ["at-loading"]);
-
-    const waiting = await b.create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS quota waiting", status: "booked" });
-    created.push(waiting.id);
+    const running = await ownTrip({ cargoDescription: "HARNESS quota running", driverName: "HARNESS Quota", truckPlate: "HAR-013-MP", status: "at-loading" });
+    const waiting = await ownTrip({ cargoDescription: "HARNESS quota waiting", status: "booked" });
 
     try {
         await spendAllowance(B.org);
+        await spendAllowance(A.org);
         const allowance = await trackingAllowance(db, B.org);
         check("B has nothing left to start this month", allowance.remaining === 0, allowance);
 
@@ -1200,8 +1230,9 @@ async function quota() {
         const stillBooked = await b.get({ id: waiting.id });
         await expectError("…while a booked load cannot start", () =>
             b.transition({ id: waiting.id, to: "at-loading", expectedVersion: stillBooked.version }), "QUOTA_EXCEEDED");
-        await expectError("…nor one filed as already at the loading site", () =>
-            b.create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS quota filed", status: "at-loading" }), "QUOTA_EXCEEDED");
+        // Filed by A: a transporter never files a truck of its own (§3)
+        await expectError("…nor one a client files as already at the loading site", () =>
+            as(A.user).create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS quota filed", status: "at-loading" }), "QUOTA_EXCEEDED");
     } finally {
         await releaseAllowance();
     }
@@ -1407,7 +1438,7 @@ async function disputes({ order, executor }: { order: string; executor: string }
         && handedView.dispute?.id === early.id && handedView.inDispute, { status: handedView.status, dispute: handedView.dispute });
 
     const nextRound = await a.offer({ id: handed.id, expectedVersion: handedView.version });
-    const [nextView, nextList] = await Promise.all([b.get({ id: handed.id }), b.list({ scope: "trips", section: "planning", pageSize: 100 })]);
+    const [nextView, nextList] = await Promise.all([b.get({ id: handed.id }), b.list({ scope: "trips", section: "procurement", pageSize: 100 })]);
     check("the executor offered it next reads no dispute on it", nextView.role === "executor" && nextView.dispute === null && !nextView.inDispute, nextView.dispute);
     check("…nor a chip in its list", nextList.items.some((row) => row.id === handed.id && !row.inDispute), nextList.items.find((row) => row.id === handed.id));
 
@@ -1449,11 +1480,7 @@ async function tracking() {
     const phone = "+258840000997";
 
     console.log("\n— §11.5 tracking follows the load in progress, stops included");
-    const trip = await b.create({
-        execution: "own-fleet", origin, destination, cargoDescription: "HARNESS tracking",
-        driverName: "HARNESS Three", driverPhone: phone, truckPlate: "HAR-015-MP", status: "booked",
-    });
-    created.push(trip.id);
+    const trip = await ownTrip({ cargoDescription: "HARNESS tracking", driverName: "HARNESS Three", driverPhone: phone, truckPlate: "HAR-015-MP", status: "booked" });
 
     const pinFor = () => resolveMovementForConversation(db, { conversationId: "harness-no-thread", driverPhone: normalizePhone(phone) });
 
@@ -1485,12 +1512,12 @@ async function tracking() {
     check("a delivered load takes no pin", await pinFor() === null, await pinFor());
 }
 
-/** §11.7 — an offer in front of a carrier is planning work on Trips, and nothing on Orders. */
+/** §11.7 — an offer in front of a carrier is procurement work under My trucks, and nothing under its partners. */
 async function receivedOffer() {
     const a = as(A.user);
     const b = as(B.user);
 
-    console.log("\n— §11.7 an offer received is Trips planning work");
+    console.log("\n— §11.7 an offer received is My trucks procurement work");
     const order = await a.create({
         execution: "partner", carrierOrgId: B.org, origin, destination, cargoDescription: "HARNESS received",
         buy: { total: 1800, currency: "MZN" },
@@ -1499,58 +1526,116 @@ async function receivedOffer() {
     const placed = await a.get({ id: order.id });
     const offered = await a.offer({ id: order.id, expectedVersion: placed.version });
 
-    const [planning, prospect, all, orders, rail, stats] = await Promise.all([
-        b.list({ scope: "trips", section: "planning", pageSize: 100 }),
-        b.list({ scope: "trips", section: "planning", status: "prospect", pageSize: 100 }),
-        b.list({ scope: "trips", section: "all", pageSize: 100 }),
-        b.list({ scope: "orders", section: "all", pageSize: 100 }),
+    // Through the page's own parser, `?tab=own` and all, so what the URL says
+    // and what the list reads are checked together
+    const [procurement, prospect, all, orders, rail, stats, ordersStats] = await Promise.all([
+        b.list(movementsListInput("procurement", query({ tab: "own", size: "100" }), "carrier")),
+        b.list(movementsListInput("procurement", query({ tab: "own", status: "prospect", size: "100" }), "carrier")),
+        b.list(movementsListInput("all", query({ size: "100" }), "carrier")),
+        b.list(movementsListInput("all", query({ tab: "partners", size: "100" }), "carrier")),
         meFor(B.user).railCounts(),
         b.stats({ scope: "trips" }),
+        b.stats({ scope: "orders" }),
     ]);
     const has = (list: { items: { id: string }[] }) => list.items.some((row) => row.id === order.id);
-    check("B's Trips ▸ Planning lists it, under Prospect", has(planning) && has(prospect), { planning: has(planning), prospect: has(prospect) });
-    check("…and Trips ▸ All", has(all));
-    check("…and Orders does not", !has(orders));
+    check("B's My trucks ▸ Procurement lists it, under Prospect", has(procurement) && has(prospect), { procurement: has(procurement), prospect: has(prospect) });
+    check("…and My trucks ▸ All, which is where a transporter lands with no tab", has(all));
+    check("…and the partners tab does not", !has(orders));
     check("the rail's badge and the tile count the same offers", rail.received === stats.received && stats.received >= 1, { rail: rail.received, stats: stats.received });
+    check("…and the rail's Procurement badge is the offers received plus the loads declined",
+        rail.received + rail.declined === stats.received + (ordersStats.byStatus.declined ?? 0),
+        { rail, received: stats.received, declined: ordersStats.byStatus.declined });
 
     const waiting = await b.get({ id: order.id });
-    check("B's way back to it is Trips ▸ Planning", scopeOf(waiting) === "trips" && sectionOf(waiting) === "planning", { scope: scopeOf(waiting), section: sectionOf(waiting) });
+    check("B's way back to it is /orders/procurement?tab=own", scopeOf(waiting) === "trips" && sectionOf(waiting) === "procurement" && tabOfScope(scopeOf(waiting)) === "own",
+        { scope: scopeOf(waiting), section: sectionOf(waiting) });
 
     await b.respond({ id: order.id, expectedVersion: offered.version, decision: "decline", note: "HARNESS fully booked" });
     const declined = await b.get({ id: order.id });
-    check("…and once declined, Trips ▸ All", scopeOf(declined) === "trips" && sectionOf(declined) === "all", { scope: scopeOf(declined), section: sectionOf(declined) });
+    check("…and once declined, /orders/all?tab=own", scopeOf(declined) === "trips" && sectionOf(declined) === "all", { scope: scopeOf(declined), section: sectionOf(declined) });
 }
 
 /**
- * §11.8 — one row in each status each list can hold, written straight to the
- * status column, then every section read once: each row must sit in exactly
- * the section sectionOf names. Then every tab's list against its count.
+ * §3 of the tabs contract — unless the company is a client, its own trucks
+ * come only from its clients' orders: a transporter files no trip of its own
+ * and takes none in-house, while a client with trucks still does both.
+ */
+async function ownTrucksFromClients() {
+    const a = as(A.user);
+    const b = as(B.user);
+
+    console.log("\n— §3 a transporter's own trucks come from its clients' orders");
+    await expectError("B, a transporter, cannot file a trip of its own", () =>
+        b.create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS own trip" }), "OWN_TRIPS_COME_FROM_CLIENTS");
+    await expectError("…not even one already at the loading site", () =>
+        b.create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS own trip", status: "at-loading" }), "OWN_TRIPS_COME_FROM_CLIENTS");
+
+    const bDraft = await b.create({ execution: "partner", carrierName: "HARNESS Sub Lda", origin, destination, cargoDescription: "HARNESS own convert" });
+    created.push(bDraft.id);
+    const bDraftView = await b.get({ id: bDraft.id });
+    check("…nor is it offered to take a partner's load in-house", !bDraftView.permissions.canConvert, bDraftView.permissions);
+    await expectError("…and the door refuses that too", () =>
+        b.convert({ id: bDraft.id, expectedVersion: bDraftView.version, to: "own-fleet" }), "OWN_TRIPS_COME_FROM_CLIENTS");
+
+    const aTrip = await a.create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS client's own truck" });
+    created.push(aTrip.id);
+    const aTripView = await a.get({ id: aTrip.id });
+    check("A, a client, still files a truck of its own", aTrip.ref.startsWith("TRP-") && aTripView.execution === "own-fleet" && aTripView.role === "owner", aTrip);
+    check("…under My trucks ▸ Procurement", scopeOf(aTripView) === "trips" && sectionOf(aTripView) === "procurement", { scope: scopeOf(aTripView), section: sectionOf(aTripView) });
+    check("…and may hand it to a partner", aTripView.permissions.canConvert, aTripView.permissions);
+
+    const aDraft = await a.create({ execution: "partner", carrierName: "HARNESS Sub Lda", origin, destination, cargoDescription: "HARNESS client convert" });
+    created.push(aDraft.id);
+    const aDraftView = await a.get({ id: aDraft.id });
+    check("…and take a partner's load in-house", aDraftView.permissions.canConvert, aDraftView.permissions);
+    const taken = await a.convert({ id: aDraft.id, expectedVersion: aDraftView.version, to: "own-fleet" });
+    check("…which the door allows", taken.ref.startsWith("TRP-"), taken);
+
+    const accepted = await ownTrip({ cargoDescription: "HARNESS accepted back link" });
+    const acceptedView = await b.get({ id: accepted.id });
+    check("a load B accepted is its own truck, confirmed, under My trucks ▸ Procurement", acceptedView.execution === "own-fleet" && acceptedView.status === "scheduled"
+        && sectionOf(acceptedView) === "procurement" && tabOfScope(scopeOf(acceptedView)) === "own", { status: acceptedView.status, section: sectionOf(acceptedView), scope: scopeOf(acceptedView) });
+    const own = await b.list(movementsListInput("procurement", query({ tab: "own", status: "scheduled", size: "100" }), "carrier"));
+    check("…listed there under Confirmed", own.items.some((row) => row.id === accepted.id), own.items.map((row) => row.ref));
+}
+
+/**
+ * §11.8 — one row in each status each tab's list can hold, written straight
+ * to the status column, then every section read once: each row must sit in
+ * exactly the section sectionOf names. Then every tab's list against its
+ * count. Each list has a tag of its own: B's trucks come from orders of A's,
+ * which must not be counted among A's fixtures.
  */
 async function sectionsAndTabs() {
     const a = as(A.user);
     const b = as(B.user);
-    const tag = "HARNESS sections";
 
     console.log("\n— §11.8 every status lands in the section sectionOf names");
-    const fixtures = async (caller: ReturnType<typeof as>, execution: "partner" | "own-fleet", statuses: readonly MovementStatus[]) =>
-        Promise.all(statuses.map(async (status) => {
-            const load = await caller.create({
-                execution, origin, destination, cargoDescription: `${tag} ${status}`,
-                ...(execution === "partner" && { carrierName: "HARNESS Off-Platform Lda" }),
-            });
-            created.push(load.id);
-            await db.update(movement).set({ status }).where(eq(movement.id, load.id));
-            return load.id;
-        }));
+    const ordersTag = "HARNESS sections orders";
+    const tripsTag = "HARNESS sections trips";
+    const orderFixtures = await Promise.all(MOVEMENT_STATUS.map(async (status) => {
+        const load = await a.create({ execution: "partner", carrierName: "HARNESS Off-Platform Lda", origin, destination, cargoDescription: `${ordersTag} ${status}` });
+        created.push(load.id);
+        await db.update(movement).set({ status }).where(eq(movement.id, load.id));
+        return load.id;
+    }));
+    // An own-fleet load is never offered or declined: nobody is asked. One at
+    // a time: each is an offer B accepts, and two accepts racing would find
+    // the same version
+    const tripFixtures: string[] = [];
+    for (const status of MOVEMENT_STATUS.filter((status) => status !== "offered" && status !== "declined")) {
+        const load = await ownTrip({ cargoDescription: `${tripsTag} ${status}` });
+        await db.update(movement).set({ status }).where(eq(movement.id, load.id));
+        tripFixtures.push(load.id);
+    }
 
     const lists = [
-        { caller: a, scope: "orders" as const, ids: await fixtures(a, "partner", MOVEMENT_STATUS) },
-        // An own-fleet load is never offered or declined: nobody is asked
-        { caller: b, scope: "trips" as const, ids: await fixtures(b, "own-fleet", MOVEMENT_STATUS.filter((status) => status !== "offered" && status !== "declined")) },
+        { caller: a, scope: "orders" as const, tag: ordersTag, ids: orderFixtures },
+        { caller: b, scope: "trips" as const, tag: tripsTag, ids: tripFixtures },
     ];
 
-    for (const { caller, scope, ids } of lists) {
-        const sections = sectionsOf(scope).filter((section) => section !== "all" && section !== "disputes");
+    for (const { caller, scope, tag, ids } of lists) {
+        const sections = SECTIONS.filter((section) => section !== "all" && section !== "disputes");
         const [rows, ...bySection] = await Promise.all([
             caller.list({ scope, section: "all", search: tag, pageSize: 100 }),
             ...sections.map((section) => caller.list({ scope, section, search: tag, pageSize: 100 })),
@@ -1567,10 +1652,10 @@ async function sectionsAndTabs() {
     console.log("\n— §11.8 every tab's list holds what its count says");
     for (const { caller, scope } of lists) {
         const stats = await caller.stats({ scope });
-        const tabbed = sectionsOf(scope).filter((section) => STATUS_TABS[section]);
+        const tabbed = SECTIONS.filter((section) => STATUS_TABS[scope][section]);
         const counted = await Promise.all(tabbed.flatMap((section) => [
             caller.list({ scope, section }).then((list) => ({ section, tab: "all", list: list.total, count: stats.bySection[section] ?? 0 })),
-            ...STATUS_TABS[section]!.map((status) => caller.list({ scope, section, status }).then((list) => ({
+            ...STATUS_TABS[scope][section]!.map((status) => caller.list({ scope, section, status }).then((list) => ({
                 section,
                 tab: status,
                 list: list.total,
@@ -1582,12 +1667,20 @@ async function sectionsAndTabs() {
         check(`${scope}: ${counted.length} tabs, each list's total equal to its count`, wrong.length === 0, wrong);
     }
 
-    const query = (entries: Record<string, string>) => (key: string) => entries[key] ?? null;
-    check("the tab param is read only where the section has that tab",
-        movementsListInput("orders", "procurement", query({ status: "declined" })).status === "declined"
-        && movementsListInput("orders", "procurement", query({ status: "all" })).status === undefined
-        && movementsListInput("orders", "procurement", query({ status: "loading" })).status === undefined
-        && movementsListInput("trips", "history", query({ status: "closed" })).status === undefined);
+    check("the status param is read only where the section, on that tab, has that tab",
+        movementsListInput("procurement", query({ tab: "partners", status: "declined" }), "carrier").status === "declined"
+        && movementsListInput("procurement", query({ tab: "own", status: "declined" }), "carrier").status === undefined
+        && movementsListInput("procurement", query({ tab: "partners", status: "all" }), "carrier").status === undefined
+        && movementsListInput("procurement", query({ tab: "partners", status: "loading" }), "carrier").status === undefined
+        && movementsListInput("history", query({ tab: "own", status: "closed" }), "carrier").status === undefined);
+    check("the tab param picks the list, whatever the company",
+        movementsListInput("all", query({ tab: "partners" }), "carrier").scope === "orders"
+        && movementsListInput("all", query({ tab: "own" }), "shipper").scope === "trips");
+    check("with no tab, a transporter lands on its own trucks and a client on its transporters",
+        movementsListInput("all", query({}), "carrier").scope === "trips"
+        && movementsListInput("all", query({ tab: "trips" }), "carrier").scope === "trips"
+        && movementsListInput("all", query({}), "shipper").scope === "orders"
+        && movementsListInput("procurement", query({ status: "declined" }), "shipper").status === "declined");
 }
 
 /**
@@ -1598,11 +1691,7 @@ async function photosAtLoading() {
     const b = as(B.user);
 
     console.log("\n— §11.10 an unapproved photo is a gap from loading on, not before");
-    const trip = await b.create({
-        execution: "own-fleet", origin, destination, cargoDescription: "HARNESS photo stage",
-        driverName: "HARNESS Photo", truckPlate: "HAR-010-MP", status: "booked",
-    });
-    created.push(trip.id);
+    const trip = await ownTrip({ cargoDescription: "HARNESS photo stage", driverName: "HARNESS Photo", truckPlate: "HAR-010-MP", status: "booked" });
     await b.documents.add({ movementId: trip.id, type: "loading-photo", url: "https://files.edgestore.dev/harness/loading-3.jpg", title: "HARNESS loading 3", mimeType: "image/jpeg" });
 
     const photoFlag = (options: { to: MovementStatus; flags: string[] }[], to: MovementStatus) =>
@@ -1679,6 +1768,7 @@ migratedData()
     .then(disputes)
     .then(tracking)
     .then(receivedOffer)
+    .then(ownTrucksFromClients)
     .then(sectionsAndTabs)
     .then(photosAtLoading)
     .then(partnerLists)

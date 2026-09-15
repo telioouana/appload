@@ -43,22 +43,35 @@ export type RouteType = (typeof ROUTE_TYPE)[number];
 export type WeightUnit = (typeof WEIGHT_UNIT)[number];
 
 // ---------------------------------------------------------------------------
-// The two lists. One table, two pages: Orders is every load somebody else
-// moves for this company — the ones it placed with a partner, and the ones a
-// transporter on the portal filed naming it as the client. Trips is every
-// load its own fleet moves, plus the loads partners have offered it.
+// One list, two tabs. One table, one page: the Orders page shows every load
+// this company is on, cut by a tab. "My trucks" (scope `trips`) is every
+// load its own fleet moves, plus the loads partners have offered it; the
+// partners tab (scope `orders`) is every load somebody else moves for it —
+// the ones it placed with a partner, and the ones a transporter on the
+// portal filed naming it as the client. The scope names stay internal: the
+// URL says `?tab=own | partners`.
 // ---------------------------------------------------------------------------
 
 export const MOVEMENT_SCOPES = ["orders", "trips"] as const;
 export type MovementScope = (typeof MOVEMENT_SCOPES)[number];
 
-export const ORDER_SECTIONS = ["all", "procurement", "booked", "in-progress", "delivered", "disputes", "history"] as const;
-export type OrderSection = (typeof ORDER_SECTIONS)[number];
+export const MOVEMENT_TABS = ["own", "partners"] as const;
+export type MovementTab = (typeof MOVEMENT_TABS)[number];
 
-export const TRIP_SECTIONS = ["all", "planning", "scheduled", "in-progress", "delivered", "disputes", "history"] as const;
-export type TripSection = (typeof TRIP_SECTIONS)[number];
+/**
+ * Where a bare `/orders/<section>` lands: a transporter on its own trucks, a
+ * client on the transporters moving for it. The one place the default is
+ * decided — the layout's redirect, the server prefetch and the client query
+ * all ask here.
+ */
+export const defaultTab = (orgType: OrgType): MovementTab => (orgType === "carrier" ? "own" : "partners");
 
-export type MovementSection = OrderSection | TripSection;
+export const scopeOfTab = (tab: MovementTab): MovementScope => (tab === "partners" ? "orders" : "trips");
+export const tabOfScope = (scope: MovementScope): MovementTab => (scope === "orders" ? "partners" : "own");
+
+/** The sections, the same seven on either tab. */
+export const SECTIONS = ["all", "procurement", "booked", "in-progress", "delivered", "disputes", "history"] as const;
+export type MovementSection = (typeof SECTIONS)[number];
 
 /**
  * A truck on the load, from the loading site to offloading, in chain order.
@@ -82,15 +95,22 @@ export const isInProgress = (status: MovementStatus): boolean =>
     (IN_PROGRESS_STATUSES as readonly MovementStatus[]).includes(status);
 
 /**
- * The statuses a section's tabs narrow it to, in tab order, after the "all"
- * tab (which is no param at all). "prospect" stands for prospect and offered
- * both — the same wait for an answer, asked by hand or through the portal —
- * and the list reads it that way. A section with no entry has no tabs.
+ * The statuses a section's tabs narrow it to, per scope, in tab order, after
+ * the "all" tab (which is no param at all). "prospect" stands for prospect
+ * and offered both — the same wait for an answer, asked by hand or through
+ * the portal — and the list reads it that way. Only a partner can turn a
+ * load down, so Declined is a tab on the partners side alone. A section with
+ * no entry has no tabs.
  */
-export const STATUS_TABS: Partial<Record<MovementSection, readonly MovementStatus[]>> = {
-    procurement: ["procurement", "prospect", "scheduled", "declined"],
-    planning: ["procurement", "prospect", "scheduled"],
-    "in-progress": IN_PROGRESS_STATUSES,
+export const STATUS_TABS: Record<MovementScope, Partial<Record<MovementSection, readonly MovementStatus[]>>> = {
+    orders: {
+        procurement: ["procurement", "prospect", "scheduled", "declined"],
+        "in-progress": IN_PROGRESS_STATUSES,
+    },
+    trips: {
+        procurement: ["procurement", "prospect", "scheduled"],
+        "in-progress": IN_PROGRESS_STATUSES,
+    },
 };
 
 /**
@@ -389,17 +409,17 @@ export type MovementStats = {
     bySection: Partial<Record<MovementSection, number>>;
     /** Every status across the whole list, behind the tabs inside a section */
     byStatus: Partial<Record<MovementStatus, number>>;
-    /** Trips only: loads partners have offered this company, awaiting its answer */
+    /** My trucks only: loads partners have offered this company, awaiting its answer */
     received: number;
     /** In progress, asked for a position today, and silent since midnight */
     silent: number;
 };
 
 // ---------------------------------------------------------------------------
-// The list pages. The section is the route segment, never a query param, so
-// a shared link opens the list the sender meant; everything else the table
-// can be cut by lives in the query string, and the same parser feeds the
-// server prefetch and the client query so the first page hydrates.
+// The list page. The section is the route segment, never a query param, so
+// a shared link opens the list the sender meant; the tab and everything else
+// the table can be cut by live in the query string, and the same parser
+// feeds the server prefetch and the client query so the first page hydrates.
 // ---------------------------------------------------------------------------
 
 export type OrgType = "carrier" | "shipper";
@@ -410,15 +430,12 @@ export const DEFAULT_SORT: MovementSort = "newest";
 export const DEFAULT_DIR: SortDir = "desc";
 export const DEFAULT_PAGE_SIZE = 25;
 
-export const sectionsOf = (scope: MovementScope): readonly MovementSection[] =>
-    scope === "orders" ? ORDER_SECTIONS : TRIP_SECTIONS;
+/** Whether a URL segment is a section of the list. */
+export const isSection = (value: string | undefined): value is MovementSection =>
+    value !== undefined && (SECTIONS as readonly string[]).includes(value);
 
-/** Whether a URL segment is a section of this list. */
-export const isScopeSection = (scope: MovementScope, value: string | undefined): value is MovementSection =>
-    value !== undefined && (sectionsOf(scope) as readonly string[]).includes(value);
-
-/** Where `/orders` and `/trips` land: everything, newest first. */
-export const DEFAULT_SECTION = "all" as const satisfies OrderSection & TripSection;
+/** Where `/orders` lands: everything, newest first. */
+export const DEFAULT_SECTION = "all" as const satisfies MovementSection;
 
 type Get = (key: string) => string | null;
 
@@ -435,20 +452,28 @@ const parsePageSize = (value: string | null): number => {
     return (PAGE_SIZES as readonly number[]).includes(parsed) ? parsed : DEFAULT_PAGE_SIZE;
 };
 
-/** The list input for one section page; the scope and section come from the route. */
-export const movementsListInput = (scope: MovementScope, section: MovementSection, get: Get) => ({
-    scope,
-    section,
-    /** A tab inside the section; "all", or a status that is not one of its tabs, is no filter */
-    status: oneOf(get("status"), STATUS_TABS[section] ?? []),
-    search: get("search")?.trim() || undefined,
-    /** Asked for a position today and still silent — the tile's filter */
-    silent: get("silent") === "1" ? (true as const) : undefined,
-    sort: oneOf(get("sort"), MOVEMENT_SORTS) ?? DEFAULT_SORT,
-    dir: get("dir") === "asc" ? ("asc" as const) : DEFAULT_DIR,
-    page: parsePage(get("page")),
-    pageSize: parsePageSize(get("size")),
-});
+/**
+ * The list input for one section page. The section comes from the route; the
+ * tab (`?tab=own | partners`, the company's own default when absent) says
+ * which list, and is sent on as the scope it reads.
+ */
+export const movementsListInput = (section: MovementSection, get: Get, orgType: OrgType) => {
+    const scope = scopeOfTab(oneOf(get("tab"), MOVEMENT_TABS) ?? defaultTab(orgType));
+
+    return {
+        scope,
+        section,
+        /** A status tab inside the section; "all", or a status that is not one of its tabs, is no filter */
+        status: oneOf(get("status"), STATUS_TABS[scope][section] ?? []),
+        search: get("search")?.trim() || undefined,
+        /** Asked for a position today and still silent — the tile's filter */
+        silent: get("silent") === "1" ? (true as const) : undefined,
+        sort: oneOf(get("sort"), MOVEMENT_SORTS) ?? DEFAULT_SORT,
+        dir: get("dir") === "asc" ? ("asc" as const) : DEFAULT_DIR,
+        page: parsePage(get("page")),
+        pageSize: parsePageSize(get("size")),
+    };
+};
 
 export type MovementsListInput = ReturnType<typeof movementsListInput>;
 
@@ -458,31 +483,30 @@ export const FILTER_KEYS = ["search", "status", "silent"] as const;
 export const isFilteredMovements = (get: Get) => FILTER_KEYS.some((key) => Boolean(get(key)));
 
 /**
- * Which of the two lists a load belongs to, for the caller: a load its own
- * fleet moves is a trip, and so is work a partner offered it — the truck it
+ * Which tab a load is under, for the caller: a load its own fleet moves is
+ * one of its trucks, and so is work a partner offered it — the truck it
  * answers with is its own; everything else it can see — a load it placed
- * with a partner, one somebody moves for it — is on Orders. The detail
- * page's way back is decided from this.
+ * with a partner, one somebody moves for it — is on the partners tab. The
+ * detail page's way back is decided from this.
  */
 export const scopeOf = (load: Pick<MovementRow, "execution" | "role" | "status">): MovementScope =>
     (load.execution === "own-fleet" && load.role === "owner") || load.role === "executor" ? "trips" : "orders";
 
 /**
- * The section of that list a load sits in right now; never "disputes", which
- * cuts across the statuses. An offer waiting on the caller's answer is being
- * planned; once answered, the executor works the load from its own row, and
- * the order it was offered lives in no section of its lists.
+ * The section a load sits in right now; never "disputes", which cuts across
+ * the statuses. An offer waiting on the caller's answer is procurement work
+ * on its own trucks; once answered, the executor works the load from its own
+ * row, and the order it was offered lives in no section of its list.
  */
 export function sectionOf(load: Pick<MovementRow, "execution" | "role" | "status">): MovementSection {
     const { status } = load;
-    const trips = scopeOf(load) === "trips";
 
-    if (load.role === "executor") return status === "offered" ? "planning" : "all";
+    if (load.role === "executor") return status === "offered" ? "procurement" : "all";
     if (status === "closed" || status === "cancelled") return "history";
     if (status === "delivered") return "delivered";
     if (isInProgress(status)) return "in-progress";
-    if (status === "booked") return trips ? "scheduled" : "booked";
-    if (!trips) return "procurement";
+    if (status === "booked") return "booked";
+    if (scopeOf(load) === "orders") return "procurement";
 
-    return status === "procurement" || status === "prospect" || status === "scheduled" ? "planning" : "all";
+    return status === "procurement" || status === "prospect" || status === "scheduled" ? "procurement" : "all";
 }

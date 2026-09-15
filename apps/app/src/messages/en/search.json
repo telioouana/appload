@@ -12,8 +12,9 @@
         "actions": "Actions"
     },
     "actions": {
-        "orders": "Search in orders",
-        "trips": "Search in trips",
+        "own": "Search in orders · My trucks",
+        "orders-transporters": "Search in orders · Transporters",
+        "orders-partners": "Search in orders · Partners",
         "partners": "Search in partners",
         "transporters": "Search in transporters",
         "drivers": "Search in drivers",

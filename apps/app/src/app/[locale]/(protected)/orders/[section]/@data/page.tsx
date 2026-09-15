@@ -7,5 +7,5 @@ export default function Data({
     params: Promise<{ section: string }>
     searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-    return <MovementsDataSlot scope="orders" params={params} searchParams={searchParams} />
+    return <MovementsDataSlot params={params} searchParams={searchParams} />
 }

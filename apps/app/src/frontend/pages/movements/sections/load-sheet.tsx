@@ -182,8 +182,11 @@ const routeOf = (values: Pick<LoadForm, "origin" | "destination">) =>
  *
  * What the company is decides what it is asked: a transporter says who the
  * load is for and what it charges; a shipper's loads are its own, so it is
- * asked neither. A partner on the portal names its own driver, so the rig is
- * asked only for the company's own trucks or a partner that is not on the
+ * asked neither. A transporter's own trucks are put on its clients' orders,
+ * never filed by hand, so only a shipper is asked which shape the load is —
+ * a transporter's is always an order. A partner on the portal names its own
+ * driver, so the rig is asked only for the company's own trucks or a
+ * partner that is not on the
  * portal, and a load for a partner on the portal is filed in procurement —
  * it is offered from its page, never scheduled on the partner's behalf.
  *
@@ -439,7 +442,7 @@ export function LoadSheet({
                             }}
                         >
                             <FieldGroup className="gap-7">
-                                {!editing && (
+                                {!editing && !carrier && (
                                     <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("shape.label")}>
                                         {(["own-fleet", "partner"] as const).map((value) => {
                                             const active = execution === value

@@ -20,6 +20,8 @@ export const MOVEMENT_ERROR_KEYS = {
     PARTNER_NOT_ON_PORTAL: "partnerNotOnPortal",
     NOT_A_CARRIER: "notACarrier",
     OWN_FLEET_HAS_NO_CARRIER: "ownFleetHasNoCarrier",
+    // A transporter's own trucks are put on its clients' orders, never filed by hand
+    OWN_TRIPS_COME_FROM_CLIENTS: "ownTripsComeFromClients",
     RIG_IS_THE_PARTNERS: "rigIsThePartners",
     EXECUTOR_DEPARTED: "executorDeparted",
     // The rig picked from the fleet is not this company's

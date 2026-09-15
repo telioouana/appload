@@ -1,7 +1,7 @@
 "use client"
 
 import { useSuspenseQuery } from "@tanstack/react-query"
-import { IconCalendarClock, IconCalendarCheck, IconFlagCheck, IconInbox, IconMapPinExclamation, IconSearch, IconSteeringWheel, IconTruckDelivery } from "@tabler/icons-react"
+import { IconCalendarCheck, IconFlagCheck, IconInbox, IconMapPinExclamation, IconSearch, IconTruckDelivery } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
 
@@ -13,11 +13,12 @@ import type { MovementScope, MovementSection } from "@/frontend/pages/movements/
 
 /**
  * The work queue above the table, one tile per section that needs the
- * company: on Orders, the loads it is still placing, what is booked in, what
- * is in progress and what arrived; on Trips, what is still being planned,
- * what is booked in, what is in progress and whose driver has gone quiet
- * today. A transporter's Trips open on the loads partners offered it, which
- * wait in Planning under the Prospect tab until it answers.
+ * company, for the tab on screen: on the partners side, the loads it is
+ * still placing, what is booked in, what is in progress and what arrived;
+ * on its own trucks, what is still in procurement, what is booked in, what
+ * is in progress and whose driver has gone quiet today. A transporter's own
+ * trucks open on the loads partners offered it, which wait in Procurement
+ * under the Prospect tab until it answers.
  *
  * That tile counts the offers alone, while the tab it opens also lists the
  * quotes the company set by hand on its own trips: a tile may open on more
@@ -42,10 +43,10 @@ export function MovementsStatsView({ scope, section }: { scope: MovementScope; s
         ]
         : [
             ...(session.organization.type === "carrier"
-                ? [{ section: "planning", status: "prospect", label: t("received"), value: stats.received, hint: t("received-hint"), Icon: IconInbox } satisfies SectionTile]
+                ? [{ section: "procurement", status: "prospect", label: t("received"), value: stats.received, hint: t("received-hint"), Icon: IconInbox } satisfies SectionTile]
                 : []),
-            { section: "planning", label: t("planning"), value: count("planning"), hint: t("planning-hint"), Icon: IconSteeringWheel },
-            { section: "scheduled", label: t("scheduled"), value: count("scheduled"), hint: t("scheduled-hint"), Icon: IconCalendarClock },
+            { section: "procurement", label: t("procurement"), value: count("procurement"), hint: t("procurement-hint"), Icon: IconSearch },
+            { section: "booked", label: t("booked"), value: count("booked"), hint: t("booked-own-hint"), Icon: IconCalendarCheck },
             { section: "in-progress", label: t("in-progress"), value: count("in-progress"), hint: t("in-progress-hint"), Icon: IconTruckDelivery },
             { section: "in-progress", silent: true, label: t("silent"), value: stats.silent, hint: t("silent-hint"), Icon: IconMapPinExclamation },
         ]

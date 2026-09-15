@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
-import { IconBuilding, IconPackage, IconRoute, IconSearch, IconSteeringWheel, IconTruck } from "@tabler/icons-react"
+import { IconBuilding, IconPackage, IconSearch, IconSteeringWheel, IconTruck, IconUsersGroup } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
 
@@ -19,13 +19,13 @@ import { useRouter } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
 import { SLUG_FOR_KIND, type KindSlug } from "@/frontend/pages/fleet/types"
 import { LaneCell, MovementStatusChip } from "@/frontend/pages/movements/components/badges"
+import type { MovementTab } from "@/frontend/pages/movements/types"
 import type { PartnerListKind } from "@/frontend/pages/partners/types"
 
 /** Everywhere the palette can send the reader. */
 type PaletteLink =
     | { pathname: "/orders/load/[loadId]"; params: { loadId: string } }
-    | { pathname: "/orders/[section]"; params: { section: string }; query: { search: string } }
-    | { pathname: "/trips/[section]"; params: { section: string }; query: { search: string } }
+    | { pathname: "/orders/[section]"; params: { section: string }; query: { tab: MovementTab; search: string } }
     | { pathname: "/partners/[kind]"; params: { kind: PartnerListKind }; query: { id: string } | { search: string } }
     | { pathname: "/drivers"; query: { id: string } | { search: string } }
     | { pathname: "/fleet/[kind]"; params: { kind: KindSlug }; query: { id: string } | { search: string } }
@@ -194,13 +194,15 @@ export function CommandPalette({ orgType }: { orgType: "shipper" | "carrier" }) 
                         them — the palette shows the best few, never a list */}
                     {ready && (
                         <CommandGroup heading={t("groups.actions")}>
-                            <CommandItem value="search-orders" onSelect={() => go({ pathname: "/orders/[section]", params: { section: "all" }, query: { search: term } })} className="gap-3">
+                            {/* The Orders page's two tabs: the company's own trucks,
+                                and what its partners move for it */}
+                            <CommandItem value="search-own" onSelect={() => go({ pathname: "/orders/[section]", params: { section: "all" }, query: { tab: "own", search: term } })} className="gap-3">
                                 <IconPackage className="size-4" stroke={1.5} />
-                                {t("actions.orders")}
+                                {t("actions.own")}
                             </CommandItem>
-                            <CommandItem value="search-trips" onSelect={() => go({ pathname: "/trips/[section]", params: { section: "all" }, query: { search: term } })} className="gap-3">
-                                <IconRoute className="size-4" stroke={1.5} />
-                                {t("actions.trips")}
+                            <CommandItem value="search-orders" onSelect={() => go({ pathname: "/orders/[section]", params: { section: "all" }, query: { tab: "partners", search: term } })} className="gap-3">
+                                <IconUsersGroup className="size-4" stroke={1.5} />
+                                {t(carrier ? "actions.orders-partners" : "actions.orders-transporters")}
                             </CommandItem>
                             {/* A carrier's partners are two lists, its clients and its transporters */}
                             <CommandItem value="search-partners" onSelect={() => go({ pathname: "/partners/[kind]", params: { kind: carrier ? "clients" : "transporters" }, query: { search: term } })} className="gap-3">

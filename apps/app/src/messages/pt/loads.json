@@ -1,26 +1,18 @@
 {
-    "scope": {
-        "orders": "Pedidos",
-        "trips": "Viagens"
-    },
+    "eyebrow": "Pedidos",
     "sections": {
         "all": "Tudo",
         "procurement": "Procura",
         "booked": "Agendado",
-        "planning": "Em planeamento",
-        "scheduled": "Agendadas",
         "in-progress": "Em curso",
         "delivered": "Entregues",
         "disputes": "Disputas",
         "history": "Histórico"
     },
     "titles": {
-        "all-orders": "Todos os pedidos",
-        "all-trips": "Todas as viagens",
+        "all": "Todos os pedidos",
         "procurement": "Procura",
         "booked": "Agendado",
-        "planning": "Viagens em planeamento",
-        "scheduled": "Viagens agendadas",
         "in-progress": "Em curso",
         "delivered": "Entregues",
         "disputes": "Cargas em disputa",
@@ -61,7 +53,10 @@
         "cancelled": "Cancelada"
     },
     "tabs": {
-        "all": "Todas"
+        "all": "Todas",
+        "own": "Os meus camiões",
+        "transporters": "Transportadoras",
+        "partners": "Parceiros"
     },
     "flags": {
         "NO_DRIVER": "Sem motorista",
@@ -113,10 +108,7 @@
         "procurement-hint": "Ainda por agendar",
         "booked": "Agendados",
         "booked-hint": "À espera do camião no local de carregamento",
-        "planning": "Em planeamento",
-        "planning-hint": "Ainda por agendar",
-        "scheduled": "Agendadas",
-        "scheduled-hint": "Com motorista e data definidos",
+        "booked-own-hint": "Com motorista e data definidos",
         "in-progress": "Em curso",
         "in-progress-hint": "Do local de carregamento ao descarregamento",
         "delivered": "Entregues",
@@ -137,11 +129,12 @@
     "data": {
         "empty": {
             "orders": "Ainda não há pedidos aqui",
-            "trips": "Ainda não há viagens aqui"
+            "trips": "Ainda não há nada nos seus camiões aqui"
         },
         "empty-description": {
             "orders": "Registe uma carga que um parceiro vai transportar e acompanhe-a daqui.",
-            "trips": "Registe uma carga da sua própria frota e acompanhe-a daqui."
+            "trips": "Registe uma carga dos seus próprios camiões e acompanhe-a daqui.",
+            "trips-carrier": "As cargas que os seus clientes lhe entregam no portal aparecem aqui assim que as aceitar."
         },
         "empty-disputes": "Quando uma empresa numa carga abrir uma disputa sobre ela, a carga aparece aqui até a disputa ser resolvida.",
         "no-results": "Nenhuma carga corresponde à pesquisa.",
@@ -504,7 +497,7 @@
         "edit-title": "Editar {ref}",
         "edit-description": "Os blocos que já não podem mudar aparecem bloqueados.",
         "description": {
-            "carrier": "Uma carga da sua frota, ou uma que entrega a um parceiro. Fica só na sua empresa; a Appload não a vê.",
+            "carrier": "Uma carga que entrega a um parceiro. Fica só na sua empresa; a Appload não a vê.",
             "shipper": "Uma carga que um transportador faz para si, ou uma dos seus próprios camiões. Fica só na sua empresa; a Appload não a vê."
         },
         "shape": {
@@ -692,6 +685,7 @@
         "partnerNotOnPortal": "Este parceiro não está no portal; agende a carga diretamente.",
         "notACarrier": "Só um transportador pode receber uma carga.",
         "ownFleetHasNoCarrier": "Uma viagem da própria frota não tem parceiro nem valor a pagar.",
+        "ownTripsComeFromClients": "As viagens da própria frota de uma transportadora vêm dos pedidos dos seus clientes.",
         "rigIsThePartners": "O parceiro está no portal e indica o próprio motorista e camião.",
         "executorDeparted": "O camião do transportador já está com a carga; só ele a pode cancelar agora.",
         "rigNotRegistered": "O motorista ou o camião escolhido não é da sua frota.",

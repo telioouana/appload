@@ -2,7 +2,7 @@ import { MovementsListLayout, movementsListMetadata } from "@/frontend/pages/mov
 
 type Params = { params: Promise<{ section: string }> }
 
-export const generateMetadata = (props: Params) => movementsListMetadata("orders", props)
+export const generateMetadata = (props: Params) => movementsListMetadata(props)
 
 export default function Layout({
     params,
@@ -10,5 +10,5 @@ export default function Layout({
     stats,
     data,
 }: Params & { header: React.ReactNode; stats: React.ReactNode; data: React.ReactNode }) {
-    return <MovementsListLayout scope="orders" params={params} header={header} stats={stats} data={data} />
+    return <MovementsListLayout params={params} header={header} stats={stats} data={data} />
 }

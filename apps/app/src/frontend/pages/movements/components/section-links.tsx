@@ -2,73 +2,22 @@
 
 import type { Icon } from "@tabler/icons-react"
 
-import { useTranslations } from "@workspace/i18n"
-
 import { cn } from "@workspace/ui/lib/utils"
-import { Scroller } from "@workspace/ui/customs/list/scroller"
 
 import { Link } from "@/i18n/navigation"
-import { sectionsOf, type MovementScope, type MovementSection, type MovementStats, type MovementStatus } from "@/frontend/pages/movements/types"
-
-/** The typed link to one section of one of the two lists. */
-export const sectionHref = (scope: MovementScope, section: MovementSection) =>
-    scope === "orders"
-        ? { pathname: "/orders/[section]" as const, params: { section } }
-        : { pathname: "/trips/[section]" as const, params: { section } }
+import { tabOfScope, type MovementScope, type MovementSection, type MovementStatus, type OrgType } from "@/frontend/pages/movements/types"
 
 /**
- * The sections, as tabs. They are routes rather than a URL filter — each is
- * addressable, and a shared link opens the list the sender meant — so these
- * are links, and following one starts the section clean instead of carrying
- * the previous page's search into it.
+ * What a tab is called, under `App.loads.tabs`: My trucks for everyone, and
+ * the other side named for what it is to this company — a client's partners
+ * are its transporters, a transporter's are its partners.
  */
-export function SectionLinks({
-    scope,
-    section,
-    stats,
-}: {
-    scope: MovementScope
-    section: MovementSection
-    stats: MovementStats | undefined
-}) {
-    const t = useTranslations("App.loads.sections")
+export const tabLabelKey = (scope: MovementScope, orgType: OrgType): "own" | "transporters" | "partners" =>
+    scope === "trips" ? "own" : orgType === "carrier" ? "partners" : "transporters"
 
-    return (
-        // The strip sits on the page ground rather than on a card, so the
-        // scroll fades are painted in that colour instead of the card's
-        <Scroller axis="x" className="mt-2" fadeClassName="from-background to-background/0">
-            <div role="tablist" className="flex w-max gap-0.5">
-                {sectionsOf(scope).map((value) => {
-                    const active = value === section
-                    const count = stats?.bySection[value]
-
-                    return (
-                        <Link
-                            key={value}
-                            role="tab"
-                            aria-selected={active}
-                            href={sectionHref(scope, value)}
-                            className={cn(
-                                "text-muted-foreground hover:text-foreground flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13px] whitespace-nowrap transition-colors",
-                                active && "bg-primary/10 text-primary font-medium",
-                            )}
-                        >
-                            {t(value)}
-                            {count !== undefined && (
-                                <span className={cn(
-                                    "bg-muted text-muted-foreground rounded-full px-1.5 py-px text-[11px] leading-4 tabular-nums",
-                                    active && "bg-primary/15 text-primary",
-                                )}>
-                                    {count.toLocaleString()}
-                                </span>
-                            )}
-                        </Link>
-                    )
-                })}
-            </div>
-        </Scroller>
-    )
-}
+/** The typed link to one section of the Orders page, on one of its two tabs. */
+export const sectionHref = (scope: MovementScope, section: MovementSection) =>
+    ({ pathname: "/orders/[section]" as const, params: { section }, query: { tab: tabOfScope(scope) } })
 
 export type SectionTile = {
     section: MovementSection
@@ -84,11 +33,12 @@ export type SectionTile = {
 
 /**
  * The work queue above the table. A section IS the filter on these pages, so
- * each tile is a link to one — or to one status tab of one — and the count it
- * shows is the count the page it opens will hold, both read from the same
- * stats. The one exception is the transporter's offers tile, which counts the
- * offers it must answer and opens on a tab that lists its own quotes too: a
- * tile may open on more than it counted, never on less.
+ * each tile is a link to one — or to one status tab of one — on the tab on
+ * screen, and the count it shows is the count the page it opens will hold,
+ * both read from the same stats. The one exception is the transporter's
+ * offers tile, which counts the offers it must answer and opens on a tab that
+ * lists its own quotes too: a tile may open on more than it counted, never
+ * on less.
  */
 export function SectionTiles({
     scope,
@@ -110,12 +60,15 @@ export function SectionTiles({
         <div className={cn("grid grid-cols-2 gap-3 px-2", tiles.length > 4 ? "xl:grid-cols-5" : "xl:grid-cols-4")}>
             {tiles.map((tile) => {
                 const active = tile.section === section && Boolean(tile.silent) === silent && (tile.status ?? null) === status
-                const query = { ...(tile.silent && { silent: "1" }), ...(tile.status && { status: tile.status }) }
+                const href = sectionHref(scope, tile.section)
 
                 return (
                     <Link
                         key={`${tile.section}${tile.silent ? "-silent" : ""}${tile.status ? `-${tile.status}` : ""}`}
-                        href={{ ...sectionHref(scope, tile.section), query: Object.keys(query).length > 0 ? query : undefined }}
+                        href={{
+                            ...href,
+                            query: { ...href.query, ...(tile.silent && { silent: "1" }), ...(tile.status && { status: tile.status }) },
+                        }}
                         aria-current={active ? "page" : undefined}
                         className={cn(
                             "bg-card ring-foreground/5 flex items-center gap-3 rounded-2xl px-4 py-3 text-left ring-1 transition-colors",

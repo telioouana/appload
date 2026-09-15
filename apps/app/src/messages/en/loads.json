@@ -1,26 +1,18 @@
 {
-    "scope": {
-        "orders": "Orders",
-        "trips": "Trips"
-    },
+    "eyebrow": "Orders",
     "sections": {
         "all": "All",
         "procurement": "Procurement",
         "booked": "Booked",
-        "planning": "Planning",
-        "scheduled": "Schedule",
         "in-progress": "In progress",
         "delivered": "Delivered",
         "disputes": "Disputes",
         "history": "History"
     },
     "titles": {
-        "all-orders": "All orders",
-        "all-trips": "All trips",
+        "all": "All orders",
         "procurement": "Procurement",
         "booked": "Booked",
-        "planning": "Trips being planned",
-        "scheduled": "Scheduled trips",
         "in-progress": "In progress",
         "delivered": "Delivered",
         "disputes": "Loads in dispute",
@@ -61,7 +53,10 @@
         "cancelled": "Cancelled"
     },
     "tabs": {
-        "all": "All"
+        "all": "All",
+        "own": "My trucks",
+        "transporters": "Transporters",
+        "partners": "Partners"
     },
     "flags": {
         "NO_DRIVER": "No driver",
@@ -113,10 +108,7 @@
         "procurement-hint": "Not booked in yet",
         "booked": "Booked",
         "booked-hint": "Waiting for the truck at the loading site",
-        "planning": "Planning",
-        "planning-hint": "Not booked in yet",
-        "scheduled": "Schedule",
-        "scheduled-hint": "Driver and date set",
+        "booked-own-hint": "Driver and date set",
         "in-progress": "In progress",
         "in-progress-hint": "From the loading site to offloading",
         "delivered": "Delivered",
@@ -137,11 +129,12 @@
     "data": {
         "empty": {
             "orders": "No orders here yet",
-            "trips": "No trips here yet"
+            "trips": "Nothing on your trucks here yet"
         },
         "empty-description": {
             "orders": "File a load a partner will move, and follow it from here.",
-            "trips": "File a load for your own fleet, and follow it from here."
+            "trips": "File a load for your own trucks, and follow it from here.",
+            "trips-carrier": "The loads your clients hand you on the portal show up here once you accept them."
         },
         "empty-disputes": "When a company on a load opens a dispute on it, the load shows up here until the dispute is resolved.",
         "no-results": "No load matches the search.",
@@ -504,7 +497,7 @@
         "edit-title": "Edit {ref}",
         "edit-description": "Blocks that can no longer change are locked.",
         "description": {
-            "carrier": "A load for your own fleet, or one you hand to a partner. It stays with your company; Appload does not see it.",
+            "carrier": "A load you hand to a partner. It stays with your company; Appload does not see it.",
             "shipper": "A load a transporter moves for you, or one on your own trucks. It stays with your company; Appload does not see it."
         },
         "shape": {
@@ -692,6 +685,7 @@
         "partnerNotOnPortal": "This partner is not on the portal; schedule the load directly.",
         "notACarrier": "Only a transporter can be given a load.",
         "ownFleetHasNoCarrier": "A trip on your own fleet has no partner and nothing to pay.",
+        "ownTripsComeFromClients": "A transporter's own trips come from its clients' orders.",
         "rigIsThePartners": "The partner is on the portal and names its own driver and truck.",
         "executorDeparted": "The transporter's truck is already on the load; only they can cancel it now.",
         "rigNotRegistered": "The driver or truck picked is not in your fleet.",

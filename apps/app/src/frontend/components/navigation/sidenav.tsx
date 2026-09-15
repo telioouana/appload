@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
     type Icon,
@@ -21,10 +21,9 @@ import {
     IconList,
     IconLockOpen,
     IconMap2,
+    IconMapPinOff,
     IconPlus,
-    IconRoute,
     IconSearch,
-    IconSteeringWheel,
     IconTruck,
     IconTruckDelivery,
     IconUsers,
@@ -46,7 +45,7 @@ import { UNREAD_POLL_MS } from "@/frontend/pages/notifications/types";
 import { sectionsFor } from "@/frontend/pages/orders/types";
 import { useNewLoad } from "@/frontend/pages/movements/hooks/use-new-load";
 import { NewLoadSheet } from "@/frontend/pages/movements/sections/new-load-sheet";
-import { ORDER_SECTIONS, TRIP_SECTIONS } from "@/frontend/pages/movements/types";
+import { MOVEMENT_TABS, SECTIONS, defaultTab, type MovementSection, type MovementTab } from "@/frontend/pages/movements/types";
 
 import { NavUser } from "./nav-user";
 
@@ -70,6 +69,8 @@ type NavLink = {
     path: NavHref;
     /** Rows waiting on this company behind this entry */
     badge?: number;
+    /** Of those, the ones that want to be seen first — drivers gone quiet */
+    alert?: number;
 };
 
 // A parent group, always open; the row itself is never a link. It has no path
@@ -90,30 +91,32 @@ type NavGroup = {
 
 type NavEntry = NavLink | NavGroup;
 
-function ReviewBadge({ count }: { count?: number }) {
-    if (!count) return null;
+function ReviewBadge({ count, alert }: { count?: number; alert?: number }) {
+    if (!count && !alert) return null;
 
+    // A location alert gets its own red pill beside the plain count, so the
+    // rail says "something is wrong" rather than just "something is new"
     return (
-        <span className="bg-primary text-primary-foreground ml-auto inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[11px] font-medium tabular-nums group-data-[collapsible=icon]:hidden">
-            {count > 99 ? "99+" : count}
+        <span className="ml-auto inline-flex items-center gap-1 group-data-[collapsible=icon]:hidden">
+            {alert ? (
+                <span className="bg-destructive text-destructive-foreground inline-flex h-[18px] min-w-[18px] items-center justify-center gap-0.5 rounded-full px-1.5 text-[11px] font-medium tabular-nums">
+                    <IconMapPinOff className="size-3" stroke={2} />
+                    {alert > 99 ? "99+" : alert}
+                </span>
+            ) : null}
+            {count ? (
+                <span className="bg-primary text-primary-foreground inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[11px] font-medium tabular-nums">
+                    {count > 99 ? "99+" : count}
+                </span>
+            ) : null}
         </span>
     );
 }
 
-const ORDER_ICONS: Record<(typeof ORDER_SECTIONS)[number], Icon> = {
+const ORDER_ICONS: Record<MovementSection, Icon> = {
     "all": IconList,
     "procurement": IconSearch,
     "booked": IconCalendarCheck,
-    "in-progress": IconTruckDelivery,
-    "delivered": IconChecks,
-    "disputes": IconGavel,
-    "history": IconHistory,
-};
-
-const TRIP_ICONS: Record<(typeof TRIP_SECTIONS)[number], Icon> = {
-    "all": IconList,
-    "planning": IconSteeringWheel,
-    "scheduled": IconCalendarClock,
     "in-progress": IconTruckDelivery,
     "delivered": IconChecks,
     "disputes": IconGavel,
@@ -134,9 +137,11 @@ const APPLOAD_ICONS: Record<ReturnType<typeof sectionsFor>[number], Icon> = {
  * The portal's rail, in the admin's shape: an unlabelled group for reading
  * the business, Operations for the day's work with the one button that
  * files a load, My company for who it works with and what it owns, and the
- * account menu at the foot. Both lists of loads are always open, each
- * section one click away from anywhere, and a count sits on exactly the
- * section that needs the company.
+ * account menu at the foot. The Orders group is always open, each section
+ * one click away from anywhere — the company's own trucks and its partners'
+ * are the two tabs of the page a section opens, so each row lands on the
+ * tab this company defaults to — and a count sits on exactly the section
+ * that needs the company, added up across both tabs.
  */
 export function Sidenav({
     orgType,
@@ -148,6 +153,12 @@ export function Sidenav({
     const g = useTranslations("General")
     const pathname = usePathname()
     const params = useParams<Record<string, string | string[]>>()
+    const searchParams = useSearchParams()
+    // A section row keeps the tab the reader is on — My trucks or the
+    // partners' — and only falls back to the company's default when the URL
+    // names none, so browsing one side never bounces back to the other
+    const urlTab = searchParams.get("tab")
+    const tab: MovementTab = (MOVEMENT_TABS as readonly string[]).includes(urlTab ?? "") ? (urlTab as MovementTab) : defaultTab(orgType)
     const trpc = useTRPC()
     const { setOpenMobile } = useSidebar()
 
@@ -180,6 +191,11 @@ export function Sidenav({
         { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", path: "/analytics" },
     ]
 
+    // A badge is the two tabs' counts added: a section's number is what waits
+    // there on either side, and the page it opens carries both
+    const sum = (own: number | undefined, partners: number | undefined) =>
+        own === undefined && partners === undefined ? undefined : (own ?? 0) + (partners ?? 0)
+
     const ops: NavEntry[] = [
         {
             Icon: IconBox,
@@ -188,28 +204,17 @@ export function Sidenav({
             // A load's own page belongs to no section, so the Orders group
             // owns it — the rail is never blank while one is open
             match: "/orders/load",
-            items: ORDER_SECTIONS.map((section) => ({
+            items: SECTIONS.map((section) => ({
                 Icon: ORDER_ICONS[section],
                 name: tl(section),
                 match: `/orders/${section}`,
-                path: { pathname: "/orders/[section]", params: { section } },
-                // Turned down by a partner and waiting to be placed again,
-                // or held by a dispute
-                badge: section === "procurement" ? counts?.declined : section === "disputes" ? counts?.disputes.orders : undefined,
-            })),
-        },
-        {
-            Icon: IconRoute,
-            name: t("work.trips"),
-            id: "trips",
-            items: TRIP_SECTIONS.map((section) => ({
-                Icon: TRIP_ICONS[section],
-                name: tl(section),
-                match: `/trips/${section}`,
-                path: { pathname: "/trips/[section]", params: { section } },
-                // Loads partners offered the company, waiting on its answer,
-                // or held by a dispute
-                badge: section === "planning" ? counts?.received : section === "disputes" ? counts?.disputes.trips : undefined,
+                path: { pathname: "/orders/[section]", params: { section }, query: { tab } },
+                // Offered by a partner and waiting on the company's answer
+                // (My trucks) or turned down by one and waiting to be placed
+                // again (partners), or held by a dispute on either side
+                badge: section === "procurement"
+                    ? sum(counts?.received, counts?.declined)
+                    : section === "disputes" ? sum(counts?.disputes.trips, counts?.disputes.orders) : undefined,
             })),
         },
         ...(SHOW_APPLOAD ? [{
@@ -237,7 +242,8 @@ export function Sidenav({
             name: t("work.notifications"),
             match: "/notifications",
             path: "/notifications",
-            badge: unread?.count,
+            badge: unread ? unread.count - unread.alerts : undefined,
+            alert: unread?.alerts,
         },
     ]
 
@@ -312,7 +318,7 @@ export function Sidenav({
                             <NavPending className="font-medium tracking-tight">
                                 {item.name}
                             </NavPending>
-                            <ReviewBadge count={item.badge} />
+                            <ReviewBadge count={item.badge} alert={item.alert} />
                         </Link>
                     )}
                 </SidebarMenuButton>
@@ -391,9 +397,12 @@ export function Sidenav({
                     <SidebarGroupContent>
                         <SidebarMenu className="gap-2">
                             <NewLoadSheet />
+                            {/* Always opens on a partner's load: a transporter's own
+                                trucks come from its clients' orders, and a client picks
+                                the shape inside the sheet */}
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild tooltip={t("new-load")}>
-                                    <Button onClick={() => openNewLoad(carrier ? "own-fleet" : "partner")}>
+                                    <Button onClick={() => openNewLoad("partner")}>
                                         <IconPlus />
                                         {t("new-load")}
                                     </Button>

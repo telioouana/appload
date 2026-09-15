@@ -13,7 +13,7 @@ import { useTRPC } from "@/backend/api/client"
 import { Dash, Mono } from "@workspace/ui/customs/list/table-cells"
 import { LATEST_LIMIT, latestInput, latestLoadsInput } from "@/frontend/pages/dashboard/types"
 import { MovementStatusChip, place as loadPlace, useMoney } from "@/frontend/pages/movements/components/badges"
-import type { MovementRow } from "@/frontend/pages/movements/types"
+import { defaultTab, type MovementRow } from "@/frontend/pages/movements/types"
 import { OrderStatusBadge } from "@/frontend/pages/orders/components/badges"
 import { money, place } from "@/frontend/pages/orders/lib/format"
 import type { OrderRow } from "@/frontend/pages/orders/types"
@@ -27,8 +27,8 @@ const partyOf = (row: MovementRow) =>
     row.role === "owner" ? (row.execution === "partner" ? row.carrier : row.client)?.name ?? null : row.owner?.name ?? null
 
 /**
- * The loads filed most recently, whichever list they are on: the company's
- * own orders and trips, and the orders it runs through Appload — one table,
+ * The loads filed most recently, whichever tab they are on: the company's
+ * own trucks and its partners', and the orders it runs through Appload — one table,
  * newest first, as a plain table rather than the list kit's: nothing here
  * sorts, selects or pages. A row opens the page where every decision on it
  * is taken.
@@ -41,6 +41,7 @@ export function LatestOrders() {
     const trpc = useTRPC()
     const router = useRouter()
 
+    const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
     const { data: orders } = useSuspenseQuery(trpc.movements.list.queryOptions(latestLoadsInput("orders")))
     const { data: trips } = useSuspenseQuery(trpc.movements.list.queryOptions(latestLoadsInput("trips")))
     const { data: appload } = useSuspenseQuery(trpc.orders.list.queryOptions(latestInput()))
@@ -61,8 +62,10 @@ export function LatestOrders() {
             <header className="flex items-center justify-between gap-3">
                 <h2 className="text-sm font-medium">{t("loads.latest.title")}</h2>
 
+                {/* Both tabs feed this table; "view all" opens the one the
+                    company lands on */}
                 <Link
-                    href={{ pathname: "/orders/[section]", params: { section: "all" } }}
+                    href={{ pathname: "/orders/[section]", params: { section: "all" }, query: { tab: defaultTab(session.organization.type) } }}
                     className="text-muted-foreground hover:text-foreground flex shrink-0 items-center gap-1.5 text-xs"
                 >
                     {t("view-all")}

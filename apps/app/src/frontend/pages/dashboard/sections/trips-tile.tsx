@@ -11,10 +11,10 @@ import { Link } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
 
 /**
- * The company's own fleet, in two numbers: what is in progress, and whose
+ * The company's own trucks, in two numbers: what is in progress, and whose
  * driver was asked for a position today and has not answered. Both open the
- * trips list already narrowed to exactly what they counted — the same stats
- * the list's own tiles read.
+ * My trucks tab already narrowed to exactly what they counted — the same
+ * stats the list's own tiles read.
  */
 export function TripsTile() {
     const t = useTranslations("App.dashboard")
@@ -30,14 +30,14 @@ export function TripsTile() {
             key: "in-progress",
             label: t("trips.in-progress"),
             value: inProgress,
-            query: undefined,
+            query: { tab: "own" as const },
             warn: false,
         },
         {
             key: "no-response",
             label: t("trips.no-response"),
             value: data.silent,
-            query: { silent: "1" },
+            query: { tab: "own" as const, silent: "1" },
             warn: data.silent > 0,
         },
     ]
@@ -48,7 +48,7 @@ export function TripsTile() {
                 <h2 className="text-sm font-medium">{t("trips.title")}</h2>
 
                 <Link
-                    href={{ pathname: "/trips/[section]", params: { section: "all" } }}
+                    href={{ pathname: "/orders/[section]", params: { section: "all" }, query: { tab: "own" } }}
                     className="text-muted-foreground hover:text-foreground flex shrink-0 items-center gap-1.5 text-xs"
                 >
                     {t("view-all")}
@@ -60,7 +60,7 @@ export function TripsTile() {
                 {figures.map((figure) => (
                     <Link
                         key={figure.key}
-                        href={{ pathname: "/trips/[section]", params: { section: "in-progress" }, query: figure.query }}
+                        href={{ pathname: "/orders/[section]", params: { section: "in-progress" }, query: figure.query }}
                         className="hover:bg-muted/50 flex flex-col rounded-xl px-1 py-0.5 transition-colors"
                     >
                         <span className="text-muted-foreground truncate text-xs font-medium">{figure.label}</span>

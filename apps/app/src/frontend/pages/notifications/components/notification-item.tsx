@@ -1,9 +1,10 @@
 "use client"
 
-import { IconChevronRight } from "@tabler/icons-react"
+import { IconChevronRight, IconMapPinOff } from "@tabler/icons-react"
 
 import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
 
+import { Badge } from "@workspace/ui/components/badge"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useRouter } from "@/i18n/navigation"
@@ -38,6 +39,10 @@ export function NotificationItem({
 
     const target = notificationTarget(row.entityType, row.entityId)
     const unread = row.readAt === null
+    // A driver gone quiet, too close or sending a chosen address is the one
+    // notification that must not read like the others: it carries its own
+    // red mark, unread or not
+    const alert = row.kind === "movement.location-alert"
 
     const open = () => {
         if (unread) markRead.mutate({ ids: [row.id] })
@@ -53,19 +58,25 @@ export function NotificationItem({
             onClick={open}
             className={cn(
                 "hover:bg-muted/50 focus-visible:ring-ring/50 flex w-full cursor-pointer items-start gap-3 px-4 py-3 text-left transition-colors outline-none focus-visible:ring-2",
-                unread && "bg-primary/[0.04]",
+                unread && (alert ? "bg-destructive/[0.06]" : "bg-primary/[0.04]"),
             )}
         >
             <span className="flex size-4 shrink-0 items-center justify-center pt-1">
                 {unread && (
                     <>
-                        <span className="bg-primary size-2 rounded-full" />
+                        <span className={cn("size-2 rounded-full", alert ? "bg-destructive" : "bg-primary")} />
                         <span className="sr-only">{t("unread")}</span>
                     </>
                 )}
             </span>
 
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                {alert && (
+                    <Badge variant="destructive" className="w-fit gap-1 text-[10px]">
+                        <IconMapPinOff className="size-3" stroke={2} />
+                        {t("alert-badge")}
+                    </Badge>
+                )}
                 <span className={cn("text-sm", unread && "font-medium")}>
                     {line(kindMessageKey(row.kind), icuValues(row.params))}
                 </span>

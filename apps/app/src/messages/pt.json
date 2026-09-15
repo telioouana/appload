@@ -291,7 +291,6 @@
                     "dashboard": "Painel",
                     "orders": "Pedidos",
                     "quotes": "Cotações",
-                    "trips": "Viagens",
                     "map": "Mapa",
                     "appload": "Appload",
                     "notifications": "Notificações"
@@ -371,13 +370,13 @@
                 "empty-description": "Os pedidos e as viagens aparecem aqui assim que estiverem em curso"
             },
             "trips": {
-                "title": "Frota própria",
+                "title": "Os meus camiões",
                 "in-progress": "Em curso",
                 "no-response": "Sem resposta hoje"
             },
             "loads": {
                 "appload": "Appload",
-                "planning": "Viagens por planear",
+                "planning": "Os meus camiões por planear",
                 "planning-hint": "Ainda por agendar",
                 "own-road": "Frota própria em curso",
                 "own-road-hint": "Os seus camiões com cargas em curso",

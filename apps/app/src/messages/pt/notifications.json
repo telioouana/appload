@@ -2,15 +2,6 @@
     "title": "Notificações",
     "description": "Tudo o que aconteceu à sua empresa no portal.",
     "unread": "Por ler",
-    "bell": {
-        "label": "Notificações",
-        "unread": "{count, plural, one {# notificação por ler} other {# notificações por ler}}",
-        "overflow": "{count}+"
-    },
-    "popover": {
-        "empty": "Não há nada por aqui.",
-        "view-all": "Ver todas"
-    },
     "filters": {
         "all": "Todas",
         "unread": "Por ler",
@@ -110,5 +101,6 @@
         "cta": "Abrir no portal",
         "disclaimer": "Recebeu esta mensagem porque a sua empresa usa o portal Appload.",
         "footer": "Pode acompanhar tudo no portal, a qualquer momento."
-    }
+    },
+    "alert-badge": "Alerta de localização"
 }

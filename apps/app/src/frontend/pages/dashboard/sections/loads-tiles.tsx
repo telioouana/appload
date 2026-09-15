@@ -13,11 +13,12 @@ import type { MovementSection } from "@/frontend/pages/movements/types"
  * The company's own loads at a glance, before anything Appload brokers for
  * it: what partners are waiting on it to answer (a shipper, which is never
  * offered work, sees what it has agreed with a partner and not booked in
- * yet instead), what it is still placing, what its own fleet has still to
+ * yet instead), what it is still placing, what its own trucks have still to
  * plan, and what its trucks and its partners' have in progress.
  *
- * Every number is a section of the Orders or Trips list, or one status tab
- * of one, and opens it — the same stats those lists' own tiles and tabs read.
+ * Every number is a section of the Orders page on one of its two tabs, or
+ * one status tab of one, and opens it — the same stats the page's own tiles
+ * and tabs read.
  */
 export function LoadsTiles() {
     const t = useTranslations("App.dashboard.loads")
@@ -34,15 +35,15 @@ export function LoadsTiles() {
     const row: Array<StatTileProps & { key: string }> = [
         carrier
             ? {
-                // Offers wait in Planning, under the Prospect tab, until
-                // answered — alongside the company's own hand-set quotes, so
-                // the tab may hold more than this counts
+                // Offers wait in My trucks ▸ Procurement, under the Prospect
+                // tab, until answered — alongside the company's own hand-set
+                // quotes, so the tab may hold more than this counts
                 key: "received",
                 Icon: IconInbox,
                 label: tiles("received"),
                 value: trips.received,
                 hint: tiles("received-hint"),
-                href: { pathname: "/trips/[section]", params: { section: "planning" }, query: { status: "prospect" } },
+                href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab: "own", status: "prospect" } },
             }
             : {
                 key: "confirmed",
@@ -50,7 +51,7 @@ export function LoadsTiles() {
                 label: tiles("confirmed"),
                 value: orders.byStatus.scheduled ?? 0,
                 hint: tiles("confirmed-hint"),
-                href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { status: "scheduled" } },
+                href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab: "partners", status: "scheduled" } },
             },
         {
             key: "procurement",
@@ -58,15 +59,15 @@ export function LoadsTiles() {
             label: tiles("procurement"),
             value: count(orders, "procurement"),
             hint: tiles("procurement-hint"),
-            href: { pathname: "/orders/[section]", params: { section: "procurement" } },
+            href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab: "partners" } },
         },
         {
             key: "planning",
             Icon: IconSteeringWheel,
             label: t("planning"),
-            value: count(trips, "planning"),
+            value: count(trips, "procurement"),
             hint: t("planning-hint"),
-            href: { pathname: "/trips/[section]", params: { section: "planning" } },
+            href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab: "own" } },
         },
         {
             key: "own-road",
@@ -74,7 +75,7 @@ export function LoadsTiles() {
             label: t("own-road"),
             value: count(trips, "in-progress"),
             hint: t("own-road-hint"),
-            href: { pathname: "/trips/[section]", params: { section: "in-progress" } },
+            href: { pathname: "/orders/[section]", params: { section: "in-progress" }, query: { tab: "own" } },
         },
         {
             key: "partner-road",
@@ -82,7 +83,7 @@ export function LoadsTiles() {
             label: t("partner-road"),
             value: count(orders, "in-progress"),
             hint: t("partner-road-hint"),
-            href: { pathname: "/orders/[section]", params: { section: "in-progress" } },
+            href: { pathname: "/orders/[section]", params: { section: "in-progress" }, query: { tab: "partners" } },
         },
     ]
 

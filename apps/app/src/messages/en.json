@@ -291,7 +291,6 @@
                     "dashboard": "Dashboard",
                     "orders": "Orders",
                     "quotes": "Quotes",
-                    "trips": "Trips",
                     "map": "Map",
                     "appload": "Appload",
                     "notifications": "Notifications"
@@ -371,13 +370,13 @@
                 "empty-description": "Orders and trips appear here as soon as they are in progress"
             },
             "trips": {
-                "title": "Own fleet",
+                "title": "My trucks",
                 "in-progress": "In progress",
                 "no-response": "No answer today"
             },
             "loads": {
                 "appload": "Appload",
-                "planning": "Trips to plan",
+                "planning": "My trucks to plan",
                 "planning-hint": "Not booked in yet",
                 "own-road": "Own fleet in progress",
                 "own-road-hint": "Your trucks on a load right now",

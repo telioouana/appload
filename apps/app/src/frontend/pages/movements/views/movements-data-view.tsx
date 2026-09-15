@@ -33,14 +33,18 @@ import {
 } from "@/frontend/pages/movements/types"
 
 /**
- * The list card for one section of either list. Every row opens the one
- * shared load page — a trip that is handed to a partner later keeps its
+ * The list card for one section, on one of the two tabs. Every row opens the
+ * one shared load page — a trip that is handed to a partner later keeps its
  * address.
  *
  * The sections that hold several statuses cut by status in the toolbar: a
- * fixed set of tabs, zero counts included, so a tab never appears or vanishes
- * as loads move. The nine stages of a load in progress are too many to line
- * up, so there they are a menu.
+ * fixed set of tabs per side, zero counts included, so a tab never appears or
+ * vanishes as loads move. The nine stages of a load in progress are too many
+ * to line up, so there they are a menu.
+ *
+ * An empty list offers to file a load of the shape it lists — except a
+ * transporter's own trucks, which are put on its clients' orders and never
+ * filed by hand: there the empty state only says where they come from.
  */
 export function MovementsDataView({ scope, section }: { scope: MovementScope; section: MovementSection }) {
     const t = useTranslations("App.loads")
@@ -55,8 +59,8 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
     const orgType = session.organization.type
 
     // The same builder the server prefetch used, so the first page hydrates
-    // straight into this query instead of refetching
-    const input = movementsListInput(scope, section, get)
+    // straight into this query instead of refetching; it reads the tab too
+    const input = movementsListInput(section, get, orgType)
 
     const { data } = useSuspenseQuery(trpc.movements.list.queryOptions(input))
     const { data: stats } = useSuspenseQuery(trpc.movements.stats.queryOptions({ scope }))
@@ -75,11 +79,11 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
         storageKey: `appload.portal.${scope}.columns`,
     })
 
-    // The sections are routes, so their tabs are links in the page header;
-    // the toolbar's tabs are the statuses inside the one on screen. A
-    // prospect waits on an answer whether it was asked by hand or offered on
-    // the portal, so its tab counts both
-    const statuses = STATUS_TABS[section] ?? []
+    // The sections are the rail's and the two sides are the page header's
+    // pills; the toolbar's tabs are the statuses inside the section on
+    // screen. A prospect waits on an answer whether it was asked by hand or
+    // offered on the portal, so its tab counts both
+    const statuses = STATUS_TABS[scope][section] ?? []
     const statusCount = (status: (typeof statuses)[number]) =>
         (stats.byStatus[status] ?? 0) + (status === "prospect" ? stats.byStatus.offered ?? 0 : 0)
     const tabs = statuses.length === 0 ? [] : [
@@ -90,6 +94,9 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
     const chips = get("silent") === "1"
         ? [{ key: "silent", label: t("filters.tracking"), value: t("filters.silent") }]
         : []
+
+    // A transporter's own trucks come from its clients; nobody files one
+    const ownTripsFromClients = scope === "trips" && orgType === "carrier"
 
     return (
         <ListCard>
@@ -126,9 +133,13 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
                     isFiltered={isFilteredMovements(get)}
                     empty={{
                         title: t(`data.empty.${scope}`),
-                        description: section === "disputes" ? t("data.empty-disputes") : t(`data.empty-description.${scope}`),
+                        description: section === "disputes"
+                            ? t("data.empty-disputes")
+                            : t(`data.empty-description.${ownTripsFromClients ? "trips-carrier" : scope}`),
                         filtered: t("data.no-results"),
-                        action: <Button onClick={() => openNewLoad(scope === "trips" ? "own-fleet" : "partner")}>{t(`actions.new.${scope}`)}</Button>,
+                        action: ownTripsFromClients
+                            ? undefined
+                            : <Button onClick={() => openNewLoad(scope === "trips" ? "own-fleet" : "partner")}>{t(`actions.new.${scope}`)}</Button>,
                     }}
                 />
             </div>

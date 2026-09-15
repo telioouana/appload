@@ -259,10 +259,11 @@ export const meRouter = createTRPCRouter({
 
     /**
      * The rail's badges in one small read. Each counts rows the page its
-     * entry opens will show — the offers inside Trips' planning section, the
-     * turned-down loads inside Orders' procurement section, each list's
-     * disputes, the incoming requests on Partners — so a badge never promises
-     * a row the page does not have.
+     * entry opens will show — the offers received inside My trucks ▸
+     * Procurement, the turned-down loads inside the partners tab's
+     * Procurement (the rail adds the two for its one Procurement badge),
+     * each tab's disputes (added the same way), the incoming requests on
+     * Partners — so a badge never promises a row the page does not have.
      *
      * Its own read, never the pages' stats: the rail mounts above every
      * page's hydration boundary, and a query it observed first would be

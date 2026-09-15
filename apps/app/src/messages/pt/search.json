@@ -12,8 +12,9 @@
         "actions": "Acções"
     },
     "actions": {
-        "orders": "Procurar nos pedidos",
-        "trips": "Procurar nas viagens",
+        "own": "Procurar nos pedidos · Os meus camiões",
+        "orders-transporters": "Procurar nos pedidos · Transportadoras",
+        "orders-partners": "Procurar nos pedidos · Parceiros",
         "partners": "Procurar nos parceiros",
         "transporters": "Procurar nas transportadoras",
         "drivers": "Procurar nos motoristas",

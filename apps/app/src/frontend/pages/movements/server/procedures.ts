@@ -111,15 +111,14 @@ import {
 import {
     MOVEMENT_SCOPES,
     MOVEMENT_SORTS,
-    ORDER_SECTIONS,
     PAGE_SIZES,
-    TRIP_SECTIONS,
+    SECTIONS,
     type LoadFormOptions,
     type MovementDetail,
     type MovementRow,
-    type MovementSection,
     type MovementStats,
     type MovementThreadItem,
+    type OrgType,
     type PagedResult,
 } from "@/frontend/pages/movements/types";
 
@@ -282,8 +281,9 @@ const FIELD_GROUP: Partial<Record<keyof UpdateMovementInput, EditableGroup>> = {
 };
 
 const ListInput = z.object({
+    /** Which tab's list: the page derives it from `?tab=` (types.ts movementsListInput) */
     scope: z.enum(MOVEMENT_SCOPES),
-    section: z.enum([...new Set([...ORDER_SECTIONS, ...TRIP_SECTIONS])] as [MovementSection, ...MovementSection[]]).default("all"),
+    section: z.enum(SECTIONS).default("all"),
     /** One of the section's tabs; the page's parser only ever sends those */
     status: z.enum(MOVEMENT_STATUS).optional(),
     search: z.string().trim().max(120).optional(),
@@ -392,7 +392,7 @@ function assertConfirmationUrl(url: string, movementId: string) {
     }
 }
 
-async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRole): Promise<MovementDetail> {
+async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRole, orgType: OrgType): Promise<MovementDetail> {
     const role = roleOrThrow(row, tenantId);
     const owner = role === "owner";
     const trailId = row.executionMovementId ? await terminalMovementId(db, row.id) : row.id;
@@ -435,6 +435,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
         disputes,
         unapprovedPhotos: photosWaiting,
         orgRole,
+        orgType,
     });
 }
 
@@ -539,18 +540,17 @@ export const movementsRouter = createTRPCRouter({
         }),
 
     /**
-     * The counts behind one list's sections and tabs, each of exactly the
-     * predicate its link opens — so a number always agrees with its list. The
-     * sections in one scan; the statuses in a scan of their own, grouped over
-     * the whole list, since a section and a status can share a name.
+     * The counts behind one tab's sections and status tabs, each of exactly
+     * the predicate its link opens — so a number always agrees with its list.
+     * The sections in one scan; the statuses in a scan of their own, grouped
+     * over the whole list, since a section and a status can share a name.
      */
     stats: tenantProcedure
         .input(z.object({ scope: z.enum(MOVEMENT_SCOPES) }))
         .query(async ({ ctx, input }): Promise<MovementStats> => {
             const tenantId = ctx.tenant.organizationId;
-            const sections: readonly MovementSection[] = input.scope === "orders" ? ORDER_SECTIONS : TRIP_SECTIONS;
 
-            const select = Object.fromEntries(sections.map((section) => [
+            const select = Object.fromEntries(SECTIONS.map((section) => [
                 section,
                 sql<number>`count(*) filter (where ${sectionPredicate(input.scope, section, tenantId)})::int`.mapWith(Number),
             ]));
@@ -579,7 +579,7 @@ export const movementsRouter = createTRPCRouter({
             ]);
 
             const bySection: MovementStats["bySection"] = Object.fromEntries(
-                sections.map((section) => [section, Number(row?.[section] ?? 0)]),
+                SECTIONS.map((section) => [section, Number(row?.[section] ?? 0)]),
             );
 
             return {
@@ -649,7 +649,7 @@ export const movementsRouter = createTRPCRouter({
         .input(z.object({ id: z.string().nonempty() }))
         .query(async ({ ctx, input }): Promise<MovementDetail> => {
             const { row } = await loadVisible(ctx.db, input.id, ctx.tenant.organizationId);
-            return detailOf(ctx.db, row, ctx.tenant.organizationId, ctx.tenant.role);
+            return detailOf(ctx.db, row, ctx.tenant.organizationId, ctx.tenant.role, ctx.tenant.orgType);
         }),
 
     /**
@@ -659,6 +659,10 @@ export const movementsRouter = createTRPCRouter({
      * load is missing at that status is flagged on its first trail line
      * rather than refused, and "already at the loading site" is the one that
      * spends a tracked movement.
+     *
+     * Unless the company is a client, its own trucks are only ever put on its
+     * clients' orders: a transporter's own-fleet row is created by accepting
+     * an offer (offer.ts respondToOffer), never filed by hand.
      */
     create: tenantProcedure
         .input(CreateMovementBaseSchema)
@@ -667,6 +671,10 @@ export const movementsRouter = createTRPCRouter({
             const partner = input.execution === "partner";
 
             assertCan(ctx.tenant.role, partner ? "order" : "trip", "create");
+
+            if (!partner && ctx.tenant.orgType === "carrier") {
+                throw new TRPCError({ code: "FORBIDDEN", message: "OWN_TRIPS_COME_FROM_CLIENTS" });
+            }
 
             if (!partner && (input.carrierOrgId || input.carrierName || input.buy)) {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "OWN_FLEET_HAS_NO_CARRIER" });
@@ -1040,11 +1048,21 @@ export const movementsRouter = createTRPCRouter({
             return { id: result.executorMovementId ?? result.movement.id, ref: result.executorRef };
         }),
 
-    /** Hands an own-fleet load to a partner, or takes a partner's back in-house. */
+    /**
+     * Hands an own-fleet load to a partner, or takes a partner's back
+     * in-house — the latter only for a client: a transporter's own trucks
+     * come from its clients' orders (see `create`), and the button is not
+     * drawn for it either (projection.ts canConvert).
+     */
     convert: tenantProcedure
         .input(ConvertMovementBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string; ref: string; version: number }> => {
             assertCan(ctx.tenant.role, "order", "create");
+
+            if (input.to === "own-fleet" && ctx.tenant.orgType === "carrier") {
+                throw new TRPCError({ code: "FORBIDDEN", message: "OWN_TRIPS_COME_FROM_CLIENTS" });
+            }
+
             const updated = await convertMovement(ctx.db, actorOf(ctx.tenant), input);
             return { id: updated.id, ref: movementRef(updated.seq, updated.execution), version: updated.version };
         }),

@@ -22,13 +22,14 @@ type NewLoadState = {
 
 /**
  * Whether the new-load sheet is open, and on which shape. A store rather
- * than the URL: a half-typed load is not a page. The rail's button, each
- * list's header and the empty states all open the one sheet the rail mounts.
+ * than the URL: a half-typed load is not a page. The rail's button and the
+ * empty states open the one sheet the rail mounts — the rail always on a
+ * partner's load, a client's empty My trucks on its own.
  */
 export const useNewLoad = create<NewLoadState>((set) => ({
     isOpen: false,
     armed: false,
-    execution: "own-fleet",
+    execution: "partner",
     open: (execution) => set({ isOpen: true, armed: true, execution }),
     close: () => set({ isOpen: false }),
 }))

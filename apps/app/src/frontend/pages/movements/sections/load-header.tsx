@@ -11,14 +11,15 @@ import type { TrackingAllowance } from "@workspace/domain/subscription"
 
 import { Link } from "@/i18n/navigation"
 import { ExecutionChip, MovementStatusChip, RoleChip, place } from "@/frontend/pages/movements/components/badges"
-import { sectionHref } from "@/frontend/pages/movements/components/section-links"
+import { sectionHref, tabLabelKey } from "@/frontend/pages/movements/components/section-links"
 import { LoadActions } from "@/frontend/pages/movements/sections/load-actions"
 import { scopeOf, sectionOf, type MovementDetail, type OrgType } from "@/frontend/pages/movements/types"
 
 /**
- * The top of a load's page: the way back to the list it sits in, what the
- * load is, who is on the other side of it for the reader, and the things
- * the reader can do about it now.
+ * The top of a load's page: the way back to the section and tab it sits in
+ * (`/orders/<section>?tab=own | partners`), what the load is, who is on the
+ * other side of it for the reader, and the things the reader can do about
+ * it now.
  */
 export function LoadHeader({
     load,
@@ -52,7 +53,9 @@ export function LoadHeader({
 
                 <div className="flex min-w-0 flex-col gap-1">
                     <nav className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                        <span>{t(`scope.${scope}`)}</span>
+                        <span>{t("eyebrow")}</span>
+                        <span aria-hidden>/</span>
+                        <span>{t(`tabs.${tabLabelKey(scope, orgType)}`)}</span>
                         <span aria-hidden>/</span>
                         <span className="text-foreground/70">{t(`sections.${section}`)}</span>
                     </nav>

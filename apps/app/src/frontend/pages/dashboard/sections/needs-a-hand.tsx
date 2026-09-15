@@ -152,7 +152,7 @@ export function NeedsAHand() {
             Icon: IconInbox,
             label: t("queue.offered"),
             count: rail.isError ? 0 : rail.data?.received,
-            href: { pathname: "/trips/[section]", params: { section: "planning" }, query: { status: "prospect" } },
+            href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab: "own", status: "prospect" } },
             tone: "warn",
         },
         {
@@ -160,7 +160,7 @@ export function NeedsAHand() {
             Icon: IconRepeat,
             label: t("queue.declined"),
             count: rail.isError ? 0 : rail.data?.declined,
-            href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { status: "declined" } },
+            href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab: "partners", status: "declined" } },
             tone: "warn",
         },
         {
@@ -168,14 +168,14 @@ export function NeedsAHand() {
             Icon: IconMapPinExclamation,
             label: t("queue.silent-trips"),
             count: ownTrips.silent,
-            href: { pathname: "/trips/[section]", params: { section: "in-progress" }, query: { silent: "1" } },
+            href: { pathname: "/orders/[section]", params: { section: "in-progress" }, query: { tab: "own", silent: "1" } },
         },
         {
             key: "silent-orders",
             Icon: IconMapPinExclamation,
             label: t("queue.silent-orders"),
             count: ownOrders.silent,
-            href: { pathname: "/orders/[section]", params: { section: "in-progress" }, query: { silent: "1" } },
+            href: { pathname: "/orders/[section]", params: { section: "in-progress" }, query: { tab: "partners", silent: "1" } },
         },
     ]
 

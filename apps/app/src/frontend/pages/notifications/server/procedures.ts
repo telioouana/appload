@@ -1,7 +1,7 @@
 import "server-only";
 
 import { z } from "zod";
-import { and, count, desc, eq, inArray, isNull, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
 
 import { notification, NOTIFICATION_KIND } from "@workspace/db/notifications";
 
@@ -84,7 +84,7 @@ export const notificationsRouter = createTRPCRouter({
      * turns it into notifications before the count is taken. The cron does
      * the same for the organizations nobody is looking at.
      */
-    unreadCount: tenantProcedure.query(async ({ ctx }): Promise<{ count: number }> => {
+    unreadCount: tenantProcedure.query(async ({ ctx }): Promise<{ count: number; alerts: number }> => {
         try {
             await materializeOrderEvents(ctx.db, ctx.tenant.organizationId);
         } catch (error) {
@@ -93,12 +93,18 @@ export const notificationsRouter = createTRPCRouter({
             console.error(`notification materialization failed for ${ctx.tenant.organizationId}`, error);
         }
 
+        // The location alerts are counted apart: a driver gone quiet is the
+        // one notification that wants to be seen before the rest, so the bell
+        // and the rail can mark it differently
         const [row] = await ctx.db
-            .select({ value: count() })
+            .select({
+                value: count(),
+                alerts: count(sql`case when ${notification.kind} = 'movement.location-alert' then 1 end`),
+            })
             .from(notification)
             .where(mine(ctx.tenant.userId, ctx.tenant.organizationId, [isNull(notification.readAt)]));
 
-        return { count: row?.value ?? 0 };
+        return { count: row?.value ?? 0, alerts: row?.alerts ?? 0 };
     }),
 
     /** Marks what the reader just opened, or the rows a popover showed them. */

@@ -11,7 +11,6 @@ import { CommandPaletteProvider } from "@workspace/ui/customs/list/command"
 import { Sidenav } from "@/frontend/components/navigation/sidenav"
 import { AccessDenied } from "@/frontend/components/access-denied"
 import { CommandPalette } from "@/frontend/components/command-palette"
-import { NotificationBell } from "@/frontend/components/notifications/notification-bell"
 
 export default async function Layout({
     children,
@@ -52,11 +51,11 @@ export default async function Layout({
                     nobody: the rail is display:none there and the keyboard
                     shortcut is no help on a phone. The trigger is its only
                     handle, gated in CSS rather than on `useIsMobile`, which
-                    reports desktop on the server and would flash it away. */}
-                <header className="flex h-12 shrink-0 items-center gap-2 px-2">
-                    <SidebarTrigger className="md:hidden" />
-
-                    <NotificationBell className="ml-auto" />
+                    reports desktop on the server and would flash it away. On a
+                    desktop the bar has nothing to hold: notifications live on
+                    the rail. */}
+                <header className="flex h-12 shrink-0 items-center gap-2 px-2 md:hidden">
+                    <SidebarTrigger />
                 </header>
 
                 <main className="mx-4 flex-1 min-h-0 flex flex-col overflow-hidden">

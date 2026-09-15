@@ -84,12 +84,8 @@ export function icuValues(params: NotificationParams): Record<string, string | n
 export const PAGE_SIZES = [10, 25, 50] as const;
 export const DEFAULT_PAGE_SIZE = 25;
 
-/** What the popover shows: the last page of everything, unread or not. */
-export const POPOVER_PAGE_SIZE = 10;
-
-/** The unread badge's cadence, and the open popover's (plan §7). */
+/** The rail's unread badge cadence (plan §7). */
 export const UNREAD_POLL_MS = 30_000;
-export const POPOVER_POLL_MS = 10_000;
 
 export type PagedResult<T> = {
     items: T[];

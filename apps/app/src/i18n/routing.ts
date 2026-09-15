@@ -28,10 +28,10 @@ export const routing = defineRouting({
         "/drivers": {
             pt: "/motoristas"
         },
-        // The company's own loads: Orders are the ones somebody else moves,
-        // Trips the ones its own fleet moves, and both open on one shared
-        // page — a static segment beside the section, so a trip handed to a
-        // partner keeps its address
+        // The company's own loads, on one page: the ones its own trucks move
+        // and the ones somebody else moves are two tabs (`?tab=own | partners`)
+        // of the same section. A load's page is a static segment beside the
+        // section, so a trip handed to a partner keeps its address
         "/orders": {
             pt: "/pedidos"
         },
@@ -40,12 +40,6 @@ export const routing = defineRouting({
         },
         "/orders/load/[loadId]": {
             pt: "/pedidos/carga/[loadId]"
-        },
-        "/trips": {
-            pt: "/viagens"
-        },
-        "/trips/[section]": {
-            pt: "/viagens/[section]"
         },
         // Appload's brokerage: requests, offers, standing quotes and the
         // orders Appload books, beside the company's own loads rather than

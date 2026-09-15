@@ -8,9 +8,9 @@ import { LoadSheet } from "@/frontend/pages/movements/sections/load-sheet"
 
 /**
  * The one new-load sheet, mounted by the rail so it is there on every page:
- * the rail's own button, each list's header and the empty states all open
- * it through the store, on the shape they are about. Nothing of it exists
- * until it is first opened (see `armed`).
+ * the rail's own button and the lists' empty states open it through the
+ * store, on the shape they are about. Nothing of it exists until it is first
+ * opened (see `armed`).
  */
 export function NewLoadSheet() {
     const armed = useNewLoad((state) => state.armed)
