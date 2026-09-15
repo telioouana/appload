@@ -26,6 +26,10 @@ export const uac = createAccessControl({
     // one lifts the payment holds, and `terms` (the carrier debt recovered
     // from later shipments) is reserved for the next stage — both supervisory
     dispute: ["read", "list", "open", "update", "resolve", "terms"],
+    // Partner portal plans. Moving a company onto `pro` (or ending its
+    // subscription) is a commercial decision, so it sits above the ops role
+    // even though the write itself is two columns on `organization`.
+    subscription: ["update"],
 })
 
 // Ops staff: full day-to-day order work, but resolving review flags,
@@ -54,6 +58,7 @@ export const manager = uac.newRole({
     risk: ["read", "flag", "clear"],
     chat: ["read", "list", "send", "start"],
     dispute: ["read", "list", "open", "update", "resolve", "terms"],
+    subscription: ["update"],
 })
 // Admin additionally owns the terminal reversals (completed → delivered,
 // cancelled reinstate) — those are gated on the role itself, not a statement
@@ -68,6 +73,7 @@ export const admin = uac.newRole({
     risk: ["read", "flag", "clear"],
     chat: ["read", "list", "send", "start"],
     dispute: ["read", "list", "open", "update", "resolve", "terms"],
+    subscription: ["update"],
 })
 
 export const STAFF_ROLES = { user, manager, admin } as const;

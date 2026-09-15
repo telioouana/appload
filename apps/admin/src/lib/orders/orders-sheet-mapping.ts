@@ -1,6 +1,6 @@
 import type { DocumentParty, NoteReason, Order } from "@workspace/db/orders";
 
-import { OrderError } from "./errors";
+import { OrderError } from "@workspace/domain/orders/errors";
 
 /**
  * The "DATABASE LOGBOOK" spreadsheet keeps every order in one Google Sheets

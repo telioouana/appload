@@ -3,7 +3,7 @@
 import { useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { DEFAULT_PRESET, kpiPeriod, kpiType, maputoToday, type PeriodPreset } from "@/frontend/pages/kpis/types"
 
 /**

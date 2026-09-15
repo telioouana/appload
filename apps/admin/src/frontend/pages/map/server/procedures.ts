@@ -2,124 +2,17 @@ import { z } from "zod";
 import { asc, count, desc, eq, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
-import { order, type Location } from "@workspace/db/orders";
+import { order } from "@workspace/db/orders";
 import { chatConversation } from "@workspace/db/chats";
 import { orderLocation, orderRoute } from "@workspace/db/tracking";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
+import { computeOrderRoute } from "@workspace/maps/server/routes";
+import { cacheKey, failedRecently, failureKey, GEOCODE_TTL_MS, num, rememberFailure, routeFailures, toRouteDto, trailSource } from "@workspace/maps/server/route-cache";
+import type { MapOrder, OrderRouteDto, TrailPoint } from "@workspace/maps/types";
 
-import { computeOrderRoute } from "@/lib/maps/routes";
-import { TRACKED_STATUSES } from "@/lib/tracking/statuses";
-import type { MapOrder, OrderRouteDto, RouteSource, TrailPoint } from "@/frontend/pages/map/types";
-
-/**
- * A geocode row is only the two endpoints — a poor answer we keep retrying
- * once a day in case the place id starts resolving. A `routes` row is the
- * real polyline and never expires: the addresses are part of the cache key,
- * so a re-route only happens when Ops edits one of them.
- */
-const GEOCODE_TTL_MS = 24 * 60 * 60 * 1000;
-
-/**
- * How long a failed compute is remembered. A failure has no geometry to
- * store, so it cannot be cached in `order_route` — and every retry costs one
- * Routes call plus two geocodes and holds the request open for up to three
- * eight-second timeouts. The order sheet embeds this map unconditionally, so
- * an order whose addresses do not resolve would otherwise pay for Google
- * again on every open, as fast as anyone can reopen it.
- */
-const ROUTE_FAILURE_TTL_MS = 15 * 60 * 1000;
-
-/** How many failures to remember before the expired ones are swept. */
-const ROUTE_FAILURE_LIMIT = 200;
-
-/**
- * Module scope, so the memory lives as long as the serverless instance: the
- * worst case is one paid attempt per cold start instead of one per open.
- * Keyed on the addresses too — editing them is exactly the event that makes
- * a retry worth paying for.
- */
-const routeFailures = new Map<string, number>();
-
-/**
- * Shape the procedures read out of `order_route`, kept structural so the
- * lat/lng columns work whether the schema stores them as doubles or as
- * `numeric` (which drizzle hands back as strings).
- */
-type RouteRow = {
-    originLat: number | string;
-    originLng: number | string;
-    destinationLat: number | string;
-    destinationLng: number | string;
-    encodedPolyline: string | null;
-    distanceMeters: number | string | null;
-    durationSeconds: number | string | null;
-    source: string;
-    computedAt: Date;
-};
-
-const num = (value: number | string): number => (typeof value === "number" ? value : Number(value));
-
-const numOrNull = (value: number | string | null): number | null => (value === null ? null : num(value));
-
-const routeSource = (value: string): RouteSource => (value === "geocode" ? "geocode" : "routes");
-
-const trailSource = (value: string): TrailPoint["source"] => (value === "manual" ? "manual" : "whatsapp");
-
-/**
- * What one endpoint was resolved against, and therefore what invalidates the
- * cached route. Orders imported from the logbook carry an empty place id and
- * are looked up by their address text (see `waypoint()` in lib/maps/routes),
- * so the text has to stand in as the key — keying on `""` would make every
- * such row look fresh forever and survive an address edit.
- */
-const cacheKey = (location: Location): string => location.placeId || location.address;
-
-/** The same pair the cached row is keyed on, plus the order it belongs to. */
-const failureKey = (orderId: string, origin: Location, destination: Location): string =>
-    `${orderId}\u0000${cacheKey(origin)}\u0000${cacheKey(destination)}`;
-
-function failedRecently(key: string): boolean {
-    const at = routeFailures.get(key);
-
-    if (at === undefined) {
-        return false;
-    }
-
-    if (Date.now() - at < ROUTE_FAILURE_TTL_MS) {
-        return true;
-    }
-
-    routeFailures.delete(key);
-
-    return false;
-}
-
-function rememberFailure(key: string): void {
-    if (routeFailures.size >= ROUTE_FAILURE_LIMIT) {
-        const now = Date.now();
-
-        for (const [seen, at] of routeFailures) {
-            if (now - at >= ROUTE_FAILURE_TTL_MS) routeFailures.delete(seen);
-        }
-    }
-
-    routeFailures.set(key, Date.now());
-}
-
-/** `orderId` is the human id the caller asked for, not the row's uuid. */
-function toRouteDto(orderId: string, row: RouteRow): OrderRouteDto {
-    return {
-        orderId,
-        origin: { lat: num(row.originLat), lng: num(row.originLng) },
-        destination: { lat: num(row.destinationLat), lng: num(row.destinationLng) },
-        encodedPolyline: row.encodedPolyline,
-        distanceMeters: numOrNull(row.distanceMeters),
-        durationSeconds: numOrNull(row.durationSeconds),
-        source: routeSource(row.source),
-        computedAt: row.computedAt,
-    };
-}
+import { fillPlaceLabels } from "@workspace/domain/tracking/place-labels";
+import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
 export const mapRouter = createTRPCRouter({
     /**
@@ -251,6 +144,7 @@ export const mapRouter = createTRPCRouter({
                     latitude: orderLocation.latitude,
                     longitude: orderLocation.longitude,
                     placeName: orderLocation.placeName,
+                    placeLabel: orderLocation.placeLabel,
                     recordedAt: orderLocation.recordedAt,
                     source: orderLocation.source,
                 })
@@ -263,8 +157,10 @@ export const mapRouter = createTRPCRouter({
                 lat: num(point.latitude),
                 lng: num(point.longitude),
                 placeName: point.placeName,
+                placeLabel: point.placeLabel,
                 recordedAt: point.recordedAt,
                 source: trailSource(point.source),
+                picked: point.placeName !== null,
             }));
         }),
 
@@ -306,6 +202,7 @@ export const mapRouter = createTRPCRouter({
                     latitude: orderLocation.latitude,
                     longitude: orderLocation.longitude,
                     placeName: orderLocation.placeName,
+                    placeLabel: orderLocation.placeLabel,
                     recordedAt: orderLocation.recordedAt,
                     source: orderLocation.source,
                 })
@@ -324,6 +221,10 @@ export const mapRouter = createTRPCRouter({
                 .where(inArray(chatConversation.orderId, humanIds))
                 .orderBy(desc(chatConversation.lastMessageAt)),
         ]);
+
+        // Pins recorded before labels existed, or while Google was down, get
+        // theirs the first time the map reads them — a page per poll
+        const filled = await fillPlaceLabels(ctx.db, "order", lastPings.filter((ping) => ping.placeLabel === null).map((ping) => ping.id));
 
         const lastByOrder = new Map(lastPings.map((ping) => [ping.orderId, ping]));
         const countByOrder = new Map(pingCounts.map((row) => [row.orderId, row.pings]));
@@ -357,8 +258,10 @@ export const mapRouter = createTRPCRouter({
                         lat: num(ping.latitude),
                         lng: num(ping.longitude),
                         placeName: ping.placeName,
+                        placeLabel: ping.placeLabel ?? filled.get(ping.id) ?? null,
                         recordedAt: ping.recordedAt,
                         source: trailSource(ping.source),
+                        picked: ping.placeName !== null,
                     }
                     : null,
                 pingCount: countByOrder.get(row.id) ?? 0,

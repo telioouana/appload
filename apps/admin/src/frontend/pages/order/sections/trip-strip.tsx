@@ -8,13 +8,13 @@ import type { Order } from "@workspace/db/orders"
 import { cn } from "@workspace/ui/lib/utils"
 import { statusIcons } from "@workspace/ui/customs/badge/status-badge"
 
-import { Scroller } from "@/components/list/scroller"
-import { deriveMilestones, type MilestoneStep } from "@/lib/orders/milestones"
+import { Scroller } from "@workspace/ui/customs/list/scroller"
+import { deriveMilestones, type MilestoneStep } from "@workspace/domain/orders/milestones"
 import { daysLate } from "@/frontend/pages/orders/types"
 import type { HistoryEntry } from "@/frontend/pages/order/components/history-timeline"
 
 import { ActivityPopover } from "./activity-popover"
-import { Cell, CellRow } from "./section-card"
+import { Cell, CellRow } from "@workspace/ui/customs/detail/section-card"
 
 /**
  * Wide enough for two lines of the longest status name at 12px, in either

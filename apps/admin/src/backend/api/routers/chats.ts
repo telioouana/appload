@@ -6,8 +6,6 @@ import { order, orderHistory, type Order } from "@workspace/db/orders";
 import { chatConversation, chatMessage, type ChatConversation, type ChatMessage } from "@workspace/db/chats";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
-
-import { StartChatBaseSchema } from "@/backend/schemas/start-chat";
 import {
     locationRequestText,
     sendWhatsAppLocationRequest,
@@ -15,11 +13,13 @@ import {
     sendWhatsAppText,
     shareLocationPayload,
     trackingTemplateText,
-} from "@/lib/chats/infobip";
-import { normalizePhone } from "@/lib/chats/phone";
-import { startConversation } from "@/lib/chats/conversations";
-import { hasOpenSession, place, SESSION_WINDOW_HOURS } from "@/lib/tracking/run-slot";
-import { TRACKED_STATUSES } from "@/lib/tracking/statuses";
+} from "@workspace/comms/infobip";
+import { normalizePhone } from "@workspace/comms/phone";
+
+import { StartChatBaseSchema } from "@/backend/schemas/start-chat";
+import { startConversation } from "@workspace/domain/tracking/conversations";
+import { hasOpenSession, place, SESSION_WINDOW_HOURS } from "@workspace/domain/tracking/slot";
+import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
 export type ConversationSummary = ChatConversation & {
     lastMessage: string | null;

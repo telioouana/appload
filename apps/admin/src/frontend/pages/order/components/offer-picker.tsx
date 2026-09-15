@@ -8,7 +8,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import { Label } from "@workspace/ui/components/label"
 
 import { KycBadge } from "@/frontend/pages/partners/sections/badges"
-import { DetailRow } from "@/frontend/pages/order/sections/section-card"
+import { DetailRow } from "@workspace/ui/customs/detail/section-card"
 import { IncludesChips, money, snapshot } from "@/frontend/pages/order/sections/offers-card"
 import type { OfferRow } from "@/frontend/pages/order/server/offers-procedures"
 

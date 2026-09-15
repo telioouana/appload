@@ -5,7 +5,7 @@ import { ErrorBoundary } from "react-error-boundary"
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
 import { cashflowInput, isSection } from "@/frontend/pages/orders/types"
 import { OrdersStatsView } from "@/frontend/pages/orders/views/orders-stats-view"
-import { StripSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { StripSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 export default async function Stats({
     params,

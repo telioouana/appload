@@ -22,7 +22,7 @@ import { DriverInput } from "@/components/inputs/driver";
 import { OrganizationInput } from "@/components/inputs/organization";
 import { KycGateBanner } from "@/frontend/pages/order/components/kyc-gate-banner";
 import { OfferFields, OfferPricingSummary, offerNames } from "@/frontend/pages/order/components/offer-fields";
-import { priceOffer } from "@/lib/orders/commission";
+import { priceOffer } from "@workspace/domain/orders/commission";
 import { truckAgeFromYear } from "@/lib/fleet";
 import { CreateOrderForm, CreateOrderFormInput } from "@/backend/schemas/order";
 

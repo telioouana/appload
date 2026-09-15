@@ -11,8 +11,8 @@ import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
 
 import { useTRPC } from "@/backend/api/client"
-import { TRACKED_STATUSES } from "@/lib/tracking/statuses"
-import type { OrderStatus } from "@/lib/orders/transitions"
+import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses"
+import type { OrderStatus } from "@workspace/domain/orders/transitions"
 
 /** The statuses whose thread should be linked to this order. */
 const LINKABLE: OrderStatus[] = ["booked", ...TRACKED_STATUSES]

@@ -16,6 +16,7 @@ import {
     IconMessages,
     IconTruck,
     IconTruckLoading,
+    IconUserPlus,
     IconUsers,
 } from "@tabler/icons-react"
 
@@ -167,6 +168,24 @@ export function NeedsAHand() {
     ]
 
     const documents: QueueItem[] = [
+        // Portal claims first: somebody is locked out of their own account
+        // until one of these is answered
+        {
+            key: "claims-shippers",
+            Icon: IconUserPlus,
+            label: t("queue.claims-shippers"),
+            count: pending((queue) => queue.pendingClaims.shipper),
+            href: { pathname: "/shippers", query: { claims: "1" } },
+            tone: "warn",
+        },
+        {
+            key: "claims-carriers",
+            Icon: IconUserPlus,
+            label: t("queue.claims-carriers"),
+            count: pending((queue) => queue.pendingClaims.carrier),
+            href: { pathname: "/carriers/all", query: { claims: "1" } },
+            tone: "warn",
+        },
         {
             key: "shippers",
             Icon: IconBuildingFactory2,

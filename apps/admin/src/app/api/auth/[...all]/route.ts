@@ -17,12 +17,17 @@ const handler = toNextJsHandler(auth);
  * would also block the server-side auth.api.signUpEmail call that driver
  * registration depends on.
  *
+ * The organization plugin's own write endpoints are closed for the same
+ * reason: organizations are written by direct Drizzle insert/update in
+ * organizations.register/update, and /organization/update would let any
+ * member with `organization:update` rewrite the registry beside that gate.
+ *
  * This is defence in depth, not the gate: the databaseHooks in
  * packages/auth/src/server.ts are what actually protect `type`, because they
  * hold for every caller rather than only for requests arriving through this
  * route.
  */
-const BLOCKED_ENDPOINTS = ["/sign-up/email", "/update-user"];
+const BLOCKED_ENDPOINTS = ["/sign-up/email", "/update-user", "/organization/update", "/organization/delete"];
 
 function isBlocked(request: NextRequest): boolean {
     const { pathname } = new URL(request.url);
@@ -32,7 +37,7 @@ function isBlocked(request: NextRequest): boolean {
 export async function POST(request: NextRequest) {
     if (isBlocked(request)) {
         return NextResponse.json(
-            { code: "SIGN_UP_DISABLED", message: "Sign up is disabled" },
+            { code: "ENDPOINT_DISABLED", message: "This endpoint is disabled" },
             { status: 403 },
         );
     }

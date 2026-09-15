@@ -8,14 +8,14 @@ import { useTranslations } from "@workspace/i18n"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
-import { today } from "@/lib/kyc/derive"
-import { ListCard } from "@/components/list/list-card"
-import { ListFooter } from "@/components/list/list-footer"
-import { ListToolbar } from "@/components/list/list-toolbar"
-import { BulkAction, BulkBar } from "@/components/list/bulk-bar"
-import { DataTable, useDataTable } from "@/components/list/data-table"
-import { FilterChoice, FilterToggle } from "@/components/list/filter-controls"
-import { downloadCsv, stamp } from "@/components/list/csv"
+import { today } from "@workspace/domain/kyc/derive"
+import { ListCard } from "@workspace/ui/customs/list/list-card"
+import { ListFooter } from "@workspace/ui/customs/list/list-footer"
+import { ListToolbar } from "@workspace/ui/customs/list/list-toolbar"
+import { BulkAction, BulkBar } from "@workspace/ui/customs/list/bulk-bar"
+import { DataTable, useDataTable } from "@workspace/ui/customs/list/data-table"
+import { FilterChoice, FilterToggle } from "@workspace/ui/customs/list/filter-controls"
+import { downloadCsv, stamp } from "@workspace/ui/lib/csv"
 import { useOrganizationColumns } from "@/frontend/pages/partners/columns/organization-columns"
 import { isFilteredList, usePartnerList, withoutPaging } from "@/frontend/pages/partners/hooks/use-partner-list"
 import { usePartnerProfile, type ProfileTab } from "@/frontend/pages/partners/hooks/use-partner-profile"
@@ -131,6 +131,12 @@ export function OrganizationsDataView({ type }: { type: "shipper" | "carrier" })
                                     label={t("filters.incomplete")}
                                     hint={t("filters.incomplete-hint")}
                                     param="incomplete"
+                                    value="1"
+                                />
+                                <FilterToggle
+                                    label={t("filters.claims")}
+                                    hint={t("filters.claims-hint")}
+                                    param="claims"
                                     value="1"
                                 />
                             </div>

@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@workspace/ui/component
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@workspace/ui/components/command"
 
 import { useTRPC } from "@/backend/api/client"
-import { PlateChip } from "@/components/list/table-cells"
+import { PlateChip } from "@workspace/ui/customs/list/table-cells"
 import { KycBadge } from "@/frontend/pages/partners/sections/badges"
 import { usePartnerMutations } from "@/frontend/pages/partners/hooks/use-partner-mutations"
 

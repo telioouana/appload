@@ -6,6 +6,7 @@ import { auth } from "@workspace/auth/server"
 import { getStaffGates } from "@workspace/trpc/staff-gate"
 
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@workspace/ui/components/sidebar"
+import { CommandPaletteProvider } from "@workspace/ui/customs/list/command"
 
 import { Sidenav } from "@/frontend/components/navigation/sidenav"
 import { AccessDenied } from "@/frontend/components/access-denied"
@@ -44,7 +45,12 @@ export default async function Layout({
                 </header>
 
                 <main className="mx-4 flex-1 min-h-0 flex flex-col overflow-hidden">
-                    {children}
+                    {/* The shared list header shows its ⌘K hint inside this and
+                        nowhere else — the portal mounts no palette, so it never
+                        advertises a shortcut that does nothing */}
+                    <CommandPaletteProvider>
+                        {children}
+                    </CommandPaletteProvider>
                 </main>
             </SidebarInset>
 

@@ -6,7 +6,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { moneyTone } from "@/components/list/money-tone"
+import { moneyTone } from "@workspace/ui/lib/money-tone"
 
 /**
  * One figure on the metrics page's top row: what it measures, how much of it

@@ -1,0 +1,387 @@
+{
+    "metadata": "Cotações",
+    "title": {
+        "carrier": "Cotações enviadas",
+        "shipper": "Cotações recebidas"
+    },
+    "description": {
+        "carrier": "As rotas e os preços que ofereceu aos seus clientes, e o que aconteceu a cada um.",
+        "shipper": "As rotas e os preços que os seus transportadores lhe ofereceram, prontos a virar pedido."
+    },
+    "search": {
+        "placeholder": "Procurar por empresa ou rota",
+        "clear": "Limpar a pesquisa"
+    },
+    "columns": {
+        "partner": "Empresa",
+        "lane": "Rota",
+        "loading": "Carregamento",
+        "capacity": "Capacidade",
+        "total": "Preço",
+        "cover": "Inclui",
+        "valid": "Válida até",
+        "status": "Estado"
+    },
+    "sort": {
+        "newest": "Mais recentes",
+        "partner": "Empresa",
+        "total": "Preço",
+        "valid": "Validade"
+    },
+    "filters": {
+        "all": "Todas",
+        "validity": "Validade",
+        "expiring": "A expirar",
+        "expiring-hint": "Cotações em aberto que caducam em sete dias"
+    },
+    "status": {
+        "sent": "Em aberto",
+        "accepted": "Aceite",
+        "declined": "Recusada",
+        "withdrawn": "Retirada",
+        "expired": "Expirada"
+    },
+    "cover": {
+        "git": "Seguro de carga",
+        "gps": "Rastreamento",
+        "none": "Só transporte"
+    },
+    "values": {
+        "open-date": "Qualquer dia",
+        "no-expiry": "Sem prazo",
+        "not-stated": "Não indicado",
+        "pending": "À espera de resposta"
+    },
+    "unit": {
+        "ton": "t",
+        "kg": "kg",
+        "liter": "L"
+    },
+    "route": {
+        "national": "Nacional",
+        "regional": "Regional"
+    },
+    "regime": {
+        "normal": "Normal (16%)",
+        "simplified-5": "Simplificado (5%)",
+        "simplified-3": "Simplificado (3%)",
+        "n/a": "Não aplicável"
+    },
+    "bay": {
+        "flatbed": "Plataforma (flatbed)",
+        "dropsides": "Taipais (dropsides)",
+        "tautliner": "Tautliner",
+        "rigid-body": "Rígido",
+        "refrigerated": "Refrigerado",
+        "tipper": "Basculante",
+        "side-tipper": "Basculante lateral",
+        "tanker": "Cisterna",
+        "lowbed": "Zorra (lowbed)"
+    },
+    "category": {
+        "agriculture-inputs": "Insumos agrícolas",
+        "agriculture-products": "Produtos agrícolas",
+        "construction": "Construção",
+        "machinery-equipment": "Máquinas e equipamentos",
+        "fmcg": "Bens de consumo (FMCG)",
+        "general-cargo": "Carga geral",
+        "medicine": "Medicamentos",
+        "mining": "Mineração",
+        "oil-gas": "Petróleo e gás",
+        "vehicles": "Veículos",
+        "other": "Outro"
+    },
+    "load-type": {
+        "dedicated": "Camião dedicado",
+        "groupage": "Grupagem"
+    },
+    "packing": {
+        "bags-1kg": "Sacos de 1 kg",
+        "bags-2kg": "Sacos de 2 kg",
+        "bags-5kg": "Sacos de 5 kg",
+        "bags-25kg": "Sacos de 25 kg",
+        "bags-30kg": "Sacos de 30 kg",
+        "bags-50kg": "Sacos de 50 kg",
+        "bags-100kg": "Sacos de 100 kg",
+        "bags-1ton": "Big bags (1 t)",
+        "bottle-1l": "Garrafas de 1 L",
+        "bottle-5l": "Garrafões de 5 L",
+        "bottle-10l": "Garrafões de 10 L",
+        "bottle-20l": "Garrafões de 20 L",
+        "bottle-25l": "Garrafões de 25 L",
+        "container-20ft": "Contentor de 20 pés",
+        "container-40ft": "Contentor de 40 pés",
+        "boxes": "Caixas",
+        "pallets": "Paletes",
+        "noPacking": "A granel / sem embalagem",
+        "other": "Outro"
+    },
+    "tiles": {
+        "standing": {
+            "carrier": "Em cima da mesa",
+            "shipper": "À sua espera"
+        },
+        "standing-hint": {
+            "carrier": "Cotações que os clientes ainda não responderam",
+            "shipper": "Preços que ainda pode aceitar"
+        },
+        "expiring": "A expirar",
+        "expiring-hint": "Válidas por menos de sete dias",
+        "accepted": "Aceites",
+        "accepted-hint": "{count, plural, =0 {Nenhuma este mês} one {# este mês} other {# este mês}}"
+    },
+    "data": {
+        "empty": "Ainda não há cotações",
+        "empty-description": {
+            "carrier": "Ofereça uma rota e um preço a um cliente e ela aparece aqui.",
+            "shipper": "Os preços que os seus transportadores lhe oferecem aparecem aqui, prontos a aceitar."
+        },
+        "no-results": "Nenhuma cotação corresponde a esta pesquisa",
+        "error": "Não foi possível carregar as cotações."
+    },
+    "add": {
+        "trigger": "Nova cotação",
+        "title": "Nova cotação",
+        "description": "Ofereça uma rota e um preço a um dos seus clientes. Ele transforma-a em pedido com um clique.",
+        "client": "Cliente",
+        "lane": "Rota",
+        "capacity": "Camião",
+        "price": "Preço",
+        "terms": "Condições",
+        "client-price": "O que o cliente paga",
+        "fields": {
+            "client": {
+                "label": "Cliente",
+                "placeholder": "Escolha um cliente",
+                "description": "Só os clientes com quem está ligado",
+                "empty": "Ainda não tem clientes ligados. Adicione um na página Parceiros primeiro."
+            },
+            "origin": {
+                "label": "Local de carga",
+                "placeholder": "Procure um local"
+            },
+            "destination": {
+                "label": "Local de descarga",
+                "placeholder": "Procure um local"
+            },
+            "route": {
+                "label": "Rota",
+                "placeholder": "Escolha a rota"
+            },
+            "loadingDate": {
+                "label": "Data de carga",
+                "placeholder": "Deixe vazio para qualquer dia"
+            },
+            "bay": {
+                "label": "Tipo de carroçaria",
+                "placeholder": "Escolha o tipo de carroçaria"
+            },
+            "capacity": {
+                "label": "Capacidade oferecida",
+                "placeholder": "ex. 30"
+            },
+            "regime": {
+                "label": "Regime fiscal",
+                "placeholder": "Escolha o regime"
+            },
+            "currency": {
+                "label": "Moeda",
+                "placeholder": "Escolha a moeda"
+            },
+            "subtotal": {
+                "label": "Subtotal",
+                "placeholder": "0,00"
+            },
+            "vat": {
+                "label": "IVA",
+                "placeholder": "0,00"
+            },
+            "total": {
+                "label": "Total",
+                "placeholder": "0,00",
+                "description": "IVA incluído; o subtotal e o IVA seguem o seu regime"
+            },
+            "git": {
+                "label": "Seguro de carga incluído",
+                "description": "O preço já cobre o seguro da mercadoria"
+            },
+            "gps": {
+                "label": "Rastreamento incluído",
+                "description": "O camião é rastreado durante toda a viagem"
+            },
+            "validUntil": {
+                "label": "Válida até",
+                "placeholder": "Deixe vazio para manter em aberto",
+                "description": "Depois desta data o preço deixa de estar em cima da mesa"
+            },
+            "notes": {
+                "label": "Notas",
+                "placeholder": "O que o cliente deve saber sobre este preço"
+            }
+        },
+        "actions": {
+            "send": "Enviar cotação",
+            "sending": "A enviar…"
+        }
+    },
+    "panel": {
+        "title": "Cotação",
+        "description": "A rota, o preço e o que ainda pode ser decidido.",
+        "error": "Não foi possível carregar esta cotação.",
+        "role": {
+            "carrier": "Cliente",
+            "shipper": "Transportador"
+        },
+        "lane": "Rota",
+        "capacity": "Camião",
+        "price": "Preço",
+        "price-note": "É isto que o cliente paga: a Appload não acrescenta nada a uma cotação enviada pelo portal.",
+        "notes": "Notas",
+        "history": "Histórico",
+        "open-order": "Abrir o pedido {orderId}",
+        "fields": {
+            "route": "Rota",
+            "loading": "Data de carga",
+            "valid": "Válida até",
+            "bay": "Tipo de carroçaria",
+            "capacity": "Capacidade oferecida",
+            "subtotal": "Subtotal",
+            "vat": "IVA",
+            "total": "Total",
+            "regime": "Regime fiscal",
+            "sent": "Enviada",
+            "decided": "Respondida"
+        }
+    },
+    "accept": {
+        "title": "Aceitar esta cotação",
+        "description": "A rota, o transportador e o preço já estão definidos. Diga o que vai ser transportado e o pedido fica reservado.",
+        "cargo": "Carga",
+        "schedule": "Datas",
+        "handling": "Manuseamento",
+        "fields": {
+            "category": {
+                "label": "Categoria",
+                "placeholder": "Escolha uma categoria"
+            },
+            "description": {
+                "label": "Descrição",
+                "placeholder": "O que vai ser transportado"
+            },
+            "weight": {
+                "label": "Peso",
+                "placeholder": "ex. 28"
+            },
+            "loadType": {
+                "label": "Tipo de carga",
+                "placeholder": "Escolha o tipo de carga"
+            },
+            "packing": {
+                "label": "Embalagem",
+                "placeholder": "Escolha a embalagem"
+            },
+            "deliveries": {
+                "label": "Entregas",
+                "placeholder": "1"
+            },
+            "trucks": {
+                "label": "Camiões",
+                "placeholder": "1"
+            },
+            "loadingDate": {
+                "label": "Data de carga",
+                "placeholder": "Escolha uma data"
+            },
+            "offloadingDate": {
+                "label": "Data de descarga",
+                "placeholder": "Escolha uma data"
+            },
+            "distance": {
+                "label": "Distância (km)",
+                "placeholder": "0",
+                "description": "Calculada a partir dos dois locais da cotação; corrija se a estrada for outra"
+            },
+            "hazardous": {
+                "label": "Carga perigosa",
+                "description": "Mercadoria perigosa que precisa de código hazchem"
+            },
+            "hazchem": {
+                "label": "Código hazchem",
+                "placeholder": "ex. 3YE"
+            },
+            "refrigerated": {
+                "label": "Carga refrigerada",
+                "description": "A carga tem de viajar a uma temperatura definida"
+            },
+            "temperature": {
+                "label": "Temperatura (°C)",
+                "placeholder": "ex. -18"
+            },
+            "temperatureInstructions": {
+                "label": "Instruções de temperatura",
+                "placeholder": "O que o motorista tem de cumprir"
+            }
+        },
+        "actions": {
+            "book": "Aceitar e reservar",
+            "booking": "A reservar…"
+        }
+    },
+    "decline": {
+        "title": "Recusar esta cotação",
+        "description": "O transportador fica a saber que o preço foi recusado. Uma razão curta ajuda-o a voltar com uma melhor.",
+        "fields": {
+            "note": {
+                "label": "Razão",
+                "placeholder": "ex. o preço está acima do nosso orçamento para esta rota",
+                "description": "Opcional, e só o transportador a vê"
+            }
+        }
+    },
+    "actions": {
+        "accept": "Aceitar",
+        "decline": "Recusar",
+        "withdraw": "Retirar",
+        "cancel": "Cancelar"
+    },
+    "toasts": {
+        "created": "Cotação enviada",
+        "withdrawn": "Cotação retirada",
+        "declined": "Cotação recusada",
+        "accepted": "Pedido {orderId} reservado"
+    },
+    "form": {
+        "errors": {
+            "address": "Escolha um local nas sugestões",
+            "category": "Escolha uma categoria",
+            "client": "Escolha um cliente",
+            "count": "Indique um número inteiro maior que zero",
+            "currency": "Escolha uma moeda",
+            "date": "Escolha uma data válida",
+            "description": "Diga o que vai ser transportado",
+            "distance": "Indique a distância em quilómetros",
+            "list": "Escolha uma das opções",
+            "note": "A nota é demasiado longa",
+            "total": "Indique o preço total",
+            "value": "Indique um valor válido",
+            "weight": "Indique um peso válido"
+        }
+    },
+    "errors": {
+        "notFound": "Esta cotação já não existe.",
+        "notSent": "Esta cotação já foi respondida.",
+        "alreadyDecided": "Outra pessoa respondeu a esta cotação primeiro.",
+        "expired": "Esta cotação já passou a data de validade.",
+        "loadingDate": "Escolha uma data de carga para o pedido.",
+        "clientNotConnected": "Não está ligado a este cliente.",
+        "notAllowed": "Não tem permissão para fazer isto.",
+        "subscription": "A sua empresa não tem um plano activo. Fale connosco para activar um.",
+        "quotaExceeded": "Os movimentos seguidos deste mês já foram todos usados. O limite volta a zero no início do mês seguinte.",
+        "carrierNotVerified": "Este transportador ainda não está verificado pela Appload, por isso o pedido não pode ser reservado.",
+        "carrierContractMissing": "Este transportador ainda não tem contrato assinado com a Appload.",
+        "carrierContractExpired": "O contrato deste transportador com a Appload expirou.",
+        "carrierSuspended": "Este transportador está suspenso.",
+        "riskReview": "A Appload tem de rever este transportador antes de se reservar um pedido com ele.",
+        "unknown": "Algo correu mal. Tente novamente."
+    }
+}

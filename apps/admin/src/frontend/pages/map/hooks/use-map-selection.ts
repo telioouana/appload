@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect } from "react"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
+
+export type MapViewKind = "map" | "table"
 
 const TYPING_TAGS = ["INPUT", "TEXTAREA", "SELECT"]
 
@@ -21,6 +23,8 @@ export function useMapSelection() {
 
     const selected = get("order")
     const query = get("q") ?? ""
+    // `?view=table` lists the same loads as rows; absent means the map
+    const view: MapViewKind = get("view") === "table" ? "table" : "map"
 
     const select = useCallback(
         (orderId: string | null) => shallow({ key: "order", value: orderId }),
@@ -29,6 +33,11 @@ export function useMapSelection() {
 
     const setQuery = useCallback(
         (text: string) => shallow({ key: "q", value: text.trim() || null }),
+        [shallow],
+    )
+
+    const setView = useCallback(
+        (next: MapViewKind) => shallow({ key: "view", value: next === "table" ? "table" : null }),
         [shallow],
     )
 
@@ -56,5 +65,5 @@ export function useMapSelection() {
         return () => window.removeEventListener("keydown", onKey)
     }, [selected, shallow])
 
-    return { selected, query, select, setQuery }
+    return { selected, query, view, select, setQuery, setView }
 }

@@ -8,7 +8,7 @@ import { Link } from "@/i18n/navigation"
 import { Button } from "@workspace/ui/components/button"
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
 
-import { parseFlagReason } from "@/lib/kyc/flag-reason"
+import { parseFlagReason } from "@workspace/domain/kyc/flag-reason"
 
 /** The active dispute as both order surfaces receive it from `order.get`. */
 export type OrderDisputeBanner = {

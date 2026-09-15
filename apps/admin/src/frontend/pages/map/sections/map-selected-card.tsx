@@ -13,7 +13,7 @@ import { cn } from "@workspace/ui/lib/utils"
 
 import { Link } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 import { useOrderSheet } from "@/frontend/pages/orders/hooks/use-order-sheet"
 import { OrderStatusBadge, place } from "@/frontend/pages/orders/sections/order-item-shared"
 import type { MapOrder } from "@/frontend/pages/map/types"

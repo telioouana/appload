@@ -1,0 +1,141 @@
+{
+    "title": "Analytics",
+    "description": "How your company moved in {period}",
+    "error": "This card could not be loaded.",
+    "none": "—",
+    "period": {
+        "label": "Period",
+        "month": "Month",
+        "quarter": "Quarter",
+        "year": "Year",
+        "quarter-label": "Q{quarter} {year}",
+        "year-select": "Choose year"
+    },
+    "loads": {
+        "title": "Your own loads",
+        "hint": "Your company's orders and trips loading in {year}, inside or outside Appload",
+        "empty": "No loads in {year} yet",
+        "no-money": "No amounts recorded on {count, plural, one {your load} other {your # loads}} yet.",
+        "receivable": "To receive from clients",
+        "received": "Received",
+        "payable": "To pay partners",
+        "paid": "Paid",
+        "costs": "Running costs",
+        "rechargeable": "of which {amount} recharged",
+        "gross": "Gross margin ({count, plural, one {# load} other {# loads}})",
+        "net": "Net margin",
+        "comparable": "{comparable} of {finished} delivered loads have a comparable margin: the others have no price or are in two currencies.",
+        "partners": {
+            "title": "Who you worked with",
+            "client": "Client",
+            "partner": "Partner",
+            "loads": "{count, plural, one {# load} other {# loads}}"
+        }
+    },
+    "pipeline": {
+        "title": "Appload orders",
+        "hint": "Today's count, whatever period is chosen above",
+        "total": "{count, plural, one {# order} other {# orders}}",
+        "sections": {
+            "prospects": "To award",
+            "booked": "Booked",
+            "onGoing": "On the road",
+            "delivered": "Delivered",
+            "completed": "Completed",
+            "cancelled": "Cancelled"
+        },
+        "attention": {
+            "awaitingOffers": "Awaiting offers",
+            "offersToReview": "Offers to decide",
+            "newRequests": "New requests",
+            "toDispatch": "To dispatch",
+            "onTheRoad": "On the road",
+            "deliveredPending": "Delivered, not closed"
+        },
+        "empty": "No orders to count yet"
+    },
+    "monthly": {
+        "title": "Appload orders by month",
+        "total": "{count} in {year}",
+        "series": {
+            "orders": "Orders",
+            "delivered": "Delivered",
+            "tons": "Tons"
+        },
+        "empty": "No orders in {year}"
+    },
+    "money": {
+        "title": "Money on Appload orders",
+        "shipper": {
+            "outstanding": "To pay",
+            "settled": "Paid",
+            "hint": "What you still owe your carriers and what you have already paid them"
+        },
+        "carrier": {
+            "outstanding": "To receive",
+            "settled": "Received",
+            "hint": "What your clients still owe you and what you have already received"
+        },
+        "insurance": "Insurance",
+        "empty": "No amounts to show yet"
+    },
+    "kpis": {
+        "title": "Performance on Appload orders",
+        "empty": "No transports analysed in this period",
+        "days-value": "{days} days",
+        "tiles": {
+            "on-time": "On time at offloading",
+            "on-time-hint": "{loading} at loading",
+            "days": "Average transport duration",
+            "days-hint": "{count} of {total} transports have the dates recorded",
+            "demurrage": "Transports with demurrage",
+            "demurrage-hint": "{days, plural, one {# day charged} other {# days charged}}",
+            "incidents": "Incidents",
+            "incidents-hint": "{days, plural, one {# delay day} other {# delay days}}",
+            "damage": "Transports with damage",
+            "damage-hint": "{claims} with a claim",
+            "co2": "CO₂ reductions",
+            "co2-hint": "kg / ton transported",
+            "backload": "Backloads",
+            "backload-hint": "{count, plural, one {# backload transport} other {# backload transports}}"
+        }
+    },
+    "charts": {
+        "transports": {
+            "title": "Transports and punctuality",
+            "transports": "Transports",
+            "on-time": "On time at offloading",
+            "empty": "No transports in this period"
+        },
+        "price": {
+            "title": "Value transported (USD)",
+            "total": "Value in the period",
+            "per-transport": "Value per transport",
+            "note": "Amounts in USD, converted at the loading day's rate",
+            "provisional": "{count, plural, one {# transport uses} other {# transports use}} the nearest earlier rate",
+            "unrated": "{count, plural, one {# transport} other {# transports}} could not be converted",
+            "empty": "No transports in this period",
+            "no-values": "No converted amounts in this period"
+        }
+    },
+    "partners": {
+        "title": "Partners on Appload orders",
+        "hint": "The other party of every order in the period",
+        "columns": {
+            "partner": "Partner",
+            "orders": "Orders",
+            "tons": "Tons",
+            "on-time": "On time",
+            "usd": "Value (USD)",
+            "share": "Share"
+        },
+        "sort": {
+            "label": "Sort by",
+            "orders": "Orders",
+            "tons": "Tons",
+            "usd": "Value",
+            "onTime": "On time"
+        },
+        "empty": "No partner moved cargo in this period"
+    }
+}

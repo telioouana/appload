@@ -3,8 +3,11 @@
 import { useEffect, useMemo, useRef } from "react"
 import { useMap } from "@vis.gl/react-google-maps"
 
-import { MapCanvas } from "@/frontend/pages/map/components/map-canvas"
-import { GoogleMapsProvider } from "@/frontend/pages/map/components/maps-provider"
+import { useTranslations } from "@workspace/i18n"
+
+import { MapCanvas } from "@workspace/maps/components/map-canvas"
+import { GoogleMapsProvider } from "@workspace/maps/components/maps-provider"
+
 import { MapSelectedCard } from "@/frontend/pages/map/sections/map-selected-card"
 import { OverviewPins } from "@/frontend/pages/map/sections/overview-pins"
 import type { MapOrder } from "@/frontend/pages/map/types"
@@ -69,6 +72,8 @@ export function FleetMap({
     onSelect: (orderId: string) => void
     onClose: () => void
 }) {
+    const t = useTranslations("Admin.map.detail")
+
     const selectedOrder = useMemo(
         () => orders.find((order) => order.orderId === selected) ?? null,
         [orders, selected],
@@ -76,7 +81,7 @@ export function FleetMap({
 
     return (
         <div className="relative h-full">
-            <GoogleMapsProvider>
+            <GoogleMapsProvider missingKeyMessage={t("missing-key")}>
                 <MapCanvas className="h-full w-full overflow-hidden rounded-xl" gestureHandling="cooperative">
                     <OverviewPins
                         orders={orders}

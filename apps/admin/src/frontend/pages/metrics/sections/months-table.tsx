@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@workspace/ui/components/tooltip"
 
 import { useTRPC } from "@/backend/api/client"
-import { Scroller } from "@/components/list/scroller"
+import { Scroller } from "@workspace/ui/customs/list/scroller"
 import { YearSelect } from "@/frontend/pages/dashboard/components/year-select"
 import { useMetricsCurrency } from "@/frontend/pages/metrics/hooks/use-metrics-currency"
 import { metricsYear, overviewInput } from "@/frontend/pages/metrics/types"

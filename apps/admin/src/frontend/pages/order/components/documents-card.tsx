@@ -11,10 +11,10 @@ import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
-import { isProofOfPayment } from "@/lib/orders/payments"
+import { domainErrorCode } from "@workspace/trpc/errors"
+import { isProofOfPayment } from "@workspace/domain/orders/payments"
 
-import { SectionCard } from "@/frontend/pages/order/sections/section-card"
+import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 import { DOCUMENT_ERROR_CODES, formType, invoicePartyOf } from "./add-document-dialog"
 
 /**

@@ -9,11 +9,11 @@ import type { Order, OrderDocument } from "@workspace/db/orders"
 
 import { PaymentLedger } from "@/frontend/pages/order/components/payment-ledger"
 import { PartyBlock } from "@/frontend/pages/orders/sections/order-item-parts"
-import { effectiveCommission, effectiveTotals } from "@/lib/orders/totals"
+import { effectiveCommission, effectiveTotals } from "@workspace/domain/orders/totals"
 import type { OfferRow } from "@/frontend/pages/order/server/offers-procedures"
 
 import { IncludesChips } from "./offers-card"
-import { Cell, CellRow, SectionCard } from "./section-card"
+import { Cell, CellRow, SectionCard } from "@workspace/ui/customs/detail/section-card"
 
 /**
  * Both sides of the money, side by side: what the shipper owes and what the

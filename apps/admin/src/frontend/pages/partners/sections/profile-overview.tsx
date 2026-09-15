@@ -14,7 +14,7 @@ import { cn } from "@workspace/ui/lib/utils"
 import { Link } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
 import type { AppRouter } from "@/backend/api/routers/_app"
-import { IdentityCell, initials, Mono, PlateChip } from "@/components/list/table-cells"
+import { IdentityCell, initials, Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
 import { OrderStatusBadge } from "@/frontend/pages/orders/sections/order-item-shared"
 import type { OrderValues } from "@/frontend/pages/orders/types"
 import { TripLocation } from "@/frontend/pages/partners/sections/trip-location"
@@ -25,7 +25,7 @@ import { MissingField } from "@/frontend/pages/partners/sections/missing-field"
 import { StartChatButton } from "@/frontend/pages/partners/sections/whatsapp-mark"
 import { usePartnerMutations } from "@/frontend/pages/partners/hooks/use-partner-mutations"
 import { isPlaceholder, type VehicleKind } from "@/frontend/pages/partners/types"
-import { today } from "@/lib/kyc/derive"
+import { today } from "@workspace/domain/kyc/derive"
 
 type Outputs = inferRouterOutputs<AppRouter>
 
@@ -223,7 +223,7 @@ export function DriverOverview({ profile, onOrders }: { profile: DriverProfile; 
                             ? <Mono>{profile.passport}</Mono>
                             : <MissingField kind="passport" label={t("missing.add.passport")} onSave={patch("passport")} />}
                     </KeyValue>
-                    <KeyValue label={t("columns.carrier")}>
+                    <KeyValue label={t("columns.owner")}>
                         {profile.carrierName ? (
                             <Link href={{ pathname: "/carriers/all", query: { id: profile.carrierId } }} className="hover:text-primary inline-flex items-center gap-1 underline-offset-4 hover:underline">
                                 {profile.carrierName}
@@ -334,7 +334,7 @@ export function VehicleOverview({ profile, onOrders }: { profile: VehicleProfile
                 aside={profile.kind === "truck" ? <AssignDriverPopover truckId={profile.id} carrierId={profile.carrierId} /> : undefined}
             >
                 <dl className="flex flex-col gap-2">
-                    <KeyValue label={t("columns.carrier")}>
+                    <KeyValue label={t("columns.owner")}>
                         {profile.carrierName ? (
                             <Link href={{ pathname: "/carriers/all", query: { id: profile.carrierId } }} className="hover:text-primary inline-flex items-center gap-1 underline-offset-4 hover:underline">
                                 {profile.carrierName}

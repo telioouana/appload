@@ -59,3 +59,12 @@ export function toStoragePath(value: string): string {
 export function orderDocumentPath(orderId: string, type: string): string {
     return toStoragePath(`orders/${orderId}/${type}`)
 }
+
+/**
+ * The prefix for one of a portal load's papers, keyed on the movement's own
+ * id (a UUID) rather than its reference, which changes when a trip is
+ * handed to a partner.
+ */
+export function movementDocumentPath(movementId: string, type: string): string {
+    return toStoragePath(`movements/${movementId}/${type}`)
+}

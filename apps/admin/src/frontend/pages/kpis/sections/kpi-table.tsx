@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
-import { Scroller } from "@/components/list/scroller"
+import { Scroller } from "@workspace/ui/customs/list/scroller"
 import { useKpiRows } from "@/frontend/pages/kpis/hooks/use-kpi-rows"
 import { reportInput } from "@/frontend/pages/kpis/types"
 

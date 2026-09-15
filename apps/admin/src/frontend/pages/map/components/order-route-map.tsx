@@ -4,15 +4,15 @@ import { useQuery } from "@tanstack/react-query"
 
 import type { OrderStatus } from "@workspace/db/types"
 import { useFormatter, useTranslations } from "@workspace/i18n"
+import { MapCanvas } from "@workspace/maps/components/map-canvas"
+import { GoogleMapsProvider, mapsConfigured } from "@workspace/maps/components/maps-provider"
+import { RouteLayer } from "@workspace/maps/components/route-layer"
+import { useRouteColors } from "@workspace/maps/lib/colors"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
 
-import { useRouteColors } from "../lib/colors"
 import { TRAIL_POLL_MS } from "../types"
-import { MapCanvas } from "./map-canvas"
-import { GoogleMapsProvider, mapsConfigured } from "./maps-provider"
-import { RouteLayer } from "./route-layer"
 
 type Props = {
     /** The human order id, e.g. `APPL275.26`. */
@@ -52,7 +52,7 @@ export function OrderRouteMap({ orderId, status, className }: Props) {
     // screen alone. A missing route is not a missing map.
     return (
         <div className={cn("relative", className)}>
-            <GoogleMapsProvider>
+            <GoogleMapsProvider missingKeyMessage={t("missing-key")}>
                 <MapCanvas>
                     <RouteLayer route={route.data} trail={points} status={status} fit />
                 </MapCanvas>

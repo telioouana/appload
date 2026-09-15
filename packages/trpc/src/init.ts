@@ -5,8 +5,9 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import { db } from "@workspace/db/db";
 import { Auth } from "@workspace/auth/server";
 
-import { recordRequestActivity } from "@workspace/trpc/activity-log";
+import { recordRequestActivity, type AppName } from "@workspace/trpc/activity-log";
 import { getStaffGates, type StaffGates } from "@workspace/trpc/staff-gate";
+import { getTenantGates, type TenantGates } from "@workspace/trpc/tenant-gate";
 
 /**
  * 1. CONTEXT
@@ -23,6 +24,9 @@ import { getStaffGates, type StaffGates } from "@workspace/trpc/staff-gate";
 export const createTRPCContext = async (opts: {
     headers: Headers,
     auth: Auth,
+    // Which app the request came from. Stamped on every activity-log row so
+    // admin and portal actions stay distinguishable in the audit trail
+    app: AppName,
     // Serverless-safe scheduler for post-response work (e.g. Next's `after`).
     // Without it, fire-and-forget promises can be frozen once the response
     // is sent and activity-log rows silently lost.
@@ -35,16 +39,20 @@ export const createTRPCContext = async (opts: {
     // request is enough: every gated procedure in this context (an RSC
     // render's prefetches, one batched HTTP call) awaits the same lookup
     let staff: Promise<StaffGates> | undefined
+    // Same deal for the portal's tenant gate: one membership lookup per request
+    let tenant: Promise<TenantGates> | undefined
 
     return {
         authApi,
         session,
         db,
+        app: opts.app,
         // Request headers, forwarded to auth APIs that need them
         // (e.g. authApi.getAccessToken)
         headers: opts.headers,
         waitUntil: opts.waitUntil,
         staffGates: (userId: string) => (staff ??= getStaffGates(db, { userId })),
+        tenantGates: (userId: string) => (tenant ??= getTenantGates(db, { userId })),
     };
 };
 
@@ -144,6 +152,7 @@ export const protectedProcedure = t.procedure
         // never turns into a request failure
         const pending = recordRequestActivity({
             session: ctx.session,
+            app: ctx.app,
             path,
             type,
             rawInput,

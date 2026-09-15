@@ -38,7 +38,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
-import { PROOF_OF_PAYMENT } from "@/lib/orders/payments"
+import { PROOF_OF_PAYMENT } from "@workspace/domain/orders/payments"
 import { primaryOrderAction } from "@/frontend/pages/orders/lib/actions"
 import { OrderRouteMapLazy } from "@/frontend/pages/map/components/order-route-map.lazy"
 import { useCreateOrder } from "@/frontend/pages/order/hooks/use-create-order"

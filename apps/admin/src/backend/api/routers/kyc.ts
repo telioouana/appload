@@ -16,13 +16,13 @@ import type { db as Database } from "@workspace/db/db";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
 
-import { loadOrderGate } from "@/lib/kyc/order-gate";
+import { loadOrderGate } from "@workspace/domain/kyc/order-gate";
 import { kycActionRequirements } from "@/lib/kyc/transitions";
-import { isKycUrl, withProxiedPages } from "@/lib/kyc/file-access";
+import { isKycUrl, withProxiedPages } from "@workspace/domain/kyc/file-access";
 import {
     OWNERSHIP_DOC,
     requirementFor,
-} from "@/lib/kyc/requirements";
+} from "@workspace/domain/kyc/requirements";
 // Subject loading and status derivation are shared with the expiry cron —
 // deriveKycStatus must keep exactly one caller-facing owner
 import {
@@ -33,7 +33,7 @@ import {
     toCurrentDoc,
     writeDerivedStatus,
     type Subject,
-} from "@/lib/kyc/subjects";
+} from "@workspace/domain/kyc/subjects";
 
 const subjectType = z.enum(KYC_SUBJECT_TYPE);
 const documentType = z.enum(KYC_DOCUMENT_TYPE);

@@ -27,11 +27,11 @@ import {
     DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu"
 
-import { initials } from "@/components/list/table-cells"
+import { initials } from "@workspace/ui/customs/list/table-cells"
 import { KycBadge } from "@/frontend/pages/partners/sections/badges"
 import type { OfferRow } from "@/frontend/pages/order/server/offers-procedures"
 
-import { SectionCard } from "./section-card"
+import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 
 type OffersListProps = {
     order: Order

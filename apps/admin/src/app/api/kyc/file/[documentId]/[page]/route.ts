@@ -6,7 +6,7 @@ import { kycDocument } from "@workspace/db/kyc-documents";
 import { getStaffGates } from "@workspace/trpc/staff-gate";
 import { isAuthorized } from "@workspace/auth/user-permissions";
 
-import { isKycMimeType, isKycUrl, mimeFromUrl } from "@/lib/kyc/file-access";
+import { isKycMimeType, isKycUrl, mimeFromUrl } from "@workspace/domain/kyc/file-access";
 
 // Matches the kycFiles bucket's own ceiling. Applied to what storage claims,
 // so an object that somehow grew past the bucket limit cannot be relayed.

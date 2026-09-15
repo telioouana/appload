@@ -2,7 +2,7 @@
 
 import { useCallback } from "react"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 
 export const ORDER_TABS = ["overview", "offers", "payments", "documents", "history"] as const
 export type OrderTab = (typeof ORDER_TABS)[number]

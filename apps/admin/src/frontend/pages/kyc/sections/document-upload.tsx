@@ -14,7 +14,7 @@ import { Label } from "@workspace/ui/components/label"
 import { Button } from "@workspace/ui/components/button"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 
 const ACCEPTED = ["application/pdf", "image/jpeg", "image/png"]
 const MAX_BYTES = 5 * 1024 * 1024

@@ -30,11 +30,17 @@
         "./types": "./src/types/index.ts",
         "./activity-log": "./src/schemas/activity-log.ts",
         "./chats": "./src/schemas/chats.ts",
+        "./connections": "./src/schemas/connections.ts",
         "./fleet": "./src/schemas/fleet.ts",
         "./fx": "./src/schemas/fx.ts",
         "./kyc-documents": "./src/schemas/kyc-documents.ts",
+        "./notifications": "./src/schemas/notifications.ts",
         "./orders": "./src/schemas/orders.ts",
+        "./quotes": "./src/schemas/quotes.ts",
+        "./subscriptions": "./src/schemas/subscriptions.ts",
         "./tracking": "./src/schemas/tracking.ts",
-        "./users": "./src/schemas/users.ts"
+        "./movements": "./src/schemas/movements.ts",
+        "./users": "./src/schemas/users.ts",
+        "./errors": "./src/errors.ts"
     }
 }

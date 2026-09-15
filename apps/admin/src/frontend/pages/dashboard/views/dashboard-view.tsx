@@ -8,9 +8,9 @@ import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
 import { Button } from "@workspace/ui/components/button"
 
 import { Link } from "@/i18n/navigation"
-import { PageHeader } from "@/components/list/page-header"
+import { PageHeader } from "@workspace/ui/customs/list/page-header"
 import { OrderSheet } from "@/frontend/pages/orders/views/order-sheet"
-import { TilesSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 import { YearSelect } from "@/frontend/pages/dashboard/components/year-select"
 import { FleetCard } from "@/frontend/pages/dashboard/sections/fleet-card"

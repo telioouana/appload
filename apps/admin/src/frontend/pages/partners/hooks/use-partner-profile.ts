@@ -2,9 +2,9 @@
 
 import { useCallback } from "react"
 
-import { useListParams } from "@/components/list/use-list-params"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 
-export const PROFILE_TABS = ["overview", "documents", "fleet", "drivers", "orders", "activity"] as const
+export const PROFILE_TABS = ["overview", "documents", "fleet", "drivers", "orders", "portal", "activity"] as const
 export type ProfileTab = (typeof PROFILE_TABS)[number]
 
 /**

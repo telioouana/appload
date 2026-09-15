@@ -4,7 +4,7 @@ import { ErrorBoundary } from "react-error-boundary"
 import { getTranslations } from "@workspace/i18n/server"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { ListError, ListSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { ListError, ListSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 import { driversListInput } from "@/frontend/pages/partners/types"
 import { DriversDataView } from "@/frontend/pages/partners/views/drivers-data-view"
 
@@ -24,7 +24,7 @@ export default async function Data({
     })
 
     prefetch(trpc.partners.drivers.queryOptions(input))
-    prefetch(trpc.partners.driverStats.queryOptions())
+    prefetch(trpc.partners.driverStats.queryOptions({ owner: input.owner }))
 
     return (
         <HydrateClient>

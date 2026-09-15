@@ -5,7 +5,7 @@ import { Skeleton } from "@workspace/ui/components/skeleton"
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { TilesSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 /**
  * A card-shaped placeholder. It carries the page gutter itself, so a band

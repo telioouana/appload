@@ -10,7 +10,7 @@ import type { db as Database } from "@workspace/db/db";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
 
-import { uniqueViolationConstraint } from "@/lib/db-errors";
+import { uniqueViolationConstraint } from "@workspace/db/errors";
 import { UNBILLABLE_STATUSES } from "@/frontend/pages/orders/types";
 import { DISPUTE_SORTS, HOLD_SIDES, type DisputeRow, type DisputeStats, type PagedResult } from "@/frontend/pages/disputes/types";
 

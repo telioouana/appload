@@ -9,8 +9,8 @@ import { Button } from "@workspace/ui/components/button"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 
 import { useTRPC } from "@/backend/api/client"
-import { PageHeader } from "@/components/list/page-header"
-import { TilesSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { PageHeader } from "@workspace/ui/customs/list/page-header"
+import { TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 import { CardBoundary, CardSkeleton, Quiet } from "@/frontend/pages/dashboard/views/dashboard-fallbacks"
 import { CurrencyToggle } from "@/frontend/pages/metrics/components/currency-toggle"

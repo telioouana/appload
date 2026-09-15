@@ -1,0 +1,106 @@
+{
+    "title": "Notifications",
+    "description": "Everything that happened to your company on the portal.",
+    "unread": "Unread",
+    "filters": {
+        "all": "All",
+        "unread": "Unread",
+        "any-kind": "All kinds"
+    },
+    "families": {
+        "connections": "Partners",
+        "orders": "Appload orders",
+        "quotes": "Quotes",
+        "loads": "Your loads",
+        "account": "Account"
+    },
+    "actions": {
+        "mark-all": "Mark all as read",
+        "mark-all-short": "Mark all"
+    },
+    "data": {
+        "empty": {
+            "title": "No notifications yet.",
+            "description": "As soon as something happens to your loads, orders or partners, it shows up here."
+        },
+        "no-results": {
+            "title": "Nothing matches these filters.",
+            "description": "Drop a filter to see more."
+        },
+        "error": "The notifications could not be loaded."
+    },
+    "toasts": {
+        "all-read": "{count, plural, =0 {There was nothing unread} one {# notification marked as read} other {# notifications marked as read}}"
+    },
+    "errors": {
+        "unknown": "That did not go through. Please try again."
+    },
+    "kind-labels": {
+        "connection-requested": "Connection request",
+        "connection-accepted": "Connection accepted",
+        "connection-declined": "Connection declined",
+        "connection-removed": "Connection ended",
+        "claim-approved": "Access approved",
+        "member-joined": "New member",
+        "order-requested": "Quote requested",
+        "order-quoted": "Order quoted",
+        "order-booked": "Order booked",
+        "order-status": "Status change",
+        "order-cancelled": "Order cancelled",
+        "order-document": "Document attached",
+        "quote-received": "Quote received",
+        "quote-accepted": "Quote accepted",
+        "quote-declined": "Quote declined",
+        "quote-withdrawn": "Quote withdrawn",
+        "movement-offered": "Load offered",
+        "movement-accepted": "Offer accepted",
+        "movement-declined": "Offer declined",
+        "movement-started": "Load in progress",
+        "movement-delivered": "Load delivered",
+        "movement-cancelled": "Load cancelled",
+        "movement-withdrawn": "Offer withdrawn",
+        "movement-location-alert": "Location alert",
+        "movement-document": "Document added",
+        "movement-dispute-opened": "Dispute opened",
+        "movement-dispute-resolved": "Dispute resolved",
+        "subscription-changed": "Plan changed"
+    },
+    "kinds": {
+        "connection-requested": "{partnerName} wants to connect with your company.",
+        "connection-accepted": "{partnerName} accepted your connection.",
+        "connection-declined": "{partnerName} declined your connection.",
+        "connection-removed": "{partnerName} ended the connection with your company.",
+        "claim-approved": "Your access to the portal was approved.",
+        "member-joined": "{memberName} joined your company.",
+        "order-requested": "{shipperName} asked you to quote order {orderId}.",
+        "order-quoted": "{carrierName} quoted order {orderId}.",
+        "order-booked": "Order {orderId} was booked.",
+        "order-status": "{to, select, prospect{Order {orderId} is back to quoting.} booked{Order {orderId} was booked.} loading{Order {orderId} is loading.} offloading{Order {orderId} is offloading.} stopped{Order {orderId} is stopped.} issue{Order {orderId} is on hold with an issue.} delivered{Order {orderId} was delivered.} completed{Order {orderId} is completed.} cancelled{Order {orderId} was cancelled.} underbid{Order {orderId} was lost on price.} other{Order {orderId} changed status.}}",
+        "order-cancelled": "Order {orderId} was cancelled.",
+        "order-document": "{documentType, select, pod{A proof of delivery} evidence{A piece of evidence} other{A document}} was attached to order {orderId}.",
+        "quote-received": "{carrierName} sent you a quote.",
+        "quote-accepted": "{clientName} accepted your quote and order {orderId} was created.",
+        "quote-declined": "A quote of yours was declined.",
+        "quote-withdrawn": "{carrierName} withdrew the quote they had sent you.",
+        "movement-offered": "{organizationName} offered you load {ref}: {origin} → {destination}, for {total} {currency}.",
+        "movement-accepted": "{organizationName} accepted load {ref} ({origin} → {destination}).",
+        "movement-declined": "{organizationName} declined load {ref} ({origin} → {destination}); it needs another partner.",
+        "movement-started": "Load {ref} is in progress: the truck is at the loading site ({origin} → {destination}).",
+        "movement-delivered": "Load {ref} arrived in {destination}.",
+        "movement-cancelled": "Load {ref} ({origin} → {destination}) was cancelled.",
+        "movement-withdrawn": "{organizationName} withdrew the offer of load {ref} ({origin} → {destination}).",
+        "movement-location-alert": "{issue, select, noLocation{{driverName} sent no location for load {ref} this round.} shortDistance{{driverName} moved less than 20 km since the last position on load {ref}.} pickedAddress{{driverName} sent a chosen address instead of the live position on load {ref}.} other{{driverName} did not send a valid position for load {ref}.}}{streak, plural, =1 {} =2 {{audience, select, client{ Second round in a row — the transporter was told too.} other{ Second round in a row — the client was told too.}}} other {{audience, select, client{ {streak} rounds in a row — the transporter was told too.} other{ {streak} rounds in a row — the client was told too.}}}}",
+        "movement-document": "{type, select, pod {A proof of delivery} cmr {A CMR} invoice {An invoice} receipt {A receipt} other {A document}} was added to load {ref}.",
+        "movement-dispute-opened": "{named, select, true {{organizationName} opened a dispute on load {ref} ({origin} → {destination}) over {reason, select, theft {theft} loss {a loss} damage {damage} other {something else}}.} other {A company on load {ref} ({origin} → {destination}) opened a dispute over {reason, select, theft {theft} loss {a loss} damage {damage} other {something else}}.}}",
+        "movement-dispute-resolved": "{named, select, true {{organizationName} resolved the dispute on load {ref} ({origin} → {destination}).} other {A company on load {ref} ({origin} → {destination}) resolved the dispute.}}",
+        "subscription-changed": "{plan, select, starter{Your company moved to the Starter plan.} business{Your company moved to the Business plan.} enterprise{Your company moved to the Enterprise plan.} other{Your company has no active plan.}}"
+    },
+    "email": {
+        "subject": "Appload — {title}",
+        "greeting": "Hello, there is news on your Appload account.",
+        "cta": "Open the portal",
+        "disclaimer": "You are receiving this because your company uses the Appload portal.",
+        "footer": "You can follow everything on the portal, at any time."
+    },
+    "alert-badge": "Location alert"
+}

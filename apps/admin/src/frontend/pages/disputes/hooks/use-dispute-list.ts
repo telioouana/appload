@@ -6,9 +6,9 @@ import { useSearchParams } from "next/navigation"
 import { useTranslations } from "@workspace/i18n"
 import { DISPUTE_STATUS } from "@workspace/db/types"
 
-import type { ActiveFilter, StatusTab } from "@/components/list/list-toolbar"
-import type { SortState } from "@/components/list/data-table"
-import { useListParams } from "@/components/list/use-list-params"
+import type { ActiveFilter, StatusTab } from "@workspace/ui/customs/list/list-toolbar"
+import type { SortState } from "@workspace/ui/customs/list/data-table"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { DEFAULT_DIR, DEFAULT_SORT, parseDir, type DisputeStats } from "@/frontend/pages/disputes/types"
 
 /** The disputes list's URL state: sort, the status tabs and the filter chips. */

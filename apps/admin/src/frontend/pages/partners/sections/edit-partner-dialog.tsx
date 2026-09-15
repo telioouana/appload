@@ -16,7 +16,7 @@ import { FieldGroup } from "@workspace/ui/components/field"
 import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
 
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 import { usePartnerMutations } from "@/frontend/pages/partners/hooks/use-partner-mutations"
 import type { VehicleKind } from "@/frontend/pages/partners/types"
 

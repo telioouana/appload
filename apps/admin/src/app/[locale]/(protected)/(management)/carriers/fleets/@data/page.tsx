@@ -4,7 +4,7 @@ import { ErrorBoundary } from "react-error-boundary"
 import { getTranslations } from "@workspace/i18n/server"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { ListError, ListSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { ListError, ListSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 import { vehiclesListInput } from "@/frontend/pages/partners/types"
 import { VehiclesDataView } from "@/frontend/pages/partners/views/vehicles-data-view"
 
@@ -24,7 +24,7 @@ export default async function Data({
     })
 
     prefetch(trpc.partners.vehicles.queryOptions(input))
-    prefetch(trpc.partners.vehicleStats.queryOptions({ kind: input.kind }))
+    prefetch(trpc.partners.vehicleStats.queryOptions({ kind: input.kind, owner: input.owner }))
 
     return (
         <HydrateClient>

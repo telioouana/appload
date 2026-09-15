@@ -1,0 +1,37 @@
+{
+    "name": "@workspace/maps",
+    "version": "0.0.0",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "lint": "eslint",
+        "format": "prettier --write \"**/*.{ts,tsx}\"",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@tabler/icons-react": "^3.44.0",
+        "@vis.gl/react-google-maps": "1.9.0",
+        "@workspace/db": "workspace:*",
+        "@workspace/i18n": "workspace:*",
+        "@workspace/ui": "workspace:*",
+        "next-themes": "^0.4.6",
+        "react": "19.2.4",
+        "react-dom": "19.2.4",
+        "server-only": "^0.0.1"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "@workspace/eslint-config": "workspace:*",
+        "@workspace/typescript-config": "workspace:*",
+        "eslint": "^9",
+        "typescript": "^5"
+    },
+    "exports": {
+        "./server/*": "./src/server/*.ts",
+        "./components/*": "./src/components/*.tsx",
+        "./lib/*": "./src/lib/*.ts",
+        "./types": "./src/types.ts"
+    }
+}

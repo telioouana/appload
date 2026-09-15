@@ -5,7 +5,7 @@ import { getTranslations } from "@workspace/i18n/server"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
 import { MapView } from "@/frontend/pages/map/views/map-view"
-import { ListError, ListSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { ListError, ListSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 export async function generateMetadata() {
     const t = await getTranslations("Admin.map")

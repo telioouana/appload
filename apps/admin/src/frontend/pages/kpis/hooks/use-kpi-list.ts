@@ -3,8 +3,8 @@
 import { useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 
-import type { SortState } from "@/components/list/data-table"
-import { useListParams } from "@/components/list/use-list-params"
+import type { SortState } from "@workspace/ui/customs/list/data-table"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { useRouter } from "@/i18n/navigation"
 import { carriedQuery } from "@/frontend/pages/kpis/types"
 

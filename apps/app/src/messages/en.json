@@ -1,0 +1,687 @@
+{
+    "General": {
+        "app-name": "appload",
+        "slogan": "Going the extra mile",
+        "inputs": {
+            "file": {
+                "delete": {
+                    "label": "Delete",
+                    "tooltip": "Delete file",
+                    "error": "Error deleting the file, please try again"
+                },
+                "upload": {
+                    "label": "Upload",
+                    "tooltip": "Upload file",
+                    "error": "Error uploading the file, please try again"
+                },
+                "remove": {
+                    "label": "Remove",
+                    "tooltip": "Remove field"
+                },
+                "errors": {
+                    "size": "The file exceeds the maximum allowed size",
+                    "format": "The file format is not supported"
+                }
+            }
+        }
+    },
+    "List": {
+        "ascending": "Ascending",
+        "breadcrumb": "You are here",
+        "clear-all": "Clear all",
+        "clear-selection": "Clear selection",
+        "columns": "Columns",
+        "command": "Search anywhere (⌘K)",
+        "copied": "Copied",
+        "currency": "Currency",
+        "descending": "Descending",
+        "empty": {
+            "adjust": "Try a different search or clear a filter."
+        },
+        "export": "Export CSV",
+        "filters": "Filters",
+        "next": "Next page",
+        "pagination": "Pages",
+        "per-page": "{count} per page",
+        "previous": "Previous page",
+        "remove-filter": "Remove {filter} filter",
+        "select-all": "Select all rows on this page",
+        "select-row": "Select row",
+        "selected": "{count, plural, one {# selected} other {# selected}}",
+        "showing": "Showing {from}–{to} of {total}",
+        "sort": "Sort",
+        "sort-by": "Sort by",
+        "status": "Status",
+        "suggestions": "Suggestions"
+    },
+    "App": {
+        "metadata": {
+            "title": "Appload Partners",
+            "description": "Appload's partner portal: orders, quotes, trips and fleet for clients and transporters."
+        },
+        "auth": {
+            "title": "Appload Partners",
+            "description": "Enter your credentials to sign in",
+            "email": {
+                "label": "Email",
+                "placeholder": "name@company.co.mz",
+                "error": "Enter a valid email"
+            },
+            "password": {
+                "label": "Password",
+                "placeholder": "••••••••••",
+                "error": "Password is required"
+            },
+            "errors": {
+                "invalid_credentials": "Wrong email or password",
+                "email_not_verified": "Confirm your email before signing in",
+                "too_many_requests": "Too many attempts. Wait a moment and try again",
+                "default": "Sign-in failed. Please try again"
+            },
+            "sign-in": "Sign in",
+            "forgot-link": "Forgot password?",
+            "no-account": "No account yet?",
+            "sign-up-link": "Create one",
+            "have-account": "Already have an account?",
+            "sign-in-link": "Sign in",
+            "sign-up": {
+                "title": "Create your account",
+                "description": "One account for your company's orders, quotes and trips",
+                "name": {
+                    "label": "Full name",
+                    "placeholder": "Your name",
+                    "error": "Your name is required"
+                },
+                "email": {
+                    "label": "Work email",
+                    "placeholder": "name@company.co.mz",
+                    "error": "Enter a valid email"
+                },
+                "password": {
+                    "label": "Password",
+                    "placeholder": "••••••••••",
+                    "error": "The password must be at least 8 characters"
+                },
+                "company-type": {
+                    "label": "What does your company do?",
+                    "shipper": "Client (shipper)",
+                    "shipper-hint": "You have cargo to move",
+                    "carrier": "Transporter (carrier)",
+                    "carrier-hint": "You move other companies' cargo",
+                    "error": "Choose your company type"
+                },
+                "invited": {
+                    "title": "You were invited",
+                    "description": "Create your account with {email} to join {organization}"
+                },
+                "submit": "Create account",
+                "sent": {
+                    "title": "Check your inbox",
+                    "description": "We sent a confirmation link to {email}. Open it to finish setting up your account.",
+                    "resend": "Send it again",
+                    "resent": "Link sent again",
+                    "sign-in": "Back to sign in"
+                },
+                "errors": {
+                    "emailTaken": "That email already has an account. Sign in instead",
+                    "invitationInvalid": "This invitation is no longer valid",
+                    "rateLimited": "Too many sign-up attempts. Try again later",
+                    "unknown": "We could not create the account. Please try again"
+                }
+            },
+            "forgot": {
+                "title": "Recover password",
+                "description": "Enter your email and we will send you a reset link",
+                "submit": "Send reset link",
+                "sent-title": "Check your inbox",
+                "sent-description": "If that account exists, a reset link is on its way. The link expires after one hour",
+                "back": "Back to sign in"
+            },
+            "reset": {
+                "title": "Set a new password",
+                "description": "Choose a new password for your account",
+                "password": {
+                    "label": "New password",
+                    "placeholder": "••••••••••",
+                    "error": "The password must be at least 8 characters"
+                },
+                "confirm": {
+                    "label": "Confirm password",
+                    "placeholder": "••••••••••",
+                    "error": "Confirm the new password",
+                    "mismatch": "The passwords do not match"
+                },
+                "submit": "Reset password",
+                "success": "Password updated. Sign in with the new password",
+                "request-again": "Request a new link",
+                "errors": {
+                    "invalid_token": "This reset link is invalid or has expired",
+                    "invalid_token_hint": "Request a new link below and use it within one hour"
+                }
+            },
+            "verify": {
+                "title": "Confirm your email",
+                "description": "We sent a confirmation link to {email}. Open it and you are in.",
+                "description-generic": "Open the confirmation link we sent you and you are in.",
+                "hint": "Nothing in the inbox? Check the spam folder before asking for another link.",
+                "resend": "Send the link again",
+                "resend-wait": "Send again in {seconds}s",
+                "resent": "Link sent again",
+                "error": "We could not send the link. Please try again",
+                "sign-in": "Back to sign in"
+            },
+            "invitation": {
+                "title": "Join {organization}",
+                "loading": "Loading the invitation…",
+                "accept": "Accept invitation",
+                "accepting": "Joining…",
+                "signed-in": {
+                    "description": "You are signed in as {email}. Accept to join {organization}."
+                },
+                "mismatch": {
+                    "title": "Another account is signed in",
+                    "description": "This invitation is for {invited}, but you are signed in as {current}. Sign out and open the link again.",
+                    "sign-out": "Sign out"
+                },
+                "errors": {
+                    "notFound": "This invitation does not exist",
+                    "expired": "This invitation has expired. Ask for a new one",
+                    "settled": "This invitation was already used",
+                    "emailUnverified": "Confirm your email before accepting the invitation",
+                    "unknown": "We could not open this invitation. Please try again"
+                }
+            }
+        },
+        "onboarding": {
+            "title": "Set up your company",
+            "type": {
+                "label": "Account type",
+                "shipper": "Client",
+                "carrier": "Transporter"
+            },
+            "nuit": {
+                "title": "Find your company",
+                "description": "Almost every company we work with is already in our records. Search by NUIT to see if yours is.",
+                "label": "Company NUIT",
+                "placeholder": "9 digits",
+                "error": "The NUIT has 9 digits",
+                "submit": "Search",
+                "searching": "Searching…"
+            },
+            "found": {
+                "title": "{name}",
+                "claim": {
+                    "title": "We already have this company",
+                    "description": "Nobody uses the portal for it yet. Ask to become its owner and we will check the request.",
+                    "description-match": "Nobody uses the portal for it yet, and your account email is the one we have on file for it — so you go straight in.",
+                    "submit": "Claim this company",
+                    "enter": "Enter this company",
+                    "submitting": "Sending…",
+                    "sent-title": "Request sent",
+                    "sent-description": "Appload will review it and let you know by email."
+                },
+                "taken": {
+                    "title": "This company is already on the portal",
+                    "description": "Ask its owner to invite you — they can do it from Settings, Members."
+                }
+            },
+            "pending": {
+                "title": "Request under review",
+                "description": "You asked to join {name} on {date}. Appload will answer by email.",
+                "hint": "Nothing to do here for now — we will write to you."
+            },
+            "create": {
+                "title": "Register your company",
+                "description": "These details go on your orders and invoices.",
+                "fields": {
+                    "name": {
+                        "label": "Company name",
+                        "placeholder": "Registered name",
+                        "error": "The company name is required"
+                    },
+                    "nuit": {
+                        "label": "NUIT",
+                        "placeholder": "9 digits",
+                        "error": "The NUIT has 9 digits"
+                    },
+                    "email": {
+                        "label": "Company email",
+                        "placeholder": "billing@company.co.mz",
+                        "description": "Leave it empty to use your own address",
+                        "error": "Enter a valid email"
+                    },
+                    "phone": {
+                        "label": "Phone",
+                        "placeholder": "+258 84 000 0000",
+                        "error": "Enter the company phone"
+                    },
+                    "billingAddress": {
+                        "label": "Billing address",
+                        "placeholder": "Search the address",
+                        "error": "Choose an address from the list"
+                    },
+                    "physicalAddress": {
+                        "label": "Physical address",
+                        "placeholder": "Search the address",
+                        "error": "Choose an address from the list"
+                    }
+                },
+                "submit": "Register company",
+                "submitting": "Registering…",
+                "back": "Search another NUIT"
+            },
+            "signed-in": "Signed in as {email}.",
+            "sign-out": "Sign out",
+            "errors": {
+                "alreadyMember": "Your account already belongs to a company",
+                "emailUnverified": "Confirm your email before registering a company",
+                "hasMembers": "This company is already on the portal",
+                "claimPending": "You already have a request under review",
+                "duplicateNuit": "That NUIT is already registered",
+                "duplicateEmail": "That email is already used by another company",
+                "duplicatePhone": "That phone is already used by another company",
+                "notFound": "We could not find that company",
+                "unknown": "Something went wrong. Please try again"
+            }
+        },
+        "shell": {
+            "sidebar": {
+                "work": {
+                    "label": "Operations",
+                    "dashboard": "Dashboard",
+                    "orders": "Orders",
+                    "quotes": "Quotes",
+                    "map": "Map",
+                    "appload": "Appload",
+                    "notifications": "Notifications"
+                },
+                "company": {
+                    "label": "My company",
+                    "fleet": "Fleet",
+                    "drivers": "Drivers",
+                    "team": "Team",
+                    "partners": "Partners",
+                    "my-transporters": "My transporters",
+                    "analytics": "Analytics"
+                },
+                "new-load": "New load"
+            },
+            "user": {
+                "settings": "Settings",
+                "language": "Language",
+                "theme": {
+                    "label": "Theme",
+                    "light": "Light",
+                    "dark": "Dark",
+                    "system": "System"
+                },
+                "sign-out": "Sign out"
+            }
+        },
+        "access-denied": {
+            "title": "Access restricted",
+            "description": "The partner portal is for client and transporter accounts. Sign in with your company account to continue",
+            "closed": "This company's account is closed. Talk to Appload to reopen it",
+            "sign-out": "Sign out"
+        },
+        "errors": {
+            "not-found": {
+                "title": "Page not found",
+                "description": "The page you are looking for does not exist or has moved",
+                "home": "Go to the dashboard"
+            },
+            "boundary": {
+                "title": "Something went wrong",
+                "description": "The page hit an unexpected error. Try again — if it keeps happening, contact support",
+                "retry": "Try again"
+            }
+        },
+        "dashboard": {
+            "title": "Dashboard",
+            "greeting": "Welcome, {name}",
+            "description": "{date} · what needs your attention today",
+            "error": "This part of the dashboard could not be loaded.",
+            "open-map": "Open map",
+            "view-all": "View all",
+            "type": {
+                "shipper": "Client",
+                "carrier": "Transporter"
+            },
+            "total": {
+                "label": "Orders in total",
+                "hint": {
+                    "shipper": "Everything your company has filed",
+                    "carrier": "Everything that has reached you"
+                }
+            },
+            "queue": {
+                "title": "Needs you",
+                "connections": "Partners waiting for an answer",
+                "clear-title": "All clear",
+                "clear-description": "Nothing is waiting on you right now",
+                "offered": "Loads partners offered you",
+                "declined": "Declined — to place with another partner",
+                "silent-trips": "Drivers silent today",
+                "silent-orders": "Partners' drivers silent today"
+            },
+            "road": {
+                "title": "In progress now",
+                "empty-title": "Nothing moving",
+                "empty-description": "Orders and trips appear here as soon as they are in progress"
+            },
+            "trips": {
+                "title": "My trucks",
+                "in-progress": "In progress",
+                "no-response": "No answer today"
+            },
+            "loads": {
+                "appload": "Appload",
+                "planning": "My trucks to plan",
+                "planning-hint": "Not booked in yet",
+                "own-road": "Own fleet in progress",
+                "own-road-hint": "Your trucks on a load right now",
+                "partner-road": "Partners in progress",
+                "partner-road-hint": "Loads partners are moving for you",
+                "latest": {
+                    "title": "Latest loads",
+                    "empty": "You have not filed any loads yet",
+                    "amount": "Amount",
+                    "appload": "Appload"
+                }
+            }
+        },
+        "settings": {
+            "title": "Settings",
+            "description": "Your account and your company's details on the portal",
+            "error": "Settings could not be loaded",
+            "tabs": {
+                "profile": "Profile",
+                "company": "Company",
+                "members": "Team",
+                "subscription": "Subscription"
+            },
+            "profile": {
+                "title": "Your profile",
+                "description": "The name and picture your team and Appload see",
+                "image": {
+                    "label": "Picture",
+                    "description": "JPG or PNG, up to 2 MB",
+                    "format": "Choose a JPG or PNG file",
+                    "size": "The picture cannot be larger than 2 MB"
+                },
+                "name": {
+                    "label": "Name",
+                    "placeholder": "Your name",
+                    "error": "Enter your name"
+                },
+                "email": {
+                    "label": "Email",
+                    "description": "The account email is not changed here. Contact Appload if you need it moved"
+                },
+                "role": {
+                    "label": "Role in the company",
+                    "options": {
+                        "owner": "Owner",
+                        "admin": "Admin",
+                        "member": "Member"
+                    }
+                },
+                "save": "Save",
+                "success": "Profile updated",
+                "error": "The profile could not be saved"
+            },
+            "password": {
+                "title": "Password",
+                "description": "Change this account's password",
+                "current": {
+                    "label": "Current password",
+                    "placeholder": "Your current password",
+                    "error": "Enter your current password",
+                    "invalid": "That current password is not right"
+                },
+                "new": {
+                    "label": "New password",
+                    "placeholder": "New password",
+                    "description": "At least 8 characters",
+                    "error": "The password must be at least 8 characters"
+                },
+                "confirm": {
+                    "label": "Confirm new password",
+                    "placeholder": "Repeat the new password",
+                    "error": "Repeat the new password",
+                    "mismatch": "The passwords do not match"
+                },
+                "revoke": {
+                    "label": "Sign out other sessions",
+                    "description": "Closes this account on the other devices where it is open"
+                },
+                "submit": "Change password",
+                "success": "Password changed",
+                "errors": {
+                    "PASSWORD_TOO_SHORT": "That password is too short",
+                    "PASSWORD_TOO_LONG": "That password is too long",
+                    "CREDENTIAL_ACCOUNT_NOT_FOUND": "This account has no password yet. Use password recovery",
+                    "UNKNOWN": "The password could not be changed"
+                }
+            },
+            "company": {
+                "title": "Your company",
+                "description": "The contacts and addresses Appload uses on documents and tracking",
+                "readonly": {
+                    "name": "Company name",
+                    "nuit": "NUIT",
+                    "type": "Type",
+                    "status": "Status",
+                    "kyc": "Verification",
+                    "hint": "Name and NUIT stay as registered with Appload. Contact us to correct either"
+                },
+                "type": {
+                    "shipper": "Client",
+                    "carrier": "Carrier"
+                },
+                "status": {
+                    "pending": "Pending",
+                    "active": "Active",
+                    "closed": "Closed"
+                },
+                "kyc": {
+                    "draft": "Draft",
+                    "pending-review": "Pending review",
+                    "verified": "Verified",
+                    "rejected": "Rejected",
+                    "expired": "Expired",
+                    "suspended": "Suspended"
+                },
+                "fields": {
+                    "email": {
+                        "label": "Company email",
+                        "placeholder": "office@company.co.mz",
+                        "description": "Where invoices and order documents are sent",
+                        "error": "Enter a valid email"
+                    },
+                    "phone": {
+                        "label": "Phone",
+                        "placeholder": "+258 84 000 0000",
+                        "error": "Enter a valid phone number"
+                    },
+                    "billingAddress": {
+                        "label": "Billing address",
+                        "placeholder": "Search for the address",
+                        "error": "Pick an address from the suggestions"
+                    },
+                    "physicalAddress": {
+                        "label": "Physical address",
+                        "placeholder": "Search for the address",
+                        "error": "Pick an address from the suggestions"
+                    }
+                },
+                "save": "Save changes",
+                "success": "Company details updated",
+                "read-only": "Only the owner and admins can change the company's details",
+                "errors": {
+                    "DUPLICATE_EMAIL": "That email already belongs to another company",
+                    "DUPLICATE_PHONE": "That phone number already belongs to another company",
+                    "NOT_ALLOWED": "You are not allowed to change the company's details",
+                    "NOT_FOUND": "Your company could not be found",
+                    "UNKNOWN": "Could not save. Try again"
+                },
+                "contract": {
+                    "title": "Contract with Appload",
+                    "valid-until": "valid until {date}",
+                    "states": {
+                        "valid": "Valid",
+                        "pending": "Under review",
+                        "missing": "No contract",
+                        "expired": "Expired",
+                        "rejected": "Rejected"
+                    },
+                    "upload": "Upload contract",
+                    "dialog": {
+                        "title": "Upload the signed contract",
+                        "description": "Send the contract you signed with Appload and say how long it is valid for",
+                        "file": "Choose file",
+                        "expires": "Valid until",
+                        "submit": "Send",
+                        "success": "Contract sent. Appload will review it",
+                        "errors": {
+                            "size": "The file cannot be larger than 5 MB",
+                            "type": "Only PDF, JPG or PNG are accepted"
+                        }
+                    },
+                    "hint": "Appload reviews the contract; partners then see whether it is valid."
+                }
+            },
+            "members": {
+                "title": "Team",
+                "description": "Who signs in to the portal for your company",
+                "columns": {
+                    "member": "Person",
+                    "role": "Role",
+                    "joined": "Since",
+                    "actions": "Actions"
+                },
+                "roles": {
+                    "owner": "Owner",
+                    "admin": "Admin",
+                    "member": "Member"
+                },
+                "you": "You",
+                "actions": "Actions for this person",
+                "promote": {
+                    "owner": "Make owner",
+                    "admin": "Make admin",
+                    "member": "Make member"
+                },
+                "remove": "Remove from the portal",
+                "remove-dialog": {
+                    "title": "Remove {name}?",
+                    "description": "They lose access to your company's portal right away. You can invite them again later",
+                    "cancel": "Cancel",
+                    "confirm": "Remove"
+                },
+                "last-owner": "The company must always have one owner",
+                "role-changed": "Role updated",
+                "removed": "Member removed",
+                "error": "That could not be completed",
+                "empty": "You are still the only person from your company on the portal",
+                "read-only": "Only the owner and admins can invite or change members"
+            },
+            "invite": {
+                "button": "Invite a colleague",
+                "title": "Invite a colleague",
+                "description": "We email them a link to join {organization} on the portal",
+                "fields": {
+                    "name": {
+                        "label": "Name",
+                        "placeholder": "Your colleague's name",
+                        "error": "Enter a name"
+                    },
+                    "email": {
+                        "label": "Email",
+                        "placeholder": "colleague@company.co.mz",
+                        "error": "Enter a valid email"
+                    },
+                    "role": {
+                        "label": "Role",
+                        "placeholder": "Choose a role",
+                        "error": "Choose a role"
+                    }
+                },
+                "roles": {
+                    "admin": "Admin — runs the company and the team",
+                    "member": "Member — works on the orders"
+                },
+                "submit": "Send invitation",
+                "submitting": "Sending…",
+                "cancel": "Cancel",
+                "success": "Invitation sent to {email}",
+                "errors": {
+                    "alreadyMember": "This person is already on your team",
+                    "alreadyInvited": "There is already a pending invitation for this email",
+                    "notAllowed": "You are not allowed to invite people",
+                    "unknown": "The invitation could not be sent. Try again"
+                }
+            },
+            "invitations": {
+                "title": "Pending invitations",
+                "description": "Invitations sent that have not been accepted yet",
+                "columns": {
+                    "email": "Email",
+                    "role": "Role",
+                    "expires": "Expires",
+                    "actions": "Actions"
+                },
+                "cancel": "Cancel invitation",
+                "cancelled": "Invitation cancelled",
+                "expired": "Expired",
+                "error": "The invitation could not be cancelled",
+                "empty": "No pending invitations"
+            },
+            "subscription": {
+                "title": "Subscription",
+                "description": "Your company's plan on the portal",
+                "expires": "Valid until {date}",
+                "no-expiry": "No end date",
+                "expired": "The subscription ended on {date}",
+                "none": "No active plan yet — talk to us to choose one.",
+                "since": "On the portal since {date}",
+                "tiers": {
+                    "title": "Plans",
+                    "quota": "{quota} tracked movements a month",
+                    "unlimited": "Unlimited tracked movements",
+                    "current": "Current plan"
+                },
+                "contact": {
+                    "title": "Want to change plan?",
+                    "description": "Talk to the Appload team — we handle the change with you",
+                    "button": "Talk to Appload",
+                    "subject": "Appload portal — {organization} plan"
+                }
+            }
+        },
+        "plan": {
+            "names": {
+                "none": "No plan",
+                "starter": "Starter",
+                "business": "Business",
+                "enterprise": "Enterprise"
+            },
+            "usage": "{used} of {quota} tracked movements in {month}",
+            "unlimited": "Unlimited tracked movements",
+            "dialog": {
+                "no-plan": {
+                    "title": "Your company has no plan yet",
+                    "description": "Booking a load and sending it to loading needs an active plan. The rest of the portal — partners, fleet, requests and quotes — stays open."
+                },
+                "quota": {
+                    "title": "This month's movements are used up",
+                    "description": "Your company has already tracked every movement its plan allows this month. The allowance starts again at the beginning of next month."
+                },
+                "close": "Not now",
+                "settings": "See subscription",
+                "contact": "Talk to Appload",
+                "subject": "Appload portal — {organization} plan"
+            }
+        }
+    }
+}

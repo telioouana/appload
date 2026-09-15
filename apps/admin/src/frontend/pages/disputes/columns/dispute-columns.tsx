@@ -5,7 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
-import { Dash, Mono, StackCell } from "@/components/list/table-cells"
+import { Dash, Mono, StackCell } from "@workspace/ui/customs/list/table-cells"
 import { OrderStatusBadge } from "@/frontend/pages/orders/sections/order-item-shared"
 import { DisputeReasonBadge, DisputeStatusBadge, HoldChips } from "@/frontend/pages/disputes/sections/dispute-badges"
 import type { DisputeRow } from "@/frontend/pages/disputes/types"

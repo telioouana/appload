@@ -79,15 +79,28 @@ export const edgeStoreRouter = es.router({
             { owner: ctx.userId },
             { path: input.path },
         ])
-        // Staff-only, not merely authenticated: shipper, carrier and driver
-        // accounts exist in the same auth system, and a bare session check
-        // would let any of them overwrite or delete order documents
+        // Staff or a member of an organization, never merely authenticated:
+        // shipper, carrier and driver accounts exist in the same auth system,
+        // and a bare session check would let any of them — including accounts
+        // that belong to no organization at all — overwrite or delete order
+        // documents. Partners upload POD and evidence under their own
+        // `[owner: userId, path]` prefix; which document may be attached to
+        // which order is decided by the tRPC insert, the real guard.
         .beforeUpload(({ ctx, input }) =>
-            ctx.isStaff === "true" &&
+            (ctx.isStaff === "true" || ctx.orgId !== null) &&
             isLegal("bucket path", input.path, STORAGE_PATH_RE),
         )
-        // Without this hook, client-side `delete()` calls are always rejected
-        .beforeDelete(({ ctx }) => ctx.isStaff === "true"),
+        // Without this hook, client-side `delete()` calls are always rejected.
+        // Staff delete any object in the bucket; a member deletes only what it
+        // uploaded itself — `owner` is the path's first segment, so the check
+        // is the ownership the path already records. Membership alone is not
+        // enough here: unlike an upload, a delete has no tRPC insert behind it
+        // to decide what it may touch, so any member could otherwise destroy
+        // another tenant's POD or evidence.
+        .beforeDelete(({ ctx, fileInfo }) =>
+            ctx.isStaff === "true" ||
+            (ctx.orgId !== null && fileInfo.path.owner === ctx.userId),
+        ),
 
     /**
      * Verification documents: ID cards, NUIT certificates, licences,
@@ -108,8 +121,15 @@ export const edgeStoreRouter = es.router({
      * So the URLs are treated as secrets instead. They are never sent to a
      * browser: the host app rewrites every page to a session-gated route
      * (apps/admin/src/app/api/kyc/file/[documentId]/[page]) that re-checks
-     * staff status against the database and streams the bytes itself. Writing
-     * and deleting stay staff-only through the hooks below.
+     * staff status against the database and streams the bytes itself.
+     * Deleting stays staff-only through the hook below.
+     *
+     * Writing is staff plus one narrow case: a company uploading its own
+     * signed contract with Appload from the portal, which may only write
+     * under its own `organization/<its own id>/` prefix. That is the whole
+     * widening — the prefix is the tenancy, so a member can no more reach
+     * another company's papers than a stranger can, and reading is still
+     * only the staff-gated proxy.
      *
      * That leaves one residue this design cannot fix — an object whose URL
      * leaked BEFORE the proxy existed is still fetchable by whoever holds it.
@@ -147,7 +167,20 @@ export const edgeStoreRouter = es.router({
         // two distinct subject ids onto one segment would file one
         // subject's ID documents under another
         .beforeUpload(({ ctx, input }) =>
-            ctx.isStaff === "true" &&
+            (
+                ctx.isStaff === "true" ||
+                // The portal's contract upload, and nothing else: the one
+                // document a company may file itself, under its own prefix.
+                // `orgId` is resolved live from the database by the host app,
+                // so a removed member loses this at once rather than when the
+                // cookie next refreshes. The type is spelled out rather than
+                // imported — this package knows nothing of @workspace/domain,
+                // where `CONTRACT_DOC` names the same string.
+                (input.subjectType === "organization" &&
+                    input.docType === "signed-contract" &&
+                    ctx.orgId !== null &&
+                    input.subjectId === ctx.orgId)
+            ) &&
             Object.entries(KYC_SEGMENT).every(([key, pattern]) =>
                 isLegal(`kyc ${key}`, (input as Record<string, unknown>)[key], pattern),
             ),
@@ -165,10 +198,20 @@ export type EdgeStoreRouter = typeof edgeStoreRouter
  * `resolveStaff` is supplied by the host app rather than resolved here, so
  * this package stays a thin wrapper with no database dependency of its own.
  * Omitting it leaves `isStaff` false, which closes the KYC bucket entirely.
+ *
+ * `resolveOrgId` is the same arrangement for the organization: when given,
+ * membership is read live from the database instead of the session cookie's
+ * cached `activeOrganizationId`, which a just-accepted invitation or a
+ * removed member leaves stale until the session refreshes. A host that
+ * supplies it has opted into that live answer — including the null a removed
+ * member now resolves to, which is the case the lookup exists for, so there
+ * is no fallback to the session value. Omitting it uses the session value
+ * alone.
  */
 export const createEdgeStoreHandler = (
     auth: Auth,
     resolveStaff?: (userId: string) => Promise<boolean>,
+    resolveOrgId?: (userId: string) => Promise<string | null>,
 ) =>
     createEdgeStoreNextHandler({
         router: edgeStoreRouter,
@@ -177,10 +220,13 @@ export const createEdgeStoreHandler = (
         }: CreateContextOptions): Promise<Context> => {
             const session = await auth.api.getSession({ headers: req.headers })
             const userId = session?.user.id ?? null
+            const sessionOrgId = session?.session.activeOrganizationId ?? null
 
             return {
                 userId,
-                orgId: session?.session.activeOrganizationId ?? null,
+                orgId: userId !== null && resolveOrgId !== undefined
+                    ? await resolveOrgId(userId)
+                    : sessionOrgId,
                 isStaff: userId !== null && resolveStaff !== undefined && await resolveStaff(userId)
                     ? "true"
                     : "false",

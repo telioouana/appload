@@ -25,6 +25,35 @@
             }
         }
     },
+    "List": {
+        "ascending": "Ascending",
+        "breadcrumb": "You are here",
+        "clear-all": "Clear all",
+        "clear-selection": "Clear selection",
+        "columns": "Columns",
+        "command": "Search anywhere (⌘K)",
+        "copied": "Copied",
+        "currency": "Currency",
+        "descending": "Descending",
+        "empty": {
+            "adjust": "Try a different search or clear a filter."
+        },
+        "export": "Export CSV",
+        "filters": "Filters",
+        "next": "Next page",
+        "pagination": "Pages",
+        "per-page": "{count} per page",
+        "previous": "Previous page",
+        "remove-filter": "Remove {filter} filter",
+        "select-all": "Select all rows on this page",
+        "select-row": "Select row",
+        "selected": "{count, plural, one {# selected} other {# selected}}",
+        "showing": "Showing {from}–{to} of {total}",
+        "sort": "Sort",
+        "sort-by": "Sort by",
+        "status": "Status",
+        "suggestions": "Suggestions"
+    },
     "Admin": {
         "metadata": {
             "title": "Appload Admin",
@@ -64,6 +93,8 @@
                 "unread": "Unread messages",
                 "silent": "Silent trucks",
                 "review": "Documents to review",
+                "claims-shippers": "Portal access — shippers",
+                "claims-carriers": "Portal access — carriers",
                 "shippers": "Shippers",
                 "carriers": "Carriers",
                 "drivers": "Drivers",
@@ -2869,6 +2900,8 @@
                 "profile": "Profile",
                 "incomplete": "Incomplete profile",
                 "incomplete-hint": "NUIT, phone or email still missing",
+                "claims": "Portal access requested",
+                "claims-hint": "Somebody asked to manage this company",
                 "contract-options": {
                     "valid": "Valid",
                     "missing": "Missing or expired"
@@ -2890,7 +2923,13 @@
                 "unassigned-trailer": "Not hitched",
                 "unassigned-trailer-hint": "No truck tows this trailer",
                 "unassigned-link": "Not hitched",
-                "unassigned-link-hint": "No trailer carries this link"
+                "unassigned-link-hint": "No trailer carries this link",
+                "owner": "Owner",
+                "owner-options": {
+                    "carrier": "Carriers",
+                    "shipper": "Shippers",
+                    "all": "Everyone"
+                }
             },
             "values": {
                 "none": "None",
@@ -2933,7 +2972,7 @@
                 "third-party": "Third party"
             },
             "documents": {
-                "nuit": "VAT registration (NUIT)",
+                "nuit": "NUIT registration",
                 "id-card": "ID card",
                 "commercial-certificate": "Commercial certificate",
                 "alvara": "Transport licence (alvará)",
@@ -3086,7 +3125,7 @@
                 "actions": "Actions",
                 "driver": "Driver",
                 "phone": "Phone",
-                "carrier": "Carrier",
+                "owner": "Owner",
                 "truck": "Truck",
                 "location": "Location",
                 "status": "Status",
@@ -3168,6 +3207,7 @@
                     "fleet": "Fleet",
                     "drivers": "Drivers",
                     "orders": "Orders",
+                    "portal": "Portal",
                     "activity": "Activity"
                 },
                 "type": {
@@ -3343,36 +3383,70 @@
                 "confirmed": "On WhatsApp — open a conversation",
                 "unreachable": "Not reachable on WhatsApp: the last message failed",
                 "start": "Start WhatsApp conversation"
-            }
-        },
-        "list": {
-            "breadcrumb": "You are here",
-            "currency": "Currency",
-            "command": "Search anywhere (⌘K)",
-            "empty": {
-                "adjust": "Try a different search or clear a filter."
             },
-            "select-all": "Select all rows on this page",
-            "select-row": "Select row",
-            "filters": "Filters",
-            "status": "Status",
-            "sort": "Sort",
-            "sort-by": "Sort by",
-            "ascending": "Ascending",
-            "descending": "Descending",
-            "columns": "Columns",
-            "export": "Export CSV",
-            "remove-filter": "Remove {filter} filter",
-            "clear-all": "Clear all",
-            "showing": "Showing {from}–{to} of {total}",
-            "pagination": "Pages",
-            "previous": "Previous page",
-            "next": "Next page",
-            "per-page": "{count} per page",
-            "selected": "{count, plural, one {# selected} other {# selected}}",
-            "clear-selection": "Clear selection",
-            "copied": "Copied",
-            "suggestions": "Suggestions"
+            "portal": {
+                "title": "Portal",
+                "inactive": "Not on the portal",
+                "since": "On the portal since {date}",
+                "members": "{count, plural, =0 {no members yet} one {# member} other {# members}}",
+                "claims": "Access requests",
+                "no-claims": "Nothing waiting on a decision.",
+                "approve": "Approve",
+                "reject": "Reject",
+                "approved": "Access approved",
+                "rejected": "Request rejected",
+                "email-verified": "Email verified",
+                "email-unverified": "Email not verified",
+                "email-match": "Matches the email on file",
+                "email-differs": "Different from the email on file",
+                "reject-title": "Reject this request",
+                "reject-description": "The person who asked is emailed your answer.",
+                "reject-note": "Reason (optional)",
+                "reject-placeholder": "Why this request is not being approved",
+                "cancel": "Cancel",
+                "access": "Portal access",
+                "no-members": "Nobody signs in for this company yet.",
+                "invitations": "Pending invitations",
+                "invitation-expires": "Expires",
+                "invitation-expired": "Expired",
+                "role": {
+                    "owner": "Owner",
+                    "admin": "Admin",
+                    "member": "Member"
+                },
+                "invite": "Invite owner",
+                "invite-title": "Invite a portal owner",
+                "invite-description": "They receive a link valid for 48 hours and become the owner of this company on the portal.",
+                "invite-name": "Name",
+                "invite-name-placeholder": "Who you are inviting",
+                "invite-email": "Email",
+                "invite-email-placeholder": "Where to send the invitation",
+                "invite-send": "Send invitation",
+                "invite-sent": "Invitation sent to {email}",
+                "subscription": "Subscription",
+                "plan": "Plan",
+                "plan-none": "No plan",
+                "plan-starter": "Starter",
+                "plan-business": "Business",
+                "plan-enterprise": "Enterprise",
+                "expires": "Expiry",
+                "no-expiry": "No end date",
+                "clear-expiry": "Clear the end date",
+                "subscription-save": "Save plan",
+                "subscription-saved": "Plan updated",
+                "subscription-locked": "Only a manager can change the plan.",
+                "usage": "Tracked in {month}: {used} of {quota}",
+                "usage-unlimited": "Tracked in {month}: {used} (no limit)",
+                "usage-none": "No plan — the portal blocks booking and dispatch.",
+                "errors": {
+                    "name": "Enter a name",
+                    "email": "Enter a valid email",
+                    "ALREADY_DECIDED": "This request has already been answered.",
+                    "NOT_ALLOWED": "Your role does not allow this.",
+                    "NOT_FOUND": "This record no longer exists.",
+                    "UNKNOWN": "Something went wrong. Try again."
+                }
+            }
         },
         "command": {
             "title": "Search",
@@ -3559,6 +3633,35 @@
                 "title": "No on-going loads",
                 "description": "Loads appear here once they are on the road"
             },
+            "views": {
+                "map": "Map",
+                "table": "Table"
+            },
+            "table": {
+                "columns": {
+                    "order": "Order",
+                    "status": "Status",
+                    "shipper": "Shipper",
+                    "carrier": "Carrier",
+                    "driver": "Driver",
+                    "plate": "Plate",
+                    "place": "Place",
+                    "updated": "Last update",
+                    "hours": "Hours since",
+                    "latitude": "Latitude",
+                    "longitude": "Longitude",
+                    "stale": "Stale"
+                },
+                "stale": "No position for over 12 hours",
+                "stale-filter": "Older than 12 hours",
+                "status": "Status",
+                "carrier": "Carrier",
+                "any": "All",
+                "no-position": "No position yet",
+                "export": "Export CSV",
+                "empty": "No load matches these filters",
+                "empty-description": "Try a different search or clear a filter."
+            },
             "list": {
                 "no-location": "No location yet",
                 "last-seen": "Seen {ago}",
@@ -3616,7 +3719,12 @@
         },
         "organizations": {
             "register": "Registered organization {name}",
-            "update": "Updated {name} ({changedFields})"
+            "update": "Updated {name} ({changedFields})",
+            "setSubscription": "Put {name} on the {plan} plan (expiry {expiresAt})"
+        },
+        "partners": {
+            "decideClaim": "Marked portal access request {claimId} as {decision}",
+            "inviteOwner": "Invited {email} to own organization {organizationId} on the portal"
         },
         "chats": {
             "start": "Started a conversation with {driverName}",

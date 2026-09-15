@@ -9,7 +9,7 @@ import { useTranslations } from "@workspace/i18n"
 import { Button } from "@workspace/ui/components/button"
 
 import { useTRPC } from "@/backend/api/client"
-import { PageHeader, type SuggestionGroup } from "@/components/list/page-header"
+import { PageHeader, type SuggestionGroup } from "@workspace/ui/customs/list/page-header"
 import { useCreateOrder } from "@/frontend/pages/order/hooks/use-create-order"
 import { currentYear, ordersListInput, type Section } from "@/frontend/pages/orders/types"
 

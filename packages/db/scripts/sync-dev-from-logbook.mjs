@@ -783,6 +783,10 @@ if (!ASSUME_YES) {
 console.log("\nwiping...");
 await q(`
     TRUNCATE TABLE
+        notification, notification_cursor,
+        movement_event, movement_cost, movement_document,
+        movement_location, movement_tracking_request, movement_route, movement,
+        order_request, quote, partner_connection, organization_claim, subscription_usage,
         order_document, order_history, order_offer, sheet_sync, tracking_request,
         chat_message, chat_conversation, "order",
         network, ops_order, kyc, member, invitation,
@@ -820,9 +824,9 @@ const json = (value) => JSON.stringify(value);
 console.log("inserting organizations...");
 await insertMany(
     "organization",
-    ["id", "name", "slug", "created_at", "nuit", "type", "status", "email", "phone_number", "subscription_plan", "kyc_status"],
+    ["id", "name", "slug", "created_at", "nuit", "type", "status", "email", "phone_number", "kyc_status"],
     [...organizations.values()],
-    (o) => [o.id, o.name, o.slug, new Date().toISOString(), o.nuit, o.type, "active", o.email, o.phoneNumber, "free", "draft"],
+    (o) => [o.id, o.name, o.slug, new Date().toISOString(), o.nuit, o.type, "active", o.email, o.phoneNumber, "draft"],
 );
 
 console.log("inserting trucks...");

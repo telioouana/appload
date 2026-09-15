@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@workspace/ui/component
 
 import { cn } from "@workspace/ui/lib/utils"
 
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 
 export type MissingFieldKind = "nuit" | "email" | "phone" | "passport"
 

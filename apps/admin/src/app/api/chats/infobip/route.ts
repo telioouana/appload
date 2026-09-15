@@ -1,33 +1,22 @@
-import { createHash, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq, inArray } from "drizzle-orm";
 
 import { db } from "@workspace/db/db";
 import { chatConversation, chatMessage, trackingRequest } from "@workspace/db/chats";
-
 import {
     locationRequestText,
     parseDeliveryReports,
     parseInboundWebhook,
     sendWhatsAppLocationRequest,
     SHARE_LOCATION_PAYLOAD,
-} from "@/lib/chats/infobip";
-import { normalizePhone } from "@/lib/chats/phone";
-import { recordOrderLocation, resolveOrderForConversation } from "@/lib/tracking/locations";
+} from "@workspace/comms/infobip";
+import { normalizePhone } from "@workspace/comms/phone";
+import { secretMatches } from "@workspace/comms/cron";
 
-/**
- * Constant-time compare that does not leak the secret's length. timingSafeEqual
- * throws on mismatched buffer sizes, so both sides are hashed to a fixed width
- * first.
- */
-function secretMatches(provided: string | null, expected: string): boolean {
-    if (!provided) return false;
+import { reverseGeocode } from "@workspace/maps/server/reverse-geocode";
 
-    const a = createHash("sha256").update(provided).digest();
-    const b = createHash("sha256").update(expected).digest();
-
-    return timingSafeEqual(a, b);
-}
+import { recordOrderLocation, resolveOrderForConversation } from "@workspace/domain/tracking/locations";
+import { recordMovementLocation, reportMovementDelivery, resolveMovementForConversation, respondMovementRequests } from "@workspace/domain/tracking/movements";
 
 /**
  * Infobip webhook: inbound WhatsApp/SMS messages AND delivery reports both
@@ -83,6 +72,10 @@ export async function POST(request: NextRequest) {
                 eq(trackingRequest.externalId, report.externalId),
                 inArray(trackingRequest.status, ["pending", "sent"]),
             ));
+
+        // The portal's movements keep their attempts in their own table and
+        // answer to the same decision table, so a report has to reach both
+        await reportMovementDelivery(db, report);
     }
 
     const inbound = parseInboundWebhook(payload);
@@ -203,6 +196,11 @@ export async function POST(request: NextRequest) {
                         inArray(trackingRequest.status, ["pending", "sent", "delivered"]),
                     ));
 
+                // The same reply closes the portal's own location requests
+                // on this thread: one driver, one number, and he has answered
+                // whoever was asking
+                await respondMovementRequests(db, conversation.id);
+
                 // A pin is the payload we actually asked for: attribute it to
                 // the driver's load so it joins the map trail. Deliberately
                 // best-effort — the message is already stored, and throwing
@@ -223,6 +221,9 @@ export async function POST(request: NextRequest) {
                                 latitude: message.location.latitude,
                                 longitude: message.location.longitude,
                                 placeName: message.location.name,
+                                // Labelled on the way in when Google answers;
+                                // a null is filled by the map overview later
+                                placeLabel: await reverseGeocode(message.location),
                                 // When the driver sent it, not when we got
                                 // round to storing it: a backlog of queued
                                 // webhooks would otherwise land the whole
@@ -232,9 +233,30 @@ export async function POST(request: NextRequest) {
                                 recordedAt: message.receivedAt ?? saved.createdAt,
                             });
                         } else {
-                            console.warn("[infobip] location pin without an order", {
+                            // No live order behind this driver — the pin may
+                            // still belong to a portal movement, the only path
+                            // that reaches the movement trail
+                            const activeMovement = await resolveMovementForConversation(db, {
                                 conversationId: conversation.id,
+                                driverPhone: conversation.driverPhone,
                             });
+
+                            if (activeMovement) {
+                                await recordMovementLocation(db, {
+                                    movementId: activeMovement.id,
+                                    conversationId: conversation.id,
+                                    chatMessageId: saved.id,
+                                    latitude: message.location.latitude,
+                                    longitude: message.location.longitude,
+                                    placeName: message.location.name,
+                                    placeLabel: await reverseGeocode(message.location),
+                                    recordedAt: message.receivedAt ?? saved.createdAt,
+                                });
+                            } else {
+                                console.warn("[infobip] location pin without an order", {
+                                    conversationId: conversation.id,
+                                });
+                            }
                         }
                     } catch (error) {
                         console.error("[infobip] location record failed", error);

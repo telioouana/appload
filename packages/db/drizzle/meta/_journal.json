@@ -99,6 +99,55 @@
       "when": 1788796869330,
       "tag": "0013_fx_daily_rate",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1788972710524,
+      "tag": "0014_portal",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1789024762403,
+      "tag": "0015_subscription",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1789070623924,
+      "tag": "0016_movements",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789340863885,
+      "tag": "0017_movement_document_approval",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789347676507,
+      "tag": "0018_movement_tracking_alert",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789367814423,
+      "tag": "0019_movement_chain_disputes",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789470344023,
+      "tag": "0020_location_place_label",
+      "breakpoints": true
     }
   ]
 }

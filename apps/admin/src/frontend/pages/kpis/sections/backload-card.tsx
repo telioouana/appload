@@ -7,7 +7,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
 import { reportInput } from "@/frontend/pages/kpis/types"
-import { FUEL_LITRES_PER_KM, FUEL_PRICE_MZN_PER_LITRE } from "@/lib/kpis/constants"
+import { FUEL_LITRES_PER_KM, FUEL_PRICE_MZN_PER_LITRE } from "@workspace/domain/kpis/constants"
 
 /**
  * What backloading was worth over the period: how much of the work rode on a

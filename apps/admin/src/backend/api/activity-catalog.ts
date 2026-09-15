@@ -267,6 +267,41 @@ export const activityCatalog: ActivityCatalog = {
             type: input?.type ?? "",
         }),
     },
+    // The plan and its end date are commercial terms Appload set, not
+    // partner data — both are logged
+    "organizations.setSubscription": {
+        entity: (input) =>
+            input?.id ? { type: "organization", id: String(input.id) } : null,
+        params: (input, output?: { name: string; plan: string | null; expiresAt: Date | null }) => ({
+            name: output?.name ?? "",
+            // A null plan is "no plan agreed", which the log names rather
+            // than leaving blank
+            plan: output?.plan ?? input?.plan ?? "none",
+            expiresAt: output?.expiresAt ? output.expiresAt.toISOString().slice(0, 10) : "",
+        }),
+    },
+    // Portal claims: who was answered and how. The rejection note is staff
+    // reasoning about their own decision, and the claim row is the only
+    // other place it is kept — truncated, like the suspension notes above
+    "partners.decideClaim": {
+        entity: (_input, output?: { id: string }) =>
+            output ? { type: "claim", id: output.id } : null,
+        params: (input, output?: { status: string }) => ({
+            claimId: input?.id ?? "",
+            decision: output?.status ?? input?.decision ?? "",
+            note: String(input?.note ?? "").slice(0, 300),
+        }),
+    },
+    // The invited address is the whole point of the record: it is who was
+    // handed the keys to a partner's portal account
+    "partners.inviteOwner": {
+        entity: (input) =>
+            input?.organizationId ? { type: "organization", id: String(input.organizationId) } : null,
+        params: (input) => ({
+            organizationId: input?.organizationId ?? "",
+            email: input?.email ?? "",
+        }),
+    },
     // Partner edits log which fields changed, never the values (contact
     // details and addresses are personal data)
     "organizations.update": {

@@ -1,5 +1,5 @@
 import type { MapOrder } from "@/frontend/pages/map/types"
-import { cashflowInput, currentYear, type OrderStatus } from "@/frontend/pages/orders/types"
+import { cashflowInput, currentYear } from "@/frontend/pages/orders/types"
 // Type only, so the bundler erases it: the client never pulls the router in
 import type { OrdersInput } from "@/frontend/pages/orders/server/procedures"
 
@@ -19,7 +19,7 @@ export const LATEST_LIMIT = 8
 export const UNREAD_POLL_MS = 30_000
 
 /** Orders that never ran: the chart's bottom band, and never money. */
-export const LOST_STATUSES: OrderStatus[] = ["cancelled", "underbid"]
+export { LOST_STATUSES } from "@workspace/domain/orders/status-groups"
 
 export type MonthPoint = {
     /** 1-12, the expected loading month */

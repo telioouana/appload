@@ -1,4 +1,4 @@
-import { OrderError } from "./errors";
+import { OrderError } from "@workspace/domain/orders/errors";
 
 const SHEETS_API = "https://sheets.googleapis.com/v4/spreadsheets";
 

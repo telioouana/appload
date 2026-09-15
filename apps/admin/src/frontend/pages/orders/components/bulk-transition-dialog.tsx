@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
 
 import { useTRPC } from "@/backend/api/client"
-import { allowedTransitions, transitionRequirements, type OrderStatus, type TransitionRequirement } from "@/lib/orders/transitions"
+import { allowedTransitions, transitionRequirements, type OrderStatus, type TransitionRequirement } from "@workspace/domain/orders/transitions"
 import { INTERRUPTED_STATUSES, type OrderRow } from "@/frontend/pages/orders/types"
 import type { BulkTransitionResult } from "@/frontend/pages/orders/server/procedures"
 

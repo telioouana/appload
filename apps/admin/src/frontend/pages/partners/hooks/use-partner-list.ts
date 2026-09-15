@@ -5,9 +5,9 @@ import { useSearchParams } from "next/navigation"
 
 import { useTranslations } from "@workspace/i18n"
 
-import type { SortState } from "@/components/list/data-table"
-import type { ActiveFilter, StatusTab } from "@/components/list/list-toolbar"
-import { useListParams } from "@/components/list/use-list-params"
+import type { SortState } from "@workspace/ui/customs/list/data-table"
+import type { ActiveFilter, StatusTab } from "@workspace/ui/customs/list/list-toolbar"
+import { useListParams } from "@workspace/ui/hooks/use-list-params"
 import { EXPIRY_WINDOW_DAYS, type StatsBucket } from "@/frontend/pages/partners/types"
 
 /**
@@ -51,6 +51,7 @@ export function usePartnerList(defaultSort: string) {
         const expiring = get("expiring")
         if (expiring) push("expiring", t("filters.expiring"), t("filters.within-days", { days: Number(expiring) || EXPIRY_WINDOW_DAYS }))
         if (get("incomplete")) push("incomplete", t("filters.profile"), t("filters.incomplete"))
+        if (get("claims")) push("claims", t("portal.title"), t("filters.claims"))
 
         const contract = get("contract")
         if (contract === "valid" || contract === "missing") push("contract", t("columns.contract"), t(`filters.contract-options.${contract}`))
@@ -68,7 +69,10 @@ export function usePartnerList(defaultSort: string) {
 
         if (get("phone") === "missing") push("phone", t("columns.phone"), t("values.missing"))
         if (get("unassigned")) push("unassigned", t("filters.assignment"), t("values.unassigned"))
-        if (get("carrier")) push("carrier", t("columns.carrier"), t("filters.selected"))
+        if (get("carrier")) push("carrier", t("columns.owner"), t("filters.selected"))
+
+        const owner = get("owner")
+        if (owner === "shipper" || owner === "all") push("owner", t("filters.owner"), t(`filters.owner-options.${owner}`))
 
         return chips
     }
@@ -86,5 +90,5 @@ export function withoutPaging<T extends { page: number; pageSize: number }>(inpu
 
 /** Whether anything narrows the list beyond its natural scope. */
 export const isFilteredList = (get: (key: string) => string | null) =>
-    ["search", "status", "expiring", "incomplete", "contract", "risk", "province", "ownership", "phone", "unassigned", "carrier"]
+    ["search", "status", "expiring", "incomplete", "contract", "risk", "province", "ownership", "phone", "unassigned", "carrier", "owner", "claims"]
         .some((key) => Boolean(get(key)))

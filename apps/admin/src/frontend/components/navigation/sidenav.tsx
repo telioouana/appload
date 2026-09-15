@@ -13,12 +13,13 @@ import { Button } from "@workspace/ui/components/button";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@workspace/ui/components/sidebar";
 
 import { cn } from "@workspace/ui/lib/utils";
+import { NAV_ITEM_CLASSES, NAV_SECTION_LABEL_CLASSES } from "@workspace/ui/lib/nav-tokens";
 
 import { useTRPC } from "@/backend/api/client";
 import { CreateOrderView } from "@/frontend/pages/order/views/create-order-view";
 import { useCreateOrder } from "@/frontend/pages/order/hooks/use-create-order";
 
-import { NavPending } from "./nav-pending";
+import { NavPending } from "@workspace/ui/customs/nav/nav-pending";
 import { NavUser } from "./nav-user";
 
 // Internal pathnames accepted as `href` by the typed next-intl `Link`.
@@ -49,19 +50,6 @@ type NavGroup = {
 
 type NavEntry = NavLink | NavGroup;
 
-const ITEM_CLASSES = [
-    "flex-none cursor-pointer rounded-full whitespace-nowrap text-sm text-secondary-foreground h-9 bg-sidebar border-none px-4 py-2",
-    "hover:bg-linear-to-r/oklch from-primary from-0% via-50% via-sidebar-primary/75 to-sidebar-primary/50 hover:text-white",
-    "data-active:bg-linear-to-r/oklch data-active:text-white",
-    // The kit styles two more states with its own (dark) accent colour: a
-    // group whose submenu is expanded being hovered, and the pressed state.
-    // Both would leave the label and icon dark on the orange gradient.
-    "data-open:hover:bg-linear-to-r/oklch data-open:hover:text-white active:bg-linear-to-r/oklch active:text-white",
-];
-
-// Heads each area of the rail in the same quiet key as the rest of it, so the
-// name separates the two lists without drawing a line between them.
-const SECTION_LABEL_CLASSES = "px-4 text-[11px] font-semibold tracking-wider uppercase text-sidebar-foreground/60";
 
 // Drivers reply while the operator is on another page, so the unread count
 // polls out here. The Messages page refreshes its own list twice as often.
@@ -200,7 +188,7 @@ export function Sidenav({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     asChild
                     tooltip={item.name}
                     isActive={isActive}
-                    className={cn(...ITEM_CLASSES, isActive && "bg-linear-to-r/oklch border-[#E67623]/10")}
+                    className={cn(...NAV_ITEM_CLASSES, isActive && "bg-linear-to-r/oklch border-[#E67623]/10")}
                 >
                     {"items" in item ? (
                         /* Parent UI: Just a layout, no navigation */
@@ -236,7 +224,7 @@ export function Sidenav({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                         isActive={isSubActive}
                                         // The kit pins sub-item icons to the accent colour, which stays
                                         // dark on the orange hover in light mode; follow the text instead
-                                        className={cn(...ITEM_CLASSES, "[&>svg]:text-current", isSubActive && "bg-linear-to-r/oklch border-[#E67623]/10")}
+                                        className={cn(...NAV_ITEM_CLASSES, "[&>svg]:text-current", isSubActive && "bg-linear-to-r/oklch border-[#E67623]/10")}
                                     >
                                         <Link href={subItem.path}>
                                             <subItem.Icon className="size-5!" stroke={1} />
@@ -292,7 +280,7 @@ export function Sidenav({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     the label says what the links under it are for, and folds away
                     on its own once the rail collapses to icons */}
                 <SidebarGroup>
-                    <SidebarGroupLabel className={SECTION_LABEL_CLASSES}>
+                    <SidebarGroupLabel className={NAV_SECTION_LABEL_CLASSES}>
                         {t("content.ops.label")}
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
@@ -312,7 +300,7 @@ export function Sidenav({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </SidebarGroup>
 
                 <SidebarGroup>
-                    <SidebarGroupLabel className={SECTION_LABEL_CLASSES}>
+                    <SidebarGroupLabel className={NAV_SECTION_LABEL_CLASSES}>
                         {t("content.management.label")}
                     </SidebarGroupLabel>
                     <SidebarGroupContent>

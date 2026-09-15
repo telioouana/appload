@@ -2,25 +2,31 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { and, asc, count, countDistinct, desc, eq, gte, ilike, inArray, isNotNull, isNull, like, lte, ne, notInArray, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 
-import { organization, user } from "@workspace/db/users";
+import { invitation, member, organization, user } from "@workspace/db/users";
 import { order, type Location } from "@workspace/db/orders";
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import { chatConversation, chatMessage } from "@workspace/db/chats";
 import { kycDocument } from "@workspace/db/kyc-documents";
+import { CLAIM_STATUS, organizationClaim } from "@workspace/db/connections";
+import { notificationCursor } from "@workspace/db/notifications";
 import { KYC_STATUS, OWNERSHIP_STATUS, type KycStatus, type KycSubjectType, type LoadingBay } from "@workspace/db/types";
 import type { db as Database } from "@workspace/db/db";
+import { brandedEmail, sendEmail } from "@workspace/auth/email";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
 
 import { ACTIVE_STATUSES } from "@/frontend/pages/orders/types";
-import { addDays, docProgress, today, type CurrentDoc } from "@/lib/kyc/derive";
-import { CONTRACT_DOC, subjectKind } from "@/lib/kyc/requirements";
+import { notify } from "@workspace/domain/notifications";
+import { trackingAllowance } from "@workspace/domain/subscription";
+import { addDays, docProgress, today, type CurrentDoc } from "@workspace/domain/kyc/derive";
+import { CONTRACT_DOC, subjectKind } from "@workspace/domain/kyc/requirements";
 import {
     CONTRACT_FILTERS,
     DRIVER_SORTS,
     EXPIRY_WINDOW_DAYS,
     ISSUE_STATUSES,
     ORGANIZATION_SORTS,
+    OWNER_TYPES,
     PLACEHOLDER_PATTERNS,
     RISK_FILTERS,
     STATUS_FILTERS,
@@ -73,6 +79,8 @@ const OrganizationsInput = z.object({
     contract: z.enum(CONTRACT_FILTERS).optional(),
     risk: z.enum(RISK_FILTERS).optional(),
     province: z.string().trim().max(120).optional(),
+    // Rows with a portal claim still waiting on a decision
+    claims: z.boolean().optional(),
 });
 
 const DriversInput = z.object({
@@ -81,6 +89,7 @@ const DriversInput = z.object({
     phone: z.literal("missing").optional(),
     unassigned: z.boolean().optional(),
     carrier: z.string().optional(),
+    owner: z.enum(OWNER_TYPES).default("carrier"),
 });
 
 const VehiclesInput = z.object({
@@ -90,7 +99,11 @@ const VehiclesInput = z.object({
     ownership: z.enum(OWNERSHIP_STATUS).optional(),
     unassigned: z.boolean().optional(),
     carrier: z.string().optional(),
+    owner: z.enum(OWNER_TYPES).default("carrier"),
 });
+
+/** The owner scope the fleet pages and their tiles share (see OWNER_TYPES). */
+const OwnerInput = z.object({ owner: z.enum(OWNER_TYPES).default("carrier") });
 
 type OrganizationsInput = z.infer<typeof OrganizationsInput>;
 type DriversInput = z.infer<typeof DriversInput>;
@@ -264,6 +277,13 @@ function contractedSubjects(db: Db, on: string) {
         ));
 }
 
+/** Organizations someone has asked to own on the portal, still undecided. */
+const claimedOrganizations = (db: Db) =>
+    db
+        .select({ id: organizationClaim.organizationId })
+        .from(organizationClaim)
+        .where(eq(organizationClaim.status, "pending"));
+
 const incompleteOrganization = () =>
     or(
         placeholder(organization.nuit, PLACEHOLDER_PATTERNS.nuit),
@@ -419,6 +439,7 @@ function organizationConditions(db: Db, input: OrganizationsInput): SQL {
     if (input.risk === "flagged") conditions.push(ne(organization.riskLevel, "none"));
     if (input.risk === "watch" || input.risk === "high") conditions.push(eq(organization.riskLevel, input.risk));
     if (input.province) conditions.push(eq(sql`${organization.physicalAddress}->>'state'`, input.province));
+    if (input.claims) conditions.push(inArray(organization.id, claimedOrganizations(db)));
 
     if (input.search) {
         const term = `%${escapeLike(input.search)}%`;
@@ -561,8 +582,22 @@ async function listOrganizations(db: Db, input: OrganizationsInput, limit: numbe
 // Drivers
 // ---------------------------------------------------------------------------
 
+/**
+ * Assets owned by one kind of organization. The fleet tables key on
+ * `carrier_id`, which since the portal opened fleet registration to shippers
+ * is any owning organization — this is what tells the two apart.
+ */
+function ownedBy(db: Db, column: AnyColumn, owner: z.infer<typeof OwnerInput>["owner"]): SQL | undefined {
+    if (owner === "all") return undefined;
+
+    return inArray(column, db.select({ id: organization.id }).from(organization).where(eq(organization.type, owner)));
+}
+
 function driverConditions(db: Db, input: DriversInput): SQL | undefined {
     const conditions: SQL[] = [];
+
+    const owner = ownedBy(db, driver.carrierId, input.owner);
+    if (owner) conditions.push(owner);
 
     if (input.status) conditions.push(statusCondition(driver.kycStatus, input.status));
     if (input.expiring) conditions.push(inArray(driver.id, expiringSubjects(db, "driver", input.expiring, today())));
@@ -693,6 +728,9 @@ async function listDrivers(db: Db, input: DriversInput, limit: number, offset: n
 function vehicleConditions(db: Db, input: VehiclesInput): SQL | undefined {
     const table = VEHICLE_TABLE[input.kind];
     const conditions: SQL[] = [];
+
+    const owner = ownedBy(db, table.carrierId, input.owner);
+    if (owner) conditions.push(owner);
 
     if (input.status) conditions.push(statusCondition(table.kycStatus, input.status));
     if (input.expiring) conditions.push(inArray(table.id, expiringSubjects(db, input.kind, input.expiring, today())));
@@ -904,6 +942,49 @@ const orderAggregate = (paymentStatus?: AnyColumn) => ({
 });
 
 // ---------------------------------------------------------------------------
+// Portal
+// ---------------------------------------------------------------------------
+
+// How long an owner invitation stays acceptable
+const INVITATION_TTL_MS = 48 * 60 * 60 * 1000;
+
+/** An absolute link into the partner portal, which is a separate origin. */
+const portalUrl = (path: string) => `${process.env.NEXT_PUBLIC_PORTAL_URL ?? ""}${path}`;
+
+/**
+ * A Portuguese transactional email to a partner. Portal copy is pt only
+ * (§5 of the plan): these people never chose a language with us. A provider
+ * failure is logged, never thrown — the decision it accompanies is already
+ * written and must not be rolled back by an email.
+ */
+async function sendPortalEmail(params: {
+    to: string;
+    subject: string;
+    title: string;
+    lines: string[];
+    ctaLabel: string;
+    ctaUrl: string;
+    disclaimer: string;
+}): Promise<void> {
+    const result = await sendEmail({
+        to: [params.to],
+        subject: params.subject,
+        html: brandedEmail({
+            title: params.title,
+            lines: params.lines,
+            ctaLabel: params.ctaLabel,
+            ctaUrl: params.ctaUrl,
+            disclaimer: params.disclaimer,
+            locale: "pt",
+        }),
+    });
+
+    if (!result.ok) {
+        console.error(`[portal] email "${params.subject}" failed:`, result.error);
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
 
@@ -981,16 +1062,22 @@ export const partnersRouter = createTRPCRouter({
         }),
 
     driverStats: authorizedProcedure("organizations", ["read"])
-        .query(async ({ ctx }): Promise<StatsBucket> => {
+        .input(OwnerInput)
+        .query(async ({ ctx, input }): Promise<StatsBucket> => {
+            // The same owner scope as the list, so a tile always counts
+            // exactly the rows it opens
+            const owner = ownedBy(ctx.db, driver.carrierId, input.owner);
+
             const [buckets, [attention]] = await Promise.all([
-                statusBuckets(ctx.db, driver, "driver"),
+                statusBuckets(ctx.db, driver, "driver", owner),
                 ctx.db
                     .select({
                         phone: conditionCount(missingDriverPhone()),
                         unassigned: conditionCount(isNull(driver.truckId)),
                     })
                     .from(driver)
-                    .innerJoin(user, eq(user.id, driver.userId)),
+                    .innerJoin(user, eq(user.id, driver.userId))
+                    .where(owner),
             ]);
 
             return {
@@ -1016,18 +1103,22 @@ export const partnersRouter = createTRPCRouter({
         }),
 
     vehicleStats: authorizedProcedure("organizations", ["read"])
-        .input(z.object({ kind: vehicleKind }))
+        .input(OwnerInput.extend({ kind: vehicleKind }))
         .query(async ({ ctx, input }): Promise<StatsBucket> => {
             const table = VEHICLE_TABLE[input.kind];
+            // The same owner scope as the list, so a tile always counts
+            // exactly the rows it opens
+            const owner = ownedBy(ctx.db, table.carrierId, input.owner);
 
             const [buckets, [attention]] = await Promise.all([
-                statusBuckets(ctx.db, table, input.kind),
+                statusBuckets(ctx.db, table, input.kind, owner),
                 ctx.db
                     .select({
                         ownership: conditionCount(eq(table.ownershipStatus, "unverified")),
                         unassigned: conditionCount(unassignedVehicle(ctx.db, input.kind)),
                     })
-                    .from(table),
+                    .from(table)
+                    .where(owner),
             ]);
 
             return {
@@ -1065,6 +1156,11 @@ export const partnersRouter = createTRPCRouter({
                     physicalAddress: organization.physicalAddress,
                     metadata: organization.metadata,
                     createdAt: organization.createdAt,
+                    // Portal standing: null activation means the company
+                    // exists here but nobody signs in for it yet
+                    portalActivatedAt: organization.portalActivatedAt,
+                    subscriptionPlan: organization.subscriptionPlan,
+                    subscriptionExpiresAt: organization.subscriptionExpiresAt,
                 })
                 .from(organization)
                 .where(eq(organization.id, input.id));
@@ -1442,19 +1538,285 @@ export const partnersRouter = createTRPCRouter({
             };
         }),
 
+    /**
+     * Portal claims: a user asking to own a company that already exists here
+     * but has nobody on the portal yet. Pending by default — that is the
+     * queue ops works from.
+     */
+    claims: authorizedProcedure("organizations", ["read"])
+        .input(z.object({
+            organizationId: z.string().optional(),
+            status: z.enum(CLAIM_STATUS).optional(),
+        }))
+        .query(async ({ ctx, input }) => {
+            return ctx.db
+                .select({
+                    id: organizationClaim.id,
+                    status: organizationClaim.status,
+                    autoApproved: organizationClaim.autoApproved,
+                    decisionNote: organizationClaim.decisionNote,
+                    decidedAt: organizationClaim.decidedAt,
+                    createdAt: organizationClaim.createdAt,
+                    organizationId: organizationClaim.organizationId,
+                    organizationName: organization.name,
+                    organizationType: organization.type,
+                    organizationEmail: organization.email,
+                    userId: organizationClaim.userId,
+                    userName: user.name,
+                    userEmail: user.email,
+                    emailVerified: user.emailVerified,
+                })
+                .from(organizationClaim)
+                .innerJoin(organization, eq(organization.id, organizationClaim.organizationId))
+                .innerJoin(user, eq(user.id, organizationClaim.userId))
+                .where(and(
+                    eq(organizationClaim.status, input.status ?? "pending"),
+                    input.organizationId ? eq(organizationClaim.organizationId, input.organizationId) : undefined,
+                ))
+                .orderBy(asc(organizationClaim.createdAt))
+                .limit(100);
+        }),
+
+    /**
+     * Ops answering a claim. Approving is what actually puts a company on
+     * the portal: the claimant becomes its owner, the activation date is
+     * stamped, and the notification cursor starts at now — a company joining
+     * today must not wake up to years of its own order history.
+     *
+     * neon-http has no transactions, so the writes are ordered so a failure
+     * in the middle leaves something a retry can finish: membership first
+     * (the only step that can still refuse), the claim's own row last.
+     */
+    decideClaim: authorizedProcedure("organizations", ["update"])
+        .input(z.object({
+            id: z.string().nonempty(),
+            decision: z.enum(["approve", "reject"]),
+            note: z.string().trim().max(500).optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const [claim] = await ctx.db
+                .select({
+                    id: organizationClaim.id,
+                    status: organizationClaim.status,
+                    organizationId: organizationClaim.organizationId,
+                    organizationName: organization.name,
+                    portalActivatedAt: organization.portalActivatedAt,
+                    userId: organizationClaim.userId,
+                    userName: user.name,
+                    userEmail: user.email,
+                })
+                .from(organizationClaim)
+                .innerJoin(organization, eq(organization.id, organizationClaim.organizationId))
+                .innerJoin(user, eq(user.id, organizationClaim.userId))
+                .where(eq(organizationClaim.id, input.id));
+
+            if (!claim) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+            if (claim.status !== "pending") throw new TRPCError({ code: "CONFLICT", message: "ALREADY_DECIDED" });
+
+            const decidedAt = new Date();
+            const note = input.note?.trim() || null;
+
+            if (input.decision === "reject") {
+                await ctx.db
+                    .update(organizationClaim)
+                    .set({ status: "rejected", decisionNote: note, decidedBy: ctx.session.user.id, decidedAt })
+                    .where(eq(organizationClaim.id, claim.id));
+
+                await sendPortalEmail({
+                    to: claim.userEmail,
+                    subject: `Pedido de acesso a ${claim.organizationName}`,
+                    title: "Pedido de acesso não aprovado",
+                    lines: [
+                        `O seu pedido para gerir ${claim.organizationName} no portal Appload não foi aprovado.`,
+                        ...(note ? [`Motivo: ${note}`] : []),
+                        "Se acha que se trata de um engano, fale connosco e resolvemos.",
+                    ],
+                    ctaLabel: "Voltar ao portal",
+                    ctaUrl: portalUrl("/onboarding"),
+                    disclaimer: "Se não fez este pedido, ignore este email.",
+                });
+
+                return { id: claim.id, status: "rejected" as const };
+            }
+
+            // Idempotent: a retry after a half-written approval must not fail
+            // here with "already a member"
+            const [existing] = await ctx.db
+                .select({ id: member.id })
+                .from(member)
+                .where(and(eq(member.organizationId, claim.organizationId), eq(member.userId, claim.userId)));
+
+            if (!existing) {
+                await ctx.authApi.addMember({
+                    body: { userId: claim.userId, organizationId: claim.organizationId, role: "owner" },
+                });
+            }
+
+            if (!claim.portalActivatedAt) {
+                await ctx.db
+                    .update(organization)
+                    .set({ portalActivatedAt: decidedAt })
+                    .where(and(eq(organization.id, claim.organizationId), isNull(organization.portalActivatedAt)));
+            }
+
+            // Created, never moved: an existing cursor is a materializer's
+            // position, and rewinding it would replay the trail
+            await ctx.db
+                .insert(notificationCursor)
+                .values({ organizationId: claim.organizationId, lastHistoryCreatedAt: decidedAt })
+                .onConflictDoNothing();
+
+            await ctx.db
+                .update(organizationClaim)
+                .set({ status: "approved", decisionNote: note, decidedBy: ctx.session.user.id, decidedAt })
+                .where(eq(organizationClaim.id, claim.id));
+
+            await notify(ctx.db, {
+                organizationId: claim.organizationId,
+                kind: "claim.approved",
+                userIds: [claim.userId],
+                email: false, // decideClaim emails the claimant directly below; no outbox copy
+                entityType: "organization",
+                entityId: claim.organizationId,
+            });
+
+            await sendPortalEmail({
+                to: claim.userEmail,
+                subject: `${claim.organizationName} está no portal Appload`,
+                title: "Bem-vindo ao portal Appload",
+                lines: [
+                    `O seu pedido para gerir ${claim.organizationName} foi aprovado.`,
+                    "Já pode entrar no portal e acompanhar as suas cargas, parceiros e documentos.",
+                ],
+                ctaLabel: "Entrar no portal",
+                ctaUrl: portalUrl("/dashboard"),
+                disclaimer: "Se não fez este pedido, fale connosco antes de entrar.",
+            });
+
+            return { id: claim.id, status: "approved" as const };
+        }),
+
+    /**
+     * Invites the first portal user of a partner company. The organization
+     * plugin's own createInvitation demands that the inviter be a member of
+     * the organization, which staff never are — so the row is written
+     * directly and the email is sent from here.
+     */
+    inviteOwner: authorizedProcedure("organizations", ["update"])
+        .input(z.object({
+            organizationId: z.string().nonempty(),
+            email: z.email(),
+            name: z.string().trim().nonempty().max(120),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const [org] = await ctx.db
+                .select({ id: organization.id, name: organization.name })
+                .from(organization)
+                .where(eq(organization.id, input.organizationId));
+
+            if (!org) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+
+            // Accepting requires the signed-in email to equal this one, and
+            // Better Auth compares it as stored
+            const email = input.email.trim().toLowerCase();
+            const id = crypto.randomUUID();
+            const createdAt = new Date();
+
+            await ctx.db.insert(invitation).values({
+                id,
+                organizationId: org.id,
+                email,
+                role: "owner",
+                status: "pending",
+                expiresAt: new Date(createdAt.getTime() + INVITATION_TTL_MS),
+                inviterId: ctx.session.user.id,
+                name: input.name,
+                createdAt,
+            });
+
+            await sendPortalEmail({
+                to: email,
+                subject: `Convite para gerir ${org.name} na Appload`,
+                title: `Junte-se a ${org.name} na Appload`,
+                lines: [
+                    `A Appload convidou-o para gerir ${org.name} no portal de parceiros.`,
+                    "O convite é válido durante 48 horas.",
+                ],
+                ctaLabel: "Aceitar o convite",
+                ctaUrl: portalUrl(`/accept-invitation/${id}`),
+                disclaimer: "Se não estava à espera deste convite, ignore este email.",
+            });
+
+            return { id, email };
+        }),
+
+    /** Who signs in for a partner company today, and who is still invited. */
+    portalMembers: authorizedProcedure("organizations", ["read"])
+        .input(z.object({ organizationId: z.string().nonempty() }))
+        .query(async ({ ctx, input }) => {
+            const [members, invitations] = await Promise.all([
+                ctx.db
+                    .select({
+                        id: member.id,
+                        userId: member.userId,
+                        name: user.name,
+                        email: user.email,
+                        role: member.role,
+                        createdAt: member.createdAt,
+                    })
+                    .from(member)
+                    .innerJoin(user, eq(user.id, member.userId))
+                    .where(eq(member.organizationId, input.organizationId))
+                    .orderBy(asc(member.createdAt)),
+
+                ctx.db
+                    .select({
+                        id: invitation.id,
+                        name: invitation.name,
+                        email: invitation.email,
+                        role: invitation.role,
+                        expiresAt: invitation.expiresAt,
+                        createdAt: invitation.createdAt,
+                    })
+                    .from(invitation)
+                    .where(and(eq(invitation.organizationId, input.organizationId), eq(invitation.status, "pending")))
+                    .orderBy(desc(invitation.createdAt)),
+            ]);
+
+            return { members, invitations };
+        }),
+
+    /**
+     * The same allowance the portal enforces: the plan, the running month
+     * and the tracked movements spent on it, so ops reads the quota off the
+     * source rather than counting orders by hand.
+     */
+    portalUsage: authorizedProcedure("organizations", ["read"])
+        .input(z.object({ organizationId: z.string().nonempty() }))
+        .query(async ({ ctx, input }) => trackingAllowance(ctx.db, input.organizationId)),
+
     /** Pending-review counts for the sidebar badges — one small query per table. */
     reviewQueue: authorizedProcedure("organizations", ["read"])
         .query(async ({ ctx }) => {
             const pending = (table: SubjectTable, where?: SQL) =>
                 ctx.db.select({ value: count() }).from(table).where(and(eq(table.kycStatus, "pending-review"), where));
 
-            const [[shippers], [carriers], [drivers], [trucks], [trailers], [links]] = await Promise.all([
+            const [[shippers], [carriers], [drivers], [trucks], [trailers], [links], claims] = await Promise.all([
                 pending(organization, eq(organization.type, "shipper")),
                 pending(organization, eq(organization.type, "carrier")),
                 pending(driver),
                 pending(truck),
                 pending(trailer),
                 pending(link),
+                // Portal claims are not a kyc status, so they ride their own
+                // grouped count — split by party type, since each side has
+                // its own list to open
+                ctx.db
+                    .select({ type: organization.type, value: count() })
+                    .from(organizationClaim)
+                    .innerJoin(organization, eq(organization.id, organizationClaim.organizationId))
+                    .where(eq(organizationClaim.status, "pending"))
+                    .groupBy(organization.type),
             ]);
 
             return {
@@ -1462,6 +1824,10 @@ export const partnersRouter = createTRPCRouter({
                 carriers: carriers?.value ?? 0,
                 drivers: drivers?.value ?? 0,
                 fleet: (trucks?.value ?? 0) + (trailers?.value ?? 0) + (links?.value ?? 0),
+                pendingClaims: {
+                    shipper: claims.find((row) => row.type === "shipper")?.value ?? 0,
+                    carrier: claims.find((row) => row.type === "carrier")?.value ?? 0,
+                },
                 // /carriers/fleets shows one kind at a time, so the summed row
                 // above could not open exactly the rows it counts
                 fleetByKind: {

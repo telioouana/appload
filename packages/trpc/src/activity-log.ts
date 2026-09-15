@@ -3,6 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@workspace/db/db";
 import {
     activityLog,
+    type ActivityApp,
     type ActivityParams,
     type CreateActivityLog,
 } from "@workspace/db/activity-log";
@@ -10,6 +11,9 @@ import {
 // A session counts as "resumed" when the first authenticated request arrives
 // after this much logged inactivity
 const RESUME_GAP_MS = 30 * 60 * 1000;
+
+// Which app a logged action was performed in — the column's own vocabulary
+export type AppName = ActivityApp;
 
 export type ActivityExtractor = {
     // output is undefined when the mutation failed — extractors must tolerate it.
@@ -46,6 +50,7 @@ type SessionCtx = {
 
 export async function recordRequestActivity(opts: {
     session: SessionCtx;
+    app: AppName;
     path: string;
     type: string; // "mutation" | "query" | "subscription"
     rawInput: unknown; // only fetched for mutations
@@ -56,6 +61,7 @@ export async function recordRequestActivity(opts: {
 }) {
     const { session } = opts;
     const base = {
+        app: opts.app,
         actorId: session.user.id,
         actorName: session.user.name,
         sessionId: session.session.id,

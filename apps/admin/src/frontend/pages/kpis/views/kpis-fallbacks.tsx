@@ -1,6 +1,6 @@
 import { Skeleton } from "@workspace/ui/components/skeleton"
 
-import { TilesSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 import { CardSkeleton } from "@/frontend/pages/dashboard/views/dashboard-fallbacks"
 

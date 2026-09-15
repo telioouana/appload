@@ -20,8 +20,13 @@ jobs:
       # production without it); DATABASE_URL just has to be non-empty.
       # Keep this list in sync with what the build touches at module scope —
       # a missing one surfaces as "Failed to collect page data" in next build.
+      # The portal (apps/app) builds from this same block: every name it
+      # reads at module scope is one the admin reads too, and everything
+      # else it touches (Maps keys, contact address) has a code fallback.
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_PORTAL_URL: http://localhost:3001
+      OPS_NOTIFICATION_EMAIL: ci-placeholder@example.com
       BETTER_AUTH_SECRET: ci-placeholder-secret-0123456789abcdefghijklmnop
       DATABASE_URL: postgres://ci:ci@localhost:5432/ci
       # EdgeStore validates these at module load during page-data collection.

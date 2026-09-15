@@ -34,6 +34,19 @@ export const ORGANIZATION_SORTS = ["name", "status", "orders", "created"] as con
 export const DRIVER_SORTS = ["name", "status", "carrier", "created"] as const
 export const VEHICLE_SORTS = ["plate", "status", "carrier", "year", "created"] as const
 
+/**
+ * Whose fleet the drivers and vehicles pages list. Since the portal opened
+ * fleet registration to shippers running their own trucks, the fleet tables
+ * hold both — but a shipper's assets never go through verification (they can
+ * never be on an Appload order), so the pages default to carriers: the list,
+ * its tabs and its tiles then count exactly the assets somebody has to
+ * review, and a shipper's fleet is one filter away rather than a permanent
+ * column of "draft" rows in the KYC queue.
+ */
+export const OWNER_TYPES = ["carrier", "shipper", "all"] as const
+export type OwnerType = (typeof OWNER_TYPES)[number]
+export const DEFAULT_OWNER: OwnerType = "carrier"
+
 export type OrganizationSort = (typeof ORGANIZATION_SORTS)[number]
 export type DriverSort = (typeof DRIVER_SORTS)[number]
 export type VehicleSort = (typeof VEHICLE_SORTS)[number]
@@ -233,6 +246,7 @@ export const organizationsListInput = (get: Get) => ({
     contract: oneOf(get("contract"), CONTRACT_FILTERS),
     risk: oneOf(get("risk"), RISK_FILTERS),
     province: text(get("province")),
+    claims: flag(get("claims")),
 })
 
 export const driversListInput = (get: Get) => ({
@@ -241,6 +255,7 @@ export const driversListInput = (get: Get) => ({
     phone: get("phone") === "missing" ? ("missing" as const) : undefined,
     unassigned: flag(get("unassigned")),
     carrier: text(get("carrier")),
+    owner: currentOwner(get),
 })
 
 export const vehiclesListInput = (get: Get) => ({
@@ -250,6 +265,7 @@ export const vehiclesListInput = (get: Get) => ({
     ownership: oneOf(get("ownership"), OWNERSHIP_STATUS),
     unassigned: flag(get("unassigned")),
     carrier: text(get("carrier")),
+    owner: currentOwner(get),
 })
 
 export type OrganizationsListInput = ReturnType<typeof organizationsListInput>
@@ -272,6 +288,8 @@ export const FILTER_KEYS = [
     "phone",
     "unassigned",
     "carrier",
+    "owner",
+    "claims",
     "page",
 ] as const
 
@@ -283,3 +301,8 @@ export const FILTER_KEYS = [
 export const EXPIRY_WINDOW_DAYS = 30
 
 export const currentKind = (get: Get) => parseKind(get("kind"))
+
+/** Whose fleet the page lists; absent means carriers (see OWNER_TYPES). */
+export function currentOwner(get: Get): OwnerType {
+    return oneOf(get("owner"), OWNER_TYPES) ?? DEFAULT_OWNER
+}

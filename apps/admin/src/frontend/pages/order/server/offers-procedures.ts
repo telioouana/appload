@@ -9,8 +9,8 @@ import type { db as Database } from "@workspace/db/db";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
 
-import { carrierSnapshot } from "@/lib/orders/carrier-snapshot";
-import { offerPricingColumns, priceOffer } from "@/lib/orders/commission";
+import { carrierSnapshot } from "@workspace/domain/orders/carrier-snapshot";
+import { offerPricingColumns, priceOffer } from "@workspace/domain/orders/commission";
 import { OfferDecisionSchema, OfferValuesSchemaServer } from "@/backend/schemas/offer";
 
 import { toTRPCError } from "./procedures";

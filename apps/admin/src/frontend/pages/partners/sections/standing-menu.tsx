@@ -24,7 +24,7 @@ import {
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
+import { domainErrorCode } from "@workspace/trpc/errors"
 import { useStaffRole } from "@/frontend/pages/kyc/sections/document-checklist"
 
 const STANDING_ERROR_CODES = ["NOT_ALLOWED", "INVALID_STATE", "NOT_FOUND", "UNKNOWN"] as const

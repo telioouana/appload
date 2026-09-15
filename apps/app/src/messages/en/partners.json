@@ -1,0 +1,225 @@
+{
+    "title": "Partners",
+    "titles": {
+        "clients": "Clients",
+        "transporters": "Transporters",
+        "requests": "Partner requests"
+    },
+    "description": {
+        "shipper": "The transporters you work with, and the requests waiting on an answer.",
+        "carrier": "The clients you carry for, the carriers you subcontract, and the requests waiting on an answer."
+    },
+    "search": {
+        "placeholder": "Search by company name",
+        "clear": "Clear the search"
+    },
+    "tabs": {
+        "clients": "Clients",
+        "transporters": "Transporters",
+        "requests": "Requests"
+    },
+    "tiles": {
+        "incoming": "Waiting on you",
+        "incoming-hint": "Requests to accept or decline",
+        "outgoing": "Waiting on them",
+        "outgoing-hint": "Requests you sent"
+    },
+    "columns": {
+        "partner": "Company",
+        "relation": "Relation",
+        "kyc": "Verification",
+        "orders": "Orders",
+        "since": "Connected since",
+        "actions": "Actions"
+    },
+    "kind": {
+        "client": "Client",
+        "transporter": "Transporter"
+    },
+    "direction": {
+        "incoming": "Received",
+        "outgoing": "Sent"
+    },
+    "status": {
+        "pending": "Pending",
+        "accepted": "Connected",
+        "declined": "Declined",
+        "removed": "Ended"
+    },
+    "kyc": {
+        "draft": "Not submitted",
+        "pending-review": "Under review",
+        "verified": "Verified",
+        "rejected": "Rejected",
+        "expired": "Expired",
+        "suspended": "Suspended"
+    },
+    "order-status": {
+        "prospect": "Prospect",
+        "booked": "Booked",
+        "to-loading": "To loading",
+        "at-loading": "At loading",
+        "loading": "Loading",
+        "waiting-documents": "Waiting for documents",
+        "on-route": "On route",
+        "stopped": "Stopped",
+        "issue": "Issue",
+        "at-border": "At border",
+        "at-offloading": "At offloading",
+        "offloading": "Offloading",
+        "delivered": "Delivered",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "underbid": "Lost on price"
+    },
+    "values": {
+        "missing": "Not given",
+        "no-province": "Province not given"
+    },
+    "data": {
+        "empty": "No partners yet",
+        "empty-clients": "Add the companies whose cargo you carry and their orders will reach you here.",
+        "empty-transporters": {
+            "shipper": "Add the carriers you ship with and you can send them orders straight away.",
+            "carrier": "Add the transporters you subcontract and you can pass them loads you cannot cover."
+        },
+        "no-results": "No company matches this search",
+        "error": "The partner list could not be loaded."
+    },
+    "requests": {
+        "incoming": "Waiting on you",
+        "outgoing": "Waiting on them",
+        "empty": {
+            "title": "No requests",
+            "description": "Requests you send and requests you receive both land here."
+        }
+    },
+    "actions": {
+        "menu": "Row actions",
+        "open": "Open profile",
+        "accept": "Accept",
+        "decline": "Decline",
+        "remove": "End connection",
+        "withdraw": "Withdraw request",
+        "cancel": "Cancel",
+        "remove-confirm": {
+            "title": "End this connection?",
+            "description": "{name} will no longer be able to send you work, and you will not be able to send them any. The orders you already ran together are kept."
+        },
+        "withdraw-confirm": {
+            "title": "Withdraw this request?",
+            "description": "{name} will no longer see your request. You can send it again at any time."
+        }
+    },
+    "add": {
+        "trigger": "Add partner",
+        "title": "Add a partner",
+        "relation": "What are you adding",
+        "description": {
+            "search": "Search for the company first — nearly every carrier and shipper Appload works with is already here.",
+            "register": "Register a company that is not in Appload yet. It is connected to you as soon as it is registered."
+        },
+        "search": {
+            "client": "Search for a client by name",
+            "transporter": "Search for a transporter by name",
+            "hint": "Type at least two letters of the company name.",
+            "empty": "No company matches this search."
+        },
+        "state": {
+            "connected": "Connected",
+            "pending": "Request sent",
+            "awaiting-you": "Waiting on you"
+        },
+        "select": "Select",
+        "send": "Send request",
+        "back": "Back",
+        "register": "Register a company",
+        "register-hint": "Not finding them?",
+        "message": {
+            "label": "Note (optional)",
+            "placeholder": "Say who you are and what you would like to work on together.",
+            "hint": "The note is shown with your request."
+        }
+    },
+    "register": {
+        "submit": "Register and connect",
+        "duplicate-nuit-hint": "This NUIT is already registered. Send that company a request instead.",
+        "fields": {
+            "name": {
+                "client": "Client name",
+                "transporter": "Transporter name",
+                "placeholder": "Company name as registered",
+                "error": "Enter the company name"
+            },
+            "nuit": {
+                "label": "NUIT",
+                "placeholder": "9 digits",
+                "error": "A NUIT has 9 digits"
+            },
+            "phone": {
+                "label": "Phone",
+                "placeholder": "+258 84 000 0000",
+                "error": "Enter a phone number"
+            },
+            "email": {
+                "label": "Email (optional)",
+                "placeholder": "contact@company.co.mz",
+                "description": "A contact address for this company. Appload keeps it as a note — the company sets its own when it joins.",
+                "error": "Enter a valid email address"
+            },
+            "physicalAddress": {
+                "label": "Address (optional)",
+                "placeholder": "Search for the address",
+                "error": "Pick an address from the suggestions"
+            }
+        }
+    },
+    "profile": {
+        "title": "Partner profile",
+        "description": "Contact details, connection history and the orders you have run together.",
+        "error": "This partner could not be loaded.",
+        "contact": "Contact",
+        "connection": "Connection",
+        "orders": "Orders together",
+        "locked": "Contact details are shown once the connection is accepted.",
+        "last-loading": "Last loading {date}",
+        "no-orders": "No orders together yet",
+        "fields": {
+            "email": "Email",
+            "phone": "Phone",
+            "address": "Address",
+            "billing": "Billing address",
+            "requested": "Requested",
+            "answered": "Answered",
+            "direction": "Request"
+        },
+        "contract": {
+            "valid": "Contract valid",
+            "missing": "No contract with Appload",
+            "expired": "Contract expired",
+            "pending": "Contract under review"
+        }
+    },
+    "toasts": {
+        "requested": "Request sent.",
+        "accepted": "Connection accepted.",
+        "declined": "Request declined.",
+        "removed": "Connection ended.",
+        "withdrawn": "Request withdrawn.",
+        "registered": "{name} was registered and is now connected."
+    },
+    "errors": {
+        "notFound": "This request is no longer available. Refresh the page.",
+        "alreadyConnected": "You are already connected to this company.",
+        "alreadyPending": "There is already a request open with this company.",
+        "selfConnection": "A company cannot connect to itself.",
+        "wrongPartnerType": "This company cannot be added in that role.",
+        "relationNotAllowed": "Your company cannot make this kind of connection.",
+        "notAllowed": "Your role does not allow this.",
+        "duplicateNuit": "This NUIT is already registered.",
+        "duplicateEmail": "This email is already registered.",
+        "duplicatePhone": "This phone number is already registered.",
+        "rateLimited": "You have registered several companies today. Try again tomorrow.",
+        "unknown": "Something went wrong. Please try again."
+    }
+}

@@ -9,7 +9,7 @@ import { Badge } from "@workspace/ui/components/badge"
 
 import { CargoFlags } from "@/frontend/pages/orders/sections/order-item-shared"
 
-import { SectionCard } from "./section-card"
+import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 
 /**
  * Where the load goes and what it is. The full addresses, not the city-level

@@ -9,14 +9,14 @@ import { OWNERSHIP_STATUS } from "@workspace/db/types"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
-import { today } from "@/lib/kyc/derive"
-import { ListCard } from "@/components/list/list-card"
-import { ListFooter } from "@/components/list/list-footer"
-import { ListToolbar } from "@/components/list/list-toolbar"
-import { BulkAction, BulkBar } from "@/components/list/bulk-bar"
-import { DataTable, useDataTable } from "@/components/list/data-table"
-import { FilterChoice, FilterToggle } from "@/components/list/filter-controls"
-import { downloadCsv, stamp } from "@/components/list/csv"
+import { today } from "@workspace/domain/kyc/derive"
+import { ListCard } from "@workspace/ui/customs/list/list-card"
+import { ListFooter } from "@workspace/ui/customs/list/list-footer"
+import { ListToolbar } from "@workspace/ui/customs/list/list-toolbar"
+import { BulkAction, BulkBar } from "@workspace/ui/customs/list/bulk-bar"
+import { DataTable, useDataTable } from "@workspace/ui/customs/list/data-table"
+import { FilterChoice, FilterToggle } from "@workspace/ui/customs/list/filter-controls"
+import { downloadCsv, stamp } from "@workspace/ui/lib/csv"
 import { useVehicleColumns } from "@/frontend/pages/partners/columns/vehicle-columns"
 import { isFilteredList, usePartnerList, withoutPaging } from "@/frontend/pages/partners/hooks/use-partner-list"
 import { usePartnerProfile, type ProfileTab } from "@/frontend/pages/partners/hooks/use-partner-profile"
@@ -40,7 +40,7 @@ export function VehiclesDataView() {
     const input = vehiclesListInput(get)
 
     const { data } = useSuspenseQuery(trpc.partners.vehicles.queryOptions(input))
-    const { data: stats } = useSuspenseQuery(trpc.partners.vehicleStats.queryOptions({ kind: input.kind }))
+    const { data: stats } = useSuspenseQuery(trpc.partners.vehicleStats.queryOptions({ kind: input.kind, owner: input.owner }))
     const isRefreshing = useIsFetching({ queryKey: trpc.partners.vehicles.pathKey() }) > 0
 
     const on = today()
@@ -95,6 +95,16 @@ export function VehiclesDataView() {
                     isExporting={isExporting}
                     filters={
                         <>
+                            {/* Carriers when absent: the fleet somebody verifies */}
+                            <FilterChoice
+                                label={t("filters.owner")}
+                                param="owner"
+                                anyLabel={t("filters.owner-options.carrier")}
+                                options={[
+                                    { value: "shipper", label: t("filters.owner-options.shipper") },
+                                    { value: "all", label: t("filters.owner-options.all") },
+                                ]}
+                            />
                             <FilterChoice
                                 label={t("columns.ownership")}
                                 param="ownership"

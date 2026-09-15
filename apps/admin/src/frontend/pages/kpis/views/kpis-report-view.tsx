@@ -10,9 +10,9 @@ import { Button } from "@workspace/ui/components/button"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 
 import { useTRPC } from "@/backend/api/client"
-import { PageHeader } from "@/components/list/page-header"
+import { PageHeader } from "@workspace/ui/customs/list/page-header"
 import { Link } from "@/i18n/navigation"
-import { TilesSkeleton } from "@/frontend/pages/partners/views/list-fallbacks"
+import { TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
 import { CardBoundary, CardSkeleton, Quiet } from "@/frontend/pages/dashboard/views/dashboard-fallbacks"
 import { DownloadMenu } from "@/frontend/pages/kpis/components/download-menu"

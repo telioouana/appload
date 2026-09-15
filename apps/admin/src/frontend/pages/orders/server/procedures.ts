@@ -23,7 +23,7 @@ import {
     prospectDueSoon,
     statusCount,
     thisYear,
-} from "@/lib/orders/predicates";
+} from "@workspace/domain/orders/predicates";
 import { isPlaceholder } from "@/frontend/pages/partners/types";
 import { pendingOfferCount, toTRPCError, transitionOrder } from "@/frontend/pages/order/server/procedures";
 import {
