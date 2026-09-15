@@ -21,7 +21,7 @@ import { FOLLOW_UP_STATUSES } from "@workspace/domain/tracking/conversations";
 import { foreignKeyViolationConstraint } from "@workspace/db/errors";
 import { deriveOrderFields } from "@workspace/domain/orders/derive";
 import { allowedTransitions, transitionRequirements } from "@workspace/domain/orders/transitions";
-import { isReadyToDispatch } from "@workspace/domain/orders/dispatch-readiness";
+import { isDispatchMove, isReadyToDispatch } from "@workspace/domain/orders/dispatch-readiness";
 import { carrierSnapshot } from "@workspace/domain/orders/carrier-snapshot";
 import { offerPricingColumns, priceOffer } from "@workspace/domain/orders/commission";
 import { getSheetsAccessToken } from "@/lib/orders/google-token";
@@ -38,6 +38,7 @@ import {
     applyTransition,
     assertCurrencyUnlocked,
     deriveResumeStatus,
+    liveStatus,
     pendingOfferCount,
     resumeFromHistory,
     startFollowUpChat,
@@ -1032,7 +1033,7 @@ export const orderRouter = createTRPCRouter({
     transitionOptions: authorizedProcedure("order", ["read"])
         .input(z.object({ orderId: z.string() }))
         .query(async ({ ctx, input }) => {
-            const [row] = await ctx.db
+            const [loaded] = await ctx.db
                 .select({
                     id: order.id,
                     status: order.status,
@@ -1061,9 +1062,14 @@ export const orderRouter = createTRPCRouter({
                 .from(order)
                 .where(eq(order.orderId, input.orderId));
 
-            if (!row) {
+            if (!loaded) {
                 throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
             }
+
+            // A row the retirement script has not moved yet is still stored on
+            // "to-loading", which the state machine no longer knows: read it
+            // as the status that replaced it or the dialog offers nothing
+            const row = { ...loaded, status: liveStatus(loaded.status) };
 
             const resumeStatus =
                 row.status === "stopped" || row.status === "issue"
@@ -1087,7 +1093,7 @@ export const orderRouter = createTRPCRouter({
                 // must not be blocked for lacking one
                 const blockedReason: "NO_OFFERS" | "INCOMPLETE_FOR_DISPATCH" | "DISPUTE_OPEN" | null =
                     requirements.includes("offer") && row.pendingOffers === 0 ? "NO_OFFERS"
-                        : to === "to-loading" && dispatchBlocked ? "INCOMPLETE_FOR_DISPATCH"
+                        : isDispatchMove(row.status, to) && dispatchBlocked ? "INCOMPLETE_FOR_DISPATCH"
                             : to === "completed" && disputeBlocked ? "DISPUTE_OPEN"
                                 : null;
 

@@ -47,7 +47,7 @@ const adjustedTotal = (base: number | null, debit: string, credit: string) =>
 // Every status from booked onwards implies the deal was closed; prospect and
 // cancelled/underbid orders never get a deal date stamped
 const DEAL_CLOSED_STATUSES = new Set<Order["status"]>([
-    "booked", "to-loading", "at-loading", "loading", "waiting-documents",
+    "booked", "at-loading", "loading", "waiting-documents",
     "on-route", "stopped", "issue", "at-border", "at-offloading", "offloading",
     "delivered", "completed",
 ]);

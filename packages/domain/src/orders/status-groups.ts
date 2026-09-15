@@ -21,7 +21,6 @@ export type OrderSection = Exclude<Section, "all">
 export const ORDER_STATUS_SECTION: Record<OrderStatus, OrderSection> = {
     "prospect": "prospect",
     "booked": "booked",
-    "to-loading": "on-going",
     "at-loading": "on-going",
     "loading": "on-going",
     "waiting-documents": "on-going",
@@ -62,7 +61,7 @@ export const currentYear = () => new Date().getFullYear()
 export const LOADING_WINDOW_DAYS = 7
 
 /** A truck is still expected at the loading site in these states. */
-export const PRE_LOADING_STATUSES: OrderStatus[] = ["booked", "to-loading", "at-loading"]
+export const PRE_LOADING_STATUSES: OrderStatus[] = ["booked", "at-loading"]
 
 /** The trip is parked; the resume target lives server-side. */
 export const INTERRUPTED_STATUSES: OrderStatus[] = ["stopped", "issue"]

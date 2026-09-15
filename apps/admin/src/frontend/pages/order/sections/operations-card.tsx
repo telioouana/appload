@@ -13,8 +13,8 @@ import { OperationsStrip } from "@/frontend/pages/orders/sections/order-item-par
 import { OpenChatButton } from "./open-chat-button"
 import { SectionCard, StatTile } from "@workspace/ui/customs/detail/section-card"
 
-/** Booking no longer asks for the rig, so these two statuses are where it is still missing. */
-const AWAITING_ASSIGNMENT: Order["status"][] = ["booked", "to-loading"]
+/** Booking no longer asks for the rig, so this is where it is still missing. */
+const AWAITING_ASSIGNMENT: Order["status"][] = ["booked"]
 
 /**
  * Who is driving and in what, over the four figures the trip is judged on.

@@ -36,6 +36,7 @@ export const NOTIFICATION_KIND = [
     "movement.dispute-opened",
     "movement.dispute-resolved",
     "subscription.changed",
+    "thread.message",
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KIND)[number];

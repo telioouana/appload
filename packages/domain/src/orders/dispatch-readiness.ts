@@ -1,8 +1,19 @@
 import type { Order } from "@workspace/db/orders";
+import type { OrderStatus } from "@workspace/db/types";
+
+/**
+ * The one edge that is a dispatch: a booked order leaving for the loading
+ * site. Everything else that lands on "at-loading" — a resume out of an
+ * interrupt, an admin correcting a trip already running — is not one, and
+ * must not ask for the rig, the papers or the plan again.
+ */
+export function isDispatchMove(from: OrderStatus, to: OrderStatus): boolean {
+    return from === "booked" && to === "at-loading";
+}
 
 /**
  * Whether a STORED booked row already carries the driver and the truck,
- * and what is still missing. This is the bar for booked -> to-loading: a
+ * and what is still missing. This is the bar for the dispatch move: a
  * trip is often booked weeks ahead of the vehicle being named, so the
  * fields are optional at booking and mandatory the moment the order is
  * dispatched to the loading site.

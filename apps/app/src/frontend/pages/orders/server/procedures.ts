@@ -14,10 +14,10 @@ import { createOrder } from "@workspace/domain/orders/create";
 import { currentOrderYear, nextOrderId } from "@workspace/domain/orders/order-id";
 import { CreateOrderSchemaServer } from "@workspace/domain/orders/schemas";
 import { allowedForActor } from "@workspace/domain/orders/policy";
-import { missingForDispatch } from "@workspace/domain/orders/dispatch-readiness";
+import { isDispatchMove, missingForDispatch } from "@workspace/domain/orders/dispatch-readiness";
 import { PENDING_POD_STATUSES } from "@workspace/domain/orders/status-groups";
 import { allowedTransitions, transitionRequirements } from "@workspace/domain/orders/transitions";
-import { applyTransition, deriveResumeStatus, pendingOfferCount } from "@workspace/domain/orders/transition";
+import { applyTransition, deriveResumeStatus, liveStatus, pendingOfferCount } from "@workspace/domain/orders/transition";
 import { trackingAllowance } from "@workspace/domain/subscription";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
@@ -695,7 +695,12 @@ export const ordersRouter = createTRPCRouter({
         .input(z.object({ orderId: z.string().nonempty() }))
         .query(async ({ ctx, input }): Promise<TransitionOptions> => {
             const tenant = scopeOf(ctx.tenant);
-            const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+            const loaded = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+
+            // A row the retirement script has not moved yet is still stored on
+            // "to-loading", which the state machine no longer knows: read it as
+            // the status that replaced it or the dialog offers nothing
+            const row = { ...loaded, status: liveStatus(loaded.status) };
 
             const [resumeStatus, [counted]] = await Promise.all([
                 row.status === "stopped" || row.status === "issue"
@@ -730,13 +735,13 @@ export const ordersRouter = createTRPCRouter({
 
             // The two moves a plan pays for: the client's booking and the
             // carrier's FIRST dispatch. A resume out of an interrupt lands on
-            // "to-loading" again for a movement that was already billed, so it
+            // "at-loading" again for a movement that was already billed, so it
             // is not on the plan's tab and must not be offered as blocked. The
             // month's usage is counted once, and only when the gated move is
             // actually on the table — every other reader of this query would
             // be paying for a number it cannot act on
             const gated = tenant.orgType !== "carrier" ? "booked"
-                : row.status === "booked" ? "to-loading"
+                : row.status === "booked" ? "at-loading"
                     : null;
 
             const allowance = gated !== null && allowed.includes(gated)
@@ -748,7 +753,7 @@ export const ordersRouter = createTRPCRouter({
 
                 const blockedReason =
                     requirements.includes("offer") && pendingOffers === 0 ? "NO_OFFERS" as const
-                        : to === "to-loading" && missing.length > 0 ? "INCOMPLETE_FOR_DISPATCH" as const
+                        : isDispatchMove(row.status, to) && missing.length > 0 ? "INCOMPLETE_FOR_DISPATCH" as const
                             : to === gated && allowance !== null && !allowance.active
                                 ? "SUBSCRIPTION_REQUIRED" as const
                                 : to === gated && allowance !== null && allowance.remaining === 0
@@ -1004,10 +1009,10 @@ export const ordersRouter = createTRPCRouter({
         }),
 
     /**
-     * The carrier drives its own trip: the forward chain to-loading … delivered,
+     * The carrier drives its own trip: the forward chain at-loading … delivered,
      * plus the two interrupts and the resume the shared policy allows it.
      *
-     * The booked → `to-loading` move carries the dispatch: the driver and the
+     * The booked → `at-loading` move carries the dispatch: the driver and the
      * rig are resolved against the carrier's own registry and written onto the
      * order under the optimistic lock, WHICH BUMPS THE VERSION — the transition
      * is then applied with it. Two concurrent dispatches therefore cannot both
@@ -1029,15 +1034,15 @@ export const ordersRouter = createTRPCRouter({
 
                 let expectedVersion = input.expectedVersion;
 
-                // The dispatch belongs to ONE move, booked → to-loading, and
+                // The dispatch belongs to ONE move, booked → at-loading, and
                 // it is written before the transition so the gate inside the
                 // shared door checks the driver it is about to commit. That
                 // order also means a refused transition leaves the write
                 // standing — there are no transactions here — so nothing but
-                // that move may reach it: a `to-loading` from anywhere else
+                // that move may reach it: an `at-loading` from anywhere else
                 // (a resume from an interrupt, an illegal jump on a trip
                 // already running) never touches the rig.
-                if (input.to === "to-loading" && row.status === "booked") {
+                if (isDispatchMove(row.status, input.to)) {
                     if (!input.dispatch) {
                         throw new TRPCError({ code: "BAD_REQUEST", message: "DISPATCH_REQUIRED" });
                     }

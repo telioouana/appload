@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 import { useEdgeStore } from "@workspace/edgestore/client"
 import { orderDocumentPath } from "@workspace/edgestore/path"
+import { isDispatchMove } from "@workspace/domain/orders/dispatch-readiness"
 
 import { DriverInput } from "@/components/inputs/driver"
 import { FleetInput } from "@/components/inputs/fleet"
@@ -70,7 +71,7 @@ const FIELD_FOR: Record<string, keyof RigForm> = {
  * and the server re-guards every move anyway — and this renders whichever of
  * the three payloads that move needs:
  *
- * - the rig, on the dispatch (booked → `to-loading`, and only there): the
+ * - the rig, on the dispatch (booked → `at-loading`, and only there): the
  *   driver and the truck are picked from the carrier's own registry, and the
  *   mutation writes them onto the order before it moves it — a trip already
  *   running keeps the rig it left with;
@@ -118,7 +119,7 @@ export function TransitionDialog({
     )
 
     const to = target.to
-    const needsRig = to === "to-loading" && status === "booked"
+    const needsRig = isDispatchMove(status, to)
     const needsNote = target.requirements.includes("note")
     const documentType: PartnerDocumentType | null =
         target.requirements.includes("evidence") ? "evidence"

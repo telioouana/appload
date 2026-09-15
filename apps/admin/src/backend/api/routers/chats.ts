@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { and, asc, count, countDistinct, desc, eq, gt, inArray, isNotNull, isNull, or } from "drizzle-orm";
 
-import { order, orderHistory, type Order } from "@workspace/db/orders";
+import { order, orderHistory, type Order, type OrderHistory } from "@workspace/db/orders";
 import { chatConversation, chatMessage, type ChatConversation, type ChatMessage } from "@workspace/db/chats";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
@@ -33,9 +33,10 @@ export type ConversationSummary = ChatConversation & {
 /** One status transition of the conversation's linked order. */
 export type ThreadStatusEvent = {
     id: string;
-    // null = order creation
-    fromStatus: Order["status"] | null;
-    toStatus: Order["status"];
+    // null = order creation. Straight off the history columns: the trail
+    // keeps the retired statuses the rows were written with
+    fromStatus: OrderHistory["fromStatus"];
+    toStatus: NonNullable<OrderHistory["toStatus"]>;
     createdAt: Date;
 };
 

@@ -30,6 +30,7 @@
         "./subscription": "./src/subscription.ts",
         "./movements/*": "./src/movements/*.ts",
         "./orders/*": "./src/orders/*.ts",
+        "./threads/*": "./src/threads/*.ts",
         "./kyc/*": "./src/kyc/*.ts",
         "./kpis/*": "./src/kpis/*.ts",
         "./pdf/*": "./src/pdf/*.ts",

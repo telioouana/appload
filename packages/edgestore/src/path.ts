@@ -68,3 +68,12 @@ export function orderDocumentPath(orderId: string, type: string): string {
 export function movementDocumentPath(movementId: string, type: string): string {
     return toStoragePath(`movements/${movementId}/${type}`)
 }
+
+/**
+ * The prefix for a chat attachment, keyed on the thread's own id. The send
+ * mutation checks the stored URL contains this segment, so a file uploaded
+ * against one thread can never be posted into another.
+ */
+export function threadAttachmentPath(threadId: string): string {
+    return toStoragePath(`threads/${threadId}`)
+}

@@ -145,7 +145,8 @@ const mapWith = (aliases, fallback = null) => (value) => aliases[norm(value)] ??
 const status = mapWith({
     "prospect": "prospect", "prospects": "prospect",
     "booked": "booked",
-    "to loading": "to-loading",
+    // "To Loading" was retired: the sheet's rows land on its replacement
+    "to loading": "at-loading",
     "at loading": "at-loading",
     "loading": "loading",
     "waiting for documents": "waiting-documents", "waiting documents": "waiting-documents",

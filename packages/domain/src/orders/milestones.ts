@@ -30,7 +30,7 @@ export type MilestoneStep = {
 // The chain in trip order. The two optional stages only show once they
 // happened (or, for the border, when the route crosses one).
 const CHAIN: OrderStatus[] = [
-    "booked", "to-loading", "at-loading", "loading", "waiting-documents",
+    "booked", "at-loading", "loading", "waiting-documents",
     "on-route", "at-border", "at-offloading", "offloading", "delivered", "completed",
 ];
 

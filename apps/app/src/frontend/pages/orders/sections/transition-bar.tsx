@@ -13,6 +13,7 @@ import {
     DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu"
 
+import { isDispatchMove } from "@workspace/domain/orders/dispatch-readiness"
 import { primaryTransition } from "@workspace/domain/orders/transitions"
 
 import { PlanDialog, type PlanReason } from "@/components/plan-dialog"
@@ -83,7 +84,7 @@ export function TransitionBar({
             <div className="flex shrink-0 items-center gap-2">
                 {primary && (
                     <Button size="sm" disabled={!openable(primary)} onClick={() => pick(primary)}>
-                        {interrupted ? <IconPlayerPlay /> : primary.to === "to-loading" ? <IconSteeringWheel /> : <IconArrowRight />}
+                        {interrupted ? <IconPlayerPlay /> : isDispatchMove(order.status, primary.to) ? <IconSteeringWheel /> : <IconArrowRight />}
                         <span className="truncate">
                             {interrupted ? t("resume", { status: tStatus(primary.to) }) : tStatus(primary.to)}
                         </span>

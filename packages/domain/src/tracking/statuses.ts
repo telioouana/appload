@@ -6,6 +6,6 @@ export type OrderStatus = (typeof ORDER_STATUS)[number];
 // active set, including interrupts and the border. Leaf module so both the
 // tracking cron and the chat layer can share it without an import cycle.
 export const TRACKED_STATUSES: OrderStatus[] = [
-    "to-loading", "at-loading", "loading", "waiting-documents",
+    "at-loading", "loading", "waiting-documents",
     "on-route", "stopped", "issue", "at-border", "at-offloading", "offloading",
 ];

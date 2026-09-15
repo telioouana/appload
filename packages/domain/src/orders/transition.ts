@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 
 import { order, orderDocument, orderHistory, orderOffer, type CreateOrder, type Order, type OrderOffer } from "@workspace/db/orders";
 import type { db as Database } from "@workspace/db/db";
-import { isActiveDispute } from "@workspace/db/types";
+import { isActiveDispute, LEGACY_ORDER_STATUS_ALIAS } from "@workspace/db/types";
 import { isAuthorized } from "@workspace/auth/user-permissions";
 
 import type { Actor } from "@workspace/domain/orders/actor";
@@ -11,7 +11,7 @@ import { guardOrderGate } from "@workspace/domain/kyc/order-gate";
 import { FOLLOW_UP_STATUSES, startConversation } from "@workspace/domain/tracking/conversations";
 import { offerAcceptable } from "@workspace/domain/orders/booking-readiness";
 import { deriveOrderFields } from "@workspace/domain/orders/derive";
-import { isReadyToDispatch } from "@workspace/domain/orders/dispatch-readiness";
+import { isDispatchMove, isReadyToDispatch } from "@workspace/domain/orders/dispatch-readiness";
 import { changedCurrencyParties, partiesWithMoneyDocuments } from "@workspace/domain/orders/note-currency";
 import { proofPaymentPatch } from "@workspace/domain/orders/payments";
 import { paymentSums } from "@workspace/domain/orders/payment-sums";
@@ -203,7 +203,21 @@ export function resumeFromHistory(
         && entry.toStatus !== null
         && !RESUME_EXCLUDED.includes(entry.toStatus as OrderStatus));
 
-    return (found?.toStatus as OrderStatus | undefined) ?? null;
+    return liveStatus(found?.toStatus ?? null);
+}
+
+/**
+ * A stored status as the live vocabulary knows it. History rows keep the
+ * retired values they were written with, and so does an order row that
+ * `scripts/retire-to-loading.mjs` has not moved yet, so everything that
+ * reads a status back out of the database goes through here. Without it a
+ * row still parked on "to-loading" has no rank, no legal targets and no
+ * way out — the state machine would refuse every move on it.
+ */
+export function liveStatus(stored: string): OrderStatus;
+export function liveStatus(stored: string | null): OrderStatus | null;
+export function liveStatus(stored: string | null): OrderStatus | null {
+    return stored === null ? null : (LEGACY_ORDER_STATUS_ALIAS[stored] ?? stored as OrderStatus);
 }
 
 /** The same rule against the database, for callers without the timeline. */
@@ -219,7 +233,7 @@ export async function deriveResumeStatus(db: typeof Database, orderPk: string): 
         .orderBy(desc(orderHistory.createdAt))
         .limit(1);
 
-    return row?.toStatus ?? null;
+    return liveStatus(row?.toStatus ?? null);
 }
 
 /**
@@ -358,14 +372,19 @@ export async function applyTransition(
     ctx: OrderContext,
     input: TransitionParams,
 ): Promise<TransitionOrderOutput> {
-    const [current] = await ctx.db
+    const [row] = await ctx.db
         .select()
         .from(order)
         .where(eq(order.orderId, input.orderId));
 
-    if (!current) {
+    if (!row) {
         throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
     }
+
+    // Read through the alias: a row the retirement script has not moved yet
+    // is still stored on "to-loading", and every guard below is written
+    // against the live vocabulary
+    const current = { ...row, status: liveStatus(row.status) };
 
     if (ctx.actor.kind === "staff") {
         // Closing an order as lost (cancelled or underbid) is its own
@@ -390,12 +409,12 @@ export async function applyTransition(
     // told that rather than being sold a plan it does not need. Staff move
     // orders on every plan and on none.
     //
-    // Only the first dispatch is asked for: "to-loading" is also where an
+    // Only the first dispatch is asked for: "at-loading" is also where an
     // interrupted trip resumes, and that movement was already billed when it
     // left "booked". A truck parked on the road must not become unmovable
     // because the month ran out or the plan lapsed while it was stopped.
     if (ctx.actor.kind === "tenant"
-        && (input.to === "booked" || (input.to === "to-loading" && current.status === "booked"))) {
+        && (input.to === "booked" || isDispatchMove(current.status, input.to))) {
         await assertTrackingAllowance(ctx.db, ctx.actor.organizationId);
     }
 
@@ -440,7 +459,7 @@ export async function applyTransition(
     // Driver and truck are optional at booking — a trip is committed
     // weeks before the rig that will run it is known — and mandatory
     // the moment it is dispatched to the loading site
-    if (input.to === "to-loading" && !isReadyToDispatch(current)) {
+    if (isDispatchMove(current.status, input.to) && !isReadyToDispatch(current)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "INCOMPLETE_FOR_DISPATCH" });
     }
 
@@ -462,7 +481,7 @@ export async function applyTransition(
             ctx.actor,
             { note: input.note },
         )
-        : input.to === "to-loading" && current.carrierId
+        : isDispatchMove(current.status, input.to) && current.carrierId
             ? await guardOrderGate(
                 ctx.db,
                 {
@@ -618,7 +637,7 @@ export async function applyTransition(
     // Dispatch is the moment tracking starts, so the movement is billed to
     // both parties then — whoever ordered it, Admin included: a partner's
     // month must count the orders staff dispatched on its behalf too.
-    if (input.to === "to-loading") {
+    if (isDispatchMove(current.status, input.to)) {
         await recordTrackingUsage(ctx.db, {
             organizationIds: [updated.shipperId, updated.carrierId],
             entityType: "order",

@@ -284,8 +284,10 @@ export type OrderDocumentView = {
 export type OrderHistoryEntry = {
     id: string;
     kind: OrderHistoryKind;
-    fromStatus: OrderStatus | null;
-    toStatus: OrderStatus | null;
+    // The trail keeps the retired statuses the rows were written with, so
+    // an old dispatch still renders as "to-loading" on the timeline
+    fromStatus: OrderStatus | "to-loading" | null;
+    toStatus: OrderStatus | "to-loading" | null;
     note: string | null;
     /** Document rows: what was uploaded */
     documentType: OrderDocumentType | null;

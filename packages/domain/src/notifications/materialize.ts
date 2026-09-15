@@ -4,8 +4,7 @@ import { and, asc, eq, exists, gt, inArray, isNull, lt, or } from "drizzle-orm";
 
 import type { db as Database } from "@workspace/db/db";
 import { notificationCursor } from "@workspace/db/notifications";
-import { order, orderHistory, type OrderHistoryKind } from "@workspace/db/orders";
-import type { OrderStatus } from "@workspace/db/types";
+import { order, orderHistory, type OrderHistory, type OrderHistoryKind } from "@workspace/db/orders";
 import { user } from "@workspace/db/users";
 
 import { notify, type NotifyInput } from "@workspace/domain/notifications";
@@ -29,8 +28,10 @@ const SCAN_LIMIT = 200;
 type TrailRow = {
     id: string;
     kind: OrderHistoryKind;
-    fromStatus: OrderStatus | null;
-    toStatus: OrderStatus | null;
+    // Straight off the column: the trail keeps the retired statuses the rows
+    // were written with, and this only ever compares and renders them
+    fromStatus: OrderHistory["fromStatus"];
+    toStatus: OrderHistory["toStatus"];
     metadata: Record<string, unknown>;
     createdAt: Date;
     orderId: string;

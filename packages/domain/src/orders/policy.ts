@@ -22,8 +22,7 @@ import type { OrderStatus } from "@workspace/domain/orders/transitions";
 // subset of the machine's own FORWARD map: delivered → completed is
 // Appload's closure, not the driver's.
 const CARRIER_FORWARD: Partial<Record<OrderStatus, OrderStatus[]>> = {
-    "booked": ["to-loading"],
-    "to-loading": ["at-loading"],
+    "booked": ["at-loading"],
     "at-loading": ["loading"],
     "loading": ["waiting-documents", "on-route"],
     "waiting-documents": ["on-route"],

@@ -38,6 +38,7 @@
         "./orders": "./src/schemas/orders.ts",
         "./quotes": "./src/schemas/quotes.ts",
         "./subscriptions": "./src/schemas/subscriptions.ts",
+        "./threads": "./src/schemas/threads.ts",
         "./tracking": "./src/schemas/tracking.ts",
         "./movements": "./src/schemas/movements.ts",
         "./users": "./src/schemas/users.ts",

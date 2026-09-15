@@ -4,6 +4,7 @@ import { useState } from "react"
 import {
     IconArrowRight,
     IconCash,
+    IconChecklist,
     IconChevronDown,
     IconFileDollar,
     IconFileText,
@@ -40,6 +41,7 @@ const KIND_ICON: Record<OrderHistoryKind, typeof IconArrowRight> = {
     "flag": IconFlag,
     "dispute": IconGavel,
     "offer": IconFileDollar,
+    "check": IconChecklist,
     "system": IconRobot,
 }
 

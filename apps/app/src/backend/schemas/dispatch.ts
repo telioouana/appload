@@ -6,7 +6,7 @@ import { ORDER_STATUS } from "@workspace/db/types";
  * The carrier side of an order: sending the rig to load, moving the trip
  * along the chain, and the proof it uploads on the way.
  *
- * Dispatch is not a form of its own — it is the payload `booked → to-loading`
+ * Dispatch is not a form of its own — it is the payload `booked → at-loading`
  * carries. The picker chooses from the carrier's OWN registered fleet and
  * drivers, and the procedure re-checks every id against `carrier_id = T`
  * before it writes the driver and plate columns the transition then gates on.
@@ -65,7 +65,7 @@ export function buildTransition(msg: Message) {
         to: z.enum(ORDER_STATUS),
         expectedVersion: z.number().int().min(1),
         note: z.string().trim().min(NOTE_MIN, msg("note")).max(NOTE_MAX, msg("note")).optional(),
-        /** Required by `to-loading`, ignored by every other move */
+        /** Required by the dispatch (booked → `at-loading`), ignored by every other move */
         dispatch: buildDispatch(msg).optional(),
         /** Proof attached to the move; also lands on the order's documents */
         document: TransitionDocumentSchema.optional(),

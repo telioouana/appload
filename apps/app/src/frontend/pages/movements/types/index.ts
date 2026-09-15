@@ -10,7 +10,7 @@ import type {
     MovementExecution,
     MovementStatus,
 } from "@workspace/db/movements";
-import type { CATEGORIES, DisputeReason, FISCAL_REGIME, ROUTE_TYPE, WEIGHT_UNIT } from "@workspace/db/types";
+import type { CATEGORIES, DisputeReason, FISCAL_REGIME, OrderStatus, ROUTE_TYPE, WEIGHT_UNIT } from "@workspace/db/types";
 import type { MovementRole } from "@workspace/domain/movements/policy";
 import type { EditableGroup } from "@workspace/domain/movements/policy";
 import type { CostTotal, Currency, PaymentStatus } from "@workspace/domain/movements/money";
@@ -121,13 +121,13 @@ export const STATUS_TABS: Record<MovementScope, Partial<Record<MovementSection, 
  * chip and a pin of one colour always agree. The truck's own chain is the
  * order's chain, stage for stage.
  */
-const TONE: Record<MovementStatus, OrderStatusKey> = {
+const TONE: Record<MovementStatus, OrderStatus> = {
     "procurement": "prospect",
     "prospect": "prospect",
     "offered": "prospect",
     "declined": "cancelled",
     "scheduled": "booked",
-    "booked": "to-loading",
+    "booked": "booked",
     "at-loading": "at-loading",
     "loading": "loading",
     "waiting-documents": "waiting-documents",
@@ -142,7 +142,7 @@ const TONE: Record<MovementStatus, OrderStatusKey> = {
     "cancelled": "cancelled",
 };
 
-export const movementTone = (status: MovementStatus): OrderStatusKey => TONE[status];
+export const movementTone = (status: MovementStatus): OrderStatus => TONE[status];
 
 export const MOVEMENT_SORTS = ["newest", "loading", "delivery"] as const;
 export type MovementSort = (typeof MOVEMENT_SORTS)[number];
