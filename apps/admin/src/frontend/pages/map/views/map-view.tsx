@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { useMap } from "@vis.gl/react-google-maps"
-import { IconList, IconMapPin, IconMaximize } from "@tabler/icons-react"
+import { IconList, IconMap, IconMapPin, IconMaximize, IconTable } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
 
@@ -20,12 +20,15 @@ import { cn } from "@workspace/ui/lib/utils"
 import { useTRPC } from "@/backend/api/client"
 import { OrderSheet } from "@/frontend/pages/orders/views/order-sheet"
 
-import { useMapSelection } from "@/frontend/pages/map/hooks/use-map-selection"
+import { useMapSelection, type MapViewKind } from "@/frontend/pages/map/hooks/use-map-selection"
 import { matchesOrder } from "@/frontend/pages/map/lib/search"
 import { MapOrderList } from "@/frontend/pages/map/sections/map-order-list"
 import { MapSelectedCard } from "@/frontend/pages/map/sections/map-selected-card"
+import { MapTable } from "@/frontend/pages/map/sections/map-table"
 import { OverviewPins } from "@/frontend/pages/map/sections/overview-pins"
 import { OVERVIEW_POLL_MS, TRAIL_POLL_MS, type LatLng, type MapOrder, type TrailPoint } from "@/frontend/pages/map/types"
+
+const VIEWS: [MapViewKind, typeof IconMap][] = [["map", IconMap], ["table", IconTable]]
 
 /**
  * The open load's road route drawn over its trail of pings. The route is its
@@ -87,7 +90,7 @@ export function MapView() {
     const t = useTranslations("Admin.map")
     const trpc = useTRPC()
 
-    const { selected, query, select, setQuery } = useMapSelection()
+    const { selected, query, view, select, setQuery, setView } = useMapSelection()
 
     // Under `md` the list is an overlay over the map; there is no room for both
     const [isListOpen, setListOpen] = useState(false)
@@ -142,8 +145,35 @@ export function MapView() {
                     </span>
                 </div>
                 <p className="text-muted-foreground text-sm">{t("description")}</p>
+
+                {/* The same loads two ways: pins, or rows that filter and export.
+                    A shallow `?view=` so a pasted link opens the one the sender had */}
+                <div className="bg-muted mt-2 flex w-fit gap-0.5 rounded-full p-1">
+                    {VIEWS.map(([value, Icon]) => {
+                        const active = value === view
+
+                        return (
+                            <button
+                                key={value}
+                                type="button"
+                                aria-current={active ? "page" : undefined}
+                                onClick={() => setView(value)}
+                                className={cn(
+                                    "text-muted-foreground flex h-7 cursor-pointer items-center gap-1.5 rounded-full px-3 text-[13px] transition-colors",
+                                    active && "bg-background text-foreground font-medium shadow-sm",
+                                )}
+                            >
+                                <Icon className="size-3.5" stroke={1.5} />
+                                {t(`views.${value}`)}
+                            </button>
+                        )
+                    })}
+                </div>
             </header>
 
+            {view === "table" ? (
+                <MapTable orders={orders} query={query} onQueryChange={setQuery} />
+            ) : (
             <div className="bg-card relative flex min-h-0 flex-1 overflow-hidden rounded-3xl border">
                 <MapOrderList
                     orders={orders}
@@ -229,8 +259,9 @@ export function MapView() {
                     />
                 )}
             </div>
+            )}
 
-            {/* URL-driven by `?id=`: the card's "Open order" writes it */}
+            {/* URL-driven by `?id=`: the card's "Open order" and a table row write it */}
             <OrderSheet />
         </>
     )

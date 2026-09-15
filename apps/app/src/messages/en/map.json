@@ -16,6 +16,36 @@
         "last-seen": "Seen {ago}",
         "toggle": "Movements"
     },
+    "views": {
+        "map": "Map",
+        "table": "Table"
+    },
+    "table": {
+        "columns": {
+            "ref": "Reference",
+            "status": "Status",
+            "counterparty": "Partner",
+            "driver": "Driver",
+            "plate": "Plate",
+            "place": "Place",
+            "last-update": "Last update",
+            "hours": "Hours",
+            "latitude": "Latitude",
+            "longitude": "Longitude"
+        },
+        "stale": "No update for over 12 hours",
+        "stale-filter": "Older than 12 hours",
+        "status": "Any status",
+        "kind": "Any kind",
+        "kinds": {
+            "order": "Order",
+            "load": "Trip"
+        },
+        "no-position": "No position yet",
+        "export": "Export CSV",
+        "empty": "No movements match",
+        "empty-description": "Try a different search or clear a filter"
+    },
     "selected": {
         "open": {
             "order": "Open order",

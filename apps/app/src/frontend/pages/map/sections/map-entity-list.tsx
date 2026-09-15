@@ -1,17 +1,17 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { IconBox, IconRoute, IconSearch, IconX } from "@tabler/icons-react"
+import { useMemo } from "react"
+import { IconBox, IconRoute } from "@tabler/icons-react"
 
 import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
 
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@workspace/ui/components/input-group"
 import { Separator } from "@workspace/ui/components/separator"
 
 import { cn } from "@workspace/ui/lib/utils"
 
 import { OrderStatusBadge } from "@/frontend/pages/orders/components/badges"
 import { place } from "@/frontend/pages/orders/lib/format"
+import { MapSearchInput } from "@/frontend/pages/map/components/map-search-input"
 import type { MapEntity } from "@/frontend/pages/map/types"
 
 /** Newest ping first; movements that have never pinged sink to the bottom. */
@@ -44,62 +44,16 @@ export function MapEntityList({
     // Explicit now keeps relativeTime warning-free and ticks the labels over
     const now = useNow({ updateInterval: 60_000 })
 
-    // Typing stays local so each keystroke re-renders the list, not the map
-    const [text, setText] = useState(query)
-
-    // `?q=` can also change from outside the box — back/forward rewrites it.
-    // Adjusting the state during render is React's own answer to that (an
-    // effect would render the stale text once and then render again).
-    // `lastQuery` is the previous value of the prop, so this only fires on a
-    // real external change.
-    const [lastQuery, setLastQuery] = useState(query)
-
-    if (query !== lastQuery) {
-        setLastQuery(query)
-
-        // Typing writes the trimmed text to the URL, so "beira " coming back
-        // as "beira" is our own echo, not somebody else's edit.
-        if (text.trim() !== query) setText(query)
-    }
-
     const sorted = useMemo(() => {
         const missed = (entity: MapEntity) => (query && !matches.has(entity.ref) ? 1 : 0)
 
         return [...entities].sort((a, b) => missed(a) - missed(b) || seenAt(b) - seenAt(a))
     }, [entities, matches, query])
 
-    const update = (value: string) => {
-        setText(value)
-        onQueryChange(value)
-    }
-
     return (
         <aside className={cn("bg-card flex w-80 shrink-0 flex-col border-r", className)}>
             <div className="flex flex-col gap-2 p-3">
-                <InputGroup>
-                    <InputGroupAddon>
-                        <IconSearch className="size-4" stroke={1.5} />
-                    </InputGroupAddon>
-
-                    <InputGroupInput
-                        value={text}
-                        placeholder={t("search")}
-                        onChange={(event) => update(event.target.value)}
-                    />
-
-                    {text && (
-                        <InputGroupAddon align="inline-end">
-                            <InputGroupButton
-                                size="icon-xs"
-                                variant="ghost"
-                                aria-label={t("clear-search")}
-                                onClick={() => update("")}
-                            >
-                                <IconX className="size-4" stroke={1.5} />
-                            </InputGroupButton>
-                        </InputGroupAddon>
-                    )}
-                </InputGroup>
+                <MapSearchInput query={query} onQueryChange={onQueryChange} />
 
                 <p className="text-muted-foreground text-xs">
                     {query ? t("matches", { count: matches.size }) : t("count", { count: entities.length })}

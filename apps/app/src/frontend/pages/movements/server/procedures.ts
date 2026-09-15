@@ -1566,6 +1566,7 @@ export const movementsRouter = createTRPCRouter({
                     latitude: movementLocation.latitude,
                     longitude: movementLocation.longitude,
                     placeName: movementLocation.placeName,
+                    placeLabel: movementLocation.placeLabel,
                     recordedAt: movementLocation.recordedAt,
                     source: movementLocation.source,
                 })
@@ -1578,6 +1579,7 @@ export const movementsRouter = createTRPCRouter({
                 lat: num(point.latitude),
                 lng: num(point.longitude),
                 placeName: point.placeName,
+                placeLabel: point.placeLabel,
                 recordedAt: point.recordedAt,
                 source: trailSource(point.source),
                 picked: point.placeName !== null,

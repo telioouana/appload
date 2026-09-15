@@ -11,6 +11,7 @@ import { computeOrderRoute } from "@workspace/maps/server/routes";
 import { cacheKey, failedRecently, failureKey, GEOCODE_TTL_MS, num, rememberFailure, routeFailures, toRouteDto, trailSource } from "@workspace/maps/server/route-cache";
 import type { MapOrder, OrderRouteDto, TrailPoint } from "@workspace/maps/types";
 
+import { fillPlaceLabels } from "@workspace/domain/tracking/place-labels";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
 export const mapRouter = createTRPCRouter({
@@ -143,6 +144,7 @@ export const mapRouter = createTRPCRouter({
                     latitude: orderLocation.latitude,
                     longitude: orderLocation.longitude,
                     placeName: orderLocation.placeName,
+                    placeLabel: orderLocation.placeLabel,
                     recordedAt: orderLocation.recordedAt,
                     source: orderLocation.source,
                 })
@@ -155,6 +157,7 @@ export const mapRouter = createTRPCRouter({
                 lat: num(point.latitude),
                 lng: num(point.longitude),
                 placeName: point.placeName,
+                placeLabel: point.placeLabel,
                 recordedAt: point.recordedAt,
                 source: trailSource(point.source),
                 picked: point.placeName !== null,
@@ -199,6 +202,7 @@ export const mapRouter = createTRPCRouter({
                     latitude: orderLocation.latitude,
                     longitude: orderLocation.longitude,
                     placeName: orderLocation.placeName,
+                    placeLabel: orderLocation.placeLabel,
                     recordedAt: orderLocation.recordedAt,
                     source: orderLocation.source,
                 })
@@ -217,6 +221,10 @@ export const mapRouter = createTRPCRouter({
                 .where(inArray(chatConversation.orderId, humanIds))
                 .orderBy(desc(chatConversation.lastMessageAt)),
         ]);
+
+        // Pins recorded before labels existed, or while Google was down, get
+        // theirs the first time the map reads them — a page per poll
+        const filled = await fillPlaceLabels(ctx.db, "order", lastPings.filter((ping) => ping.placeLabel === null).map((ping) => ping.id));
 
         const lastByOrder = new Map(lastPings.map((ping) => [ping.orderId, ping]));
         const countByOrder = new Map(pingCounts.map((row) => [row.orderId, row.pings]));
@@ -250,6 +258,7 @@ export const mapRouter = createTRPCRouter({
                         lat: num(ping.latitude),
                         lng: num(ping.longitude),
                         placeName: ping.placeName,
+                        placeLabel: ping.placeLabel ?? filled.get(ping.id) ?? null,
                         recordedAt: ping.recordedAt,
                         source: trailSource(ping.source),
                         picked: ping.placeName !== null,

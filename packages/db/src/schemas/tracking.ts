@@ -82,6 +82,11 @@ export const orderLocation = pgTable(
         longitude: doublePrecision("longitude").notNull(),
         // Label the driver's client attached to the location, when any
         placeName: text("place_name"),
+        // "District or city, Province, Country" reverse-geocoded from the
+        // coordinates, once per ping: what the map's table view reads as the
+        // place. Null until resolved — a pin recorded while Google was down
+        // is labelled the first time the overview reads it (fillPlaceLabels)
+        placeLabel: text("place_label"),
         source: text("source", { enum: LOCATION_SOURCE }).default("whatsapp").notNull(),
         recordedAt: timestamp("recorded_at").defaultNow().notNull(),
         createdAt: timestamp("created_at").defaultNow().notNull(),

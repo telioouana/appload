@@ -16,6 +16,36 @@
         "last-seen": "Visto {ago}",
         "toggle": "Transportes"
     },
+    "views": {
+        "map": "Mapa",
+        "table": "Tabela"
+    },
+    "table": {
+        "columns": {
+            "ref": "Referência",
+            "status": "Estado",
+            "counterparty": "Parceiro",
+            "driver": "Motorista",
+            "plate": "Matrícula",
+            "place": "Local",
+            "last-update": "Última atualização",
+            "hours": "Horas",
+            "latitude": "Latitude",
+            "longitude": "Longitude"
+        },
+        "stale": "Sem atualização há mais de 12 horas",
+        "stale-filter": "Há mais de 12 horas",
+        "status": "Qualquer estado",
+        "kind": "Qualquer tipo",
+        "kinds": {
+            "order": "Pedido",
+            "load": "Viagem"
+        },
+        "no-position": "Ainda sem posição",
+        "export": "Exportar CSV",
+        "empty": "Nenhum transporte corresponde",
+        "empty-description": "Experimente outra pesquisa ou retire um filtro"
+    },
     "selected": {
         "open": {
             "order": "Abrir pedido",

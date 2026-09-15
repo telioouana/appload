@@ -24,6 +24,8 @@ export type TrailPoint = {
     lat: number
     lng: number
     placeName: string | null
+    /** "District or city, Province, Country" reverse-geocoded from the coordinates; null until resolved */
+    placeLabel: string | null
     recordedAt: Date
     source: "whatsapp" | "manual"
     /**

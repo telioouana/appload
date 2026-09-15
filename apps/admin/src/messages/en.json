@@ -3633,6 +3633,35 @@
                 "title": "No on-going loads",
                 "description": "Loads appear here once they are on the road"
             },
+            "views": {
+                "map": "Map",
+                "table": "Table"
+            },
+            "table": {
+                "columns": {
+                    "order": "Order",
+                    "status": "Status",
+                    "shipper": "Shipper",
+                    "carrier": "Carrier",
+                    "driver": "Driver",
+                    "plate": "Plate",
+                    "place": "Place",
+                    "updated": "Last update",
+                    "hours": "Hours since",
+                    "latitude": "Latitude",
+                    "longitude": "Longitude",
+                    "stale": "Stale"
+                },
+                "stale": "No position for over 12 hours",
+                "stale-filter": "Older than 12 hours",
+                "status": "Status",
+                "carrier": "Carrier",
+                "any": "All",
+                "no-position": "No position yet",
+                "export": "Export CSV",
+                "empty": "No load matches these filters",
+                "empty-description": "Try a different search or clear a filter."
+            },
             "list": {
                 "no-location": "No location yet",
                 "last-seen": "Seen {ago}",

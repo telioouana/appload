@@ -141,6 +141,13 @@
       "when": 1789367814423,
       "tag": "0019_movement_chain_disputes",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789470344023,
+      "tag": "0020_location_place_label",
+      "breakpoints": true
     }
   ]
 }

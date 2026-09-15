@@ -13,6 +13,8 @@ import {
 import { normalizePhone } from "@workspace/comms/phone";
 import { secretMatches } from "@workspace/comms/cron";
 
+import { reverseGeocode } from "@workspace/maps/server/reverse-geocode";
+
 import { recordOrderLocation, resolveOrderForConversation } from "@workspace/domain/tracking/locations";
 import { recordMovementLocation, reportMovementDelivery, resolveMovementForConversation, respondMovementRequests } from "@workspace/domain/tracking/movements";
 
@@ -219,6 +221,9 @@ export async function POST(request: NextRequest) {
                                 latitude: message.location.latitude,
                                 longitude: message.location.longitude,
                                 placeName: message.location.name,
+                                // Labelled on the way in when Google answers;
+                                // a null is filled by the map overview later
+                                placeLabel: await reverseGeocode(message.location),
                                 // When the driver sent it, not when we got
                                 // round to storing it: a backlog of queued
                                 // webhooks would otherwise land the whole
@@ -244,6 +249,7 @@ export async function POST(request: NextRequest) {
                                     latitude: message.location.latitude,
                                     longitude: message.location.longitude,
                                     placeName: message.location.name,
+                                    placeLabel: await reverseGeocode(message.location),
                                     recordedAt: message.receivedAt ?? saved.createdAt,
                                 });
                             } else {

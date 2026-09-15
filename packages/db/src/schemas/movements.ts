@@ -312,6 +312,9 @@ export const movementLocation = pgTable(
         longitude: doublePrecision("longitude").notNull(),
         // Label the driver's client attached to the location, when any
         placeName: text("place_name"),
+        // Reverse-geocoded "District or city, Province, Country", the same
+        // column and the same lazy fill as `order_location.place_label`
+        placeLabel: text("place_label"),
         source: text("source", { enum: LOCATION_SOURCE }).default("whatsapp").notNull(),
         recordedAt: timestamp("recorded_at").defaultNow().notNull(),
         createdAt: timestamp("created_at").defaultNow().notNull(),

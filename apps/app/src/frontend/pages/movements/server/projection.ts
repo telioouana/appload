@@ -422,6 +422,7 @@ export async function loadPings(db: Db, ids: readonly string[]): Promise<PingSta
                 latitude: movementLocation.latitude,
                 longitude: movementLocation.longitude,
                 placeName: movementLocation.placeName,
+                placeLabel: movementLocation.placeLabel,
                 recordedAt: movementLocation.recordedAt,
             })
             .from(movementLocation)
@@ -440,6 +441,7 @@ export async function loadPings(db: Db, ids: readonly string[]): Promise<PingSta
             latitude: Number(ping.latitude),
             longitude: Number(ping.longitude),
             placeName: ping.placeName,
+            placeLabel: ping.placeLabel,
         }])),
         counts: new Map(counted.map((row) => [row.movementId, row.pings])),
     };

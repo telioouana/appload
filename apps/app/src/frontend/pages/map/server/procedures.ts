@@ -7,6 +7,7 @@ import { orderLocation, orderRoute } from "@workspace/db/tracking";
 import { movement, movementLocation } from "@workspace/db/movements";
 
 import { movementRole } from "@workspace/domain/movements/policy";
+import { fillPlaceLabels } from "@workspace/domain/tracking/place-labels";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
@@ -47,6 +48,7 @@ type PingRow = {
     latitude: number;
     longitude: number;
     placeName: string | null;
+    placeLabel: string | null;
     recordedAt: Date;
     source: string;
 };
@@ -58,6 +60,7 @@ const toPoint = (ping: PingRow): TrailPoint => ({
     lat: num(ping.latitude),
     lng: num(ping.longitude),
     placeName: ping.placeName,
+    placeLabel: ping.placeLabel,
     recordedAt: ping.recordedAt,
     source: trailSource(ping.source),
     picked: ping.placeName !== null,
@@ -133,6 +136,7 @@ export const mapRouter = createTRPCRouter({
                         latitude: orderLocation.latitude,
                         longitude: orderLocation.longitude,
                         placeName: orderLocation.placeName,
+                        placeLabel: orderLocation.placeLabel,
                         recordedAt: orderLocation.recordedAt,
                         source: orderLocation.source,
                     })
@@ -148,6 +152,7 @@ export const mapRouter = createTRPCRouter({
                         latitude: movementLocation.latitude,
                         longitude: movementLocation.longitude,
                         placeName: movementLocation.placeName,
+                        placeLabel: movementLocation.placeLabel,
                         recordedAt: movementLocation.recordedAt,
                         source: movementLocation.source,
                     })
@@ -157,8 +162,18 @@ export const mapRouter = createTRPCRouter({
                 : NO_PINGS,
         ]);
 
-        const lastByOrder = new Map(orderPings.map((ping) => [ping.subjectId, ping]));
-        const lastByTrail = new Map(loadPings.map((ping) => [ping.subjectId, ping]));
+        // Pins recorded before labels existed, or while Google was down, get
+        // theirs the first time the map reads them — a page per poll
+        const unlabelled = (pings: PingRow[]) => pings.filter((ping) => ping.placeLabel === null).map((ping) => ping.id);
+        const [orderLabels, loadLabels] = await Promise.all([
+            fillPlaceLabels(ctx.db, "order", unlabelled(orderPings)),
+            fillPlaceLabels(ctx.db, "movement", unlabelled(loadPings)),
+        ]);
+        const labelled = (ping: PingRow, labels: Map<string, string>): PingRow =>
+            ping.placeLabel === null ? { ...ping, placeLabel: labels.get(ping.id) ?? null } : ping;
+
+        const lastByOrder = new Map(orderPings.map((ping) => [ping.subjectId, labelled(ping, orderLabels)]));
+        const lastByTrail = new Map(loadPings.map((ping) => [ping.subjectId, labelled(ping, loadLabels)]));
 
         const orderEntities: MapEntity[] = orders.map((row) => {
             const ping = lastByOrder.get(row.id);
@@ -321,6 +336,7 @@ export const mapRouter = createTRPCRouter({
                     latitude: orderLocation.latitude,
                     longitude: orderLocation.longitude,
                     placeName: orderLocation.placeName,
+                    placeLabel: orderLocation.placeLabel,
                     recordedAt: orderLocation.recordedAt,
                     source: orderLocation.source,
                 })

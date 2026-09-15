@@ -9,18 +9,23 @@ const TYPING_TAGS = ["INPUT", "TEXTAREA", "SELECT"]
 /** An open sheet, dialog or command palette — Radix's own Escape handling owns the key. */
 const MODAL_LAYER = "[data-slot=\"sheet-content\"], [role=\"dialog\"]"
 
+/** The map itself, or the same movements as a table (`?view=table`) */
+export type MapViewMode = "map" | "table"
+
 /**
- * Which pin is open (`?id=APPL021.26` or `?id=TRP-12`) and what is being
- * searched (`?q=`), kept in the URL so a view of the map can be pasted into
- * a message and reopen on the same truck. The overview query takes no input,
- * so neither param changes what the server returns: every write is shallow
- * and stays on the client instead of re-running the page.
+ * Which pin is open (`?id=APPL021.26` or `?id=TRP-12`), what is being
+ * searched (`?q=`) and which view is showing (`?view=table`), kept in the
+ * URL so a view of the map can be pasted into a message and reopen on the
+ * same truck. The overview query takes no input, so no param changes what
+ * the server returns: every write is shallow and stays on the client
+ * instead of re-running the page.
  */
 export function useMapSelection() {
     const { get, shallow } = useListParams()
 
     const selected = get("id")
     const query = get("q") ?? ""
+    const view: MapViewMode = get("view") === "table" ? "table" : "map"
 
     const select = useCallback(
         (ref: string | null) => shallow({ key: "id", value: ref }),
@@ -29,6 +34,12 @@ export function useMapSelection() {
 
     const setQuery = useCallback(
         (text: string) => shallow({ key: "q", value: text.trim() || null }),
+        [shallow],
+    )
+
+    // The map is the default, so it is spelled as no param at all
+    const setView = useCallback(
+        (next: MapViewMode) => shallow({ key: "view", value: next === "table" ? "table" : null }),
         [shallow],
     )
 
@@ -56,5 +67,5 @@ export function useMapSelection() {
         return () => window.removeEventListener("keydown", onKey)
     }, [selected, shallow])
 
-    return { selected, query, select, setQuery }
+    return { selected, query, view, select, setQuery, setView }
 }

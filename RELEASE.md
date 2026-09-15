@@ -176,7 +176,7 @@ matching ref clause before the first push, or Vercel will refuse to save
 
 The portal reads and writes the admin's database — one database, two apps.
 Its migrations go in with the same command as everything else, in one
-run — `0014 → 0015 → 0016 → 0017 → 0018 → 0019` back to back:
+run — `0014 → 0015 → 0016 → 0017 → 0018 → 0019 → 0020` back to back:
 
 ```bash
 DATABASE_URL=<prod url> pnpm --filter @workspace/db db:migrate
@@ -245,8 +245,17 @@ then push `prod/admin` and the portal back to back.
   columns of `movement_event` — see the coupling note above. Dev gets it from
   `node packages/db/scripts/add-movement-chain-disputes.mjs`, which ends by
   printing the `in-transit` rows left (must be 0).
+- `0020_location_place_label` — `order_location` and `movement_location`
+  gain `place_label`, the "District or city, Province, Country" reverse-
+  geocoded from a ping's coordinates that the map's table view shows as the
+  place. Additive, nothing to backfill: new pins are labelled by the Infobip
+  webhook as they arrive, and old ones the first time a map overview reads
+  them (at most 25 per read), so the Google calls stay with the pins somebody
+  looks at. Needs `GOOGLE_MAPS_API_KEY` with the Geocoding API enabled — on
+  both apps' Vercel projects, since the portal's overview fills labels too.
+  Dev gets it from `node packages/db/scripts/add-location-place-label.mjs`.
 
-The shared **dev** database got all six from the idempotent scripts
+The shared **dev** database got all seven from the idempotent scripts
 instead — `node packages/db/scripts/create-portal-tables.mjs`,
 `node packages/db/scripts/add-portal-columns.mjs`,
 `node packages/db/scripts/add-subscription-usage.mjs`, then
@@ -254,8 +263,9 @@ instead — `node packages/db/scripts/create-portal-tables.mjs`,
 `trip` table across with its rows; a fresh database uses
 `create-movement-tables.mjs` instead), then
 `node packages/db/scripts/add-movement-document-approval.mjs`,
-`node packages/db/scripts/create-movement-tracking-alert.mjs` and finally
-`node packages/db/scripts/add-movement-chain-disputes.mjs`. Same rule
+`node packages/db/scripts/create-movement-tracking-alert.mjs`,
+`node packages/db/scripts/add-movement-chain-disputes.mjs` and finally
+`node packages/db/scripts/add-location-place-label.mjs`. Same rule
 as every other table: scripts on dev, `db:migrate` on production,
 **never both** against one database.
 

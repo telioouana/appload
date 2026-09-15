@@ -3633,6 +3633,35 @@
                 "title": "Sem cargas em andamento",
                 "description": "As cargas aparecem aqui assim que estiverem em trânsito"
             },
+            "views": {
+                "map": "Mapa",
+                "table": "Tabela"
+            },
+            "table": {
+                "columns": {
+                    "order": "Pedido",
+                    "status": "Estado",
+                    "shipper": "Cliente",
+                    "carrier": "Transportador",
+                    "driver": "Motorista",
+                    "plate": "Matrícula",
+                    "place": "Local",
+                    "updated": "Última atualização",
+                    "hours": "Horas desde",
+                    "latitude": "Latitude",
+                    "longitude": "Longitude",
+                    "stale": "Desatualizada"
+                },
+                "stale": "Sem posição há mais de 12 horas",
+                "stale-filter": "Há mais de 12 horas",
+                "status": "Estado",
+                "carrier": "Transportador",
+                "any": "Todos",
+                "no-position": "Ainda sem posição",
+                "export": "Exportar CSV",
+                "empty": "Nenhuma carga corresponde a estes filtros",
+                "empty-description": "Experimente outra pesquisa ou limpe um filtro."
+            },
             "list": {
                 "no-location": "Ainda sem localização",
                 "last-seen": "Vista {ago}",

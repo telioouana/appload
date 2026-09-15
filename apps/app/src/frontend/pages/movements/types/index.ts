@@ -187,6 +187,8 @@ export type MovementPing = {
     latitude: number;
     longitude: number;
     placeName: string | null;
+    /** "District or city, Province, Country" reverse-geocoded from the coordinates; null until resolved */
+    placeLabel: string | null;
 };
 
 export type MovementRow = {

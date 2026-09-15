@@ -92,6 +92,9 @@ export async function recordOrderLocation(
         latitude: number;
         longitude: number;
         placeName: string | null;
+        // Reverse-geocoded by the caller when it could; a null is filled in
+        // later by the map overview (place-labels.ts)
+        placeLabel?: string | null;
         recordedAt: Date;
     },
 ): Promise<boolean> {
@@ -104,6 +107,7 @@ export async function recordOrderLocation(
             latitude: input.latitude,
             longitude: input.longitude,
             placeName: input.placeName,
+            placeLabel: input.placeLabel ?? null,
             source: "whatsapp",
             recordedAt: input.recordedAt,
         })

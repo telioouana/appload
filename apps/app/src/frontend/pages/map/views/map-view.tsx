@@ -23,6 +23,8 @@ import { useMapSelection } from "@/frontend/pages/map/hooks/use-map-selection"
 import { matchesEntity } from "@/frontend/pages/map/lib/search"
 import { MapEntityList } from "@/frontend/pages/map/sections/map-entity-list"
 import { MapSelectedCard } from "@/frontend/pages/map/sections/map-selected-card"
+import { MapTable } from "@/frontend/pages/map/sections/map-table"
+import { MapViewSwitch } from "@/frontend/pages/map/sections/map-view-switch"
 import { OverviewPins } from "@/frontend/pages/map/sections/overview-pins"
 import { OVERVIEW_POLL_MS, TRAIL_POLL_MS, type LatLng, type MapEntity, type TrailPoint } from "@/frontend/pages/map/types"
 
@@ -103,7 +105,9 @@ export function MapView() {
     const t = useTranslations("App.map")
     const trpc = useTRPC()
 
-    const { selected, query, select, setQuery } = useMapSelection()
+    const { selected, query, view, select, setQuery, setView } = useMapSelection()
+
+    const isTable = view === "table"
 
     // Under `md` the list is an overlay over the map; there is no room for both
     const [isListOpen, setListOpen] = useState(false)
@@ -129,15 +133,16 @@ export function MapView() {
     // dropping it the moment a pin is clicked leaves that truck unmarked for
     // a whole round trip, and for good if the trail request fails. An order's
     // trail and a load's are two tables and two procedures; only the one
-    // matching the open pin runs.
+    // matching the open pin runs — and neither while the table is showing,
+    // which draws no trail.
     const orderTrail = useQuery(trpc.map.orderTrail.queryOptions(
         { orderId: selectedEntity?.ref ?? "" },
-        { enabled: Boolean(selectedEntity) && isOrder, refetchInterval: TRAIL_POLL_MS },
+        { enabled: Boolean(selectedEntity) && isOrder && !isTable, refetchInterval: TRAIL_POLL_MS },
     ))
 
     const loadTrail = useQuery(trpc.movements.trail.queryOptions(
         { id: selectedEntity?.id ?? "" },
-        { enabled: Boolean(selectedEntity) && !isOrder, refetchInterval: TRAIL_POLL_MS },
+        { enabled: Boolean(selectedEntity) && !isOrder && !isTable, refetchInterval: TRAIL_POLL_MS },
     ))
 
     const trail = useMemo<TrailPoint[]>(
@@ -167,24 +172,11 @@ export function MapView() {
                     </span>
                 </div>
                 <p className="text-muted-foreground text-sm">{t("description")}</p>
+                <MapViewSwitch view={view} onChange={setView} />
             </header>
 
-            <div className="bg-card relative flex min-h-0 flex-1 overflow-hidden rounded-3xl border">
-                <MapEntityList
-                    entities={entities}
-                    matches={matches}
-                    query={query}
-                    onQueryChange={setQuery}
-                    selected={selected}
-                    onSelect={onSelect}
-                    className={cn(
-                        isListOpen
-                            ? "absolute inset-y-0 left-0 z-30 shadow-xl md:static md:shadow-none"
-                            : "hidden md:flex",
-                    )}
-                />
-
-                <section className="relative min-w-0 flex-1">
+            {isTable ? (
+                <div className="bg-card relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border">
                     {entities.length === 0 ? (
                         <Empty className="h-full">
                             <EmptyHeader>
@@ -196,64 +188,113 @@ export function MapView() {
                             </EmptyHeader>
                         </Empty>
                     ) : (
-                        <GoogleMapsProvider missingKeyMessage={t("detail.missing-key")}>
-                            {/* The map owns the whole viewport here, so the
-                                wheel zooms it instead of scrolling a page */}
-                            <MapCanvas className="h-full w-full" gestureHandling="greedy">
-                                <OverviewPins
-                                    entities={entities}
-                                    matches={matches}
-                                    query={query}
-                                    selected={selected}
-                                    hasTrail={trail.length > 0}
-                                    onSelect={onSelect}
-                                />
-
-                                {selectedEntity && (
-                                    <SelectedRoute
-                                        entity={selectedEntity}
-                                        trail={trail}
-                                        emphasis={!query ? "normal" : matches.has(selectedEntity.ref) ? "match" : "dim"}
-                                    />
-                                )}
-                            </MapCanvas>
-
-                            <ShowAllControl points={points} onShowAll={() => select(null)} />
-                        </GoogleMapsProvider>
+                        <MapTable
+                            entities={entities}
+                            query={query}
+                            onQueryChange={setQuery}
+                            selected={selected}
+                            onSelect={onSelect}
+                        />
                     )}
 
-                    <Button
-                        size="sm"
-                        variant="secondary"
-                        className="absolute top-3 left-3 z-10 shadow-lg md:hidden"
-                        onClick={() => setListOpen((open) => !open)}
-                    >
-                        <IconList className="size-4" stroke={1.5} />
-                        {t("list.toggle")}
-                    </Button>
-
+                    {/* Bottom corner rather than the map's top one: up there it
+                        would sit over the very columns the red rule points at */}
                     {selectedEntity && (
                         <MapSelectedCard
                             key={selectedEntity.ref}
                             entity={selectedEntity}
                             onClose={() => select(null)}
-                            className="absolute top-3 right-3 z-20 max-w-sm"
+                            className="absolute right-3 bottom-3 z-20 max-w-sm"
                         />
                     )}
-                </section>
-
-                {/* The open list covers its own toggle on a phone, so the map
-                    beside it becomes the way out — without this the overlay
-                    can only be dismissed by picking a movement. */}
-                {isListOpen && (
-                    <button
-                        type="button"
-                        aria-label={t("selected.close")}
-                        className="absolute inset-0 z-20 md:hidden"
-                        onClick={() => setListOpen(false)}
+                </div>
+            ) : (
+                <div className="bg-card relative flex min-h-0 flex-1 overflow-hidden rounded-3xl border">
+                    <MapEntityList
+                        entities={entities}
+                        matches={matches}
+                        query={query}
+                        onQueryChange={setQuery}
+                        selected={selected}
+                        onSelect={onSelect}
+                        className={cn(
+                            isListOpen
+                                ? "absolute inset-y-0 left-0 z-30 shadow-xl md:static md:shadow-none"
+                                : "hidden md:flex",
+                        )}
                     />
-                )}
-            </div>
+
+                    <section className="relative min-w-0 flex-1">
+                        {entities.length === 0 ? (
+                            <Empty className="h-full">
+                                <EmptyHeader>
+                                    <EmptyMedia variant="icon">
+                                        <IconMapPin />
+                                    </EmptyMedia>
+                                    <EmptyTitle>{t("empty.title")}</EmptyTitle>
+                                    <EmptyDescription>{t("empty.description")}</EmptyDescription>
+                                </EmptyHeader>
+                            </Empty>
+                        ) : (
+                            <GoogleMapsProvider missingKeyMessage={t("detail.missing-key")}>
+                                {/* The map owns the whole viewport here, so the
+                                    wheel zooms it instead of scrolling a page */}
+                                <MapCanvas className="h-full w-full" gestureHandling="greedy">
+                                    <OverviewPins
+                                        entities={entities}
+                                        matches={matches}
+                                        query={query}
+                                        selected={selected}
+                                        hasTrail={trail.length > 0}
+                                        onSelect={onSelect}
+                                    />
+
+                                    {selectedEntity && (
+                                        <SelectedRoute
+                                            entity={selectedEntity}
+                                            trail={trail}
+                                            emphasis={!query ? "normal" : matches.has(selectedEntity.ref) ? "match" : "dim"}
+                                        />
+                                    )}
+                                </MapCanvas>
+
+                                <ShowAllControl points={points} onShowAll={() => select(null)} />
+                            </GoogleMapsProvider>
+                        )}
+
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            className="absolute top-3 left-3 z-10 shadow-lg md:hidden"
+                            onClick={() => setListOpen((open) => !open)}
+                        >
+                            <IconList className="size-4" stroke={1.5} />
+                            {t("list.toggle")}
+                        </Button>
+
+                        {selectedEntity && (
+                            <MapSelectedCard
+                                key={selectedEntity.ref}
+                                entity={selectedEntity}
+                                onClose={() => select(null)}
+                                className="absolute top-3 right-3 z-20 max-w-sm"
+                            />
+                        )}
+                    </section>
+
+                    {/* The open list covers its own toggle on a phone, so the map
+                        beside it becomes the way out — without this the overlay
+                        can only be dismissed by picking a movement. */}
+                    {isListOpen && (
+                        <button
+                            type="button"
+                            aria-label={t("selected.close")}
+                            className="absolute inset-0 z-20 md:hidden"
+                            onClick={() => setListOpen(false)}
+                        />
+                    )}
+                </div>
+            )}
         </>
     )
 }
