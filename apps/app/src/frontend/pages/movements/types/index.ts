@@ -52,7 +52,8 @@ export type WeightUnit = (typeof WEIGHT_UNIT)[number];
 // URL says `?tab=own | partners`.
 // ---------------------------------------------------------------------------
 
-export const MOVEMENT_SCOPES = ["orders", "trips"] as const;
+// Own trucks first: that is the order the two tabs are shown in
+export const MOVEMENT_SCOPES = ["trips", "orders"] as const;
 export type MovementScope = (typeof MOVEMENT_SCOPES)[number];
 
 export const MOVEMENT_TABS = ["own", "partners"] as const;
