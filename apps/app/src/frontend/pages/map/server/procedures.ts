@@ -8,7 +8,7 @@ import { movement, movementLocation } from "@workspace/db/movements";
 
 import { movementRole } from "@workspace/domain/movements/policy";
 import { fillPlaceLabels } from "@workspace/domain/tracking/place-labels";
-import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
+import { ON_GOING_STATUSES } from "@workspace/domain/orders/status-groups";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { tenantProcedure } from "@workspace/trpc/tenant";
@@ -101,8 +101,8 @@ export const mapRouter = createTRPCRouter({
                 })
                 .from(order)
                 .where(and(
-                    inArray(order.status, TRACKED_STATUSES),
-                    // A tracked order is one somebody is driving, so the
+                    inArray(order.status, ON_GOING_STATUSES),
+                    // An on-going order is one somebody is driving, so the
                     // parties are the only readers: a carrier that merely
                     // quoted for it never sees the truck
                     or(eq(order.shipperId, tenant.organizationId), eq(order.carrierId, tenant.organizationId)),

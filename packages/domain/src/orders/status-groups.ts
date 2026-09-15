@@ -36,6 +36,13 @@ export const ORDER_STATUS_SECTION: Record<OrderStatus, OrderSection> = {
     "underbid": "history",
 }
 
+// A trip that is under way: the truck is at the loading site or past it,
+// interruptions and the border included. The "on-going" section of the
+// order pages, and the set every "where is it right now" view reads.
+export const ON_GOING_STATUSES: OrderStatus[] = ORDER_STATUS.filter(
+    (status) => ORDER_STATUS_SECTION[status] === "on-going",
+)
+
 // A shipment currently occupying a truck, a driver and a carrier: booked
 // through to offloading. Derived from the section map so the operational
 // overlays on the partner pages can never drift from the order pages.

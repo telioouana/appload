@@ -12,6 +12,7 @@
         "orders": "Appload orders",
         "quotes": "Quotes",
         "loads": "Your loads",
+        "messages": "Messages",
         "account": "Account"
     },
     "actions": {
@@ -63,6 +64,7 @@
         "movement-document": "Document added",
         "movement-dispute-opened": "Dispute opened",
         "movement-dispute-resolved": "Dispute resolved",
+        "thread-message": "New message",
         "subscription-changed": "Plan changed"
     },
     "kinds": {
@@ -93,6 +95,7 @@
         "movement-document": "{type, select, pod {A proof of delivery} cmr {A CMR} invoice {An invoice} receipt {A receipt} other {A document}} was added to load {ref}.",
         "movement-dispute-opened": "{named, select, true {{organizationName} opened a dispute on load {ref} ({origin} → {destination}) over {reason, select, theft {theft} loss {a loss} damage {damage} other {something else}}.} other {A company on load {ref} ({origin} → {destination}) opened a dispute over {reason, select, theft {theft} loss {a loss} damage {damage} other {something else}}.}}",
         "movement-dispute-resolved": "{named, select, true {{organizationName} resolved the dispute on load {ref} ({origin} → {destination}).} other {A company on load {ref} ({origin} → {destination}) resolved the dispute.}}",
+        "thread-message": "{attachments, plural, =0 {{senderName} wrote on {reference}: {preview}} one {{senderName} sent a file on {reference}.} other {{senderName} sent # files on {reference}.}}",
         "subscription-changed": "{plan, select, starter{Your company moved to the Starter plan.} business{Your company moved to the Business plan.} enterprise{Your company moved to the Enterprise plan.} other{Your company has no active plan.}}"
     },
     "email": {

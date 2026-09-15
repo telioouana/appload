@@ -6,10 +6,16 @@ import { chatConversation, type ChatConversation } from "@workspace/db/chats";
 import type { db as Database } from "@workspace/db/db";
 import { normalizePhone } from "@workspace/comms/phone";
 
-import { TRACKED_STATUSES, type OrderStatus } from "@workspace/domain/tracking/statuses";
+import { ACTIVE_STATUSES } from "@workspace/domain/orders/status-groups";
+import type { OrderStatus } from "@workspace/domain/tracking/statuses";
 
-/** Statuses whose orders should always have an open driver thread. */
-export const FOLLOW_UP_STATUSES: OrderStatus[] = ["booked", ...TRACKED_STATUSES];
+/**
+ * Statuses whose orders should always have an open driver thread. Wider than
+ * the cron's tracked set on purpose: the thread is opened as soon as a rig is
+ * committed, so the operator can talk to the driver long before the first
+ * automatic ping goes out.
+ */
+export const FOLLOW_UP_STATUSES: OrderStatus[] = ACTIVE_STATUSES;
 
 /**
  * One conversation per driver phone, keyed by the normalized (bare-digit)

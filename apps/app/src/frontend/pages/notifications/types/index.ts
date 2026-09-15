@@ -9,7 +9,7 @@ import type { NotificationKind, NotificationParams } from "@workspace/db/notific
 // names behind it. Every kind belongs to exactly one family.
 // ---------------------------------------------------------------------------
 
-export const KIND_FAMILIES = ["connections", "loads", "orders", "quotes", "account"] as const;
+export const KIND_FAMILIES = ["connections", "loads", "orders", "quotes", "messages", "account"] as const;
 
 export type KindFamily = (typeof KIND_FAMILIES)[number];
 
@@ -32,6 +32,8 @@ export const KINDS_BY_FAMILY: Record<KindFamily, NotificationKind[]> = {
     // Appload's brokerage
     orders: ["order.requested", "order.quoted", "order.booked", "order.status", "order.cancelled", "order.document"],
     quotes: ["quote.received", "quote.accepted", "quote.declined", "quote.withdrawn"],
+    // What the parties of a shipment say to each other, on an order or a load
+    messages: ["thread.message"],
     account: ["claim.approved", "member.joined", "subscription.changed"],
 };
 

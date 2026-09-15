@@ -243,7 +243,7 @@ All enforcement lives in a pure module (`apps/admin/src/lib/kyc/eligibility.ts`)
 | Carrier `riskLevel: "high"` | Red banner; booking requires explicit acknowledgment + note | Requires `manager`+ role (uac gate) **and** a note; order auto-flagged for review; acknowledgment recorded in `order_history` metadata |
 | Selected plate `ownershipStatus: "third-party"` | Inline warning badge in the plate picker (`searchVehicles` returns `ownershipStatus`) | Same as high-risk carrier: manager + note + auto-flag |
 | Selected plate `unverified` | Amber "ownership not verified" badge | Warn-only initially; tighten to require-manager once the fleet backlog is reviewed |
-| Driver/vehicle KYC not `verified` | Badge in pickers | Warn at `booked`; block at `to-loading` (cargo not yet committed → still swappable) |
+| Driver/vehicle KYC not `verified` | Badge in pickers | Warn at `booked`; block at the dispatch (`booked → at-loading`) (cargo not yet committed → still swappable) |
 
 This makes the loss-of-cargo scenario auditable end to end: the mismatch is on the vehicle row, the flag + reason on the carrier, the manager's acknowledgment note in `order_history`, and every action in `activity_log`.
 

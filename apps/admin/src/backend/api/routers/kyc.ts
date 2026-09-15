@@ -10,7 +10,6 @@ import {
     KYC_SUBJECT_TYPE,
     KycPagesSchema,
     type KycStatus,
-    type KycSubjectType,
 } from "@workspace/db/types";
 import type { db as Database } from "@workspace/db/db";
 import { createTRPCRouter } from "@workspace/trpc/init";
@@ -18,7 +17,8 @@ import { authorizedProcedure } from "@workspace/trpc/permissions";
 
 import { loadOrderGate } from "@workspace/domain/kyc/order-gate";
 import { kycActionRequirements } from "@/lib/kyc/transitions";
-import { isKycUrl, withProxiedPages } from "@workspace/domain/kyc/file-access";
+import { uploadKycDocument } from "@workspace/domain/kyc/upload";
+import { withProxiedPages } from "@workspace/domain/kyc/file-access";
 import {
     OWNERSHIP_DOC,
     requirementFor,
@@ -42,21 +42,6 @@ const documentType = z.enum(KYC_DOCUMENT_TYPE);
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "INVALID_DATE");
 
 type Db = typeof Database;
-
-/**
- * Uploads must come from our own KYC bucket, filed under the subject they
- * are being attached to. The host check alone would let a caller file some
- * other subject's ID scan — or an order document — as this subject's
- * paperwork, which a reviewer would then approve in good faith. The bucket
- * builds the path from the same three values (see the kycFiles bucket in
- * packages/edgestore/src/server.ts), so requiring them to reappear in the
- * URL ties the record to its file.
- */
-function assertKycUrl(url: string, subjectType: KycSubjectType, subjectId: string) {
-    if (!isKycUrl(url, subjectType, subjectId)) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_DOCUMENT_URL" });
-    }
-}
 
 export const kycRouter = createTRPCRouter({
     /** The live document set for one subject, for the review sheet. */
@@ -123,44 +108,15 @@ export const kycRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }) => {
             const subject = await loadSubject(ctx.db, input.subjectType, input.subjectId);
 
-            if (!requirementFor(subject.kind, input.type)) {
-                throw new TRPCError({ code: "BAD_REQUEST", message: "DOCUMENT_NOT_APPLICABLE" });
-            }
-
-            for (const page of input.pages) {
-                assertKycUrl(page.url, input.subjectType, input.subjectId);
-            }
-
-            const existing = await currentDocuments(ctx.db, subject);
-            const replaced = existing.find((doc) => doc.type === input.type);
-
-            const [document] = await ctx.db
-                .insert(kycDocument)
-                .values({
-                    subjectType: input.subjectType,
-                    subjectId: input.subjectId,
-                    type: input.type,
-                    pages: input.pages,
-                    issuedAt: input.issuedAt ?? null,
-                    expiresAt: input.expiresAt ?? null,
-                    documentNumber: input.documentNumber ?? null,
-                    supersedesId: replaced?.id ?? null,
-                    uploadedBy: ctx.session.user.id,
-                })
-                .returning();
-
-            if (!document) {
-                throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
-            }
-
-            const next = existing
-                .filter((doc) => doc.type !== input.type)
-                .map(toCurrentDoc)
-                .concat(toCurrentDoc(document));
-
-            const status = await writeDerivedStatus(ctx.db, subject, next);
-
-            return { document: withProxiedPages(document), kycStatus: status };
+            return uploadKycDocument(ctx.db, {
+                subject,
+                type: input.type,
+                pages: input.pages,
+                issuedAt: input.issuedAt,
+                expiresAt: input.expiresAt,
+                documentNumber: input.documentNumber,
+                uploadedBy: ctx.session.user.id,
+            });
         }),
 
     /**

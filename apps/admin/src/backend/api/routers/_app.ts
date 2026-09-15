@@ -5,6 +5,7 @@ import { chatsRouter } from "./chats"
 import { fleetRouter } from "./fleet"
 import { kycRouter } from "./kyc"
 import { organizationsRouter } from "./organizations"
+import { threadsRouter } from "./threads"
 import { activityCatalog } from "../activity-catalog"
 import { dashboardRouter } from "@/frontend/pages/dashboard/server/procedures";
 import { kpisRouter } from "@/frontend/pages/kpis/server/procedures";
@@ -38,6 +39,7 @@ export const appRouter = createTRPCRouter({
     organizations: organizationsRouter,
     partners: partnersRouter,
     settings: settingsRouter,
+    threads: threadsRouter,
 });
 
 // export type definition of API

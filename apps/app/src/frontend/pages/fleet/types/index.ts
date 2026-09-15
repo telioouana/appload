@@ -104,19 +104,12 @@ export type VehicleRow = {
     hitchedTo: string | null;
 };
 
-export type VehicleDocument = {
-    type: string;
-    status: "pending" | "approved" | "rejected";
-    expiresAt: string | null;
-};
-
-export type VehicleProfile = Omit<VehicleRow, "driverId" | "driverName"> & {
+export type VehicleProfile =Omit<VehicleRow, "driverId" | "driverName"> & {
     vin: string;
     ownerNuit: string | null;
     loadingBay: LoadingBay | null;
     createdAt: Date;
-    documents: VehicleDocument[];
-    drivers: { id: string; name: string; kycStatus: KycStatus }[];
+    drivers:{ id: string; name: string; kycStatus: KycStatus }[];
 };
 
 export type PagedResult<T> = {

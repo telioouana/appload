@@ -96,19 +96,6 @@
         "registered": "Registado em",
         "kyc": "Estado",
         "none": "Nenhum",
-        "read-only": "Os documentos são carregados e verificados pela Appload. Fale connosco para actualizar um documento.",
-        "no-documents": "Ainda não há documentos deste motorista.",
-        "doc-status": {
-            "pending": "Por rever",
-            "approved": "Aprovado",
-            "rejected": "Rejeitado"
-        },
-        "doc-type": {
-            "driver-license": "Carta de condução",
-            "id-card": "Bilhete de identidade"
-        },
-        "expires": "Válido até {date}",
-        "no-expiry": "Sem validade",
         "loads": {
             "title": "Cargas",
             "empty": "Este motorista ainda não foi indicado em nenhuma carga."

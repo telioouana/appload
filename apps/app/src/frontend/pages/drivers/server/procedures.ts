@@ -188,11 +188,6 @@ export const driversRouter = createTRPCRouter({
                 truckId: row.truckId,
                 plate: row.plate,
                 createdAt: row.createdAt,
-                documents: documents.map((doc) => ({
-                    type: doc.type,
-                    status: doc.status,
-                    expiresAt: doc.expiresAt,
-                })),
                 truck: row.truckId && row.plate
                     ? { id: row.truckId, regPlate: row.plate, brand: row.truckBrand ?? "", model: row.truckModel ?? "" }
                     : null,

@@ -1,3 +1,5 @@
+import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses"
+
 import type { MapEntity } from "@/frontend/pages/map/types"
 
 /**
@@ -14,9 +16,16 @@ export const hoursSince = (entity: MapEntity, now: Date): number | null =>
         ? Math.max(0, Math.floor((now.getTime() - entity.lastPosition.recordedAt.getTime()) / 3_600_000))
         : null
 
-/** Older than twelve hours — or never heard from at all, which is worse */
+/**
+ * Older than twelve hours — or never heard from at all, which is worse.
+ * Only for a movement the cron is pinging: tracking starts when the truck
+ * leaves the loading site, so a load still parked there is never late. The
+ * loads carry the order vocabulary (`movementTone`), which spells the six
+ * tracked stages the same way, so one test covers both kinds.
+ */
 export const isStale = (entity: MapEntity, now: Date): boolean =>
-    !entity.lastPosition || now.getTime() - entity.lastPosition.recordedAt.getTime() > STALE_AFTER_MS
+    TRACKED_STATUSES.includes(entity.status)
+    && (!entity.lastPosition || now.getTime() - entity.lastPosition.recordedAt.getTime() > STALE_AFTER_MS)
 
 /**
  * The place as text: the reverse-geocoded label, else what the driver's

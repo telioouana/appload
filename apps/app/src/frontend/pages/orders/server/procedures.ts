@@ -15,11 +15,10 @@ import { currentOrderYear, nextOrderId } from "@workspace/domain/orders/order-id
 import { CreateOrderSchemaServer } from "@workspace/domain/orders/schemas";
 import { allowedForActor } from "@workspace/domain/orders/policy";
 import { isDispatchMove, missingForDispatch } from "@workspace/domain/orders/dispatch-readiness";
-import { PENDING_POD_STATUSES } from "@workspace/domain/orders/status-groups";
+import { ON_GOING_STATUSES, PENDING_POD_STATUSES } from "@workspace/domain/orders/status-groups";
 import { allowedTransitions, transitionRequirements } from "@workspace/domain/orders/transitions";
 import { applyTransition, deriveResumeStatus, liveStatus, pendingOfferCount } from "@workspace/domain/orders/transition";
 import { trackingAllowance } from "@workspace/domain/subscription";
-import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
@@ -427,9 +426,12 @@ export const ordersRouter = createTRPCRouter({
             ]),
         ) as Record<OrderSection, SQL<number>>;
 
+        // The whole on-going section, not the cron's ping set: the tile opens
+        // /orders/on-going, and a number that disagrees with the list one
+        // click away is worse than a number that counts a truck still loading
         const onTheRoad = shipper
-            ? inArray(order.status, TRACKED_STATUSES)
-            : and(eq(order.carrierId, tenantId), inArray(order.status, TRACKED_STATUSES));
+            ? inArray(order.status, ON_GOING_STATUSES)
+            : and(eq(order.carrierId, tenantId), inArray(order.status, ON_GOING_STATUSES));
 
         const [row] = await ctx.db
             .select({

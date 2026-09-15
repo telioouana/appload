@@ -381,9 +381,12 @@ the admin projects is harmless but does nothing.
    `HEADER_MISMATCH`); formula cells are never overwritten, and a new order
    is appended into the table body with the neighbouring row's formulas.
    Dropdown columns must carry the labels the app writes — in particular
-   `Status` needs: Prospects, Booked, To Loading, At Loading, Loading,
+   `Status` needs: Prospects, Booked, At Loading, Loading,
    Waiting Documents, In Transit, Stopped, Issue, At Border, At Offloading,
-   Offloading, Delivered, Completed, Cancelled, Underbid.
+   Offloading, Delivered, Completed, Cancelled, Underbid. Sheets that
+   predate the change carry `To Loading` as well; the app no longer writes
+   it, so leave it in the dropdown only for as long as old rows still
+   show it.
 4. **Seed the logbook's `MONTHLY RATES` tab once per environment.** The
    Metrics page reads the same logbook the sync writes to (step 2) and pins
    each month's opening exchange rate in a `MONTHLY RATES` tab there,
@@ -536,7 +539,7 @@ drivers, file its own loads, send order requests, answer them with offers,
 and publish or accept quotes. The doors that ask for a plan are the ones that
 start a truck being watched — on Appload's orders, booking (a client
 accepting an offer or a standing quote) and the carrier's first dispatch
-(`booked → to loading`); on the company's own loads, offering one to a
+(`booked → at loading`); on the company's own loads, offering one to a
 partner on the portal, the partner accepting it, and putting one on the
 road — and they answer `SUBSCRIPTION_REQUIRED` without an active plan,
 `QUOTA_EXCEEDED` once the month's tracked movements are spent. Each company

@@ -67,12 +67,12 @@ console.log(ASSUME_YES ? "mode:     WRITE" : "mode:     DRY RUN — nothing is w
 console.log(`backfill: ${BACKFILL ? "yes — dispatch packs for on-going orders" : "no"}\n`);
 
 /**
- * The statuses a truck is actually committed on: the ones whose
- * ORDER_STATUS_SECTION is "on-going" in packages/domain/src/orders/
- * status-groups.ts — a pack is only of use while the trip is still running.
+ * The statuses a truck is actually committed on: ON_GOING_STATUSES in
+ * packages/domain/src/orders/status-groups.ts — a pack is only of use while
+ * the trip is still running. Spelled out here because a plain node script
+ * cannot import the workspace TypeScript; keep the two in step.
  * Deliberately NOT ACTIVE_STATUSES, which also carries "booked": a booked
- * order was never dispatched, so it has nothing to snapshot. Reconcile this
- * list with ON_GOING_STATUSES once that export lands in status-groups.ts.
+ * order was never dispatched, so it has nothing to snapshot.
  */
 const ON_GOING = [
     "at-loading", "loading", "waiting-documents", "on-route",

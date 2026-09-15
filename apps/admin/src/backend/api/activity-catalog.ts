@@ -355,6 +355,25 @@ export const activityCatalog: ActivityCatalog = {
             conversationId: input?.conversationId ?? "",
         }),
     },
+    "threads.send": {
+        entity: (input) =>
+            input?.subjectId ? { type: String(input.subjectType ?? "order"), id: String(input.subjectId) } : null,
+        // Deliberately no body and no attachment URLs — metadata only, the
+        // same line the driver conversations hold
+        params: (input) => ({
+            subjectType: input?.subjectType ?? "",
+            subjectId: input?.subjectId ?? "",
+            attachmentCount: Array.isArray(input?.attachments) ? input.attachments.length : 0,
+        }),
+    },
+    "threads.markRead": {
+        entity: (input) =>
+            input?.subjectId ? { type: String(input.subjectType ?? "order"), id: String(input.subjectId) } : null,
+        params: (input) => ({
+            subjectType: input?.subjectType ?? "",
+            subjectId: input?.subjectId ?? "",
+        }),
+    },
     // No params by design: the whole input is the new password. Uncatalogued
     // mutations already log with empty params, so this entry changes no
     // behaviour — it states the omission rather than leaving it to inference.

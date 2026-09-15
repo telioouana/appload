@@ -14,6 +14,7 @@ import { orderLocation } from "@workspace/db/tracking";
 import type { db as Database } from "@workspace/db/db";
 import { normalizePhone } from "@workspace/comms/phone";
 
+import { ON_GOING_STATUSES } from "@workspace/domain/orders/status-groups";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
 /**
@@ -26,10 +27,14 @@ import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
  *     left the tracked set: a pin that arrives minutes after delivery
  *     still belongs to the trip the operator was watching.
  *  2. otherwise the driver's newest live booking — the same filter
- *     requestLocation uses (chats.ts): tracked statuses only, and the
+ *     requestLocation uses (chats.ts): on-going orders only — wider than
+ *     the cron's tracked set, because a driver who shares his position from
+ *     the loading site is still telling us where the load is — and the
  *     phone match runs in JS because conversations store bare digits
- *     while orders keep E.164. Newest booking wins; a driver running two
- *     live loads at once is the one case this cannot disambiguate.
+ *     while orders keep E.164. A load that has actually departed outranks
+ *     one still sitting at the loading site, and among equals the newest
+ *     booking wins; a driver running two loads on the road at once is the
+ *     one case this cannot disambiguate.
  *
  * Returns null when neither finds anything — an unknown sender, or a
  * driver with no live load.
@@ -53,17 +58,24 @@ export async function resolveOrderForConversation(
     }
 
     const candidates = await db
-        .select({ id: order.id, orderId: order.orderId, driverPhoneNumber: order.driverPhoneNumber })
+        .select({
+            id: order.id,
+            orderId: order.orderId,
+            status: order.status,
+            driverPhoneNumber: order.driverPhoneNumber,
+        })
         .from(order)
         .where(and(
-            inArray(order.status, TRACKED_STATUSES),
+            inArray(order.status, ON_GOING_STATUSES),
             isNotNull(order.driverPhoneNumber),
         ))
         .orderBy(desc(order.createdAt));
 
-    const active = candidates.find(
-        (row) => normalizePhone(row.driverPhoneNumber!) === conversation.driverPhone,
-    );
+    const mine = (row: { driverPhoneNumber: string | null }) =>
+        normalizePhone(row.driverPhoneNumber!) === conversation.driverPhone;
+
+    const active = candidates.find((row) => mine(row) && TRACKED_STATUSES.includes(row.status))
+        ?? candidates.find(mine);
 
     return active ? { id: active.id, orderId: active.orderId } : null;
 }

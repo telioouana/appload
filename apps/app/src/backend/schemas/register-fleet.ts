@@ -55,8 +55,9 @@ function buildLoadingBay(msg: (field: MessageField) => ErrorParam) {
 
 /**
  * Registration fields shared by every fleet vehicle. Documents (booklet,
- * proof of ownership) are deliberately not collected here: KYC uploads and
- * review stay in Admin, and the portal only ever shows their verdict.
+ * proof of ownership) are deliberately not collected here: they are filed
+ * from the vehicle's profile sheet, one slot at a time, so registering a
+ * vehicle never waits on paperwork.
  */
 function buildBaseFields(msg: (field: MessageField) => ErrorParam) {
     return z.object({

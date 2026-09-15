@@ -4,9 +4,8 @@ import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { IconPencil } from "@tabler/icons-react"
 
-import { useFormatter, useTranslations } from "@workspace/i18n"
+import { useTranslations } from "@workspace/i18n"
 
-import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@workspace/ui/components/sheet"
 
@@ -23,6 +22,7 @@ import {
     ProfileHeader,
     ProfileSkeleton,
 } from "@/frontend/pages/fleet/sections/profile-parts"
+import { PapersCard } from "@/frontend/pages/fleet/sections/papers-card"
 import { MovementStatusChip, place as loadPlace } from "@/frontend/pages/movements/components/badges"
 import { EditDriverDialog } from "@/frontend/pages/drivers/sections/edit-driver-dialog"
 import { AssignTruckPopover } from "@/frontend/pages/drivers/sections/assign-truck-popover"
@@ -33,9 +33,10 @@ import { isPlaceholderEmail, type DriverProfile } from "@/frontend/pages/drivers
 /**
  * The profile panel the drivers list mounts once, keyed by `?id=`.
  *
- * The licence and ID card are shown read-only: uploads and review stay in
- * Admin (plan §5), so what the carrier can do here is see what is missing and
- * fix the contact details behind it.
+ * The licence and ID card are filed from here — a carrier that cannot file
+ * them cannot dispatch a driver — and reviewed by Appload, so what the
+ * carrier sees is what is missing, what is still pending, and the contact
+ * details behind it.
  */
 export function DriverProfileSheet() {
     const t = useTranslations("App.drivers.profile")
@@ -104,7 +105,14 @@ function Panel({ id, onClose }: { id: string; onClose: () => void }) {
                     <Contact profile={data} />
                     {verified && <Verification profile={data} />}
                     <Assignment profile={data} />
-                    {verified && <Documents profile={data} />}
+                    {verified && (
+                        <PapersCard
+                            subjectType="driver"
+                            subjectId={data.id}
+                            title={t("profile.documents")}
+                            className="lg:col-span-2"
+                        />
+                    )}
                     <Loads profile={data} />
                 </div>
             </ProfileBody>
@@ -215,38 +223,3 @@ function Loads({ profile }: { profile: DriverProfile }) {
     )
 }
 
-function Documents({ profile }: { profile: DriverProfile }) {
-    const t = useTranslations("App.drivers.profile")
-    const types = useTranslations("App.drivers.profile.doc-type")
-    const f = useFormatter()
-
-    return (
-        <ProfileCard title={t("documents")} className="lg:col-span-2">
-            {profile.documents.length === 0 ? (
-                <p className="text-muted-foreground text-[13px]">{t("no-documents")}</p>
-            ) : (
-                <ul className="flex flex-col gap-2">
-                    {profile.documents.map((doc) => (
-                        <li key={doc.type} className="flex items-center justify-between gap-3 text-[13px]">
-                            <span className="truncate">
-                                {types.has(doc.type) ? types(doc.type) : doc.type}
-                            </span>
-                            <span className="flex shrink-0 items-center gap-2">
-                                <span className="text-muted-foreground text-xs">
-                                    {doc.expiresAt
-                                        ? t("expires", { date: f.dateTime(new Date(`${doc.expiresAt}T00:00:00`), { dateStyle: "medium" }) })
-                                        : t("no-expiry")}
-                                </span>
-                                <Badge variant={doc.status === "approved" ? "default" : doc.status === "rejected" ? "destructive" : "secondary"}>
-                                    {t(`doc-status.${doc.status}`)}
-                                </Badge>
-                            </span>
-                        </li>
-                    ))}
-                </ul>
-            )}
-
-            <p className="text-muted-foreground text-xs">{t("read-only")}</p>
-        </ProfileCard>
-    )
-}

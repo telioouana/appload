@@ -15,7 +15,7 @@ import { useTRPC } from "@/backend/api/client";
 import { useListParams } from "@workspace/ui/hooks/use-list-params";
 import type { ConversationSummary } from "@/backend/api/routers/chats";
 import { domainErrorCode } from "@workspace/trpc/errors";
-import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
+import { ACTIVE_STATUSES } from "@/frontend/pages/orders/types";
 
 import { ConversationList, type ConversationFilter } from "@/frontend/pages/chats/sections/conversation-list";
 import { Thread } from "@/frontend/pages/chats/sections/thread";
@@ -28,7 +28,7 @@ const CONVERSATIONS_POLL_MS = 15_000;
 const MESSAGES_POLL_MS = 5_000;
 
 // Orders that still have a truck committed, plus fresh bookings
-const ACTIVE_ORDER_STATUSES = new Set<string>(["booked", ...TRACKED_STATUSES]);
+const ACTIVE_ORDER_STATUSES = new Set<string>(ACTIVE_STATUSES);
 
 const LOCATION_ERROR_KEYS = {
     NO_ACTIVE_ORDER: "noActiveOrder",

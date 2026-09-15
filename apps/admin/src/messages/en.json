@@ -1039,7 +1039,7 @@
                     },
                     "bookingDetails": {
                         "title": "Booking details",
-                        "description": "Optional now; needed before the order moves to To loading.",
+                        "description": "Optional now; needed before the order moves to At loading.",
                         "noOffer": "Mark the offer this order is booked with to assign a driver and a truck."
                     }
                 },
@@ -1323,7 +1323,6 @@
                                 "options": {
                                     "prospect": "Prospect",
                                     "booked": "Booked",
-                                    "to-loading": "To loading",
                                     "at-loading": "At loading",
                                     "loading": "Loading",
                                     "waiting-documents": "Waiting for documents",
@@ -1864,7 +1863,7 @@
                     "OFFER_REQUIRED": "Pick an offer to book this order with.",
                     "OFFER_NOT_PENDING": "This offer was already decided.",
                     "NO_OFFERS": "This prospect has no pending offers. Add one first.",
-                    "INCOMPLETE_FOR_DISPATCH": "Assign the driver, their phone and the truck before moving to To loading.",
+                    "INCOMPLETE_FOR_DISPATCH": "Assign the driver, their phone and the truck before moving to At loading site.",
                     "OFFER_UNPRICED": "This offer has no Appload commission yet. Edit it and set the commission before booking with it."
                 },
                 "book": "Book order"
@@ -2515,7 +2514,7 @@
                     "title": "Offer to book with",
                     "description": "Pick the offer this order is booked with. Carrier, price and commission are taken from it.",
                     "empty": "This prospect has no pending offers. Add one on the order page first.",
-                    "hint": "The other offers are marked lost. Driver and truck can be assigned any time before To loading.",
+                    "hint": "The other offers are marked lost. Driver and truck can be assigned any time before the order leaves for the loading site.",
                     "summary": {
                         "shipper": "Shipper pays",
                         "carrier": "Carrier gets",
@@ -3754,6 +3753,10 @@
             "update": "Updated offer {offerId} from {carrierName} ({total} {currency})",
             "decide": "Marked offer {offerId} from {carrierName} as {status}",
             "remove": "Deleted offer {offerId}"
+        },
+        "threads": {
+            "send": "Sent a message on {subjectType} {subjectId} ({attachmentCount} attachments)",
+            "markRead": "Read the messages on {subjectType} {subjectId}"
         }
     }
 }

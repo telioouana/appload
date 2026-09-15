@@ -15,7 +15,7 @@ import {
 import { normalizePhone } from "@workspace/comms/phone";
 
 import { movementRef } from "@workspace/domain/movements/refs";
-import { IN_PROGRESS_STATUSES } from "@workspace/domain/movements/status";
+import { TRACKED_STATUSES as TRACKED_MOVEMENT_STATUSES } from "@workspace/domain/movements/status";
 import { startConversation } from "@workspace/domain/tracking/conversations";
 import { REVIEW_AFTER_MINUTES, reviewMovementSlot } from "@workspace/domain/tracking/movement-review";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
@@ -91,9 +91,11 @@ export async function runMovementTrackingSlot(db: typeof Database, info: SlotInf
         .select()
         .from(movement)
         .where(and(
-            // From the loading site to offloading, stops included: a truck
-            // held up is exactly the one somebody wants a position from
-            inArray(movement.status, IN_PROGRESS_STATUSES),
+            // From the moment the truck leaves the loading site to the end
+            // of offloading, stops included: a truck held up on the road is
+            // exactly the one somebody wants a position from, while one
+            // still standing at the loading site is where everyone expects
+            inArray(movement.status, TRACKED_MOVEMENT_STATUSES),
             eq(movement.trackingEnabled, true),
             // A load may be started with no driver named — that is flagged,
             // never blocked — and there is nobody to ask where it is until

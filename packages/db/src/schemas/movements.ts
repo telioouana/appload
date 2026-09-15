@@ -65,7 +65,9 @@ export type MovementStatus = (typeof MOVEMENT_STATUS)[number];
 /**
  * The statuses a load is in progress in, in chain order: from the truck at
  * the loading site to the truck offloading, the two interruptions included.
- * Tracking runs, and a plan is billed, from the moment a load enters this set.
+ * A plan is billed from the moment a load enters this set; the cron only
+ * asks the driver where he is once he has left the loading site
+ * (TRACKED_STATUSES in @workspace/domain/movements/status).
  * Exported here rather than from the domain because the db package cannot
  * import the domain; `movement_driver_phone_idx` below spells the same list.
  */
@@ -222,10 +224,13 @@ export const movement = pgTable(
         // What has been offered to this company, and every load it executes
         index("movement_carrier_status_idx").on(table.carrierOrgId, table.status),
         index("movement_client_status_idx").on(table.clientOrgId, table.status),
-        // The tracking cron's working set: loads in progress with nobody
-        // downstream reporting for them. The link clause is the whole reason a
-        // subcontracted driver is asked once instead of once per company. The
-        // status list is typed out, never built from
+        // Covers the tracking cron's working set: loads in progress with
+        // nobody downstream reporting for them. Deliberately the wider
+        // in-progress list — the cron now selects only the six tracked
+        // statuses (TRACKED_STATUSES in @workspace/domain/movements/status),
+        // a subset, so its narrower query still reads this index. The link
+        // clause is the whole reason a subcontracted driver is asked once
+        // instead of once per company. The status list is typed out, never built from
         // MOVEMENT_IN_PROGRESS_STATUSES: drizzle-kit would write an
         // interpolated list into the migration as $1..$9 placeholders
         index("movement_driver_phone_idx")

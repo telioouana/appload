@@ -11,11 +11,11 @@ import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
 
 import { useTRPC } from "@/backend/api/client"
-import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses"
+import { ACTIVE_STATUSES } from "@/frontend/pages/orders/types"
 import type { OrderStatus } from "@workspace/domain/orders/transitions"
 
 /** The statuses whose thread should be linked to this order. */
-const LINKABLE: OrderStatus[] = ["booked", ...TRACKED_STATUSES]
+const LINKABLE: OrderStatus[] = ACTIVE_STATUSES
 
 /**
  * Opens the driver's WhatsApp thread from the order. `chats.start` upserts

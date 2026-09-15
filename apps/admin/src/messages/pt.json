@@ -1039,7 +1039,7 @@
                     },
                     "bookingDetails": {
                         "title": "Dados da confirmação",
-                        "description": "Opcionais agora; necessários antes de o pedido passar a \"A caminho do carregamento\".",
+                        "description": "Opcionais agora; necessários antes de o pedido passar a \"No local de carregamento\".",
                         "noOffer": "Marque a oferta com que este pedido é confirmado para atribuir motorista e camião."
                     }
                 },
@@ -1323,7 +1323,6 @@
                                 "options": {
                                     "prospect": "Prospectiva",
                                     "booked": "Confirmado",
-                                    "to-loading": "A caminho do carregamento",
                                     "at-loading": "No local de carregamento",
                                     "loading": "Em carregamento",
                                     "waiting-documents": "À espera de documentos",
@@ -1864,7 +1863,7 @@
                     "OFFER_REQUIRED": "Escolha a oferta com que confirmar este pedido.",
                     "OFFER_NOT_PENDING": "Esta oferta já foi decidida.",
                     "NO_OFFERS": "Este pedido em prospectiva não tem ofertas pendentes. Adicione uma primeiro.",
-                    "INCOMPLETE_FOR_DISPATCH": "Atribua o motorista, o contacto dele e o camião antes de mover para \"A caminho do carregamento\".",
+                    "INCOMPLETE_FOR_DISPATCH": "Atribua o motorista, o contacto dele e o camião antes de mover para \"No local de carregamento\".",
                     "OFFER_UNPRICED": "Esta oferta ainda não tem a comissão da Appload. Edite-a e defina a comissão antes de confirmar com ela."
                 },
                 "book": "Confirmar pedido"
@@ -2515,7 +2514,7 @@
                     "title": "Oferta com que confirmar",
                     "description": "Escolha a oferta com que este pedido é confirmado. O transportador, o preço e a comissão vêm dela.",
                     "empty": "Este pedido em prospectiva não tem ofertas pendentes. Adicione uma primeiro na página do pedido.",
-                    "hint": "As restantes ofertas ficam marcadas como perdidas. O motorista e o camião podem ser atribuídos a qualquer momento antes de \"A caminho do carregamento\".",
+                    "hint": "As restantes ofertas ficam marcadas como perdidas. O motorista e o camião podem ser atribuídos a qualquer momento antes de o pedido seguir para o local de carregamento.",
                     "summary": {
                         "shipper": "O expedidor paga",
                         "carrier": "O transportador recebe",
@@ -3754,6 +3753,10 @@
             "update": "Atualizou a oferta {offerId} de {carrierName} ({total} {currency})",
             "decide": "Marcou a oferta {offerId} de {carrierName} como {status}",
             "remove": "Eliminou a oferta {offerId}"
+        },
+        "threads": {
+            "send": "Enviou uma mensagem em {subjectType} {subjectId} ({attachmentCount} anexos)",
+            "markRead": "Leu as mensagens em {subjectType} {subjectId}"
         }
     }
 }

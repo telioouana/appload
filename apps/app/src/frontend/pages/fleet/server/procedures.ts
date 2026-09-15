@@ -224,11 +224,6 @@ export const fleetRouter = createTRPCRouter({
                     capacity: bay?.capacity ?? null,
                     bayType: bay?.type ?? null,
                     progress: docProgress(input.kind, documents, today()),
-                    documents: documents.map((doc) => ({
-                        type: doc.type,
-                        status: doc.status,
-                        expiresAt: doc.expiresAt,
-                    })),
                     drivers,
                     hitchedTo,
                 };

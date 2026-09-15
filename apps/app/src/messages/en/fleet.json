@@ -151,20 +151,45 @@
         "driver": "Driver",
         "hitched": "Hitched to",
         "kyc": "Status",
-        "none": "None",
-        "read-only": "Documents are uploaded and reviewed by Appload. Talk to us to update one.",
-        "no-documents": "No documents for this vehicle yet.",
+        "none": "None"
+    },
+    "papers": {
+        "missing": "Missing",
+        "not-filed": "Nothing filed yet",
+        "expires": "Valid until {date}",
+        "no-expiry": "No expiry",
+        "add-pages": "Add pages",
+        "remove-page": "Remove page",
+        "submit": "File document",
+        "issued": "Issued on",
+        "expiry": "Valid until",
+        "number": "Document number",
+        "preview": "Page",
+        "open-file": "Open the file",
+        "no-preview": "This file cannot be shown here.",
+        "review-note": "Appload reviews every document filed here. It stays pending review until someone has looked at it.",
         "doc-status": {
             "pending": "Pending review",
             "approved": "Approved",
             "rejected": "Rejected"
         },
         "doc-type": {
+            "driver-license": "Driving licence",
+            "id-card": "ID card",
             "vehicle-booklet": "Vehicle booklet",
             "proof-of-ownership": "Proof of ownership"
         },
-        "expires": "Valid until {date}",
-        "no-expiry": "No expiry"
+        "errors": {
+            "LOAD_FAILED": "These documents could not be loaded.",
+            "DOCUMENT_NOT_APPLICABLE": "This document is not one this record needs.",
+            "INVALID_DOCUMENT_URL": "This file could not be accepted. Pick it again.",
+            "NOT_ALLOWED": "Your role cannot file documents.",
+            "NOT_FOUND": "This record could not be found.",
+            "UPLOAD_FAILED": "The file could not be uploaded. Try again.",
+            "FILE_TOO_LARGE": "Each page must be 5 MB or less.",
+            "FILE_TYPE": "Only PDF, JPG and PNG files are accepted.",
+            "UNKNOWN": "Something went wrong. Try again."
+        }
     },
     "edit": {
         "title": "Edit vehicle",

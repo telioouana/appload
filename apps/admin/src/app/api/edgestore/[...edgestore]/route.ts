@@ -4,7 +4,16 @@ import { db } from "@workspace/db/db"
 import { member } from "@workspace/db/users"
 import { auth } from "@workspace/auth/server"
 import { getStaffGates } from "@workspace/trpc/staff-gate"
-import { createEdgeStoreHandler } from "@workspace/edgestore/server"
+import { configureEdgeStore, createEdgeStoreHandler } from "@workspace/edgestore/server"
+import { isKycSubjectType, kycSubjectOwner } from "@workspace/domain/kyc/tenant-access"
+
+// Staff short-circuit the KYC bucket, so this is only reached by a partner
+// session arriving at this origin under the shared COOKIE_DOMAIN. Wired here
+// too so both hosts answer the bucket identically.
+configureEdgeStore({
+    resolveKycSubjectOwner: async (subjectType, subjectId) =>
+        isKycSubjectType(subjectType) ? kycSubjectOwner(db, subjectType, subjectId) : null,
+})
 
 // The KYC bucket serves identity documents, so staff status is read live
 // from the database — the same gate the tRPC procedures apply, rather than

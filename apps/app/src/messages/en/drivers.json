@@ -96,19 +96,6 @@
         "registered": "Registered on",
         "kyc": "Status",
         "none": "None",
-        "read-only": "Documents are uploaded and reviewed by Appload. Talk to us to update one.",
-        "no-documents": "No documents for this driver yet.",
-        "doc-status": {
-            "pending": "Pending review",
-            "approved": "Approved",
-            "rejected": "Rejected"
-        },
-        "doc-type": {
-            "driver-license": "Driving licence",
-            "id-card": "ID card"
-        },
-        "expires": "Valid until {date}",
-        "no-expiry": "No expiry",
         "loads": {
             "title": "Loads",
             "empty": "This driver has not been named on a load yet."

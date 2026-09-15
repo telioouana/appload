@@ -37,10 +37,26 @@ export const TERMINAL_STATUSES = ["closed", "cancelled"] as const satisfies read
 
 /**
  * A truck on the load, from the loading site to offloading, interruptions
- * included: what the cron tracks and what a plan pays for. Stated in the
- * schema, which cannot import this module, and re-exported under its name here.
+ * included: what a plan pays for, and what counts as a load under way.
+ * Stated in the schema, which cannot import this module, and re-exported
+ * under its name here.
  */
 export const IN_PROGRESS_STATUSES = MOVEMENT_IN_PROGRESS_STATUSES;
+
+/**
+ * What the cron actually asks a driver about: from the moment he pulls away
+ * from the loading site until the load is off, interruptions and the border
+ * included. Pinging a truck that is still being loaded costs a message and
+ * tells nobody anything, so tracking starts one stage after billing does.
+ */
+export const TRACKED_STATUSES = [
+    "on-route",
+    "stopped",
+    "issue",
+    "at-border",
+    "at-offloading",
+    "offloading",
+] as const satisfies readonly MovementStatus[];
 
 /** Where a truck is held up; each resumes at the stage it interrupted (`resumeStatus`). */
 export const INTERRUPT_STATUSES = ["stopped", "issue"] as const satisfies readonly MovementStatus[];

@@ -8,6 +8,7 @@ import { driversCatalog } from "@/frontend/pages/drivers/server/activity"
 import { driversRouter } from "@/frontend/pages/drivers/server/procedures"
 import { fleetCatalog } from "@/frontend/pages/fleet/server/activity"
 import { fleetRouter } from "@/frontend/pages/fleet/server/procedures"
+import { kycRouter } from "@/frontend/pages/fleet/server/kyc"
 import { mapCatalog } from "@/frontend/pages/map/server/activity"
 import { mapRouter } from "@/frontend/pages/map/server/procedures"
 import { movementsCatalog } from "@/frontend/pages/movements/server/activity"
@@ -22,6 +23,8 @@ import { partnersRouter } from "@/frontend/pages/partners/server/procedures"
 import { quotesCatalog } from "@/frontend/pages/quotes/server/activity"
 import { quotesRouter } from "@/frontend/pages/quotes/server/procedures"
 import { searchRouter } from "@/frontend/pages/search/server/procedures"
+import { threadsCatalog } from "@/frontend/pages/threads/server/activity"
+import { threadsRouter } from "@/frontend/pages/threads/server/procedures"
 import { meRouter } from "@/frontend/pages/settings/server/procedures"
 
 // Module scope: runs on every cold start before any request is handled, so
@@ -39,12 +42,14 @@ registerActivityCatalog({
     ...ordersCatalog,
     ...partnersCatalog,
     ...quotesCatalog,
+    ...threadsCatalog,
 });
 
 export const appRouter = createTRPCRouter({
     analytics: analyticsRouter,
     drivers: driversRouter,
     fleet: fleetRouter,
+    kyc: kycRouter,
     map: mapRouter,
     me: meRouter,
     movements: movementsRouter,
@@ -54,6 +59,7 @@ export const appRouter = createTRPCRouter({
     partners: partnersRouter,
     quotes: quotesRouter,
     search: searchRouter,
+    threads: threadsRouter,
 });
 
 // export type definition of API

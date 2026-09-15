@@ -12,7 +12,7 @@ import type { OfferStatus, OrderStatus } from "@workspace/db/types";
 import type { Actor } from "@workspace/domain/orders/actor";
 import type { OrderContext } from "@workspace/domain/orders/transition";
 import { pendingOfferCount } from "@workspace/domain/orders/transition";
-import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
+import { ON_GOING_STATUSES } from "@workspace/domain/orders/status-groups";
 import { OrderError } from "@workspace/domain/orders/errors";
 
 import { foreignKeyViolationConstraint } from "@workspace/db/errors";
@@ -180,7 +180,7 @@ export function sectionPredicate(
             case "quoted":
                 return and(eq(order.status, "prospect"), sql`${pendingOfferCount} > 0`);
             case "booked": return eq(order.status, "booked");
-            case "on-going": return inArray(order.status, TRACKED_STATUSES);
+            case "on-going": return inArray(order.status, ON_GOING_STATUSES);
             case "delivered": return eq(order.status, "delivered");
             case "history": return inArray(order.status, CLOSED_STATUSES);
         }
@@ -193,7 +193,7 @@ export function sectionPredicate(
         case "requests": return myRequest(tenantId, ["requested"]);
         case "quoted": return myOffer(tenantId, ["pending"]);
         case "booked": return and(eq(order.carrierId, tenantId), eq(order.status, "booked"));
-        case "on-going": return and(eq(order.carrierId, tenantId), inArray(order.status, TRACKED_STATUSES));
+        case "on-going": return and(eq(order.carrierId, tenantId), inArray(order.status, ON_GOING_STATUSES));
         case "delivered": return and(eq(order.carrierId, tenantId), eq(order.status, "delivered"));
         case "history":
             return or(

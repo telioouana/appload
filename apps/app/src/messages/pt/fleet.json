@@ -151,20 +151,45 @@
         "driver": "Motorista",
         "hitched": "Engatado a",
         "kyc": "Estado",
-        "none": "Nenhum",
-        "read-only": "Os documentos são carregados e verificados pela Appload. Fale connosco para actualizar um documento.",
-        "no-documents": "Ainda não há documentos deste veículo.",
+        "none": "Nenhum"
+    },
+    "papers": {
+        "missing": "Em falta",
+        "not-filed": "Ainda não foi entregue",
+        "expires": "Válido até {date}",
+        "no-expiry": "Sem validade",
+        "add-pages": "Adicionar páginas",
+        "remove-page": "Remover página",
+        "submit": "Entregar documento",
+        "issued": "Emitido em",
+        "expiry": "Válido até",
+        "number": "Número do documento",
+        "preview": "Página",
+        "open-file": "Abrir o ficheiro",
+        "no-preview": "Não é possível mostrar este ficheiro aqui.",
+        "review-note": "A Appload verifica todos os documentos entregues aqui. Fica por rever até alguém o analisar.",
         "doc-status": {
             "pending": "Por rever",
             "approved": "Aprovado",
             "rejected": "Rejeitado"
         },
         "doc-type": {
+            "driver-license": "Carta de condução",
+            "id-card": "Bilhete de identidade",
             "vehicle-booklet": "Livrete",
             "proof-of-ownership": "Prova de propriedade"
         },
-        "expires": "Válido até {date}",
-        "no-expiry": "Sem validade"
+        "errors": {
+            "LOAD_FAILED": "Não foi possível carregar estes documentos.",
+            "DOCUMENT_NOT_APPLICABLE": "Este documento não é pedido para este registo.",
+            "INVALID_DOCUMENT_URL": "Não foi possível aceitar este ficheiro. Escolha-o novamente.",
+            "NOT_ALLOWED": "O seu perfil não pode entregar documentos.",
+            "NOT_FOUND": "Não foi possível encontrar este registo.",
+            "UPLOAD_FAILED": "Não foi possível carregar o ficheiro. Tente novamente.",
+            "FILE_TOO_LARGE": "Cada página tem de ter 5 MB ou menos.",
+            "FILE_TYPE": "Só são aceites ficheiros PDF, JPG e PNG.",
+            "UNKNOWN": "Algo correu mal. Tente novamente."
+        }
     },
     "edit": {
         "title": "Editar veículo",

@@ -19,6 +19,7 @@ import { normalizePhone } from "@workspace/comms/phone";
 import { StartChatBaseSchema } from "@/backend/schemas/start-chat";
 import { startConversation } from "@workspace/domain/tracking/conversations";
 import { hasOpenSession, place, SESSION_WINDOW_HOURS } from "@workspace/domain/tracking/slot";
+import { ON_GOING_STATUSES } from "@workspace/domain/orders/status-groups";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
 export type ConversationSummary = ChatConversation & {
@@ -280,12 +281,14 @@ export const chatsRouter = createTRPCRouter({
 
             // The driver's current load: conversations store bare digits while
             // orders keep E.164, so the phone match normalizes in JS — the
-            // tracked set is small. The thread's linked order wins over recency.
+            // on-going set is small. Asking by hand is not the cron: an
+            // operator may want a position from a truck still at the loading
+            // site. The thread's linked order wins over recency.
             const candidates = await ctx.db
                 .select()
                 .from(order)
                 .where(and(
-                    inArray(order.status, TRACKED_STATUSES),
+                    inArray(order.status, ON_GOING_STATUSES),
                     isNotNull(order.driverPhoneNumber),
                 ))
                 .orderBy(desc(order.createdAt));
@@ -293,7 +296,11 @@ export const chatsRouter = createTRPCRouter({
             const matches = candidates.filter(
                 (row) => normalizePhone(row.driverPhoneNumber!) === conversation.driverPhone,
             );
-            const active = matches.find((row) => row.orderId === conversation.orderId) ?? matches[0];
+            // ...and a load already on the road wins over one still parked
+            // at the loading site, before recency decides
+            const active = matches.find((row) => row.orderId === conversation.orderId)
+                ?? matches.find((row) => TRACKED_STATUSES.includes(row.status))
+                ?? matches[0];
 
             if (!active) {
                 throw new TRPCError({ code: "PRECONDITION_FAILED", message: "NO_ACTIVE_ORDER" });
