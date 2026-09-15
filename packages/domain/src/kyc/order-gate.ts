@@ -1,14 +1,15 @@
 import { TRPCError } from "@trpc/server";
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
-import { organization, user } from "@workspace/db/users";
-import { driver, link, trailer, truck } from "@workspace/db/fleet";
+import { organization } from "@workspace/db/users";
 import type { db as Database } from "@workspace/db/db";
 import { isAuthorized } from "@workspace/auth/user-permissions";
 
 import type { Actor } from "@workspace/domain/orders/actor";
 import { today } from "@workspace/domain/kyc/derive";
 import { currentDocuments, loadSubject, toCurrentDoc } from "@workspace/domain/kyc/subjects";
+import { paperState } from "@workspace/domain/orders/dispatch-readiness";
+import { loadRigSubjects } from "@workspace/domain/orders/dispatch-papers";
 import {
     enforcementMode,
     evaluateOrderGate,
@@ -26,8 +27,6 @@ export type OrderParties = {
     trailerPlate?: string | null
     linkPlate?: string | null
 };
-
-const VEHICLE_TABLE = { truck, trailer, link } as const;
 
 /**
  * Loads the verification state of every party on an order and reduces it to
@@ -146,55 +145,22 @@ export async function guardOrderGate(
 }
 
 /**
- * The driver and the vehicles named on the order, with their KYC state.
- * Labelled the way the flag reason will show them: the driver by name,
- * vehicles by plate.
+ * The driver and the vehicles named on the order, with their KYC state and
+ * what they hold of the papers dispatch asks for. Labelled the way the flag
+ * reason will show them: the driver by name, vehicles by plate.
+ *
+ * The rows themselves come from the dispatch lookup, so the gate that flags
+ * an unreviewed rig and the guard that refuses one without papers are
+ * reading the same document set.
  */
 async function loadPartySubjects(db: Db, parties: OrderParties): Promise<SubjectFlag[]> {
-    const plateLookups = (["truck", "trailer", "link"] as const)
-        .map((kind) => ({ kind, plate: parties[`${kind}Plate` as const] }))
-        .filter((entry): entry is { kind: "truck" | "trailer" | "link"; plate: string } =>
-            typeof entry.plate === "string" && entry.plate.length > 0,
-        );
+    const subjects = await loadRigSubjects(db, parties);
 
-    const [driverRows, ...vehicleRows] = await Promise.all([
-        parties.driverId
-            ? db.select({ name: user.name, kycStatus: driver.kycStatus })
-                .from(driver)
-                .innerJoin(user, eq(user.id, driver.userId))
-                .where(eq(driver.id, parties.driverId))
-            : Promise.resolve([]),
-
-        ...plateLookups.map(({ kind, plate }) => {
-            const table = VEHICLE_TABLE[kind];
-
-            return db
-                .select({
-                    regPlate: table.regPlate,
-                    kycStatus: table.kycStatus,
-                    ownershipStatus: table.ownershipStatus,
-                })
-                .from(table)
-                .where(inArray(table.regPlate, [plate]));
-        }),
-    ]);
-
-    const subjects: SubjectFlag[] = [];
-
-    for (const row of driverRows) {
-        subjects.push({ kind: "driver", label: row.name, kycStatus: row.kycStatus });
-    }
-
-    plateLookups.forEach(({ kind }, index) => {
-        for (const row of vehicleRows[index] ?? []) {
-            subjects.push({
-                kind,
-                label: row.regPlate,
-                kycStatus: row.kycStatus,
-                ownershipStatus: row.ownershipStatus,
-            });
-        }
-    });
-
-    return subjects;
+    return subjects.map((subject) => ({
+        kind: subject.kind,
+        label: subject.label,
+        kycStatus: subject.kycStatus,
+        ...(subject.ownershipStatus && { ownershipStatus: subject.ownershipStatus }),
+        papers: paperState(subject),
+    }));
 }

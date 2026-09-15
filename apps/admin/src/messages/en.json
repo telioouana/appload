@@ -1864,8 +1864,10 @@
                     "OFFER_NOT_PENDING": "This offer was already decided.",
                     "NO_OFFERS": "This prospect has no pending offers. Add one first.",
                     "INCOMPLETE_FOR_DISPATCH": "Assign the driver, their phone and the truck before moving to At loading site.",
+                    "PAPERS_MISSING": "The papers of the driver or the rig are not on file. Open their records and file them before the truck leaves.",
                     "OFFER_UNPRICED": "This offer has no Appload commission yet. Edit it and set the commission before booking with it."
                 },
+                "papersOr": "or",
                 "book": "Book order"
             },
             "detailPage": {
@@ -1895,7 +1897,10 @@
                         "KYC_UNVERIFIED": "Driver or vehicles not yet verified",
                         "HIGH_RISK_SUBCONTRACTOR": "Vehicles owned by a third party",
                         "CARRIER_RISK_HIGH": "High-risk carrier",
-                        "CARRIER_RISK_WATCH": "Carrier under observation"
+                        "CARRIER_RISK_WATCH": "Carrier under observation",
+                        "PAPERS_UNREVIEWED": "Dispatched with papers nobody had reviewed yet",
+                        "LOADING_MISMATCH": "The truck or the driver at the loading site was not the one dispatched",
+                        "LOADING_CHECK_SKIPPED": "Loading started without a completed check"
                     }
                 },
                 "sections": {
@@ -1971,6 +1976,16 @@
                 },
                 "operations": {
                     "assign": "Assign driver and truck"
+                },
+                "papers": {
+                    "title": "Papers on file",
+                    "ok": "On file",
+                    "pending": "Awaiting review",
+                    "missing": "Nothing on file",
+                    "review": "Open the record"
+                },
+                "chat": {
+                    "title": "Conversation"
                 }
             },
             "history": {
@@ -2599,6 +2614,36 @@
                     "created": "Order created — {to}"
                 }
             },
+            "threads": {
+                "modes": {
+                    "drivers": "Drivers",
+                    "orders": "Order chats"
+                },
+                "listEmptyTitle": "No order conversations yet",
+                "listEmptyDescription": "One appears here as soon as a shipper or a carrier writes on an order.",
+                "emptyTitle": "Pick an order conversation",
+                "emptyDescription": "The shipper, the carrier and Appload, on one order.",
+                "noCarrier": "No carrier yet",
+                "empty": "Nobody has written here yet.",
+                "fileOnly": "File sent",
+                "placeholder": "Write a message…",
+                "send": "Send",
+                "attach": "Attach a file",
+                "remove": "Remove file",
+                "loadMore": "Earlier messages",
+                "you": "You",
+                "appload": "Appload",
+                "errors": {
+                    "EMPTY_MESSAGE": "Write something or attach a file.",
+                    "INVALID_ATTACHMENT_URL": "That file does not belong to this conversation.",
+                    "THREAD_NOT_FOUND": "This conversation is no longer available.",
+                    "UPLOAD_FAILED": "The file could not be uploaded.",
+                    "FILE_TYPE": "PDF, JPG and PNG only.",
+                    "FILE_TOO_LARGE": "Each file must be 10 MB or less.",
+                    "TOO_MANY_FILES": "Up to 5 files per message.",
+                    "UNKNOWN": "The message could not be sent."
+                }
+            },
             "panel": {
                 "title": "Linked order",
                 "close": "Close",
@@ -3074,6 +3119,10 @@
                     "CARRIER_CONTRACT_EXPIRED": "This carrier's signed contract has expired, so it cannot operate on the platform.",
                     "CARRIER_SUSPENDED": "This carrier is suspended.",
                     "UNKNOWN": "This carrier cannot be booked right now."
+                },
+                "papers": {
+                    "missing": "No papers on file for {subjects} — the truck cannot leave for the loading site until they are filed.",
+                    "unreviewed": "Papers filed but not yet reviewed for {subjects}. The truck can leave; the order is flagged."
                 }
             },
             "eyebrow": {

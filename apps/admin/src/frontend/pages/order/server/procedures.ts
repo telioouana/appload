@@ -21,7 +21,10 @@ import { FOLLOW_UP_STATUSES } from "@workspace/domain/tracking/conversations";
 import { foreignKeyViolationConstraint } from "@workspace/db/errors";
 import { deriveOrderFields } from "@workspace/domain/orders/derive";
 import { allowedTransitions, transitionRequirements } from "@workspace/domain/orders/transitions";
-import { isDispatchMove, isReadyToDispatch } from "@workspace/domain/orders/dispatch-readiness";
+import { isDispatchMove } from "@workspace/domain/orders/dispatch-readiness";
+import { loadDispatchReadiness } from "@workspace/domain/orders/dispatch-papers";
+import { recordDispatch, rigChanged } from "@workspace/domain/orders/dispatch-pack";
+import { ON_GOING_STATUSES } from "@workspace/domain/orders/status-groups";
 import { carrierSnapshot } from "@workspace/domain/orders/carrier-snapshot";
 import { offerPricingColumns, priceOffer } from "@workspace/domain/orders/commission";
 import { getSheetsAccessToken } from "@/lib/orders/google-token";
@@ -555,6 +558,19 @@ export const orderRouter = createTRPCRouter({
                     });
                 }
 
+                // Ops correcting the rig on a trip already running re-writes
+                // the dispatch pack (D7): the loading site has to be checked
+                // against the truck that is actually coming, and the papers
+                // of the one that was replaced stay on the superseded pack.
+                // Best-effort like the hooks below — the edit itself landed.
+                if (ON_GOING_STATUSES.includes(updated.status) && rigChanged(data, current)) {
+                    await recordDispatch(ctx.db, {
+                        orderPk: current.id,
+                        row: updated,
+                        actor: ctx.session.user.id,
+                    }).catch((error: unknown) => console.error(`dispatch pack failed for ${input.orderId}`, error));
+                }
+
                 // A driver phone landing on an already booked/tracked order
                 // opens the follow-up thread the booked transition skipped
                 // (or reroutes it to the corrected number). Best-effort,
@@ -1046,6 +1062,8 @@ export const orderRouter = createTRPCRouter({
                     // refuse it: booking needs an offer still awaiting a
                     // decision, dispatch needs the driver and the truck
                     truckPlate: order.truckPlate,
+                    trailerPlate: order.trailerPlate,
+                    linkPlate: order.linkPlate,
                     truckAge: order.truckAge,
                     driverId: order.driverId,
                     driverName: order.driverName,
@@ -1082,26 +1100,45 @@ export const orderRouter = createTRPCRouter({
             // dispatch, or a dispute that must be settled before the cargo
             // closes. Always a boolean — a conditional spread would infer a
             // union and break `entry.blocked` in the dialog.
-            const dispatchBlocked = !isReadyToDispatch(row);
             const disputeBlocked = isActiveDispute(row.disputeStatus);
+            const allowed = allowedTransitions(context);
 
-            const targets = allowedTransitions(context).map((to) => {
+            // The dispatch gate reads the rig's papers out of the KYC store,
+            // so it only runs when the dispatch is actually on the table
+            const dispatch = allowed.some((to) => isDispatchMove(row.status, to))
+                ? await loadDispatchReadiness(ctx.db, row)
+                : null;
+
+            const targets = allowed.map((to) => {
                 const requirements = transitionRequirements(row.status, to, { resumeStatus }) ?? [];
+                const dispatching = isDispatchMove(row.status, to) ? dispatch : null;
 
                 // Keyed on the requirement, not on the target: an admin
                 // reversal back to booked does not accept an offer, and
                 // must not be blocked for lacking one
-                const blockedReason: "NO_OFFERS" | "INCOMPLETE_FOR_DISPATCH" | "DISPUTE_OPEN" | null =
+                const blockedReason: "NO_OFFERS" | "INCOMPLETE_FOR_DISPATCH" | "PAPERS_MISSING" | "DISPUTE_OPEN" | null =
                     requirements.includes("offer") && row.pendingOffers === 0 ? "NO_OFFERS"
-                        : isDispatchMove(row.status, to) && dispatchBlocked ? "INCOMPLETE_FOR_DISPATCH"
-                            : to === "completed" && disputeBlocked ? "DISPUTE_OPEN"
-                                : null;
+                        : dispatching && dispatching.fields.length > 0 ? "INCOMPLETE_FOR_DISPATCH"
+                            : dispatching && dispatching.papers.length > 0 ? "PAPERS_MISSING"
+                                : to === "completed" && disputeBlocked ? "DISPUTE_OPEN"
+                                    : null;
 
                 return {
                     to,
                     requirements,
                     blocked: blockedReason !== null,
                     blockedReason,
+                    // What the dispatch still owes, so the dialog names the
+                    // subject and the paper instead of saying "not ready".
+                    // Null on every other move — never a conditional spread,
+                    // which would infer a union the dialog cannot read.
+                    dispatch: dispatching
+                        ? {
+                            missingFields: dispatching.fields,
+                            missingPapers: dispatching.papers,
+                            unreviewed: dispatching.unreviewed,
+                        }
+                        : null,
                 };
             });
 

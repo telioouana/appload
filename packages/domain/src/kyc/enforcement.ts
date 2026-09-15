@@ -28,6 +28,12 @@ export type SubjectFlag = {
     label: string
     kycStatus: KycStatus
     ownershipStatus?: OwnershipStatus
+    /**
+     * What the subject holds of the papers dispatch asks for. Absent where
+     * the caller did not load them — the booking gate names a carrier only,
+     * and has no rig to ask about.
+     */
+    papers?: "missing" | "pending" | "ok"
 };
 
 export type OrderGate = {
@@ -114,7 +120,15 @@ export function gateFlagReason(gate: OrderGate): string | null {
         return line(`KYC_${gate.carrier.code}`, null);
     }
     if (gate.unverified.length > 0) {
-        return line("KYC_UNVERIFIED", gate.unverified.map((s) => s.label).join(", "));
+        // A rig whose papers are all in and merely awaiting review is a
+        // different backlog to one that filed nothing: the first is
+        // Appload's queue, the second is the carrier's. Only when every
+        // unverified subject is in the first case does the order say so.
+        const code = gate.unverified.every((s) => s.papers === "pending")
+            ? "PAPERS_UNREVIEWED"
+            : "KYC_UNVERIFIED";
+
+        return line(code, gate.unverified.map((s) => s.label).join(", "));
     }
 
     return null;

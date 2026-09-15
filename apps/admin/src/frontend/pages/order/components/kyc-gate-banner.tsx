@@ -49,6 +49,16 @@ export function KycGateBanner({
         enabled: Boolean(carrierId),
     })
 
+    // The gate loads the rig's papers alongside its verification state, so
+    // the banner can say which subject is holding the dispatch up
+    const missingPapers = (gate?.unverified ?? [])
+        .filter((subject) => subject.papers === "missing")
+        .map((subject) => subject.label)
+
+    const unreviewedPapers = (gate?.unverified ?? [])
+        .filter((subject) => subject.papers === "pending")
+        .map((subject) => subject.label)
+
     // Nothing to say about a carrier that is verified, unflagged, and whose
     // rig is fully checked
     if (!gate || (gate.carrier.eligible && gate.requirements.length === 0)) {
@@ -88,6 +98,21 @@ export function KycGateBanner({
                         </span>
                     ))}
                 </div>
+
+                {/* The papers are their own line: a rig with nothing on file
+                    cannot be dispatched in any enforcement mode, where an
+                    unreviewed one only flags the order */}
+                {missingPapers.length > 0 && (
+                    <span className="text-xs">
+                        {t("papers.missing", { subjects: missingPapers.join(", ") })}
+                    </span>
+                )}
+
+                {unreviewedPapers.length > 0 && (
+                    <span className="text-xs">
+                        {t("papers.unreviewed", { subjects: unreviewedPapers.join(", ") })}
+                    </span>
+                )}
 
                 {/* What proceeding will cost, stated before they proceed */}
                 {!blocking && gate.requirements.includes("flag") && (

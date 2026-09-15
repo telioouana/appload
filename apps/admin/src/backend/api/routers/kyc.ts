@@ -16,6 +16,8 @@ import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
 
 import { loadOrderGate } from "@workspace/domain/kyc/order-gate";
+import { dispatchDocsFor, paperState } from "@workspace/domain/orders/dispatch-readiness";
+import { loadRigSubjects } from "@workspace/domain/orders/dispatch-papers";
 import { kycActionRequirements } from "@/lib/kyc/transitions";
 import { uploadKycDocument } from "@workspace/domain/kyc/upload";
 import { withProxiedPages } from "@workspace/domain/kyc/file-access";
@@ -253,6 +255,39 @@ export const kycRouter = createTRPCRouter({
             linkPlate: z.string().nullish(),
         }))
         .query(({ ctx, input }) => loadOrderGate(ctx.db, input)),
+
+    /**
+     * What the rig of one order holds of the papers dispatch asks for, with
+     * the verdict per subject.
+     *
+     * The same lookup the dispatch guard runs, so the line the operator
+     * reads on the order page and the refusal the move would produce are one
+     * decision. The pages themselves are deliberately not here — neither
+     * proxied nor raw: the review sheet (`kyc.documents`) is where a paper
+     * is opened, and this links to it. Leaving them out is also what keeps
+     * the shape (a `RigSubject`, which `DispatchReadiness.unreviewed` also
+     * carries) incapable of serialising a storage URL to a browser.
+     */
+    subjectPapers: authorizedProcedure("kyc", ["read"])
+        .input(z.object({
+            driverId: z.string().nullish(),
+            truckPlate: z.string().nullish(),
+            trailerPlate: z.string().nullish(),
+            linkPlate: z.string().nullish(),
+        }))
+        .query(async ({ ctx, input }) => {
+            const subjects = await loadRigSubjects(ctx.db, input);
+
+            return subjects.map((subject) => ({
+                kind: subject.kind,
+                subjectId: subject.subjectId,
+                label: subject.label,
+                kycStatus: subject.kycStatus,
+                papers: paperState(subject),
+                needs: dispatchDocsFor(subject.kind),
+                docs: subject.docs,
+            }));
+        }),
 
     flagRisk: authorizedProcedure("risk", ["flag"])
         .input(z.object({

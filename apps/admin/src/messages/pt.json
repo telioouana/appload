@@ -1864,8 +1864,10 @@
                     "OFFER_NOT_PENDING": "Esta oferta já foi decidida.",
                     "NO_OFFERS": "Este pedido em prospectiva não tem ofertas pendentes. Adicione uma primeiro.",
                     "INCOMPLETE_FOR_DISPATCH": "Atribua o motorista, o contacto dele e o camião antes de mover para \"No local de carregamento\".",
+                    "PAPERS_MISSING": "Faltam documentos do motorista ou do camião. Abra os registos e submeta-os antes de o camião sair.",
                     "OFFER_UNPRICED": "Esta oferta ainda não tem a comissão da Appload. Edite-a e defina a comissão antes de confirmar com ela."
                 },
+                "papersOr": "ou",
                 "book": "Confirmar pedido"
             },
             "detailPage": {
@@ -1895,7 +1897,10 @@
                         "KYC_UNVERIFIED": "Motorista ou viaturas ainda não verificados",
                         "HIGH_RISK_SUBCONTRACTOR": "Viaturas pertencentes a terceiros",
                         "CARRIER_RISK_HIGH": "Transportador de alto risco",
-                        "CARRIER_RISK_WATCH": "Transportador em observação"
+                        "CARRIER_RISK_WATCH": "Transportador em observação",
+                        "PAPERS_UNREVIEWED": "Despachado com documentos que ainda ninguém tinha revisto",
+                        "LOADING_MISMATCH": "O camião ou o motorista no local de carregamento não era o despachado",
+                        "LOADING_CHECK_SKIPPED": "O carregamento começou sem conferência concluída"
                     }
                 },
                 "sections": {
@@ -1971,6 +1976,16 @@
                 },
                 "operations": {
                     "assign": "Atribuir motorista e camião"
+                },
+                "papers": {
+                    "title": "Documentos submetidos",
+                    "ok": "Submetido",
+                    "pending": "Aguarda revisão",
+                    "missing": "Nada submetido",
+                    "review": "Abrir o registo"
+                },
+                "chat": {
+                    "title": "Conversa"
                 }
             },
             "history": {
@@ -2599,6 +2614,36 @@
                     "created": "Pedido criado — {to}"
                 }
             },
+            "threads": {
+                "modes": {
+                    "drivers": "Motoristas",
+                    "orders": "Conversas de pedidos"
+                },
+                "listEmptyTitle": "Ainda sem conversas de pedidos",
+                "listEmptyDescription": "Aparece aqui assim que um cliente ou um transportador escrever num pedido.",
+                "emptyTitle": "Escolha uma conversa",
+                "emptyDescription": "O cliente, o transportador e a Appload, num pedido.",
+                "noCarrier": "Sem transportador",
+                "empty": "Ainda ninguém escreveu aqui.",
+                "fileOnly": "Ficheiro enviado",
+                "placeholder": "Escreva uma mensagem…",
+                "send": "Enviar",
+                "attach": "Anexar ficheiro",
+                "remove": "Retirar ficheiro",
+                "loadMore": "Mensagens anteriores",
+                "you": "Você",
+                "appload": "Appload",
+                "errors": {
+                    "EMPTY_MESSAGE": "Escreva algo ou anexe um ficheiro.",
+                    "INVALID_ATTACHMENT_URL": "O ficheiro não pertence a esta conversa.",
+                    "THREAD_NOT_FOUND": "Esta conversa já não está disponível.",
+                    "UPLOAD_FAILED": "Não foi possível carregar o ficheiro.",
+                    "FILE_TYPE": "Só PDF, JPG e PNG.",
+                    "FILE_TOO_LARGE": "Cada ficheiro tem de ter até 10 MB.",
+                    "TOO_MANY_FILES": "No máximo 5 ficheiros por mensagem.",
+                    "UNKNOWN": "Não foi possível enviar a mensagem."
+                }
+            },
             "panel": {
                 "title": "Pedido associado",
                 "close": "Fechar",
@@ -3074,6 +3119,10 @@
                     "CARRIER_CONTRACT_EXPIRED": "O contrato assinado deste transportador expirou, por isso não pode operar na plataforma.",
                     "CARRIER_SUSPENDED": "Este transportador está suspenso.",
                     "UNKNOWN": "Este transportador não pode ser contratado neste momento."
+                },
+                "papers": {
+                    "missing": "Sem documentos submetidos para {subjects} — o camião não pode seguir para o carregamento enquanto não forem submetidos.",
+                    "unreviewed": "Documentos submetidos mas ainda não revistos para {subjects}. O camião pode seguir; o pedido fica sinalizado."
                 }
             },
             "eyebrow": {

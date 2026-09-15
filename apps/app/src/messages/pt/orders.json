@@ -237,8 +237,9 @@
         "noteRequired": "Esta alteração precisa de uma explicação.",
         "podRequired": "Esta alteração precisa do comprovativo de entrega anexado.",
         "evidenceRequired": "Esta alteração precisa de um documento anexado.",
-        "incompleteForDispatch": "É preciso indicar o motorista e o camião antes de seguir para o carregamento.",
+        "incompleteForDispatch": "É preciso indicar o motorista e o camião antes de o camião seguir para o local de carregamento.",
         "dispatchRequired": "Escolha primeiro o motorista e o camião.",
+        "papersMissing": "Faltam documentos. Submeta-os antes de o camião seguir para o local de carregamento.",
         "disputeOpen": "Este pedido tem uma disputa aberta. A Appload tem de a resolver primeiro.",
         "driverNotRegistered": "Esse motorista não está registado na sua empresa.",
         "truckNotRegistered": "Esse camião não está na sua frota.",
@@ -593,6 +594,18 @@
                 "label": "Semi-reboque (opcional)",
                 "placeholder": "Procurar nos seus semi-reboques"
             }
+        },
+        "papers": {
+            "title": "Documentos",
+            "description": "A Appload confere estes documentos no local de carregamento, por isso têm de estar submetidos antes de o camião sair.",
+            "loading": "A verificar o que está submetido...",
+            "error": "Não foi possível carregar os documentos. Tente novamente.",
+            "ok": "Submetido",
+            "pending": "Aguarda revisão",
+            "missing": "Nada submetido",
+            "pending-hint": "Submetido. A Appload revê-o, e o camião pode sair entretanto.",
+            "missing-hint": "Submeta um destes para enviar este camião.",
+            "or": "ou"
         },
         "note": {
             "label": "O que aconteceu?",

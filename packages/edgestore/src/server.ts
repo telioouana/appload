@@ -74,7 +74,12 @@ const FLEET_SUBJECTS = new Set(["driver", "truck", "trailer", "link"])
  */
 type ResolveKycSubjectOwner = (subjectType: string, subjectId: string) => Promise<string | null>
 
+/** Whether a company is a party to a thread, likewise asked of the host. */
+type ResolveThreadParty = (threadId: string, organizationId: string) => Promise<boolean>
+
 let resolveKycSubjectOwner: ResolveKycSubjectOwner | undefined
+
+let resolveThreadParty: ResolveThreadParty | undefined
 
 /**
  * Hands the buckets the one lookup they cannot do themselves.
@@ -82,12 +87,17 @@ let resolveKycSubjectOwner: ResolveKycSubjectOwner | undefined
  * It cannot travel on the context the way `resolveStaff` and `resolveOrgId`
  * do: the context is built before the upload's input is known, and the
  * question here — "whose driver is this?" — is a question about the input.
- * So the host routes (apps/admin and apps/app `/api/edgestore`) set it at
+ * So the host routes (apps/admin and apps/app `/api/edgestore`) set them at
  * module scope beside `createEdgeStoreHandler`. Left unset, the portal's
- * fleet uploads are refused and the bucket behaves exactly as it did before.
+ * fleet uploads and every partner's chat attachment are refused, and the
+ * buckets behave exactly as they did before.
  */
-export const configureEdgeStore = (config: { resolveKycSubjectOwner: ResolveKycSubjectOwner }) => {
+export const configureEdgeStore = (config: {
+    resolveKycSubjectOwner: ResolveKycSubjectOwner
+    resolveThreadParty: ResolveThreadParty
+}) => {
     resolveKycSubjectOwner = config.resolveKycSubjectOwner
+    resolveThreadParty = config.resolveThreadParty
 }
 
 export const edgeStoreRouter = es.router({
@@ -239,6 +249,63 @@ export const edgeStoreRouter = es.router({
             if (!FLEET_SUBJECTS.has(input.subjectType) || !resolveKycSubjectOwner) return false
 
             return (await resolveKycSubjectOwner(input.subjectType, input.subjectId)) === ctx.orgId
+        })
+        .beforeDelete(({ ctx }) => ctx.isStaff === "true"),
+
+    /**
+     * Files hung off a chat message: a delivery note, a photo of the load,
+     * a PDF.
+     *
+     * The thread id is the whole path, and it is the gate: the send mutation
+     * refuses any URL that does not carry `/threads/<threadId>/`, so a party
+     * to one shipment cannot post a file uploaded against another. Who may
+     * write into a thread is a question about the participants, which this
+     * package cannot answer — the host apps supply the lookup
+     * (`configureEdgeStore`), the same rows the send mutation counts unread
+     * against.
+     *
+     * Public-if-the-URL-is-known, like the order documents and unlike the
+     * KYC scans: these are read as `<a>` links in the conversation rather
+     * than through a proxy. Deleting stays staff-only — a message already
+     * sent is not the sender's to unsay.
+     */
+    threadFiles: es
+        .fileBucket({
+            accept: ["application/pdf", "image/jpeg", "image/png"],
+            maxSize: 10 * 1024 * 1024,
+        })
+        // Built with `threadAttachmentPath`, like the order buckets above:
+        // only an accessor on `input` or `ctx` may appear in `.path()`, so
+        // the "threads" segment the send mutation looks for travels as part
+        // of the value rather than as a constant here
+        .input(z.object({ path: z.string().max(512) }))
+        .path(({ input }) => [
+            { path: input.path },
+        ])
+        .beforeUpload(async ({ ctx, input, fileInfo }) => {
+            if (!isLegal("bucket path", input.path, STORAGE_PATH_RE)) return false
+
+            // A replace overwrites the bytes behind an object already hanging
+            // off a sent message, without running `beforeDelete` — which is
+            // staff-only — and the message would still name its first sender.
+            // Chat only ever adds files.
+            if (fileInfo.replaceTargetUrl) return false
+
+            // Exactly `threads/<threadId>`: the id is what the party check
+            // below is asked about, and what the stored URL is checked
+            // against when the message is sent
+            const [folder, threadId, ...rest] = input.path.split("/")
+
+            if (folder !== "threads" || !threadId || rest.length > 0) {
+                console.error("edgestore: illegal thread path", input.path)
+                return false
+            }
+
+            if (ctx.isStaff === "true") return true
+
+            if (ctx.orgId === null || !resolveThreadParty) return false
+
+            return resolveThreadParty(threadId, ctx.orgId)
         })
         .beforeDelete(({ ctx }) => ctx.isStaff === "true"),
 })

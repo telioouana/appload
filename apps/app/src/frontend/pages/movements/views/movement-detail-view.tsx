@@ -15,6 +15,7 @@ import { RouteCard } from "@/frontend/pages/movements/sections/route-card"
 import { ThreadCard } from "@/frontend/pages/movements/sections/thread-card"
 import { TimelineCard } from "@/frontend/pages/movements/sections/timeline-card"
 import { TrackingCard } from "@/frontend/pages/movements/sections/tracking-card"
+import { ChatCard } from "@/frontend/pages/threads/sections/chat-card"
 
 /**
  * One load on one page: a dispute on it first, then where it goes and what
@@ -74,6 +75,11 @@ export function MovementDetailView({ loadId }: { loadId: string }) {
 
                 <div className="container-snap flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pb-2">
                     <TrackingCard load={load} />
+
+                    {/* The two companies on the load, above the driver's own
+                        WhatsApp thread. A client reads its order on its own
+                        row, which carries the same conversation */}
+                    {load.role !== "client" && <ChatCard subjectType="movement" subjectId={load.id} />}
 
                     {/* What the driver has said back, under the card that asks */}
                     {load.permissions.canReadThread && <ThreadCard load={load} />}

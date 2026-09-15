@@ -237,8 +237,9 @@
         "noteRequired": "This change needs an explanation.",
         "podRequired": "This change needs the proof of delivery attached.",
         "evidenceRequired": "This change needs a document attached.",
-        "incompleteForDispatch": "The driver and the truck have to be named before the trip goes to loading.",
+        "incompleteForDispatch": "The driver and the truck have to be named before the truck leaves for the loading site.",
         "dispatchRequired": "Pick the driver and the truck first.",
+        "papersMissing": "Some papers are still missing. File them before the truck leaves for the loading site.",
         "disputeOpen": "This order has an open dispute. Appload has to settle it first.",
         "driverNotRegistered": "That driver is not in your registry.",
         "truckNotRegistered": "That truck is not in your fleet.",
@@ -593,6 +594,18 @@
                 "label": "Link (optional)",
                 "placeholder": "Search your links"
             }
+        },
+        "papers": {
+            "title": "Papers",
+            "description": "Appload checks these at the loading site, so they have to be on file before the truck leaves.",
+            "loading": "Checking what is on file...",
+            "error": "The papers could not be loaded. Try again.",
+            "ok": "On file",
+            "pending": "Awaiting review",
+            "missing": "Nothing on file",
+            "pending-hint": "Filed. Appload reviews it, and the truck can leave meanwhile.",
+            "missing-hint": "File one of these to send this truck.",
+            "or": "or"
         },
         "note": {
             "label": "What happened?",

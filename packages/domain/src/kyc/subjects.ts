@@ -91,6 +91,18 @@ export async function currentDocuments(db: Db, subject: Subject): Promise<KycDoc
         ))
         .orderBy(desc(kycDocument.createdAt));
 
+    return pickCurrent(rows);
+}
+
+/**
+ * The same rule over rows already in hand: one row per type, newest first,
+ * minus whatever a later submission supersedes. Soft-deleted rows must be
+ * excluded by the query — this only sees what it is given.
+ *
+ * Exists so a caller that reads several subjects in one query (the dispatch
+ * rig) derives the live set exactly as `currentDocuments` does.
+ */
+export function pickCurrent(rows: KycDocument[]): KycDocument[] {
     const superseded = new Set(
         rows.map((row) => row.supersedesId).filter((id): id is string => id !== null),
     );

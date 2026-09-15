@@ -355,6 +355,35 @@ export async function listStaffThreads(db: typeof Database, userId: string): Pro
     }));
 }
 
+/**
+ * Whether a company is a party to a thread.
+ *
+ * What the attachments bucket asks before letting a member write a file into
+ * `threads/<threadId>/`: the bucket has no subject of its own and no session
+ * beyond the organization. The subject is resolved rather than the
+ * participant rows read, so the bucket gives the same answer `sendMessage`
+ * will — the cache is only reconciled when somebody opens the thread, and a
+ * carrier dropped from an order must stop being able to mint upload URLs at
+ * once rather than when a remaining party next looks.
+ */
+export async function threadParty(
+    db: typeof Database,
+    threadId: string,
+    organizationId: string,
+): Promise<boolean> {
+    const [row] = await db
+        .select({ subjectType: thread.subjectType, subjectId: thread.subjectId })
+        .from(thread)
+        .where(eq(thread.id, threadId))
+        .limit(1);
+
+    if (!row) return false;
+
+    const resolved = await resolveThreadSubject(db, row);
+
+    return resolved?.sides.orgIds.includes(organizationId) ?? false;
+}
+
 /** Moves this reader's cursor to now. Their own, never their company's. */
 export async function markRead(db: typeof Database, userId: string, threadId: string): Promise<void> {
     const lastReadAt = new Date();

@@ -176,6 +176,10 @@ export function Sidenav({
     // a key it observed first reaches a page's server render empty. The
     // unread number is the bell's query, which no page suspends on
     const { data: counts } = useQuery({ ...trpc.me.railCounts.queryOptions(), staleTime: 60_000 })
+    // Chat is counted here too, and only here: a message writes a
+    // `thread.message` notification for every member of the other side, so
+    // adding the thread cursor's own unread on top would count each message
+    // twice — and the two halves clear on different actions
     const { data: unread } = useQuery(trpc.notifications.unreadCount.queryOptions(undefined, { refetchInterval: UNREAD_POLL_MS }))
 
     const carrier = orgType === "carrier"

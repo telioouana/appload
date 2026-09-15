@@ -21,6 +21,7 @@ export const ORDER_ERROR_KEYS = {
     EVIDENCE_REQUIRED: "evidenceRequired",
     INCOMPLETE_FOR_DISPATCH: "incompleteForDispatch",
     DISPATCH_REQUIRED: "dispatchRequired",
+    PAPERS_MISSING: "papersMissing",
     DISPUTE_OPEN: "disputeOpen",
     // Dispatch: an id that is not this carrier's own
     DRIVER_NOT_REGISTERED: "driverNotRegistered",

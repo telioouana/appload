@@ -40,7 +40,7 @@ const DIALOG_ERROR_CODES = [
     // Booking is the acceptance of a carrier offer, and dispatch needs the
     // rig the offer did not have to name
     "OFFER_REQUIRED", "OFFER_NOT_PENDING", "NO_OFFERS", "OFFER_UNPRICED",
-    "INCOMPLETE_FOR_DISPATCH",
+    "INCOMPLETE_FOR_DISPATCH", "PAPERS_MISSING",
     // Verification gate, raised when booking commits cargo to a carrier
     "CARRIER_NOT_VERIFIED", "CARRIER_CONTRACT_MISSING", "CARRIER_CONTRACT_EXPIRED",
     "CARRIER_SUSPENDED", "RISK_ACK_NOT_ALLOWED", "RISK_ACK_NOTE_REQUIRED",
@@ -76,6 +76,9 @@ export function TransitionDialog({
 }) {
     const t = useTranslations("Admin.orders.transitionDialog")
     const tStatus = useTranslations("Admin.orders.header.filters.status.options")
+    // The paper names are the review sheet's, so a gap is named here exactly
+    // as it is on the record the operator will open
+    const tDoc = useTranslations("Admin.partners.documents")
 
     const [target, setTarget] = useState<OrderStatus | undefined>(initialTarget)
     const [offerId, setOfferId] = useState<string | null>(initialOfferId ?? null)
@@ -238,7 +241,21 @@ export function TransitionDialog({
 
                         {blocked && (
                             <Alert variant="destructive">
-                                <AlertDescription>{t(`errors.${selected?.blockedReason ?? "UNKNOWN"}`)}</AlertDescription>
+                                <AlertDescription className="flex flex-col gap-1">
+                                    <span>{t(`errors.${selected?.blockedReason ?? "UNKNOWN"}`)}</span>
+
+                                    {/* Which subject owes which paper — the
+                                        operator has to know whose record to
+                                        open, not merely that something is
+                                        missing */}
+                                    {selected?.blockedReason === "PAPERS_MISSING" && (
+                                        <span className="text-xs">
+                                            {(selected.dispatch?.missingPapers ?? [])
+                                                .map((gap) => `${gap.label}: ${gap.needs.map((type) => tDoc(type)).join(` ${t("papersOr")} `)}`)
+                                                .join(" · ")}
+                                        </span>
+                                    )}
+                                </AlertDescription>
                             </Alert>
                         )}
 

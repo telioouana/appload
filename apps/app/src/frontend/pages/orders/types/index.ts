@@ -358,6 +358,7 @@ export type OrderDetail = {
 export type TransitionBlockedReason =
     | "NO_OFFERS"
     | "INCOMPLETE_FOR_DISPATCH"
+    | "PAPERS_MISSING"
     | "SUBSCRIPTION_REQUIRED"
     | "QUOTA_EXCEEDED";
 

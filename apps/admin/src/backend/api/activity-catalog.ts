@@ -5,6 +5,7 @@ import type { DriverOption, VehicleOption } from "./routers/fleet";
 import type { ChatConversation } from "@workspace/db/chats";
 import type { KycDocument } from "@workspace/db/kyc-documents";
 import type { CreateOrderOutput } from "@/frontend/pages/order/server/procedures";
+import type { TransitionOrderOutput } from "@workspace/domain/orders/transition";
 import type { OfferRow } from "@/frontend/pages/order/server/offers-procedures";
 
 // (transition/resolveFlag rows carry ids and statuses only — never notes
@@ -60,9 +61,12 @@ export const activityCatalog: ActivityCatalog = {
     "order.transition": {
         entity: (input) =>
             input?.orderId ? { type: "order", id: String(input.orderId) } : null,
-        params: (input) => ({
+        // The dispatch pack this move wrote, so the row that sent the truck
+        // points at the papers it left with. Empty on every other move.
+        params: (input, output?: TransitionOrderOutput) => ({
             orderId: input?.orderId ?? "",
             to: input?.to ?? "",
+            dispatchId: output?.dispatchId ?? "",
         }),
     },
     "order.resolveFlag": {

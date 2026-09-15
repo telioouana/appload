@@ -1,0 +1,22 @@
+{
+    "title": "Conversation",
+    "empty": "Nobody has written here yet.",
+    "placeholder": "Write a message…",
+    "send": "Send",
+    "attach": "Attach a file",
+    "remove": "Remove file",
+    "load-more": "Earlier messages",
+    "you": "You",
+    "appload": "Appload",
+    "errors": {
+        "RATE_LIMITED": "Too many messages this hour. Try again later.",
+        "EMPTY_MESSAGE": "Write something or attach a file.",
+        "INVALID_ATTACHMENT_URL": "That file does not belong to this conversation.",
+        "THREAD_NOT_FOUND": "This conversation is no longer available.",
+        "UPLOAD_FAILED": "The file could not be uploaded.",
+        "FILE_TYPE": "PDF, JPG and PNG only.",
+        "FILE_TOO_LARGE": "Each file must be 10 MB or less.",
+        "TOO_MANY_FILES": "Up to 5 files per message.",
+        "UNKNOWN": "The message could not be sent."
+    }
+}

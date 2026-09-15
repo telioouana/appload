@@ -21,6 +21,8 @@ import quotesEn from "./en/quotes.json";
 import quotesPt from "./pt/quotes.json";
 import searchEn from "./en/search.json";
 import searchPt from "./pt/search.json";
+import threadsEn from "./en/threads.json";
+import threadsPt from "./pt/threads.json";
 
 /**
  * The portal's message catalog is split per feature so the features can be
@@ -43,6 +45,7 @@ export const en = {
         partners: partnersEn,
         quotes: quotesEn,
         search: searchEn,
+        threads: threadsEn,
     },
 };
 
@@ -60,6 +63,7 @@ export const pt = {
         partners: partnersPt,
         quotes: quotesPt,
         search: searchPt,
+        threads: threadsPt,
     },
 };
 

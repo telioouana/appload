@@ -5,13 +5,16 @@ import { member } from "@workspace/db/users"
 import { auth } from "@workspace/auth/server"
 import { configureEdgeStore, createEdgeStoreHandler } from "@workspace/edgestore/server"
 import { isKycSubjectType, kycSubjectOwner } from "@workspace/domain/kyc/tenant-access"
+import { threadParty } from "@workspace/domain/threads/queries"
 
-// Who a driver or vehicle belongs to, for the KYC bucket's fleet uploads —
-// the same lookup the tRPC gate makes, so a file can only be written under a
-// subject the mutation would then accept it for.
+// Who a driver or vehicle belongs to, for the KYC bucket's fleet uploads,
+// and who is a party to a thread, for the attachments bucket — the same
+// lookups the tRPC gates make, so a file can only be written where the
+// mutation would then accept it.
 configureEdgeStore({
     resolveKycSubjectOwner: async (subjectType, subjectId) =>
         isKycSubjectType(subjectType) ? kycSubjectOwner(db, subjectType, subjectId) : null,
+    resolveThreadParty: (threadId, organizationId) => threadParty(db, threadId, organizationId),
 })
 
 /**

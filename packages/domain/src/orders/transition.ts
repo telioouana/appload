@@ -11,7 +11,9 @@ import { guardOrderGate } from "@workspace/domain/kyc/order-gate";
 import { FOLLOW_UP_STATUSES, startConversation } from "@workspace/domain/tracking/conversations";
 import { offerAcceptable } from "@workspace/domain/orders/booking-readiness";
 import { deriveOrderFields } from "@workspace/domain/orders/derive";
-import { isDispatchMove, isReadyToDispatch } from "@workspace/domain/orders/dispatch-readiness";
+import { isDispatchMove } from "@workspace/domain/orders/dispatch-readiness";
+import { loadDispatchReadiness } from "@workspace/domain/orders/dispatch-papers";
+import { recordDispatch } from "@workspace/domain/orders/dispatch-pack";
 import { changedCurrencyParties, partiesWithMoneyDocuments } from "@workspace/domain/orders/note-currency";
 import { proofPaymentPatch } from "@workspace/domain/orders/payments";
 import { paymentSums } from "@workspace/domain/orders/payment-sums";
@@ -350,6 +352,8 @@ export async function acceptOffer(
 export type TransitionOrderOutput = {
     orderId: string;
     order: Order;
+    /** The dispatch pack this move wrote, on the dispatch and nowhere else */
+    dispatchId?: string;
     warning?: "SHEET_FAILED";
 };
 
@@ -458,9 +462,23 @@ export async function applyTransition(
 
     // Driver and truck are optional at booking — a trip is committed
     // weeks before the rig that will run it is known — and mandatory
-    // the moment it is dispatched to the loading site
-    if (isDispatchMove(current.status, input.to) && !isReadyToDispatch(current)) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "INCOMPLETE_FOR_DISPATCH" });
+    // the moment it is dispatched to the loading site. So are their
+    // papers (D6): unlike the verification gate below, which warns or
+    // blocks depending on the mode, a rig with nothing on file is
+    // refused outright in every mode. The papers are part of the
+    // payload the move commits, not a risk somebody may accept.
+    if (isDispatchMove(current.status, input.to)) {
+        const readiness = await loadDispatchReadiness(ctx.db, current);
+
+        if (readiness.fields.length > 0) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "INCOMPLETE_FOR_DISPATCH" });
+        }
+        if (readiness.papers.length > 0) {
+            // The message is all that travels: the dialogs name the subject
+            // and the paper from the gaps `transitionOptions` (admin) and
+            // `kyc.rigPapers` (portal) already gave them
+            throw new TRPCError({ code: "BAD_REQUEST", message: "PAPERS_MISSING" });
+        }
     }
 
     // The cargo cannot be closed while a dispute over it is open; the
@@ -620,6 +638,22 @@ export async function applyTransition(
             .where(and(eq(orderOffer.orderId, current.id), eq(orderOffer.status, "pending")));
     }
 
+    // What the truck left with, snapshotted at the one moment it is true.
+    // After the row itself landed — there are no transactions here — so a
+    // failure leaves a dispatched order without a pack (which every reader
+    // tolerates, legacy rows having none either) rather than a pack for a
+    // move that never happened. It is swallowed for the same reason: the
+    // move already happened, and the history row, the billing and the
+    // follow-ups below must land whatever the pack did.
+    const dispatchId = isDispatchMove(current.status, input.to)
+        ? await recordDispatch(ctx.db, { orderPk: current.id, row: updated, actor: ctx.actor.userId })
+            .catch((error: unknown) => {
+                console.error(`dispatch pack failed for ${input.orderId}`, error);
+
+                return null;
+            })
+        : null;
+
     await ctx.db.insert(orderHistory).values({
         orderId: current.id,
         actorUserId: ctx.actor.userId,
@@ -631,6 +665,7 @@ export async function applyTransition(
             ...(flag && { flagged: true }),
             ...(input.document && { document: input.document }),
             ...(booked && { offer: booked.accepted.historyOffer }),
+            ...(dispatchId && { dispatchId }),
         },
     });
 
@@ -683,15 +718,15 @@ export async function applyTransition(
     } else {
         try {
             if (!(await ctx.sheets.push(updated)).ok) {
-                return { orderId: input.orderId, order: updated, warning: "SHEET_FAILED" };
+                return { orderId: input.orderId, order: updated, ...(dispatchId && { dispatchId }), warning: "SHEET_FAILED" };
             }
         } catch (error) {
             // Token acquisition failed — the outbox cron retries with
             // the service account
             console.error(`sheet sync failed on transition for ${input.orderId}`, error);
-            return { orderId: input.orderId, order: updated, warning: "SHEET_FAILED" };
+            return { orderId: input.orderId, order: updated, ...(dispatchId && { dispatchId }), warning: "SHEET_FAILED" };
         }
     }
 
-    return { orderId: input.orderId, order: updated };
+    return { orderId: input.orderId, order: updated, ...(dispatchId && { dispatchId }) };
 }

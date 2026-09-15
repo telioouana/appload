@@ -15,6 +15,7 @@ import { currentOrderYear, nextOrderId } from "@workspace/domain/orders/order-id
 import { CreateOrderSchemaServer } from "@workspace/domain/orders/schemas";
 import { allowedForActor } from "@workspace/domain/orders/policy";
 import { isDispatchMove, missingForDispatch } from "@workspace/domain/orders/dispatch-readiness";
+import { loadDispatchReadiness } from "@workspace/domain/orders/dispatch-papers";
 import { ON_GOING_STATUSES, PENDING_POD_STATUSES } from "@workspace/domain/orders/status-groups";
 import { allowedTransitions, transitionRequirements } from "@workspace/domain/orders/transitions";
 import { applyTransition, deriveResumeStatus, liveStatus, pendingOfferCount } from "@workspace/domain/orders/transition";
@@ -750,19 +751,42 @@ export const ordersRouter = createTRPCRouter({
                 ? await trackingAllowance(ctx.db, tenant.organizationId)
                 : null;
 
+            // The papers of the rig STORED on the order. A booked trip
+            // usually carries none — the dialog picks the rig and asks
+            // kyc.rigPapers about that pick — so this only bites where ops
+            // named the driver and the truck from Admin.
+            const dispatch = allowed.some((to) => isDispatchMove(row.status, to))
+                ? await loadDispatchReadiness(ctx.db, row)
+                : null;
+
             const targets: TransitionOption[] = allowed.map((to) => {
                 const requirements = transitionRequirements(row.status, to, { resumeStatus }) ?? [];
+                const dispatching = isDispatchMove(row.status, to) ? dispatch : null;
 
                 const blockedReason =
                     requirements.includes("offer") && pendingOffers === 0 ? "NO_OFFERS" as const
-                        : isDispatchMove(row.status, to) && missing.length > 0 ? "INCOMPLETE_FOR_DISPATCH" as const
-                            : to === gated && allowance !== null && !allowance.active
-                                ? "SUBSCRIPTION_REQUIRED" as const
-                                : to === gated && allowance !== null && allowance.remaining === 0
-                                    ? "QUOTA_EXCEEDED" as const
-                                    : null;
+                        // Papers the stored rig lacks block the move; a rig
+                        // that is not named yet does not, because the dialog
+                        // is where it is picked — and that pick has its own
+                        // papers block
+                        : dispatching && dispatching.fields.length === 0 && dispatching.papers.length > 0
+                            ? "PAPERS_MISSING" as const
+                            : dispatching && dispatching.fields.length > 0 ? "INCOMPLETE_FOR_DISPATCH" as const
+                                : to === gated && allowance !== null && !allowance.active
+                                    ? "SUBSCRIPTION_REQUIRED" as const
+                                    : to === gated && allowance !== null && allowance.remaining === 0
+                                        ? "QUOTA_EXCEEDED" as const
+                                        : null;
 
-                return { to, requirements, blocked: blockedReason !== null, blockedReason };
+                // Both dispatch refusals stay openable (the bar lets them
+                // through): the dispatch dialog is what fills the rig in, and
+                // its papers block is where a gap is named and closed
+                return {
+                    to,
+                    requirements,
+                    blocked: blockedReason !== null,
+                    blockedReason,
+                };
             });
 
             return {
@@ -1049,12 +1073,32 @@ export const ordersRouter = createTRPCRouter({
                         throw new TRPCError({ code: "BAD_REQUEST", message: "DISPATCH_REQUIRED" });
                     }
 
-                    expectedVersion = await writeDispatch(ctx.db, {
-                        row,
-                        tenantId: tenant.organizationId,
-                        dispatch: input.dispatch,
-                        expectedVersion,
+                    const resolved = await resolveDispatch(ctx.db, tenant.organizationId, input.dispatch);
+
+                    // The rig that was just picked, judged before it is
+                    // written: the transition re-checks it on the stored row,
+                    // but by then the driver and the plates would already be
+                    // on the order — and a refused move must not leave a trip
+                    // carrying a rig it never left with. The write below is
+                    // the only one that can be rolled back here, by not
+                    // happening, so BOTH refusals the shared door can raise
+                    // are raised here first.
+                    const readiness = await loadDispatchReadiness(ctx.db, {
+                        ...row,
+                        ...resolved,
+                        // The resolved rig leaves the age alone when the
+                        // truck has no year on file
+                        truckAge: resolved.truckAge ?? row.truckAge,
                     });
+
+                    if (readiness.fields.length > 0) {
+                        throw new TRPCError({ code: "BAD_REQUEST", message: "INCOMPLETE_FOR_DISPATCH" });
+                    }
+                    if (readiness.papers.length > 0) {
+                        throw new TRPCError({ code: "BAD_REQUEST", message: "PAPERS_MISSING" });
+                    }
+
+                    expectedVersion = await writeDispatch(ctx.db, row, resolved, expectedVersion);
                 }
 
                 const result = await applyTransition(orderContext(ctx), {
@@ -1227,21 +1271,35 @@ async function loadOwnState(db: Db, orderIds: string[], tenantId: string): Promi
 }
 
 /**
- * Writes the driver and the rig onto the order, each id checked against the
- * carrier's own registry first. Returns the version the transition must then
- * present — this write bumps it.
+ * The rig the dispatch picked, as the order stores it: the driver's own
+ * details and the plates behind the vehicle ids.
  */
-async function writeDispatch(
-    db: Db,
-    params: {
-        row: Order;
-        tenantId: string;
-        dispatch: { driverId: string; truckId: string; trailerId?: string; linkId?: string };
-        expectedVersion: number;
-    },
-): Promise<number> {
-    const { dispatch, tenantId } = params;
+type ResolvedDispatch = {
+    driverId: string;
+    driverName: string;
+    driverPhoneNumber: string | null;
+    driverPassport: string | null;
+    truckPlate: string;
+    /** Undefined for a truck registered without a year: the column is left alone */
+    truckAge: (typeof TRUCK_AGE)[number] | undefined;
+    trailerPlate: string | null;
+    linkPlate: string | null;
+};
 
+/**
+ * Turns the ids the dialog picked into the rows behind them, each one checked
+ * against the carrier's own registry.
+ *
+ * Separate from the write because the papers of that rig are judged BEFORE
+ * anything is stored: a dispatch the gate would refuse must not leave the
+ * driver and the plates on the order, and there are no transactions here to
+ * take them back.
+ */
+async function resolveDispatch(
+    db: Db,
+    tenantId: string,
+    dispatch: { driverId: string; truckId: string; trailerId?: string; linkId?: string },
+): Promise<ResolvedDispatch> {
     const [driverRow] = await db
         .select({
             id: driver.id,
@@ -1292,20 +1350,32 @@ async function writeDispatch(
         throw new TRPCError({ code: "BAD_REQUEST", message: "LINK_NOT_REGISTERED" });
     }
 
+    return {
+        driverId: driverRow.id,
+        driverName: driverRow.name,
+        driverPhoneNumber: driverRow.phoneNumber,
+        driverPassport: driverRow.passport,
+        truckPlate: truckRow.regPlate,
+        truckAge: truckAgeFromYear(truckRow.year),
+        trailerPlate: trailerRow?.regPlate ?? null,
+        linkPlate: linkRow?.regPlate ?? null,
+    };
+}
+
+/**
+ * Writes the resolved rig onto the order. Returns the version the transition
+ * must then present — this write bumps it.
+ */
+async function writeDispatch(
+    db: Db,
+    row: Order,
+    resolved: ResolvedDispatch,
+    expectedVersion: number,
+): Promise<number> {
     const [updated] = await db
         .update(order)
-        .set({
-            driverId: driverRow.id,
-            driverName: driverRow.name,
-            driverPhoneNumber: driverRow.phoneNumber,
-            driverPassport: driverRow.passport,
-            truckPlate: truckRow.regPlate,
-            truckAge: truckAgeFromYear(truckRow.year),
-            trailerPlate: trailerRow?.regPlate ?? null,
-            linkPlate: linkRow?.regPlate ?? null,
-            version: sql`${order.version} + 1`,
-        })
-        .where(and(eq(order.id, params.row.id), eq(order.version, params.expectedVersion)))
+        .set({ ...resolved, version: sql`${order.version} + 1` })
+        .where(and(eq(order.id, row.id), eq(order.version, expectedVersion)))
         .returning({ version: order.version });
 
     if (!updated) {
