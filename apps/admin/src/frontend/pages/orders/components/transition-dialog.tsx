@@ -41,6 +41,8 @@ const DIALOG_ERROR_CODES = [
     // rig the offer did not have to name
     "OFFER_REQUIRED", "OFFER_NOT_PENDING", "NO_OFFERS", "OFFER_UNPRICED",
     "INCOMPLETE_FOR_DISPATCH", "PAPERS_MISSING",
+    // The loading check: only a manager may let a mismatched rig load
+    "MANAGER_REQUIRED",
     // Verification gate, raised when booking commits cargo to a carrier
     "CARRIER_NOT_VERIFIED", "CARRIER_CONTRACT_MISSING", "CARRIER_CONTRACT_EXPIRED",
     "CARRIER_SUSPENDED", "RISK_ACK_NOT_ALLOWED", "RISK_ACK_NOTE_REQUIRED",
@@ -256,6 +258,16 @@ export function TransitionDialog({
                                         </span>
                                     )}
                                 </AlertDescription>
+                            </Alert>
+                        )}
+
+                        {/* What the loading check found, on the move into
+                            "loading": a mismatch a manager is about to accept
+                            in writing, or a load nobody checked at all */}
+                        {selected?.loadingCheck && selected.loadingCheck.state !== "passed" && !blocked && (
+                            <Alert variant={selected.loadingCheck.state === "mismatch" ? "destructive" : "default"}>
+                                <IconAlertTriangle />
+                                <AlertDescription>{t(`loadingCheck.${selected.loadingCheck.state}`)}</AlertDescription>
                             </Alert>
                         )}
 

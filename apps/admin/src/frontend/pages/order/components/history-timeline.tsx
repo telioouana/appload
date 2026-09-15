@@ -79,6 +79,20 @@ function readOffer(source: Record<string, unknown> | null) {
     }
 }
 
+/**
+ * A loading-check row: either the check itself (its outcome) or the move
+ * that started a load nobody had checked. The jsonb column is untyped, so
+ * an unreadable row degrades to the bare title.
+ */
+function readCheck(metadata: Record<string, unknown>) {
+    const outcome = metadata.outcome
+    return {
+        skipped: metadata.skipped === true,
+        partial: metadata.partial === true,
+        outcome: outcome === "passed" || outcome === "mismatch" || outcome === "skipped" ? outcome : null,
+    }
+}
+
 const record = (value: unknown) =>
     typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null
 
@@ -269,6 +283,24 @@ export function HistoryTimeline({ entries }: { entries: HistoryEntry[] }) {
                                                         {[dispute.holdShipper && tDispute("hold-shipper"), dispute.holdCarrier && tDispute("hold-carrier")].filter(Boolean).join(" · ")}
                                                     </span>
                                                 )}
+                                            </span>
+                                        )
+                                    })()
+                                ) : entry.kind === "check" ? (
+                                    (() => {
+                                        const check = readCheck(entry.metadata)
+                                        const who = entry.actorName ?? t("system")
+
+                                        return (
+                                            <span className="text-sm">
+                                                {check.skipped
+                                                    ? t(check.partial ? "check.skippedPartial" : "check.skipped", { actor: who })
+                                                    : check.outcome
+                                                        // A check that WAS run and left unfinished is
+                                                        // stored as "skipped" too; it is not the load
+                                                        // nobody looked at
+                                                        ? t(check.outcome === "skipped" ? "check.recordedPartial" : `check.${check.outcome}`, { actor: who })
+                                                        : t("kinds.check")}
                                             </span>
                                         )
                                     })()

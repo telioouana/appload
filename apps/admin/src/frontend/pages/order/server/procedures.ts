@@ -23,7 +23,10 @@ import { deriveOrderFields } from "@workspace/domain/orders/derive";
 import { allowedTransitions, transitionRequirements } from "@workspace/domain/orders/transitions";
 import { isDispatchMove } from "@workspace/domain/orders/dispatch-readiness";
 import { loadDispatchReadiness } from "@workspace/domain/orders/dispatch-papers";
-import { recordDispatch, rigChanged } from "@workspace/domain/orders/dispatch-pack";
+import { loadDispatchPack, recordDispatch, rigChanged } from "@workspace/domain/orders/dispatch-pack";
+import { LoadingCheckInputSchema, loadingMoveRequirements } from "@workspace/domain/orders/loading-check";
+import { loadLoadingCheckState, openDispatchId, recordLoadingCheck } from "@workspace/domain/orders/loading-check-store";
+import type { Actor } from "@workspace/domain/orders/actor";
 import { ON_GOING_STATUSES } from "@workspace/domain/orders/status-groups";
 import { carrierSnapshot } from "@workspace/domain/orders/carrier-snapshot";
 import { offerPricingColumns, priceOffer } from "@workspace/domain/orders/commission";
@@ -1041,6 +1044,97 @@ export const orderRouter = createTRPCRouter({
         }),
 
     /**
+     * The loading check: the pack the truck left with, what was confirmed
+     * at the site, and the photos taken there. Read by anyone who may read
+     * the order; only `order:update` may record one.
+     */
+    loadingCheck: authorizedProcedure("order", ["read"])
+        .input(z.object({ orderId: z.string() }))
+        .query(async ({ ctx, input }) => {
+            const [row] = await ctx.db
+                .select({ id: order.id })
+                .from(order)
+                .where(eq(order.orderId, input.orderId));
+
+            if (!row) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+            }
+
+            // A pack is null on an order dispatched before packs existed;
+            // the state then falls back to the order's latest check
+            const pack = await loadDispatchPack(ctx.db, row.id);
+            const state = await loadLoadingCheckState(ctx.db, row.id, pack?.id ?? null);
+
+            // The photos OF THIS CHECK, not every loading photo on the
+            // order: a re-check has its own evidence, and an upload nobody's
+            // check references is not evidence of anything
+            const photos = state.check && state.check.photoDocumentIds.length > 0
+                ? await ctx.db
+                    .select({
+                        id: orderDocument.id,
+                        title: orderDocument.title,
+                        url: orderDocument.url,
+                        mimeType: orderDocument.mimeType,
+                        createdAt: orderDocument.createdAt,
+                    })
+                    .from(orderDocument)
+                    .where(and(
+                        eq(orderDocument.orderId, row.id),
+                        inArray(orderDocument.id, state.check.photoDocumentIds),
+                        isNull(orderDocument.deletedAt),
+                    ))
+                    .orderBy(orderDocument.createdAt)
+                : [];
+
+            const [checker] = state.check?.checkedBy
+                ? await ctx.db.select({ name: user.name }).from(user).where(eq(user.id, state.check.checkedBy))
+                : [];
+
+            return {
+                pack,
+                state,
+                checkedByName: checker?.name ?? null,
+                photos,
+                canCheck: isAuthorized(ctx.staff.role, "order", ["update"]),
+            };
+        }),
+
+    /**
+     * Ops confirming the rig at the loading site on the orderer's behalf. A
+     * mismatch flags the order, which is what makes the move into "loading"
+     * a supervisory decision afterwards.
+     */
+    recordLoadingCheck: authorizedProcedure("order", ["update"])
+        .input(LoadingCheckInputSchema)
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const [current] = await ctx.db
+                    .select()
+                    .from(order)
+                    .where(eq(order.orderId, input.orderId));
+
+                if (!current) {
+                    throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+                }
+
+                const { check, order: updated } = await recordLoadingCheck(ctx.db, {
+                    current,
+                    actor: { kind: "staff", userId: ctx.session.user.id, role: ctx.staff.role },
+                    input,
+                });
+
+                return {
+                    orderId: input.orderId,
+                    checkId: check.id,
+                    outcome: check.outcome,
+                    version: updated.version,
+                };
+            } catch (error) {
+                throw toTRPCError(error);
+            }
+        }),
+
+    /**
      * Everything the transition UI needs, computed server-side so the
      * dialogs only ever offer legal targets: allowed moves with their
      * requirements, the current version for the optimistic-lock handshake,
@@ -1109,19 +1203,33 @@ export const orderRouter = createTRPCRouter({
                 ? await loadDispatchReadiness(ctx.db, row)
                 : null;
 
+            // What the orderer confirmed at the loading site, read against
+            // the pack in force. Only the move that STARTS the load asks —
+            // the same edge the shared door gates; coming back from a stop
+            // is a free resume
+            const loadingCheck = row.status === "at-loading" && allowed.includes("loading")
+                ? await loadLoadingCheckState(ctx.db, row.id, await openDispatchId(ctx.db, row.id))
+                : null;
+            const actor: Actor = { kind: "staff", userId: ctx.session.user.id, role: ctx.staff.role };
+
             const targets = allowed.map((to) => {
-                const requirements = transitionRequirements(row.status, to, { resumeStatus }) ?? [];
+                const base = transitionRequirements(row.status, to, { resumeStatus }) ?? [];
                 const dispatching = isDispatchMove(row.status, to) ? dispatch : null;
+                const checking = to === "loading" ? loadingCheck : null;
+                const loadingMove = checking ? loadingMoveRequirements(checking, actor) : null;
+                // A mismatch a manager may accept is accepted in writing
+                const requirements = loadingMove?.note ? [...base, "note" as const] : base;
 
                 // Keyed on the requirement, not on the target: an admin
                 // reversal back to booked does not accept an offer, and
                 // must not be blocked for lacking one
-                const blockedReason: "NO_OFFERS" | "INCOMPLETE_FOR_DISPATCH" | "PAPERS_MISSING" | "DISPUTE_OPEN" | null =
+                const blockedReason: "NO_OFFERS" | "INCOMPLETE_FOR_DISPATCH" | "PAPERS_MISSING" | "DISPUTE_OPEN" | "MANAGER_REQUIRED" | null =
                     requirements.includes("offer") && row.pendingOffers === 0 ? "NO_OFFERS"
                         : dispatching && dispatching.fields.length > 0 ? "INCOMPLETE_FOR_DISPATCH"
                             : dispatching && dispatching.papers.length > 0 ? "PAPERS_MISSING"
-                                : to === "completed" && disputeBlocked ? "DISPUTE_OPEN"
-                                    : null;
+                                : loadingMove?.blocked === "MANAGER_REQUIRED" ? "MANAGER_REQUIRED"
+                                    : to === "completed" && disputeBlocked ? "DISPUTE_OPEN"
+                                        : null;
 
                 return {
                     to,
@@ -1139,6 +1247,10 @@ export const orderRouter = createTRPCRouter({
                             unreviewed: dispatching.unreviewed,
                         }
                         : null,
+                    // Where the loading check stands, so the dialog can warn
+                    // that this move will be recorded as unchecked. Null on
+                    // every other move.
+                    loadingCheck: checking,
                 };
             });
 

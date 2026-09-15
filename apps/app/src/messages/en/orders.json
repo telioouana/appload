@@ -241,6 +241,8 @@
         "dispatchRequired": "Pick the driver and the truck first.",
         "papersMissing": "Some papers are still missing. File them before the truck leaves for the loading site.",
         "disputeOpen": "This order has an open dispute. Appload has to settle it first.",
+        "loadingMismatchReview": "The loading check found a mismatch. Appload has to review it before the load can start.",
+        "managerRequired": "Only an Appload manager can let this load start.",
         "driverNotRegistered": "That driver is not in your registry.",
         "truckNotRegistered": "That truck is not in your fleet.",
         "trailerNotRegistered": "That trailer is not in your fleet.",
@@ -511,6 +513,7 @@
             "credit-note": "Credit note",
             "proof-of-payment": "Proof of payment",
             "evidence": "Evidence",
+            "loading-photo": "Loading photo",
             "transport-order": "Transport order",
             "other": "Other"
         },
@@ -607,6 +610,11 @@
             "missing-hint": "File one of these to send this truck.",
             "or": "or"
         },
+        "loadingCheck": {
+            "none": "Nobody has checked the truck and the driver against what was dispatched. This move will be recorded as unchecked and the order will be flagged.",
+            "partial": "The loading check was left unfinished. This move will be recorded as unchecked and the order will be flagged.",
+            "mismatch": "The loading check found that the truck or the driver is not the one that was dispatched. Appload has to review it before the load can start."
+        },
         "note": {
             "label": "What happened?",
             "optional": "Note (optional)",
@@ -623,6 +631,53 @@
             "required": "This move needs the file.",
             "optional": "Attach it now, or later from the documents card."
         }
+    },
+    "loadingCheck": {
+        "title": "Loading check",
+        "description": "Before loading starts, the client confirms that the truck and the driver at the gate are the ones that were dispatched.",
+        "kinds": {
+            "driver": "Driver",
+            "truck": "Truck",
+            "trailer": "Trailer",
+            "link": "Link"
+        },
+        "papers": {
+            "show": "Show papers",
+            "hide": "Hide papers",
+            "none": "No papers",
+            "phone": "Phone"
+        },
+        "items": {
+            "driver-identity": "The driver is the one that was dispatched",
+            "rig-plates": "The plates are the ones that were dispatched"
+        },
+        "answers": {
+            "ok": "Matches",
+            "no": "Does not match",
+            "untouched": "Not checked"
+        },
+        "outcome": {
+            "passed": "Everything matched",
+            "mismatch": "Mismatch found",
+            "partial": "Left unfinished",
+            "none": "Not checked"
+        },
+        "recorded-by": "by {name} · {date}",
+        "recorded-appload": "Appload",
+        "item-note": "Note (optional)",
+        "note": {
+            "label": "Note (optional)",
+            "placeholder": "Anything else worth recording about the rig at the gate"
+        },
+        "photos": {
+            "label": "Photos",
+            "add": "Add photos",
+            "remove": "Remove the photo",
+            "hint": "Up to {max} photos of the truck, the plates or the driver's papers. JPG and PNG.",
+            "format": "Only JPG and PNG photos are accepted."
+        },
+        "submit": "Record the check",
+        "toast": "The loading check was recorded"
     },
     "detail": {
         "meta": "Order {orderId}",

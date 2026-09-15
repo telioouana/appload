@@ -53,7 +53,7 @@ import { NavUser } from "./nav-user";
 // the rail while the portal is shown as the company's own operations hub.
 // Flip to true to bring the whole group back (the sections and the quotes);
 // the routes under /appload stay reachable by URL either way.
-const SHOW_APPLOAD: boolean = false
+const SHOW_APPLOAD: boolean = true
 
 // Whatever the typed next-intl `Link` accepts as `href`: a plain internal
 // pathname for a static route, or the `{ pathname, params }` object form for

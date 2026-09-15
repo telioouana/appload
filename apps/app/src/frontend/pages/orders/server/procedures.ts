@@ -16,6 +16,9 @@ import { CreateOrderSchemaServer } from "@workspace/domain/orders/schemas";
 import { allowedForActor } from "@workspace/domain/orders/policy";
 import { isDispatchMove, missingForDispatch } from "@workspace/domain/orders/dispatch-readiness";
 import { loadDispatchReadiness } from "@workspace/domain/orders/dispatch-papers";
+import { loadDispatchPack } from "@workspace/domain/orders/dispatch-pack";
+import { LoadingCheckInputSchema, loadingMoveRequirements } from "@workspace/domain/orders/loading-check";
+import { loadLoadingCheckState, openDispatchId, recordLoadingCheck } from "@workspace/domain/orders/loading-check-store";
 import { ON_GOING_STATUSES, PENDING_POD_STATUSES } from "@workspace/domain/orders/status-groups";
 import { allowedTransitions, transitionRequirements } from "@workspace/domain/orders/transitions";
 import { applyTransition, deriveResumeStatus, liveStatus, pendingOfferCount } from "@workspace/domain/orders/transition";
@@ -25,12 +28,13 @@ import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
 import { CancelOrderBaseSchema, CreateOrderBaseSchema, SendRequestsBaseSchema } from "@/backend/schemas/order";
-import { AddDocumentBaseSchema, TransitionBaseSchema, type TransitionDocumentForm } from "@/backend/schemas/dispatch";
+import { AddDocumentBaseSchema, TransitionBaseSchema, type PartnerDocumentForm } from "@/backend/schemas/dispatch";
 import {
     ORDER_SECTIONS,
     ORDER_SORTS,
     defaultSection,
     isSection,
+    type LoadingCheckView,
     type OrderDetail,
     type OrderDocumentView,
     type OrderHistoryEntry,
@@ -44,6 +48,7 @@ import {
     type TransitionOptions,
 } from "@/frontend/pages/orders/types";
 import {
+    actorOf,
     anyRequest,
     assertEdgeStoreUrl,
     assertOrgType,
@@ -264,7 +269,7 @@ async function addOrderDocument(
     params: {
         row: Pick<Order, "id" | "orderId" | "shipperId" | "carrierId">;
         tenant: TenantScope;
-        document: TransitionDocumentForm;
+        document: PartnerDocumentForm;
     },
 ): Promise<OrderDocumentView> {
     assertEdgeStoreUrl(params.document.url);
@@ -289,16 +294,23 @@ async function addOrderDocument(
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
     }
 
-    await db.insert(orderHistory).values({
-        orderId: params.row.id,
-        actorUserId: params.tenant.userId,
-        kind: "document",
-        metadata: { documentId: document.id, type: document.type },
-    });
+    // A loading photo is one piece of a check, and a check is worth one
+    // timeline row and one notification — written by the check itself, not
+    // by each of the ten photos it may carry
+    const evented = document.type !== "loading-photo";
+
+    if (evented) {
+        await db.insert(orderHistory).values({
+            orderId: params.row.id,
+            actorUserId: params.tenant.userId,
+            kind: "document",
+            metadata: { documentId: document.id, type: document.type },
+        });
+    }
 
     const counterparty = params.tenant.orgType === "shipper" ? params.row.carrierId : params.row.shipperId;
 
-    if (counterparty) {
+    if (evented && counterparty) {
         await notify(db, {
             organizationId: counterparty,
             kind: "order.document",
@@ -759,9 +771,20 @@ export const ordersRouter = createTRPCRouter({
                 ? await loadDispatchReadiness(ctx.db, row)
                 : null;
 
+            // What the orderer confirmed at the loading site. The carrier
+            // only reads it — a mismatch about its own truck is Appload's
+            // to clear — so here it is the reason the move is refused. Only
+            // the move that STARTS the load asks, the same edge the shared
+            // door gates; resuming after a stop is the carrier's free move.
+            const loadingCheck = row.status === "at-loading" && allowed.includes("loading")
+                ? await loadLoadingCheckState(ctx.db, row.id, await openDispatchId(ctx.db, row.id))
+                : null;
+
             const targets: TransitionOption[] = allowed.map((to) => {
                 const requirements = transitionRequirements(row.status, to, { resumeStatus }) ?? [];
                 const dispatching = isDispatchMove(row.status, to) ? dispatch : null;
+                const checking = to === "loading" ? loadingCheck : null;
+                const loadingMove = checking ? loadingMoveRequirements(checking, actor) : null;
 
                 const blockedReason =
                     requirements.includes("offer") && pendingOffers === 0 ? "NO_OFFERS" as const
@@ -772,11 +795,12 @@ export const ordersRouter = createTRPCRouter({
                         : dispatching && dispatching.fields.length === 0 && dispatching.papers.length > 0
                             ? "PAPERS_MISSING" as const
                             : dispatching && dispatching.fields.length > 0 ? "INCOMPLETE_FOR_DISPATCH" as const
-                                : to === gated && allowance !== null && !allowance.active
-                                    ? "SUBSCRIPTION_REQUIRED" as const
-                                    : to === gated && allowance !== null && allowance.remaining === 0
-                                        ? "QUOTA_EXCEEDED" as const
-                                        : null;
+                                : loadingMove?.blocked ?? (
+                                    to === gated && allowance !== null && !allowance.active
+                                        ? "SUBSCRIPTION_REQUIRED" as const
+                                        : to === gated && allowance !== null && allowance.remaining === 0
+                                            ? "QUOTA_EXCEEDED" as const
+                                            : null);
 
                 // Both dispatch refusals stay openable (the bar lets them
                 // through): the dispatch dialog is what fills the rig in, and
@@ -786,6 +810,7 @@ export const ordersRouter = createTRPCRouter({
                     requirements,
                     blocked: blockedReason !== null,
                     blockedReason,
+                    loadingCheck: checking,
                 };
             });
 
@@ -798,6 +823,97 @@ export const ordersRouter = createTRPCRouter({
                 missingForDispatch: missing,
                 pendingOffers: tenant.orgType === "shipper" ? pendingOffers : 0,
             };
+        }),
+
+    /**
+     * The dispatch pack and what was confirmed at the loading site. Both
+     * parties to the trip read it — the carrier is being checked, and sees
+     * exactly what was checked about it — and only the shipper that ordered
+     * the load may record one.
+     */
+    loadingCheck: tenantProcedure
+        .input(z.object({ orderId: z.string().nonempty() }))
+        .query(async ({ ctx, input }): Promise<LoadingCheckView> => {
+            const tenant = scopeOf(ctx.tenant);
+            const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+
+            // A carrier that was asked about the order, or quoted and lost,
+            // is not a party to the trip: the driver's papers are not its
+            // business
+            if (!ownsOrder(row, tenant)) {
+                return { pack: null, state: { state: "none", check: null }, checkedByName: null, photos: [], canCheck: false };
+            }
+
+            const pack = await loadDispatchPack(ctx.db, row.id);
+            const state = await loadLoadingCheckState(ctx.db, row.id, pack?.id ?? null);
+
+            // The photos OF THIS CHECK, not every loading photo on the
+            // order: a re-check has its own evidence, and an upload nobody's
+            // check references is not evidence of anything
+            const photos = state.check && state.check.photoDocumentIds.length > 0
+                ? await ctx.db
+                    .select({
+                        id: orderDocument.id,
+                        title: orderDocument.title,
+                        url: orderDocument.url,
+                        mimeType: orderDocument.mimeType,
+                        createdAt: orderDocument.createdAt,
+                    })
+                    .from(orderDocument)
+                    .where(and(
+                        eq(orderDocument.orderId, row.id),
+                        inArray(orderDocument.id, state.check.photoDocumentIds),
+                        isNull(orderDocument.deletedAt),
+                    ))
+                    .orderBy(orderDocument.createdAt)
+                : [];
+
+            const [checker] = state.check?.checkedBy
+                ? await ctx.db.select({ name: user.name }).from(user).where(eq(user.id, state.check.checkedBy))
+                : [];
+
+            return {
+                pack,
+                state,
+                checkedByName: checker?.name ?? null,
+                photos,
+                canCheck: tenant.orgType === "shipper",
+            };
+        }),
+
+    /**
+     * The shipper confirming, before the load starts, that the truck and the
+     * driver at the gate are the ones the pack names. A mismatch flags the
+     * order; from there only Appload can let the load proceed.
+     */
+    recordLoadingCheck: authorizedTenantProcedure("order", ["update"])
+        .input(LoadingCheckInputSchema)
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const tenant = scopeOf(ctx.tenant);
+                assertOrgType(tenant, "shipper");
+
+                const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+
+                if (!ownsOrder(row, tenant)) {
+                    throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED_FOR_ACTOR" });
+                }
+
+                const { check, order: updated } = await recordLoadingCheck(ctx.db, {
+                    current: row,
+                    actor: actorOf(tenant),
+                    input,
+                });
+
+                return {
+                    orderId: input.orderId,
+                    checkId: check.id,
+                    outcome: check.outcome,
+                    version: updated.version,
+                };
+            } catch (error) {
+                throw toTRPCError(error);
+            }
         }),
 
     /**
@@ -1047,7 +1163,7 @@ export const ordersRouter = createTRPCRouter({
      */
     transition: authorizedTenantProcedure("order", ["update"])
         .input(TransitionBaseSchema)
-        .mutation(async ({ ctx, input }): Promise<{ orderId: string; status: string; version: number }> => {
+        .mutation(async ({ ctx, input }): Promise<{ orderId: string; status: string; version: number; loadingCheck?: string }> => {
             try {
                 const tenant = scopeOf(ctx.tenant);
                 assertOrgType(tenant, "carrier");
@@ -1141,6 +1257,9 @@ export const ordersRouter = createTRPCRouter({
                     orderId: result.orderId,
                     status: result.order.status,
                     version: result.order.version,
+                    // What the loading check said, so the activity row names
+                    // who let a load start unchecked
+                    ...(result.loadingCheck && { loadingCheck: result.loadingCheck }),
                 };
             } catch (error) {
                 throw toTRPCError(error);
@@ -1178,7 +1297,12 @@ export const ordersRouter = createTRPCRouter({
                     if (tenant.orgType === "carrier" && row.carrierId !== tenant.organizationId) {
                         throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED_FOR_ACTOR" });
                     }
-                    if (tenant.orgType === "shipper" && input.type !== "evidence") {
+                    // The client files evidence, and the photos of its own
+                    // loading check; the carrier is checked, not checking
+                    if (tenant.orgType === "shipper" && input.type !== "evidence" && input.type !== "loading-photo") {
+                        throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED_FOR_ACTOR" });
+                    }
+                    if (tenant.orgType === "carrier" && input.type === "loading-photo") {
                         throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED_FOR_ACTOR" });
                     }
 

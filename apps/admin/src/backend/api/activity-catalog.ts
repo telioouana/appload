@@ -67,6 +67,26 @@ export const activityCatalog: ActivityCatalog = {
             orderId: input?.orderId ?? "",
             to: input?.to ?? "",
             dispatchId: output?.dispatchId ?? "",
+            // What the loading check said when the load started — "none" and
+            // "partial" are the rows that answer "who let it load unchecked"
+            loadingCheck: output?.loadingCheck ?? "",
+        }),
+    },
+    // The orderer's confirmation at the loading site: what it came to and
+    // which items failed (their keys — the checker's notes stay on the row)
+    "order.recordLoadingCheck": {
+        entity: (input) =>
+            input?.orderId ? { type: "order", id: String(input.orderId) } : null,
+        params: (input, output?: { outcome?: string }) => ({
+            orderId: input?.orderId ?? "",
+            outcome: output?.outcome ?? "",
+            mismatchItems: Array.isArray(input?.items)
+                ? input.items
+                    .filter((item: { ok?: boolean | null }) => item?.ok === false)
+                    .map((item: { key?: string }) => item?.key ?? "")
+                    .join(", ")
+                : "",
+            photoCount: Array.isArray(input?.photoDocumentIds) ? input.photoDocumentIds.length : 0,
         }),
     },
     "order.resolveFlag": {

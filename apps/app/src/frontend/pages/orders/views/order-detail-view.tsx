@@ -9,6 +9,7 @@ import { orderMilestones } from "@/frontend/pages/orders/lib/milestones"
 import { MilestoneRail } from "@/frontend/pages/orders/components/milestone-rail"
 import { OrderDetailHeader } from "@/frontend/pages/orders/sections/detail-header"
 import { DocumentsCard } from "@/frontend/pages/orders/sections/documents-card"
+import { LoadingCheckCard, showsLoadingCheck } from "@/frontend/pages/orders/sections/loading-check-card"
 import { OffersPanel } from "@/frontend/pages/orders/sections/offers-panel"
 import { OperationsCard } from "@/frontend/pages/orders/sections/operations-card"
 import { RequestsPanel } from "@/frontend/pages/orders/sections/requests-panel"
@@ -67,6 +68,11 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                     <RequestsPanel order={order} orgType={orgType} />
 
                     <OperationsCard order={order} />
+
+                    {/* What the truck was dispatched with, and the client's
+                        confirmation at the loading site. The card itself
+                        renders nothing when there is neither. */}
+                    {showsLoadingCheck(order.status) && <LoadingCheckCard order={order} />}
 
                     <DocumentsCard order={order} orgType={orgType} />
 

@@ -14,6 +14,8 @@ import { deriveOrderFields } from "@workspace/domain/orders/derive";
 import { isDispatchMove } from "@workspace/domain/orders/dispatch-readiness";
 import { loadDispatchReadiness } from "@workspace/domain/orders/dispatch-papers";
 import { recordDispatch } from "@workspace/domain/orders/dispatch-pack";
+import { loadingMoveRequirements, type LoadingCheckState } from "@workspace/domain/orders/loading-check";
+import { loadLoadingCheckState, openDispatchId } from "@workspace/domain/orders/loading-check-store";
 import { changedCurrencyParties, partiesWithMoneyDocuments } from "@workspace/domain/orders/note-currency";
 import { proofPaymentPatch } from "@workspace/domain/orders/payments";
 import { paymentSums } from "@workspace/domain/orders/payment-sums";
@@ -354,6 +356,8 @@ export type TransitionOrderOutput = {
     order: Order;
     /** The dispatch pack this move wrote, on the dispatch and nowhere else */
     dispatchId?: string;
+    /** What the loading check said, on the move into "loading" and nowhere else */
+    loadingCheck?: LoadingCheckState["state"];
     warning?: "SHEET_FAILED";
 };
 
@@ -481,6 +485,28 @@ export async function applyTransition(
         }
     }
 
+    // Loading starts once the orderer has confirmed that the truck and the
+    // driver at the gate are the ones the pack names. The confirmation
+    // itself never blocks: a mismatch is a supervisory decision (a manager
+    // with a note, and a partner never has one), and no check at all simply
+    // proceeds with the order marked as unchecked.
+    //
+    // Exactly the edge that starts the load: `at-loading → loading` (a
+    // legacy `to-loading` row aliases to it above). Coming back into
+    // "loading" from a stop is not a second start — the check was already
+    // answered for, and a resume is the carrier's own free move.
+    const loadingCheck = input.to === "loading" && current.status === "at-loading"
+        ? await loadLoadingCheckState(ctx.db, current.id, await openDispatchId(ctx.db, current.id))
+        : null;
+    const loadingMove = loadingCheck ? loadingMoveRequirements(loadingCheck, ctx.actor) : null;
+
+    if (loadingMove?.blocked) {
+        throw new TRPCError({ code: "FORBIDDEN", message: loadingMove.blocked });
+    }
+    if (loadingMove?.note && !input.note) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "NOTE_REQUIRED" });
+    }
+
     // The cargo cannot be closed while a dispute over it is open; the
     // dispute is settled or closed first, which lifts this
     if (input.to === "completed" && isActiveDispute(current.disputeStatus)) {
@@ -548,6 +574,12 @@ export async function applyTransition(
     }
 
     const flag = verdict.requirements.includes("flag");
+    // Loading started on nobody's confirmation: the move goes through and
+    // the order carries the fact. ": partial" tells a check that was left
+    // half answered from one that was never run.
+    const skippedReason = loadingMove?.skippedFlag
+        ? `LOADING_CHECK_SKIPPED${loadingCheck?.state === "partial" ? ": partial" : ""}${input.note ? ` — ${input.note}` : ""}`
+        : null;
     const stamps = transitionStamps(current, input.to);
     const payments = await paymentSums(ctx.db, current.id);
 
@@ -582,7 +614,16 @@ export async function applyTransition(
             // reason names the specific gap, where the transition
             // flag only carries the operator's note
             ...gateFlag,
-            ...(flag && !gateFlag && {
+            // A verification flag names a specific gap and outranks both of
+            // the flags below; between these two, the unchecked load is the
+            // one with a reason of its own
+            ...(skippedReason && !gateFlag && {
+                flaggedForReview: true,
+                flagReason: skippedReason,
+                flaggedAt: new Date(),
+                flaggedBy: ctx.actor.userId,
+            }),
+            ...(flag && !gateFlag && !skippedReason && {
                 flaggedForReview: true,
                 flagReason: input.note ?? null,
                 flaggedAt: new Date(),
@@ -666,8 +707,27 @@ export async function applyTransition(
             ...(input.document && { document: input.document }),
             ...(booked && { offer: booked.accepted.historyOffer }),
             ...(dispatchId && { dispatchId }),
+            ...(loadingCheck && { loadingCheck: loadingCheck.state }),
         },
     });
+
+    // An unchecked load is its own event on the timeline, next to the move
+    // that caused it: the flag can be resolved, the row stays
+    if (skippedReason) {
+        await ctx.db.insert(orderHistory).values({
+            orderId: current.id,
+            actorUserId: ctx.actor.userId,
+            kind: "check",
+            metadata: {
+                skipped: true,
+                partial: loadingCheck?.state === "partial",
+                movedBy: ctx.actor.userId,
+                // The column holds one reason at a time (D5), so what this
+                // flag replaced is kept here
+                ...(current.flagReason && { previousFlagReason: current.flagReason }),
+            },
+        });
+    }
 
     // Dispatch is the moment tracking starts, so the movement is billed to
     // both parties then — whoever ordered it, Admin included: a partner's
@@ -709,6 +769,13 @@ export async function applyTransition(
         if (ctx.waitUntil) ctx.waitUntil(followUp); else await followUp;
     }
 
+    // What this move is worth saying about itself, on every way out:
+    // the pack it wrote and what the loading check said.
+    const carried = {
+        ...(dispatchId && { dispatchId }),
+        ...(loadingCheck && { loadingCheck: loadingCheck.state }),
+    };
+
     // The portal defers the logbook: nothing is pushed, the outbox row
     // is left pending and the existing sheet-sync cron heals it. The row may
     // already carry the Admin's re-derivation marker, which queueing must
@@ -718,15 +785,15 @@ export async function applyTransition(
     } else {
         try {
             if (!(await ctx.sheets.push(updated)).ok) {
-                return { orderId: input.orderId, order: updated, ...(dispatchId && { dispatchId }), warning: "SHEET_FAILED" };
+                return { orderId: input.orderId, order: updated, ...carried, warning: "SHEET_FAILED" };
             }
         } catch (error) {
             // Token acquisition failed — the outbox cron retries with
             // the service account
             console.error(`sheet sync failed on transition for ${input.orderId}`, error);
-            return { orderId: input.orderId, order: updated, ...(dispatchId && { dispatchId }), warning: "SHEET_FAILED" };
+            return { orderId: input.orderId, order: updated, ...carried, warning: "SHEET_FAILED" };
         }
     }
 
-    return { orderId: input.orderId, order: updated, ...(dispatchId && { dispatchId }) };
+    return { orderId: input.orderId, order: updated, ...carried };
 }

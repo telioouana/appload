@@ -35,7 +35,7 @@ import {
     NOTE_MIN,
     NOTE_MAX,
     type DispatchMessageField,
-    type PartnerDocumentType,
+    type TransitionDocumentType,
 } from "@/backend/schemas/dispatch"
 
 /** What the pickers bind (the visible text) next to the id each one chose. */
@@ -129,7 +129,7 @@ export function TransitionDialog({
     const to = target.to
     const needsRig = isDispatchMove(status, to)
     const needsNote = target.requirements.includes("note")
-    const documentType: PartnerDocumentType | null =
+    const documentType: TransitionDocumentType | null =
         target.requirements.includes("evidence") ? "evidence"
             : target.requirements.includes("pod") || to === "delivered" ? "pod"
                 : null
@@ -159,11 +159,19 @@ export function TransitionDialog({
     const subjects = useMemo(() => papers.data ?? [], [papers.data])
     const gaps = useMemo(() => missingPapers(subjects), [subjects])
 
+    // The loading check, on the move into "loading" and nowhere else: a
+    // mismatch is Appload's to clear, and no check at all goes through with
+    // the order flagged
+    const check = target.loadingCheck
+    const checkBlocked = target.blockedReason === "LOADING_MISMATCH_REVIEW_REQUIRED"
+        || target.blockedReason === "MANAGER_REQUIRED"
+
     const isPending = uploading || transition.isPending
     // A rig whose papers are not in is refused by the server in every
     // enforcement mode, so the dialog does not offer to try
     const papersReady = !needsRig || !picked || (papers.isSuccess && gaps.length === 0)
-    const ready = papersReady
+    const ready = !checkBlocked
+        && papersReady
         && (!needsNote || note.trim().length >= NOTE_MIN)
         && (!needsDocument || file !== null)
 
@@ -197,7 +205,7 @@ export function TransitionDialog({
             dispatch = parsed.data
         }
 
-        let document: { type: PartnerDocumentType; url: string; title?: string; size?: number; mimeType?: string } | undefined
+        let document: { type: TransitionDocumentType; url: string; title?: string; size?: number; mimeType?: string } | undefined
 
         if (file && documentType) {
             setUploading(true)
@@ -258,6 +266,18 @@ export function TransitionDialog({
                 </DialogHeader>
 
                 <div className="flex flex-col gap-4">
+                    {check && checkBlocked && (
+                        <Alert variant="destructive">
+                            <AlertDescription>{t("loadingCheck.mismatch")}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    {check && !checkBlocked && (check.state === "none" || check.state === "partial") && (
+                        <Alert>
+                            <AlertDescription>{t(`loadingCheck.${check.state}`)}</AlertDescription>
+                        </Alert>
+                    )}
+
                     {needsRig && (
                         <FieldGroup className="gap-4">
                             <DriverInput

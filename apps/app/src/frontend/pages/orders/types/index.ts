@@ -15,6 +15,8 @@ import {
     WEIGHT_UNIT,
 } from "@workspace/db/types";
 import type { DispatchField } from "@workspace/domain/orders/dispatch-readiness";
+import type { DispatchPack } from "@workspace/domain/orders/dispatch-pack";
+import type { LoadingCheckState } from "@workspace/domain/orders/loading-check";
 import type { TransitionRequirement } from "@workspace/domain/orders/transitions";
 import type { TrackingAllowance } from "@workspace/domain/subscription";
 
@@ -354,19 +356,50 @@ export type OrderDetail = {
     permissions: OrderPermissions;
 };
 
+/**
+ * The loading check as the order page reads it: the pack the truck left
+ * with, what was confirmed at the site, and the photos taken there. Empty
+ * for a carrier that merely quoted — the trip's papers belong to the two
+ * parties to it.
+ */
+export type LoadingCheckView = {
+    pack: DispatchPack | null;
+    state: LoadingCheckState;
+    /** Who recorded the check, when there is one */
+    checkedByName: string | null;
+    photos: LoadingPhotoView[];
+    /** The shipper that ordered the load, and nobody else */
+    canCheck: boolean;
+};
+
+export type LoadingPhotoView = {
+    id: string;
+    title: string | null;
+    url: string;
+    mimeType: string | null;
+    createdAt: Date;
+};
+
 /** Why a move is advertised but not takeable. */
 export type TransitionBlockedReason =
     | "NO_OFFERS"
     | "INCOMPLETE_FOR_DISPATCH"
     | "PAPERS_MISSING"
     | "SUBSCRIPTION_REQUIRED"
-    | "QUOTA_EXCEEDED";
+    | "QUOTA_EXCEEDED"
+    | "LOADING_MISMATCH_REVIEW_REQUIRED"
+    | "MANAGER_REQUIRED";
 
 export type TransitionOption = {
     to: OrderStatus;
     requirements: TransitionRequirement[];
     blocked: boolean;
     blockedReason: TransitionBlockedReason | null;
+    /**
+     * Where the loading check stands, on the move into "loading" and
+     * nowhere else: the dialog warns that an unchecked load flags the order
+     */
+    loadingCheck: LoadingCheckState | null;
 };
 
 export type TransitionOptions = {

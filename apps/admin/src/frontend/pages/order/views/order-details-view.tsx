@@ -28,6 +28,7 @@ import { OrderUpdatedSuccess, type UpdatedOrder } from "../section/order-updated
 import { ChatCard } from "../sections/chat-card"
 import { OrderDetailHeader } from "../sections/detail-header"
 import { DisputeBanner, FlagBanner } from "../sections/exception-banners"
+import { LoadingCheckCard, showsLoadingCheck } from "../sections/loading-check-card"
 import { OffersCard } from "../sections/offers-card"
 import { OperationsCard } from "../sections/operations-card"
 import { PartiesCard } from "../sections/parties-card"
@@ -190,6 +191,11 @@ export function OrderDetailsView({ orderId }: { orderId: string }) {
                     />
 
                     <OperationsCard order={order} onAssign={canUpdateOrder ? () => onOpen(order) : undefined} />
+
+                    {/* What the truck was dispatched with, and the orderer's
+                        confirmation at the loading site. The card renders
+                        nothing when there is neither. */}
+                    {showsLoadingCheck(order.status) && <LoadingCheckCard order={order} />}
 
                     <DocumentsCard
                         orderId={orderId}

@@ -106,7 +106,12 @@ const INVOICE_OPTION = "invoice" as const
 type FormType = Exclude<OrderDocumentType, "shipper-invoice" | "carrier-invoice"> | typeof INVOICE_OPTION
 
 const FORM_TYPES: FormType[] = ORDER_DOCUMENT_TYPE.flatMap((option): FormType[] =>
-    option === "shipper-invoice" ? [INVOICE_OPTION] : option === "carrier-invoice" ? [] : [option],
+    option === "shipper-invoice" ? [INVOICE_OPTION]
+        : option === "carrier-invoice" ? []
+            // Loading photos are filed by the loading-check card, against the
+            // check they belong to; filing one loose would document nothing
+            : option === "loading-photo" ? []
+                : [option],
 )
 
 /** The stored type for a form choice (an invoice needs its party first) */

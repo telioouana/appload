@@ -1865,13 +1865,75 @@
                     "NO_OFFERS": "This prospect has no pending offers. Add one first.",
                     "INCOMPLETE_FOR_DISPATCH": "Assign the driver, their phone and the truck before moving to At loading site.",
                     "PAPERS_MISSING": "The papers of the driver or the rig are not on file. Open their records and file them before the truck leaves.",
-                    "OFFER_UNPRICED": "This offer has no Appload commission yet. Edit it and set the commission before booking with it."
+                    "OFFER_UNPRICED": "This offer has no Appload commission yet. Edit it and set the commission before booking with it.",
+                    "MANAGER_REQUIRED": "The loading check found a mismatch. Only a manager can let this load start."
                 },
                 "papersOr": "or",
+                "loadingCheck": {
+                    "none": "Nobody has checked the truck and the driver against what was dispatched. This move will be recorded as unchecked and the order will be flagged.",
+                    "partial": "The loading check was left unfinished. This move will be recorded as unchecked and the order will be flagged.",
+                    "mismatch": "The loading check found that the truck or the driver is not the one that was dispatched. Explain in the note why the load goes ahead."
+                },
                 "book": "Book order"
             },
             "detailPage": {
                 "metaTitle": "Order {reference}",
+                "loadingCheck": {
+                    "title": "Loading check",
+                    "description": "Before loading starts, the orderer confirms that the truck and the driver at the gate are the ones that were dispatched.",
+                    "kinds": {
+                        "driver": "Driver",
+                        "truck": "Truck",
+                        "trailer": "Trailer",
+                        "link": "Link"
+                    },
+                    "papers": {
+                        "show": "Show papers",
+                        "hide": "Hide papers",
+                        "none": "No papers",
+                        "phone": "Phone",
+                        "passport": "Document"
+                    },
+                    "items": {
+                        "driver-identity": "The driver is the one that was dispatched",
+                        "rig-plates": "The plates are the ones that were dispatched"
+                    },
+                    "answers": {
+                        "ok": "Matches",
+                        "no": "Does not match",
+                        "untouched": "Not checked"
+                    },
+                    "outcome": {
+                        "passed": "Everything matched",
+                        "mismatch": "Mismatch found",
+                        "partial": "Left unfinished",
+                        "none": "Not checked"
+                    },
+                    "recordedBy": "by {name} · {date}",
+                    "recordedUnknown": "Appload",
+                    "itemNote": "Note (optional)",
+                    "note": {
+                        "label": "Note (optional)",
+                        "placeholder": "Anything else worth recording about the rig at the gate"
+                    },
+                    "photos": {
+                        "label": "Photos",
+                        "add": "Add photos",
+                        "remove": "Remove the photo",
+                        "hint": "Up to {max} photos of the truck, the plates or the driver's papers. JPG and PNG.",
+                        "format": "Only JPG and PNG photos are accepted."
+                    },
+                    "submit": "Record the check",
+                    "toast": "The loading check was recorded",
+                    "errors": {
+                        "VERSION_CONFLICT": "Someone else changed this order first. Refresh and try again.",
+                        "NOT_ALLOWED": "Your role does not allow recording the loading check.",
+                        "NOT_FOUND": "This order no longer exists.",
+                        "PHOTO_NOT_ON_ORDER": "One of the photos does not belong to this order.",
+                        "UPLOAD_FAILED": "Uploading a photo failed. Please try again.",
+                        "UNKNOWN": "An unexpected error occurred. Please try again."
+                    }
+                },
                 "error": "Failed to load this order.",
                 "back": "Back to orders",
                 "more": "More actions",
@@ -2005,7 +2067,15 @@
                     "system": "System event",
                     "payment": "Payment",
                     "dispute": "Dispute",
-                    "offer": "Carrier offer"
+                    "offer": "Carrier offer",
+                    "check": "Loading check"
+                },
+                "check": {
+                    "passed": "Loading check recorded by {actor}: everything matched",
+                    "mismatch": "Loading check recorded by {actor}: mismatch found",
+                    "recordedPartial": "Loading check recorded by {actor}: left unfinished",
+                    "skipped": "Loading started without a check, moved by {actor}",
+                    "skippedPartial": "Loading started on an unfinished check, moved by {actor}"
                 },
                 "offer": {
                     "created": "Offer from {carrier} · {amount} added",
@@ -2130,6 +2200,7 @@
                     "proof-of-payment": "Proof of payment",
                     "evidence": "Evidence",
                     "transport-order": "Transport order",
+                    "loading-photo": "Loading photo",
                     "other": "Other"
                 },
                 "parties": {
@@ -3750,7 +3821,8 @@
             "update": "Updated order {orderId} ({changedFields})",
             "updateDeal": "Edited deal {orderId} ({status})",
             "transition": "Moved order {orderId} to {to}",
-            "resolveFlag": "Resolved the review flag on order {orderId}"
+            "resolveFlag": "Resolved the review flag on order {orderId}",
+            "recordLoadingCheck": "Recorded the loading check on order {orderId}: {outcome} ({photoCount} photos)"
         },
         "documents": {
             "create": "Added a {type} document to order {orderId}",

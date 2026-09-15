@@ -74,6 +74,9 @@ export function TransitionBar({
         !option.blocked
         || option.blockedReason === "INCOMPLETE_FOR_DISPATCH"
         || option.blockedReason === "PAPERS_MISSING"
+        // Nothing to fill in either, but the dialog is where the loading
+        // check says what it found and who has to clear it
+        || option.blockedReason === "LOADING_MISMATCH_REVIEW_REQUIRED"
         || planReasonOf(option) !== null
 
     // A plan refusal is not a move the transition dialog can complete, so it

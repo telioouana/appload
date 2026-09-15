@@ -241,6 +241,8 @@
         "dispatchRequired": "Escolha primeiro o motorista e o camião.",
         "papersMissing": "Faltam documentos. Submeta-os antes de o camião seguir para o local de carregamento.",
         "disputeOpen": "Este pedido tem uma disputa aberta. A Appload tem de a resolver primeiro.",
+        "loadingMismatchReview": "A verificação de carga encontrou uma divergência. A Appload tem de a rever antes de a carga começar.",
+        "managerRequired": "Só um gestor da Appload pode deixar esta carga começar.",
         "driverNotRegistered": "Esse motorista não está registado na sua empresa.",
         "truckNotRegistered": "Esse camião não está na sua frota.",
         "trailerNotRegistered": "Esse reboque não está na sua frota.",
@@ -511,6 +513,7 @@
             "credit-note": "Nota de crédito",
             "proof-of-payment": "Comprovativo de pagamento",
             "evidence": "Evidência",
+            "loading-photo": "Foto de carregamento",
             "transport-order": "Ordem de transporte",
             "other": "Outro"
         },
@@ -607,6 +610,11 @@
             "missing-hint": "Submeta um destes para enviar este camião.",
             "or": "ou"
         },
+        "loadingCheck": {
+            "none": "Ninguém verificou o camião e o motorista contra o que foi despachado. Este movimento fica registado como não verificado e o pedido fica sinalizado.",
+            "partial": "A verificação de carga ficou incompleta. Este movimento fica registado como não verificado e o pedido fica sinalizado.",
+            "mismatch": "A verificação de carga encontrou um camião ou um motorista diferente do que foi despachado. A Appload tem de rever antes de a carga começar."
+        },
         "note": {
             "label": "O que aconteceu?",
             "optional": "Nota (opcional)",
@@ -623,6 +631,53 @@
             "required": "Esta mudança precisa do ficheiro.",
             "optional": "Anexe agora, ou mais tarde no cartão de documentos."
         }
+    },
+    "loadingCheck": {
+        "title": "Verificação de carga",
+        "description": "Antes de a carga começar, o cliente confirma que o camião e o motorista no portão são os que foram despachados.",
+        "kinds": {
+            "driver": "Motorista",
+            "truck": "Camião",
+            "trailer": "Reboque",
+            "link": "Link"
+        },
+        "papers": {
+            "show": "Ver documentos",
+            "hide": "Esconder documentos",
+            "none": "Sem documentos",
+            "phone": "Telefone"
+        },
+        "items": {
+            "driver-identity": "O motorista é o que foi despachado",
+            "rig-plates": "As matrículas são as que foram despachadas"
+        },
+        "answers": {
+            "ok": "Corresponde",
+            "no": "Não corresponde",
+            "untouched": "Não verificado"
+        },
+        "outcome": {
+            "passed": "Tudo correspondeu",
+            "mismatch": "Divergência encontrada",
+            "partial": "Ficou incompleta",
+            "none": "Não verificado"
+        },
+        "recorded-by": "por {name} · {date}",
+        "recorded-appload": "Appload",
+        "item-note": "Nota (opcional)",
+        "note": {
+            "label": "Nota (opcional)",
+            "placeholder": "Outra coisa que valha a pena registar sobre o conjunto no portão"
+        },
+        "photos": {
+            "label": "Fotografias",
+            "add": "Adicionar fotografias",
+            "remove": "Remover a fotografia",
+            "hint": "Até {max} fotografias do camião, das matrículas ou dos documentos do motorista. JPG e PNG.",
+            "format": "Só são aceites fotografias JPG e PNG."
+        },
+        "submit": "Registar a verificação",
+        "toast": "A verificação de carga foi registada"
     },
     "detail": {
         "meta": "Pedido {orderId}",
