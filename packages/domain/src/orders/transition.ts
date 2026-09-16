@@ -7,6 +7,7 @@ import { isActiveDispute, LEGACY_ORDER_STATUS_ALIAS } from "@workspace/db/types"
 import { isAuthorized } from "@workspace/auth/user-permissions";
 
 import type { Actor } from "@workspace/domain/orders/actor";
+import { syncApploadLinks } from "@workspace/domain/appload/link";
 import { guardOrderGate } from "@workspace/domain/kyc/order-gate";
 import { FOLLOW_UP_STATUSES, startConversation } from "@workspace/domain/tracking/conversations";
 import { offerAcceptable } from "@workspace/domain/orders/booking-readiness";
@@ -739,6 +740,17 @@ export async function applyTransition(
             entityId: updated.id,
         });
     }
+
+    // The two companies' own rows follow the order they are linked to, after
+    // it moved and never before. Best-effort and idempotent (appload/link.ts):
+    // a company's books failing to keep up is not a reason to refuse a move
+    // that already happened, and the next transition repairs them.
+    await syncApploadLinks(ctx.db, {
+        order: updated,
+        from: current.status,
+        dispatch: isDispatchMove(current.status, input.to),
+        ...(booked && { candidates: "settle" as const }),
+    }).catch((error: unknown) => console.error(`appload link sync failed for ${input.orderId}`, error));
 
     // The upload that backed the move becomes a first-class
     // document on the order (POD for completion, evidence for

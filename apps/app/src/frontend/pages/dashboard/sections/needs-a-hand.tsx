@@ -23,6 +23,7 @@ import { cn } from "@workspace/ui/lib/utils"
 
 import { Link } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
+import { defaultTab } from "@/frontend/pages/movements/types"
 
 type QueueItem = {
     key: string
@@ -100,6 +101,9 @@ export function NeedsAHand() {
     const rail = useQuery({ ...trpc.me.railCounts.queryOptions(), staleTime: 60_000 })
 
     const shipper = session.organization.type === "shipper"
+    // The Appload rows land in the company's own sections, on the tab it
+    // lands on — a transporter its own trucks, a client its transporters'
+    const tab = defaultTab(session.organization.type)
     const { attention } = data
 
     const orders: QueueItem[] = shipper
@@ -109,7 +113,7 @@ export function NeedsAHand() {
                 Icon: IconFileDollar,
                 label: tiles("offers-to-review"),
                 count: attention.offersToReview,
-                href: { pathname: "/appload/[section]", params: { section: "quoted" } },
+                href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab } },
                 tone: "warn",
             },
             {
@@ -117,7 +121,7 @@ export function NeedsAHand() {
                 Icon: IconFileCheck,
                 label: tiles("delivered-pending"),
                 count: attention.deliveredPending,
-                href: { pathname: "/appload/[section]", params: { section: "delivered" } },
+                href: { pathname: "/orders/[section]", params: { section: "delivered" }, query: { tab } },
             },
         ]
         : [
@@ -126,7 +130,7 @@ export function NeedsAHand() {
                 Icon: IconInbox,
                 label: tiles("new-requests"),
                 count: attention.newRequests,
-                href: { pathname: "/appload/[section]", params: { section: "requests" } },
+                href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab } },
                 tone: "warn",
             },
             {
@@ -134,7 +138,7 @@ export function NeedsAHand() {
                 Icon: IconSteeringWheel,
                 label: tiles("to-dispatch"),
                 count: attention.toDispatch,
-                href: { pathname: "/appload/[section]", params: { section: "booked" }, query: { dispatch: "1" } },
+                href: { pathname: "/orders/[section]", params: { section: "booked" }, query: { tab } },
                 tone: "warn",
             },
             {
@@ -142,7 +146,7 @@ export function NeedsAHand() {
                 Icon: IconFileCheck,
                 label: tiles("delivered-pending"),
                 count: attention.deliveredPending,
-                href: { pathname: "/appload/[section]", params: { section: "delivered" } },
+                href: { pathname: "/orders/[section]", params: { section: "delivered" }, query: { tab } },
             },
         ]
 

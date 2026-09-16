@@ -208,6 +208,10 @@
         "withdrawn": "Request withdrawn.",
         "registered": "{name} was registered and is now connected."
     },
+    "appload": {
+        "badge": "Always available",
+        "description": "Appload moves loads for every company on the portal. There is nothing to connect: hand it a load from the Orders page."
+    },
     "errors": {
         "notFound": "This request is no longer available. Refresh the page.",
         "alreadyConnected": "You are already connected to this company.",

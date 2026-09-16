@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 
 import { order, orderHistory, orderOffer, type CreateOrder, type Order } from "@workspace/db/orders";
 
+import { syncApploadLinks } from "@workspace/domain/appload/link";
 import { guardOrderGate } from "@workspace/domain/kyc/order-gate";
 import type { Actor } from "@workspace/domain/orders/actor";
 import { carrierSnapshot } from "@workspace/domain/orders/carrier-snapshot";
@@ -125,8 +126,16 @@ export type OrderIdParts = { orderId: string; seq: number; year: number };
  * sheet to read. It is a callback rather than a value because the unique
  * (year, seq) index arbitrates concurrent creates — the retry needs a
  * freshly recomputed sequence, not the one that just lost.
+ *
+ * `syncLinks: false` is for the one caller that links the order itself:
+ * `offerToAppload` puts the tenant's existing row on the order right after
+ * this returns, and a mirror pass in between would open a second row for the
+ * same company — which the partial unique (order_id, organization_id) refuses.
  */
-export type CreateOptions = { nextOrderId: (attempt: number) => Promise<OrderIdParts> };
+export type CreateOptions = {
+    nextOrderId: (attempt: number) => Promise<OrderIdParts>;
+    syncLinks?: boolean;
+};
 
 /**
  * WHO may file this order, the create side of what `allowedForActor` decides
@@ -144,9 +153,12 @@ function guardCreateForActor(actor: Actor, input: CreateOrderForm): void {
         return;
     }
 
-    const owns = actor.orgType === "shipper"
-        ? input.shipperId === actor.organizationId
-        : input.offers.every((offer) => offer.carrierId === actor.organizationId);
+    // Which side the company is on is read off the payload, never off its
+    // type: a transporter handing a load to Appload is that order's shipper.
+    // An offer-only payload has to carry at least one — `every` on an empty
+    // list would make any payload anybody's
+    const owns = input.shipperId === actor.organizationId
+        || (input.offers.length > 0 && input.offers.every((offer) => offer.carrierId === actor.organizationId));
 
     const commission = [input.commissionSubtotal, input.commissionVAT, input.commissionTotal];
 
@@ -280,6 +292,17 @@ export async function createOrder(
         toStatus: saved.status,
         ...(acceptedOffer && { metadata: { offer: offerMetadata(acceptedOffer) } }),
     });
+
+    // The rows of the two companies on this order, if either is on the portal
+    // — a client that filed it here, a carrier a standing quote just booked.
+    // Best-effort and idempotent, like every other call site (appload/link.ts)
+    if (options.syncLinks !== false) {
+        await syncApploadLinks(ctx.db, {
+            order: saved,
+            from: null,
+            ...(acceptedOffer && { candidates: "settle" as const }),
+        }).catch((error: unknown) => console.error(`appload link sync failed for ${saved.orderId}`, error));
+    }
 
     // The order is stored either way; failures land in the
     // sheet_sync outbox and the retry cron heals them

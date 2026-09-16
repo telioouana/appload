@@ -168,6 +168,8 @@
         "open-file": "Abrir o ficheiro",
         "no-preview": "Não é possível mostrar este ficheiro aqui.",
         "review-note": "A Appload verifica todos os documentos entregues aqui. Fica por rever até alguém o analisar.",
+        "company-title": "Documentos da empresa",
+        "contract-note": "Carregado pela Appload depois da assinatura",
         "doc-status": {
             "pending": "Por rever",
             "approved": "Aprovado",
@@ -177,7 +179,14 @@
             "driver-license": "Carta de condução",
             "id-card": "Bilhete de identidade",
             "vehicle-booklet": "Livrete",
-            "proof-of-ownership": "Prova de propriedade"
+            "proof-of-ownership": "Prova de propriedade",
+            "nuit": "Registo do NUIT",
+            "commercial-certificate": "Certidão comercial",
+            "alvara": "Alvará de transporte",
+            "bank-letter": "Carta bancária",
+            "republic-bulletin": "Boletim da República",
+            "commercial-exercise": "Exercício comercial",
+            "signed-contract": "Contrato assinado"
         },
         "errors": {
             "LOAD_FAILED": "Não foi possível carregar estes documentos.",

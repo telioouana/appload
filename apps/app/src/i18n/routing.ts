@@ -41,13 +41,15 @@ export const routing = defineRouting({
         "/orders/load/[loadId]": {
             pt: "/pedidos/carga/[loadId]"
         },
-        // Appload's brokerage: requests, offers, standing quotes and the
-        // orders Appload books, beside the company's own loads rather than
-        // mixed into them. Static segments sit beside the dynamic one, as in
-        // the admin — two sibling dynamic segments are not allowed, and a
-        // static one wins the match. The code behind these pages is still
-        // named `orders` and `quotes` (frontend/pages, App.orders,
-        // App.quotes): only the addresses moved
+        // The standing prices the company keeps with Appload, under My
+        // company beside the rest of what it owns
+        "/quotes": {
+            pt: "/cotacoes"
+        },
+        // Where Appload's brokerage used to be. Appload is a partner like any
+        // other now and its loads are on the Orders page, so every one of
+        // these addresses is a redirect — kept because the notifications and
+        // emails already sent point at them
         "/appload": "/appload",
         "/appload/[section]": "/appload/[section]",
         "/appload/details/[orderId]": {

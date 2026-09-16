@@ -14,6 +14,11 @@ import { orderErrorKey } from "@/frontend/pages/orders/lib/errors"
  * tiles and rewrites the timeline, so the lists and the counts have to
  * refetch together.
  *
+ * These calls are taken from the load page too, where the order is worked
+ * from the row that follows it: booking one, moving it on, dispatching it or
+ * calling it off all rewrite that row and the rail's counts, so both refetch
+ * with the order.
+ *
  * Errors are deliberately NOT toasted here. The dialogs that own these
  * calls show the reason in place, next to the control that failed; the two
  * fire-and-forget actions (withdrawing a request, declining an offer) are
@@ -24,7 +29,11 @@ export function useOrderMutations() {
     const trpc = useTRPC()
     const queryClient = useQueryClient()
 
-    const refresh = () => queryClient.invalidateQueries({ queryKey: trpc.orders.pathKey() })
+    const refresh = () => Promise.all([
+        queryClient.invalidateQueries({ queryKey: trpc.orders.pathKey() }),
+        queryClient.invalidateQueries({ queryKey: trpc.movements.pathKey() }),
+        queryClient.invalidateQueries({ queryKey: trpc.me.railCounts.queryKey() }),
+    ])
 
     /** The domain reason a call failed, as a toast — for actions with no dialog of their own. */
     const fail = (error: unknown) => toast.error(t(`errors.${orderErrorKey(error)}`))

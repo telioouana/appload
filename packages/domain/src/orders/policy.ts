@@ -60,12 +60,14 @@ export function allowedForActor(
         return true;
     }
 
-    if (actor.orgType === "shipper") {
+    // Which side of an order a company is on is the order's own answer, not
+    // its type: a transporter that hands a load to Appload is that order's
+    // shipper, and it is the carrier of the next one
+    if (order.shipperId === actor.organizationId) {
         // The shipper owns its cargo while it is still a quote: it books
         // one of the offers it was given, or it drops the order. Once the
         // truck is on the job the trip is the carrier's and the closure is
         // Appload's.
-        if (order.shipperId !== actor.organizationId) return false;
         if (order.status !== "prospect" && order.status !== "booked") return false;
         if (target === "booked") return Boolean(opts.offerId);
 

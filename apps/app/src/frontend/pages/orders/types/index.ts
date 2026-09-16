@@ -90,20 +90,13 @@ export const defaultSection = (orgType: OrgType): OrderSection =>
     orgType === "carrier" ? "requests" : "all";
 
 // ---------------------------------------------------------------------------
-// Paging, sorting and the filter vocabulary. One list of allowed values
-// governs the URL parser, the server input and the toolbar.
+// Sorting and paging. One list of allowed values governs the server input;
+// the lists themselves are the Orders page's now.
 // ---------------------------------------------------------------------------
-
-export const PAGE_SIZES = [25, 50, 100] as const;
-export const DEFAULT_PAGE_SIZE = 25;
 
 export type SortDir = "asc" | "desc";
 
 export const ORDER_SORTS = ["newest", "loading", "status"] as const;
-export type OrderSort = (typeof ORDER_SORTS)[number];
-
-export const DEFAULT_SORT: OrderSort = "newest";
-export const DEFAULT_DIR: SortDir = "desc";
 
 export type PagedResult<T> = {
     items: T[];
@@ -353,6 +346,8 @@ export type OrderDetail = {
     offers: OrderOfferView[];
     requests: OrderRequestView[];
     documents: OrderDocumentView[];
+    /** The caller's own load behind this order, when it keeps one */
+    linkedLoadId: string | null;
     permissions: OrderPermissions;
 };
 
@@ -419,52 +414,3 @@ export type TransitionOptions = {
     /** Shipper: offers still awaiting a decision */
     pendingOffers: number;
 };
-
-// ---------------------------------------------------------------------------
-// URL parsing. The URL is the state store: the toolbar writes these params
-// and the data view reads them, so the query key derives from the URL and the
-// RSC prefetch builds the exact same input from the same parser. The section
-// is the one thing that does not come from the query string — it is the route
-// segment.
-// ---------------------------------------------------------------------------
-
-type Get = (key: string) => string | null;
-
-const oneOf = <T extends readonly string[]>(value: string | null, allowed: T): T[number] | undefined =>
-    value && (allowed as readonly string[]).includes(value) ? (value as T[number]) : undefined;
-
-const parsePage = (value: string | null): number => {
-    const parsed = Number(value);
-    return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
-};
-
-const parsePageSize = (value: string | null): number => {
-    const parsed = Number(value);
-    return (PAGE_SIZES as readonly number[]).includes(parsed) ? parsed : DEFAULT_PAGE_SIZE;
-};
-
-const parseDir = (value: string | null): SortDir =>
-    value === "asc" ? "asc" : value === "desc" ? "desc" : DEFAULT_DIR;
-
-const flag = (value: string | null): true | undefined => (value === "1" ? true : undefined);
-
-const text = (value: string | null): string | undefined => value?.trim() || undefined;
-
-/** The list input for a section page; the section comes from the route. */
-export const ordersListInput = (section: OrderSection, get: Get) => ({
-    section,
-    search: text(get("search")),
-    /** Carrier: booked orders with no driver named yet — the "to dispatch" tile */
-    dispatch: flag(get("dispatch")),
-    sort: oneOf(get("sort"), ORDER_SORTS),
-    dir: parseDir(get("dir")),
-    page: parsePage(get("page")),
-    pageSize: parsePageSize(get("size")),
-});
-
-export type OrdersListInput = ReturnType<typeof ordersListInput>;
-
-/** Every URL key a filter control owns, so "nothing yet" is told from "nothing matched". */
-export const FILTER_KEYS = ["search", "dispatch"] as const;
-
-export const isFilteredOrders = (get: Get) => FILTER_KEYS.some((key) => Boolean(get(key)));

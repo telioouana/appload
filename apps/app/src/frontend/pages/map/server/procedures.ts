@@ -115,7 +115,22 @@ export const mapRouter = createTRPCRouter({
                 .orderBy(desc(movement.startedAt)),
         ]);
 
-        const orderIds = orders.map((row) => row.id);
+        // A load on an Appload order is the same truck as the order: it is
+        // pinned once, from the company's own row, with the order's pings.
+        // Only that company's row stands in for the order — a client whose
+        // partner handed the load on is not a party to it and reads neither
+        // its pings nor its rig; it follows the partner's own trail
+        const linkedOrderPks = new Set(
+            loads
+                .filter((row) => row.organizationId === tenant.organizationId)
+                .map((row) => row.orderId)
+                .filter((id): id is string => id !== null),
+        );
+        const orderEntityRows = orders.filter((row) => !linkedOrderPks.has(row.id));
+        // The dropped order rows still carry the dispatched rig: the orderer's
+        // linked row is never given the driver and plate, only the executor's
+        const orderById = new Map(orders.map((row) => [row.id, row]));
+        const orderIds = [...new Set([...orders.map((row) => row.id), ...linkedOrderPks])];
         const trails = await trailIds(ctx.db, loads);
         const trailSubjects = [...new Set(trails.values())];
         const linkedTrails = loads.filter((row) => row.executionMovementId).map((row) => trails.get(row.id) ?? row.id);
@@ -175,7 +190,7 @@ export const mapRouter = createTRPCRouter({
         const lastByOrder = new Map(orderPings.map((ping) => [ping.subjectId, labelled(ping, orderLabels)]));
         const lastByTrail = new Map(loadPings.map((ping) => [ping.subjectId, labelled(ping, loadLabels)]));
 
-        const orderEntities: MapEntity[] = orders.map((row) => {
+        const orderEntities: MapEntity[] = orderEntityRows.map((row) => {
             const ping = lastByOrder.get(row.id);
 
             return {
@@ -207,7 +222,12 @@ export const mapRouter = createTRPCRouter({
                 trailId,
                 terminalRig: rigs.get(trailId) ?? null,
             });
-            const ping = lastByTrail.get(trailId);
+            // A load of this company's on an Appload order has no trail of
+            // its own: its driver reports to the order, and that is where its
+            // position and the dispatched rig come from
+            const linkedOrderPk = row.organizationId === tenant.organizationId ? row.orderId : null;
+            const linked = linkedOrderPk ? orderById.get(linkedOrderPk) : undefined;
+            const ping = linkedOrderPk ? lastByOrder.get(linkedOrderPk) : lastByTrail.get(trailId);
             const party = role === "owner" ? (row.execution === "partner" ? view.carrier : view.client) : view.owner;
 
             return {
@@ -221,8 +241,8 @@ export const mapRouter = createTRPCRouter({
                 status: movementTone(row.status),
                 origin: row.origin,
                 destination: row.destination,
-                driverName: view.driverName,
-                truckPlate: view.truckPlate,
+                driverName: view.driverName ?? linked?.driverName ?? null,
+                truckPlate: view.truckPlate ?? linked?.truckPlate ?? null,
                 lastPosition: ping ? toPoint(ping) : null,
             };
         });

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, count, desc, eq, ilike, inArray, isNull, max, ne, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, isNull, ne, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 
 import { order, orderDocument, orderHistory, orderOffer } from "@workspace/db/orders";
 import type { Order, OrderDocumentType } from "@workspace/db/orders";
@@ -9,9 +9,11 @@ import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import { user } from "@workspace/db/users";
 import { ORDER_STATUS, type TRUCK_AGE } from "@workspace/db/types";
 
+import { linkedMovementId } from "@workspace/domain/appload/link";
 import { notify } from "@workspace/domain/notifications";
 import { createOrder } from "@workspace/domain/orders/create";
-import { currentOrderYear, nextOrderId } from "@workspace/domain/orders/order-id";
+import { portalNextOrderId } from "@workspace/domain/orders/next-order-id";
+import { currentOrderYear } from "@workspace/domain/orders/order-id";
 import { CreateOrderSchemaServer } from "@workspace/domain/orders/schemas";
 import { allowedForActor } from "@workspace/domain/orders/policy";
 import { isDispatchMove, missingForDispatch } from "@workspace/domain/orders/dispatch-readiness";
@@ -52,6 +54,8 @@ import {
     anyRequest,
     assertEdgeStoreUrl,
     assertOrgType,
+    assertShipperOf,
+    counterpartyNameColumn,
     isMineColumn,
     loadVisibleOrder,
     moneyColumns,
@@ -62,6 +66,8 @@ import {
     organizationName,
     ownsOrder,
     scopeOf,
+    sideOf,
+    sideScope,
     toMoney,
     toMoneyDetail,
     toNumber,
@@ -77,6 +83,7 @@ import {
     closeOrderRequests,
     listRequestViews,
     requestCount,
+    withdrawApploadRequest,
     writeOrderRequests,
 } from "@/frontend/pages/orders/server/requests";
 import { offersRouter } from "@/frontend/pages/orders/server/offers";
@@ -191,7 +198,7 @@ const rowColumns = (tenant: TenantScope) => ({
     expectedOffloadingDate: order.expectedOffloadingDate,
     deliveries: order.deliveries,
     expectedTrucks: order.expectedTrucks,
-    counterpartyName: tenant.orgType === "shipper" ? order.carrierName : order.shipperName,
+    counterpartyName: counterpartyNameColumn(tenant),
     driverName: order.driverName,
     truckPlate: order.truckPlate,
     trailerPlate: order.trailerPlate,
@@ -199,7 +206,7 @@ const rowColumns = (tenant: TenantScope) => ({
     version: order.version,
     createdAt: order.createdAt,
     isMine: isMineColumn(tenant),
-    ...moneyColumns(tenant.orgType),
+    ...moneyColumns(tenant),
     offersPending: tenant.orgType === "shipper" ? pendingOfferCount : zeroCount,
     requestedCount: tenant.orgType === "shipper" ? requestCount(["requested"]) : zeroCount,
     quotedCount: tenant.orgType === "shipper" ? requestCount(["quoted"]) : zeroCount,
@@ -308,7 +315,11 @@ async function addOrderDocument(
         });
     }
 
-    const counterparty = params.tenant.orgType === "shipper" ? params.row.carrierId : params.row.shipperId;
+    // The other party to the trip, read off the row: the uploader is the
+    // client of the orders it filed and the carrier of the ones it drives
+    const counterparty = params.row.shipperId === params.tenant.organizationId
+        ? params.row.carrierId
+        : params.row.shipperId;
 
     if (evented && counterparty) {
         await notify(db, {
@@ -449,7 +460,10 @@ export const ordersRouter = createTRPCRouter({
         const [row] = await ctx.db
             .select({
                 ...sectionSelect,
-                total: count(),
+                // Counted on the side the sections are counted on, so the
+                // total is the sum of the lists it opens: a transporter's
+                // delegated orders are worked from their load row, not here
+                total: shipper ? count() : countWhere(eq(order.carrierId, tenantId)),
                 // Shipper: asked and still waiting for the first answer
                 awaitingOffers: shipper
                     ? countWhere(and(
@@ -508,20 +522,31 @@ export const ordersRouter = createTRPCRouter({
         .query(async ({ ctx, input }): Promise<OrderDetail> => {
             const tenant = scopeOf(ctx.tenant);
             const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
-            const carrier = tenant.orgType === "carrier";
+            // Which side of THIS order the caller is on: a transporter reads
+            // the load it handed to Appload as that order's client
+            const reader = sideScope(tenant, row);
+            const carrier = reader.orgType === "carrier";
             // Reading the order is not being a party to it: a carrier that
             // was asked about it, or quoted and lost, sees the row — and
             // nothing on it that belongs to the deal somebody else got
             const isMine = ownsOrder(row, tenant);
 
-            const [offerRows, requests, documents] = await Promise.all([
+            const [offerRows, requests, documents, linkedLoadId] = await Promise.all([
                 ctx.db
-                    .select(offerColumns(tenant.orgType))
+                    .select(offerColumns(reader.orgType))
                     .from(orderOffer)
-                    .where(visibleOffers(row.id, tenant))
+                    .where(visibleOffers(row.id, reader))
                     .orderBy(desc(orderOffer.createdAt)),
-                listRequestViews(ctx.db, row.id, tenant),
+                listRequestViews(ctx.db, row.id, reader),
                 isMine ? listDocumentViews(ctx.db, row.id) : Promise.resolve([]),
+                // The caller's own load behind this order, when it keeps one.
+                // Best-effort: the order page is not worth failing over a
+                // link that only sends the reader somewhere nicer
+                linkedMovementId(ctx.db, { orderId: row.id, organizationId: tenant.organizationId })
+                    .catch((error) => {
+                        console.error(`linked load for ${row.orderId} failed`, error);
+                        return null;
+                    }),
             ]);
 
             const offers = offerRows.map((offer) => toOfferView(offer, tenant.organizationId));
@@ -600,6 +625,7 @@ export const ordersRouter = createTRPCRouter({
                 offers,
                 requests,
                 documents,
+                linkedLoadId,
                 permissions: {
                     isMine,
                     canCancel: !carrier && (row.status === "prospect" || row.status === "booked"),
@@ -629,6 +655,7 @@ export const ordersRouter = createTRPCRouter({
         .query(async ({ ctx, input }): Promise<OrderHistoryEntry[]> => {
             const tenant = scopeOf(ctx.tenant);
             const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+            const reader = sideScope(tenant, row);
             const isMine = ownsOrder(row, tenant);
 
             const [entries, offerRows] = await Promise.all([
@@ -651,9 +678,9 @@ export const ordersRouter = createTRPCRouter({
                     .orderBy(desc(orderHistory.createdAt))
                     .limit(HISTORY_LIMIT),
                 ctx.db
-                    .select(offerColumns(tenant.orgType))
+                    .select(offerColumns(reader.orgType))
                     .from(orderOffer)
-                    .where(visibleOffers(row.id, tenant)),
+                    .where(visibleOffers(row.id, reader)),
             ]);
 
             const offers = new Map(offerRows.map((offer) => [
@@ -755,7 +782,7 @@ export const ordersRouter = createTRPCRouter({
             // month's usage is counted once, and only when the gated move is
             // actually on the table — every other reader of this query would
             // be paying for a number it cannot act on
-            const gated = tenant.orgType !== "carrier" ? "booked"
+            const gated = sideOf(row, tenant) !== "carrier" ? "booked"
                 : row.status === "booked" ? "at-loading"
                     : null;
 
@@ -821,7 +848,7 @@ export const ordersRouter = createTRPCRouter({
                 targets,
                 allowance,
                 missingForDispatch: missing,
-                pendingOffers: tenant.orgType === "shipper" ? pendingOffers : 0,
+                pendingOffers: sideOf(row, tenant) === "shipper" ? pendingOffers : 0,
             };
         }),
 
@@ -877,7 +904,7 @@ export const ordersRouter = createTRPCRouter({
                 state,
                 checkedByName: checker?.name ?? null,
                 photos,
-                canCheck: tenant.orgType === "shipper",
+                canCheck: sideOf(row, tenant) === "shipper",
             };
         }),
 
@@ -891,13 +918,9 @@ export const ordersRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }) => {
             try {
                 const tenant = scopeOf(ctx.tenant);
-                assertOrgType(tenant, "shipper");
-
                 const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
 
-                if (!ownsOrder(row, tenant)) {
-                    throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED_FOR_ACTOR" });
-                }
+                assertShipperOf(row, tenant);
 
                 const { check, order: updated } = await recordLoadingCheck(ctx.db, {
                     current: row,
@@ -957,20 +980,7 @@ export const ordersRouter = createTRPCRouter({
                 const result = await createOrder(
                     orderContext(ctx),
                     payload,
-                    {
-                        // The unique (year, seq) index arbitrates concurrent
-                        // creates, so every attempt recomputes the sequence.
-                        // The portal has no logbook to read: the sheet's own
-                        // max is 0 and Admin's sync cron heals the sheet.
-                        nextOrderId: async () => {
-                            const [row] = await ctx.db
-                                .select({ value: max(order.seq) })
-                                .from(order)
-                                .where(eq(order.year, year));
-
-                            return nextOrderId(row?.value ?? 0, 0, year);
-                        },
-                    },
+                    { nextOrderId: portalNextOrderId(ctx.db, year) },
                 );
 
                 // Cargo particulars the shared create payload does not carry
@@ -1017,9 +1027,9 @@ export const ordersRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; sent: number; skipped: number }> => {
             try {
                 const tenant = scopeOf(ctx.tenant);
-                assertOrgType(tenant, "shipper");
-
                 const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+
+                assertShipperOf(row, tenant);
 
                 if (row.status !== "prospect") {
                     throw new TRPCError({ code: "BAD_REQUEST", message: "ORDER_NOT_PROSPECT" });
@@ -1066,9 +1076,9 @@ export const ordersRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; carrierOrgId: string }> => {
             try {
                 const tenant = scopeOf(ctx.tenant);
-                assertOrgType(tenant, "shipper");
-
                 const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+
+                assertShipperOf(row, tenant);
 
                 if (row.status !== "prospect") {
                     throw new TRPCError({ code: "BAD_REQUEST", message: "ORDER_NOT_PROSPECT" });
@@ -1088,6 +1098,11 @@ export const ordersRouter = createTRPCRouter({
                     throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
                 }
 
+                // The carrier's own row for this order goes off with the
+                // request. Best-effort, like every write on the far side of
+                // an order: the next sync repairs what a failure leaves
+                await withdrawApploadRequest(ctx.db, row.id, input.carrierOrgId);
+
                 return { orderId: row.orderId, carrierOrgId: input.carrierOrgId };
             } catch (error) {
                 throw toTRPCError(error);
@@ -1104,9 +1119,9 @@ export const ordersRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; status: string; version: number }> => {
             try {
                 const tenant = scopeOf(ctx.tenant);
-                assertOrgType(tenant, "shipper");
-
                 const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+
+                assertShipperOf(row, tenant);
 
                 // Read before the transition settles the offers: afterwards
                 // every pending row is already "lost"
@@ -1293,16 +1308,20 @@ export const ordersRouter = createTRPCRouter({
                 try {
                     const tenant = scopeOf(ctx.tenant);
                     const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+                    // What may be filed follows the side of this order, not
+                    // the kind of company: the client of a load it handed to
+                    // Appload files what a client files
+                    const side = sideOf(row, tenant);
 
-                    if (tenant.orgType === "carrier" && row.carrierId !== tenant.organizationId) {
+                    if (side === "carrier" && row.carrierId !== tenant.organizationId) {
                         throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED_FOR_ACTOR" });
                     }
                     // The client files evidence, and the photos of its own
                     // loading check; the carrier is checked, not checking
-                    if (tenant.orgType === "shipper" && input.type !== "evidence" && input.type !== "loading-photo") {
+                    if (side === "shipper" && input.type !== "evidence" && input.type !== "loading-photo") {
                         throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED_FOR_ACTOR" });
                     }
-                    if (tenant.orgType === "carrier" && input.type === "loading-photo") {
+                    if (side === "carrier" && input.type === "loading-photo") {
                         throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED_FOR_ACTOR" });
                     }
 

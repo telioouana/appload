@@ -10,16 +10,13 @@ import {
     IconBox,
     IconBuildingWarehouse,
     IconCalendarCheck,
-    IconCalendarClock,
     IconChartHistogram,
     IconChecks,
-    IconContainer,
     IconFileInvoice,
     IconGavel,
     IconHistory,
     IconLayoutDashboard,
     IconList,
-    IconLockOpen,
     IconMap2,
     IconMapPinOff,
     IconPlus,
@@ -42,18 +39,11 @@ import { NavPending } from "@workspace/ui/customs/nav/nav-pending";
 
 import { useTRPC } from "@/backend/api/client";
 import { UNREAD_POLL_MS } from "@/frontend/pages/notifications/types";
-import { sectionsFor } from "@/frontend/pages/orders/types";
 import { useNewLoad } from "@/frontend/pages/movements/hooks/use-new-load";
 import { NewLoadSheet } from "@/frontend/pages/movements/sections/new-load-sheet";
 import { MOVEMENT_TABS, SECTIONS, defaultTab, type MovementSection, type MovementTab } from "@/frontend/pages/movements/types";
 
 import { NavUser } from "./nav-user";
-
-// Temporary kill switch (2026-09-13): Appload's brokerage is hidden from
-// the rail while the portal is shown as the company's own operations hub.
-// Flip to true to bring the whole group back (the sections and the quotes);
-// the routes under /appload stay reachable by URL either way.
-const SHOW_APPLOAD: boolean = true
 
 // Whatever the typed next-intl `Link` accepts as `href`: a plain internal
 // pathname for a static route, or the `{ pathname, params }` object form for
@@ -123,16 +113,6 @@ const ORDER_ICONS: Record<MovementSection, Icon> = {
     "history": IconHistory,
 };
 
-const APPLOAD_ICONS: Record<ReturnType<typeof sectionsFor>[number], Icon> = {
-    "all": IconList,
-    "requests": IconLockOpen,
-    "quoted": IconFileInvoice,
-    "booked": IconCalendarClock,
-    "on-going": IconTruckDelivery,
-    "delivered": IconChecks,
-    "history": IconHistory,
-};
-
 /**
  * The portal's rail, in the admin's shape: an unlabelled group for reading
  * the business, Operations for the day's work with the one button that
@@ -149,7 +129,6 @@ export function Sidenav({
 }: React.ComponentProps<typeof Sidebar> & { orgType: "shipper" | "carrier" }) {
     const t = useTranslations("App.shell.sidebar")
     const tl = useTranslations("App.loads.sections")
-    const to = useTranslations("App.orders.sections")
     const g = useTranslations("General")
     const pathname = usePathname()
     const params = useParams<Record<string, string | string[]>>()
@@ -197,8 +176,10 @@ export function Sidenav({
 
     // A badge is the two tabs' counts added: a section's number is what waits
     // there on either side, and the page it opens carries both
-    const sum = (own: number | undefined, partners: number | undefined) =>
-        own === undefined && partners === undefined ? undefined : (own ?? 0) + (partners ?? 0)
+    const sum = (...counts: Array<number | undefined>) =>
+        counts.every((count) => count === undefined)
+            ? undefined
+            : counts.reduce<number>((total, count) => total + (count ?? 0), 0)
 
     const ops: NavEntry[] = [
         {
@@ -214,32 +195,15 @@ export function Sidenav({
                 match: `/orders/${section}`,
                 path: { pathname: "/orders/[section]", params: { section }, query: { tab } },
                 // Offered by a partner and waiting on the company's answer
-                // (My trucks) or turned down by one and waiting to be placed
-                // again (partners), or held by a dispute on either side
+                // (My trucks), turned down by one and waiting to be placed
+                // again (partners), or an Appload offer still to decide —
+                // all of it procurement work; held by a dispute on either side
                 badge: section === "procurement"
-                    ? sum(counts?.received, counts?.declined)
-                    : section === "disputes" ? sum(counts?.disputes.trips, counts?.disputes.orders) : undefined,
+                    ? sum(counts?.received, counts?.declined, counts?.offersToReview)
+                    : section === "booked" ? counts?.toDispatch
+                        : section === "disputes" ? sum(counts?.disputes.trips, counts?.disputes.orders) : undefined,
             })),
         },
-        ...(SHOW_APPLOAD ? [{
-            // Appload's brokerage, beside the company's own loads: the
-            // requests and offers it runs through Appload, and the quotes
-            Icon: IconContainer,
-            name: t("work.appload"),
-            id: "appload",
-            items: [
-                ...sectionsFor(orgType).map((section) => ({
-                    Icon: APPLOAD_ICONS[section],
-                    name: to(section),
-                    match: `/appload/${section}`,
-                    path: { pathname: "/appload/[section]" as const, params: { section } },
-                    badge: carrier
-                        ? section === "requests" ? counts?.appload.newRequests : section === "booked" ? counts?.appload.toDispatch : undefined
-                        : section === "quoted" ? counts?.appload.offersToReview : undefined,
-                })),
-                { Icon: IconFileInvoice, name: t("work.quotes"), match: "/appload/quotes", path: "/appload/quotes" },
-            ],
-        } satisfies NavGroup] : []),
         { Icon: IconMap2, name: t("work.map"), match: "/map", path: "/map" },
         {
             Icon: IconBell,
@@ -264,6 +228,9 @@ export function Sidenav({
             path: { pathname: "/partners/[kind]", params: { kind: carrier ? "clients" : "transporters" } },
             badge: counts?.partners,
         },
+        // The standing prices the company keeps with Appload; the loads they
+        // turn into live on the Orders page like any other
+        { Icon: IconFileInvoice, name: t("company.quotes"), match: "/quotes", path: "/quotes" },
         {
             // Every company may keep a fleet: a carrier's is what it sells, a
             // shipper's moves its own goods between its own sites. One row;
@@ -287,8 +254,8 @@ export function Sidenav({
         return Array.isArray(value) ? value.join("/") : value ?? ""
     })
 
-    // The quotes live under /appload too, so the sections test for an exact
-    // segment rather than a prefix that would light "all" up on /appload/quotes
+    // A load's own page sits under /orders too, so an entry tests for an exact
+    // segment rather than a prefix that would light "all" up on /orders/load
     const isOn = (match: string) => current === match || current.startsWith(`${match}/`)
 
     const renderEntries = (entries: NavEntry[]) => entries.map((item) => {

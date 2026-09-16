@@ -6,7 +6,7 @@ import { IconChevronDown, IconFileText } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 import { isOrgAuthorized } from "@workspace/auth/organization-permissions"
-import type { KycDocumentType, KycPage, OrderDispatchSubject } from "@workspace/db/types"
+import type { KycDocumentType, KycPage, KycSubjectType } from "@workspace/db/types"
 
 import { Badge } from "@workspace/ui/components/badge"
 import { Spinner } from "@workspace/ui/components/spinner"
@@ -15,18 +15,21 @@ import { Alert } from "@workspace/ui/components/alert"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
-import { REQUIRED_DOCS, subjectKind } from "@workspace/domain/kyc/requirements"
+import { CONTRACT_DOC, REQUIRED_DOCS, subjectKind } from "@workspace/domain/kyc/requirements"
 import { ProfileCard } from "@/frontend/pages/fleet/sections/profile-parts"
 import { PaperPreview, PaperUpload } from "@/frontend/pages/fleet/sections/paper-upload"
 
 /**
- * The papers Appload holds for one driver or vehicle, and the way to file
- * what is missing.
+ * The papers Appload holds for one subject — the company itself, or one of
+ * its drivers and vehicles — and the way to file what is missing.
  *
- * One row per slot of the subject's checklist, so a carrier reads the same
+ * One row per slot of the subject's checklist, so a partner reads the same
  * list the reviewer does — including the slots nothing has been filed for,
  * which a list of what exists could never show. Review stays Appload's: what
  * is filed here lands `pending`.
+ *
+ * The one slot that is never offered is the signed contract: Appload files
+ * it after signature, so the company reads where it stands and nothing more.
  */
 export function PapersCard({
     subjectType,
@@ -34,7 +37,7 @@ export function PapersCard({
     title,
     className,
 }: {
-    subjectType: OrderDispatchSubject
+    subjectType: KycSubjectType
     subjectId: string
     title: string
     className?: string
@@ -52,18 +55,22 @@ export function PapersCard({
 
     const invalidate = async () => {
         // The badges and the progress on both lists derive from these
-        // documents, so they refetch alongside the card
+        // documents, so they refetch alongside the card — and the company's
+        // own verdict, which the session carries, is derived from them too
         await Promise.all([
             queryClient.invalidateQueries({ queryKey: trpc.kyc.pathKey() }),
             queryClient.invalidateQueries({ queryKey: trpc.fleet.pathKey() }),
             queryClient.invalidateQueries({ queryKey: trpc.drivers.pathKey() }),
+            queryClient.invalidateQueries({ queryKey: trpc.me.pathKey() }),
         ])
     }
 
     // The checklist is rendered from the loaded set, never from the subject
     // kind alone: with nothing in hand every slot would read "Missing" and
-    // offer to file over a paper that already stands
-    const kind = query.data ? subjectKind(subjectType) : null
+    // offer to file over a paper that already stands. A company's checklist
+    // is the one its own type asks for; every other subject's kind is its
+    // table
+    const kind = query.data ? subjectKind(subjectType, session.organization.type) : null
     const documents = query.data?.documents ?? []
     const byType = new Map(documents.map((doc) => [doc.type, doc]))
 
@@ -134,13 +141,21 @@ export function PapersCard({
                                 </div>
                             )}
 
+                            {/* The contract is signed on paper and filed by
+                                Appload, so the slot says where it stands and
+                                offers nothing */}
+                            {type === CONTRACT_DOC && (
+                                <p className="text-muted-foreground text-xs">{t("contract-note")}</p>
+                            )}
+
                             {/* Filing is offered where the slot is empty, and
                                 as a resubmission when the paper was turned
                                 down — never over one that already stands */}
-                            {canUpload && (!document || document.status === "rejected") && !satisfied && (
+                            {canUpload && type !== CONTRACT_DOC && (!document || document.status === "rejected") && !satisfied && (
                                 <PaperUpload
                                     subjectType={subjectType}
                                     subjectId={subjectId}
+                                    kind={kind}
                                     type={type}
                                     onUploaded={invalidate}
                                 />

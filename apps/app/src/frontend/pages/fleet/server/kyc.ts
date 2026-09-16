@@ -6,11 +6,12 @@ import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import { user } from "@workspace/db/users";
 import {
     KYC_DOCUMENT_TYPE,
-    ORDER_DISPATCH_SUBJECT,
+    KYC_SUBJECT_TYPE,
     KycPagesSchema,
     type KycDocumentStatus,
     type KycDocumentType,
     type KycStatus,
+    type KycSubjectType,
     type OrderDispatchSubject,
 } from "@workspace/db/types";
 import type { db as Database } from "@workspace/db/db";
@@ -18,28 +19,32 @@ import type { db as Database } from "@workspace/db/db";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure } from "@workspace/trpc/tenant";
 
+import { isValid, today } from "@workspace/domain/kyc/derive";
 import { withProxiedPages } from "@workspace/domain/kyc/file-access";
-import { subjectKind } from "@workspace/domain/kyc/requirements";
-import { currentDocuments, type Subject } from "@workspace/domain/kyc/subjects";
+import { CONTRACT_DOC, subjectKind } from "@workspace/domain/kyc/requirements";
+import { currentDocuments, loadSubject, type Subject } from "@workspace/domain/kyc/subjects";
 import { uploadKycDocument } from "@workspace/domain/kyc/upload";
 
 /**
- * The papers of a company's own drivers and vehicles, from the portal.
+ * The papers of a company itself and of its own drivers and vehicles, from
+ * the portal.
  *
  * The KYC store was Admin's alone until dispatch started demanding papers
  * before a truck may load: a carrier that cannot file a licence itself
  * cannot dispatch, so the same store is opened here — strictly to the
- * subjects in its own registry, which is what every procedure below checks
- * before it looks at anything. Review stays Appload's.
+ * subjects in its own registry and to its own company row, which is what
+ * every procedure below checks before it looks at anything. Review stays
+ * Appload's, and so does the signed contract: Appload files it after
+ * signature, so `upload` refuses that one type.
  */
 
 type Db = typeof Database;
 
 const VEHICLE_TABLE = { truck, trailer, link } as const;
 
-// Drivers and vehicles only: the company's own contract is filed from
-// Settings, and no other organization's papers are reachable from here
-const subjectType = z.enum(ORDER_DISPATCH_SUBJECT);
+// The company itself, its drivers and its vehicles: no other organization's
+// papers are reachable from here, and `tenantSubject` is what enforces that
+const subjectType = z.enum(KYC_SUBJECT_TYPE);
 const documentType = z.enum(KYC_DOCUMENT_TYPE);
 
 // Calendar day, matching the pg `date` columns
@@ -130,12 +135,37 @@ async function ownedSubject(
     };
 }
 
+/**
+ * Any subject the tenant may file papers for: its own company, or a driver
+ * or vehicle in its own registry.
+ *
+ * The organization's id IS its tenancy, so the one from input is only ever
+ * compared with the gate's — a subject that is not this company is NOT_FOUND
+ * exactly as another carrier's truck is. Its kind, and with it the checklist
+ * the upload is validated against, comes off the company row rather than
+ * from input.
+ */
+async function tenantSubject(
+    db: Db,
+    tenantId: string,
+    type: KycSubjectType,
+    id: string,
+): Promise<Subject> {
+    if (type !== "organization") {
+        return (await ownedSubject(db, tenantId, type, id)).subject;
+    }
+
+    if (id !== tenantId) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+
+    return loadSubject(db, "organization", tenantId);
+}
+
 export const kycRouter = createTRPCRouter({
     /** The live document set for one of the tenant's subjects. */
     documents: authorizedTenantProcedure("kyc", ["read"])
         .input(z.object({ subjectType, subjectId: z.string().nonempty() }))
         .query(async ({ ctx, input }) => {
-            const { subject } = await ownedSubject(
+            const subject = await tenantSubject(
                 ctx.db,
                 ctx.tenant.organizationId,
                 input.subjectType,
@@ -172,6 +202,10 @@ export const kycRouter = createTRPCRouter({
      * upload goes through, so a carrier's submission is superseded, derived
      * and recorded exactly as a reviewer's would be — and lands as `pending`
      * for Appload to review.
+     *
+     * Which types a subject may hold is `uploadKycDocument`'s check against
+     * REQUIRED_DOCS for its kind; the contract is the one exception refused
+     * here, because it is a paper Appload files, not one a partner sends.
      */
     upload: authorizedTenantProcedure("kyc", ["upload"])
         .input(z.object({
@@ -184,12 +218,33 @@ export const kycRouter = createTRPCRouter({
             documentNumber: z.string().trim().max(60).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
-            const { subject } = await ownedSubject(
+            // The contract is countersigned by Appload and filed by Appload;
+            // a partner reads where it stands but never sends one
+            if (input.type === CONTRACT_DOC) {
+                throw new TRPCError({ code: "FORBIDDEN", message: "CONTRACT_APPLOAD_ONLY" });
+            }
+
+            const subject = await tenantSubject(
                 ctx.db,
                 ctx.tenant.organizationId,
                 input.subjectType,
                 input.subjectId,
             );
+
+            // Any member may file the company's papers, but never over one
+            // that already stands: an upload supersedes, so a second NUIT
+            // sent over an approved one would drop the slot back to pending
+            // and the company out of `verified` — unbookable until a
+            // reviewer looks again. Resubmitting a rejected or expired
+            // paper, which is what the card offers, stays open.
+            if (subject.subjectType === "organization") {
+                const standing = (await currentDocuments(ctx.db, subject))
+                    .find((doc) => doc.type === input.type);
+
+                if (standing && isValid(standing, today())) {
+                    throw new TRPCError({ code: "CONFLICT", message: "DOCUMENT_ALREADY_ON_FILE" });
+                }
+            }
 
             return uploadKycDocument(ctx.db, {
                 subject,

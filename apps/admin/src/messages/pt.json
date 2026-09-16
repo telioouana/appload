@@ -466,8 +466,9 @@
             "username": {
                 "label": "Utilizador",
                 "placeholder": "nome",
-                "description": "Introduza o teu nome de email",
-                "error": "O nome de utilizador é obrigatório"
+                "description": "Introduza o seu nome de utilizador, o @apploadafrica.com é acrescentado por nós",
+                "error": "O nome de utilizador é obrigatório",
+                "invalid": "Introduza apenas o nome de utilizador, sem @ nem espaços"
             },
             "password": {
                 "label": "Palavra passe",

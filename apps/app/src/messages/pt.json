@@ -290,9 +290,7 @@
                     "label": "Operações",
                     "dashboard": "Painel",
                     "orders": "Pedidos",
-                    "quotes": "Cotações",
                     "map": "Mapa",
-                    "appload": "Appload",
                     "notifications": "Notificações"
                 },
                 "company": {
@@ -302,6 +300,7 @@
                     "team": "Equipa",
                     "partners": "Parceiros",
                     "my-transporters": "As minhas transportadoras",
+                    "quotes": "Cotações",
                     "analytics": "Análises"
                 },
                 "new-load": "Nova carga"
@@ -375,7 +374,6 @@
                 "no-response": "Sem resposta hoje"
             },
             "loads": {
-                "appload": "Appload",
                 "planning": "Os meus camiões por planear",
                 "planning-hint": "Ainda por agendar",
                 "own-road": "Frota própria em curso",
@@ -385,8 +383,7 @@
                 "latest": {
                     "title": "Últimas cargas",
                     "empty": "Ainda não registou nenhuma carga",
-                    "amount": "Valor",
-                    "appload": "Appload"
+                    "amount": "Valor"
                 }
             }
         },
@@ -524,31 +521,6 @@
                     "NOT_ALLOWED": "Não tem permissão para alterar os dados da empresa",
                     "NOT_FOUND": "Não encontrámos a sua empresa",
                     "UNKNOWN": "Não foi possível guardar. Tente novamente"
-                },
-                "contract": {
-                    "title": "Contrato com a Appload",
-                    "valid-until": "válido até {date}",
-                    "states": {
-                        "valid": "Válido",
-                        "pending": "Em análise",
-                        "missing": "Sem contrato",
-                        "expired": "Expirado",
-                        "rejected": "Rejeitado"
-                    },
-                    "upload": "Carregar contrato",
-                    "dialog": {
-                        "title": "Carregar o contrato assinado",
-                        "description": "Envie o contrato que assinou com a Appload e indique até quando é válido",
-                        "file": "Escolher ficheiro",
-                        "expires": "Válido até",
-                        "submit": "Enviar",
-                        "success": "Contrato enviado. A Appload vai analisá-lo",
-                        "errors": {
-                            "size": "O ficheiro não pode ter mais de 5 MB",
-                            "type": "Só aceitamos PDF, JPG ou PNG"
-                        }
-                    },
-                    "hint": "A Appload analisa o contrato; os parceiros passam a ver se está válido."
                 }
             },
             "members": {

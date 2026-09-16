@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import {
     IconAlertOctagon,
     IconAlertTriangle,
@@ -45,7 +46,9 @@ import {
 
 import type { TrackingAllowance } from "@workspace/domain/subscription"
 
+import { useTRPC } from "@/backend/api/client"
 import { PlanDialog, planBlock, type PlanReason } from "@/components/plan-dialog"
+import { CancelOrderDialog } from "@/frontend/pages/orders/sections/cancel-order-dialog"
 import { useFlagLabel, useMoveLabel } from "@/frontend/pages/movements/components/badges"
 import { useMovementMutations } from "@/frontend/pages/movements/hooks/use-movement-mutations"
 import { ConvertDialog } from "@/frontend/pages/movements/sections/convert-dialog"
@@ -86,6 +89,7 @@ type Open =
     | { kind: "confirmation" }
     | { kind: "dispute" }
     | { kind: "edit" }
+    | { kind: "cancel-appload" }
     | null
 
 /**
@@ -116,8 +120,19 @@ export function LoadActions({
     const flagLabel = useFlagLabel()
     const moveLabel = useMoveLabel()
     const { permissions } = load
+    const trpc = useTRPC()
 
     const { withdraw, requestLocation } = useMovementMutations()
+
+    const appload = load.appload
+    // The load the company handed to Appload is called off with Appload, on
+    // the order itself — the panels below read the very same query, so this
+    // costs nothing once the page is up
+    const { data: order } = useQuery({
+        ...trpc.orders.get.queryOptions({ orderId: appload?.orderId ?? "" }),
+        enabled: appload?.role === "orderer",
+    })
+    const cancelWithAppload = appload?.role === "orderer" && Boolean(order?.permissions.canCancel)
 
     const [open, setOpen] = useState<Open>(null)
     // Set when a menu item opens a dialog or the sheet: the menu must not
@@ -156,7 +171,7 @@ export function LoadActions({
 
     const tools = canEdit || canConfirm || permissions.canRequestLocation || permissions.canConvert || permissions.canWithdraw
     const trouble = interruptions.length > 0 || permissions.canOpenDispute
-    const menu = tools || trouble || cancel
+    const menu = tools || trouble || cancel || cancelWithAppload
 
     return (
         <>
@@ -316,6 +331,21 @@ export function LoadActions({
                                     </DropdownMenuItem>
                                 </>
                             )}
+
+                            {/* The row follows the order: calling the load off
+                                is calling the order off, with a reason */}
+                            {cancelWithAppload && (
+                                <>
+                                    {(tools || trouble) && <DropdownMenuSeparator />}
+                                    <DropdownMenuItem
+                                        variant="destructive"
+                                        onSelect={() => openFromMenu({ kind: "cancel-appload" })}
+                                    >
+                                        <IconBan stroke={1.5} />
+                                        {t("appload.cancelWithAppload")}
+                                    </DropdownMenuItem>
+                                </>
+                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )}
@@ -342,6 +372,15 @@ export function LoadActions({
 
             {open?.kind === "confirmation" && (
                 <SendConfirmationDialog load={load} companyName={organizationName} onClose={close} />
+            )}
+
+            {open?.kind === "cancel-appload" && appload && order && (
+                <CancelOrderDialog
+                    orderId={appload.orderId}
+                    expectedVersion={order.version}
+                    open
+                    onOpenChange={(next) => { if (!next) close() }}
+                />
             )}
 
             <LoadSheet

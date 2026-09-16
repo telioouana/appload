@@ -26,7 +26,7 @@ Decisions confirmed with Claire (2026-09-09):
 | Commission on portal deals | **None.** Portal offers are priced with `commissionTotal = 0`; client price = carrier price with the existing VAT rules. Staff can still re-price in Admin. |
 | Onboarding | **Self-serve + staff approval.** Unknown NUIT → organization created at sign-up. Known NUIT with no members → claim approved by staff in Admin; auto-approved when the verified sign-up email equals the organization's email on file. |
 | Subscription | **Named tiers by monthly tracked movements** (revised 2026-09-10, see §4.1): no free plan; staff set the tier (starter/business/enterprise) and an expiry in Admin; the portal blocks booking, dispatch and trips when there is no active plan or the month's allowance is used up. No payments. |
-| KYC | **Status badges only.** Uploads and review stay in Admin. |
+| KYC | **Review stays in Admin.** Partners file their own papers from the portal — the company's own documents, its drivers and its vehicles — and the signed contract is uploaded by Appload after signature (see `appload-partner-design.md` §7b). |
 
 Architectural decisions taken in this plan (rationale inline):
 
@@ -581,7 +581,7 @@ M0 rules: extraction is a **pure move plus parameterization** — no logic edits
 
 ## 13. Explicitly out of scope (v1) / follow-ups
 - Google sign-in for partners (needs an auth factory or provider-conditional `mapProfileToUser`).
-- KYC self-upload and a tenant file proxy; EdgeStore protected files.
+- EdgeStore protected files. (KYC self-upload and the tenant file proxy landed later — `appload-partner-design.md` §7b.)
 - Online payments; plan changes from the portal.
 - SSE/WebSocket notifications; per-tenant WhatsApp sender or template language.
 - Drivers as portal members (`driver` org role stays unregistered); phone OTP (`phoneNumber` plugin stubs).

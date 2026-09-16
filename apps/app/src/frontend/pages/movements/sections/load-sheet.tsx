@@ -7,12 +7,13 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { IconCancel, IconDeviceFloppy, IconLoader2, IconTruck, IconUsersGroup } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
-import { CATEGORIES, CURRENCY, FISCAL_REGIME, WEIGHT_UNIT } from "@workspace/db/types"
+import { CATEGORIES, CURRENCY, FISCAL_REGIME, WEIGHT_UNIT, isApploadOrg } from "@workspace/db/types"
 import { VAT_RATE } from "@workspace/domain/orders/commission"
 import type { TrackingAllowance } from "@workspace/domain/subscription"
 import { DEFAULT_PHONE_COUNTRY, fromE164, toE164 } from "@workspace/ui/lib/phone"
 
 import { cn } from "@workspace/ui/lib/utils"
+import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import { SelectItem } from "@workspace/ui/components/select"
 import { Alert, AlertDescription } from "@workspace/ui/components/alert"
@@ -262,8 +263,15 @@ export function LoadSheet({
     const locked = (group: EditableGroup) => editable !== null && !editable.includes(group)
 
     const partners = options?.partners ?? []
-    const carriers = partners.filter((row) => row.type === "carrier")
+    // Appload is pinned in front of the connections by the server, and is a
+    // transporter as far as this picker is concerned: anything that is not a
+    // client can be handed the load
+    const carriers = partners.filter((row) => row.type !== "shipper")
+    // Appload moves loads; it never orders one from a company here, and the
+    // doors refuse it as a client
+    const clients = partners.filter((row) => !isApploadOrg(row.id))
     const pickedCarrier = partners.find((row) => row.id === carrierOrgId)
+    const pickedAppload = isApploadOrg(carrierOrgId)
     // A partner on the portal answers for itself: its own driver, its own yes
     const partnerOnPortal = partner && Boolean(pickedCarrier?.onPortal)
     const asksRig = !partner || !partnerOnPortal
@@ -565,7 +573,7 @@ export function LoadSheet({
                                                 description={t("fields.client-hint")}
                                             >
                                                 <SelectItem value={NONE}>{t("fields.client-none")}</SelectItem>
-                                                {partners.map((row) => (
+                                                {clients.map((row) => (
                                                     <SelectItem key={row.id} value={row.id}>{row.name}</SelectItem>
                                                 ))}
                                                 <SelectItem value={TYPED}>{t("fields.client-typed")}</SelectItem>
@@ -606,11 +614,22 @@ export function LoadSheet({
                                                 isPending={isPending || locked("buy")}
                                                 label={t("fields.partner")}
                                                 placeholder={t("fields.partner-placeholder")}
-                                                description={partnerOnPortal ? t("fields.partner-on-portal") : t("fields.partner-hint")}
+                                                description={pickedAppload
+                                                    ? tl("appload.pickerHint")
+                                                    : partnerOnPortal ? t("fields.partner-on-portal") : t("fields.partner-hint")}
                                             >
                                                 <SelectItem value={NONE}>{t("fields.partner-none")}</SelectItem>
                                                 {carriers.map((row) => (
-                                                    <SelectItem key={row.id} value={row.id}>{row.name}</SelectItem>
+                                                    <SelectItem key={row.id} value={row.id}>
+                                                        {isApploadOrg(row.id) ? (
+                                                            <span className="flex items-center gap-2">
+                                                                {row.name}
+                                                                <Badge variant="outline" className="rounded-full font-normal">
+                                                                    {tl("appload.pickerBadge")}
+                                                                </Badge>
+                                                            </span>
+                                                        ) : row.name}
+                                                    </SelectItem>
                                                 ))}
                                                 <SelectItem value={TYPED}>{t("off-portal-partner")}</SelectItem>
                                             </SelectInput>

@@ -7,6 +7,7 @@ import { useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
 import { StatTile, type StatTileProps } from "@/frontend/pages/dashboard/components/stat-tile"
+import { defaultTab } from "@/frontend/pages/movements/types"
 
 /**
  * The five numbers the day starts with: how big the company's order book is,
@@ -28,6 +29,9 @@ export function PipelineTiles() {
     const { data } = useSuspenseQuery(trpc.analytics.pipeline.queryOptions())
 
     const shipper = session.organization.type === "shipper"
+    // Appload's loads are the company's own: each tile opens the section of
+    // the Orders page that holds them, on the tab this company lands on
+    const tab = defaultTab(session.organization.type)
     const { attention } = data
 
     const onTheRoad: StatTileProps & { key: string } = {
@@ -36,7 +40,7 @@ export function PipelineTiles() {
         label: tiles("on-the-road"),
         value: attention.onTheRoad,
         hint: tiles("on-the-road-hint"),
-        href: { pathname: "/appload/[section]", params: { section: "on-going" } },
+        href: { pathname: "/orders/[section]", params: { section: "in-progress" }, query: { tab } },
     }
 
     const delivered: StatTileProps & { key: string } = {
@@ -45,7 +49,7 @@ export function PipelineTiles() {
         label: tiles("delivered-pending"),
         value: attention.deliveredPending,
         hint: tiles(shipper ? "delivered-pending-hint.shipper" : "delivered-pending-hint.carrier"),
-        href: { pathname: "/appload/[section]", params: { section: "delivered" } },
+        href: { pathname: "/orders/[section]", params: { section: "delivered" }, query: { tab } },
     }
 
     const row: Array<StatTileProps & { key: string }> = shipper
@@ -56,7 +60,7 @@ export function PipelineTiles() {
                 label: t("total.label"),
                 value: data.total,
                 hint: t("total.hint.shipper"),
-                href: { pathname: "/appload/[section]", params: { section: "all" } },
+                href: { pathname: "/orders/[section]", params: { section: "all" }, query: { tab } },
             },
             {
                 key: "awaiting-offers",
@@ -64,7 +68,7 @@ export function PipelineTiles() {
                 label: tiles("awaiting-offers"),
                 value: attention.awaitingOffers,
                 hint: tiles("awaiting-offers-hint"),
-                href: { pathname: "/appload/[section]", params: { section: "requests" } },
+                href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab } },
             },
             {
                 key: "offers-to-review",
@@ -72,7 +76,7 @@ export function PipelineTiles() {
                 label: tiles("offers-to-review"),
                 value: attention.offersToReview,
                 hint: tiles("offers-to-review-hint"),
-                href: { pathname: "/appload/[section]", params: { section: "quoted" } },
+                href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab } },
             },
             onTheRoad,
             delivered,
@@ -84,8 +88,9 @@ export function PipelineTiles() {
                 label: t("total.label"),
                 value: data.total,
                 hint: t("total.hint.carrier"),
-                // A carrier has no "all" page: what it may see is spread over
-                // requests, quotes and the loads it carries
+                // No door: a carrier's Appload book is spread over the
+                // requests it was asked, the quotes it gave and the loads it
+                // carries, which no one section of the Orders page holds
             },
             {
                 key: "new-requests",
@@ -93,7 +98,7 @@ export function PipelineTiles() {
                 label: tiles("new-requests"),
                 value: attention.newRequests,
                 hint: tiles("new-requests-hint"),
-                href: { pathname: "/appload/[section]", params: { section: "requests" } },
+                href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab } },
             },
             {
                 key: "to-dispatch",
@@ -101,7 +106,7 @@ export function PipelineTiles() {
                 label: tiles("to-dispatch"),
                 value: attention.toDispatch,
                 hint: tiles("to-dispatch-hint"),
-                href: { pathname: "/appload/[section]", params: { section: "booked" }, query: { dispatch: "1" } },
+                href: { pathname: "/orders/[section]", params: { section: "booked" }, query: { tab } },
             },
             onTheRoad,
             delivered,

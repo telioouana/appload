@@ -69,6 +69,10 @@ export async function resolveMovementForConversation(
             isNotNull(movement.driverPhone),
             // Only the row that actually holds the truck — see above
             isNull(movement.executionMovementId),
+            // A load linked to an Appload order is that order's pin: the
+            // order attribution above already claimed it, and a second trail
+            // for the same truck would be the same pings counted twice
+            isNull(movement.orderId),
         ))
         .orderBy(desc(movement.createdAt));
 

@@ -22,8 +22,8 @@ import { CardBoundary, CardSkeleton, TilesSkeleton } from "@/frontend/pages/dash
 /**
  * The board the day starts on: the company's own loads first — what is
  * waiting on it, what is on the road — then what needs a decision, where the
- * trucks are, what the year of its own loads is worth, the Appload book
- * beside it, and the loads filed last.
+ * trucks are, what the year of its own loads is worth, where the loads
+ * Appload brokers for it stand, and the loads filed last.
  *
  * The greeting stays put and the bands scroll under it, as on the order
  * details page — the shell is viewport-locked, so this body is the only thing
@@ -119,10 +119,9 @@ export function DashboardView() {
                     </CardBoundary>
                 </div>
 
-                {/* Appload's brokerage, under its own name: its book is one
-                    part of what the company moves, not the whole of it */}
-                <div className="flex shrink-0 flex-col gap-2">
-                    <h2 className="text-muted-foreground px-2 text-xs font-medium tracking-wide uppercase">{t("loads.appload")}</h2>
+                {/* The loads Appload brokers are the company's own now, so
+                    their counts sit with the rest rather than under a name */}
+                <div className="shrink-0">
                     <CardBoundary fallback={<TilesSkeleton />} message={t("error")}>
                         <PipelineTiles />
                     </CardBoundary>

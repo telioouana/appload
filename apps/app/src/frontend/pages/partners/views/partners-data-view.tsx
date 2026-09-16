@@ -3,9 +3,12 @@
 import { useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { useIsFetching, useSuspenseQuery } from "@tanstack/react-query"
+import { IconContainer } from "@tabler/icons-react"
 
+import { APPLOAD_ORG_NAME } from "@workspace/db/types"
 import { useTranslations } from "@workspace/i18n"
 
+import { Badge } from "@workspace/ui/components/badge"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { useTRPC } from "@/backend/api/client"
@@ -70,6 +73,25 @@ export function PartnersDataView({ kind }: { kind: PartnerListKind }) {
 
     return (
         <>
+            {/* Appload moves loads for every company on the portal, so it is
+                on this list without being connected to: there is nothing to
+                ask for and nothing to remove */}
+            {kind === "transporters" && (
+                <section className="bg-card ring-foreground/5 dark:ring-foreground/10 mx-2 mb-3 flex shrink-0 items-center gap-3 rounded-2xl px-5 py-4 ring-1">
+                    <span className="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-xl">
+                        <IconContainer className="size-5" stroke={1.5} />
+                    </span>
+
+                    <div className="flex min-w-0 flex-col">
+                        <span className="flex items-center gap-2 text-sm font-medium">
+                            {APPLOAD_ORG_NAME}
+                            <Badge variant="outline" className="rounded-full font-normal">{t("appload.badge")}</Badge>
+                        </span>
+                        <span className="text-muted-foreground text-xs">{t("appload.description")}</span>
+                    </div>
+                </section>
+            )}
+
             <ListCard>
                 <div className={cn("flex min-h-0 flex-1 flex-col transition-opacity", isRefreshing && "opacity-60")}>
                     {kind === "requests" ? (

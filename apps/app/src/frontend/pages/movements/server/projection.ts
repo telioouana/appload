@@ -184,6 +184,8 @@ export const silentToday = (tenantId: string, now: Date): SQL =>
         eq(movement.organizationId, tenantId),
         inArray(movement.status, IN_PROGRESS_STATUSES),
         isNull(movement.executionMovementId),
+        // A load on an Appload order is pinged from the order, and answers there
+        isNull(movement.orderId),
         sql`exists (
             select 1 from ${movementTrackingRequest} where ${and(
                 eq(movementTrackingRequest.movementId, movement.id),
@@ -204,11 +206,25 @@ const orderBase = (tenantId: string): SQL =>
     or(and(eq(movement.execution, "partner"), eq(movement.organizationId, tenantId)), forMe(tenantId)) as SQL;
 
 /**
- * Loads partners have offered this company and are waiting on. On Trips,
- * because answering one is planning work for its own truck.
+ * Loads partners have offered this company and are waiting on, and the
+ * Appload orders it has been asked to move. On Trips, because answering one
+ * is planning work for its own truck.
+ *
+ * An Appload candidate is this company's OWN row from the day the order was
+ * sent to it — own-fleet, on the order, and without a number of its own until
+ * the order is booked to it — so it is recognised by the order behind it
+ * rather than by a partner having offered it.
  */
 export const received = (tenantId: string): SQL =>
-    and(eq(movement.carrierOrgId, tenantId), eq(movement.status, "offered")) as SQL;
+    or(
+        and(eq(movement.carrierOrgId, tenantId), eq(movement.status, "offered")),
+        and(
+            eq(movement.organizationId, tenantId),
+            isNotNull(movement.orderId),
+            eq(movement.execution, "own-fleet"),
+            inArray(movement.status, ["offered", "prospect"]),
+        ),
+    ) as SQL;
 
 /** Loads this company's own fleet moves. */
 const tripBase = (tenantId: string): SQL =>

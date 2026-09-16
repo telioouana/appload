@@ -19,16 +19,18 @@ configureEdgeStore({
 
 /**
  * No staff resolver: nothing signed in here is staff, so the KYC bucket
- * stays closed apart from what a company may file itself — its signed
- * contract with Appload under its own `organization/<id>/` prefix, and the
- * papers of its own drivers and vehicles. Everything else the portal uploads
- * is order documents (POD, evidence).
+ * stays closed apart from what a company may file itself — its own
+ * verification papers under its own `organization/<id>/` prefix, the signed
+ * contract excepted (Appload files that one after signature), and the papers
+ * of the drivers and vehicles in its own registry. Everything else the portal
+ * uploads is order documents (POD, evidence).
  *
  * Membership is read live from the database rather than from the session
  * cookie's cached `activeOrganizationId` — a just-accepted invitation leaves
  * that stale for up to five minutes, and a removed member must lose the
- * bucket at once. The contract prefix is that same organization id, so the
- * live answer is what decides which company's papers a member can write to.
+ * bucket at once. The organization prefix is that same organization id, so
+ * the live answer is what decides which company's papers a member can write
+ * to.
  */
 const handler = createEdgeStoreHandler(auth, undefined, async (userId) => {
     const [membership] = await db

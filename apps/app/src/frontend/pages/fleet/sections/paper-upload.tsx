@@ -6,7 +6,7 @@ import { IconLoader2, IconUpload, IconX } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
 import { useEdgeStore } from "@workspace/edgestore/client"
-import type { KycDocumentType, KycPage, OrderDispatchSubject } from "@workspace/db/types"
+import type { KycDocumentType, KycPage, KycSubjectKind, KycSubjectType } from "@workspace/db/types"
 
 import { Alert } from "@workspace/ui/components/alert"
 import { Input } from "@workspace/ui/components/input"
@@ -35,7 +35,8 @@ const UPLOAD_ERROR_CODES = [
 type UploadErrorCode = (typeof UPLOAD_ERROR_CODES)[number]
 
 /**
- * Files one paper for a driver or a vehicle, from the portal.
+ * Files one paper for the company itself, a driver or a vehicle, from the
+ * portal.
  *
  * Two-phase commit, as in Admin's own upload: every page lands in EdgeStore
  * as `temporary`, the row is written, and only then are the files confirmed.
@@ -45,11 +46,14 @@ type UploadErrorCode = (typeof UPLOAD_ERROR_CODES)[number]
 export function PaperUpload({
     subjectType,
     subjectId,
+    kind,
     type,
     onUploaded,
 }: {
-    subjectType: OrderDispatchSubject
+    subjectType: KycSubjectType
     subjectId: string
+    /** An organization's kind is its company type, which only its card knows */
+    kind?: KycSubjectKind
     type: KycDocumentType
     onUploaded: () => Promise<void> | void
 }) {
@@ -68,8 +72,10 @@ export function PaperUpload({
     const upload = useMutation(trpc.kyc.upload.mutationOptions())
 
     // The date a reviewer cannot approve the paper without, marked here so
-    // the carrier is asked for it while the document is in front of them
-    const needsExpiry = requiresExpiry(subjectKind(subjectType), type)
+    // the carrier is asked for it while the document is in front of them.
+    // Every subject but an organization is its own kind, so the fallback is
+    // exact wherever the caller has nothing to say
+    const needsExpiry = requiresExpiry(kind ?? subjectKind(subjectType), type)
 
     const pick = (list: FileList | null) => {
         if (!list) return

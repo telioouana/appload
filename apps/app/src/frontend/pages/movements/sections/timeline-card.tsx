@@ -21,7 +21,11 @@ type ActionKey = (typeof ACTION_KEYS)[number]
 const isActionKey = (value: string): value is ActionKey => (ACTION_KEYS as readonly string[]).includes(value)
 
 /** The codes the doors write as a note when a move was carried up or down a chain. */
-const NOTE_CODES = ["EXECUTOR_WITHDREW", "CLIENT_CANCELLED"] as const
+const NOTE_CODES = [
+    "EXECUTOR_WITHDREW", "CLIENT_CANCELLED",
+    // Written on the rows Appload keeps in step with one of its orders
+    "APPLOAD_BOOKED_ELSEWHERE", "APPLOAD_REQUEST_WITHDRAWN",
+] as const
 
 type NoteCode = (typeof NOTE_CODES)[number]
 

@@ -290,9 +290,7 @@
                     "label": "Operations",
                     "dashboard": "Dashboard",
                     "orders": "Orders",
-                    "quotes": "Quotes",
                     "map": "Map",
-                    "appload": "Appload",
                     "notifications": "Notifications"
                 },
                 "company": {
@@ -302,6 +300,7 @@
                     "team": "Team",
                     "partners": "Partners",
                     "my-transporters": "My transporters",
+                    "quotes": "Quotes",
                     "analytics": "Analytics"
                 },
                 "new-load": "New load"
@@ -375,7 +374,6 @@
                 "no-response": "No answer today"
             },
             "loads": {
-                "appload": "Appload",
                 "planning": "My trucks to plan",
                 "planning-hint": "Not booked in yet",
                 "own-road": "Own fleet in progress",
@@ -385,8 +383,7 @@
                 "latest": {
                     "title": "Latest loads",
                     "empty": "You have not filed any loads yet",
-                    "amount": "Amount",
-                    "appload": "Appload"
+                    "amount": "Amount"
                 }
             }
         },
@@ -524,31 +521,6 @@
                     "NOT_ALLOWED": "You are not allowed to change the company's details",
                     "NOT_FOUND": "Your company could not be found",
                     "UNKNOWN": "Could not save. Try again"
-                },
-                "contract": {
-                    "title": "Contract with Appload",
-                    "valid-until": "valid until {date}",
-                    "states": {
-                        "valid": "Valid",
-                        "pending": "Under review",
-                        "missing": "No contract",
-                        "expired": "Expired",
-                        "rejected": "Rejected"
-                    },
-                    "upload": "Upload contract",
-                    "dialog": {
-                        "title": "Upload the signed contract",
-                        "description": "Send the contract you signed with Appload and say how long it is valid for",
-                        "file": "Choose file",
-                        "expires": "Valid until",
-                        "submit": "Send",
-                        "success": "Contract sent. Appload will review it",
-                        "errors": {
-                            "size": "The file cannot be larger than 5 MB",
-                            "type": "Only PDF, JPG or PNG are accepted"
-                        }
-                    },
-                    "hint": "Appload reviews the contract; partners then see whether it is valid."
                 }
             },
             "members": {

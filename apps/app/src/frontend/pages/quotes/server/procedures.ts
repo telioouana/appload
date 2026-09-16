@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq, gte, isNotNull, lt, max, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNotNull, lt, or, sql, type SQL } from "drizzle-orm";
 
 import { order } from "@workspace/db/orders";
 import { organization } from "@workspace/db/users";
@@ -15,7 +15,8 @@ import { notify } from "@workspace/domain/notifications";
 import type { Actor } from "@workspace/domain/orders/actor";
 import { createOrder } from "@workspace/domain/orders/create";
 import { OrderError } from "@workspace/domain/orders/errors";
-import { currentOrderYear, nextOrderId } from "@workspace/domain/orders/order-id";
+import { portalNextOrderId } from "@workspace/domain/orders/next-order-id";
+import { currentOrderYear } from "@workspace/domain/orders/order-id";
 import { CreateOrderSchemaServer } from "@workspace/domain/orders/schemas";
 import type { OrderContext } from "@workspace/domain/orders/transition";
 
@@ -700,20 +701,7 @@ export const quotesRouter = createTRPCRouter({
                 const result = await createOrder(
                     orderContext({ db: ctx.db, tenant }),
                     booked,
-                    {
-                        // The unique (year, seq) index arbitrates concurrent
-                        // creates, so every attempt recomputes the sequence.
-                        // The portal has no logbook to read: the sheet's own
-                        // max is 0 and Admin's sync cron heals the sheet.
-                        nextOrderId: async () => {
-                            const [seq] = await ctx.db
-                                .select({ value: max(order.seq) })
-                                .from(order)
-                                .where(eq(order.year, year));
-
-                            return nextOrderId(seq?.value ?? 0, 0, year);
-                        },
-                    },
+                    { nextOrderId: portalNextOrderId(ctx.db, year) },
                 );
 
                 // The quote now points at what it became, and the order says

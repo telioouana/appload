@@ -15,6 +15,7 @@ import { sendEmail } from "@workspace/auth/email";
 
 import { CreateOrderSchemaServer, UpdateOrderSchemaServer, type CreateOrderForm } from "@/backend/schemas/order";
 
+import { markApploadCandidateQuoted, syncApploadLinks } from "@workspace/domain/appload/link";
 import { OrderError } from "@workspace/domain/orders/errors";
 import { guardOrderGate } from "@workspace/domain/kyc/order-gate";
 import { FOLLOW_UP_STATUSES } from "@workspace/domain/tracking/conversations";
@@ -217,6 +218,13 @@ async function syncDealOffers(
                     eq(orderOffer.status, "pending"),
                 ));
 
+            // The quote moved to another carrier: that one is now the one
+            // waiting on the decision (appload/link.ts), best-effort
+            if (moved) {
+                await markApploadCandidateQuoted(db, { orderPk, carrierOrgId: offer.carrierId })
+                    .catch((error: unknown) => console.error(`appload candidate failed for ${orderPk}`, error));
+            }
+
             if (offer.accepted) acceptedId = offer.id;
             continue;
         }
@@ -233,6 +241,11 @@ async function syncDealOffers(
                 createdBy: userId,
             })
             .returning({ id: orderOffer.id });
+
+        // A price registered on the carrier's behalf answers the request its
+        // linked row is waiting on, the same hook the offers router runs
+        await markApploadCandidateQuoted(db, { orderPk, carrierOrgId: offer.carrierId })
+            .catch((error: unknown) => console.error(`appload candidate failed for ${orderPk}`, error));
 
         if (offer.accepted && inserted) acceptedId = inserted.id;
     }
@@ -574,6 +587,15 @@ export const orderRouter = createTRPCRouter({
                     }).catch((error: unknown) => console.error(`dispatch pack failed for ${input.orderId}`, error));
                 }
 
+                // The two companies' own rows carry the corrected money, rig
+                // and driver. Best-effort like the pack above: an edit made in
+                // Admin never blocks on a tenant's books
+                await syncApploadLinks(ctx.db, {
+                    order: updated,
+                    from: liveStatus(current.status),
+                    dispatch: true,
+                }).catch((error: unknown) => console.error(`appload link sync failed for ${input.orderId}`, error));
+
                 // A driver phone landing on an already booked/tracked order
                 // opens the follow-up thread the booked transition skipped
                 // (or reroutes it to the corrected number). Best-effort,
@@ -804,6 +826,15 @@ export const orderRouter = createTRPCRouter({
 
                     if (ctx.waitUntil) ctx.waitUntil(followUp); else await followUp;
                 }
+
+                // The deal form is the other door onto a booking, so the rows
+                // linked to the order follow it exactly as they follow the
+                // transition. Best-effort (appload/link.ts)
+                await syncApploadLinks(ctx.db, {
+                    order: updated,
+                    from: liveStatus(current.status),
+                    ...(booking && { candidates: "settle" as const }),
+                }).catch((error: unknown) => console.error(`appload link sync failed for ${input.orderId}`, error));
 
                 const loadingBay = await lookupLoadingBay(ctx.db, updated);
 

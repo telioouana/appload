@@ -26,6 +26,10 @@ export const MOVEMENT_ERROR_KEYS = {
     EXECUTOR_DEPARTED: "executorDeparted",
     // The load is on an Appload order, which is where it is moved from
     FOLLOWS_APPLOAD_ORDER: "followsApploadOrder",
+    // Appload takes the load to the market and needs the whole brief first
+    APPLOAD_NEEDS_DETAILS: "apploadNeedsDetails",
+    // Appload moves loads; it is never the company that orders one
+    APPLOAD_NOT_A_CLIENT: "apploadNotAClient",
     // The rig picked from the fleet is not this company's
     DRIVER_NOT_REGISTERED: "rigNotRegistered",
     TRUCK_NOT_REGISTERED: "rigNotRegistered",

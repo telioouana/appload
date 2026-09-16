@@ -108,6 +108,10 @@ export async function runMovementTrackingSlot(db: typeof Database, info: SlotInf
             // links nowhere, and B is the one company that asks him. Ask
             // twice and the driver learns to ignore us
             isNull(movement.executionMovementId),
+            // A load on an Appload order is asked by the order runner, which
+            // is also what bills it: this side would be the second question
+            // on the same phone about the same cargo
+            isNull(movement.orderId),
             pingedByAdmin.length > 0
                 ? notInArray(sql`regexp_replace(${movement.driverPhone}, '\\D', '', 'g')`, pingedByAdmin)
                 : undefined,

@@ -168,6 +168,8 @@
         "open-file": "Open the file",
         "no-preview": "This file cannot be shown here.",
         "review-note": "Appload reviews every document filed here. It stays pending review until someone has looked at it.",
+        "company-title": "Company documents",
+        "contract-note": "Uploaded by Appload after signature",
         "doc-status": {
             "pending": "Pending review",
             "approved": "Approved",
@@ -177,7 +179,14 @@
             "driver-license": "Driving licence",
             "id-card": "ID card",
             "vehicle-booklet": "Vehicle booklet",
-            "proof-of-ownership": "Proof of ownership"
+            "proof-of-ownership": "Proof of ownership",
+            "nuit": "NUIT registration",
+            "commercial-certificate": "Commercial certificate",
+            "alvara": "Transport licence (alvará)",
+            "bank-letter": "Bank letter",
+            "republic-bulletin": "Republic bulletin",
+            "commercial-exercise": "Commercial exercise",
+            "signed-contract": "Signed contract"
         },
         "errors": {
             "LOAD_FAILED": "These documents could not be loaded.",

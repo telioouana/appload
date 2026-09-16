@@ -62,11 +62,28 @@ const KYC_SEGMENT = {
 
 /**
  * The subjects a company keeps in its own registry, and may therefore file
- * papers for from the portal. Spelled out rather than imported, like the
- * contract type below: this package knows nothing of @workspace/db, where
+ * papers for from the portal. Spelled out rather than imported, like
+ * ORGANIZATION_DOCS below: this package knows nothing of @workspace/db, where
  * the same four strings are ORDER_DISPATCH_SUBJECT.
  */
 const FLEET_SUBJECTS = new Set(["driver", "truck", "trailer", "link"])
+
+/**
+ * The papers a company may file for itself from the portal: every type its
+ * own checklist can hold, minus the contract — Appload files that one after
+ * signature. Spelled out rather than imported, like the subjects above: this
+ * package knows nothing of @workspace/domain, where REQUIRED_DOCS names the
+ * same strings for the shipper and carrier kinds.
+ */
+const ORGANIZATION_DOCS = new Set([
+    "nuit",
+    "id-card",
+    "commercial-certificate",
+    "alvara",
+    "bank-letter",
+    "republic-bulletin",
+    "commercial-exercise",
+])
 
 /**
  * Who a fleet subject belongs to, supplied by the host app — this package
@@ -166,9 +183,10 @@ export const edgeStoreRouter = es.router({
      * delete in disguise — refused in `beforeUpload`.
      *
      * Writing is staff plus two narrow cases, both a company filing its own
-     * paperwork from the portal: its signed contract with Appload, under its
-     * own `organization/<its own id>/` prefix, and the papers of a driver or
-     * vehicle in its own registry. The contract's prefix IS its tenancy; a
+     * paperwork from the portal: its own verification papers, under its own
+     * `organization/<its own id>/` prefix — the signed contract excepted,
+     * which Appload files after signature — and the papers of a driver or
+     * vehicle in its own registry. The organization prefix IS its tenancy; a
      * vehicle id is not, so that one is decided by asking the host app who
      * the subject belongs to (`configureEdgeStore`). Either way a member can
      * no more reach another company's papers than a stranger can.
@@ -234,12 +252,11 @@ export const edgeStoreRouter = es.router({
             // cookie next refreshes.
             if (ctx.orgId === null) return false
 
-            // The company's contract with Appload, under its own prefix. The
-            // type is spelled out rather than imported — this package knows
-            // nothing of @workspace/domain, where `CONTRACT_DOC` names the
-            // same string.
+            // The company's own papers, under its own prefix — everything
+            // its checklist holds except the contract, which is Appload's to
+            // file.
             if (input.subjectType === "organization") {
-                return input.docType === "signed-contract" && input.subjectId === ctx.orgId
+                return input.subjectId === ctx.orgId && ORGANIZATION_DOCS.has(input.docType)
             }
 
             // A company's own drivers and vehicles: the papers a carrier

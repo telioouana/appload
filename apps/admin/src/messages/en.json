@@ -466,8 +466,9 @@
             "username": {
                 "label": "Username",
                 "placeholder": "name",
-                "description": "Enter your email name",
-                "error": "Username is required"
+                "description": "Your staff username, @apploadafrica.com is added for you",
+                "error": "Username is required",
+                "invalid": "Enter the username only, without @ or spaces"
             },
             "password": {
                 "label": "Password",

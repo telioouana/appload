@@ -6,7 +6,7 @@ import { kycDocument } from "@workspace/db/kyc-documents";
 import { order } from "@workspace/db/orders";
 import { organization } from "@workspace/db/users";
 import type { db as Database } from "@workspace/db/db";
-import { AddressSchema, isPartnerOrgType, type Address, type OrganizationType } from "@workspace/db/types";
+import { APPLOAD_ORG_ID, AddressSchema, isPartnerOrgType, type Address, type OrganizationType } from "@workspace/db/types";
 import { CONNECTION_RELATION, partnerConnection, type ConnectionRelation, type ConnectionStatus } from "@workspace/db/connections";
 
 import { notify } from "@workspace/domain/notifications";
@@ -181,6 +181,9 @@ export const partnersRouter = createTRPCRouter({
                 .where(and(
                     eq(organization.nuit, input.nuit),
                     ne(organization.id, tenantId),
+                    // Appload carries a NUIT like any company and is nobody's
+                    // connection: it works with every company already
+                    ne(organization.id, APPLOAD_ORG_ID),
                     ne(organization.status, "closed"),
                 ))
                 .limit(1);

@@ -19,6 +19,7 @@ import {
     type MovementDispute,
 } from "@workspace/db/movements";
 import { organization, user } from "@workspace/db/users";
+import { APPLOAD_ORG_ID, APPLOAD_ORG_NAME, isApploadOrg } from "@workspace/db/types";
 
 import { brandedEmail, sendEmail } from "@workspace/auth/email";
 import { isOrgAuthorized, type OrgRole } from "@workspace/auth/organization-permissions";
@@ -29,6 +30,7 @@ import {
     shareLocationPayload,
     trackingTemplateText,
 } from "@workspace/comms/infobip";
+import { offerToAppload } from "@workspace/domain/appload/link";
 import { announce, recordEvent, statusStamps, transitionMovement, type MovementActor } from "@workspace/domain/movements/apply";
 import { nextReference } from "@workspace/domain/movements/counters";
 import { activeDisputeFor, openDispute, resolveDispute } from "@workspace/domain/movements/disputes";
@@ -635,12 +637,17 @@ export const movementsRouter = createTRPCRouter({
         ]);
 
         return {
-            partners: partners.map((row) => ({
-                id: row.id,
-                name: row.name,
-                type: row.type,
-                onPortal: row.portalActivatedAt !== null,
-            })),
+            // Appload is a partner of every company, pinned in front of the
+            // ones it connected to itself: no connection row stands behind it
+            partners: [
+                { id: APPLOAD_ORG_ID, name: APPLOAD_ORG_NAME, type: "appload" as const, onPortal: true },
+                ...partners.map((row) => ({
+                    id: row.id,
+                    name: row.name,
+                    type: row.type,
+                    onPortal: row.portalActivatedAt !== null,
+                })),
+            ],
             drivers: drivers.map((row) => ({ id: row.id, name: row.name, phone: row.phone ?? null })),
             trucks: trucks.map((row) => ({ id: row.id, plate: row.plate })),
         };
@@ -685,11 +692,18 @@ export const movementsRouter = createTRPCRouter({
                 throw new TRPCError({ code: "BAD_REQUEST", message: "OWN_FLEET_HAS_NO_CARRIER" });
             }
 
+            // Appload moves loads; it never orders one from a company here
+            if (isApploadOrg(input.clientOrgId)) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "APPLOAD_NOT_A_CLIENT" });
+            }
+
             if (input.clientOrgId && !(await isConnected(ctx.db, tenantId, input.clientOrgId))) {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "PARTNER_NOT_CONNECTED" });
             }
 
-            if (partner && input.carrierOrgId) await assertExecutor(ctx.db, tenantId, input.carrierOrgId);
+            if (partner && input.carrierOrgId) {
+                await assertExecutor(ctx.db, tenantId, input.carrierOrgId);
+            }
 
             const executorOnPortal = partner && await isOnPortal(ctx.db, input.carrierOrgId ?? null);
 
@@ -875,7 +889,13 @@ export const movementsRouter = createTRPCRouter({
                 throw new TRPCError({ code: "BAD_REQUEST", message: "FIELD_LOCKED" });
             }
 
-            if (input.carrierOrgId) await assertExecutor(ctx.db, tenantId, input.carrierOrgId);
+            if (input.carrierOrgId) {
+                await assertExecutor(ctx.db, tenantId, input.carrierOrgId);
+            }
+
+            if (isApploadOrg(input.clientOrgId)) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "APPLOAD_NOT_A_CLIENT" });
+            }
 
             if (input.clientOrgId && !(await isConnected(ctx.db, tenantId, input.clientOrgId))) {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "PARTNER_NOT_CONNECTED" });
@@ -1041,12 +1061,22 @@ export const movementsRouter = createTRPCRouter({
             return { id: updated.id, status: updated.status, version: updated.version };
         }),
 
-    /** Places a load with a partner that can answer on the portal. */
+    /**
+     * Places a load with a partner that can answer on the portal — or with
+     * Appload, which answers by taking the load on as an order of its own
+     * (appload/link.ts) while this company keeps its row.
+     */
     offer: tenantProcedure
         .input(OfferMovementBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string; version: number }> => {
             assertCan(ctx.tenant.role, "order", "create");
-            const updated = await offerMovement(ctx.db, actorOf(ctx.tenant), input);
+
+            const row = await loadOwn(ctx.db, input.id, ctx.tenant.organizationId);
+
+            const updated = isApploadOrg(row.carrierOrgId)
+                ? await offerToAppload(ctx.db, actorOf(ctx.tenant), input)
+                : await offerMovement(ctx.db, actorOf(ctx.tenant), input);
+
             return { id: updated.id, version: updated.version };
         }),
 

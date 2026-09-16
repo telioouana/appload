@@ -109,7 +109,7 @@ export type NotificationLink =
     | { pathname: "/appload/details/[orderId]"; params: { orderId: string } }
     | { pathname: "/orders/load/[loadId]"; params: { loadId: string } }
     | { pathname: "/partners"; query: { id: string } }
-    | { pathname: "/appload/quotes"; query: { id: string } }
+    | { pathname: "/quotes"; query: { id: string } }
     | { pathname: "/settings" };
 
 /**
@@ -123,6 +123,9 @@ export function notificationTarget(
     entityId: string | null,
 ): { link: NotificationLink; path: string } | null {
     switch (entityType) {
+        // An Appload order has no page of its own any more: the address is a
+        // redirect to the reader's own load, so the rows already written and
+        // the emails already sent still land somewhere
         case "order":
             return entityId
                 ? { link: { pathname: "/appload/details/[orderId]", params: { orderId: entityId } }, path: `/appload/details/${encodeURIComponent(entityId)}` }
@@ -137,7 +140,7 @@ export function notificationTarget(
                 : null;
         case "quote":
             return entityId
-                ? { link: { pathname: "/appload/quotes", query: { id: entityId } }, path: `/appload/quotes?id=${encodeURIComponent(entityId)}` }
+                ? { link: { pathname: "/quotes", query: { id: entityId } }, path: `/quotes?id=${encodeURIComponent(entityId)}` }
                 : null;
         case "subscription":
             return { link: { pathname: "/settings" }, path: "/settings" };

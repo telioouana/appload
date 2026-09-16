@@ -16,6 +16,7 @@ import { and, eq, sql } from "drizzle-orm";
 
 import type { db as Database } from "@workspace/db/db";
 import { movement, type Movement } from "@workspace/db/movements";
+import { isApploadOrg } from "@workspace/db/types";
 import { organization } from "@workspace/db/users";
 
 import { recordEvent, type MovementActor } from "@workspace/domain/movements/apply";
@@ -29,7 +30,7 @@ import { place } from "@workspace/domain/tracking/slot";
 
 type Db = typeof Database;
 
-async function loadOwn(db: Db, actor: MovementActor, id: string, expectedVersion: number): Promise<Movement> {
+export async function loadOwn(db: Db, actor: MovementActor, id: string, expectedVersion: number): Promise<Movement> {
     const [row] = await db
         .select()
         .from(movement)
@@ -59,6 +60,10 @@ function assertUnlinked(row: Movement): void {
  * has, never on anything the page says about it.
  */
 export async function assertExecutor(db: Db, ownerOrgId: string, carrierOrgId: string): Promise<void> {
+    // Appload is every company's partner and nobody's connection: it is not a
+    // transporter row and there is no invitation to accept
+    if (isApploadOrg(carrierOrgId)) return;
+
     const [row] = await db
         .select({ type: organization.type })
         .from(organization)
