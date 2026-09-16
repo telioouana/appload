@@ -10,7 +10,7 @@ import type { ThreadSubject } from "@workspace/db/types";
 
 import type { Actor } from "@workspace/domain/orders/actor";
 import { isExecutorOf } from "@workspace/domain/movements/policy";
-import { movementRef } from "@workspace/domain/movements/refs";
+import { counterpartyRef, movementRef } from "@workspace/domain/movements/refs";
 
 /**
  * Who a thread belongs to, read from the subject row rather than from the
@@ -61,16 +61,18 @@ const selectMovement = (db: typeof Database, where: SQL) =>
     db
         .select({
             id: movement.id,
-            seq: movement.seq,
-            execution: movement.execution,
+            reference: movement.reference,
+            requestReference: movement.requestReference,
+            clientReference: movement.clientReference,
             status: movement.status,
             organizationId: movement.organizationId,
             clientOrgId: movement.clientOrgId,
             carrierOrgId: movement.carrierOrgId,
             executionMovementId: movement.executionMovementId,
             linkedId: linked.id,
-            linkedSeq: linked.seq,
-            linkedExecution: linked.execution,
+            linkedReference: linked.reference,
+            linkedRequestReference: linked.requestReference,
+            linkedClientReference: linked.clientReference,
         })
         .from(movement)
         .leftJoin(linked, eq(linked.id, movement.executionMovementId))
@@ -147,12 +149,18 @@ export async function resolveThreadSubject(
             orgIds: carrierOrgId ? [row.organizationId, carrierOrgId] : [row.organizationId],
             staff: false,
         },
-        label: movementRef(row.seq, row.execution),
-        executor: carrierOrgId && row.linkedId && row.linkedSeq !== null && row.linkedExecution
+        // One label for a room both companies read: once a partner is in it,
+        // the name the owner's own client gave the load is not what names it
+        label: carrierOrgId ? counterpartyRef(row) : movementRef(row),
+        executor: carrierOrgId && row.linkedId
             ? {
                 organizationId: carrierOrgId,
                 subjectId: row.linkedId,
-                label: movementRef(row.linkedSeq, row.linkedExecution),
+                label: movementRef({
+                    reference: row.linkedReference,
+                    requestReference: row.linkedRequestReference,
+                    clientReference: row.linkedClientReference,
+                }),
             }
             : null,
     };

@@ -34,13 +34,13 @@ export function OverviewMap({
 }: {
     entities: MapEntity[]
     selected: string | null
-    onSelect: (ref: string) => void
+    onSelect: (id: string) => void
     onClose: () => void
 }) {
     const t = useTranslations("App.map.detail")
 
     const selectedEntity = useMemo(
-        () => entities.find((entity) => entity.ref === selected) ?? null,
+        () => entities.find((entity) => entity.id === selected) ?? null,
         [entities, selected],
     )
 
@@ -65,7 +65,7 @@ export function OverviewMap({
                 would sit over the pins around the truck just opened. */}
             {selectedEntity && (
                 <MapSelectedCard
-                    key={selectedEntity.ref}
+                    key={selectedEntity.id}
                     entity={selectedEntity}
                     onClose={onClose}
                     className="absolute inset-x-2 bottom-2 z-20"

@@ -20,7 +20,7 @@ import { organization } from "@workspace/db/users";
 
 import { recordEvent, type MovementActor } from "@workspace/domain/movements/apply";
 import { isConnected, isOnPortal, organizationName } from "@workspace/domain/movements/link";
-import { movementRef } from "@workspace/domain/movements/refs";
+import { counterpartyRef, movementRef } from "@workspace/domain/movements/refs";
 import { notify } from "@workspace/domain/notifications";
 import { assertTrackingAllowance } from "@workspace/domain/subscription";
 import { place } from "@workspace/domain/tracking/slot";
@@ -132,7 +132,9 @@ export async function offerMovement(
         entityType: "movement",
         entityId: row.id,
         params: {
-            ref: movementRef(row.seq, row.execution),
+            // The partner is offered the load, not the name the owner's own
+            // client gave it
+            ref: counterpartyRef(row),
             organizationName: await organizationName(db, actor.organizationId),
             origin: place(row.origin),
             destination: place(row.destination),
@@ -185,7 +187,7 @@ export async function withdrawOffer(
             entityType: "movement",
             entityId: row.id,
             params: {
-                ref: movementRef(row.seq, row.execution),
+                ref: counterpartyRef(row),
                 organizationName: await organizationName(db, actor.organizationId),
                 origin: place(row.origin),
                 destination: place(row.destination),
@@ -235,7 +237,7 @@ export async function respondToOffer(
 
     const note = input.note?.trim() || null;
     const now = new Date();
-    const ref = movementRef(row.seq, row.execution);
+    const ref = movementRef(row);
     const executorName = await organizationName(db, actor.organizationId);
     const common = { origin: place(row.origin), destination: place(row.destination) };
 
@@ -283,8 +285,16 @@ export async function respondToOffer(
     const stamp = now.toISOString();
 
     // Every value in the SELECT list is cast: an INSERT ... SELECT gives a
-    // parameter no target column to infer its type from
-    const claimed = await db.execute<{ id: string; seq: number }>(sql`
+    // parameter no target column to infer its type from.
+    // The executor's `client_reference` is the owner's reference, falling
+    // back to the old global "ORD-<seq>" on a row the renumbering has not
+    // reached yet
+    const claimed = await db.execute<{
+        id: string;
+        reference: string | null;
+        request_reference: string | null;
+        client_reference: string | null;
+    }>(sql`
         with claimed as (
             update ${movement}
             set status = 'scheduled',
@@ -309,7 +319,7 @@ export async function respondToOffer(
         )
         select
             ${executorId}::text, ${actor.organizationId}::text, 'own-fleet', 'scheduled',
-            claimed.organization_id, 'ORD-' || claimed.seq,
+            claimed.organization_id, coalesce(claimed.reference, 'ORD-' || claimed.seq),
             claimed.origin, claimed.destination, claimed.route, claimed.cargo_description,
             claimed.category, claimed.weight, claimed.weight_unit,
             claimed.expected_loading_date, claimed.expected_delivery_at,
@@ -317,7 +327,7 @@ export async function respondToOffer(
             claimed.buy_fiscal_regime, 'pending'::payment_status_enum,
             true, 1, ${actor.userId}::text, ${stamp}::timestamp, ${stamp}::timestamp
         from claimed
-        returning id, seq
+        returning id, reference, request_reference, client_reference
     `);
 
     const created = claimed.rows[0];
@@ -359,7 +369,11 @@ export async function respondToOffer(
     return {
         movement: updated,
         executorMovementId: created.id,
-        executorRef: movementRef(Number(created.seq), "own-fleet"),
+        executorRef: movementRef({
+            reference: created.reference,
+            requestReference: created.request_reference,
+            clientReference: created.client_reference,
+        }),
     };
 }
 

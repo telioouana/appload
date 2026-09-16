@@ -9,7 +9,7 @@
 
 import { and, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 
-import { movement, movementLocation, movementTrackingRequest, type MovementExecution } from "@workspace/db/movements";
+import { movement, movementLocation, movementTrackingRequest } from "@workspace/db/movements";
 import type { db as Database } from "@workspace/db/db";
 import type { DeliveryReport } from "@workspace/comms/infobip";
 import { normalizePhone } from "@workspace/comms/phone";
@@ -42,12 +42,19 @@ import { IN_PROGRESS_STATUSES } from "@workspace/domain/movements/status";
 export async function resolveMovementForConversation(
     db: typeof Database,
     conversation: { conversationId: string; driverPhone: string },
-): Promise<{ id: string; seq: number; execution: MovementExecution; organizationId: string } | null> {
+): Promise<{
+    id: string;
+    reference: string | null;
+    requestReference: string | null;
+    clientReference: string | null;
+    organizationId: string;
+} | null> {
     const running = await db
         .select({
             id: movement.id,
-            seq: movement.seq,
-            execution: movement.execution,
+            reference: movement.reference,
+            requestReference: movement.requestReference,
+            clientReference: movement.clientReference,
             organizationId: movement.organizationId,
             conversationId: movement.conversationId,
             driverPhone: movement.driverPhone,
@@ -101,8 +108,9 @@ export async function resolveMovementForConversation(
     return active
         ? {
             id: active.id,
-            seq: active.seq,
-            execution: active.execution,
+            reference: active.reference,
+            requestReference: active.requestReference,
+            clientReference: active.clientReference,
             organizationId: active.organizationId,
         }
         : null;
@@ -110,8 +118,8 @@ export async function resolveMovementForConversation(
 
 /**
  * Stores one ping against a movement. `movementId` is the movement's uuid PK
- * (what resolveMovementForConversation returns as `id`), not its "TRP-<seq>"
- * reference.
+ * (what resolveMovementForConversation returns as `id`), not the reference
+ * the company knows it by.
  *
  * Idempotent per chat message for the same reason the order trail is
  * (locations.ts): the unique chatMessageId turns a replay into a no-op and

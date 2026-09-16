@@ -30,6 +30,7 @@ import { neon } from "@neondatabase/serverless";
 
 import { loadEnv, googleAccessToken, getValues, sheetsGet } from "./google-sheets.mjs";
 import * as map from "./logbook-mapping.mjs";
+import { seedAppload } from "./seed-appload-organization.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CACHE_PATH = path.join(__dirname, "logbook-geocode-cache.json");
@@ -788,6 +789,7 @@ await q(`
         order_loading_check, order_dispatch_document, order_dispatch,
         movement_event, movement_cost, movement_document,
         movement_location, movement_tracking_request, movement_route, movement,
+        organization_counter,
         order_request, quote, partner_connection, organization_claim, subscription_usage,
         order_document, order_history, order_offer, sheet_sync, tracking_request,
         chat_message, chat_conversation, "order",
@@ -1060,6 +1062,13 @@ function report() {
 }
 
 report();
+
+/**
+ * The wipe above truncates `organization`, which takes Appload's own row with
+ * it — and a load handed to Appload names that row. Put it back.
+ */
+console.log("\nre-seeding the Appload organization...");
+await seedAppload(sql);
 
 const [{ n: orderCount }] = await q(`SELECT count(*)::int AS n FROM "order"`);
 const [{ n: orgCount }] = await q(`SELECT count(*)::int AS n FROM organization`);

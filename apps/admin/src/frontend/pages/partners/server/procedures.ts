@@ -9,7 +9,7 @@ import { chatConversation, chatMessage } from "@workspace/db/chats";
 import { kycDocument } from "@workspace/db/kyc-documents";
 import { CLAIM_STATUS, organizationClaim } from "@workspace/db/connections";
 import { notificationCursor } from "@workspace/db/notifications";
-import { KYC_STATUS, OWNERSHIP_STATUS, type KycStatus, type KycSubjectType, type LoadingBay } from "@workspace/db/types";
+import { KYC_STATUS, OWNERSHIP_STATUS, PARTNER_ORG_TYPE, isPartnerOrgType, type KycStatus, type KycSubjectType, type LoadingBay } from "@workspace/db/types";
 import type { db as Database } from "@workspace/db/db";
 import { brandedEmail, sendEmail } from "@workspace/auth/email";
 import { createTRPCRouter } from "@workspace/trpc/init";
@@ -558,8 +558,11 @@ async function listOrganizations(db: Db, input: OrganizationsInput, limit: numbe
 
         return {
             ...row,
+            // One type at a time — `organizationConditions` filters on it,
+            // and the column itself now also admits Appload's own row
+            type: input.type,
             city: city(row.physicalAddress),
-            progress: docProgress(subjectKind("organization", row.type), documents, on),
+            progress: docProgress(subjectKind("organization", input.type), documents, on),
             contract: row.type === "carrier" ? contractState(documents, on) : null,
             nextExpiry: nextExpiry(documents),
             activeOrders: aggregate?.active ?? 0,
@@ -1165,7 +1168,11 @@ export const partnersRouter = createTRPCRouter({
                 .from(organization)
                 .where(eq(organization.id, input.id));
 
-            if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+            // Appload is a partner on the platform, not one of its partners:
+            // this panel is written for a shipper or a carrier and nothing else
+            if (!row || !isPartnerOrgType(row.type)) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+            }
 
             const party = row.type === "shipper" ? order.shipperId : order.carrierId;
             const paymentStatus = row.type === "shipper" ? order.shipperPaymentStatus : order.carrierPaymentStatus;
@@ -1193,6 +1200,9 @@ export const partnersRouter = createTRPCRouter({
 
             return {
                 ...profile,
+                // The guard above narrowed the reference, not the rest of the
+                // row: the column itself also admits Appload's own type
+                type: row.type,
                 representee,
                 city: city(row.physicalAddress),
                 progress: docProgress(subjectKind("organization", row.type), documents, on),
@@ -1500,11 +1510,16 @@ export const partnersRouter = createTRPCRouter({
                         physicalAddress: organization.physicalAddress,
                     })
                     .from(organization)
-                    .where(or(
-                        ilike(organization.name, term),
-                        ilike(organization.nuit, term),
-                        ilike(organization.email, term),
-                        ilike(organization.phoneNumber, term),
+                    // Shippers and carriers only: the palette's hits open a
+                    // partner profile, and Appload's own row has none
+                    .where(and(
+                        inArray(organization.type, [...PARTNER_ORG_TYPE]),
+                        or(
+                            ilike(organization.name, term),
+                            ilike(organization.nuit, term),
+                            ilike(organization.email, term),
+                            ilike(organization.phoneNumber, term),
+                        ),
                     ))
                     .orderBy(asc(organization.name))
                     .limit(6),

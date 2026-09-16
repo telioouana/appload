@@ -493,7 +493,7 @@ async function announceDispute(
             entityType: "movement",
             entityId: row.id,
             params: {
-                ref: movementRef(row.seq, row.execution),
+                ref: movementRef(row),
                 origin: place(row.origin),
                 destination: place(row.destination),
                 reason: dispute.reason,
@@ -781,7 +781,7 @@ export const movementsRouter = createTRPCRouter({
                 await announce(ctx.db, created, { from: null, actorOrgId: tenantId, notifyOwner: false, notifyExecutor: false });
             }
 
-            return { id: created.id, ref: movementRef(created.seq, created.execution) };
+            return { id: created.id, ref: movementRef(created) };
         }),
 
     /**
@@ -1064,7 +1064,7 @@ export const movementsRouter = createTRPCRouter({
             }
 
             const updated = await convertMovement(ctx.db, actorOf(ctx.tenant), input);
-            return { id: updated.id, ref: movementRef(updated.seq, updated.execution), version: updated.version };
+            return { id: updated.id, ref: movementRef(updated), version: updated.version };
         }),
 
     /**
@@ -1296,7 +1296,7 @@ export const movementsRouter = createTRPCRouter({
                         email: false,
                         entityType: "movement",
                         entityId: row.id,
-                        params: { ref: movementRef(row.seq, row.execution), type: input.type },
+                        params: { ref: movementRef(row), type: input.type },
                     });
                 }
 
@@ -1493,7 +1493,7 @@ export const movementsRouter = createTRPCRouter({
 
             if (!allowed) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "RATE_LIMITED" });
 
-            const ref = movementRef(row.seq, row.execution);
+            const ref = movementRef(row);
             const names = await loadNames(ctx.db, [row.organizationId]);
             const tenantName = names.get(row.organizationId) ?? "";
 
@@ -1666,7 +1666,7 @@ export const movementsRouter = createTRPCRouter({
             const { row } = await loadVisible(ctx.db, input.id, ctx.tenant.organizationId);
             // The map contract names its subject `orderId`; the load's own
             // reference is what goes in it, and nothing reads it but a label
-            const ref = movementRef(row.seq, row.execution);
+            const ref = movementRef(row);
 
             const [cached] = await ctx.db
                 .select()
@@ -1771,7 +1771,7 @@ export const movementsRouter = createTRPCRouter({
                     .where(and(eq(movement.id, row.id), eq(movement.organizationId, tenantId)));
             }
 
-            const ref = movementRef(row.seq, row.execution);
+            const ref = movementRef(row);
             const origin = place(row.origin);
             const destination = place(row.destination);
             const open = await hasOpenSession(ctx.db, conversation.id);

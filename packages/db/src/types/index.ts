@@ -105,6 +105,36 @@ export type KycStatus = (typeof KYC_STATUS)[number]
 export type RiskLevel = (typeof RISK_LEVEL)[number]
 export type OwnershipStatus = (typeof OWNERSHIP_STATUS)[number]
 
+// Who an organization is on the platform. The two partner types are the only
+// ones a portal account may belong to; "appload" is the brokerage's own row,
+// seeded with a fixed id so a load handed to Appload names an organization
+// like any other partner. Text + TS const, never a pg enum: widening the
+// column must not need an ALTER TYPE on the shared database.
+export const PARTNER_ORG_TYPE = ["shipper", "carrier"] as const
+export const ORGANIZATION_TYPE = [...PARTNER_ORG_TYPE, "appload"] as const
+
+export type PartnerOrgType = (typeof PARTNER_ORG_TYPE)[number]
+export type OrganizationType = (typeof ORGANIZATION_TYPE)[number]
+
+/** Whether this organization type is one a portal tenant may be. */
+export const isPartnerOrgType = (type: string | null | undefined): type is PartnerOrgType =>
+    type === "shipper" || type === "carrier"
+
+/** The brokerage's own organization row — one fixed id, never a member. */
+export const APPLOAD_ORG_ID = "appload"
+export const APPLOAD_ORG_NAME = "Appload"
+
+/** Whether this organization id is Appload's own row. */
+export const isApploadOrg = (organizationId: string | null | undefined): boolean =>
+    organizationId === APPLOAD_ORG_ID
+
+// What a per-company movement reference counts. "REQ" is a load still
+// collecting offers, "ORD" the one it becomes once somebody is committed to
+// moving it; both are numbered per organization, per kind, per year.
+export const REFERENCE_KIND = ["REQ", "ORD"] as const
+
+export type ReferenceKind = (typeof REFERENCE_KIND)[number]
+
 // A document is one logical paper; its scans are the pages. Mirrors the
 // Urls shape already used across the schema, plus the file metadata the
 // review UI needs to render a preview without a HEAD request.

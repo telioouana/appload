@@ -335,7 +335,7 @@ async function raise(
         .where(and(eq(member.organizationId, row.organizationId), eq(member.role, "owner")));
 
     const params = {
-        ref: movementRef(row.seq, row.execution),
+        ref: movementRef(row),
         driverName: row.driverName,
         issue,
         streak,

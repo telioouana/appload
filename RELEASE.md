@@ -172,11 +172,48 @@ matching ref clause before the first push, or Vercel will refuse to save
      `node packages/db/scripts/create-fx-daily-rate-table.mjs` and then the
      same seed.
 
+   - `0022_appload_partner` — **two steps, both before the portal deploy.**
+
+     First, Appload's own `organization` row: a load handed to Appload names
+     an organization like any other partner, and without the row the portal
+     cannot offer it. Production passes Claire's real identity — the NUIT,
+     the email and the phone number are unique columns, and the NUIT is on
+     every invoice. Dry-run first, read the row, then write:
+
+     ```bash
+     DATABASE_URL=<prod url> node packages/db/scripts/seed-appload-organization.mjs \
+         --nuit=<9 digits> --email=<address> --phone=<+258…>
+     DATABASE_URL=<prod url> node packages/db/scripts/seed-appload-organization.mjs \
+         --nuit=<9 digits> --email=<address> --phone=<+258…> --yes
+     ```
+
+     It never creates a `member`: nobody signs in as Appload, staff work in
+     the admin. Safe to re-run — it is an upsert on the fixed id `appload`.
+
+     Second, the references. They used to be one global sequence ("TRP-41" /
+     "ORD-41") and are now per company, per year ("ORD-0001-26"), read from
+     the new columns — so every existing load needs its number before the
+     portal shows it. Dry-run first, read the per-company table, then write:
+
+     ```bash
+     DATABASE_URL=<prod url> node packages/db/scripts/renumber-movement-references.mjs
+     DATABASE_URL=<prod url> node packages/db/scripts/renumber-movement-references.mjs --yes
+     ```
+
+     Each company's loads are walked oldest first: own-fleet and committed
+     partner loads take an `ORD`, everything else a `REQ`;
+     `organization_counter` is then set to the highest number handed out so
+     the app continues the run, and executor rows carrying the old global
+     "ORD-41" of their parent are repointed at that parent's new reference.
+     Run it **once**, after the migration and before the portal deploy; it
+     skips rows that already have a reference, so a re-run is a no-op.
+
 ### Partner portal
 
 The portal reads and writes the admin's database — one database, two apps.
 Its migrations go in with the same command as everything else, in one
-run — `0014 → 0015 → 0016 → 0017 → 0018 → 0019 → 0020` back to back:
+run — `0014 → 0015 → 0016 → 0017 → 0018 → 0019 → 0020 → 0021 → 0022`
+back to back:
 
 ```bash
 DATABASE_URL=<prod url> pnpm --filter @workspace/db db:migrate
@@ -254,8 +291,18 @@ then push `prod/admin` and the portal back to back.
   looks at. Needs `GOOGLE_MAPS_API_KEY` with the Geocoding API enabled — on
   both apps' Vercel projects, since the portal's overview fills labels too.
   Dev gets it from `node packages/db/scripts/add-location-place-label.mjs`.
+- `0022_appload_partner` — Appload becomes a partner like any transporter,
+  and every company numbers its own loads. `movement` gains `order_id` (the
+  Appload order a row is the tenant's side of, FK on `order`, set null),
+  `reference` and `request_reference`, with an index on `order_id`, one
+  partial unique per (order, organization) over the live rows and one per
+  (organization, reference); `organization_counter` is new — the last
+  reference number handed out per (organization, kind, year). Purely
+  additive: `organization.type` is a text column, so admitting the new
+  `appload` value is no DDL at all. Two data steps follow it, below. Dev gets
+  it from `node packages/db/scripts/add-appload-partner-columns.mjs`.
 
-The shared **dev** database got all seven from the idempotent scripts
+The shared **dev** database got all nine from the idempotent scripts
 instead — `node packages/db/scripts/create-portal-tables.mjs`,
 `node packages/db/scripts/add-portal-columns.mjs`,
 `node packages/db/scripts/add-subscription-usage.mjs`, then
@@ -264,9 +311,11 @@ instead — `node packages/db/scripts/create-portal-tables.mjs`,
 `create-movement-tables.mjs` instead), then
 `node packages/db/scripts/add-movement-document-approval.mjs`,
 `node packages/db/scripts/create-movement-tracking-alert.mjs`,
-`node packages/db/scripts/add-movement-chain-disputes.mjs` and finally
-`node packages/db/scripts/add-location-place-label.mjs`. Same rule
-as every other table: scripts on dev, `db:migrate` on production,
+`node packages/db/scripts/add-movement-chain-disputes.mjs`,
+`node packages/db/scripts/add-location-place-label.mjs`,
+`node packages/db/scripts/create-dispatch-check-thread-tables.mjs` and
+finally `node packages/db/scripts/add-appload-partner-columns.mjs --yes`.
+Same rule as every other table: scripts on dev, `db:migrate` on production,
 **never both** against one database.
 
 ## 2. Vercel — project + environment

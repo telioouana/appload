@@ -1,6 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 
 import { member, organization, user } from "@workspace/db/users";
+import { isPartnerOrgType, type PartnerOrgType } from "@workspace/db/types";
 import type { db as Database } from "@workspace/db/db";
 import { PLAN_QUOTA, planIsActive, type SubscriptionPlan } from "@workspace/domain/subscription";
 
@@ -11,7 +12,9 @@ export type TenantReason =
     | "ORGANIZATION_CLOSED"
     | "BANNED";
 
-export type OrgType = "shipper" | "carrier";
+// The portal is partner-only, so a tenant's organization is never Appload's
+// own row: the gate below denies a membership of any other type
+export type OrgType = PartnerOrgType;
 export type OrgStatus = "pending" | "active" | "closed";
 export type TenantRole = "owner" | "admin" | "member";
 
@@ -121,7 +124,8 @@ export async function getTenantGates(
     const resolved = {
         userId: params.userId,
         organizationId: membership?.organizationId ?? null,
-        orgType: membership?.orgType ?? null,
+        // Anything but shipper|carrier is not a tenant at all — the deny below
+        orgType: membership && isPartnerOrgType(membership.orgType) ? membership.orgType : null,
         orgStatus: membership?.orgStatus ?? null,
         role: membership ? role : null,
         emailVerified,
@@ -140,6 +144,10 @@ export async function getTenantGates(
     if (account.banned === true || account.status === "closed") return deny("BANNED");
     if (!emailVerified) return deny("EMAIL_UNVERIFIED");
     if (!membership) return deny("NO_ORGANIZATION");
+    // Appload's own organization is a partner on the platform, not a tenant of
+    // it: it never has members, and a stray one is no more a portal account
+    // than a staff login is
+    if (!isPartnerOrgType(membership.orgType)) return deny("NOT_PARTNER_ACCOUNT");
     if (membership.orgStatus === "closed") return deny("ORGANIZATION_CLOSED");
 
     return {

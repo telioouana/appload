@@ -6,6 +6,7 @@ import { and, asc, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 import { partnerConnection } from "@workspace/db/connections";
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import { movement } from "@workspace/db/movements";
+import { isPartnerOrgType } from "@workspace/db/types";
 import { organization, user } from "@workspace/db/users";
 
 import { movementRole } from "@workspace/domain/movements/policy";
@@ -15,7 +16,7 @@ import { tenantProcedure } from "@workspace/trpc/tenant";
 
 import type { VehicleKind } from "@/frontend/pages/fleet/types";
 import { sectionPredicate, toMovementRow, type PingState } from "@/frontend/pages/movements/server/projection";
-import type { GlobalSearch, SearchLoad, SearchVehicle } from "@/frontend/pages/search/types";
+import type { GlobalSearch, SearchLoad, SearchPartner, SearchVehicle } from "@/frontend/pages/search/types";
 
 // Escape LIKE wildcards so what the user typed matches literally
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
@@ -166,7 +167,9 @@ export const searchRouter = createTRPCRouter({
 
             return {
                 loads,
-                partners,
+                // Appload's own row is on the platform but is nobody's
+                // partner; the column admits it, an accepted connection does not
+                partners: partners.filter((row): row is SearchPartner => isPartnerOrgType(row.type)),
                 drivers,
                 vehicles: [...trucks, ...trailers, ...links].slice(0, HITS),
             };

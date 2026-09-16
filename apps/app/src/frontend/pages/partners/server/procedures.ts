@@ -6,7 +6,7 @@ import { kycDocument } from "@workspace/db/kyc-documents";
 import { order } from "@workspace/db/orders";
 import { organization } from "@workspace/db/users";
 import type { db as Database } from "@workspace/db/db";
-import { AddressSchema, type Address } from "@workspace/db/types";
+import { AddressSchema, isPartnerOrgType, type Address, type OrganizationType } from "@workspace/db/types";
 import { CONNECTION_RELATION, partnerConnection, type ConnectionRelation, type ConnectionStatus } from "@workspace/db/connections";
 
 import { notify } from "@workspace/domain/notifications";
@@ -152,7 +152,7 @@ export const partnersRouter = createTRPCRouter({
                 .orderBy(asc(organization.name))
                 .limit(10);
 
-            return rows.map((row) => toCandidate(row, tenantId));
+            return rows.flatMap((row) => toCandidate(row, tenantId) ?? []);
         }),
 
     /**
@@ -634,23 +634,29 @@ export const partnersRouter = createTRPCRouter({
             ]);
 
             return {
-                items: rows.map((row) => ({
-                    id: row.id,
-                    relation: row.relation,
-                    status: row.status,
-                    direction: row.requesterOrgId === tenantId ? "outgoing" : "incoming",
-                    message: row.message,
-                    respondedAt: row.respondedAt,
-                    createdAt: row.createdAt,
-                    partner: {
-                        id: row.partnerId,
-                        name: row.partnerName,
-                        type: row.partnerType,
-                        province: row.partnerAddress?.state ?? null,
-                        kycStatus: row.partnerKycStatus,
-                    },
-                    sharedOrders: row.sharedOrders,
-                })),
+                items: rows.flatMap((row) => {
+                    // Appload is connected to nobody, so it is never one of
+                    // these counterparties — the widened column still admits it
+                    if (!isPartnerOrgType(row.partnerType)) return [];
+
+                    return [{
+                        id: row.id,
+                        relation: row.relation,
+                        status: row.status,
+                        direction: row.requesterOrgId === tenantId ? "outgoing" : "incoming",
+                        message: row.message,
+                        respondedAt: row.respondedAt,
+                        createdAt: row.createdAt,
+                        partner: {
+                            id: row.partnerId,
+                            name: row.partnerName,
+                            type: row.partnerType,
+                            province: row.partnerAddress?.state ?? null,
+                            kycStatus: row.partnerKycStatus,
+                        },
+                        sharedOrders: row.sharedOrders,
+                    }];
+                }),
                 total: counted?.count ?? 0,
                 page: input.page,
                 pageSize: input.pageSize,
@@ -691,7 +697,11 @@ export const partnersRouter = createTRPCRouter({
                 .where(and(eq(partnerConnection.id, input.id), tenantSideFilter(tenantId)))
                 .limit(1);
 
-            if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+            // The column admits Appload's own row, which is connected to
+            // nobody and so is never the counterparty of a connection
+            if (!row || !isPartnerOrgType(row.partnerType)) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+            }
 
             const accepted = row.status === "accepted";
             const direction: ConnectionDirection = row.requesterOrgId === tenantId ? "outgoing" : "incoming";
@@ -756,7 +766,7 @@ export const partnersRouter = createTRPCRouter({
 type CandidateRow = {
     id: string;
     name: string;
-    type: OrgType;
+    type: OrganizationType;
     physicalAddress: Address | null;
     kycStatus: PartnerCandidate["kycStatus"];
     connectionId: string | null;
@@ -767,9 +777,12 @@ type CandidateRow = {
 /**
  * The shared projection of the two lookups. A declined or removed pair is
  * reported as no connection at all: it says nothing about the companies now,
- * and a fresh request is exactly what the caller may make.
+ * and a fresh request is exactly what the caller may make. Appload's own row
+ * is no candidate: it is a partner of everybody and connected to nobody.
  */
-function toCandidate(row: CandidateRow, tenantId: string): PartnerCandidate {
+function toCandidate(row: CandidateRow, tenantId: string): PartnerCandidate | null {
+    if (!isPartnerOrgType(row.type)) return null;
+
     const live = row.connectionId !== null && (row.connectionStatus === "pending" || row.connectionStatus === "accepted");
 
     return {

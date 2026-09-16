@@ -36,7 +36,7 @@ import type { NotificationKind } from "@workspace/db/notifications";
 import { unapprovedPhotos } from "@workspace/domain/movements/documents";
 import { legSettled } from "@workspace/domain/movements/money";
 import { isOnPortal, MAX_HOPS, organizationName, parentMovement } from "@workspace/domain/movements/link";
-import { movementRef } from "@workspace/domain/movements/refs";
+import { counterpartyRef, movementRef } from "@workspace/domain/movements/refs";
 import {
     entersInProgress,
     isInProgress,
@@ -165,7 +165,7 @@ export async function announce(
     const clientHearsAsOwner = parent !== null && parent.organizationId === row.clientOrgId;
 
     const params = {
-        ref: movementRef(row.seq, row.execution),
+        ref: movementRef(row),
         origin: place(row.origin),
         destination: place(row.destination),
     };
@@ -201,7 +201,13 @@ export async function announce(
             kind,
             email,
             ...entity,
-            params: { ...params, organizationName: await organizationName(db, row.organizationId) },
+            params: {
+                ...params,
+                // The partner carrying the load never learns the reference the
+                // owner's own client gave it
+                ref: counterpartyRef(row),
+                organizationName: await organizationName(db, row.organizationId),
+            },
         });
     }
 }
@@ -496,7 +502,7 @@ async function executorCancelled(db: Db, parent: Movement, childId: string, now:
         entityType: "movement",
         entityId: child.id,
         params: {
-            ref: movementRef(child.seq, child.execution),
+            ref: movementRef(child),
             origin: place(child.origin),
             destination: place(child.destination),
             organizationName: await organizationName(db, parent.organizationId),
@@ -546,7 +552,7 @@ async function cancelDown(db: Db, parent: Movement, now: Date, hop = 0): Promise
         entityType: "movement",
         entityId: child.id,
         params: {
-            ref: movementRef(child.seq, child.execution),
+            ref: movementRef(child),
             origin: place(child.origin),
             destination: place(child.destination),
             organizationName: await organizationName(db, parent.organizationId),

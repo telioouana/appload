@@ -180,7 +180,9 @@ export const mapRouter = createTRPCRouter({
 
             return {
                 kind: "order",
-                id: row.id,
+                // The id the order's URLs, its route and its trail already
+                // carry — the primary key names it nowhere the reader can see
+                id: row.orderId,
                 ref: row.orderId,
                 href: { pathname: "/appload/details/[orderId]", params: { orderId: row.orderId } },
                 counterpartyName: shipper ? row.carrierName : row.shipperName,

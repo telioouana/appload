@@ -249,7 +249,9 @@ export const meRouter = createTRPCRouter({
 
         return {
             user: account,
-            organization: company,
+            // The gate already narrowed the type to a partner one; the column
+            // also admits Appload's own row, which is never a tenant
+            organization: { ...company, type: ctx.tenant.orgType },
             role: ctx.tenant.role,
             plan: ctx.tenant.plan,
             allowance,

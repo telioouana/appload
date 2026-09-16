@@ -26,7 +26,7 @@ import { isOrgAuthorized, type OrgRole } from "@workspace/auth/organization-perm
 import { terminalMovementId } from "@workspace/domain/movements/link";
 import { costTotals, exVat, legSettled, margin } from "@workspace/domain/movements/money";
 import { editableGroups, movementRole, type MovementRole } from "@workspace/domain/movements/policy";
-import { movementRef } from "@workspace/domain/movements/refs";
+import { counterpartyRef, movementRef } from "@workspace/domain/movements/refs";
 import {
     entersInProgress,
     IN_PROGRESS_STATUSES,
@@ -569,7 +569,11 @@ export function toMovementRow(
 
     return {
         id: row.id,
-        ref: movementRef(row.seq, row.execution),
+        // The partner carrying the load is not told the reference the owner's
+        // own client gave it — the same line `clientReference` is cut on below
+        ref: role === "executor" ? counterpartyRef(row) : movementRef(row),
+        // Linked rows arrive in M2; until then no row follows an order
+        apploadOrderId: null,
         execution: row.execution,
         status: row.status,
         role,
@@ -696,6 +700,8 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
 
     return {
         ...toMovementRow(row, role, { ...extras, inDispute: disputeVisible }),
+        // Linked rows arrive in M2; until then no row follows an order
+        appload: null,
         route: row.route,
         category: row.category,
         weight: num(row.weight),

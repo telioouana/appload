@@ -13,7 +13,7 @@ const MODAL_LAYER = "[data-slot=\"sheet-content\"], [role=\"dialog\"]"
 export type MapViewMode = "map" | "table"
 
 /**
- * Which pin is open (`?id=APPL021.26` or `?id=TRP-12`), what is being
+ * Which pin is open (`?id=` the order's APPL id, or the load's row id), what is being
  * searched (`?q=`) and which view is showing (`?view=table`), kept in the
  * URL so a view of the map can be pasted into a message and reopen on the
  * same truck. The overview query takes no input, so no param changes what
@@ -28,7 +28,7 @@ export function useMapSelection() {
     const view: MapViewMode = get("view") === "table" ? "table" : "map"
 
     const select = useCallback(
-        (ref: string | null) => shallow({ key: "id", value: ref }),
+        (id: string | null) => shallow({ key: "id", value: id }),
         [shallow],
     )
 

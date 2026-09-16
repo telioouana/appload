@@ -199,7 +199,7 @@ async function claimAndSend(
                 .where(eq(movement.id, row.id));
         }
     } catch (error) {
-        console.error(`tracking: ensure conversation failed for ${movementRef(row.seq, row.execution)}`, error);
+        console.error(`tracking: ensure conversation failed for ${movementRef(row)}`, error);
     }
 
     const [claim] = await db
@@ -229,7 +229,7 @@ async function send(
     row: Movement,
     claim: MovementTrackingRequest,
 ): Promise<"sent" | "failed"> {
-    const reference = movementRef(row.seq, row.execution);
+    const reference = movementRef(row);
 
     // One step instead of two whenever WhatsApp allows it, and only on
     // attempt 1 — the order runner carries the full reasoning

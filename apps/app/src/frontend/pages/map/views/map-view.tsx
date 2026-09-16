@@ -116,13 +116,15 @@ export function MapView() {
         trpc.map.overview.queryOptions(undefined, { refetchInterval: OVERVIEW_POLL_MS }),
     )
 
+    // Keyed by id, not by reference: references are per company now, so two
+    // loads of the same company's can read alike and an unnumbered one is "—"
     const matches = useMemo(
-        () => new Set(entities.filter((entity) => matchesEntity(entity, query)).map((entity) => entity.ref)),
+        () => new Set(entities.filter((entity) => matchesEntity(entity, query)).map((entity) => entity.id)),
         [entities, query],
     )
 
     const selectedEntity = useMemo(
-        () => entities.find((entity) => entity.ref === selected) ?? null,
+        () => entities.find((entity) => entity.id === selected) ?? null,
         [entities, selected],
     )
 
@@ -157,8 +159,8 @@ export function MapView() {
         [entities],
     )
 
-    const onSelect = (ref: string) => {
-        select(ref === selected ? null : ref)
+    const onSelect = (id: string) => {
+        select(id === selected ? null : id)
         setListOpen(false)
     }
 
@@ -201,7 +203,7 @@ export function MapView() {
                         would sit over the very columns the red rule points at */}
                     {selectedEntity && (
                         <MapSelectedCard
-                            key={selectedEntity.ref}
+                            key={selectedEntity.id}
                             entity={selectedEntity}
                             onClose={() => select(null)}
                             className="absolute right-3 bottom-3 z-20 max-w-sm"
@@ -253,7 +255,7 @@ export function MapView() {
                                         <SelectedRoute
                                             entity={selectedEntity}
                                             trail={trail}
-                                            emphasis={!query ? "normal" : matches.has(selectedEntity.ref) ? "match" : "dim"}
+                                            emphasis={!query ? "normal" : matches.has(selectedEntity.id) ? "match" : "dim"}
                                         />
                                     )}
                                 </MapCanvas>
@@ -274,7 +276,7 @@ export function MapView() {
 
                         {selectedEntity && (
                             <MapSelectedCard
-                                key={selectedEntity.ref}
+                                key={selectedEntity.id}
                                 entity={selectedEntity}
                                 onClose={() => select(null)}
                                 className="absolute top-3 right-3 z-20 max-w-sm"
