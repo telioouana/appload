@@ -30,13 +30,14 @@ import {
     trackingTemplateText,
 } from "@workspace/comms/infobip";
 import { announce, recordEvent, statusStamps, transitionMovement, type MovementActor } from "@workspace/domain/movements/apply";
+import { nextReference } from "@workspace/domain/movements/counters";
 import { activeDisputeFor, openDispute, resolveDispute } from "@workspace/domain/movements/disputes";
 import { unapprovedPhotos } from "@workspace/domain/movements/documents";
 import { isConnected, isOnPortal, organizationName, terminalMovementId } from "@workspace/domain/movements/link";
 import { settlementStatus } from "@workspace/domain/movements/money";
 import { assertExecutor, convertMovement, offerMovement, respondToOffer, withdrawOffer } from "@workspace/domain/movements/offer";
 import { editableGroups, isExecutorOf, movementRole, type EditableGroup } from "@workspace/domain/movements/policy";
-import { movementRef } from "@workspace/domain/movements/refs";
+import { movementRef, needsOrderReference } from "@workspace/domain/movements/refs";
 import { entersInProgress, isInProgress, isTerminal, movementFlags } from "@workspace/domain/movements/status";
 import { notify } from "@workspace/domain/notifications";
 import { assertTrackingAllowance, recordTrackingUsage } from "@workspace/domain/subscription";
@@ -85,6 +86,7 @@ import {
 import { assertEdgeStoreUrl } from "@/frontend/pages/orders/server/projection";
 import {
     hasParentRow,
+    loadApploadRefs,
     loadCosts,
     loadDisputed,
     loadDisputes,
@@ -300,12 +302,12 @@ type ListInput = z.infer<typeof ListInput>;
 /** The reference, the driver, the plate and the cargo are what a load is looked up by. */
 function searchWhere(term: string, tenantId: string): SQL | undefined {
     const pattern = `%${escapeLike(term)}%`;
-    const digits = term.replace(/\D/g, "");
-    // "ORD-42", "trp 42" and "42" all mean the same row; anything longer than
-    // a plausible sequence is a plate or a name, not a reference
-    const seq = digits.length > 0 && digits.length <= 9 ? Number(digits) : null;
 
     return or(
+        // Both names a load answers to: the order it is, and the request it
+        // was filed as. "ORD-0001" and "0001-26" each find it
+        ilike(movement.reference, pattern),
+        ilike(movement.requestReference, pattern),
         ilike(movement.driverName, pattern),
         ilike(movement.truckPlate, pattern),
         ilike(movement.cargoDescription, pattern),
@@ -316,7 +318,6 @@ function searchWhere(term: string, tenantId: string): SQL | undefined {
             or(eq(movement.organizationId, tenantId), eq(movement.clientOrgId, tenantId)),
             ilike(movement.clientReference, pattern),
         ),
-        seq === null ? undefined : eq(movement.seq, seq),
     );
 }
 
@@ -336,11 +337,12 @@ async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<
     const roles = rows.map((row) => ({ row, role: roleOrThrow(row, tenantId) }));
     const trails = await trailIds(db, rows);
     const linkedTerminals = rows.filter((row) => row.executionMovementId).map((row) => trails.get(row.id) ?? row.id);
-    const [names, pings, rigs, disputed] = await Promise.all([
+    const [names, pings, rigs, disputed, apploadRefs] = await Promise.all([
         loadNames(db, rows.flatMap((row) => [row.organizationId, row.clientOrgId, row.carrierOrgId])),
         loadPings(db, [...trails.values()]),
         loadTerminalRigs(db, linkedTerminals),
         loadDisputed(db, rows.map((row) => row.id)),
+        loadApploadRefs(db, rows.map((row) => row.orderId)),
     ]);
 
     return roles.map(({ row, role }) => {
@@ -349,6 +351,7 @@ async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<
             names,
             pings,
             trailId,
+            apploadRefs,
             terminalRig: rigs.get(trailId) ?? null,
             // An executor reads a dispute only from its own offer round, which
             // takes the trail to tell. It never needs to here: the only rows a
@@ -399,7 +402,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
 
     const linked = row.executionMovementId !== null;
 
-    const [names, pings, costs, documents, events, disputes, hasParent, executorOnPortal, rigs, terminalProofs, carrierEmail, trailerPlate, photosWaiting] = await Promise.all([
+    const [names, pings, costs, documents, events, disputes, hasParent, executorOnPortal, rigs, terminalProofs, carrierEmail, trailerPlate, photosWaiting, apploadRefs] = await Promise.all([
         loadNames(db, [row.organizationId, row.clientOrgId, row.carrierOrgId]),
         loadPings(db, [trailId]),
         owner ? loadCosts(db, row.id) : Promise.resolve([]),
@@ -416,6 +419,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
         // photos are filed against — and only for the company that answers
         // for them: what a load still lacks is the owner's own reading
         owner ? unapprovedPhotos(db, row.id) : Promise.resolve(0),
+        loadApploadRefs(db, [row.orderId]),
     ]);
 
     return toMovementDetail(row, role, {
@@ -427,6 +431,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
         names,
         pings,
         trailId,
+        apploadRefs,
         hasParent,
         executorOnPortal,
         costs,
@@ -699,7 +704,9 @@ export const movementsRouter = createTRPCRouter({
             }
 
             const rig = await resolveRig(ctx.db, tenantId, input);
-            const values: CreateMovement = {
+            const filedAt = new Date();
+
+            const values: Omit<CreateMovement, "reference" | "requestReference"> = {
                 organizationId: tenantId,
                 execution: input.execution,
                 status: input.status,
@@ -756,9 +763,25 @@ export const movementsRouter = createTRPCRouter({
 
             if (starts) await assertTrackingAllowance(ctx.db, tenantId);
 
+            // What the company will call this load (refs.ts). A load it moves
+            // itself is an order from the start; one it is placing with a
+            // partner is a request until somebody commits to it — unless it is
+            // filed already committed, which takes both numbers at once.
+            // Minted last, so the only thing that can still fail after a number
+            // is taken out of the company's books is the insert itself
+            const partnerRequest = partner ? await nextReference(ctx.db, tenantId, "REQ", filedAt) : null;
+            const orderReference = !partner || needsOrderReference(input.status)
+                ? await nextReference(ctx.db, tenantId, "ORD", filedAt)
+                : null;
+
             const [created] = await ctx.db
                 .insert(movement)
-                .values({ ...values, ...statusStamps(null, input.status, new Date()) })
+                .values({
+                    ...values,
+                    reference: orderReference,
+                    requestReference: partnerRequest,
+                    ...statusStamps(null, input.status, filedAt),
+                })
                 .returning();
 
             if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
@@ -826,6 +849,7 @@ export const movementsRouter = createTRPCRouter({
                 hasParent,
                 executorOnPortal: onPortalNow,
                 disputeOpen: dispute !== null,
+                apploadLinked: row.orderId !== null,
             });
 
             const touched = (Object.keys(input) as (keyof UpdateMovementInput)[])
@@ -1744,8 +1768,9 @@ export const movementsRouter = createTRPCRouter({
 
             // A driver is only somewhere worth asking about while the load is in
             // progress — booked, nobody has gone to it yet; delivered, the
-            // position is somebody else's next job
-            if (!isInProgress(row.status) || row.executionMovementId) {
+            // position is somebody else's next job. Nor a load on an Appload
+            // order: that truck is asked from the order, and answers there
+            if (!isInProgress(row.status) || row.executionMovementId || row.orderId !== null) {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "NOT_TRACKABLE" });
             }
 

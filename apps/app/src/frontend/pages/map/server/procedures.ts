@@ -199,7 +199,8 @@ export const mapRouter = createTRPCRouter({
             // The predicate only admits rows the tenant owns or is the client of
             const role = movementRole(row, tenant.organizationId) ?? "client";
             const trailId = trails.get(row.id) ?? row.id;
-            // Cut to what this company may know of the row, the way the lists cut it
+            // Cut to what this company may know of the row, the way the lists
+            // cut it — bar the Appload order id, which no pin carries (types/)
             const view = toMovementRow(row, role, {
                 names,
                 pings: NO_PING_STATE,

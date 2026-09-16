@@ -77,10 +77,24 @@ export type EditInput = {
     executorOnPortal: boolean;
     /** A dispute covering this row holds its books open (disputes.ts) */
     disputeOpen: boolean;
+    /** The row follows an Appload order (mirror.ts) */
+    apploadLinked: boolean;
 };
 
 export function editableGroups(row: EditInput): EditableGroup[] {
     if (isTerminal(row.status)) return [];
+
+    // An Appload order holds the terms of both rows on it. What is left is
+    // each company's own paperwork — and, on the row of the company that
+    // handed the load over (execution "partner", carrier Appload), who its
+    // own client is and what it charges that client: that side of the load
+    // is its own business, and Appload never sees it
+    // — and an open dispute pins that client here too, for the reason below
+    if (row.apploadLinked) {
+        if (row.execution !== "partner") return ["paperwork"];
+
+        return row.disputeOpen ? ["paperwork", "sellAmounts"] : ["paperwork", "client", "sellAmounts"];
+    }
 
     const groups: EditableGroup[] = ["paperwork"];
     const agreed = row.linked || row.hasParent;

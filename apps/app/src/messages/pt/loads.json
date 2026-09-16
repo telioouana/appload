@@ -688,6 +688,7 @@
         "ownTripsComeFromClients": "As viagens da própria frota de uma transportadora vêm dos pedidos dos seus clientes.",
         "rigIsThePartners": "O parceiro está no portal e indica o próprio motorista e camião.",
         "executorDeparted": "O camião do transportador já está com a carga; só ele a pode cancelar agora.",
+        "followsApploadOrder": "Esta carga segue o pedido Appload e é tratada a partir dele.",
         "rigNotRegistered": "O motorista ou o camião escolhido não é da sua frota.",
         "noDriver": "Indique o nome e o telefone do motorista primeiro.",
         "noCarrier": "Indique o parceiro que vai transportar a carga primeiro.",

@@ -688,6 +688,7 @@
         "ownTripsComeFromClients": "A transporter's own trips come from its clients' orders.",
         "rigIsThePartners": "The partner is on the portal and names its own driver and truck.",
         "executorDeparted": "The transporter's truck is already on the load; only they can cancel it now.",
+        "followsApploadOrder": "This load follows its Appload order and is handled from there.",
         "rigNotRegistered": "The driver or truck picked is not in your fleet.",
         "noDriver": "Name the driver and their phone first.",
         "noCarrier": "Name the partner that will move the load first.",

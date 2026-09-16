@@ -107,6 +107,8 @@ export type MovementShape = {
     linked: boolean;
     /** Partner execution only: the executor can answer for itself on the portal */
     executorOnPortal: boolean;
+    /** The row follows an Appload order (mirror.ts): the order moves it, not its owner */
+    apploadLinked: boolean;
 };
 
 /**
@@ -121,7 +123,12 @@ export type MovementShape = {
  * procurement, which undoes an answer rather than a milestone.
  */
 export function ownerTargets(shape: MovementShape): MovementStatus[] {
-    const { execution, status, route, resumeStatus, linked, executorOnPortal } = shape;
+    const { execution, status, route, resumeStatus, linked, executorOnPortal, apploadLinked } = shape;
+
+    // The load is on an Appload order: every milestone on it comes down from
+    // that order (mirror.ts), and the one thing left to its owner is closing
+    // its own books once the load has arrived
+    if (apploadLinked) return status === "delivered" ? ["closed"] : [];
 
     // The truck is somebody else's: the load moves when their row does
     if (linked) {

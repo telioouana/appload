@@ -20,6 +20,7 @@ import {
     type MovementEventKind,
     type MovementStatus,
 } from "@workspace/db/movements";
+import { order } from "@workspace/db/orders";
 import { organization, user } from "@workspace/db/users";
 
 import { isOrgAuthorized, type OrgRole } from "@workspace/auth/organization-permissions";
@@ -309,6 +310,47 @@ export async function loadOwn(db: Db, id: string, tenantId: string): Promise<Mov
 
 const notFound = () => new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
 
+/**
+ * The Appload ids ("APPL021.26") of the orders a page of rows follows, keyed
+ * by the order's primary key. Read in one query, and only for the rows that
+ * need it: the company moving the load carries the id on its own row, as the
+ * reference its client — Appload — gave it.
+ */
+export async function loadApploadRefs(db: Db, orderPks: Iterable<string | null>): Promise<Map<string, string>> {
+    const unique = [...new Set([...orderPks].filter((id): id is string => Boolean(id)))];
+
+    if (unique.length === 0) return new Map();
+
+    const rows = await db
+        .select({ id: order.id, orderId: order.orderId })
+        .from(order)
+        .where(inArray(order.id, unique));
+
+    return new Map(rows.map((row) => [row.id, row.orderId]));
+}
+
+/**
+ * Which side of an Appload order a row is, and what that order is called, or
+ * null on a load the company runs for itself.
+ *
+ * The company that handed the load over keeps a partner row with Appload as
+ * its carrier; the one moving it keeps an own-fleet row with Appload as its
+ * client, and the ones still being asked keep the same row without a number
+ * of their own yet. Only the orderer's row has to look the id up — the other
+ * two were given it as their client's reference.
+ */
+export function apploadOf(
+    row: Movement,
+    apploadRefs: Map<string, string> | undefined,
+): MovementDetail["appload"] {
+    if (row.orderId === null) return null;
+
+    const role = row.execution === "partner" ? "orderer" : row.reference ? "executor" : "candidate";
+    const orderId = role === "orderer" ? apploadRefs?.get(row.orderId) ?? null : row.clientReference;
+
+    return orderId === null ? null : { orderId, role };
+}
+
 /** The display names of the companies a page of rows mentions, in one query. */
 export async function loadNames(db: Db, ids: Iterable<string | null>): Promise<Map<string, string>> {
     const unique = [...new Set([...ids].filter((id): id is string => Boolean(id)))];
@@ -560,6 +602,8 @@ export function toMovementRow(
         terminalRig?: TerminalRig | null;
         /** Read by whoever shows it: the list (`loadDisputed`) and the detail */
         inDispute?: boolean;
+        /** The Appload ids of the orders these rows follow (`loadApploadRefs`) */
+        apploadRefs?: Map<string, string>;
     },
 ): MovementRow {
     const owner = role === "owner";
@@ -572,8 +616,7 @@ export function toMovementRow(
         // The partner carrying the load is not told the reference the owner's
         // own client gave it — the same line `clientReference` is cut on below
         ref: role === "executor" ? counterpartyRef(row) : movementRef(row),
-        // Linked rows arrive in M2; until then no row follows an order
-        apploadOrderId: null,
+        apploadOrderId: apploadOf(row, ctx.apploadRefs)?.orderId ?? null,
         execution: row.execution,
         status: row.status,
         role,
@@ -646,6 +689,8 @@ type DetailExtras = {
     names: Map<string, string>;
     pings: PingState;
     trailId: string;
+    /** The Appload id of the order this row follows, if it follows one (`loadApploadRefs`) */
+    apploadRefs?: Map<string, string>;
     hasParent: boolean;
     executorOnPortal: boolean;
     costs: readonly CostRow[];
@@ -700,8 +745,7 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
 
     return {
         ...toMovementRow(row, role, { ...extras, inDispute: disputeVisible }),
-        // Linked rows arrive in M2; until then no row follows an order
-        appload: null,
+        appload: apploadOf(row, extras.apploadRefs),
         route: row.route,
         category: row.category,
         weight: num(row.weight),
@@ -895,6 +939,9 @@ function permissionsFor(
 
     const partner = row.execution === "partner";
     const linked = row.executionMovementId !== null;
+    // The load is on an Appload order: it is moved, tracked and talked about
+    // from that order, and what is left here is the company's own books
+    const apploadLinked = row.orderId !== null;
     const writeResource = partner ? "order" : "trip";
     const mayWrite = can(writeResource, "update");
     const shape = {
@@ -904,6 +951,7 @@ function permissionsFor(
         resumeStatus: row.resumeStatus,
         linked,
         executorOnPortal: extras.executorOnPortal,
+        apploadLinked,
     };
     const guards = guardsOf(row, extras.unapprovedPhotos, disputeOpen);
 
@@ -933,14 +981,18 @@ function permissionsFor(
         editable: mayWrite
             ? editableGroups({ ...shape, hasParent: extras.hasParent, disputeOpen })
             : [],
+        // Appload is offered a load the same way any partner on the portal is;
+        // the router sends that one through the link door instead
         canOffer: partner && !linked && extras.executorOnPortal
             && (row.status === "procurement" || row.status === "declined") && can("order", "create"),
-        canWithdraw: row.status === "offered" && can("order", "update"),
+        // A linked row sits at "offered" too (the order's own prospect stage):
+        // it is cancelled with Appload, never withdrawn from here
+        canWithdraw: !apploadLinked && row.status === "offered" && can("order", "update"),
         canRespond: false,
         // Taking a partner's load in-house is filing a trip of one's own,
         // which a transporter never does by hand: its trucks are put on its
         // clients' orders by accepting them (procedures.ts create, convert)
-        canConvert: can("order", "create") && (
+        canConvert: can("order", "create") && !apploadLinked && (
             partner
                 ? extras.orgType !== "carrier" && !linked
                     && (row.status === "procurement" || row.status === "prospect" || row.status === "declined")
@@ -954,12 +1006,13 @@ function permissionsFor(
         canApproveDocuments: can("document", "approve"),
         canRecordPayment: row.status !== "cancelled" && (row.sellTotal !== null || (partner && row.buyTotal !== null))
             && can("order", "update"),
-        canRequestLocation: isInProgress(row.status) && !linked && Boolean(row.driverPhone) && can("trip", "update"),
+        canRequestLocation: isInProgress(row.status) && !linked && !apploadLinked
+            && Boolean(row.driverPhone) && can("trip", "update"),
         // Reading follows the phone: whoever may see the number may see what
         // was said to it, and a linked order's driver belongs to the executor
         // Only a conversation this row's own asking stamped is readable, so
         // the card is offered on that, not on a typed number
-        canReadThread: !linked && Boolean(row.conversationId),
+        canReadThread: !linked && !apploadLinked && Boolean(row.conversationId),
         canOpenDispute: none.canOpenDispute,
     };
 }

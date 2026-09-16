@@ -32,7 +32,7 @@ export type MapEntity = {
      * read alike and an unnumbered one is "—".
      */
     id: string;
-    /** What the pin is labelled with: the order id, or the load's TRP-/ORD- reference */
+    /** What the pin is labelled with: the order id, or the load's own reference */
     ref: string;
     href: MapEntityHref;
     /** The company on the other side, when the movement has one */

@@ -24,6 +24,8 @@ export const MOVEMENT_ERROR_KEYS = {
     OWN_TRIPS_COME_FROM_CLIENTS: "ownTripsComeFromClients",
     RIG_IS_THE_PARTNERS: "rigIsThePartners",
     EXECUTOR_DEPARTED: "executorDeparted",
+    // The load is on an Appload order, which is where it is moved from
+    FOLLOWS_APPLOAD_ORDER: "followsApploadOrder",
     // The rig picked from the fleet is not this company's
     DRIVER_NOT_REGISTERED: "rigNotRegistered",
     TRUCK_NOT_REGISTERED: "rigNotRegistered",
