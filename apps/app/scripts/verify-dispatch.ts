@@ -30,6 +30,7 @@ import { partnerConnection } from "@workspace/db/connections";
 import { db } from "@workspace/db/db";
 import { driver, truck } from "@workspace/db/fleet";
 import { kycDocument } from "@workspace/db/kyc-documents";
+import { movement, movementEvent } from "@workspace/db/movements";
 import { notification } from "@workspace/db/notifications";
 import {
     order,
@@ -132,6 +133,22 @@ const madeTrucks: string[] = [];
 /** Order primary keys, and the display ids the notifications hang off */
 const madeOrders: string[] = [];
 const madeOrderIds: string[] = [];
+/**
+ * The loads an Appload order opens in a portal company's own books. The two
+ * companies here were made by this run and nobody has activated the portal
+ * for them, so there should never be one — which is worth counting rather
+ * than assuming, since the order doors open them without being asked.
+ */
+const madeLinks: string[] = [];
+
+/** Takes note of any linked load our orders have opened, once each. */
+async function noteLinkedLoads() {
+    if (madeOrders.length === 0) return;
+
+    const rows = await db.select({ id: movement.id }).from(movement).where(inArray(movement.orderId, madeOrders));
+
+    for (const row of rows) if (!madeLinks.includes(row.id)) madeLinks.push(row.id);
+}
 
 /**
  * A page URL of our own KYC bucket, shaped the way EdgeStore builds it from
@@ -627,12 +644,15 @@ async function main() {
     console.log("\n— the boundaries");
     const secondLive = await sh.orders.get({ orderId: second.orderId });
 
+    // Refused for the side it stands on, not for the kind of company it is: a
+    // transporter is the client of the order it hands to Appload, and runs
+    // that one's check
     await expectError("the carrier cannot run the check on itself", () =>
         ca.orders.recordLoadingCheck({
             orderId: second.orderId,
             expectedVersion: secondLive.version,
             items: [{ key: "driver-identity", ok: true }, { key: "rig-plates", ok: true }],
-        }), "WRONG_ORGANIZATION_TYPE");
+        }), "NOT_ALLOWED_FOR_ACTOR");
 
     await expectError("a company with no part in the order reads nothing of the check", () =>
         as(STRANGER.user).orders.loadingCheck({ orderId: first.orderId }), "NOT_FOUND");
@@ -652,6 +672,8 @@ async function main() {
 
 /** How many rows of ours each table still holds. */
 async function census(): Promise<Record<string, number>> {
+    await noteLinkedLoads();
+
     const tally = async (
         label: string,
         ids: string[],
@@ -667,6 +689,7 @@ async function census(): Promise<Record<string, number>> {
         tally("dispatch", madeOrders, async (ids) => db.select({ value: count() }).from(orderDispatch).where(inArray(orderDispatch.orderId, ids))),
         tally("checks", madeOrders, async (ids) => db.select({ value: count() }).from(orderLoadingCheck).where(inArray(orderLoadingCheck.orderId, ids))),
         tally("sheet-sync", madeOrders, async (ids) => db.select({ value: count() }).from(sheetSync).where(inArray(sheetSync.orderId, ids))),
+        tally("linked-loads", madeLinks, async (ids) => db.select({ value: count() }).from(movement).where(inArray(movement.id, ids))),
         tally("usage", madeOrders, async (ids) => db.select({ value: count() }).from(subscriptionUsage).where(and(eq(subscriptionUsage.entityType, "order"), inArray(subscriptionUsage.entityId, ids)))),
         tally("notifications", madeOrderIds, async (ids) => db.select({ value: count() }).from(notification).where(and(eq(notification.entityType, "order"), inArray(notification.entityId, ids)))),
         tally("activity", [SESSION_ID], async () => db.select({ value: count() }).from(activityLog).where(eq(activityLog.sessionId, SESSION_ID))),
@@ -695,6 +718,13 @@ async function cleanup() {
         // The thread's order link is a plain FK with no cascade
         await db.delete(chatConversation).where(inArray(chatConversation.orderId, madeOrderIds));
         await db.delete(notification).where(and(eq(notification.entityType, "order"), inArray(notification.entityId, madeOrderIds)));
+    }
+
+    // Before the orders, while the rows still point at them: the FK nulls the
+    // link rather than taking the load with it
+    if (madeLinks.length > 0) {
+        await db.delete(movementEvent).where(inArray(movementEvent.movementId, madeLinks));
+        await db.delete(movement).where(inArray(movement.id, madeLinks));
     }
 
     if (madeOrders.length > 0) {

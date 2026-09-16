@@ -480,6 +480,21 @@ async function cleanup() {
         counts.notification = (await db.delete(notification).where(inArray(notification.entityId, subjectIds)).returning({ id: notification.id })).length;
     }
 
+    // The loads an Appload order opens in the portal companies' own books —
+    // the client's row and the carriers' — go before the orders do: the link
+    // is a plain FK that nulls itself, so an order deleted first leaves them
+    // behind with nothing pointing at them
+    const linked = ordersHere.length === 0 ? [] : (await db
+        .select({ id: movement.id })
+        .from(movement)
+        .where(inArray(movement.orderId, ordersHere)))
+        .map((row) => row.id);
+
+    if (linked.length > 0) {
+        counts.linked_event = (await db.delete(movementEvent).where(inArray(movementEvent.movementId, linked)).returning({ id: movementEvent.id })).length;
+        counts.linked_movement = (await db.delete(movement).where(inArray(movement.id, linked)).returning({ id: movement.id })).length;
+    }
+
     if (ordersHere.length > 0) {
         counts.sheet_sync = await clearSheetOutbox();
         counts.order_history =(await db.delete(orderHistory).where(inArray(orderHistory.orderId, ordersHere)).returning({ id: orderHistory.id })).length;
@@ -504,6 +519,13 @@ async function cleanup() {
         .returning({ id: rateLimit.id })).length;
 
     console.log(`\ncleaned up ${Object.entries(counts).filter(([, value]) => value > 0).map(([table, value]) => `${value} ${table}`).join(", ") || "nothing"}`);
+
+    // Counted again by id, since by now there is no order left to find them by
+    const left = linked.length === 0
+        ? []
+        : await db.select({ id: movement.id }).from(movement).where(inArray(movement.id, linked));
+
+    console.log(`linked loads left behind: ${left.length}`);
 }
 
 orderThread()
