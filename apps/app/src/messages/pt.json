@@ -56,11 +56,11 @@
     },
     "App": {
         "metadata": {
-            "title": "Appload Parceiros",
-            "description": "Portal de parceiros da Appload: pedidos, cotações, viagens e frota para clientes e transportadores."
+            "title": "Appload Enterprise",
+            "description": "Appload Enterprise: pedidos, cotações, viagens e frota para clientes e transportadores."
         },
         "auth": {
-            "title": "Appload Parceiros",
+            "title": "Appload Enterprise",
             "description": "Introduza as suas credenciais para iniciar a sessão",
             "email": {
                 "label": "Email",
@@ -319,7 +319,7 @@
         },
         "access-denied": {
             "title": "Acesso restrito",
-            "description": "O portal de parceiros é para contas de clientes e transportadores. Inicie a sessão com a conta da sua empresa para continuar",
+            "description": "O Appload Enterprise é para contas de clientes e transportadores. Inicie a sessão com a conta da sua empresa para continuar",
             "closed": "A conta desta empresa está encerrada. Fale com a Appload para a reabrir",
             "sign-out": "Terminar sessão"
         },
@@ -627,7 +627,7 @@
                     "title": "Quer mudar de plano?",
                     "description": "Fale com a equipa da Appload — tratamos da mudança consigo",
                     "button": "Falar com a Appload",
-                    "subject": "Portal Appload — plano da {organization}"
+                    "subject": "Appload Enterprise — plano da {organization}"
                 }
             }
         },
@@ -652,7 +652,7 @@
                 "close": "Agora não",
                 "settings": "Ver subscrição",
                 "contact": "Falar com a Appload",
-                "subject": "Portal Appload — plano da {organization}"
+                "subject": "Appload Enterprise — plano da {organization}"
             }
         }
     }

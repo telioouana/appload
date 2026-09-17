@@ -655,7 +655,7 @@ export const onboardingRouter = createTRPCRouter({
                         ],
                         ctaLabel: "Abrir no Admin",
                         ctaUrl: adminUrl,
-                        disclaimer: "Este email é enviado automaticamente pelo portal de parceiros.",
+                        disclaimer: "Este email é enviado automaticamente pelo Appload Enterprise.",
                     }),
                 });
 

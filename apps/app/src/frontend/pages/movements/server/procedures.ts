@@ -1571,7 +1571,7 @@ export const movementsRouter = createTRPCRouter({
                     // file, for a mail client that strips attachments
                     ctaLabel: "Abrir a confirmação",
                     ctaUrl: input.url,
-                    disclaimer: `Este email foi enviado por ${tenantName} através do portal de parceiros da Appload.`,
+                    disclaimer: `Este email foi enviado por ${tenantName} através do Appload Enterprise.`,
                 }),
                 attachments: [{ filename: input.filename, content }],
             });

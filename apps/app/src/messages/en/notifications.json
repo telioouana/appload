@@ -102,7 +102,7 @@
         "subject": "Appload — {title}",
         "greeting": "Hello, there is news on your Appload account.",
         "cta": "Open the portal",
-        "disclaimer": "You are receiving this because your company uses the Appload portal.",
+        "disclaimer": "You are receiving this because your company uses Appload Enterprise.",
         "footer": "You can follow everything on the portal, at any time."
     },
     "alert-badge": "Location alert"

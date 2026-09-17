@@ -1642,7 +1642,7 @@ export const partnersRouter = createTRPCRouter({
                     subject: `Pedido de acesso a ${claim.organizationName}`,
                     title: "Pedido de acesso não aprovado",
                     lines: [
-                        `O seu pedido para gerir ${claim.organizationName} no portal Appload não foi aprovado.`,
+                        `O seu pedido para gerir ${claim.organizationName} no Appload Enterprise não foi aprovado.`,
                         ...(note ? [`Motivo: ${note}`] : []),
                         "Se acha que se trata de um engano, fale connosco e resolvemos.",
                     ],
@@ -1697,8 +1697,8 @@ export const partnersRouter = createTRPCRouter({
 
             await sendPortalEmail({
                 to: claim.userEmail,
-                subject: `${claim.organizationName} está no portal Appload`,
-                title: "Bem-vindo ao portal Appload",
+                subject: `${claim.organizationName} está no Appload Enterprise`,
+                title: "Bem-vindo ao Appload Enterprise",
                 lines: [
                     `O seu pedido para gerir ${claim.organizationName} foi aprovado.`,
                     "Já pode entrar no portal e acompanhar as suas cargas, parceiros e documentos.",
@@ -1754,7 +1754,7 @@ export const partnersRouter = createTRPCRouter({
                 subject: `Convite para gerir ${org.name} na Appload`,
                 title: `Junte-se a ${org.name} na Appload`,
                 lines: [
-                    `A Appload convidou-o para gerir ${org.name} no portal de parceiros.`,
+                    `A Appload convidou-o para gerir ${org.name} no Appload Enterprise.`,
                     "O convite é válido durante 48 horas.",
                 ],
                 ctaLabel: "Aceitar o convite",
