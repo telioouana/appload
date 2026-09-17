@@ -8,11 +8,19 @@ import { DetailRow, SectionCard } from "@workspace/ui/customs/detail/section-car
 import { Dash } from "@workspace/ui/customs/list/table-cells"
 
 import { MovementRouteMap } from "@/frontend/pages/movements/components/movement-route-map"
+import { ApploadOrderMap } from "@/frontend/pages/movements/sections/appload-panels"
 import type { MovementDetail } from "@/frontend/pages/movements/types"
+
+const MAP_CLASS = "h-72 overflow-hidden rounded-xl"
 
 /**
  * Where the load goes, when, and what it carries. The map is the lane Google
  * drew and, once the truck is moving, where it has been.
+ *
+ * On a load that follows an Appload order the map is the order's, because
+ * that is where Appload files the truck's positions; the row's own trail
+ * would be empty. A company still quoting sees the plain load map — the
+ * server hands the order's route to its two parties only.
  *
  * The vocabularies shared with Appload's orders — the same database enums —
  * are read from App.orders rather than restated.
@@ -24,6 +32,8 @@ export function RouteCard({ load }: { load: MovementDetail }) {
 
     const date = (value: Date | null) => value ? f.dateTime(value, { dateStyle: "medium" }) : <Dash />
 
+    const ownMap = <MovementRouteMap loadId={load.id} status={load.status} className={MAP_CLASS} />
+
     return (
         <SectionCard title={t("route")} aside={tv(`routeType.${load.route}`)}>
             <div className="flex flex-col gap-1.5 text-sm">
@@ -34,7 +44,9 @@ export function RouteCard({ load }: { load: MovementDetail }) {
                 </span>
             </div>
 
-            <MovementRouteMap loadId={load.id} status={load.status} className="h-72 overflow-hidden rounded-xl" />
+            {load.appload && load.appload.role !== "candidate"
+                ? <ApploadOrderMap orderId={load.appload.orderId} className={MAP_CLASS} fallback={ownMap} />
+                : ownMap}
 
             <div className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
                 <dl className="flex flex-col gap-2">

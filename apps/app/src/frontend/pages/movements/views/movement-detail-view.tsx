@@ -92,9 +92,10 @@ export function MovementDetailView({ loadId }: { loadId: string }) {
                 {!candidate && (
                     <div className="container-snap flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pb-2">
                         {appload ? (
-                            // Where the truck is, what the parties are saying
-                            // and what has happened are all the order's: the
-                            // row is only this company's copy of it
+                            // What has happened is the order's: the row is
+                            // only this company's copy of it. Where the truck
+                            // is has moved into the lane map above, which on
+                            // these loads is the order's
                             <ApploadOrderPanels orderId={appload.orderId} side={appload.role} column="right" />
                         ) : (
                             <TrackingCard load={load} />

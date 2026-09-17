@@ -1,18 +1,19 @@
 "use client"
 
-import { Suspense } from "react"
+import { Suspense, type ReactNode } from "react"
 import { useSuspenseQuery } from "@tanstack/react-query"
 
 import { Skeleton } from "@workspace/ui/components/skeleton"
 
 import { useTRPC } from "@/backend/api/client"
+import { OrderRouteMapLazy } from "@/frontend/pages/map/components/order-route-map.lazy"
 import { DocumentsCard as OrderDocumentsCard } from "@/frontend/pages/orders/sections/documents-card"
 import { LoadingCheckCard, showsLoadingCheck } from "@/frontend/pages/orders/sections/loading-check-card"
 import { OffersPanel } from "@/frontend/pages/orders/sections/offers-panel"
 import { OperationsCard } from "@/frontend/pages/orders/sections/operations-card"
 import { RequestsPanel } from "@/frontend/pages/orders/sections/requests-panel"
 import { TimelineCard as OrderTimelineCard } from "@/frontend/pages/orders/sections/timeline-card"
-import { TrackingCard as OrderTrackingCard } from "@/frontend/pages/orders/sections/tracking-card"
+import { showsTracking } from "@/frontend/pages/orders/sections/tracking-card"
 import { TransitionBar } from "@/frontend/pages/orders/sections/transition-bar"
 import type { OrderDetail, OrgType } from "@/frontend/pages/orders/types"
 
@@ -93,20 +94,13 @@ function LeftPanels({ orderId, side }: Omit<PanelsProps, "column">) {
     )
 }
 
-/** Where the truck is and what has happened. */
+/** What has happened to the order. */
 function RightPanels({ orderId }: { orderId: string }) {
     const trpc = useTRPC()
 
-    const { data: order } = useSuspenseQuery(trpc.orders.get.queryOptions({ orderId }))
     const { data: history } = useSuspenseQuery(trpc.orders.history.queryOptions({ orderId }))
 
-    return (
-        <>
-            <OrderTrackingCard order={order} />
-
-            <OrderTimelineCard entries={history} />
-        </>
-    )
+    return <OrderTimelineCard entries={history} />
 }
 
 /**
@@ -122,6 +116,38 @@ export function ApploadOrderPanels({ orderId, side, column }: PanelsProps) {
             {column === "right"
                 ? <RightPanels orderId={orderId} />
                 : <LeftPanels orderId={orderId} side={side} />}
+        </Suspense>
+    )
+}
+
+type MapProps = {
+    orderId: string
+    className: string
+    /** What to draw when the reader may not be shown the order's truck */
+    fallback: ReactNode
+}
+
+function OrderMap({ orderId, className, fallback }: MapProps) {
+    const trpc = useTRPC()
+    const { data: order } = useSuspenseQuery(trpc.orders.get.queryOptions({ orderId }))
+
+    if (!showsTracking(order)) {
+        return fallback
+    }
+
+    return <OrderRouteMapLazy orderId={order.orderId} status={order.status} className={className} />
+}
+
+/**
+ * The order's map for the load page: the lane the order drew and the trail
+ * Appload files against it. The server refuses that route to anyone who is
+ * not a party to the order, so a reader who may not see it gets the load's
+ * own map instead.
+ */
+export function ApploadOrderMap(props: MapProps) {
+    return (
+        <Suspense fallback={<Skeleton className={props.className} />}>
+            <OrderMap {...props} />
         </Suspense>
     )
 }
