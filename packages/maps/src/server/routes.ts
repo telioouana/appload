@@ -249,7 +249,19 @@ export async function computeOrderRoute(origin: Location, destination: Location)
 
     if (road) return road;
 
-    // Second try with province-sized endpoints narrowed to their capital
+    // A place id Google no longer knows fails the whole request, while the
+    // address typed beside it usually still routes
+    if ((origin.placeId && origin.address) || (destination.placeId && destination.address)) {
+        const typed = await computeViaRoutes(
+            key,
+            origin.address ? { address: origin.address } : waypoint(origin),
+            destination.address ? { address: destination.address } : waypoint(destination),
+        );
+
+        if (typed) return typed;
+    }
+
+    // Then with province-sized endpoints narrowed to their capital
     const originRegion = regionWaypoint(origin);
     const destinationRegion = regionWaypoint(destination);
 
