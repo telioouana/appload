@@ -553,7 +553,7 @@
                         "history": "History",
                         "disputes": "Disputes"
                     },
-                    "messages": "Messages",
+                    "messages": "Chats",
                     "map": "Map"
                 },
                 "management": {
@@ -2632,7 +2632,7 @@
             }
         },
         "messages": {
-            "title": "Messages",
+            "title": "Chats",
             "description": "Message drivers and keep orders up to date.",
             "unconfigured": {
                 "title": "Messaging is not configured",

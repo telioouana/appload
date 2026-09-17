@@ -42,7 +42,7 @@ export function OpenChatButton({
     const router = useRouter()
 
     const start = useMutation(trpc.chats.start.mutationOptions({
-        onSuccess: ({ conversation }) => router.push({ pathname: "/messages", query: { c: conversation.id } }),
+        onSuccess: ({ conversation }) => router.push({ pathname: "/chats", query: { c: conversation.id } }),
         onError: () => toast(t("chatFailed")),
     }))
 

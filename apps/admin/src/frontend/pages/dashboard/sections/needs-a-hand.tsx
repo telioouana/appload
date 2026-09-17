@@ -155,7 +155,7 @@ export function NeedsAHand() {
             Icon: IconMessages,
             label: t("queue.unread"),
             count: unreadCount,
-            href: "/messages",
+            href: "/chats",
         },
         {
             key: "silent",

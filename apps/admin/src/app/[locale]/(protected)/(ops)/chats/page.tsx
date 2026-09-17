@@ -9,7 +9,7 @@ export async function generateMetadata() {
     return { title: t("title") }
 }
 
-export default function Messages() {
+export default function Chats() {
     // Server-derived so the operator sees, on the page itself, that sends
     // are simulated until Infobip is configured
     return <ChatsView configured={isInfobipConfigured()} />

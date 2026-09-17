@@ -553,7 +553,7 @@
                         "history": "Histórico",
                         "disputes": "Disputas"
                     },
-                    "messages": "Mensagens",
+                    "messages": "Conversas",
                     "map": "Mapa"
                 },
                 "management": {
@@ -2632,7 +2632,7 @@
             }
         },
         "messages": {
-            "title": "Mensagens",
+            "title": "Conversas",
             "description": "Envie mensagens aos motoristas e acompanhe os pedidos.",
             "unconfigured": {
                 "title": "As mensagens não estão configuradas",

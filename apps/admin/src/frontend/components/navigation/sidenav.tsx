@@ -140,7 +140,7 @@ export function Sidenav({ ...props }: React.ComponentProps<typeof Sidebar>) {
             // place that breaks them down, so the count comes along
             Icon: IconMessages,
             name: t("content.ops.messages"),
-            path: "/messages",
+            path: "/chats",
             badge: unread === undefined && threads === undefined
                 ? undefined
                 : (unread ?? 0) + (threads?.total ?? 0),
