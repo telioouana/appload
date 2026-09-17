@@ -353,6 +353,18 @@ async function orderThread() {
     const stillAllowed = await refusal(() => chatAs(B.user).send({ ...subject, body: "HARNESS one more", attachments: [] }));
     check("…and the next one goes through", stillAllowed === null, stillAllowed);
 
+    console.log("\n— the Chats page's list, for the company and for ops");
+    const listed = (await chatAs(A.user).list()).find((row) => row.threadId === opened.threadId);
+    check("the client's list has the order, opened by the id its pages use",
+        listed?.subjectType === "order" && listed.subjectId === orderId && listed.label === orderId, listed);
+    check("…with the last thing said on it", listed?.lastMessage === "HARNESS one more" && listed.lastMessageAt !== null, listed);
+    check("…and the count the badge shows", listed?.unread === await badge(A.user, opened.threadId), { listed, badge: await badge(A.user, opened.threadId) });
+    check("a company with nothing to do with it lists nothing of it",
+        !(await chatAs(C.user).list()).some((row) => row.threadId === opened.threadId), opened.threadId);
+
+    const opsListed = (await opsAs(OPS).list()).find((row) => row.threadId === opened.threadId);
+    check("ops' own list still carries its preview", opsListed?.orderId === orderId && opsListed.lastMessage === "HARNESS one more", opsListed);
+
     return { orderId, threadId: opened.threadId, subject };
 }
 
@@ -419,6 +431,13 @@ async function loadThread() {
             && (notice.params as { reference?: string }).reference === executorRef),
         { notices: notices.map((notice) => [notice.entityId, notice.params]), executor, executorRef });
 
+    console.log("\n— one conversation, listed by each side under the row it holds");
+    const ownerListed = (await chatAs(A.user).list()).find((row) => row.threadId === ownerView.threadId);
+    check("the owner lists it on its own row", ownerListed?.subjectType === "movement" && ownerListed.subjectId === owner, ownerListed);
+    const executorListed = (await chatAs(B.user).list()).find((row) => row.threadId === ownerView.threadId);
+    check("…and the executor on ITS row, by the reference its own lists hold",
+        executorListed?.subjectId === executor && executorListed.label === executorRef, { executorListed, executor, executorRef });
+
     console.log("\n— a tenant's books are its own");
     await expectError("Appload ops cannot read a portal load's thread", () =>
         getThread(db, staffActor, ownerSubject), "THREAD_NOT_FOUND");
@@ -440,6 +459,8 @@ async function withdrawnOffer() {
 
     const invited = await chatAs(B.user).get(subject);
     check("the partner being offered the load can talk to the owner", Boolean(invited.threadId), invited);
+    check("…but a thread nobody has written into is not on the Chats list",
+        !(await chatAs(A.user).list()).some((row) => row.threadId === invited.threadId), invited.threadId);
 
     const offered = await loadsAs(A.user).get({ id: owner });
     await loadsAs(A.user).withdraw({ id: owner, expectedVersion: offered.version });

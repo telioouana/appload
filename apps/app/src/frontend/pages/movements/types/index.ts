@@ -361,6 +361,19 @@ export type MovementThreadItem = {
     createdAt: Date;
 };
 
+/**
+ * One load whose driver conversation this company may read — the rows the
+ * Chats page lists under Drivers. No preview: the messages themselves stay
+ * behind the per-load door, which is what keeps a conversation shared with
+ * another company's asking out of this list.
+ */
+export type MovementThreadLoad = {
+    id: string;
+    ref: string;
+    driverName: string | null;
+    status: MovementStatus;
+};
+
 export type MovementDetail = MovementRow & {
     /**
      * The Appload order this load follows, and which side of it this company

@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, asc, count, desc, eq, gte, ilike, inArray, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 
 import { chatConversation, chatMessage } from "@workspace/db/chats";
 import { partnerConnection } from "@workspace/db/connections";
@@ -122,6 +122,7 @@ import {
     type MovementRow,
     type MovementStats,
     type MovementThreadItem,
+    type MovementThreadLoad,
     type OrgType,
     type PagedResult,
 } from "@/frontend/pages/movements/types";
@@ -1703,6 +1704,49 @@ export const movementsRouter = createTRPCRouter({
                 .limit(100);
 
             return messages.reverse();
+        }),
+
+    /**
+     * The loads whose driver conversation this company may read, newest start
+     * first — what the Chats page lists under Drivers.
+     *
+     * The same four safeguards the per-load read above turns on, as a filter:
+     * the row is the tenant's own, it is the one holding the truck rather
+     * than a subcontract's upper half or an Appload order's mirror, its own
+     * asking stamped the conversation, and the load has actually started. A
+     * row that fails any of them has no thread to read, so it has no line
+     * here either.
+     */
+    threadList: tenantProcedure
+        .query(async ({ ctx }): Promise<MovementThreadLoad[]> => {
+            assertCan(ctx.tenant.role, "trip", "read");
+
+            const rows = await ctx.db
+                .select({
+                    id: movement.id,
+                    reference: movement.reference,
+                    requestReference: movement.requestReference,
+                    clientReference: movement.clientReference,
+                    driverName: movement.driverName,
+                    status: movement.status,
+                })
+                .from(movement)
+                .where(and(
+                    eq(movement.organizationId, ctx.tenant.organizationId),
+                    isNull(movement.executionMovementId),
+                    isNull(movement.orderId),
+                    isNotNull(movement.conversationId),
+                    isNotNull(movement.startedAt),
+                ))
+                .orderBy(desc(movement.startedAt))
+                .limit(100);
+
+            return rows.map((row) => ({
+                id: row.id,
+                ref: movementRef(row),
+                driverName: row.driverName,
+                status: row.status,
+            }));
         }),
 
     /**

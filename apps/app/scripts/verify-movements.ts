@@ -614,6 +614,15 @@ async function main() {
     check("B reads what was asked of its driver, through the conversation its own asking stamped",
         lastSaid?.id === asked && lastSaid.direction === "outbound" && lastSaid.status === "sent", bThread);
 
+    // The Chats page's Drivers side: the same four safeguards, as a list
+    const bDrivers = await b.threadList();
+    const listed = bDrivers.find((load) => load.id === accepted.id);
+    check("B's driver list has the started load, under its own reference",
+        listed?.ref === accepted.ref && listed.driverName === "HARNESS Driver", { listed, ref: accepted.ref });
+    const aDrivers = await a.threadList();
+    check("…and A's list has neither row: the order it placed, nor the truck that is not its own",
+        !aDrivers.some((load) => load.id === accepted.id || load.id === filed.id), aDrivers.map((load) => load.id));
+
     await db.update(movement).set({ driverPhone: null }).where(eq(movement.id, filed.id));
 
     console.log("\n— the proof of delivery travels up");

@@ -9,8 +9,10 @@ import {
     findThread,
     getThread,
     listMessages,
+    listOrgThreads,
     markRead,
     unreadForUser,
+    type OrgThreadRow,
     type ThreadMessageView,
     type ThreadUnread,
     type ThreadView,
@@ -92,6 +94,11 @@ export const threadsRouter = createTRPCRouter({
 
             return { read: true };
         }),
+
+    /** Every conversation this company is in, for the Chats page. */
+    list: authorizedTenantProcedure("thread", ["read"])
+        .query(({ ctx }): Promise<OrgThreadRow[]> =>
+            listOrgThreads(ctx.db, ctx.tenant.userId, ctx.tenant.organizationId)),
 
     /** The rail's message badge, counted for whoever is looking. */
     unread: authorizedTenantProcedure("thread", ["read"])

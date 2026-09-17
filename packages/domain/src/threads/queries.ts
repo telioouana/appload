@@ -5,6 +5,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { TRPCError } from "@trpc/server";
 
 import type { db as Database } from "@workspace/db/db";
+import { movement } from "@workspace/db/movements";
 import { order } from "@workspace/db/orders";
 import {
     thread,
@@ -16,6 +17,7 @@ import {
 import type { ThreadSubject } from "@workspace/db/types";
 import { organization, user } from "@workspace/db/users";
 
+import { counterpartyRef, movementRef } from "@workspace/domain/movements/refs";
 import type { Actor } from "@workspace/domain/orders/actor";
 import {
     resolveThreadSubject,
@@ -282,6 +284,24 @@ function unreadRows(db: typeof Database, userId: string, side: SQL | undefined) 
         .groupBy(thread.id, thread.subjectType, thread.subjectId);
 }
 
+/**
+ * The newest message of each listed thread, for the list preview, on the
+ * (thread_id, created_at) index — over the listed threads only, so no body
+ * outside the caller's own conversations is ever read.
+ */
+async function lastMessages(db: typeof Database, threadIds: string[]): Promise<Map<string, string>> {
+    const previews = await db
+        .selectDistinctOn([threadMessage.threadId], {
+            threadId: threadMessage.threadId,
+            body: threadMessage.body,
+        })
+        .from(threadMessage)
+        .where(inArray(threadMessage.threadId, threadIds))
+        .orderBy(threadMessage.threadId, desc(threadMessage.createdAt));
+
+    return new Map(previews.map((preview) => [preview.threadId, preview.body]));
+}
+
 export type StaffThreadRow = {
     threadId: string;
     /** The order the thread hangs off — staff threads are order threads */
@@ -333,19 +353,7 @@ export async function listStaffThreads(db: typeof Database, userId: string): Pro
 
     if (rows.length === 0) return [];
 
-    // Latest message per thread for the list preview, on the
-    // (thread_id, created_at) index — over the listed threads only, so no
-    // body outside an order conversation is ever read
-    const previews = await db
-        .selectDistinctOn([threadMessage.threadId], {
-            threadId: threadMessage.threadId,
-            body: threadMessage.body,
-        })
-        .from(threadMessage)
-        .where(inArray(threadMessage.threadId, rows.map((row) => row.threadId)))
-        .orderBy(threadMessage.threadId, desc(threadMessage.createdAt));
-
-    const previewByThread = new Map(previews.map((preview) => [preview.threadId, preview.body]));
+    const previewByThread = await lastMessages(db, rows.map((row) => row.threadId));
     const unreadByThread = new Map(unread.map((row) => [row.threadId, row.count]));
 
     return rows.map((row) => ({
@@ -353,6 +361,110 @@ export async function listStaffThreads(db: typeof Database, userId: string): Pro
         lastMessage: previewByThread.get(row.threadId) ?? null,
         unread: unreadByThread.get(row.threadId) ?? 0,
     }));
+}
+
+export type OrgThreadRow = {
+    threadId: string;
+    subjectType: ThreadSubject;
+    /** The id this company opens the conversation with — its own row on a subcontract */
+    subjectId: string;
+    /** The order id, or the load's reference as this side knows it */
+    label: string;
+    lastMessage: string | null;
+    lastMessageAt: Date | null;
+    unread: number;
+};
+
+/**
+ * The conversations one company is a party to, for the portal's Chats page.
+ * Newest first, and only the ones somebody has written into — the same rule
+ * the admin's list is built on, and for the same reason.
+ *
+ * The participant row is the filter; the subject row is what names the
+ * conversation on this side. A subcontracted load is one thread hanging off
+ * the owner's row, and the executing partner knows the same load by the row
+ * it got when it accepted: that row's id is what its detail page opens the
+ * chat with, and that row's reference is what its lists hold. Read here in
+ * one query — the owner's row and the `linked` alias — rather than resolving
+ * every subject in turn, but it is the same answer `access.ts` gives.
+ */
+export async function listOrgThreads(
+    db: typeof Database,
+    userId: string,
+    organizationId: string,
+): Promise<OrgThreadRow[]> {
+    const linked = alias(movement, "linked_movement");
+
+    const [rows, unread] = await Promise.all([
+        db
+            .select({
+                threadId: thread.id,
+                subjectType: thread.subjectType,
+                subjectId: thread.subjectId,
+                lastMessageAt: thread.lastMessageAt,
+                ownerOrgId: movement.organizationId,
+                reference: movement.reference,
+                requestReference: movement.requestReference,
+                clientReference: movement.clientReference,
+                linkedId: linked.id,
+                linkedReference: linked.reference,
+                linkedRequestReference: linked.requestReference,
+                linkedClientReference: linked.clientReference,
+            })
+            .from(thread)
+            .innerJoin(threadParticipant, and(
+                eq(threadParticipant.threadId, thread.id),
+                eq(threadParticipant.organizationId, organizationId),
+            ))
+            // Only a load has a row to join; an order's subject id is the
+            // human "APL-…" and names itself
+            .leftJoin(movement, and(eq(thread.subjectType, "movement"), eq(movement.id, thread.subjectId)))
+            .leftJoin(linked, eq(linked.id, movement.executionMovementId))
+            .where(isNotNull(thread.lastMessageAt))
+            .orderBy(desc(thread.lastMessageAt)),
+        unreadRows(db, userId, eq(threadParticipant.organizationId, organizationId)),
+    ]);
+
+    if (rows.length === 0) return [];
+
+    const previewByThread = await lastMessages(db, rows.map((row) => row.threadId));
+    const unreadByThread = new Map(unread.map((row) => [row.threadId, row.count]));
+
+    // ponytail: a company in the middle of a chain — executing one load and
+    // subcontracting it on — gets two rows for the same upstream
+    // conversation, because its own row is the subject of the thread below
+    // and the executor's side of the thread above. Both open the upstream
+    // one, as the detail page does today; give the downstream row an id of
+    // its own if chains of three ever turn up.
+    return rows.map((row) => {
+        let subjectId = row.subjectId;
+        let label = row.subjectId;
+
+        if (row.ownerOrgId === organizationId) {
+            label = movementRef(row);
+        } else if (row.ownerOrgId !== null) {
+            // The partner carrying it: its own row once it has accepted, and
+            // until then the owner's, under the label that names no client
+            subjectId = row.linkedId ?? row.subjectId;
+            label = row.linkedId
+                ? movementRef({
+                    reference: row.linkedReference,
+                    requestReference: row.linkedRequestReference,
+                    clientReference: row.linkedClientReference,
+                })
+                : counterpartyRef(row);
+        }
+
+        return {
+            threadId: row.threadId,
+            subjectType: row.subjectType,
+            subjectId,
+            label,
+            lastMessage: previewByThread.get(row.threadId) ?? null,
+            lastMessageAt: row.lastMessageAt,
+            unread: unreadByThread.get(row.threadId) ?? 0,
+        };
+    });
 }
 
 /**
