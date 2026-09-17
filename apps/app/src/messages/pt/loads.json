@@ -151,6 +151,9 @@
         "withdraw": "Retirar a oferta",
         "edit": "Editar",
         "more": "Mais ações",
+        "open-chat": "Abrir conversa",
+        "chat-driver": "Motorista",
+        "chat-order": "Conversa do pedido",
         "send-confirmation": "Enviar confirmação",
         "request-location": "Pedir localização",
         "open-dispute": "Abrir uma disputa",
@@ -405,7 +408,7 @@
     "thread": {
         "title": "Mensagens com o motorista",
         "empty": "Ainda não há mensagens com o motorista",
-        "footer": "As mensagens saem do acompanhamento acima e são respondidas no WhatsApp.",
+        "footer": "As mensagens saem do acompanhamento da carga e são respondidas no WhatsApp.",
         "status": {
             "pending": "A enviar",
             "sent": "Enviada",

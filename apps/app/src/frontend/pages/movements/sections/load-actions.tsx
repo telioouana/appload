@@ -9,6 +9,7 @@ import {
     IconBan,
     IconCalendarCheck,
     IconCheck,
+    IconChevronDown,
     IconDots,
     IconFileTime,
     IconFlagCheck,
@@ -18,6 +19,8 @@ import {
     IconLock,
     IconMail,
     IconMapPinShare,
+    IconMessageCircle,
+    IconMessages,
     IconNavigationPause,
     IconPencil,
     IconRoute,
@@ -32,6 +35,7 @@ import {
 } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
+import { Link } from "@/i18n/navigation"
 
 import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
@@ -169,6 +173,14 @@ export function LoadActions({
         && load.execution === "partner"
         && (load.status === "scheduled" || load.status === "booked" || isInProgress(load.status))
 
+    // The shipment's own conversation, as this company opens it on the Chats
+    // page: a load that follows an Appload order is the order's thread, one
+    // of the company's own is the load's — and a client reads its order on
+    // its own row, which carries the same conversation
+    const chatSubject = appload
+        ? `order:${appload.orderId}`
+        : load.role !== "client" ? `movement:${load.id}` : null
+
     const tools = canEdit || canConfirm || permissions.canRequestLocation || permissions.canConvert || permissions.canWithdraw
     const trouble = interruptions.length > 0 || permissions.canOpenDispute
     const menu = tools || trouble || cancel || cancelWithAppload
@@ -232,6 +244,40 @@ export function LoadActions({
                         </Tooltip>
                     )
                 })}
+
+                {/* The conversations this load has, both of them on the Chats
+                    page: the driver on WhatsApp, and the other company */}
+                {(permissions.canReadThread || chatSubject) && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button size="sm" variant="outline">
+                                <IconMessages className="size-4" stroke={1.5} />
+                                {t("actions.open-chat")}
+                                <IconChevronDown className="size-4" stroke={1.5} />
+                            </Button>
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent align="end" className="min-w-52">
+                            {permissions.canReadThread && (
+                                <DropdownMenuItem asChild>
+                                    <Link href={{ pathname: "/chats", query: { c: load.id } }}>
+                                        <IconMessageCircle stroke={1.5} />
+                                        {t("actions.chat-driver")}
+                                    </Link>
+                                </DropdownMenuItem>
+                            )}
+
+                            {chatSubject && (
+                                <DropdownMenuItem asChild>
+                                    <Link href={{ pathname: "/chats", query: { t: chatSubject } }}>
+                                        <IconMessages stroke={1.5} />
+                                        {t("actions.chat-order")}
+                                    </Link>
+                                </DropdownMenuItem>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
 
                 {menu && (
                     <DropdownMenu>

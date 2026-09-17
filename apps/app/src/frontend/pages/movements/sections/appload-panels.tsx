@@ -14,7 +14,6 @@ import { RequestsPanel } from "@/frontend/pages/orders/sections/requests-panel"
 import { TimelineCard as OrderTimelineCard } from "@/frontend/pages/orders/sections/timeline-card"
 import { TrackingCard as OrderTrackingCard } from "@/frontend/pages/orders/sections/tracking-card"
 import { TransitionBar } from "@/frontend/pages/orders/sections/transition-bar"
-import { ChatCard } from "@/frontend/pages/threads/sections/chat-card"
 import type { OrderDetail, OrgType } from "@/frontend/pages/orders/types"
 
 /** Which side of the Appload order the company reading the load is on. */
@@ -94,7 +93,7 @@ function LeftPanels({ orderId, side }: Omit<PanelsProps, "column">) {
     )
 }
 
-/** Where the truck is, what the parties are saying, and what has happened. */
+/** Where the truck is and what has happened. */
 function RightPanels({ orderId }: { orderId: string }) {
     const trpc = useTRPC()
 
@@ -104,11 +103,6 @@ function RightPanels({ orderId }: { orderId: string }) {
     return (
         <>
             <OrderTrackingCard order={order} />
-
-            {/* The shipper, Appload and — once it holds the job — the carrier.
-                The driver's own WhatsApp thread stays with Appload, which is
-                the company that asks him */}
-            <ChatCard subjectType="order" subjectId={orderId} />
 
             <OrderTimelineCard entries={history} />
         </>

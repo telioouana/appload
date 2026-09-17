@@ -13,10 +13,8 @@ import { LoadHeader } from "@/frontend/pages/movements/sections/load-header"
 import { MoneyCard } from "@/frontend/pages/movements/sections/money-card"
 import { PartiesCard } from "@/frontend/pages/movements/sections/parties-card"
 import { RouteCard } from "@/frontend/pages/movements/sections/route-card"
-import { ThreadCard } from "@/frontend/pages/movements/sections/thread-card"
 import { TimelineCard } from "@/frontend/pages/movements/sections/timeline-card"
 import { TrackingCard } from "@/frontend/pages/movements/sections/tracking-card"
-import { ChatCard } from "@/frontend/pages/threads/sections/chat-card"
 
 /**
  * One load on one page: a dispute on it first, then where it goes and what
@@ -27,9 +25,11 @@ import { ChatCard } from "@/frontend/pages/threads/sections/chat-card"
  *
  * A load that follows an Appload order keeps its own lane, its own money and
  * its own books here, and everything the two companies do about it — the
- * offers, the moves on, the rig, the papers, the conversation — is the
- * order's, read through `ApploadOrderPanels`. A company Appload is still
- * asking has only a quote to give, so its row shows the lane and the form.
+ * offers, the moves on, the rig, the papers — is the order's, read through
+ * `ApploadOrderPanels`. What the parties say to each other is on the Chats
+ * page, which the header's Open chat menu links to. A company Appload is
+ * still asking has only a quote to give, so its row shows the lane and the
+ * form.
  */
 export function MovementDetailView({ loadId }: { loadId: string }) {
     const t = useTranslations("App.loads.detail")
@@ -97,17 +97,7 @@ export function MovementDetailView({ loadId }: { loadId: string }) {
                             // row is only this company's copy of it
                             <ApploadOrderPanels orderId={appload.orderId} side={appload.role} column="right" />
                         ) : (
-                            <>
-                                <TrackingCard load={load} />
-
-                                {/* The two companies on the load, above the driver's own
-                                    WhatsApp thread. A client reads its order on its own
-                                    row, which carries the same conversation */}
-                                {load.role !== "client" && <ChatCard subjectType="movement" subjectId={load.id} />}
-
-                                {/* What the driver has said back, under the card that asks */}
-                                {load.permissions.canReadThread && <ThreadCard load={load} />}
-                            </>
+                            <TrackingCard load={load} />
                         )}
 
                         <TimelineCard load={load} />

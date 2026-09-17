@@ -151,6 +151,9 @@
         "withdraw": "Withdraw the offer",
         "edit": "Edit",
         "more": "More actions",
+        "open-chat": "Open chat",
+        "chat-driver": "Driver",
+        "chat-order": "Order chat",
         "send-confirmation": "Send confirmation",
         "request-location": "Ask for location",
         "open-dispute": "Open a dispute",
@@ -405,7 +408,7 @@
     "thread": {
         "title": "Driver messages",
         "empty": "No messages with the driver yet",
-        "footer": "Messages are sent from the tracking above and answered on WhatsApp.",
+        "footer": "Messages are sent from the load's tracking card and answered on WhatsApp.",
         "status": {
             "pending": "Sending",
             "sent": "Sent",
