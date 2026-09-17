@@ -35,6 +35,8 @@ import { primaryOrderAction } from "@/frontend/pages/orders/lib/actions"
 import { OrderStatusBadge, place } from "@/frontend/pages/orders/sections/order-item-shared"
 import { ORDER_STATUS_SECTION, SECTION_PATHS } from "@/frontend/pages/orders/types"
 
+import { OpenChatButton } from "./open-chat-button"
+
 /** Statuses whose every legal move needs the admin role. */
 const CLOSED: OrderStatus[] = ["completed", "cancelled", "underbid"]
 
@@ -156,6 +158,13 @@ export function OrderDetailHeader({
             </div>
 
             <div className="flex shrink-0 items-center gap-2 lg:mt-6">
+                <OpenChatButton
+                    driverName={order.driverName}
+                    driverPhone={order.driverPhoneNumber}
+                    orderId={order.orderId}
+                    status={order.status}
+                />
+
                 <Button size="sm" variant="outline" onClick={onSendPdf}>
                     <IconSend />
                     <span className="hidden sm:inline">{tActions("send-pdf")}</span>

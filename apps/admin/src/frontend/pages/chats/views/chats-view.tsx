@@ -61,18 +61,19 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
     const params = useListParams()
     const [activeId, setActiveId] = useState<string | null>(params.get("c"))
     // The order conversations are the same page's second list, with a deep
-    // link of their own: a thread named in the URL is what opens on it
-    const [activeThreadId, setActiveThreadId] = useState<string | null>(params.get("t"))
-    const [mode, setMode] = useState<ChatMode>(params.get("t") ? "orders" : "drivers")
+    // link of their own: they are named by their order, not by their thread,
+    // so the order page can link one that has never been written in
+    const [activeOrderId, setActiveOrderId] = useState<string | null>(params.get("o"))
+    const [mode, setMode] = useState<ChatMode>(params.get("o") ? "orders" : "drivers")
 
     const selectConversation = (id: string) => {
         setActiveId(id)
         params.shallow({ key: "c", value: id })
     };
 
-    const selectThread = (id: string) => {
-        setActiveThreadId(id)
-        params.shallow({ key: "t", value: id })
+    const selectOrder = (orderId: string) => {
+        setActiveOrderId(orderId)
+        params.shallow({ key: "o", value: orderId })
     };
     const [draft, setDraft] = useState("");
     const [search, setSearch] = useState("");
@@ -114,13 +115,15 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
         trpc.threads.list.queryOptions(undefined, { refetchInterval: CONVERSATIONS_POLL_MS }),
     );
     const threads = useMemo(() => threadsQuery.data ?? [], [threadsQuery.data]);
+    // The list row, when there is one: an order nobody has written to yet is
+    // opened by its id alone
     const activeThread = useMemo(
-        () => threads.find((thread) => thread.threadId === activeThreadId) ?? null,
-        [threads, activeThreadId],
+        () => threads.find((thread) => thread.orderId === activeOrderId) ?? null,
+        [threads, activeOrderId],
     );
 
     // Opened, read and written through the same hook the order page uses
-    const orderChat = useOrderThread(mode === "orders" ? activeThread?.orderId ?? null : null);
+    const orderChat = useOrderThread(mode === "orders" ? activeOrderId : null);
 
     // Active thread: polls to pick up inbound messages
     const messagesQuery = useQuery(
@@ -261,14 +264,17 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
                     mode={mode}
                     onModeChange={setMode}
                     threads={threads}
-                    activeThreadId={activeThreadId}
+                    activeOrderId={activeOrderId}
                     isLoadingThreads={threadsQuery.isPending}
-                    onSelectThread={selectThread}
+                    onSelectOrder={selectOrder}
                 />
 
                 <section className="flex min-w-0 flex-1 flex-col">
                     {mode === "orders" ? (
-                        !activeThread ? (
+                        // An order whose thread cannot be opened — no such
+                        // order, or a reader who is not in the room — reads
+                        // like nothing is picked
+                        !activeOrderId || orderChat.unavailable ? (
                             <Empty className="flex-1">
                                 <EmptyHeader>
                                     <EmptyMedia variant="icon">
@@ -282,12 +288,17 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
                             <>
                                 <header className="flex items-center gap-3 p-4">
                                     <div className="min-w-0 flex-1">
-                                        <div className="truncate font-medium">{activeThread.orderId}</div>
-                                        <div className="truncate text-xs text-muted-foreground">
-                                            {[activeThread.shipperName, activeThread.carrierName ?? t("threads.noCarrier")]
-                                                .filter(Boolean)
-                                                .join(" · ")}
-                                        </div>
+                                        <div className="truncate font-medium">{activeOrderId}</div>
+                                        {/* The parties come off the list row, which
+                                            an order nobody has written to yet has not
+                                            got */}
+                                        {activeThread && (
+                                            <div className="truncate text-xs text-muted-foreground">
+                                                {[activeThread.shipperName, activeThread.carrierName ?? t("threads.noCarrier")]
+                                                    .filter(Boolean)
+                                                    .join(" · ")}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* The panel is one state for both lists, and
@@ -376,9 +387,9 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
 
                 {/* The same panel either way — an order conversation is
                     already named by the order it hangs off */}
-                {isPanelOpen && (mode === "orders" ? activeThread : activeConversation) && (
+                {isPanelOpen && (mode === "orders" ? activeOrderId : activeConversation) && (
                     <OrderPanel
-                        orderId={mode === "orders" ? activeThread?.orderId ?? null : activeConversation?.orderId ?? null}
+                        orderId={mode === "orders" ? activeOrderId : activeConversation?.orderId ?? null}
                         onClose={() => setPanelOpen(false)}
                     />
                 )}

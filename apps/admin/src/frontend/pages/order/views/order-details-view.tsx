@@ -25,7 +25,6 @@ import { SendPdfDialog } from "../components/send-pdf-dialog"
 import { AddDocumentDialog, type DocumentPreset } from "../components/add-document-dialog"
 import { OfferDecisionDialog, OfferDialog, RemoveOfferDialog } from "../components/offer-dialog"
 import { OrderUpdatedSuccess, type UpdatedOrder } from "../section/order-updated-success"
-import { ChatCard } from "../sections/chat-card"
 import { OrderDetailHeader } from "../sections/detail-header"
 import { DisputeBanner, FlagBanner } from "../sections/exception-banners"
 import { LoadingCheckCard, showsLoadingCheck } from "../sections/loading-check-card"
@@ -218,15 +217,7 @@ export function OrderDetailsView({ orderId }: { orderId: string }) {
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-4 lg:h-full lg:min-h-0">
-                    {/* The map takes whatever the conversation under it leaves,
-                        so the column still ends where the page does */}
-                    <div className="flex min-h-0 flex-col lg:flex-1">
-                        <TrackingCard order={order} />
-                    </div>
-
-                    {/* What the shipper and the carrier are saying about this
-                        order, in the app rather than on WhatsApp */}
-                    <ChatCard orderId={orderId} />
+                    <TrackingCard order={order} />
                 </div>
             </div>
 

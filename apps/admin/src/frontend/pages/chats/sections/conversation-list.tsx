@@ -50,9 +50,9 @@ export function ConversationList({
     mode,
     onModeChange,
     threads,
-    activeThreadId,
+    activeOrderId,
     isLoadingThreads,
-    onSelectThread,
+    onSelectOrder,
 }: {
     /** Already filtered by the shell's search + filter state. */
     conversations: ConversationSummary[];
@@ -70,9 +70,9 @@ export function ConversationList({
     onModeChange: (value: ChatMode) => void;
     /** The order conversations, newest first. */
     threads: StaffThreadRow[];
-    activeThreadId: string | null;
+    activeOrderId: string | null;
     isLoadingThreads: boolean;
-    onSelectThread: (threadId: string) => void;
+    onSelectOrder: (orderId: string) => void;
 }) {
     const t = useTranslations("Admin.messages");
     const f = useFormatter();
@@ -113,9 +113,9 @@ export function ConversationList({
             {onOrders ? (
                 <OrderThreadList
                     threads={threads}
-                    activeThreadId={activeThreadId}
+                    activeOrderId={activeOrderId}
                     isLoading={isLoadingThreads}
-                    onSelect={onSelectThread}
+                    onSelect={onSelectOrder}
                 />
             ) : (
                 <>
@@ -257,19 +257,19 @@ export function ConversationList({
 
 /**
  * The order conversations: the shipper, the carrier and Appload on one
- * shipment. Keyed on the thread, labelled by the order — which is what the
- * panel on the right takes, and what a deep link carries.
+ * shipment. Keyed on the order — which is what the panel on the right takes,
+ * and what a deep link carries.
  */
 function OrderThreadList({
     threads,
-    activeThreadId,
+    activeOrderId,
     isLoading,
     onSelect,
 }: {
     threads: StaffThreadRow[];
-    activeThreadId: string | null;
+    activeOrderId: string | null;
     isLoading: boolean;
-    onSelect: (threadId: string) => void;
+    onSelect: (orderId: string) => void;
 }) {
     const t = useTranslations("Admin.messages");
     const f = useFormatter();
@@ -302,7 +302,7 @@ function OrderThreadList({
             ) : (
                 <ItemGroup className="gap-1 p-2">
                     {threads.map((thread) => {
-                        const isActive = thread.threadId === activeThreadId;
+                        const isActive = thread.orderId === activeOrderId;
                         const showUnread = thread.unread > 0 && !isActive;
 
                         return (
@@ -315,7 +315,7 @@ function OrderThreadList({
                                     isActive && "bg-primary/10 hover:bg-primary/10 dark:bg-primary/15 dark:hover:bg-primary/15",
                                 )}
                             >
-                                <button type="button" onClick={() => onSelect(thread.threadId)}>
+                                <button type="button" onClick={() => onSelect(thread.orderId)}>
                                     <ItemMedia>
                                         <Avatar className="size-9">
                                             <AvatarFallback>{initials(thread.shipperName ?? thread.orderId)}</AvatarFallback>

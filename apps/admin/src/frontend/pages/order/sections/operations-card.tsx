@@ -14,7 +14,6 @@ import { useTRPC } from "@/backend/api/client"
 import { CopyButton } from "@/frontend/pages/partners/sections/profile-parts"
 import { OperationsStrip } from "@/frontend/pages/orders/sections/order-item-parts"
 
-import { OpenChatButton } from "./open-chat-button"
 import { SectionCard, StatTile } from "@workspace/ui/customs/detail/section-card"
 
 /** Booking no longer asks for the rig, so this is where it is still missing. */
@@ -50,17 +49,7 @@ export function OperationsCard({ order, onAssign }: { order: Order; onAssign?: (
         >
             <OperationsStrip
                 order={order}
-                phoneAction={phone ? (
-                    <span className="flex shrink-0 items-center gap-1">
-                        <CopyButton value={phone} label={tActions("copy-phone")} />
-                        <OpenChatButton
-                            driverName={order.driverName}
-                            driverPhone={phone}
-                            orderId={order.orderId}
-                            status={order.status}
-                        />
-                    </span>
-                ) : undefined}
+                phoneAction={phone ? <CopyButton value={phone} label={tActions("copy-phone")} /> : undefined}
             />
 
             <PapersLine order={order} />

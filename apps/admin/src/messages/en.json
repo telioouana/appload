@@ -2003,7 +2003,9 @@
                     "heldHint": "A dispute is holding these payments."
                 },
                 "resume": "Resume",
-                "openChat": "Open conversation",
+                "openChat": "Open chat",
+                "chatDriver": "Driver (WhatsApp)",
+                "chatOrder": "Order chat",
                 "chatFailed": "Could not open the conversation, please try again.",
                 "openMap": "Open in Map",
                 "trip": {
@@ -2046,9 +2048,6 @@
                     "pending": "Awaiting review",
                     "missing": "Nothing on file",
                     "review": "Open the record"
-                },
-                "chat": {
-                    "title": "Conversation"
                 }
             },
             "history": {

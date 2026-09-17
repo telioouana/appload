@@ -2004,6 +2004,8 @@
                 },
                 "resume": "Retomar",
                 "openChat": "Abrir conversa",
+                "chatDriver": "Motorista (WhatsApp)",
+                "chatOrder": "Conversa do pedido",
                 "chatFailed": "Não foi possível abrir a conversa, tente novamente.",
                 "openMap": "Abrir no Mapa",
                 "trip": {
@@ -2046,9 +2048,6 @@
                     "pending": "Aguarda revisão",
                     "missing": "Nada submetido",
                     "review": "Abrir o registo"
-                },
-                "chat": {
-                    "title": "Conversa"
                 }
             },
             "history": {
