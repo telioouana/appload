@@ -1,7 +1,7 @@
 import "server-only";
 
 import { z } from "zod";
-import { and, count, desc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, ne, sql, type SQL } from "drizzle-orm";
 
 import { notification, NOTIFICATION_KIND } from "@workspace/db/notifications";
 
@@ -95,14 +95,21 @@ export const notificationsRouter = createTRPCRouter({
 
         // The location alerts are counted apart: a driver gone quiet is the
         // one notification that wants to be seen before the rest, so the bell
-        // and the rail can mark it differently
+        // and the rail can mark it differently.
+        //
+        // What the parties said is the Chats badge's, not the bell's: the row
+        // is still written and still listed, but counting it here would put
+        // one message behind two numbers that clear on two different actions
         const [row] = await ctx.db
             .select({
                 value: count(),
                 alerts: count(sql`case when ${notification.kind} = 'movement.location-alert' then 1 end`),
             })
             .from(notification)
-            .where(mine(ctx.tenant.userId, ctx.tenant.organizationId, [isNull(notification.readAt)]));
+            .where(mine(ctx.tenant.userId, ctx.tenant.organizationId, [
+                isNull(notification.readAt),
+                ne(notification.kind, "thread.message"),
+            ]));
 
         return { count: row?.value ?? 0, alerts: row?.alerts ?? 0 };
     }),

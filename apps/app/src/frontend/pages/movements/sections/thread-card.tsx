@@ -15,13 +15,13 @@ import { useTRPC } from "@/backend/api/client"
 import type { MovementDetail, MovementThreadItem } from "@/frontend/pages/movements/types"
 
 /**
- * What has been said to the driver on WhatsApp, under the card that asks.
- * Read-only on the portal: a position request goes out from the button
- * above, the driver answers in WhatsApp, and both land here — which is why
- * this polls on the same clock as the trail, so an answer and the pin it
- * carries appear together.
+ * What has been said to the driver on WhatsApp, on the Chats page.
+ * Read-only on the portal: a position request goes out from the load's own
+ * tracking card, the driver answers in WhatsApp, and both land here — which
+ * is why this polls on the same clock as the trail, so an answer and the pin
+ * it carries appear together.
  */
-export function ThreadCard({ load }: { load: MovementDetail }) {
+export function ThreadCard({ load }: { load: Pick<MovementDetail, "id"> }) {
     const t = useTranslations("App.loads.thread")
     const trpc = useTRPC()
 

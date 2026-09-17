@@ -49,6 +49,15 @@ export function NotificationItem({
 
         onNavigate?.()
 
+        // A message is read on the Chats page — the shipment's own page
+        // carries no conversation any more. The row already names the subject
+        // as THIS company holds it: the executing partner was told about its
+        // own row, which is the id its chat opens with
+        if (row.kind === "thread.message" && row.entityType && row.entityId) {
+            router.push({ pathname: "/chats", query: { t: `${row.entityType}:${row.entityId}` } })
+            return
+        }
+
         if (target) router.push(target.link)
     }
 

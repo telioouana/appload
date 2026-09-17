@@ -8,6 +8,18 @@
     "load-more": "Earlier messages",
     "you": "You",
     "appload": "Appload",
+    "page": {
+        "title": "Chats",
+        "modes": {
+            "drivers": "Drivers",
+            "orders": "Orders"
+        },
+        "drivers-empty": "No driver conversations yet",
+        "orders-empty": "No conversations yet",
+        "file-only": "Attachment",
+        "pick": "Pick a conversation",
+        "error": "The conversations could not be loaded."
+    },
     "errors": {
         "RATE_LIMITED": "Too many messages this hour. Try again later.",
         "EMPTY_MESSAGE": "Write something or attach a file.",

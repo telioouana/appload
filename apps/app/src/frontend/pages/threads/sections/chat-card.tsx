@@ -71,10 +71,13 @@ export function ChatCard({ subjectType, subjectId }: { subjectType: ThreadSubjec
     }))
 
     const send = useMutation(trpc.threads.send.mutationOptions())
-    // Nothing in the portal counts off this cursor — the rail's bell counts
-    // the `thread.message` notifications instead — so there is nothing to
-    // recount when it moves
-    const markRead = useMutation(trpc.threads.markRead.mutationOptions())
+    // The rail's Chats badge and the list beside this card both count off this
+    // cursor, so both are recounted when it moves
+    const recount = () => Promise.all([
+        queryClient.invalidateQueries(trpc.threads.list.queryFilter()),
+        queryClient.invalidateQueries(trpc.threads.unread.queryFilter()),
+    ])
+    const markRead = useMutation(trpc.threads.markRead.mutationOptions({ onSuccess: recount }))
 
     // Who said what, with each sender's company beside their name. Staff have
     // no organization row: the null side IS Appload
@@ -153,6 +156,9 @@ export function ChatCard({ subjectType, subjectId }: { subjectType: ThreadSubjec
             }
 
             await queryClient.invalidateQueries(trpc.threads.messages.queryFilter(subject))
+            // Sending moves the conversation to the top of the list, and
+            // reads it on the way
+            await recount()
 
             return true
         } catch (cause) {
@@ -163,8 +169,8 @@ export function ChatCard({ subjectType, subjectId }: { subjectType: ThreadSubjec
     }
 
     return (
-        <SectionCard title={t("title")}>
-            <div className="flex h-96 flex-col gap-2">
+        <SectionCard title={thread.data?.label ?? t("title")} className="h-full min-h-0">
+            <div className="flex min-h-0 flex-1 flex-col gap-2">
                 <ChatThread
                     messages={items}
                     meUserId={session.user.id}

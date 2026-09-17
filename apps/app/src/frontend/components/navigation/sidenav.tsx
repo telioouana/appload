@@ -19,6 +19,7 @@ import {
     IconList,
     IconMap2,
     IconMapPinOff,
+    IconMessages,
     IconPlus,
     IconSearch,
     IconTruck,
@@ -155,11 +156,12 @@ export function Sidenav({
     // a key it observed first reaches a page's server render empty. The
     // unread number is the bell's query, which no page suspends on
     const { data: counts } = useQuery({ ...trpc.me.railCounts.queryOptions(), staleTime: 60_000 })
-    // Chat is counted here too, and only here: a message writes a
+    // Chat is counted on the Chats row and nowhere else: a message writes a
     // `thread.message` notification for every member of the other side, so
-    // adding the thread cursor's own unread on top would count each message
-    // twice — and the two halves clear on different actions
+    // the bell leaves that kind out of its own count — otherwise one message
+    // would be two numbers, cleared by two different actions
     const { data: unread } = useQuery(trpc.notifications.unreadCount.queryOptions(undefined, { refetchInterval: UNREAD_POLL_MS }))
+    const { data: chats } = useQuery(trpc.threads.unread.queryOptions(undefined, { refetchInterval: UNREAD_POLL_MS }))
 
     const carrier = orgType === "carrier"
 
@@ -205,6 +207,13 @@ export function Sidenav({
             })),
         },
         { Icon: IconMap2, name: t("work.map"), match: "/map", path: "/map" },
+        {
+            Icon: IconMessages,
+            name: t("work.chats"),
+            match: "/chats",
+            path: "/chats",
+            badge: chats?.total,
+        },
         {
             Icon: IconBell,
             name: t("work.notifications"),

@@ -8,6 +8,18 @@
     "load-more": "Mensagens anteriores",
     "you": "Você",
     "appload": "Appload",
+    "page": {
+        "title": "Conversas",
+        "modes": {
+            "drivers": "Motoristas",
+            "orders": "Pedidos"
+        },
+        "drivers-empty": "Ainda não há conversas com motoristas",
+        "orders-empty": "Ainda não há conversas",
+        "file-only": "Anexo",
+        "pick": "Escolha uma conversa",
+        "error": "Não foi possível carregar as conversas."
+    },
     "errors": {
         "RATE_LIMITED": "Demasiadas mensagens nesta hora. Tente mais tarde.",
         "EMPTY_MESSAGE": "Escreva algo ou anexe um ficheiro.",

@@ -58,6 +58,11 @@ export const routing = defineRouting({
         "/appload/quotes": {
             pt: "/appload/cotacoes"
         },
+        // Every conversation the company is in: the parties of its orders,
+        // and what its own drivers said on WhatsApp
+        "/chats": {
+            pt: "/conversas"
+        },
         "/map": {
             pt: "/mapa"
         },
