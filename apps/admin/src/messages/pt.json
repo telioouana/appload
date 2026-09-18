@@ -231,7 +231,7 @@
                 "empty": "Nada registado em {year}",
                 "empty-years": "Ainda nada registado",
                 "parties-note": "Clientes e transportadores contam-se uma única vez nos pedidos do ano.",
-                "empty-description": "Escolha outro ano ou verifique o separador STATS na folha",
+                "empty-description": "Escolha outro ano",
                 "columns": {
                     "year": "Ano",
                     "month": "Mês",

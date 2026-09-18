@@ -231,7 +231,7 @@
                 "empty": "Nothing recorded in {year}",
                 "empty-years": "Nothing recorded yet",
                 "parties-note": "Shippers and carriers are counted once across the year's orders.",
-                "empty-description": "Pick another year, or check the STATS tab in the sheet",
+                "empty-description": "Pick another year",
                 "columns": {
                     "year": "Year",
                     "month": "Month",

@@ -1,17 +1,14 @@
 import "server-only";
 
 import { getServiceAccountAccessToken } from "@/lib/orders/service-account-token";
-import { aggregateLogbook, DAY_MS, emptyMonth, LOGBOOK_RANGE, LOGBOOK_SHEET, SERIAL_EPOCH } from "@/lib/metrics/logbook";
-import { asRateSource, monthKey, type PartyCounts, type RateRow, type SheetMonth } from "@/frontend/pages/metrics/types";
+import { emptyMonth } from "@/lib/metrics/orders";
+import { asRateSource, monthKey, type RateRow, type SheetMonth } from "@/frontend/pages/metrics/types";
 
 /**
- * The DATABASE LOGBOOK, read as data rather than as a document.
- *
- * Two tabs matter here. ORDERS is the one the rest of the admin already
- * syncs to — one row per order, the app's columns beside the accountant's —
- * and every figure on the page is folded from it (logbook.ts). MONTHLY RATES
- * is the tab this app owns: one pinned opening rate per month, which Claire
- * can override by typing over the number.
+ * The DATABASE LOGBOOK's MONTHLY RATES tab, read as data rather than as a
+ * document: one pinned opening rate per month, which Claire can override by
+ * typing over the number. The figures themselves come from the database
+ * (orders.ts) — the logbook's ORDERS tab only mirrors it.
  *
  * Everything is fetched with the service account, whatever
  * NEXT_PUBLIC_GOOGLE_SHEETS_AUTH_MODE says — the metrics page is read-only
@@ -24,18 +21,20 @@ export const RATES_SHEET = "MONTHLY RATES";
 const RATES_RANGE = "A1:F";
 const RATES_HEADER = ["Month", "USD→MZN", "USD→ZAR", "Source", "Pinned on", "Note"];
 
-// The logbook gains a row an order and is edited by hand every day; a
-// request that misses the window pays three API calls, the rest are free
+// A month's rate is pinned once and edited by hand at most; a request that
+// misses the window pays two API calls, the rest are free
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
 // The caller is a user-facing query, so a hung Google call must not hold the
 // request open longer than the client is willing to wait
 const TIMEOUT_MS = 10_000;
 
-/** The whole timeline, the names counted in it and the rates it is converted with, as one read. */
+// Sheets counts days from 1899-12-30, so 25569 is the Unix epoch
+const SERIAL_EPOCH = 25569;
+const DAY_MS = 86_400_000;
+
+/** The rates the timeline is converted with, as one read. */
 export type MetricsSnapshot = {
-    months: SheetMonth[];
-    parties: PartyCounts;
     rates: RateRow[];
     /** ISO instant of the last *successful* read, not of this call */
     fetchedAt: string;
@@ -207,7 +206,7 @@ function hasActivity(month: SheetMonth): boolean {
 }
 
 /**
- * The months the logbook holds, cut down to the timeline the page draws:
+ * The months the orders fall in, cut down to the timeline the page draws:
  * from the first month Appload traded to the current Maputo month,
  * contiguous, with the quiet months in between filled in so a chart's x-axis
  * never skips one. An order dated in the future (a booking for next month)
@@ -246,14 +245,14 @@ export function timeline(rows: SheetMonth[], currentMonth: string): SheetMonth[]
 }
 
 // Module scope, so the snapshot lives as long as the serverless instance:
-// every card on the page is served from one read of the spreadsheet
+// every request is served the rates from one read of the spreadsheet
 let cache: { snapshot: MetricsSnapshot; readAt: number } | null = null;
 
 // The read in progress, if any; see readSnapshot
 let inFlight: Promise<MetricsSnapshot> | null = null;
 
 /**
- * The timeline and the pinned rates, from cache while it is fresh. A read
+ * The pinned rates, from cache while they are fresh. A read
  * that fails serves the last good snapshot flagged `stale` — the header says
  * so and the numbers stay on screen; only a cold instance with nothing to
  * fall back on throws.
@@ -275,9 +274,6 @@ export function readSnapshot(): Promise<MetricsSnapshot> {
     return inFlight;
 }
 
-// Rows without any loading date are named once per instance, not per read
-let undatedLogged = 0;
-
 async function refreshSnapshot(): Promise<MetricsSnapshot> {
     // Outside the try: a missing env var is a misconfiguration to shout
     // about, not a network blip a stale snapshot should paper over
@@ -286,23 +282,9 @@ async function refreshSnapshot(): Promise<MetricsSnapshot> {
     try {
         const accessToken = await getServiceAccountAccessToken();
 
-        // Two reads rather than one values:batchGet, so a MONTHLY RATES tab
-        // that does not exist yet cannot take the ORDERS read down with it
-        const [orderRows, rateRows] = await Promise.all([
-            readValues(accessToken, id, LOGBOOK_SHEET, LOGBOOK_RANGE),
-            readRateRows(accessToken, id),
-        ]);
-
-        const { months, parties, undated } = aggregateLogbook(orderRows);
-
-        if (undated > 0 && undated !== undatedLogged) {
-            undatedLogged = undated;
-            console.warn(`[metrics] ${undated} logbook order(s) carry no loading date and are not on the timeline`);
-        }
+        const rateRows = await readRateRows(accessToken, id);
 
         const snapshot: MetricsSnapshot = {
-            months: timeline(months, currentMaputoMonth()),
-            parties,
             rates: parseRates(rateRows),
             fetchedAt: new Date().toISOString(),
             stale: false,
