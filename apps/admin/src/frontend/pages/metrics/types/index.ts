@@ -12,20 +12,10 @@ import type { Currency } from "@/frontend/pages/orders/types"
  * revenue moves every morning — that is the whole reason this page exists.
  */
 
-/** Where a pinned rate came from. Read `RateRow` for what each one means. */
+/** Where a month's rate came from: the daily feed, Yahoo Finance before it, or entered by hand. */
 export const RATE_SOURCES = ["feed", "yahoo", "manual"] as const
 
 export type RateSource = (typeof RATE_SOURCES)[number]
-
-/**
- * `MONTHLY RATES` is a tab Claire can edit, so the parser folds anything it
- * does not recognise to "manual": a source typed by hand means a rate pinned
- * by hand, and the card has copy for exactly these three.
- */
-export const asRateSource = (value: unknown): RateSource => {
-    const text = String(value ?? "").trim().toLowerCase()
-    return (RATE_SOURCES as readonly string[]).includes(text) ? (text as RateSource) : "manual"
-}
 
 /** `2026-09` — the key every month, rate row and lookup map is filed under. */
 export const monthKey = (year: number, month: number) => `${year}-${String(month).padStart(2, "0")}`
@@ -86,19 +76,9 @@ export type MonthRate = {
     usdMzn: number
     usdZar: number
     source: RateSource
-    /** ISO instant the row was written, or null for a rate typed into the sheet without one */
+    /** ISO instant the day's row was stored in `fx_daily_rate` */
     pinnedOn: string | null
     provisional: boolean
-}
-
-/** One row of the `MONTHLY RATES` tab, as parsed. `month` is the `YYYY-MM` key. */
-export type RateRow = {
-    month: string
-    usdMzn: number
-    usdZar: number
-    source: RateSource
-    pinnedOn: string | null
-    note: string | null
 }
 
 /**
@@ -186,7 +166,7 @@ export type MetricsLifetime = Omit<MetricYear, "year" | "yoy">
 /**
  * What `metrics.overview` returns: the whole timeline in one payload, because
  * every card reads a different slice of the same months and a second query
- * would only re-read the same sheet.
+ * would only re-read the same orders.
  */
 export type MetricsOverview = {
     months: MetricMonth[]
@@ -194,12 +174,6 @@ export type MetricsOverview = {
     lifetime: MetricsLifetime
     /** `YYYY-MM` in Maputo time — the month marked "to date" */
     currentMonth: string
-    /** ISO instant the sheet was last read successfully */
-    fetchedAt: string
-    /** The read failed and this is the last good snapshot; the header says so */
-    stale: boolean
-    /** Deep link to the logbook the numbers came from */
-    sheetUrl: string
 }
 
 /** One key for the RSC prefetch and the sections: the query takes no input. */

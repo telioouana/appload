@@ -140,13 +140,11 @@
         },
         "metrics": {
             "title": "Metrics",
-            "description": "Since March 2022 · {currency} at each month's opening rate",
-            "open-sheet": "Open sheet",
+            "description": "{currency} at each month's opening rate",
             "error": "This part of the metrics page could not load.",
             "currency": "Currency",
             "to-date": "to date",
             "year-to-date": "{year} to date",
-            "stale": "Showing the last successful read from {time}",
             "tiles": {
                 "sales": "Sales ({currency})",
                 "commission": "Commission ({currency})",
@@ -220,7 +218,7 @@
                 "zar-trend": "USD → ZAR by month",
                 "provisional": "≈ provisional rate, taken from a nearby month",
                 "provisional-months": "{count, plural, one {# month is using a nearby month's rate} other {# months are using a nearby month's rate}}",
-                "note": "Each month converts at the rate of its first day, pinned once in the MONTHLY RATES tab of the sheet. Edit a row there to override it.",
+                "note": "Each month converts at the rate of its first day, from Appload's daily exchange-rate table.",
                 "empty": "No rate pinned for this month yet"
             },
             "table": {

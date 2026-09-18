@@ -180,3 +180,50 @@ export function aggregateOrders(rows: OrderRow[]): OrdersAggregate {
         parties,
     };
 }
+
+/** Anything at all happened: a trip ran, or money was invoiced. */
+function hasActivity(month: SheetMonth): boolean {
+    const { sales, commission } = month.native;
+    const money = sales.MZN + sales.ZAR + sales.USD + commission.MZN + commission.ZAR + commission.USD;
+
+    return month.trips.total > 0 || money > 0;
+}
+
+/**
+ * The months the orders fall in, cut down to the timeline the page draws:
+ * from the first month Appload traded to the current Maputo month,
+ * contiguous, with the quiet months in between filled in so a chart's x-axis
+ * never skips one. An order dated in the future (a booking for next month)
+ * is left for the month to arrive.
+ */
+export function timeline(rows: SheetMonth[], currentMonth: string): SheetMonth[] {
+    const byKey = new Map<string, SheetMonth>();
+
+    for (const row of rows) {
+        const key = monthKey(row.year, row.month);
+
+        if (key <= currentMonth) byKey.set(key, row);
+    }
+
+    const keys = [...byKey.keys()].sort();
+    const first = keys.find((key) => hasActivity(byKey.get(key)!));
+
+    if (!first) return [];
+
+    const months: SheetMonth[] = [];
+    let year = Number(first.slice(0, 4));
+    let month = Number(first.slice(5));
+
+    for (let key = first; key <= currentMonth; key = monthKey(year, month)) {
+        months.push(byKey.get(key) ?? emptyMonth(year, month));
+
+        if (month === 12) {
+            year += 1;
+            month = 1;
+        } else {
+            month += 1;
+        }
+    }
+
+    return months;
+}

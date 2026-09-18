@@ -1,18 +1,11 @@
 "use client"
 
-import { useSuspenseQuery } from "@tanstack/react-query"
-import { IconTable } from "@tabler/icons-react"
+import { useTranslations } from "@workspace/i18n"
 
-import { useFormatter, useTranslations } from "@workspace/i18n"
-
-import { Button } from "@workspace/ui/components/button"
-import { Skeleton } from "@workspace/ui/components/skeleton"
-
-import { useTRPC } from "@/backend/api/client"
 import { PageHeader } from "@workspace/ui/customs/list/page-header"
 import { TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 
-import { CardBoundary, CardSkeleton, Quiet } from "@/frontend/pages/dashboard/views/dashboard-fallbacks"
+import { CardBoundary, CardSkeleton } from "@/frontend/pages/dashboard/views/dashboard-fallbacks"
 import { CurrencyToggle } from "@/frontend/pages/metrics/components/currency-toggle"
 import { useMetricsCurrency } from "@/frontend/pages/metrics/hooks/use-metrics-currency"
 import { MarginByYear } from "@/frontend/pages/metrics/sections/margin-by-year"
@@ -23,49 +16,6 @@ import { RevenueByYear } from "@/frontend/pages/metrics/sections/revenue-by-year
 import { TripsByMonth } from "@/frontend/pages/metrics/sections/trips-by-month"
 import { YearsTable } from "@/frontend/pages/metrics/sections/years-table"
 import { YtdTiles } from "@/frontend/pages/metrics/sections/ytd-tiles"
-import { overviewInput } from "@/frontend/pages/metrics/types"
-
-/**
- * The door to where the numbers actually live. A plain `a`, not the locale
- * `Link`: this leaves the admin for Google's own domain, so the router has
- * nothing to route.
- */
-function OpenSheet() {
-    const t = useTranslations("Admin.metrics")
-    const trpc = useTRPC()
-
-    const { data } = useSuspenseQuery(trpc.metrics.overview.queryOptions(overviewInput()))
-
-    return (
-        <Button asChild size="sm" variant="outline">
-            <a href={data.sheetUrl} target="_blank" rel="noreferrer">
-                <IconTable className="size-4" stroke={1.5} />
-                {t("open-sheet")}
-            </a>
-        </Button>
-    )
-}
-
-/**
- * When the sheet could not be read, the page serves the last snapshot it
- * holds rather than an empty board — and says which morning it is from, so
- * nobody quotes a stale figure in a meeting.
- */
-function StaleNote() {
-    const t = useTranslations("Admin.metrics")
-    const f = useFormatter()
-    const trpc = useTRPC()
-
-    const { data } = useSuspenseQuery(trpc.metrics.overview.queryOptions(overviewInput()))
-
-    if (!data.stale) return null
-
-    return (
-        <p className="text-xs text-amber-600 dark:text-amber-400">
-            {t("stale", { time: f.dateTime(new Date(data.fetchedAt), { dateStyle: "medium", timeStyle: "short" }) })}
-        </p>
-    )
-}
 
 /**
  * How Appload has done since it started trading: this year against the last,
@@ -73,7 +23,7 @@ function StaleNote() {
  * the work and the partners behind them, what currency the money arrived in,
  * and the two tables the figures come from.
  *
- * Every card reads one query, so the page is one read of one spreadsheet;
+ * Every card reads one query, so the page is one read of the orders;
  * they still stream and fail behind their own boundaries, as on the
  * dashboard, because a rate the feed would not answer for should cost a card
  * and not the page.
@@ -91,16 +41,7 @@ export function MetricsView() {
             <PageHeader
                 title={t("title")}
                 description={t("description", { currency: code })}
-                below={<Quiet><StaleNote /></Quiet>}
-                actions={
-                    <>
-                        <CurrencyToggle />
-
-                        <Quiet fallback={<Skeleton className="h-8 w-28 rounded-lg" />}>
-                            <OpenSheet />
-                        </Quiet>
-                    </>
-                }
+                actions={<CurrencyToggle />}
             />
 
             {/* The bands are `shrink-0`: in a scrolling flex column a band
