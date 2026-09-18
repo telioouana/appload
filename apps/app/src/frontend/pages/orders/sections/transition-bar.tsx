@@ -13,6 +13,7 @@ import {
     DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu"
 
+import { isDispatchMove } from "@workspace/domain/orders/dispatch-readiness"
 import { primaryTransition } from "@workspace/domain/orders/transitions"
 
 import { PlanDialog, type PlanReason } from "@/components/plan-dialog"
@@ -65,9 +66,18 @@ export function TransitionBar({
 
     if (options.targets.length === 0) return null
 
-    // Nothing to fill in for a booking with no rig — that IS the dispatch form
+    // Nothing to fill in for a booking with no rig — that IS the dispatch
+    // form, and its papers block is the one place a missing paper can be
+    // uploaded in the flow; the dialog keeps Confirm disabled until the rig
+    // it picks has everything, and the server refuses it again anyway
     const openable = (option: TransitionOption) =>
-        !option.blocked || option.blockedReason === "INCOMPLETE_FOR_DISPATCH" || planReasonOf(option) !== null
+        !option.blocked
+        || option.blockedReason === "INCOMPLETE_FOR_DISPATCH"
+        || option.blockedReason === "PAPERS_MISSING"
+        // Nothing to fill in either, but the dialog is where the loading
+        // check says what it found and who has to clear it
+        || option.blockedReason === "LOADING_MISMATCH_REVIEW_REQUIRED"
+        || planReasonOf(option) !== null
 
     // A plan refusal is not a move the transition dialog can complete, so it
     // goes to the one that explains the allowance instead
@@ -83,7 +93,7 @@ export function TransitionBar({
             <div className="flex shrink-0 items-center gap-2">
                 {primary && (
                     <Button size="sm" disabled={!openable(primary)} onClick={() => pick(primary)}>
-                        {interrupted ? <IconPlayerPlay /> : primary.to === "to-loading" ? <IconSteeringWheel /> : <IconArrowRight />}
+                        {interrupted ? <IconPlayerPlay /> : isDispatchMove(order.status, primary.to) ? <IconSteeringWheel /> : <IconArrowRight />}
                         <span className="truncate">
                             {interrupted ? t("resume", { status: tStatus(primary.to) }) : tStatus(primary.to)}
                         </span>

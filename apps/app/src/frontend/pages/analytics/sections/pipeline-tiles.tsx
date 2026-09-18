@@ -7,22 +7,23 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 import { useTRPC } from "@/backend/api/client"
 import { Link } from "@/i18n/navigation"
 import { PIPELINE_ATTENTION, PIPELINE_STAGES, type AnalyticsPipeline } from "@/frontend/pages/analytics/types"
+import type { MovementSection } from "@/frontend/pages/movements/types"
 
 /**
- * Where each waiting number opens. The other organization type's keys come
- * back as 0 and are simply never rendered, so the two sides need no branch
- * here: a company only ever has counts for the work it does.
+ * Where each waiting number opens: the section of the Orders page that holds
+ * those loads, since an Appload order is one of the company's own. The other
+ * organization type's keys come back as 0 and are simply never rendered, so
+ * the two sides need no branch here: a company only ever has counts for the
+ * work it does. No tab is named — the page settles it on the company's own
+ * default, which is where these rows sit.
  */
-const ATTENTION: Record<
-    keyof AnalyticsPipeline["attention"],
-    { section: "requests" | "quoted" | "booked" | "on-going" | "delivered"; dispatch?: true }
-> = {
-    awaitingOffers: { section: "requests" },
-    offersToReview: { section: "quoted" },
-    newRequests: { section: "requests" },
-    toDispatch: { section: "booked", dispatch: true },
-    onTheRoad: { section: "on-going" },
-    deliveredPending: { section: "delivered" },
+const ATTENTION: Record<keyof AnalyticsPipeline["attention"], MovementSection> = {
+    awaitingOffers: "procurement",
+    offersToReview: "procurement",
+    newRequests: "procurement",
+    toDispatch: "booked",
+    onTheRoad: "in-progress",
+    deliveredPending: "delivered",
 }
 
 /**
@@ -69,11 +70,7 @@ export function PipelineTiles() {
                         {waiting.map((key) => (
                             <Link
                                 key={key}
-                                href={{
-                                    pathname: "/appload/[section]",
-                                    params: { section: ATTENTION[key].section },
-                                    query: ATTENTION[key].dispatch ? { dispatch: "1" } : undefined,
-                                }}
+                                href={{ pathname: "/orders/[section]", params: { section: ATTENTION[key] } }}
                                 className="ring-foreground/10 hover:ring-primary/40 focus-visible:ring-ring/50 flex items-center gap-2 rounded-full px-3 py-1 text-xs ring-1 transition-colors outline-none focus-visible:ring-3"
                             >
                                 <span className="text-muted-foreground">{t(`attention.${key}`)}</span>

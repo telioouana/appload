@@ -6,7 +6,6 @@ import { IconPencil } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
-import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@workspace/ui/components/sheet"
 
@@ -16,6 +15,7 @@ import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { KycBadge, OwnershipBadge, StateBadge } from "@/frontend/pages/fleet/sections/badges"
 import { AssignDriverPopover } from "@/frontend/pages/fleet/sections/assign-driver-popover"
 import { EditVehicleDialog } from "@/frontend/pages/fleet/sections/edit-vehicle-dialog"
+import { PapersCard } from "@/frontend/pages/fleet/sections/papers-card"
 import {
     DateValue,
     KeyValue,
@@ -32,9 +32,9 @@ import type { VehicleKind, VehicleProfile } from "@/frontend/pages/fleet/types"
  * The profile panel the vehicles list mounts once. Which vehicle it shows
  * comes from the URL, so a row click and a shared link open the same thing.
  *
- * Everything KYC is read-only here by design (plan §5): uploads and review
- * stay in Admin, and the portal shows the verdict and the paperwork behind
- * it so a carrier knows what Appload is still waiting for.
+ * The booklet and the proof of ownership are filed from here — papers are
+ * what a dispatch is checked against — while the verdict on them stays
+ * Appload's, so a carrier reads what is still being waited on.
  */
 export function VehicleProfileSheet({ kind }: { kind: VehicleKind }) {
     const t = useTranslations("App.fleet.profile")
@@ -103,7 +103,14 @@ function Panel({ kind, id, onClose }: { kind: VehicleKind; id: string; onClose: 
                     <Details profile={data} />
                     {verified && <Verification profile={data} />}
                     <Operation profile={data} verified={verified} />
-                    {verified && <Documents profile={data} />}
+                    {verified && (
+                        <PapersCard
+                            subjectType={kind}
+                            subjectId={data.id}
+                            title={t("profile.documents")}
+                            className="lg:col-span-2"
+                        />
+                    )}
                 </div>
             </ProfileBody>
 
@@ -225,43 +232,3 @@ function Operation({ profile, verified }: { profile: VehicleProfile; verified: b
     )
 }
 
-/**
- * The paperwork Appload holds for this vehicle, as a list nobody can act on.
- * The note under it says where the uploads happen, so a missing document is
- * not a dead end.
- */
-function Documents({ profile }: { profile: VehicleProfile }) {
-    const t = useTranslations("App.fleet.profile")
-    const types = useTranslations("App.fleet.profile.doc-type")
-    const f = useFormatter()
-
-    return (
-        <ProfileCard title={t("documents")} className="lg:col-span-2">
-            {profile.documents.length === 0 ? (
-                <p className="text-muted-foreground text-[13px]">{t("no-documents")}</p>
-            ) : (
-                <ul className="flex flex-col gap-2">
-                    {profile.documents.map((doc) => (
-                        <li key={doc.type} className="flex items-center justify-between gap-3 text-[13px]">
-                            <span className="truncate">
-                                {types.has(doc.type) ? types(doc.type) : doc.type}
-                            </span>
-                            <span className="flex shrink-0 items-center gap-2">
-                                <span className="text-muted-foreground text-xs">
-                                    {doc.expiresAt
-                                        ? t("expires", { date: f.dateTime(new Date(`${doc.expiresAt}T00:00:00`), { dateStyle: "medium" }) })
-                                        : t("no-expiry")}
-                                </span>
-                                <Badge variant={doc.status === "approved" ? "default" : doc.status === "rejected" ? "destructive" : "secondary"}>
-                                    {t(`doc-status.${doc.status}`)}
-                                </Badge>
-                            </span>
-                        </li>
-                    ))}
-                </ul>
-            )}
-
-            <p className="text-muted-foreground text-xs">{t("read-only")}</p>
-        </ProfileCard>
-    )
-}

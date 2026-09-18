@@ -188,11 +188,6 @@ export const driversRouter = createTRPCRouter({
                 truckId: row.truckId,
                 plate: row.plate,
                 createdAt: row.createdAt,
-                documents: documents.map((doc) => ({
-                    type: doc.type,
-                    status: doc.status,
-                    expiresAt: doc.expiresAt,
-                })),
                 truck: row.truckId && row.plate
                     ? { id: row.truckId, regPlate: row.plate, brand: row.truckBrand ?? "", model: row.truckModel ?? "" }
                     : null,
@@ -398,7 +393,9 @@ async function driverLoads(db: Db, carrierId: string, driverId: string, phone: s
     const rows = await db
         .select({
             id: movement.id,
-            seq: movement.seq,
+            reference: movement.reference,
+            requestReference: movement.requestReference,
+            clientReference: movement.clientReference,
             status: movement.status,
             execution: movement.execution,
             origin: movement.origin,
@@ -412,7 +409,7 @@ async function driverLoads(db: Db, carrierId: string, driverId: string, phone: s
 
     return rows.map((row) => ({
         id: row.id,
-        ref: movementRef(row.seq, row.execution),
+        ref: movementRef(row),
         status: row.status,
         execution: row.execution,
         origin: row.origin,

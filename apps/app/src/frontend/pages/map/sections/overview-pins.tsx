@@ -22,13 +22,13 @@ export function OverviewPins({
     onSelect,
 }: {
     entities: MapEntity[]
-    /** Refs matching the search; only meaningful while `query` is set */
+    /** Entity ids matching the search; only meaningful while `query` is set */
     matches: Set<string>
     query: string
     selected: string | null
     /** Whether the selected movement's route layer already has a pin of its own */
     hasTrail?: boolean
-    onSelect: (ref: string) => void
+    onSelect: (id: string) => void
 }) {
     // Trucks parked in the same yard — or pinging from the same cell tower —
     // land on one another; nudge them onto a small ring so each stays clickable
@@ -58,16 +58,16 @@ export function OverviewPins({
                 // click. Only once it actually has one, though: the trail is
                 // a round trip away, and until it lands this is the clicked
                 // truck's only marker.
-                if (entity.ref === selected && hasTrail) return null
+                if (entity.id === selected && hasTrail) return null
 
                 return (
                     <StatusPin
-                        key={entity.ref}
+                        key={entity.id}
                         position={{ lat, lng }}
                         status={entity.status}
                         label={entity.ref}
-                        emphasis={!query ? "normal" : matches.has(entity.ref) ? "match" : "dim"}
-                        onClick={() => onSelect(entity.ref)}
+                        emphasis={!query ? "normal" : matches.has(entity.id) ? "match" : "dim"}
+                        onClick={() => onSelect(entity.id)}
                     />
                 )
             })}

@@ -21,7 +21,12 @@ export const ORDER_ERROR_KEYS = {
     EVIDENCE_REQUIRED: "evidenceRequired",
     INCOMPLETE_FOR_DISPATCH: "incompleteForDispatch",
     DISPATCH_REQUIRED: "dispatchRequired",
+    PAPERS_MISSING: "papersMissing",
     DISPUTE_OPEN: "disputeOpen",
+    // The loading check: a mismatch waits for Appload, and only a manager
+    // there can let the load start anyway
+    LOADING_MISMATCH_REVIEW_REQUIRED: "loadingMismatchReview",
+    MANAGER_REQUIRED: "managerRequired",
     // Dispatch: an id that is not this carrier's own
     DRIVER_NOT_REGISTERED: "driverNotRegistered",
     TRUCK_NOT_REGISTERED: "truckNotRegistered",

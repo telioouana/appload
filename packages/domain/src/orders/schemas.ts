@@ -117,7 +117,7 @@ export function create(message: (field: ErrorMessage) => ErrorParam) {
 
             /**
              * Booking details. Optional at every status: they are required
-             * before "to-loading", not before booking, and the order page
+             * before the dispatch to "at-loading", not before booking, and the order page
              * assigns them later.
              */
             driverId: z.uuid().optional(),

@@ -4,7 +4,7 @@ import { and, eq, isNull, ne, or, sql } from "drizzle-orm";
 
 import type { Auth } from "@workspace/auth/server";
 import type { db as Database } from "@workspace/db/db";
-import type { Address } from "@workspace/db/types";
+import { isPartnerOrgType, type Address } from "@workspace/db/types";
 import { invitation, member, organization, user } from "@workspace/db/users";
 import { organizationClaim, partnerConnection } from "@workspace/db/connections";
 import { notificationCursor } from "@workspace/db/notifications";
@@ -187,7 +187,9 @@ export const onboardingRouter = createTRPCRouter({
                     !invited ||
                     invited.status !== "pending" ||
                     invited.expiresAt <= new Date() ||
-                    lower(invited.email) !== lower(input.email)
+                    lower(invited.email) !== lower(input.email) ||
+                    // Nobody signs up into Appload's own row: it has no members
+                    !isPartnerOrgType(invited.orgType)
                 ) {
                     throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_INVITATION" });
                 }
@@ -253,7 +255,10 @@ export const onboardingRouter = createTRPCRouter({
                 .where(eq(invitation.id, input.id))
                 .limit(1);
 
-            if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+            // Appload's own row never invites anybody; the column admits it
+            if (!row || !isPartnerOrgType(row.organizationType)) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+            }
 
             return {
                 email: row.email,
@@ -389,7 +394,9 @@ export const onboardingRouter = createTRPCRouter({
                 .where(eq(organization.nuit, input.nuit))
                 .limit(1);
 
-            if (!found || found.status === "closed") {
+            // Appload's own row carries a NUIT like any company, and nobody
+            // registers or claims it: it answers as no company at all
+            if (!found || found.status === "closed" || !isPartnerOrgType(found.type)) {
                 return { organization: null, hasMembers: false, emailMatches: false };
             }
 
@@ -539,7 +546,9 @@ export const onboardingRouter = createTRPCRouter({
                 .where(eq(organization.id, input.organizationId))
                 .limit(1);
 
-            if (!target || target.status === "closed") {
+            // Appload's own row has no members either, and its seeded contact
+            // address is a real one — nobody claims it into an ownership
+            if (!target || target.status === "closed" || !isPartnerOrgType(target.type)) {
                 throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
             }
 
@@ -646,7 +655,7 @@ export const onboardingRouter = createTRPCRouter({
                         ],
                         ctaLabel: "Abrir no Admin",
                         ctaUrl: adminUrl,
-                        disclaimer: "Este email é enviado automaticamente pelo portal de parceiros.",
+                        disclaimer: "Este email é enviado automaticamente pelo Appload Enterprise.",
                     }),
                 });
 

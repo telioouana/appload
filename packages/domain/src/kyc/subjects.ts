@@ -4,7 +4,7 @@ import { and, desc, eq, isNull } from "drizzle-orm";
 import { organization } from "@workspace/db/users";
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import { kycDocument, type KycDocument } from "@workspace/db/kyc-documents";
-import type { KycStatus, KycSubjectKind, KycSubjectType } from "@workspace/db/types";
+import { isPartnerOrgType, type KycStatus, type KycSubjectKind, type KycSubjectType } from "@workspace/db/types";
 import type { db as Database } from "@workspace/db/db";
 
 import { deriveKycStatus, today, type CurrentDoc, type IsoDate } from "@workspace/domain/kyc/derive";
@@ -50,7 +50,8 @@ export async function loadSubject(
         return {
             subjectType: type,
             subjectId: row.id,
-            kind: subjectKind(type, row.type),
+            // Appload's own row is not a partner and has no document set
+            kind: subjectKind(type, isPartnerOrgType(row.type) ? row.type : null),
             kycStatus: row.kycStatus,
             // A carrier's own risk flag lives on its own row
             carrierId: row.type === "carrier" ? row.id : null,
@@ -91,6 +92,18 @@ export async function currentDocuments(db: Db, subject: Subject): Promise<KycDoc
         ))
         .orderBy(desc(kycDocument.createdAt));
 
+    return pickCurrent(rows);
+}
+
+/**
+ * The same rule over rows already in hand: one row per type, newest first,
+ * minus whatever a later submission supersedes. Soft-deleted rows must be
+ * excluded by the query — this only sees what it is given.
+ *
+ * Exists so a caller that reads several subjects in one query (the dispatch
+ * rig) derives the live set exactly as `currentDocuments` does.
+ */
+export function pickCurrent(rows: KycDocument[]): KycDocument[] {
     const superseded = new Set(
         rows.map((row) => row.supersedesId).filter((id): id is string => id !== null),
     );

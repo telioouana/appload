@@ -15,7 +15,7 @@ import {
 import { normalizePhone } from "@workspace/comms/phone";
 
 import { movementRef } from "@workspace/domain/movements/refs";
-import { IN_PROGRESS_STATUSES } from "@workspace/domain/movements/status";
+import { TRACKED_STATUSES as TRACKED_MOVEMENT_STATUSES } from "@workspace/domain/movements/status";
 import { startConversation } from "@workspace/domain/tracking/conversations";
 import { REVIEW_AFTER_MINUTES, reviewMovementSlot } from "@workspace/domain/tracking/movement-review";
 import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
@@ -91,9 +91,11 @@ export async function runMovementTrackingSlot(db: typeof Database, info: SlotInf
         .select()
         .from(movement)
         .where(and(
-            // From the loading site to offloading, stops included: a truck
-            // held up is exactly the one somebody wants a position from
-            inArray(movement.status, IN_PROGRESS_STATUSES),
+            // From the moment the truck leaves the loading site to the end
+            // of offloading, stops included: a truck held up on the road is
+            // exactly the one somebody wants a position from, while one
+            // still standing at the loading site is where everyone expects
+            inArray(movement.status, TRACKED_MOVEMENT_STATUSES),
             eq(movement.trackingEnabled, true),
             // A load may be started with no driver named — that is flagged,
             // never blocked — and there is nobody to ask where it is until
@@ -106,6 +108,10 @@ export async function runMovementTrackingSlot(db: typeof Database, info: SlotInf
             // links nowhere, and B is the one company that asks him. Ask
             // twice and the driver learns to ignore us
             isNull(movement.executionMovementId),
+            // A load on an Appload order is asked by the order runner, which
+            // is also what bills it: this side would be the second question
+            // on the same phone about the same cargo
+            isNull(movement.orderId),
             pingedByAdmin.length > 0
                 ? notInArray(sql`regexp_replace(${movement.driverPhone}, '\\D', '', 'g')`, pingedByAdmin)
                 : undefined,
@@ -197,7 +203,7 @@ async function claimAndSend(
                 .where(eq(movement.id, row.id));
         }
     } catch (error) {
-        console.error(`tracking: ensure conversation failed for ${movementRef(row.seq, row.execution)}`, error);
+        console.error(`tracking: ensure conversation failed for ${movementRef(row)}`, error);
     }
 
     const [claim] = await db
@@ -227,7 +233,7 @@ async function send(
     row: Movement,
     claim: MovementTrackingRequest,
 ): Promise<"sent" | "failed"> {
-    const reference = movementRef(row.seq, row.execution);
+    const reference = movementRef(row);
 
     // One step instead of two whenever WhatsApp allows it, and only on
     // attempt 1 — the order runner carries the full reasoning

@@ -208,6 +208,10 @@
         "withdrawn": "Solicitação retirada.",
         "registered": "{name} foi registada e já está ligada a si."
     },
+    "appload": {
+        "badge": "Sempre disponível",
+        "description": "A Appload transporta cargas para todas as empresas do portal. Não é preciso ligar-se a ela: entregue-lhe uma carga a partir da página de Pedidos."
+    },
     "errors": {
         "notFound": "Esta solicitação já não está disponível. Actualize a página.",
         "alreadyConnected": "Já está ligado a esta empresa.",

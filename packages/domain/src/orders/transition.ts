@@ -3,15 +3,20 @@ import { TRPCError } from "@trpc/server";
 
 import { order, orderDocument, orderHistory, orderOffer, type CreateOrder, type Order, type OrderOffer } from "@workspace/db/orders";
 import type { db as Database } from "@workspace/db/db";
-import { isActiveDispute } from "@workspace/db/types";
+import { isActiveDispute, LEGACY_ORDER_STATUS_ALIAS } from "@workspace/db/types";
 import { isAuthorized } from "@workspace/auth/user-permissions";
 
 import type { Actor } from "@workspace/domain/orders/actor";
+import { syncApploadLinks } from "@workspace/domain/appload/link";
 import { guardOrderGate } from "@workspace/domain/kyc/order-gate";
 import { FOLLOW_UP_STATUSES, startConversation } from "@workspace/domain/tracking/conversations";
 import { offerAcceptable } from "@workspace/domain/orders/booking-readiness";
 import { deriveOrderFields } from "@workspace/domain/orders/derive";
-import { isReadyToDispatch } from "@workspace/domain/orders/dispatch-readiness";
+import { isDispatchMove } from "@workspace/domain/orders/dispatch-readiness";
+import { loadDispatchReadiness } from "@workspace/domain/orders/dispatch-papers";
+import { recordDispatch } from "@workspace/domain/orders/dispatch-pack";
+import { loadingMoveRequirements, type LoadingCheckState } from "@workspace/domain/orders/loading-check";
+import { loadLoadingCheckState, openDispatchId } from "@workspace/domain/orders/loading-check-store";
 import { changedCurrencyParties, partiesWithMoneyDocuments } from "@workspace/domain/orders/note-currency";
 import { proofPaymentPatch } from "@workspace/domain/orders/payments";
 import { paymentSums } from "@workspace/domain/orders/payment-sums";
@@ -203,7 +208,21 @@ export function resumeFromHistory(
         && entry.toStatus !== null
         && !RESUME_EXCLUDED.includes(entry.toStatus as OrderStatus));
 
-    return (found?.toStatus as OrderStatus | undefined) ?? null;
+    return liveStatus(found?.toStatus ?? null);
+}
+
+/**
+ * A stored status as the live vocabulary knows it. History rows keep the
+ * retired values they were written with, and so does an order row that
+ * `scripts/retire-to-loading.mjs` has not moved yet, so everything that
+ * reads a status back out of the database goes through here. Without it a
+ * row still parked on "to-loading" has no rank, no legal targets and no
+ * way out — the state machine would refuse every move on it.
+ */
+export function liveStatus(stored: string): OrderStatus;
+export function liveStatus(stored: string | null): OrderStatus | null;
+export function liveStatus(stored: string | null): OrderStatus | null {
+    return stored === null ? null : (LEGACY_ORDER_STATUS_ALIAS[stored] ?? stored as OrderStatus);
 }
 
 /** The same rule against the database, for callers without the timeline. */
@@ -219,7 +238,7 @@ export async function deriveResumeStatus(db: typeof Database, orderPk: string): 
         .orderBy(desc(orderHistory.createdAt))
         .limit(1);
 
-    return row?.toStatus ?? null;
+    return liveStatus(row?.toStatus ?? null);
 }
 
 /**
@@ -336,6 +355,10 @@ export async function acceptOffer(
 export type TransitionOrderOutput = {
     orderId: string;
     order: Order;
+    /** The dispatch pack this move wrote, on the dispatch and nowhere else */
+    dispatchId?: string;
+    /** What the loading check said, on the move into "loading" and nowhere else */
+    loadingCheck?: LoadingCheckState["state"];
     warning?: "SHEET_FAILED";
 };
 
@@ -358,14 +381,19 @@ export async function applyTransition(
     ctx: OrderContext,
     input: TransitionParams,
 ): Promise<TransitionOrderOutput> {
-    const [current] = await ctx.db
+    const [row] = await ctx.db
         .select()
         .from(order)
         .where(eq(order.orderId, input.orderId));
 
-    if (!current) {
+    if (!row) {
         throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
     }
+
+    // Read through the alias: a row the retirement script has not moved yet
+    // is still stored on "to-loading", and every guard below is written
+    // against the live vocabulary
+    const current = { ...row, status: liveStatus(row.status) };
 
     if (ctx.actor.kind === "staff") {
         // Closing an order as lost (cancelled or underbid) is its own
@@ -390,12 +418,12 @@ export async function applyTransition(
     // told that rather than being sold a plan it does not need. Staff move
     // orders on every plan and on none.
     //
-    // Only the first dispatch is asked for: "to-loading" is also where an
+    // Only the first dispatch is asked for: "at-loading" is also where an
     // interrupted trip resumes, and that movement was already billed when it
     // left "booked". A truck parked on the road must not become unmovable
     // because the month ran out or the plan lapsed while it was stopped.
     if (ctx.actor.kind === "tenant"
-        && (input.to === "booked" || (input.to === "to-loading" && current.status === "booked"))) {
+        && (input.to === "booked" || isDispatchMove(current.status, input.to))) {
         await assertTrackingAllowance(ctx.db, ctx.actor.organizationId);
     }
 
@@ -439,9 +467,45 @@ export async function applyTransition(
 
     // Driver and truck are optional at booking — a trip is committed
     // weeks before the rig that will run it is known — and mandatory
-    // the moment it is dispatched to the loading site
-    if (input.to === "to-loading" && !isReadyToDispatch(current)) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "INCOMPLETE_FOR_DISPATCH" });
+    // the moment it is dispatched to the loading site. So are their
+    // papers (D6): unlike the verification gate below, which warns or
+    // blocks depending on the mode, a rig with nothing on file is
+    // refused outright in every mode. The papers are part of the
+    // payload the move commits, not a risk somebody may accept.
+    if (isDispatchMove(current.status, input.to)) {
+        const readiness = await loadDispatchReadiness(ctx.db, current);
+
+        if (readiness.fields.length > 0) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "INCOMPLETE_FOR_DISPATCH" });
+        }
+        if (readiness.papers.length > 0) {
+            // The message is all that travels: the dialogs name the subject
+            // and the paper from the gaps `transitionOptions` (admin) and
+            // `kyc.rigPapers` (portal) already gave them
+            throw new TRPCError({ code: "BAD_REQUEST", message: "PAPERS_MISSING" });
+        }
+    }
+
+    // Loading starts once the orderer has confirmed that the truck and the
+    // driver at the gate are the ones the pack names. The confirmation
+    // itself never blocks: a mismatch is a supervisory decision (a manager
+    // with a note, and a partner never has one), and no check at all simply
+    // proceeds with the order marked as unchecked.
+    //
+    // Exactly the edge that starts the load: `at-loading → loading` (a
+    // legacy `to-loading` row aliases to it above). Coming back into
+    // "loading" from a stop is not a second start — the check was already
+    // answered for, and a resume is the carrier's own free move.
+    const loadingCheck = input.to === "loading" && current.status === "at-loading"
+        ? await loadLoadingCheckState(ctx.db, current.id, await openDispatchId(ctx.db, current.id))
+        : null;
+    const loadingMove = loadingCheck ? loadingMoveRequirements(loadingCheck, ctx.actor) : null;
+
+    if (loadingMove?.blocked) {
+        throw new TRPCError({ code: "FORBIDDEN", message: loadingMove.blocked });
+    }
+    if (loadingMove?.note && !input.note) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "NOTE_REQUIRED" });
     }
 
     // The cargo cannot be closed while a dispute over it is open; the
@@ -462,7 +526,7 @@ export async function applyTransition(
             ctx.actor,
             { note: input.note },
         )
-        : input.to === "to-loading" && current.carrierId
+        : isDispatchMove(current.status, input.to) && current.carrierId
             ? await guardOrderGate(
                 ctx.db,
                 {
@@ -511,6 +575,12 @@ export async function applyTransition(
     }
 
     const flag = verdict.requirements.includes("flag");
+    // Loading started on nobody's confirmation: the move goes through and
+    // the order carries the fact. ": partial" tells a check that was left
+    // half answered from one that was never run.
+    const skippedReason = loadingMove?.skippedFlag
+        ? `LOADING_CHECK_SKIPPED${loadingCheck?.state === "partial" ? ": partial" : ""}${input.note ? ` — ${input.note}` : ""}`
+        : null;
     const stamps = transitionStamps(current, input.to);
     const payments = await paymentSums(ctx.db, current.id);
 
@@ -545,7 +615,16 @@ export async function applyTransition(
             // reason names the specific gap, where the transition
             // flag only carries the operator's note
             ...gateFlag,
-            ...(flag && !gateFlag && {
+            // A verification flag names a specific gap and outranks both of
+            // the flags below; between these two, the unchecked load is the
+            // one with a reason of its own
+            ...(skippedReason && !gateFlag && {
+                flaggedForReview: true,
+                flagReason: skippedReason,
+                flaggedAt: new Date(),
+                flaggedBy: ctx.actor.userId,
+            }),
+            ...(flag && !gateFlag && !skippedReason && {
                 flaggedForReview: true,
                 flagReason: input.note ?? null,
                 flaggedAt: new Date(),
@@ -601,6 +680,22 @@ export async function applyTransition(
             .where(and(eq(orderOffer.orderId, current.id), eq(orderOffer.status, "pending")));
     }
 
+    // What the truck left with, snapshotted at the one moment it is true.
+    // After the row itself landed — there are no transactions here — so a
+    // failure leaves a dispatched order without a pack (which every reader
+    // tolerates, legacy rows having none either) rather than a pack for a
+    // move that never happened. It is swallowed for the same reason: the
+    // move already happened, and the history row, the billing and the
+    // follow-ups below must land whatever the pack did.
+    const dispatchId = isDispatchMove(current.status, input.to)
+        ? await recordDispatch(ctx.db, { orderPk: current.id, row: updated, actor: ctx.actor.userId })
+            .catch((error: unknown) => {
+                console.error(`dispatch pack failed for ${input.orderId}`, error);
+
+                return null;
+            })
+        : null;
+
     await ctx.db.insert(orderHistory).values({
         orderId: current.id,
         actorUserId: ctx.actor.userId,
@@ -612,19 +707,50 @@ export async function applyTransition(
             ...(flag && { flagged: true }),
             ...(input.document && { document: input.document }),
             ...(booked && { offer: booked.accepted.historyOffer }),
+            ...(dispatchId && { dispatchId }),
+            ...(loadingCheck && { loadingCheck: loadingCheck.state }),
         },
     });
+
+    // An unchecked load is its own event on the timeline, next to the move
+    // that caused it: the flag can be resolved, the row stays
+    if (skippedReason) {
+        await ctx.db.insert(orderHistory).values({
+            orderId: current.id,
+            actorUserId: ctx.actor.userId,
+            kind: "check",
+            metadata: {
+                skipped: true,
+                partial: loadingCheck?.state === "partial",
+                movedBy: ctx.actor.userId,
+                // The column holds one reason at a time (D5), so what this
+                // flag replaced is kept here
+                ...(current.flagReason && { previousFlagReason: current.flagReason }),
+            },
+        });
+    }
 
     // Dispatch is the moment tracking starts, so the movement is billed to
     // both parties then — whoever ordered it, Admin included: a partner's
     // month must count the orders staff dispatched on its behalf too.
-    if (input.to === "to-loading") {
+    if (isDispatchMove(current.status, input.to)) {
         await recordTrackingUsage(ctx.db, {
             organizationIds: [updated.shipperId, updated.carrierId],
             entityType: "order",
             entityId: updated.id,
         });
     }
+
+    // The two companies' own rows follow the order they are linked to, after
+    // it moved and never before. Best-effort and idempotent (appload/link.ts):
+    // a company's books failing to keep up is not a reason to refuse a move
+    // that already happened, and the next transition repairs them.
+    await syncApploadLinks(ctx.db, {
+        order: updated,
+        from: current.status,
+        dispatch: isDispatchMove(current.status, input.to),
+        ...(booked && { candidates: "settle" as const }),
+    }).catch((error: unknown) => console.error(`appload link sync failed for ${input.orderId}`, error));
 
     // The upload that backed the move becomes a first-class
     // document on the order (POD for completion, evidence for
@@ -655,6 +781,13 @@ export async function applyTransition(
         if (ctx.waitUntil) ctx.waitUntil(followUp); else await followUp;
     }
 
+    // What this move is worth saying about itself, on every way out:
+    // the pack it wrote and what the loading check said.
+    const carried = {
+        ...(dispatchId && { dispatchId }),
+        ...(loadingCheck && { loadingCheck: loadingCheck.state }),
+    };
+
     // The portal defers the logbook: nothing is pushed, the outbox row
     // is left pending and the existing sheet-sync cron heals it. The row may
     // already carry the Admin's re-derivation marker, which queueing must
@@ -664,15 +797,15 @@ export async function applyTransition(
     } else {
         try {
             if (!(await ctx.sheets.push(updated)).ok) {
-                return { orderId: input.orderId, order: updated, warning: "SHEET_FAILED" };
+                return { orderId: input.orderId, order: updated, ...carried, warning: "SHEET_FAILED" };
             }
         } catch (error) {
             // Token acquisition failed — the outbox cron retries with
             // the service account
             console.error(`sheet sync failed on transition for ${input.orderId}`, error);
-            return { orderId: input.orderId, order: updated, warning: "SHEET_FAILED" };
+            return { orderId: input.orderId, order: updated, ...carried, warning: "SHEET_FAILED" };
         }
     }
 
-    return { orderId: input.orderId, order: updated };
+    return { orderId: input.orderId, order: updated, ...carried };
 }

@@ -111,7 +111,7 @@ export const place = (location: Order["loadingAddress"]) =>
 export const smsRequestText = (driverName: string, reference: string, route: RouteDetails) =>
     `Ola ${driverName}, a Appload pede a sua localizacao atual para a carga ${reference} (camiao ${route.truckPlate ?? "s/ matricula"}, ${route.origin} para ${route.destination}). Por favor responda a esta mensagem com a sua localizacao.`;
 
-/** The order flavour of the copy above; a trip passes its own "TRP-<seq>". */
+/** The order flavour of the copy above; a trip passes its own reference. */
 export const smsText = (driverName: string, row: Order) =>
     smsRequestText(driverName, row.orderId, {
         truckPlate: row.truckPlate,

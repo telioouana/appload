@@ -1,7 +1,7 @@
 import "server-only";
 
 import { TRPCError } from "@trpc/server";
-import { and, eq, inArray, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, eq, inArray, ne, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 
 import { order, orderOffer, type Order, type OrderOffer } from "@workspace/db/orders";
 import { orderRequest, type OrderRequestStatus } from "@workspace/db/quotes";
@@ -12,7 +12,7 @@ import type { OfferStatus, OrderStatus } from "@workspace/db/types";
 import type { Actor } from "@workspace/domain/orders/actor";
 import type { OrderContext } from "@workspace/domain/orders/transition";
 import { pendingOfferCount } from "@workspace/domain/orders/transition";
-import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
+import { ON_GOING_STATUSES } from "@workspace/domain/orders/status-groups";
 import { OrderError } from "@workspace/domain/orders/errors";
 
 import { foreignKeyViolationConstraint } from "@workspace/db/errors";
@@ -52,6 +52,36 @@ export const scopeOf = (tenant: TenantScope): TenantScope => ({
 export function assertOrgType(tenant: TenantScope, orgType: OrgType) {
     if (tenant.orgType !== orgType) {
         throw new TRPCError({ code: "FORBIDDEN", message: "WRONG_ORGANIZATION_TYPE" });
+    }
+}
+
+/**
+ * Which side of ONE order the tenant stands on. Not the same question as what
+ * kind of company it is: a transporter that hands a load to Appload is the
+ * client of the order that comes out of it, and reads that order — its price,
+ * its offers, its right to cancel — as the client it is there.
+ */
+export type OrderSide = "shipper" | "carrier";
+
+export const sideOf = (row: Pick<Order, "shipperId" | "carrierId">, tenant: TenantScope): OrderSide =>
+    row.shipperId === tenant.organizationId ? "shipper" : "carrier";
+
+/**
+ * The same company, read from the side one order puts it on. The projections
+ * below all key on `orgType`, and on a given order that is the side, so this
+ * is what they are handed once a row is in hand.
+ */
+export const sideScope = (tenant: TenantScope, row: Pick<Order, "shipperId" | "carrierId">): TenantScope =>
+    ({ ...tenant, orgType: sideOf(row, tenant) });
+
+/**
+ * The client's own moves — asking for quotes, booking, cancelling, checking
+ * the loading — are the client's whoever it is. What decides is the side of
+ * THIS order, never the kind of company asking.
+ */
+export function assertShipperOf(row: Pick<Order, "shipperId" | "carrierId">, tenant: TenantScope) {
+    if (sideOf(row, tenant) !== "shipper") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED_FOR_ACTOR" });
     }
 }
 
@@ -137,6 +167,8 @@ export function visibleOrders(tenantId: string, orgType: OrgType): SQL {
 
     return or(
         eq(order.carrierId, tenantId),
+        // The loads it handed to Appload: on those it is the client
+        eq(order.shipperId, tenantId),
         myRequest(tenantId),
         myOffer(tenantId),
     ) as SQL;
@@ -151,15 +183,16 @@ export function visibleOrders(tenantId: string, orgType: OrgType): SQL {
  * belongs to whoever won it.
  */
 export const ownsOrder = (row: Pick<Order, "shipperId" | "carrierId">, tenant: TenantScope): boolean =>
-    tenant.orgType === "shipper"
-        ? row.shipperId === tenant.organizationId
-        : row.carrierId === tenant.organizationId;
+    row.shipperId === tenant.organizationId || row.carrierId === tenant.organizationId;
 
 /** The same question as a selected column, for the list. */
 export const isMineColumn = (tenant: TenantScope): SQL<boolean> =>
     tenant.orgType === "shipper"
         ? sql<boolean>`true`
-        : sql<boolean>`coalesce(${eq(order.carrierId, tenant.organizationId)}, false)`;
+        : sql<boolean>`coalesce(${or(
+            eq(order.carrierId, tenant.organizationId),
+            eq(order.shipperId, tenant.organizationId),
+        )}, false)`;
 
 const CLOSED_STATUSES: OrderStatus[] = ["completed", "cancelled", "underbid"];
 
@@ -180,7 +213,7 @@ export function sectionPredicate(
             case "quoted":
                 return and(eq(order.status, "prospect"), sql`${pendingOfferCount} > 0`);
             case "booked": return eq(order.status, "booked");
-            case "on-going": return inArray(order.status, TRACKED_STATUSES);
+            case "on-going": return inArray(order.status, ON_GOING_STATUSES);
             case "delivered": return eq(order.status, "delivered");
             case "history": return inArray(order.status, CLOSED_STATUSES);
         }
@@ -193,7 +226,7 @@ export function sectionPredicate(
         case "requests": return myRequest(tenantId, ["requested"]);
         case "quoted": return myOffer(tenantId, ["pending"]);
         case "booked": return and(eq(order.carrierId, tenantId), eq(order.status, "booked"));
-        case "on-going": return and(eq(order.carrierId, tenantId), inArray(order.status, TRACKED_STATUSES));
+        case "on-going": return and(eq(order.carrierId, tenantId), inArray(order.status, ON_GOING_STATUSES));
         case "delivered": return and(eq(order.carrierId, tenantId), eq(order.status, "delivered"));
         case "history":
             return or(
@@ -217,12 +250,20 @@ export const orderScope = (section: OrderSection, tenantId: string, orgType: Org
 export const toNumber = (value: string | null): number | null => (value === null ? null : Number(value));
 
 /**
+ * The leg of a row that belongs to the side the tenant is on, chosen per row
+ * for a transporter because it is the client of the orders it handed to
+ * Appload and the carrier of the ones it was booked for.
+ */
+const myLeg = <T>(tenant: TenantScope, shipperColumn: AnyColumn, carrierColumn: AnyColumn): SQL<T | null> =>
+    sql`case when ${eq(order.shipperId, tenant.organizationId)} then ${shipperColumn} else ${carrierColumn} end`;
+
+/**
  * The tenant's own leg, as selected columns (both branches share key names).
  * Selecting them is not the same as showing them: `toMoney` still asks
  * whether the row is the reader's own deal.
  */
-export const moneyColumns = (orgType: OrgType) =>
-    orgType === "shipper"
+export const moneyColumns = (tenant: TenantScope) =>
+    tenant.orgType === "shipper"
         ? {
             moneySubtotal: order.shipperSubtotal,
             moneyVAT: order.shipperVAT,
@@ -230,11 +271,17 @@ export const moneyColumns = (orgType: OrgType) =>
             moneyCurrency: order.shipperCurrency,
         }
         : {
-            moneySubtotal: order.carrierSubtotal,
-            moneyVAT: order.carrierVAT,
-            moneyTotal: order.carrierTotal,
-            moneyCurrency: order.carrierCurrency,
+            moneySubtotal: myLeg<string>(tenant, order.shipperSubtotal, order.carrierSubtotal),
+            moneyVAT: myLeg<string>(tenant, order.shipperVAT, order.carrierVAT),
+            moneyTotal: myLeg<string>(tenant, order.shipperTotal, order.carrierTotal),
+            moneyCurrency: myLeg<Currency>(tenant, order.shipperCurrency, order.carrierCurrency),
         };
+
+/** The other company on the row, from where the tenant stands on it. */
+export const counterpartyNameColumn = (tenant: TenantScope) =>
+    tenant.orgType === "shipper"
+        ? order.carrierName
+        : myLeg<string>(tenant, order.carrierName, order.shipperName);
 
 type MoneyRow = {
     moneySubtotal: string | null;

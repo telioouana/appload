@@ -16,7 +16,7 @@ import { EdgeStoreProvider } from "@workspace/edgestore/client"
 import { TRPCReactProvider } from "@/backend/api/client"
 
 // Every page title flows through this template, so a tab reads
-// "Orders — Appload Partners"; pages that set no title of their own fall
+// "Orders — Appload Enterprise"; pages that set no title of their own fall
 // back to the default. The portal is behind a login, so there is no SEO
 // here — the titles are for the partner's tab strip and history.
 export async function generateMetadata({

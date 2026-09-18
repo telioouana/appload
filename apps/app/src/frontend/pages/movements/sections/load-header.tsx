@@ -26,16 +26,24 @@ export function LoadHeader({
     orgType,
     allowance,
     organizationName,
+    actions = true,
 }: {
     load: MovementDetail
     orgType: OrgType
     allowance: TrackingAllowance
     organizationName: string
+    /** A load the company has not won yet has nothing to do but be quoted. */
+    actions?: boolean
 }) {
     const t = useTranslations("App.loads")
 
     const scope = scopeOf(load)
     const section = sectionOf(load)
+
+    const appload = load.appload
+    // A company Appload is still asking has no reference of its own yet, so
+    // the order's is what names the page
+    const reference = appload?.role === "candidate" ? appload.orderId : load.ref
 
     // The other company on the load, from where the reader stands
     const party = load.role === "owner"
@@ -61,8 +69,17 @@ export function LoadHeader({
                     </nav>
 
                     <div className="flex flex-wrap items-center gap-2.5">
-                        <h1 className="font-heading truncate text-2xl font-semibold tracking-tight">{load.ref}</h1>
+                        <h1 className="font-heading truncate text-2xl font-semibold tracking-tight">{reference}</h1>
                         <MovementStatusChip status={load.status} />
+                        {/* Which Appload order the load follows, so the two
+                            references can be read against each other */}
+                        {appload && (
+                            <Badge variant="outline" className="rounded-full font-normal">
+                                {appload.role === "candidate"
+                                    ? t("appload.partner")
+                                    : t("appload.badge", { orderId: appload.orderId })}
+                            </Badge>
+                        )}
                         {load.role === "owner" ? <ExecutionChip execution={load.execution} /> : <RoleChip role={load.role} />}
                         {/* How much of the load is still to be filled in; the cards below say what */}
                         {load.flags.length > 0 && (
@@ -90,9 +107,11 @@ export function LoadHeader({
                 </div>
             </div>
 
-            <div className="shrink-0 lg:mt-6">
-                <LoadActions load={load} orgType={orgType} allowance={allowance} organizationName={organizationName} />
-            </div>
+            {actions && (
+                <div className="shrink-0 lg:mt-6">
+                    <LoadActions load={load} orgType={orgType} allowance={allowance} organizationName={organizationName} />
+                </div>
+            )}
         </header>
     )
 }

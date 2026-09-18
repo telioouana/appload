@@ -36,7 +36,7 @@ export function MapEntityList({
     query: string
     onQueryChange: (value: string) => void
     selected: string | null
-    onSelect: (ref: string) => void
+    onSelect: (id: string) => void
     className?: string
 }) {
     const t = useTranslations("App.map")
@@ -45,7 +45,7 @@ export function MapEntityList({
     const now = useNow({ updateInterval: 60_000 })
 
     const sorted = useMemo(() => {
-        const missed = (entity: MapEntity) => (query && !matches.has(entity.ref) ? 1 : 0)
+        const missed = (entity: MapEntity) => (query && !matches.has(entity.id) ? 1 : 0)
 
         return [...entities].sort((a, b) => missed(a) - missed(b) || seenAt(b) - seenAt(a))
     }, [entities, matches, query])
@@ -64,17 +64,17 @@ export function MapEntityList({
 
             <div className="container-snap flex-1 overflow-y-auto">
                 {sorted.map((entity) => {
-                    const isSelected = entity.ref === selected
-                    const isDimmed = !!query && !matches.has(entity.ref)
+                    const isSelected = entity.id === selected
+                    const isDimmed = !!query && !matches.has(entity.id)
                     // An order and a load read alike otherwise; the mark says
                     // which page the row leads to
                     const KindIcon = entity.kind === "load" ? IconRoute : IconBox
 
                     return (
                         <button
-                            key={entity.ref}
+                            key={entity.id}
                             type="button"
-                            onClick={() => onSelect(entity.ref)}
+                            onClick={() => onSelect(entity.id)}
                             className={cn(
                                 "hover:bg-muted/60 flex w-full cursor-pointer flex-col gap-1 border-l-2 border-transparent px-3 py-2.5 text-left transition-colors",
                                 isSelected && "border-primary bg-accent/10",

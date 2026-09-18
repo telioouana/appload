@@ -54,12 +54,31 @@ export const ordersCatalog: ActivityCatalog = {
     },
     "orders.transition": {
         entity: (input) => (input?.orderId ? { type: "order", id: String(input.orderId) } : null),
-        params: (input, output?: { status?: string }) => ({
+        params: (input, output?: { status?: string; loadingCheck?: string }) => ({
             orderId: input?.orderId ?? "",
             to: output?.status ?? input?.to ?? "",
             dispatched: Boolean(input?.dispatch),
             documentType: input?.document?.type ?? "",
             hasNote: Boolean(input?.note?.trim()),
+            // What the loading check said when the load started; empty on
+            // every other move
+            loadingCheck: output?.loadingCheck ?? "",
+        }),
+    },
+    // The client confirming the rig at the loading site. The failed items
+    // are named by key; the checker's own words stay on the row.
+    "orders.recordLoadingCheck": {
+        entity: (input) => (input?.orderId ? { type: "order", id: String(input.orderId) } : null),
+        params: (input, output?: { outcome?: string }) => ({
+            orderId: input?.orderId ?? "",
+            outcome: output?.outcome ?? "",
+            mismatchItems: Array.isArray(input?.items)
+                ? input.items
+                    .filter((item: { ok?: boolean | null }) => item?.ok === false)
+                    .map((item: { key?: string }) => item?.key ?? "")
+                    .join(", ")
+                : "",
+            photoCount: Array.isArray(input?.photoDocumentIds) ? input.photoDocumentIds.length : 0,
         }),
     },
     "orders.documents.add": {

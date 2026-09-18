@@ -32,6 +32,19 @@ export const fleetCatalog: ActivityCatalog = {
             changedLoadingBay: input?.patch?.loadingBay !== undefined,
         }),
     },
+    // The KYC router lives in this folder and mounts at the root, so its
+    // path is `kyc.upload` — the same one Admin's upload logs under, and
+    // the same params its ActivityLog message reads. Which paper was filed
+    // for which subject; never the pages themselves.
+    "kyc.upload": {
+        entity: (input) =>
+            input?.subjectId ? { type: String(input.subjectType), id: String(input.subjectId) } : null,
+        params: (input) => ({
+            subjectType: input?.subjectType ?? "",
+            subjectId: input?.subjectId ?? "",
+            documentType: input?.type ?? "",
+        }),
+    },
     "fleet.assignDriver": {
         entity: (input) => (input?.driverId ? { type: "driver", id: String(input.driverId) } : null),
         params: (input) => ({

@@ -65,12 +65,6 @@ export type DriverRow = {
     plate: string | null;
 };
 
-export type DriverDocument = {
-    type: string;
-    status: "pending" | "approved" | "rejected";
-    expiresAt: string | null;
-};
-
 /**
  * A load this driver was named on, as the profile lists it: where it goes
  * and how far along it is, and nothing of what it is worth — a driver's
@@ -87,8 +81,7 @@ export type DriverLoad = {
 
 export type DriverProfile = DriverRow & {
     createdAt: Date;
-    documents: DriverDocument[];
-    truck: { id: string; regPlate: string; brand: string; model: string } | null;
+    truck:{ id: string; regPlate: string; brand: string; model: string } | null;
     /** The five most recent loads this driver was named on */
     loads: DriverLoad[];
 };

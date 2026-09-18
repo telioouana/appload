@@ -11,7 +11,7 @@ export type RouteType = (typeof ROUTE_TYPE)[number];
  * authority.
  *
  * Statuses fall into three groups:
- * - the chain: prospect → booked → to-loading → at-loading → loading →
+ * - the chain: prospect → booked → at-loading → loading →
  *   waiting-documents → on-route → [at-border, regional only] →
  *   at-offloading → offloading → delivered → completed
  * - interrupts: stopped / issue park the chain; the resume target is
@@ -51,7 +51,6 @@ export type TransitionVerdict =
 const RANK: Partial<Record<OrderStatus, number>> = {
     "prospect": 0,
     "booked": 1,
-    "to-loading": 2,
     "at-loading": 3,
     "loading": 4,
     "waiting-documents": 5,
@@ -68,8 +67,7 @@ const RANK: Partial<Record<OrderStatus, number>> = {
 // forward: the crossing is done and the truck is back on the road.
 const FORWARD: Partial<Record<OrderStatus, OrderStatus[]>> = {
     "prospect": ["booked"],
-    "booked": ["to-loading"],
-    "to-loading": ["at-loading"],
+    "booked": ["at-loading"],
     "at-loading": ["loading"],
     "loading": ["waiting-documents", "on-route"],
     "waiting-documents": ["on-route"],
@@ -136,7 +134,7 @@ export function transitionRequirements(
         // The truck can stop or hit an issue any time it is on the job;
         // a delivered order can still surface an issue before completion
         if (to === "issue" && from === "delivered") return ["note"];
-        if (isChain(from) && rank(from) >= rank("to-loading") && rank(from) <= rank("offloading")) {
+        if (isChain(from) && rank(from) >= rank("at-loading") && rank(from) <= rank("offloading")) {
             return ["note"];
         }
         return null;

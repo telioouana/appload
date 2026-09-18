@@ -8,6 +8,12 @@ import { orderRequest, type OrderRequestStatus } from "@workspace/db/quotes";
 import { partnerConnection } from "@workspace/db/connections";
 import { organization } from "@workspace/db/users";
 
+import {
+    closeApploadCandidates,
+    upsertApploadCandidates,
+    withdrawApploadCandidate,
+} from "@workspace/domain/appload/link";
+
 import type { OrderRequestView } from "@/frontend/pages/orders/types";
 import type { Db, TenantScope } from "@/frontend/pages/orders/server/projection";
 
@@ -121,10 +127,16 @@ export async function writeOrderRequests(
             .where(inArray(orderRequest.id, reopen.map((row) => row.id)));
     }
 
-    return {
-        sent: [...fresh, ...reopen.map((row) => row.carrierOrgId)],
-        skipped,
-    };
+    const sent = [...fresh, ...reopen.map((row) => row.carrierOrgId)];
+
+    // Every carrier that was asked gets the request in its own Orders list, as
+    // a load Appload offered it. Best-effort: the request row is what the
+    // round is made of, and a linked row that failed to open is repaired by
+    // the next pass rather than costing the client its send
+    await upsertApploadCandidates(db, { orderPk: params.orderPk, carrierOrgIds: sent })
+        .catch((error: unknown) => console.error(`appload candidates failed for ${params.orderPk}`, error));
+
+    return { sent, skipped };
 }
 
 /** The round is over: booking or cancelling an order closes every open request. */
@@ -133,6 +145,19 @@ export async function closeOrderRequests(db: Db, orderPk: string): Promise<void>
         .update(orderRequest)
         .set({ status: "closed" })
         .where(and(eq(orderRequest.orderId, orderPk), notInArray(orderRequest.status, ["closed"])));
+
+    await closeApploadCandidates(db, { orderPk })
+        .catch((error: unknown) => console.error(`appload candidates failed for ${orderPk}`, error));
+}
+
+/**
+ * The client stopped waiting on one carrier: its linked row is off too.
+ * Called beside the `orderRequest` write in `orders.withdrawRequest`, and
+ * best-effort for the same reason as the two above.
+ */
+export async function withdrawApploadRequest(db: Db, orderPk: string, carrierOrgId: string): Promise<void> {
+    await withdrawApploadCandidate(db, { orderPk, carrierOrgId })
+        .catch((error: unknown) => console.error(`appload candidate withdraw failed for ${orderPk}`, error));
 }
 
 /**

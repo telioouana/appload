@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, asc, eq, inArray, isNotNull, lt, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, lt, ne, sql } from "drizzle-orm";
 
 import { db } from "@workspace/db/db";
 import { notification, notificationCursor } from "@workspace/db/notifications";
 import { organization, user } from "@workspace/db/users";
+import { APPLOAD_ORG_ID } from "@workspace/db/types";
 
 import { isEmailConfigured, sendEmail } from "@workspace/auth/email";
 import { authorizeCron } from "@workspace/comms/cron";
@@ -58,7 +59,8 @@ async function materializeActivatedOrganizations(): Promise<number> {
         .select({ id: organization.id })
         .from(organization)
         .leftJoin(notificationCursor, eq(notificationCursor.organizationId, organization.id))
-        .where(isNotNull(organization.portalActivatedAt))
+        // Appload's own row is on the portal and has no members to tell
+        .where(and(isNotNull(organization.portalActivatedAt), ne(organization.id, APPLOAD_ORG_ID)))
         // Least recently read first, which is what makes the batch a rotating
         // window instead of a prefix: a portal with more activated companies
         // than one run can hold still reaches every one of them in turn, and

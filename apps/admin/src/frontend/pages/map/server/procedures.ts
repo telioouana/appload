@@ -12,7 +12,7 @@ import { cacheKey, failedRecently, failureKey, GEOCODE_TTL_MS, num, rememberFail
 import type { MapOrder, OrderRouteDto, TrailPoint } from "@workspace/maps/types";
 
 import { fillPlaceLabels } from "@workspace/domain/tracking/place-labels";
-import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
+import { ON_GOING_STATUSES } from "@workspace/domain/orders/status-groups";
 
 export const mapRouter = createTRPCRouter({
     /**
@@ -165,9 +165,11 @@ export const mapRouter = createTRPCRouter({
         }),
 
     /**
-     * Every truck currently on the road, with its latest ping — one query
-     * per fact rather than a fan-out join, because the tracked set is small
-     * and the client polls this on a timer.
+     * Every truck currently out on a trip, with its latest ping — the whole
+     * on-going set, loading site included, because the map is what somebody
+     * looks at to find a load, not only the ones the cron pings. One query
+     * per fact rather than a fan-out join, because the set is small and the
+     * client polls this on a timer.
      */
     overview: authorizedProcedure("order", ["list"]).query(async ({ ctx }): Promise<MapOrder[]> => {
         const orders = await ctx.db
@@ -185,7 +187,7 @@ export const mapRouter = createTRPCRouter({
                 expectedOffloadingDate: order.expectedOffloadingDate,
             })
             .from(order)
-            .where(inArray(order.status, TRACKED_STATUSES))
+            .where(inArray(order.status, ON_GOING_STATUSES))
             .orderBy(desc(order.createdAt));
 
         if (!orders.length) return [];

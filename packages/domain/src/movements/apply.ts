@@ -33,10 +33,12 @@ import {
 } from "@workspace/db/movements";
 import type { NotificationKind } from "@workspace/db/notifications";
 
+import { ensureOrderReference } from "@workspace/domain/movements/counters";
 import { unapprovedPhotos } from "@workspace/domain/movements/documents";
 import { legSettled } from "@workspace/domain/movements/money";
 import { isOnPortal, MAX_HOPS, organizationName, parentMovement } from "@workspace/domain/movements/link";
-import { movementRef } from "@workspace/domain/movements/refs";
+import { FOLLOWS_APPLOAD_ORDER } from "@workspace/domain/movements/mirror";
+import { counterpartyRef, movementRef, needsOrderReference } from "@workspace/domain/movements/refs";
 import {
     entersInProgress,
     isInProgress,
@@ -165,7 +167,7 @@ export async function announce(
     const clientHearsAsOwner = parent !== null && parent.organizationId === row.clientOrgId;
 
     const params = {
-        ref: movementRef(row.seq, row.execution),
+        ref: movementRef(row),
         origin: place(row.origin),
         destination: place(row.destination),
     };
@@ -201,7 +203,13 @@ export async function announce(
             kind,
             email,
             ...entity,
-            params: { ...params, organizationName: await organizationName(db, row.organizationId) },
+            params: {
+                ...params,
+                // The partner carrying the load never learns the reference the
+                // owner's own client gave it
+                ref: counterpartyRef(row),
+                organizationName: await organizationName(db, row.organizationId),
+            },
         });
     }
 }
@@ -229,6 +237,15 @@ export async function transitionMovement(
         throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
     }
 
+    const apploadLinked = row.orderId !== null;
+
+    // A load on an Appload order is moved from the order, which mirrors every
+    // milestone down onto it. Closing its own books once the load has arrived
+    // is the one move that stays the owner's
+    if (apploadLinked && !(row.status === "delivered" && input.to === "closed")) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: FOLLOWS_APPLOAD_ORDER });
+    }
+
     const executorOnPortal = row.execution === "partner" && await isOnPortal(db, row.carrierOrgId);
     const targets = ownerTargets({
         execution: row.execution,
@@ -237,6 +254,7 @@ export async function transitionMovement(
         resumeStatus: row.resumeStatus,
         linked: row.executionMovementId !== null,
         executorOnPortal,
+        apploadLinked,
     });
 
     if (!targets.includes(input.to)) {
@@ -290,9 +308,16 @@ export async function transitionMovement(
     // in the same statement, so the two cannot disagree (see below)
     const withExecutor = input.to === "cancelled" && row.executionMovementId !== null;
 
-    const updated = withExecutor
+    let updated = withExecutor
         ? await cancelWithExecutor(db, row, input.expectedVersion, now)
         : await moveOne(db, row, input.expectedVersion, input.to, now);
+
+    // Somebody has committed to this load, so it is an order and needs the
+    // company's own ORD number before anything else is written about it
+    // (refs.ts). Minted once: a row that already has one keeps it
+    if (needsOrderReference(input.to) && updated.reference === null) {
+        updated = { ...updated, reference: await ensureOrderReference(db, updated) };
+    }
 
     await recordEvent(db, {
         movementId: row.id,
@@ -351,7 +376,7 @@ export async function propagateUp(db: Db, child: Movement, now: Date, hop = 0): 
     const next = upstreamStatus(parent.status, child.status);
     if (!next) return;
 
-    const [moved] = await db
+    const [carried] = await db
         .update(movement)
         .set({
             status: next.status,
@@ -372,7 +397,14 @@ export async function propagateUp(db: Db, child: Movement, now: Date, hop = 0): 
         .returning();
 
     // The parent moved between the read and the write; that move decided
-    if (!moved) return;
+    if (!carried) return;
+
+    // The order above is committed to as well, so it too needs its own number
+    // — normally minted when its owner accepted the offer, ensured here for a
+    // row that somehow arrived without one
+    const moved = needsOrderReference(next.status) && carried.reference === null
+        ? { ...carried, reference: await ensureOrderReference(db, carried) }
+        : carried;
 
     await recordEvent(db, {
         movementId: parent.id,
@@ -496,7 +528,7 @@ async function executorCancelled(db: Db, parent: Movement, childId: string, now:
         entityType: "movement",
         entityId: child.id,
         params: {
-            ref: movementRef(child.seq, child.execution),
+            ref: movementRef(child),
             origin: place(child.origin),
             destination: place(child.destination),
             organizationName: await organizationName(db, parent.organizationId),
@@ -546,7 +578,7 @@ async function cancelDown(db: Db, parent: Movement, now: Date, hop = 0): Promise
         entityType: "movement",
         entityId: child.id,
         params: {
-            ref: movementRef(child.seq, child.execution),
+            ref: movementRef(child),
             origin: place(child.origin),
             destination: place(child.destination),
             organizationName: await organizationName(db, parent.organizationId),

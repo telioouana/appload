@@ -17,6 +17,13 @@ export const FLAG_REASON_CODES = [
     "HIGH_RISK_SUBCONTRACTOR",
     "CARRIER_RISK_HIGH",
     "CARRIER_RISK_WATCH",
+    // The rig's papers are on file but nobody has looked at them yet: the
+    // truck goes, and the order says so
+    "PAPERS_UNREVIEWED",
+    // The loading check found the truck or the driver was not the one the
+    // dispatch pack names, or nobody checked before the load started
+    "LOADING_MISMATCH",
+    "LOADING_CHECK_SKIPPED",
 ] as const;
 
 export type FlagReasonCode = (typeof FLAG_REASON_CODES)[number];

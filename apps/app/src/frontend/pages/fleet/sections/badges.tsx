@@ -9,10 +9,10 @@ import { StatusBadge } from "@workspace/ui/customs/badge/status-badge"
 import type { FleetStatus } from "@/frontend/pages/fleet/types"
 
 /**
- * The verification verdict, read-only in the portal: uploads and review stay
- * in Admin, so this badge is the whole of what a partner can do about KYC —
- * see it. The drivers list imports the same three so both pages label a
- * status identically.
+ * The verification verdict. A partner files the papers behind it from the
+ * profile sheets, but never decides it: the verdict is derived from what
+ * Appload has reviewed, so this badge stays a reading. The drivers list
+ * imports the same three so both pages label a status identically.
  */
 export function KycBadge({ status }: { status: KycStatus }) {
     const t = useTranslations("App.fleet.status")

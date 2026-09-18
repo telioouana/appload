@@ -55,8 +55,8 @@ export const routing = defineRouting({
         "/orders/details/[orderId]": {
             pt: "/pedidos/detalhes/[orderId]"
         },
-        "/messages": {
-            pt: "/mensagens"
+        "/chats": {
+            pt: "/conversas"
         },
         "/map": {
             pt: "/mapa"

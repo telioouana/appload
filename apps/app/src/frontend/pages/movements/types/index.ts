@@ -10,7 +10,7 @@ import type {
     MovementExecution,
     MovementStatus,
 } from "@workspace/db/movements";
-import type { CATEGORIES, DisputeReason, FISCAL_REGIME, ROUTE_TYPE, WEIGHT_UNIT } from "@workspace/db/types";
+import type { CATEGORIES, DisputeReason, FISCAL_REGIME, OrderStatus, PartnerOrgType, ROUTE_TYPE, WEIGHT_UNIT } from "@workspace/db/types";
 import type { MovementRole } from "@workspace/domain/movements/policy";
 import type { EditableGroup } from "@workspace/domain/movements/policy";
 import type { CostTotal, Currency, PaymentStatus } from "@workspace/domain/movements/money";
@@ -121,13 +121,13 @@ export const STATUS_TABS: Record<MovementScope, Partial<Record<MovementSection, 
  * chip and a pin of one colour always agree. The truck's own chain is the
  * order's chain, stage for stage.
  */
-const TONE: Record<MovementStatus, OrderStatusKey> = {
+const TONE: Record<MovementStatus, OrderStatus> = {
     "procurement": "prospect",
     "prospect": "prospect",
     "offered": "prospect",
     "declined": "cancelled",
     "scheduled": "booked",
-    "booked": "to-loading",
+    "booked": "booked",
     "at-loading": "at-loading",
     "loading": "loading",
     "waiting-documents": "waiting-documents",
@@ -142,7 +142,7 @@ const TONE: Record<MovementStatus, OrderStatusKey> = {
     "cancelled": "cancelled",
 };
 
-export const movementTone = (status: MovementStatus): OrderStatusKey => TONE[status];
+export const movementTone = (status: MovementStatus): OrderStatus => TONE[status];
 
 export const MOVEMENT_SORTS = ["newest", "loading", "delivery"] as const;
 export type MovementSort = (typeof MOVEMENT_SORTS)[number];
@@ -215,6 +215,8 @@ export type MovementPing = {
 export type MovementRow = {
     id: string;
     ref: string;
+    /** The Appload order this row is the tenant's side of, "APPL021.26"; null on its own loads */
+    apploadOrderId: string | null;
     execution: MovementExecution;
     status: MovementStatus;
     role: MovementRole;
@@ -359,7 +361,26 @@ export type MovementThreadItem = {
     createdAt: Date;
 };
 
+/**
+ * One load whose driver conversation this company may read — the rows the
+ * Chats page lists under Drivers. No preview: the messages themselves stay
+ * behind the per-load door, which is what keeps a conversation shared with
+ * another company's asking out of this list.
+ */
+export type MovementThreadLoad = {
+    id: string;
+    ref: string;
+    driverName: string | null;
+    status: MovementStatus;
+};
+
 export type MovementDetail = MovementRow & {
+    /**
+     * The Appload order this load follows, and which side of it this company
+     * is on: the one that handed the load over, the one moving it, or one of
+     * the carriers still being asked. Null on a load the tenant runs itself.
+     */
+    appload: { orderId: string; role: "orderer" | "executor" | "candidate" } | null;
     route: RouteType;
     category: Category | null;
     weight: number | null;
@@ -399,8 +420,8 @@ export type MovementDetail = MovementRow & {
 
 /** What the load form picks from; every pick is checked again server-side. */
 export type LoadFormOptions = {
-    /** Accepted connections, either way round */
-    partners: Array<{ id: string; name: string; type: OrgType; onPortal: boolean }>;
+    /** Accepted connections, either way round, with Appload pinned in front of them */
+    partners: Array<{ id: string; name: string; type: PartnerOrgType | "appload"; onPortal: boolean }>;
     drivers: Array<{ id: string; name: string; phone: string | null }>;
     trucks: Array<{ id: string; plate: string }>;
 };

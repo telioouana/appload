@@ -1,3 +1,5 @@
+import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses"
+
 import type { MapOrder } from "@/frontend/pages/map/types"
 import { cashflowInput, currentYear } from "@/frontend/pages/orders/types"
 // Type only, so the bundler erases it: the client never pulls the router in
@@ -72,5 +74,11 @@ export const latestInput = () =>
 /** When a truck was last heard from; never-pinged sorts last on 0. */
 export const seenAt = (order: MapOrder) => order.lastLocation?.recordedAt.getTime() ?? 0
 
+/**
+ * Silence is only a signal about a truck somebody is actually asking: the
+ * cron pings from the moment the load leaves the loading site, so an order
+ * still at loading has no pin by design and must not be reported as quiet.
+ */
 export const isSilent = (order: MapOrder, now: number) =>
-    !order.lastLocation || now - order.lastLocation.recordedAt.getTime() > SILENT_AFTER_MS
+    TRACKED_STATUSES.includes(order.status)
+    && (!order.lastLocation || now - order.lastLocation.recordedAt.getTime() > SILENT_AFTER_MS)

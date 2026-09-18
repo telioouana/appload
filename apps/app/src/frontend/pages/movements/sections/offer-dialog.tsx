@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 
+import { isApploadOrg } from "@workspace/db/types"
+
 import { useTranslations } from "@workspace/i18n"
 
 import { Button } from "@workspace/ui/components/button"
@@ -24,6 +26,11 @@ const MESSAGE_MAX = 500
  * exactly as they stand — the lane, the cargo, the dates and what it will be
  * paid — and they freeze on both sides while it decides; nothing about the
  * owner's own client or margin goes with them.
+ *
+ * Appload is one of those partners, with one difference: sending it the load
+ * opens an Appload order, which it takes to the market. That asks for a
+ * loading date, a category, the cargo and its weight, and says so when one
+ * of them is missing.
  */
 export function OfferDialog({
     load,
@@ -43,6 +50,7 @@ export function OfferDialog({
     const [error, setError] = useState<MovementErrorMessage | null>(null)
 
     const price = load.money.payable
+    const toAppload = isApploadOrg(load.carrier?.id)
 
     function submit() {
         setError(null)
@@ -70,9 +78,11 @@ export function OfferDialog({
         <Dialog open onOpenChange={(next) => { if (!next && !offer.isPending) onClose() }}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>{t("offer.title")}</DialogTitle>
+                    <DialogTitle>{toAppload ? t("appload.sendToAppload") : t("offer.title")}</DialogTitle>
                     <DialogDescription>
-                        {t("offer.description", { partner: load.carrier?.name ?? "" })}
+                        {toAppload
+                            ? t("appload.sendDescription")
+                            : t("offer.description", { partner: load.carrier?.name ?? "" })}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -109,7 +119,7 @@ export function OfferDialog({
                     </Button>
                     <Button disabled={offer.isPending} onClick={submit}>
                         {offer.isPending && <Spinner className="size-4" />}
-                        {t("offer.submit")}
+                        {toAppload ? t("appload.sendToAppload") : t("offer.submit")}
                     </Button>
                 </DialogFooter>
             </DialogContent>

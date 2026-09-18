@@ -151,6 +151,9 @@
         "withdraw": "Withdraw the offer",
         "edit": "Edit",
         "more": "More actions",
+        "open-chat": "Open chat",
+        "chat-driver": "Driver",
+        "chat-order": "Order chat",
         "send-confirmation": "Send confirmation",
         "request-location": "Ask for location",
         "open-dispute": "Open a dispute",
@@ -405,7 +408,7 @@
     "thread": {
         "title": "Driver messages",
         "empty": "No messages with the driver yet",
-        "footer": "Messages are sent from the tracking above and answered on WhatsApp.",
+        "footer": "Messages are sent from the load's tracking card and answered on WhatsApp.",
         "status": {
             "pending": "Sending",
             "sent": "Sent",
@@ -454,7 +457,9 @@
         },
         "codes": {
             "EXECUTOR_WITHDREW": "The transporter pulled out before its truck reached the loading site; the load can go to another partner.",
-            "CLIENT_CANCELLED": "The client cancelled the load."
+            "CLIENT_CANCELLED": "The client cancelled the load.",
+            "APPLOAD_BOOKED_ELSEWHERE": "Appload placed this load with another transporter.",
+            "APPLOAD_REQUEST_WITHDRAWN": "The client took its request back."
         }
     },
     "detail": {
@@ -674,6 +679,15 @@
             "submit": "Resolve"
         }
     },
+    "appload": {
+        "badge": "Appload · {orderId}",
+        "partner": "Appload",
+        "cancelWithAppload": "Cancel with Appload",
+        "sendToAppload": "Send to Appload",
+        "sendDescription": "Appload takes the load to its transporters and comes back with offers. The lane, the cargo and the dates go with it; what you pay is agreed on the offer you accept.",
+        "pickerBadge": "Brokerage",
+        "pickerHint": "Appload finds the transporter: sending it the load opens an Appload order, and the load is worked from that order."
+    },
     "errors": {
         "notFound": "This load no longer exists, or is not shared with you.",
         "notAllowed": "Your role in the company does not allow this.",
@@ -688,6 +702,9 @@
         "ownTripsComeFromClients": "A transporter's own trips come from its clients' orders.",
         "rigIsThePartners": "The partner is on the portal and names its own driver and truck.",
         "executorDeparted": "The transporter's truck is already on the load; only they can cancel it now.",
+        "followsApploadOrder": "This load follows its Appload order and is handled from there.",
+        "apploadNeedsDetails": "Appload needs the loading date, the category, the cargo and its weight before it can take the load out.",
+        "apploadNotAClient": "Appload moves loads; it is never the client of one.",
         "rigNotRegistered": "The driver or truck picked is not in your fleet.",
         "noDriver": "Name the driver and their phone first.",
         "noCarrier": "Name the partner that will move the load first.",

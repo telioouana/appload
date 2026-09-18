@@ -6,6 +6,7 @@ import { and, asc, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 import { partnerConnection } from "@workspace/db/connections";
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import { movement } from "@workspace/db/movements";
+import { isPartnerOrgType } from "@workspace/db/types";
 import { organization, user } from "@workspace/db/users";
 
 import { movementRole } from "@workspace/domain/movements/policy";
@@ -15,7 +16,7 @@ import { tenantProcedure } from "@workspace/trpc/tenant";
 
 import type { VehicleKind } from "@/frontend/pages/fleet/types";
 import { sectionPredicate, toMovementRow, type PingState } from "@/frontend/pages/movements/server/projection";
-import type { GlobalSearch, SearchLoad, SearchVehicle } from "@/frontend/pages/search/types";
+import type { GlobalSearch, SearchLoad, SearchPartner, SearchVehicle } from "@/frontend/pages/search/types";
 
 // Escape LIKE wildcards so what the user typed matches literally
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
@@ -53,12 +54,12 @@ const searchableLoads = (tenantId: string): SQL =>
  */
 function loadMatches(term: string, tenantId: string): SQL {
     const pattern = `%${escapeLike(term)}%`;
-    const digits = term.replace(/\D/g, "");
-    // "ORD-42", "trp 42" and "42" all mean the same row; anything longer than
-    // a plausible sequence is a plate or a name, not a reference
-    const seq = digits.length > 0 && digits.length <= 9 ? Number(digits) : null;
 
     return or(
+        // Both names a load answers to: the order it is, and the request it
+        // was filed as. "ORD-0001" and "0001-26" each find it
+        ilike(movement.reference, pattern),
+        ilike(movement.requestReference, pattern),
         ilike(movement.driverName, pattern),
         ilike(movement.truckPlate, pattern),
         ilike(movement.cargoDescription, pattern),
@@ -66,7 +67,6 @@ function loadMatches(term: string, tenantId: string): SQL {
             eq(movement.organizationId, tenantId),
             or(ilike(movement.clientName, pattern), ilike(movement.carrierName, pattern)),
         ),
-        seq === null ? undefined : eq(movement.seq, seq),
     ) as SQL;
 }
 
@@ -158,6 +158,9 @@ export const searchRouter = createTRPCRouter({
                 // row with no role here would be a bug in them
                 if (!role) return [];
 
+                // A palette hit is the load under its own name; the Appload
+                // order it may follow is not one of the fields carried here,
+                // so the row is projected without the id map that resolves it
                 const { id, ref, status, execution, origin, destination } =
                     toMovementRow(row, role, { names: new Map(), pings: NO_PINGS, trailId: row.id });
 
@@ -166,7 +169,9 @@ export const searchRouter = createTRPCRouter({
 
             return {
                 loads,
-                partners,
+                // Appload's own row is on the platform but is nobody's
+                // partner; the column admits it, an accepted connection does not
+                partners: partners.filter((row): row is SearchPartner => isPartnerOrgType(row.type)),
                 drivers,
                 vehicles: [...trucks, ...trailers, ...links].slice(0, HITS),
             };

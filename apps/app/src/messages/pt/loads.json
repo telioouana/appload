@@ -151,6 +151,9 @@
         "withdraw": "Retirar a oferta",
         "edit": "Editar",
         "more": "Mais ações",
+        "open-chat": "Abrir conversa",
+        "chat-driver": "Motorista",
+        "chat-order": "Conversa do pedido",
         "send-confirmation": "Enviar confirmação",
         "request-location": "Pedir localização",
         "open-dispute": "Abrir uma disputa",
@@ -405,7 +408,7 @@
     "thread": {
         "title": "Mensagens com o motorista",
         "empty": "Ainda não há mensagens com o motorista",
-        "footer": "As mensagens saem do acompanhamento acima e são respondidas no WhatsApp.",
+        "footer": "As mensagens saem do acompanhamento da carga e são respondidas no WhatsApp.",
         "status": {
             "pending": "A enviar",
             "sent": "Enviada",
@@ -454,7 +457,9 @@
         },
         "codes": {
             "EXECUTOR_WITHDREW": "O transportador desistiu antes de o camião chegar ao local de carregamento; a carga pode ser entregue a outro parceiro.",
-            "CLIENT_CANCELLED": "O cliente cancelou a carga."
+            "CLIENT_CANCELLED": "O cliente cancelou a carga.",
+            "APPLOAD_BOOKED_ELSEWHERE": "A Appload entregou esta carga a outro transportador.",
+            "APPLOAD_REQUEST_WITHDRAWN": "O cliente retirou o pedido."
         }
     },
     "detail": {
@@ -674,6 +679,15 @@
             "submit": "Resolver"
         }
     },
+    "appload": {
+        "badge": "Appload · {orderId}",
+        "partner": "Appload",
+        "cancelWithAppload": "Cancelar com a Appload",
+        "sendToAppload": "Enviar para a Appload",
+        "sendDescription": "A Appload leva a carga aos seus transportadores e volta com propostas. A rota, a carga e as datas seguem com ela; o valor a pagar fica acordado na proposta que aceitar.",
+        "pickerBadge": "Corretagem",
+        "pickerHint": "A Appload encontra o transportador: ao enviar-lhe a carga é aberto um pedido Appload, e a carga passa a ser tratada a partir desse pedido."
+    },
     "errors": {
         "notFound": "Esta carga já não existe, ou não está partilhada consigo.",
         "notAllowed": "O seu papel na empresa não permite esta ação.",
@@ -688,6 +702,9 @@
         "ownTripsComeFromClients": "As viagens da própria frota de uma transportadora vêm dos pedidos dos seus clientes.",
         "rigIsThePartners": "O parceiro está no portal e indica o próprio motorista e camião.",
         "executorDeparted": "O camião do transportador já está com a carga; só ele a pode cancelar agora.",
+        "followsApploadOrder": "Esta carga segue o pedido Appload e é tratada a partir dele.",
+        "apploadNeedsDetails": "A Appload precisa da data de carga, da categoria, da descrição da carga e do peso antes de a levar ao mercado.",
+        "apploadNotAClient": "A Appload transporta cargas; nunca é o cliente de uma.",
         "rigNotRegistered": "O motorista ou o camião escolhido não é da sua frota.",
         "noDriver": "Indique o nome e o telefone do motorista primeiro.",
         "noCarrier": "Indique o parceiro que vai transportar a carga primeiro.",

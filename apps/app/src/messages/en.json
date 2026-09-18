@@ -56,11 +56,11 @@
     },
     "App": {
         "metadata": {
-            "title": "Appload Partners",
-            "description": "Appload's partner portal: orders, quotes, trips and fleet for clients and transporters."
+            "title": "Appload Enterprise",
+            "description": "Appload Enterprise: orders, quotes, trips and fleet for clients and transporters."
         },
         "auth": {
-            "title": "Appload Partners",
+            "title": "Appload Enterprise",
             "description": "Enter your credentials to sign in",
             "email": {
                 "label": "Email",
@@ -290,9 +290,8 @@
                     "label": "Operations",
                     "dashboard": "Dashboard",
                     "orders": "Orders",
-                    "quotes": "Quotes",
                     "map": "Map",
-                    "appload": "Appload",
+                    "chats": "Chats",
                     "notifications": "Notifications"
                 },
                 "company": {
@@ -302,6 +301,7 @@
                     "team": "Team",
                     "partners": "Partners",
                     "my-transporters": "My transporters",
+                    "quotes": "Quotes",
                     "analytics": "Analytics"
                 },
                 "new-load": "New load"
@@ -320,7 +320,7 @@
         },
         "access-denied": {
             "title": "Access restricted",
-            "description": "The partner portal is for client and transporter accounts. Sign in with your company account to continue",
+            "description": "Appload Enterprise is for client and transporter accounts. Sign in with your company account to continue",
             "closed": "This company's account is closed. Talk to Appload to reopen it",
             "sign-out": "Sign out"
         },
@@ -375,7 +375,6 @@
                 "no-response": "No answer today"
             },
             "loads": {
-                "appload": "Appload",
                 "planning": "My trucks to plan",
                 "planning-hint": "Not booked in yet",
                 "own-road": "Own fleet in progress",
@@ -385,8 +384,7 @@
                 "latest": {
                     "title": "Latest loads",
                     "empty": "You have not filed any loads yet",
-                    "amount": "Amount",
-                    "appload": "Appload"
+                    "amount": "Amount"
                 }
             }
         },
@@ -524,31 +522,6 @@
                     "NOT_ALLOWED": "You are not allowed to change the company's details",
                     "NOT_FOUND": "Your company could not be found",
                     "UNKNOWN": "Could not save. Try again"
-                },
-                "contract": {
-                    "title": "Contract with Appload",
-                    "valid-until": "valid until {date}",
-                    "states": {
-                        "valid": "Valid",
-                        "pending": "Under review",
-                        "missing": "No contract",
-                        "expired": "Expired",
-                        "rejected": "Rejected"
-                    },
-                    "upload": "Upload contract",
-                    "dialog": {
-                        "title": "Upload the signed contract",
-                        "description": "Send the contract you signed with Appload and say how long it is valid for",
-                        "file": "Choose file",
-                        "expires": "Valid until",
-                        "submit": "Send",
-                        "success": "Contract sent. Appload will review it",
-                        "errors": {
-                            "size": "The file cannot be larger than 5 MB",
-                            "type": "Only PDF, JPG or PNG are accepted"
-                        }
-                    },
-                    "hint": "Appload reviews the contract; partners then see whether it is valid."
                 }
             },
             "members": {
@@ -655,7 +628,7 @@
                     "title": "Want to change plan?",
                     "description": "Talk to the Appload team — we handle the change with you",
                     "button": "Talk to Appload",
-                    "subject": "Appload portal — {organization} plan"
+                    "subject": "Appload Enterprise — {organization} plan"
                 }
             }
         },
@@ -680,7 +653,7 @@
                 "close": "Not now",
                 "settings": "See subscription",
                 "contact": "Talk to Appload",
-                "subject": "Appload portal — {organization} plan"
+                "subject": "Appload Enterprise — {organization} plan"
             }
         }
     }

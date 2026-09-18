@@ -243,7 +243,7 @@ All enforcement lives in a pure module (`apps/admin/src/lib/kyc/eligibility.ts`)
 | Carrier `riskLevel: "high"` | Red banner; booking requires explicit acknowledgment + note | Requires `manager`+ role (uac gate) **and** a note; order auto-flagged for review; acknowledgment recorded in `order_history` metadata |
 | Selected plate `ownershipStatus: "third-party"` | Inline warning badge in the plate picker (`searchVehicles` returns `ownershipStatus`) | Same as high-risk carrier: manager + note + auto-flag |
 | Selected plate `unverified` | Amber "ownership not verified" badge | Warn-only initially; tighten to require-manager once the fleet backlog is reviewed |
-| Driver/vehicle KYC not `verified` | Badge in pickers | Warn at `booked`; block at `to-loading` (cargo not yet committed → still swappable) |
+| Driver/vehicle KYC not `verified` | Badge in pickers | Warn at `booked`; block at the dispatch (`booked → at-loading`) (cargo not yet committed → still swappable) |
 
 This makes the loss-of-cargo scenario auditable end to end: the mismatch is on the vehicle row, the flag + reason on the carrier, the manager's acknowledgment note in `order_history`, and every action in `activity_log`.
 
@@ -270,7 +270,7 @@ Sensitive IDs/NUITs must not be publicly reachable. Plan:
 1. **Dedicated protected bucket** `kycFiles` in `packages/edgestore/src/server.ts`, separate from `apploadFiles`:
    - Path: `[{ subjectType }, { subjectId }, { docType }]` — **IDs, never names/plates** (Conecta keyed on slugified names and plates; mutable and collision-prone — don't inherit).
    - `accept: ["application/pdf", "image/jpeg", "image/png"]`, `maxSize` ~5 MB.
-   - `beforeUpload` / `beforeDelete`: staff only, resolved **live from the database** via the same `getStaffGates` the tRPC gate uses (not the session's cached copy), so a demotion cuts off access immediately.
+   - `beforeUpload` / `beforeDelete`: staff only, resolved **live from the database** via the same `getStaffGates` the tRPC gate uses (not the session's cached copy), so a demotion cuts off access immediately. (Since `appload-partner-design.md` §7b, `beforeUpload` also admits a partner filing its own papers from the portal — its company's own prefix, the signed contract excepted, and the drivers and vehicles in its own registry; deletes stay staff-only.)
    - EdgeStore **access control** on the bucket so files are served through the protected-file proxy — readable only when the request context carries `isStaff`.
 
    > ⚠️ **Read protection is not in place (open item).** Writes and deletes are staff-gated as described, but anyone holding a file URL can still read it. `.accessControl({ isStaff: { eq: "true" } })` is the one-line fix, and it is written into the code as a comment — but adding it today makes **every** EdgeStore request fail with a 500, which breaks order-document uploads too. Verified by A/B test: any `accessControl` rule, on any bucket, with any shape, 500s on this project, so the protected-files feature is not enabled on the account. **Decision needed:** enable protected files on the EdgeStore plan, or move `kycFiles` to storage that signs its own URLs (S3 presigned, R2). Until then, ID scans and NUIT certificates are URL-guessable-if-leaked, which is the one part of this design that is not yet true.

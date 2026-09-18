@@ -15,6 +15,7 @@ import { and, eq, isNotNull, or } from "drizzle-orm";
 import { partnerConnection } from "@workspace/db/connections";
 import type { db as Database } from "@workspace/db/db";
 import { movement, type Movement } from "@workspace/db/movements";
+import { isApploadOrg } from "@workspace/db/types";
 import { organization } from "@workspace/db/users";
 
 type Db = typeof Database;
@@ -62,6 +63,10 @@ export async function parentMovement(db: Db, id: string): Promise<Movement | nul
  * request is never trusted, and a connection that ended closes the door.
  */
 export async function isConnected(db: Db, a: string, b: string): Promise<boolean> {
+    // Appload is connected to everyone by construction: it is the brokerage
+    // every tenant already has an account with, not a partner one invites
+    if (isApploadOrg(a) || isApploadOrg(b)) return true;
+
     const [row] = await db
         .select({ id: partnerConnection.id })
         .from(partnerConnection)
@@ -87,6 +92,10 @@ export async function isConnected(db: Db, a: string, b: string): Promise<boolean
  */
 export async function isOnPortal(db: Db, organizationId: string | null): Promise<boolean> {
     if (!organizationId) return false;
+
+    // Appload answers for itself in Admin, which is the same guarantee this
+    // predicate exists to make: somebody is there to read the offer
+    if (isApploadOrg(organizationId)) return true;
 
     const [row] = await db
         .select({ id: organization.id })

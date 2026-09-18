@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, count, desc, eq, ilike, inArray, isNull, max, ne, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, isNull, ne, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 
 import { order, orderDocument, orderHistory, orderOffer } from "@workspace/db/orders";
 import type { Order, OrderDocumentType } from "@workspace/db/orders";
@@ -9,28 +9,34 @@ import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import { user } from "@workspace/db/users";
 import { ORDER_STATUS, type TRUCK_AGE } from "@workspace/db/types";
 
+import { linkedMovementId } from "@workspace/domain/appload/link";
 import { notify } from "@workspace/domain/notifications";
 import { createOrder } from "@workspace/domain/orders/create";
-import { currentOrderYear, nextOrderId } from "@workspace/domain/orders/order-id";
+import { portalNextOrderId } from "@workspace/domain/orders/next-order-id";
+import { currentOrderYear } from "@workspace/domain/orders/order-id";
 import { CreateOrderSchemaServer } from "@workspace/domain/orders/schemas";
 import { allowedForActor } from "@workspace/domain/orders/policy";
-import { missingForDispatch } from "@workspace/domain/orders/dispatch-readiness";
-import { PENDING_POD_STATUSES } from "@workspace/domain/orders/status-groups";
+import { isDispatchMove, missingForDispatch } from "@workspace/domain/orders/dispatch-readiness";
+import { loadDispatchReadiness } from "@workspace/domain/orders/dispatch-papers";
+import { loadDispatchPack } from "@workspace/domain/orders/dispatch-pack";
+import { LoadingCheckInputSchema, loadingMoveRequirements } from "@workspace/domain/orders/loading-check";
+import { loadLoadingCheckState, openDispatchId, recordLoadingCheck } from "@workspace/domain/orders/loading-check-store";
+import { ON_GOING_STATUSES, PENDING_POD_STATUSES } from "@workspace/domain/orders/status-groups";
 import { allowedTransitions, transitionRequirements } from "@workspace/domain/orders/transitions";
-import { applyTransition, deriveResumeStatus, pendingOfferCount } from "@workspace/domain/orders/transition";
+import { applyTransition, deriveResumeStatus, liveStatus, pendingOfferCount } from "@workspace/domain/orders/transition";
 import { trackingAllowance } from "@workspace/domain/subscription";
-import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
 import { CancelOrderBaseSchema, CreateOrderBaseSchema, SendRequestsBaseSchema } from "@/backend/schemas/order";
-import { AddDocumentBaseSchema, TransitionBaseSchema, type TransitionDocumentForm } from "@/backend/schemas/dispatch";
+import { AddDocumentBaseSchema, TransitionBaseSchema, type PartnerDocumentForm } from "@/backend/schemas/dispatch";
 import {
     ORDER_SECTIONS,
     ORDER_SORTS,
     defaultSection,
     isSection,
+    type LoadingCheckView,
     type OrderDetail,
     type OrderDocumentView,
     type OrderHistoryEntry,
@@ -44,9 +50,12 @@ import {
     type TransitionOptions,
 } from "@/frontend/pages/orders/types";
 import {
+    actorOf,
     anyRequest,
     assertEdgeStoreUrl,
     assertOrgType,
+    assertShipperOf,
+    counterpartyNameColumn,
     isMineColumn,
     loadVisibleOrder,
     moneyColumns,
@@ -57,6 +66,8 @@ import {
     organizationName,
     ownsOrder,
     scopeOf,
+    sideOf,
+    sideScope,
     toMoney,
     toMoneyDetail,
     toNumber,
@@ -72,6 +83,7 @@ import {
     closeOrderRequests,
     listRequestViews,
     requestCount,
+    withdrawApploadRequest,
     writeOrderRequests,
 } from "@/frontend/pages/orders/server/requests";
 import { offersRouter } from "@/frontend/pages/orders/server/offers";
@@ -186,7 +198,7 @@ const rowColumns = (tenant: TenantScope) => ({
     expectedOffloadingDate: order.expectedOffloadingDate,
     deliveries: order.deliveries,
     expectedTrucks: order.expectedTrucks,
-    counterpartyName: tenant.orgType === "shipper" ? order.carrierName : order.shipperName,
+    counterpartyName: counterpartyNameColumn(tenant),
     driverName: order.driverName,
     truckPlate: order.truckPlate,
     trailerPlate: order.trailerPlate,
@@ -194,7 +206,7 @@ const rowColumns = (tenant: TenantScope) => ({
     version: order.version,
     createdAt: order.createdAt,
     isMine: isMineColumn(tenant),
-    ...moneyColumns(tenant.orgType),
+    ...moneyColumns(tenant),
     offersPending: tenant.orgType === "shipper" ? pendingOfferCount : zeroCount,
     requestedCount: tenant.orgType === "shipper" ? requestCount(["requested"]) : zeroCount,
     quotedCount: tenant.orgType === "shipper" ? requestCount(["quoted"]) : zeroCount,
@@ -264,7 +276,7 @@ async function addOrderDocument(
     params: {
         row: Pick<Order, "id" | "orderId" | "shipperId" | "carrierId">;
         tenant: TenantScope;
-        document: TransitionDocumentForm;
+        document: PartnerDocumentForm;
     },
 ): Promise<OrderDocumentView> {
     assertEdgeStoreUrl(params.document.url);
@@ -289,16 +301,27 @@ async function addOrderDocument(
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
     }
 
-    await db.insert(orderHistory).values({
-        orderId: params.row.id,
-        actorUserId: params.tenant.userId,
-        kind: "document",
-        metadata: { documentId: document.id, type: document.type },
-    });
+    // A loading photo is one piece of a check, and a check is worth one
+    // timeline row and one notification — written by the check itself, not
+    // by each of the ten photos it may carry
+    const evented = document.type !== "loading-photo";
 
-    const counterparty = params.tenant.orgType === "shipper" ? params.row.carrierId : params.row.shipperId;
+    if (evented) {
+        await db.insert(orderHistory).values({
+            orderId: params.row.id,
+            actorUserId: params.tenant.userId,
+            kind: "document",
+            metadata: { documentId: document.id, type: document.type },
+        });
+    }
 
-    if (counterparty) {
+    // The other party to the trip, read off the row: the uploader is the
+    // client of the orders it filed and the carrier of the ones it drives
+    const counterparty = params.row.shipperId === params.tenant.organizationId
+        ? params.row.carrierId
+        : params.row.shipperId;
+
+    if (evented && counterparty) {
         await notify(db, {
             organizationId: counterparty,
             kind: "order.document",
@@ -427,14 +450,20 @@ export const ordersRouter = createTRPCRouter({
             ]),
         ) as Record<OrderSection, SQL<number>>;
 
+        // The whole on-going section, not the cron's ping set: the tile opens
+        // /orders/on-going, and a number that disagrees with the list one
+        // click away is worse than a number that counts a truck still loading
         const onTheRoad = shipper
-            ? inArray(order.status, TRACKED_STATUSES)
-            : and(eq(order.carrierId, tenantId), inArray(order.status, TRACKED_STATUSES));
+            ? inArray(order.status, ON_GOING_STATUSES)
+            : and(eq(order.carrierId, tenantId), inArray(order.status, ON_GOING_STATUSES));
 
         const [row] = await ctx.db
             .select({
                 ...sectionSelect,
-                total: count(),
+                // Counted on the side the sections are counted on, so the
+                // total is the sum of the lists it opens: a transporter's
+                // delegated orders are worked from their load row, not here
+                total: shipper ? count() : countWhere(eq(order.carrierId, tenantId)),
                 // Shipper: asked and still waiting for the first answer
                 awaitingOffers: shipper
                     ? countWhere(and(
@@ -493,20 +522,31 @@ export const ordersRouter = createTRPCRouter({
         .query(async ({ ctx, input }): Promise<OrderDetail> => {
             const tenant = scopeOf(ctx.tenant);
             const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
-            const carrier = tenant.orgType === "carrier";
+            // Which side of THIS order the caller is on: a transporter reads
+            // the load it handed to Appload as that order's client
+            const reader = sideScope(tenant, row);
+            const carrier = reader.orgType === "carrier";
             // Reading the order is not being a party to it: a carrier that
             // was asked about it, or quoted and lost, sees the row — and
             // nothing on it that belongs to the deal somebody else got
             const isMine = ownsOrder(row, tenant);
 
-            const [offerRows, requests, documents] = await Promise.all([
+            const [offerRows, requests, documents, linkedLoadId] = await Promise.all([
                 ctx.db
-                    .select(offerColumns(tenant.orgType))
+                    .select(offerColumns(reader.orgType))
                     .from(orderOffer)
-                    .where(visibleOffers(row.id, tenant))
+                    .where(visibleOffers(row.id, reader))
                     .orderBy(desc(orderOffer.createdAt)),
-                listRequestViews(ctx.db, row.id, tenant),
+                listRequestViews(ctx.db, row.id, reader),
                 isMine ? listDocumentViews(ctx.db, row.id) : Promise.resolve([]),
+                // The caller's own load behind this order, when it keeps one.
+                // Best-effort: the order page is not worth failing over a
+                // link that only sends the reader somewhere nicer
+                linkedMovementId(ctx.db, { orderId: row.id, organizationId: tenant.organizationId })
+                    .catch((error) => {
+                        console.error(`linked load for ${row.orderId} failed`, error);
+                        return null;
+                    }),
             ]);
 
             const offers = offerRows.map((offer) => toOfferView(offer, tenant.organizationId));
@@ -585,6 +625,7 @@ export const ordersRouter = createTRPCRouter({
                 offers,
                 requests,
                 documents,
+                linkedLoadId,
                 permissions: {
                     isMine,
                     canCancel: !carrier && (row.status === "prospect" || row.status === "booked"),
@@ -614,6 +655,7 @@ export const ordersRouter = createTRPCRouter({
         .query(async ({ ctx, input }): Promise<OrderHistoryEntry[]> => {
             const tenant = scopeOf(ctx.tenant);
             const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+            const reader = sideScope(tenant, row);
             const isMine = ownsOrder(row, tenant);
 
             const [entries, offerRows] = await Promise.all([
@@ -636,9 +678,9 @@ export const ordersRouter = createTRPCRouter({
                     .orderBy(desc(orderHistory.createdAt))
                     .limit(HISTORY_LIMIT),
                 ctx.db
-                    .select(offerColumns(tenant.orgType))
+                    .select(offerColumns(reader.orgType))
                     .from(orderOffer)
-                    .where(visibleOffers(row.id, tenant)),
+                    .where(visibleOffers(row.id, reader)),
             ]);
 
             const offers = new Map(offerRows.map((offer) => [
@@ -695,7 +737,12 @@ export const ordersRouter = createTRPCRouter({
         .input(z.object({ orderId: z.string().nonempty() }))
         .query(async ({ ctx, input }): Promise<TransitionOptions> => {
             const tenant = scopeOf(ctx.tenant);
-            const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+            const loaded = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+
+            // A row the retirement script has not moved yet is still stored on
+            // "to-loading", which the state machine no longer knows: read it as
+            // the status that replaced it or the dialog offers nothing
+            const row = { ...loaded, status: liveStatus(loaded.status) };
 
             const [resumeStatus, [counted]] = await Promise.all([
                 row.status === "stopped" || row.status === "issue"
@@ -730,32 +777,68 @@ export const ordersRouter = createTRPCRouter({
 
             // The two moves a plan pays for: the client's booking and the
             // carrier's FIRST dispatch. A resume out of an interrupt lands on
-            // "to-loading" again for a movement that was already billed, so it
+            // "at-loading" again for a movement that was already billed, so it
             // is not on the plan's tab and must not be offered as blocked. The
             // month's usage is counted once, and only when the gated move is
             // actually on the table — every other reader of this query would
             // be paying for a number it cannot act on
-            const gated = tenant.orgType !== "carrier" ? "booked"
-                : row.status === "booked" ? "to-loading"
+            const gated = sideOf(row, tenant) !== "carrier" ? "booked"
+                : row.status === "booked" ? "at-loading"
                     : null;
 
             const allowance = gated !== null && allowed.includes(gated)
                 ? await trackingAllowance(ctx.db, tenant.organizationId)
                 : null;
 
+            // The papers of the rig STORED on the order. A booked trip
+            // usually carries none — the dialog picks the rig and asks
+            // kyc.rigPapers about that pick — so this only bites where ops
+            // named the driver and the truck from Admin.
+            const dispatch = allowed.some((to) => isDispatchMove(row.status, to))
+                ? await loadDispatchReadiness(ctx.db, row)
+                : null;
+
+            // What the orderer confirmed at the loading site. The carrier
+            // only reads it — a mismatch about its own truck is Appload's
+            // to clear — so here it is the reason the move is refused. Only
+            // the move that STARTS the load asks, the same edge the shared
+            // door gates; resuming after a stop is the carrier's free move.
+            const loadingCheck = row.status === "at-loading" && allowed.includes("loading")
+                ? await loadLoadingCheckState(ctx.db, row.id, await openDispatchId(ctx.db, row.id))
+                : null;
+
             const targets: TransitionOption[] = allowed.map((to) => {
                 const requirements = transitionRequirements(row.status, to, { resumeStatus }) ?? [];
+                const dispatching = isDispatchMove(row.status, to) ? dispatch : null;
+                const checking = to === "loading" ? loadingCheck : null;
+                const loadingMove = checking ? loadingMoveRequirements(checking, actor) : null;
 
                 const blockedReason =
                     requirements.includes("offer") && pendingOffers === 0 ? "NO_OFFERS" as const
-                        : to === "to-loading" && missing.length > 0 ? "INCOMPLETE_FOR_DISPATCH" as const
-                            : to === gated && allowance !== null && !allowance.active
-                                ? "SUBSCRIPTION_REQUIRED" as const
-                                : to === gated && allowance !== null && allowance.remaining === 0
-                                    ? "QUOTA_EXCEEDED" as const
-                                    : null;
+                        // Papers the stored rig lacks block the move; a rig
+                        // that is not named yet does not, because the dialog
+                        // is where it is picked — and that pick has its own
+                        // papers block
+                        : dispatching && dispatching.fields.length === 0 && dispatching.papers.length > 0
+                            ? "PAPERS_MISSING" as const
+                            : dispatching && dispatching.fields.length > 0 ? "INCOMPLETE_FOR_DISPATCH" as const
+                                : loadingMove?.blocked ?? (
+                                    to === gated && allowance !== null && !allowance.active
+                                        ? "SUBSCRIPTION_REQUIRED" as const
+                                        : to === gated && allowance !== null && allowance.remaining === 0
+                                            ? "QUOTA_EXCEEDED" as const
+                                            : null);
 
-                return { to, requirements, blocked: blockedReason !== null, blockedReason };
+                // Both dispatch refusals stay openable (the bar lets them
+                // through): the dispatch dialog is what fills the rig in, and
+                // its papers block is where a gap is named and closed
+                return {
+                    to,
+                    requirements,
+                    blocked: blockedReason !== null,
+                    blockedReason,
+                    loadingCheck: checking,
+                };
             });
 
             return {
@@ -765,8 +848,95 @@ export const ordersRouter = createTRPCRouter({
                 targets,
                 allowance,
                 missingForDispatch: missing,
-                pendingOffers: tenant.orgType === "shipper" ? pendingOffers : 0,
+                pendingOffers: sideOf(row, tenant) === "shipper" ? pendingOffers : 0,
             };
+        }),
+
+    /**
+     * The dispatch pack and what was confirmed at the loading site. Both
+     * parties to the trip read it — the carrier is being checked, and sees
+     * exactly what was checked about it — and only the shipper that ordered
+     * the load may record one.
+     */
+    loadingCheck: tenantProcedure
+        .input(z.object({ orderId: z.string().nonempty() }))
+        .query(async ({ ctx, input }): Promise<LoadingCheckView> => {
+            const tenant = scopeOf(ctx.tenant);
+            const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+
+            // A carrier that was asked about the order, or quoted and lost,
+            // is not a party to the trip: the driver's papers are not its
+            // business
+            if (!ownsOrder(row, tenant)) {
+                return { pack: null, state: { state: "none", check: null }, checkedByName: null, photos: [], canCheck: false };
+            }
+
+            const pack = await loadDispatchPack(ctx.db, row.id);
+            const state = await loadLoadingCheckState(ctx.db, row.id, pack?.id ?? null);
+
+            // The photos OF THIS CHECK, not every loading photo on the
+            // order: a re-check has its own evidence, and an upload nobody's
+            // check references is not evidence of anything
+            const photos = state.check && state.check.photoDocumentIds.length > 0
+                ? await ctx.db
+                    .select({
+                        id: orderDocument.id,
+                        title: orderDocument.title,
+                        url: orderDocument.url,
+                        mimeType: orderDocument.mimeType,
+                        createdAt: orderDocument.createdAt,
+                    })
+                    .from(orderDocument)
+                    .where(and(
+                        eq(orderDocument.orderId, row.id),
+                        inArray(orderDocument.id, state.check.photoDocumentIds),
+                        isNull(orderDocument.deletedAt),
+                    ))
+                    .orderBy(orderDocument.createdAt)
+                : [];
+
+            const [checker] = state.check?.checkedBy
+                ? await ctx.db.select({ name: user.name }).from(user).where(eq(user.id, state.check.checkedBy))
+                : [];
+
+            return {
+                pack,
+                state,
+                checkedByName: checker?.name ?? null,
+                photos,
+                canCheck: sideOf(row, tenant) === "shipper",
+            };
+        }),
+
+    /**
+     * The shipper confirming, before the load starts, that the truck and the
+     * driver at the gate are the ones the pack names. A mismatch flags the
+     * order; from there only Appload can let the load proceed.
+     */
+    recordLoadingCheck: authorizedTenantProcedure("order", ["update"])
+        .input(LoadingCheckInputSchema)
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const tenant = scopeOf(ctx.tenant);
+                const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+
+                assertShipperOf(row, tenant);
+
+                const { check, order: updated } = await recordLoadingCheck(ctx.db, {
+                    current: row,
+                    actor: actorOf(tenant),
+                    input,
+                });
+
+                return {
+                    orderId: input.orderId,
+                    checkId: check.id,
+                    outcome: check.outcome,
+                    version: updated.version,
+                };
+            } catch (error) {
+                throw toTRPCError(error);
+            }
         }),
 
     /**
@@ -810,20 +980,7 @@ export const ordersRouter = createTRPCRouter({
                 const result = await createOrder(
                     orderContext(ctx),
                     payload,
-                    {
-                        // The unique (year, seq) index arbitrates concurrent
-                        // creates, so every attempt recomputes the sequence.
-                        // The portal has no logbook to read: the sheet's own
-                        // max is 0 and Admin's sync cron heals the sheet.
-                        nextOrderId: async () => {
-                            const [row] = await ctx.db
-                                .select({ value: max(order.seq) })
-                                .from(order)
-                                .where(eq(order.year, year));
-
-                            return nextOrderId(row?.value ?? 0, 0, year);
-                        },
-                    },
+                    { nextOrderId: portalNextOrderId(ctx.db, year) },
                 );
 
                 // Cargo particulars the shared create payload does not carry
@@ -870,9 +1027,9 @@ export const ordersRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; sent: number; skipped: number }> => {
             try {
                 const tenant = scopeOf(ctx.tenant);
-                assertOrgType(tenant, "shipper");
-
                 const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+
+                assertShipperOf(row, tenant);
 
                 if (row.status !== "prospect") {
                     throw new TRPCError({ code: "BAD_REQUEST", message: "ORDER_NOT_PROSPECT" });
@@ -919,9 +1076,9 @@ export const ordersRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; carrierOrgId: string }> => {
             try {
                 const tenant = scopeOf(ctx.tenant);
-                assertOrgType(tenant, "shipper");
-
                 const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+
+                assertShipperOf(row, tenant);
 
                 if (row.status !== "prospect") {
                     throw new TRPCError({ code: "BAD_REQUEST", message: "ORDER_NOT_PROSPECT" });
@@ -941,6 +1098,11 @@ export const ordersRouter = createTRPCRouter({
                     throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
                 }
 
+                // The carrier's own row for this order goes off with the
+                // request. Best-effort, like every write on the far side of
+                // an order: the next sync repairs what a failure leaves
+                await withdrawApploadRequest(ctx.db, row.id, input.carrierOrgId);
+
                 return { orderId: row.orderId, carrierOrgId: input.carrierOrgId };
             } catch (error) {
                 throw toTRPCError(error);
@@ -957,9 +1119,9 @@ export const ordersRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; status: string; version: number }> => {
             try {
                 const tenant = scopeOf(ctx.tenant);
-                assertOrgType(tenant, "shipper");
-
                 const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+
+                assertShipperOf(row, tenant);
 
                 // Read before the transition settles the offers: afterwards
                 // every pending row is already "lost"
@@ -1004,10 +1166,10 @@ export const ordersRouter = createTRPCRouter({
         }),
 
     /**
-     * The carrier drives its own trip: the forward chain to-loading … delivered,
+     * The carrier drives its own trip: the forward chain at-loading … delivered,
      * plus the two interrupts and the resume the shared policy allows it.
      *
-     * The booked → `to-loading` move carries the dispatch: the driver and the
+     * The booked → `at-loading` move carries the dispatch: the driver and the
      * rig are resolved against the carrier's own registry and written onto the
      * order under the optimistic lock, WHICH BUMPS THE VERSION — the transition
      * is then applied with it. Two concurrent dispatches therefore cannot both
@@ -1016,7 +1178,7 @@ export const ordersRouter = createTRPCRouter({
      */
     transition: authorizedTenantProcedure("order", ["update"])
         .input(TransitionBaseSchema)
-        .mutation(async ({ ctx, input }): Promise<{ orderId: string; status: string; version: number }> => {
+        .mutation(async ({ ctx, input }): Promise<{ orderId: string; status: string; version: number; loadingCheck?: string }> => {
             try {
                 const tenant = scopeOf(ctx.tenant);
                 assertOrgType(tenant, "carrier");
@@ -1029,25 +1191,45 @@ export const ordersRouter = createTRPCRouter({
 
                 let expectedVersion = input.expectedVersion;
 
-                // The dispatch belongs to ONE move, booked → to-loading, and
+                // The dispatch belongs to ONE move, booked → at-loading, and
                 // it is written before the transition so the gate inside the
                 // shared door checks the driver it is about to commit. That
                 // order also means a refused transition leaves the write
                 // standing — there are no transactions here — so nothing but
-                // that move may reach it: a `to-loading` from anywhere else
+                // that move may reach it: an `at-loading` from anywhere else
                 // (a resume from an interrupt, an illegal jump on a trip
                 // already running) never touches the rig.
-                if (input.to === "to-loading" && row.status === "booked") {
+                if (isDispatchMove(row.status, input.to)) {
                     if (!input.dispatch) {
                         throw new TRPCError({ code: "BAD_REQUEST", message: "DISPATCH_REQUIRED" });
                     }
 
-                    expectedVersion = await writeDispatch(ctx.db, {
-                        row,
-                        tenantId: tenant.organizationId,
-                        dispatch: input.dispatch,
-                        expectedVersion,
+                    const resolved = await resolveDispatch(ctx.db, tenant.organizationId, input.dispatch);
+
+                    // The rig that was just picked, judged before it is
+                    // written: the transition re-checks it on the stored row,
+                    // but by then the driver and the plates would already be
+                    // on the order — and a refused move must not leave a trip
+                    // carrying a rig it never left with. The write below is
+                    // the only one that can be rolled back here, by not
+                    // happening, so BOTH refusals the shared door can raise
+                    // are raised here first.
+                    const readiness = await loadDispatchReadiness(ctx.db, {
+                        ...row,
+                        ...resolved,
+                        // The resolved rig leaves the age alone when the
+                        // truck has no year on file
+                        truckAge: resolved.truckAge ?? row.truckAge,
                     });
+
+                    if (readiness.fields.length > 0) {
+                        throw new TRPCError({ code: "BAD_REQUEST", message: "INCOMPLETE_FOR_DISPATCH" });
+                    }
+                    if (readiness.papers.length > 0) {
+                        throw new TRPCError({ code: "BAD_REQUEST", message: "PAPERS_MISSING" });
+                    }
+
+                    expectedVersion = await writeDispatch(ctx.db, row, resolved, expectedVersion);
                 }
 
                 const result = await applyTransition(orderContext(ctx), {
@@ -1090,6 +1272,9 @@ export const ordersRouter = createTRPCRouter({
                     orderId: result.orderId,
                     status: result.order.status,
                     version: result.order.version,
+                    // What the loading check said, so the activity row names
+                    // who let a load start unchecked
+                    ...(result.loadingCheck && { loadingCheck: result.loadingCheck }),
                 };
             } catch (error) {
                 throw toTRPCError(error);
@@ -1123,11 +1308,20 @@ export const ordersRouter = createTRPCRouter({
                 try {
                     const tenant = scopeOf(ctx.tenant);
                     const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+                    // What may be filed follows the side of this order, not
+                    // the kind of company: the client of a load it handed to
+                    // Appload files what a client files
+                    const side = sideOf(row, tenant);
 
-                    if (tenant.orgType === "carrier" && row.carrierId !== tenant.organizationId) {
+                    if (side === "carrier" && row.carrierId !== tenant.organizationId) {
                         throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED_FOR_ACTOR" });
                     }
-                    if (tenant.orgType === "shipper" && input.type !== "evidence") {
+                    // The client files evidence, and the photos of its own
+                    // loading check; the carrier is checked, not checking
+                    if (side === "shipper" && input.type !== "evidence" && input.type !== "loading-photo") {
+                        throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED_FOR_ACTOR" });
+                    }
+                    if (side === "carrier" && input.type === "loading-photo") {
                         throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED_FOR_ACTOR" });
                     }
 
@@ -1220,21 +1414,35 @@ async function loadOwnState(db: Db, orderIds: string[], tenantId: string): Promi
 }
 
 /**
- * Writes the driver and the rig onto the order, each id checked against the
- * carrier's own registry first. Returns the version the transition must then
- * present — this write bumps it.
+ * The rig the dispatch picked, as the order stores it: the driver's own
+ * details and the plates behind the vehicle ids.
  */
-async function writeDispatch(
-    db: Db,
-    params: {
-        row: Order;
-        tenantId: string;
-        dispatch: { driverId: string; truckId: string; trailerId?: string; linkId?: string };
-        expectedVersion: number;
-    },
-): Promise<number> {
-    const { dispatch, tenantId } = params;
+type ResolvedDispatch = {
+    driverId: string;
+    driverName: string;
+    driverPhoneNumber: string | null;
+    driverPassport: string | null;
+    truckPlate: string;
+    /** Undefined for a truck registered without a year: the column is left alone */
+    truckAge: (typeof TRUCK_AGE)[number] | undefined;
+    trailerPlate: string | null;
+    linkPlate: string | null;
+};
 
+/**
+ * Turns the ids the dialog picked into the rows behind them, each one checked
+ * against the carrier's own registry.
+ *
+ * Separate from the write because the papers of that rig are judged BEFORE
+ * anything is stored: a dispatch the gate would refuse must not leave the
+ * driver and the plates on the order, and there are no transactions here to
+ * take them back.
+ */
+async function resolveDispatch(
+    db: Db,
+    tenantId: string,
+    dispatch: { driverId: string; truckId: string; trailerId?: string; linkId?: string },
+): Promise<ResolvedDispatch> {
     const [driverRow] = await db
         .select({
             id: driver.id,
@@ -1285,20 +1493,32 @@ async function writeDispatch(
         throw new TRPCError({ code: "BAD_REQUEST", message: "LINK_NOT_REGISTERED" });
     }
 
+    return {
+        driverId: driverRow.id,
+        driverName: driverRow.name,
+        driverPhoneNumber: driverRow.phoneNumber,
+        driverPassport: driverRow.passport,
+        truckPlate: truckRow.regPlate,
+        truckAge: truckAgeFromYear(truckRow.year),
+        trailerPlate: trailerRow?.regPlate ?? null,
+        linkPlate: linkRow?.regPlate ?? null,
+    };
+}
+
+/**
+ * Writes the resolved rig onto the order. Returns the version the transition
+ * must then present — this write bumps it.
+ */
+async function writeDispatch(
+    db: Db,
+    row: Order,
+    resolved: ResolvedDispatch,
+    expectedVersion: number,
+): Promise<number> {
     const [updated] = await db
         .update(order)
-        .set({
-            driverId: driverRow.id,
-            driverName: driverRow.name,
-            driverPhoneNumber: driverRow.phoneNumber,
-            driverPassport: driverRow.passport,
-            truckPlate: truckRow.regPlate,
-            truckAge: truckAgeFromYear(truckRow.year),
-            trailerPlate: trailerRow?.regPlate ?? null,
-            linkPlate: linkRow?.regPlate ?? null,
-            version: sql`${order.version} + 1`,
-        })
-        .where(and(eq(order.id, params.row.id), eq(order.version, params.expectedVersion)))
+        .set({ ...resolved, version: sql`${order.version} + 1` })
+        .where(and(eq(order.id, row.id), eq(order.version, expectedVersion)))
         .returning({ version: order.version });
 
     if (!updated) {

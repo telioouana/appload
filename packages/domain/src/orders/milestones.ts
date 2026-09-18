@@ -1,4 +1,5 @@
 import type { Order, OrderHistoryKind } from "@workspace/db/orders";
+import { LEGACY_ORDER_STATUS_ALIAS } from "@workspace/db/types";
 
 import type { OrderStatus } from "@workspace/domain/orders/transitions";
 
@@ -30,7 +31,7 @@ export type MilestoneStep = {
 // The chain in trip order. The two optional stages only show once they
 // happened (or, for the border, when the route crosses one).
 const CHAIN: OrderStatus[] = [
-    "booked", "to-loading", "at-loading", "loading", "waiting-documents",
+    "booked", "at-loading", "loading", "waiting-documents",
     "on-route", "at-border", "at-offloading", "offloading", "delivered", "completed",
 ];
 
@@ -68,28 +69,37 @@ export function deriveMilestones(order: Order, history: MilestoneEntry[]): Miles
     const reached = new Map<string, Date>();
     for (const entry of history) {
         if (entry.kind !== "transition" || !entry.toStatus) continue;
-        const previous = reached.get(entry.toStatus);
-        if (!previous || entry.createdAt > previous) reached.set(entry.toStatus, entry.createdAt);
+        // The trail keeps the vocabulary it was written with: a dispatch
+        // recorded as "to-loading" lights the step that replaced it, or the
+        // chain would show a gap where the truck plainly went
+        const status = LEGACY_ORDER_STATUS_ALIAS[entry.toStatus] ?? entry.toStatus;
+        const previous = reached.get(status);
+        if (!previous || entry.createdAt > previous) reached.set(status, entry.createdAt);
     }
 
-    const currentIndex = CHAIN.indexOf(order.status);
+    // The row itself may still be stored on the retired value until the
+    // retirement script runs, and it reaches here raw (only the transition
+    // door reads a status through `liveStatus`), so alias it the same way
+    const current = LEGACY_ORDER_STATUS_ALIAS[order.status] ?? order.status;
+
+    const currentIndex = CHAIN.indexOf(current);
     const offChain = currentIndex === -1;
-    const interrupted = order.status === "stopped" || order.status === "issue";
-    const terminal = order.status === "cancelled" || order.status === "underbid";
+    const interrupted = current === "stopped" || current === "issue";
+    const terminal = current === "cancelled" || current === "underbid";
 
     const steps: MilestoneStep[] = CHAIN
         .filter((status) =>
             !OPTIONAL.includes(status)
             // An optional stage the order is parked on must never be dropped,
             // or the strip renders with no current node at all
-            || status === order.status
+            || status === current
             || reached.has(status)
             || (status === "at-border" && order.route === "regional"))
         .map((status) => {
             const at = reached.get(status) ?? STAMP[status]?.(order) ?? null;
             const index = CHAIN.indexOf(status);
             const done = at !== null || (!offChain && index < currentIndex);
-            const state: MilestoneState = status === order.status ? "current" : done ? "done" : "pending";
+            const state: MilestoneState = status === current ? "current" : done ? "done" : "pending";
 
             let onTime: boolean | null = null;
             if (status === "at-loading" && at) onTime = order.arrivalOnTimeLoading;
@@ -107,7 +117,7 @@ export function deriveMilestones(order: Order, history: MilestoneEntry[]): Miles
 
     // A prospect has not entered the chain yet; it is never also interrupted
     // or closed, so only one node is ever the current one
-    if (order.status === "prospect") {
+    if (current === "prospect") {
         steps.unshift({
             status: "prospect",
             state: "current",
@@ -122,10 +132,10 @@ export function deriveMilestones(order: Order, history: MilestoneEntry[]): Miles
         // The parked or closed trip sits after the last stage it reached
         const last = steps.reduce((position, step, index) => (step.state === "done" ? index : position), -1);
         steps.splice(last + 1, 0, {
-            status: order.status,
+            status: current,
             state: "current",
             tone: interrupted ? "warning" : "danger",
-            at: reached.get(order.status) ?? null,
+            at: reached.get(current) ?? null,
             expected: null,
             onTime: null,
         });

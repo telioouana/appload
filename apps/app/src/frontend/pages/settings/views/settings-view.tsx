@@ -9,6 +9,7 @@ import { useTranslations } from "@workspace/i18n";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
 
 import { useTRPC } from "@/backend/api/client";
+import { PapersCard } from "@/frontend/pages/fleet/sections/papers-card";
 import { CompanyCard } from "@/frontend/pages/settings/components/company-card";
 import { ProfileCard } from "@/frontend/pages/settings/components/profile-card";
 import { PasswordCard } from "@/frontend/pages/settings/components/password-card";
@@ -33,6 +34,9 @@ import { PendingInvitations } from "@/frontend/pages/settings/components/pending
  */
 export function SettingsView() {
     const t = useTranslations("App.settings")
+    // The papers card brings its own namespace, so the company's documents
+    // read exactly as a driver's or a vehicle's do
+    const tPapers = useTranslations("App.fleet.papers")
     const trpc = useTRPC()
     const searchParams = useSearchParams()
 
@@ -77,6 +81,16 @@ export function SettingsView() {
 
                 <TabsContent value="company" className="flex flex-col gap-4">
                     <CompanyCard organization={data.organization} canEdit={canManage} />
+
+                    {/* The same card the fleet profiles use, on the company
+                        itself: one row per slot of its checklist, filed here
+                        and reviewed by Appload */}
+                    <PapersCard
+                        subjectType="organization"
+                        subjectId={data.organization.id}
+                        title={tPapers("company-title")}
+                        className="bg-card"
+                    />
                 </TabsContent>
 
                 <TabsContent value="members" className="flex flex-col gap-4">

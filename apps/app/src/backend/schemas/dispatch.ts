@@ -6,7 +6,7 @@ import { ORDER_STATUS } from "@workspace/db/types";
  * The carrier side of an order: sending the rig to load, moving the trip
  * along the chain, and the proof it uploads on the way.
  *
- * Dispatch is not a form of its own — it is the payload `booked → to-loading`
+ * Dispatch is not a form of its own — it is the payload `booked → at-loading`
  * carries. The picker chooses from the carrier's OWN registered fleet and
  * drivers, and the procedure re-checks every id against `carrier_id = T`
  * before it writes the driver and plate columns the transition then gates on.
@@ -22,21 +22,42 @@ type Message = (field: DispatchMessageField) => ErrorParam;
 export const NOTE_MIN = 5;
 export const NOTE_MAX = 2000;
 
-/** The documents a partner may attach to an order (Appload owns the rest). */
-export const PARTNER_DOCUMENT_TYPES = ["pod", "evidence"] as const;
+/**
+ * The documents a partner may attach to an order (Appload owns the rest).
+ * "loading-photo" is the shipper's side only: it is what the loading-check
+ * card files, and the carrier is read-only on that check.
+ */
+export const PARTNER_DOCUMENT_TYPES = ["pod", "evidence", "loading-photo"] as const;
 export type PartnerDocumentType = (typeof PARTNER_DOCUMENT_TYPES)[number];
 
 /**
- * An upload backing a move. The URL is an EdgeStore one — the procedure
+ * What a MOVE may carry: the proof the chain asks for, and nothing else.
+ * A loading photo is the check's evidence, filed by the party running the
+ * check — never by the carrier taking the move that is being checked.
+ */
+export const TRANSITION_DOCUMENT_TYPES = ["pod", "evidence"] as const;
+export type TransitionDocumentType = (typeof TRANSITION_DOCUMENT_TYPES)[number];
+
+/**
+ * An upload against the order. The URL is an EdgeStore one — the procedure
  * refuses anything else, so a link to another host can never be stored as
  * this order's proof.
  */
-export const TransitionDocumentSchema = z.object({
-    type: z.enum(PARTNER_DOCUMENT_TYPES),
+const DocumentFileSchema = z.object({
     url: z.url(),
     title: z.string().trim().max(200).optional(),
     size: z.number().int().positive().optional(),
     mimeType: z.string().trim().max(100).optional(),
+});
+
+export const PartnerDocumentSchema = DocumentFileSchema.extend({
+    type: z.enum(PARTNER_DOCUMENT_TYPES),
+});
+
+export type PartnerDocumentForm = z.infer<typeof PartnerDocumentSchema>;
+
+export const TransitionDocumentSchema = DocumentFileSchema.extend({
+    type: z.enum(TRANSITION_DOCUMENT_TYPES),
 });
 
 export type TransitionDocumentForm = z.infer<typeof TransitionDocumentSchema>;
@@ -65,7 +86,7 @@ export function buildTransition(msg: Message) {
         to: z.enum(ORDER_STATUS),
         expectedVersion: z.number().int().min(1),
         note: z.string().trim().min(NOTE_MIN, msg("note")).max(NOTE_MAX, msg("note")).optional(),
-        /** Required by `to-loading`, ignored by every other move */
+        /** Required by the dispatch (booked → `at-loading`), ignored by every other move */
         dispatch: buildDispatch(msg).optional(),
         /** Proof attached to the move; also lands on the order's documents */
         document: TransitionDocumentSchema.optional(),
@@ -82,7 +103,7 @@ export function TransitionSchema(msg: Message) {
 }
 
 /** A document uploaded on its own, outside a status change. */
-export const AddDocumentBaseSchema = TransitionDocumentSchema.extend({
+export const AddDocumentBaseSchema = PartnerDocumentSchema.extend({
     orderId: z.string().nonempty(),
 });
 

@@ -14,7 +14,7 @@ import { member } from "@workspace/db/users";
 import { haversineMeters } from "@workspace/maps/lib/geometry";
 
 import { movementRef } from "@workspace/domain/movements/refs";
-import { IN_PROGRESS_STATUSES } from "@workspace/domain/movements/status";
+import { TRACKED_STATUSES } from "@workspace/domain/movements/status";
 import { notify } from "@workspace/domain/notifications";
 import {
     ATTEMPT_GAP_MINUTES,
@@ -155,7 +155,7 @@ export async function reviewMovementSlot(
         .from(movement)
         .where(and(
             inArray(movement.id, [...threads.keys()]),
-            inArray(movement.status, IN_PROGRESS_STATUSES),
+            inArray(movement.status, TRACKED_STATUSES),
             eq(movement.trackingEnabled, true),
             isNotNull(movement.driverPhone),
             isNotNull(movement.driverName),
@@ -335,7 +335,7 @@ async function raise(
         .where(and(eq(member.organizationId, row.organizationId), eq(member.role, "owner")));
 
     const params = {
-        ref: movementRef(row.seq, row.execution),
+        ref: movementRef(row),
         driverName: row.driverName,
         issue,
         streak,

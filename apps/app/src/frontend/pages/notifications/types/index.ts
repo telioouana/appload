@@ -9,7 +9,7 @@ import type { NotificationKind, NotificationParams } from "@workspace/db/notific
 // names behind it. Every kind belongs to exactly one family.
 // ---------------------------------------------------------------------------
 
-export const KIND_FAMILIES = ["connections", "loads", "orders", "quotes", "account"] as const;
+export const KIND_FAMILIES = ["connections", "loads", "orders", "quotes", "messages", "account"] as const;
 
 export type KindFamily = (typeof KIND_FAMILIES)[number];
 
@@ -32,6 +32,8 @@ export const KINDS_BY_FAMILY: Record<KindFamily, NotificationKind[]> = {
     // Appload's brokerage
     orders: ["order.requested", "order.quoted", "order.booked", "order.status", "order.cancelled", "order.document"],
     quotes: ["quote.received", "quote.accepted", "quote.declined", "quote.withdrawn"],
+    // What the parties of a shipment say to each other, on an order or a load
+    messages: ["thread.message"],
     account: ["claim.approved", "member.joined", "subscription.changed"],
 };
 
@@ -107,7 +109,7 @@ export type NotificationLink =
     | { pathname: "/appload/details/[orderId]"; params: { orderId: string } }
     | { pathname: "/orders/load/[loadId]"; params: { loadId: string } }
     | { pathname: "/partners"; query: { id: string } }
-    | { pathname: "/appload/quotes"; query: { id: string } }
+    | { pathname: "/quotes"; query: { id: string } }
     | { pathname: "/settings" };
 
 /**
@@ -121,6 +123,9 @@ export function notificationTarget(
     entityId: string | null,
 ): { link: NotificationLink; path: string } | null {
     switch (entityType) {
+        // An Appload order has no page of its own any more: the address is a
+        // redirect to the reader's own load, so the rows already written and
+        // the emails already sent still land somewhere
         case "order":
             return entityId
                 ? { link: { pathname: "/appload/details/[orderId]", params: { orderId: entityId } }, path: `/appload/details/${encodeURIComponent(entityId)}` }
@@ -135,7 +140,7 @@ export function notificationTarget(
                 : null;
         case "quote":
             return entityId
-                ? { link: { pathname: "/appload/quotes", query: { id: entityId } }, path: `/appload/quotes?id=${encodeURIComponent(entityId)}` }
+                ? { link: { pathname: "/quotes", query: { id: entityId } }, path: `/quotes?id=${encodeURIComponent(entityId)}` }
                 : null;
         case "subscription":
             return { link: { pathname: "/settings" }, path: "/settings" };

@@ -1,3 +1,5 @@
+import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses"
+
 import { matchesOrder } from "@/frontend/pages/map/lib/search"
 import type { MapOrder } from "@/frontend/pages/map/types"
 
@@ -27,8 +29,11 @@ export type TableFilters = {
 export const hoursSince = (order: MapOrder, now: Date): number | null =>
     order.lastLocation ? Math.max(0, Math.floor((now.getTime() - order.lastLocation.recordedAt.getTime()) / 3_600_000)) : null
 
+// Only a load the cron is actually pinging can be late answering: one still
+// at the loading site is not tracked yet, so it is never drawn in red
 export const isStale = (order: MapOrder, now: Date): boolean =>
-    !order.lastLocation || now.getTime() - order.lastLocation.recordedAt.getTime() > STALE_HOURS * 3_600_000
+    TRACKED_STATUSES.includes(order.status)
+    && (!order.lastLocation || now.getTime() - order.lastLocation.recordedAt.getTime() > STALE_HOURS * 3_600_000)
 
 /** The reverse-geocoded label, else what the driver attached, else the raw coordinates. */
 export const placeText = (order: MapOrder): string | null => {

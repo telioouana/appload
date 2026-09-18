@@ -34,7 +34,7 @@ export function OnTheRoad() {
 
     // Clicking the open movement again closes it
     const onSelect = useCallback(
-        (ref: string) => setSelected((current) => (current === ref ? null : ref)),
+        (id: string) => setSelected((current) => (current === id ? null : id)),
         [],
     )
 

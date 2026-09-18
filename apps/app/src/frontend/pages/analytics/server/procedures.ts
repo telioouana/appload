@@ -11,9 +11,8 @@ import { deriveKpis } from "@workspace/domain/kpis/compute";
 import { FX, TONS, aggregate, leg, scope, sumOf, tenantScope, toUsd, topUpRates, within, type KpiTenant } from "@workspace/domain/kpis/sql";
 import { bucketGrain, bucketStarts } from "@workspace/domain/kpis/types";
 import { billable, conditionCount } from "@workspace/domain/orders/predicates";
-import { OUTSTANDING_STATUSES, PENDING_POD_STATUSES } from "@workspace/domain/orders/status-groups";
+import { ON_GOING_STATUSES, OUTSTANDING_STATUSES, PENDING_POD_STATUSES } from "@workspace/domain/orders/status-groups";
 import { pendingOfferCount } from "@workspace/domain/orders/transition";
-import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure } from "@workspace/trpc/tenant";
@@ -213,7 +212,9 @@ export const analyticsRouter = createTRPCRouter({
                         eq(order.status, "booked"),
                         isNull(order.driverId),
                     )!),
-                onTheRoad: conditionCount(and(own, inArray(order.status, TRACKED_STATUSES))!),
+                // The on-going section, the list this tile opens — the same
+                // set the orders page counts it with (orders/server/procedures)
+                onTheRoad: conditionCount(and(own, inArray(order.status, ON_GOING_STATUSES))!),
                 deliveredPending: shipper
                     ? conditionCount(and(
                         eq(order.status, "delivered"),

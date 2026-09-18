@@ -16,18 +16,21 @@ import { and, eq, sql } from "drizzle-orm";
 
 import type { db as Database } from "@workspace/db/db";
 import { movement, type Movement } from "@workspace/db/movements";
+import { isApploadOrg } from "@workspace/db/types";
 import { organization } from "@workspace/db/users";
 
 import { recordEvent, type MovementActor } from "@workspace/domain/movements/apply";
+import { ensureOrderReference, nextReference } from "@workspace/domain/movements/counters";
 import { isConnected, isOnPortal, organizationName } from "@workspace/domain/movements/link";
-import { movementRef } from "@workspace/domain/movements/refs";
+import { FOLLOWS_APPLOAD_ORDER } from "@workspace/domain/movements/mirror";
+import { counterpartyRef, movementRef } from "@workspace/domain/movements/refs";
 import { notify } from "@workspace/domain/notifications";
 import { assertTrackingAllowance } from "@workspace/domain/subscription";
 import { place } from "@workspace/domain/tracking/slot";
 
 type Db = typeof Database;
 
-async function loadOwn(db: Db, actor: MovementActor, id: string, expectedVersion: number): Promise<Movement> {
+export async function loadOwn(db: Db, actor: MovementActor, id: string, expectedVersion: number): Promise<Movement> {
     const [row] = await db
         .select()
         .from(movement)
@@ -41,12 +44,26 @@ async function loadOwn(db: Db, actor: MovementActor, id: string, expectedVersion
 }
 
 /**
+ * None of these moves is a load on an Appload order's to make: who moves it
+ * and on what terms is settled on the order, and the row only follows
+ * (mirror.ts). A carrier cannot subcontract one either, which is the same rule
+ * read from the other side.
+ */
+function assertUnlinked(row: Movement): void {
+    if (row.orderId !== null) throw new TRPCError({ code: "BAD_REQUEST", message: FOLLOWS_APPLOAD_ORDER });
+}
+
+/**
  * Whether a company can be handed a load: connected to the one handing it
  * over, and a transporter. Shared by the offer and by naming a partner on a
  * load in the first place — the check is on the organization id the server
  * has, never on anything the page says about it.
  */
 export async function assertExecutor(db: Db, ownerOrgId: string, carrierOrgId: string): Promise<void> {
+    // Appload is every company's partner and nobody's connection: it is not a
+    // transporter row and there is no invitation to accept
+    if (isApploadOrg(carrierOrgId)) return;
+
     const [row] = await db
         .select({ type: organization.type })
         .from(organization)
@@ -73,6 +90,8 @@ export async function offerMovement(
     input: { id: string; expectedVersion: number; message?: string | null },
 ): Promise<Movement> {
     const row = await loadOwn(db, actor, input.id, input.expectedVersion);
+
+    assertUnlinked(row);
 
     if (row.execution !== "partner" || row.executionMovementId) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATUS" });
@@ -132,7 +151,9 @@ export async function offerMovement(
         entityType: "movement",
         entityId: row.id,
         params: {
-            ref: movementRef(row.seq, row.execution),
+            // The partner is offered the load, not the name the owner's own
+            // client gave it
+            ref: counterpartyRef(row),
             organizationName: await organizationName(db, actor.organizationId),
             origin: place(row.origin),
             destination: place(row.destination),
@@ -152,6 +173,8 @@ export async function withdrawOffer(
     input: { id: string; expectedVersion: number },
 ): Promise<Movement> {
     const row = await loadOwn(db, actor, input.id, input.expectedVersion);
+
+    assertUnlinked(row);
 
     if (row.status !== "offered") throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATUS" });
 
@@ -185,7 +208,7 @@ export async function withdrawOffer(
             entityType: "movement",
             entityId: row.id,
             params: {
-                ref: movementRef(row.seq, row.execution),
+                ref: counterpartyRef(row),
                 organizationName: await organizationName(db, actor.organizationId),
                 origin: place(row.origin),
                 destination: place(row.destination),
@@ -233,9 +256,11 @@ export async function respondToOffer(
     if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
     if (row.version !== input.expectedVersion) throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
 
+    assertUnlinked(row);
+
     const note = input.note?.trim() || null;
     const now = new Date();
-    const ref = movementRef(row.seq, row.execution);
+    const ref = movementRef(row);
     const executorName = await organizationName(db, actor.organizationId);
     const common = { origin: place(row.origin), destination: place(row.destination) };
 
@@ -278,13 +303,24 @@ export async function respondToOffer(
     // Saying yes commits the executor to a tracked movement of its own
     await assertTrackingAllowance(db, actor.organizationId);
 
+    // Both numbers are minted before the claim, never inside it: a claim that
+    // matches nothing leaves a gap in a counter (counters.ts says gaps are
+    // fine), where a number minted after it could leave a committed load with
+    // no name at all. The owner's is its own year's, the executor's this
+    // year's — each company numbers in its own books
+    const ownerRef = row.reference ?? await nextReference(db, row.organizationId, "ORD", row.createdAt);
+    const executorRef = await nextReference(db, actor.organizationId, "ORD", now);
+
     const executorId = crypto.randomUUID();
     // Naive UTC, the way drizzle writes every timestamp column in this repo
     const stamp = now.toISOString();
 
     // Every value in the SELECT list is cast: an INSERT ... SELECT gives a
-    // parameter no target column to infer its type from
-    const claimed = await db.execute<{ id: string; seq: number }>(sql`
+    // parameter no target column to infer its type from.
+    // The claim also names the owner's load, if the offer was the first thing
+    // anybody committed to on it, and the executor's `client_reference` is
+    // that name — read back off `claimed`, which RETURNING gives as updated
+    const claimed = await db.execute<{ id: string }>(sql`
         with claimed as (
             update ${movement}
             set status = 'scheduled',
@@ -292,6 +328,7 @@ export async function respondToOffer(
                 responded_at = ${stamp}::timestamp,
                 response_note = ${note}::text,
                 execution_movement_id = ${executorId}::text,
+                reference = coalesce(reference, ${ownerRef}::text),
                 updated_at = ${stamp}::timestamp
             where id = ${row.id}
               and status = 'offered'
@@ -300,7 +337,7 @@ export async function respondToOffer(
             returning *
         )
         insert into ${movement} (
-            id, organization_id, execution, status,
+            id, organization_id, execution, status, reference,
             client_org_id, client_reference,
             origin, destination, route, cargo_description, category, weight, weight_unit,
             expected_loading_date, expected_delivery_at,
@@ -308,8 +345,8 @@ export async function respondToOffer(
             tracking_enabled, version, created_by, created_at, updated_at
         )
         select
-            ${executorId}::text, ${actor.organizationId}::text, 'own-fleet', 'scheduled',
-            claimed.organization_id, 'ORD-' || claimed.seq,
+            ${executorId}::text, ${actor.organizationId}::text, 'own-fleet', 'scheduled', ${executorRef}::text,
+            claimed.organization_id, claimed.reference,
             claimed.origin, claimed.destination, claimed.route, claimed.cargo_description,
             claimed.category, claimed.weight, claimed.weight_unit,
             claimed.expected_loading_date, claimed.expected_delivery_at,
@@ -317,7 +354,7 @@ export async function respondToOffer(
             claimed.buy_fiscal_regime, 'pending'::payment_status_enum,
             true, 1, ${actor.userId}::text, ${stamp}::timestamp, ${stamp}::timestamp
         from claimed
-        returning id, seq
+        returning id
     `);
 
     const created = claimed.rows[0];
@@ -353,14 +390,12 @@ export async function respondToOffer(
         email: false,
         entityType: "movement",
         entityId: row.id,
-        params: { ref, organizationName: executorName, ...common },
+        // The load is called by the number it has now, which the claim may
+        // have just given it
+        params: { ref: movementRef(updated), organizationName: executorName, ...common },
     });
 
-    return {
-        movement: updated,
-        executorMovementId: created.id,
-        executorRef: movementRef(Number(created.seq), "own-fleet"),
-    };
+    return { movement: updated, executorMovementId: created.id, executorRef };
 }
 
 /**
@@ -385,6 +420,8 @@ export async function convertMovement(
     },
 ): Promise<Movement> {
     const row = await loadOwn(db, actor, input.id, input.expectedVersion);
+
+    assertUnlinked(row);
 
     if (row.execution === input.to) throw new TRPCError({ code: "BAD_REQUEST", message: "ALREADY_THAT_SHAPE" });
 
@@ -458,6 +495,13 @@ export async function convertMovement(
         toStatus: "procurement",
         metadata: { action: "converted", to: input.to },
     });
+
+    // A load the company moves itself is its own order, not a request it is
+    // still collecting offers on: it takes an ORD number now, if the request
+    // it was filed as never earned one (refs.ts)
+    if (input.to === "own-fleet" && updated.reference === null) {
+        return { ...updated, reference: await ensureOrderReference(db, updated) };
+    }
 
     return updated;
 }

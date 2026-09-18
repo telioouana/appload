@@ -44,7 +44,17 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                 enableHiding: false,
                 size: 110,
                 meta: { label: t("columns.ref") },
-                cell: ({ row }) => <Mono className="font-medium">{row.original.ref}</Mono>,
+                // A load that follows an Appload order carries two numbers:
+                // the company's own, and Appload's under it — until it has one
+                // of its own, when the order's is already what names the row
+                cell: ({ row }) => (
+                    <span className="flex min-w-0 flex-col">
+                        <Mono className="font-medium">{row.original.ref}</Mono>
+                        {row.original.apploadOrderId && row.original.apploadOrderId !== row.original.ref && (
+                            <Mono className="text-muted-foreground text-xs">{row.original.apploadOrderId}</Mono>
+                        )}
+                    </span>
+                ),
             },
             {
                 id: "status",

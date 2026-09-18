@@ -102,7 +102,9 @@ export const status = lookup({
     "prospects": "prospect",
     "prospect": "prospect",
     "booked": "booked",
-    "to loading": "to-loading",
+    // "To Loading" was retired from the vocabulary: the sheet's own rows
+    // still say it, and they land on the status that replaced it
+    "to loading": "at-loading",
     "at loading": "at-loading",
     "loading": "loading",
     "waiting documents": "waiting-documents",
@@ -294,7 +296,7 @@ export function derivePodStatus(orderStatus) {
         case "waiting-documents":
             return "pending-collection";
         default:
-            // prospect, booked, to-loading, at-loading, loading, cancelled,
+            // prospect, booked, at-loading, loading, cancelled,
             // underbid: nothing to collect yet
             return null;
     }

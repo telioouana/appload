@@ -21,7 +21,6 @@ export type OrderSection = Exclude<Section, "all">
 export const ORDER_STATUS_SECTION: Record<OrderStatus, OrderSection> = {
     "prospect": "prospect",
     "booked": "booked",
-    "to-loading": "on-going",
     "at-loading": "on-going",
     "loading": "on-going",
     "waiting-documents": "on-going",
@@ -36,6 +35,13 @@ export const ORDER_STATUS_SECTION: Record<OrderStatus, OrderSection> = {
     "cancelled": "history",
     "underbid": "history",
 }
+
+// A trip that is under way: the truck is at the loading site or past it,
+// interruptions and the border included. The "on-going" section of the
+// order pages, and the set every "where is it right now" view reads.
+export const ON_GOING_STATUSES: OrderStatus[] = ORDER_STATUS.filter(
+    (status) => ORDER_STATUS_SECTION[status] === "on-going",
+)
 
 // A shipment currently occupying a truck, a driver and a carrier: booked
 // through to offloading. Derived from the section map so the operational
@@ -62,7 +68,7 @@ export const currentYear = () => new Date().getFullYear()
 export const LOADING_WINDOW_DAYS = 7
 
 /** A truck is still expected at the loading site in these states. */
-export const PRE_LOADING_STATUSES: OrderStatus[] = ["booked", "to-loading", "at-loading"]
+export const PRE_LOADING_STATUSES: OrderStatus[] = ["booked", "at-loading"]
 
 /** The trip is parked; the resume target lives server-side. */
 export const INTERRUPTED_STATUSES: OrderStatus[] = ["stopped", "issue"]

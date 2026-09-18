@@ -96,7 +96,7 @@ export function MapTable({
     query: string
     onQueryChange: (value: string) => void
     selected: string | null
-    onSelect: (ref: string) => void
+    onSelect: (id: string) => void
     className?: string
 }) {
     const t = useTranslations("App.map")
@@ -262,7 +262,7 @@ export function MapTable({
 
                         <TableBody>
                             {rows.map((entity) => {
-                                const isSelected = entity.ref === selected
+                                const isSelected = entity.id === selected
                                 const late = isStale(entity, now)
                                 const hours = hoursSince(entity, now)
                                 const position = entity.lastPosition
@@ -272,12 +272,12 @@ export function MapTable({
 
                                 return (
                                     <TableRow
-                                        key={entity.ref}
+                                        key={entity.id}
                                         aria-current={isSelected ? "true" : undefined}
                                         onClick={(event) => {
                                             // The reference is a link to the movement's own page; a click on it must not also open the row
                                             if (event.target instanceof Element && event.target.closest("a")) return
-                                            onSelect(entity.ref)
+                                            onSelect(entity.id)
                                         }}
                                         className={cn(
                                             "cursor-pointer",

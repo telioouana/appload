@@ -9,6 +9,7 @@ import type { db as Database } from "@workspace/db/db";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
 
+import { markApploadCandidateQuoted } from "@workspace/domain/appload/link";
 import { carrierSnapshot } from "@workspace/domain/orders/carrier-snapshot";
 import { offerPricingColumns, priceOffer } from "@workspace/domain/orders/commission";
 import { OfferDecisionSchema, OfferValuesSchemaServer } from "@/backend/schemas/offer";
@@ -198,6 +199,15 @@ export const offersRouter = createTRPCRouter({
                         metadata: { action: "created", offerId: id, carrierName, total, currency: values.currency },
                     }),
                 ]);
+
+                // A quote registered on behalf of a carrier that is on the
+                // portal moves its own row from "asked" to "waiting on the
+                // decision". Best-effort (appload/link.ts); a recorded quote
+                // on a booked order is Appload's note, not a candidate
+                if (status === "pending") {
+                    await markApploadCandidateQuoted(ctx.db, { orderPk: row.id, carrierOrgId: values.carrierId })
+                        .catch((error: unknown) => console.error(`appload candidate quote failed for ${input.orderId}`, error));
+                }
 
                 return loadOfferRow(ctx.db, id);
             } catch (error) {

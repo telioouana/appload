@@ -85,6 +85,9 @@ export function Sidenav({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { data: queue } = useQuery({ ...trpc.partners.reviewQueue.queryOptions(), staleTime: 60_000 })
     const { data: attention } = useQuery({ ...trpc.orders.attention.queryOptions(), staleTime: 60_000 })
     const { data: unread } = useQuery({ ...trpc.chats.unread.queryOptions(), refetchInterval: UNREAD_POLL_MS })
+    // The order conversations are the same page's other list, so their count
+    // rides on the same badge
+    const { data: threads } = useQuery({ ...trpc.threads.unread.queryOptions(), refetchInterval: UNREAD_POLL_MS })
 
     const report: NavEntry[] = [
         {
@@ -137,8 +140,10 @@ export function Sidenav({ ...props }: React.ComponentProps<typeof Sidebar>) {
             // place that breaks them down, so the count comes along
             Icon: IconMessages,
             name: t("content.ops.messages"),
-            path: "/messages",
-            badge: unread,
+            path: "/chats",
+            badge: unread === undefined && threads === undefined
+                ? undefined
+                : (unread ?? 0) + (threads?.total ?? 0),
         }
     ]
 

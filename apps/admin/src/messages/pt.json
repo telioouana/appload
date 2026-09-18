@@ -466,8 +466,9 @@
             "username": {
                 "label": "Utilizador",
                 "placeholder": "nome",
-                "description": "Introduza o teu nome de email",
-                "error": "O nome de utilizador é obrigatório"
+                "description": "Introduza o seu nome de utilizador, o @apploadafrica.com é acrescentado por nós",
+                "error": "O nome de utilizador é obrigatório",
+                "invalid": "Introduza apenas o nome de utilizador, sem @ nem espaços"
             },
             "password": {
                 "label": "Palavra passe",
@@ -552,7 +553,7 @@
                         "history": "Histórico",
                         "disputes": "Disputas"
                     },
-                    "messages": "Mensagens",
+                    "messages": "Conversas",
                     "map": "Mapa"
                 },
                 "management": {
@@ -1039,7 +1040,7 @@
                     },
                     "bookingDetails": {
                         "title": "Dados da confirmação",
-                        "description": "Opcionais agora; necessários antes de o pedido passar a \"A caminho do carregamento\".",
+                        "description": "Opcionais agora; necessários antes de o pedido passar a \"No local de carregamento\".",
                         "noOffer": "Marque a oferta com que este pedido é confirmado para atribuir motorista e camião."
                     }
                 },
@@ -1323,7 +1324,6 @@
                                 "options": {
                                     "prospect": "Prospectiva",
                                     "booked": "Confirmado",
-                                    "to-loading": "A caminho do carregamento",
                                     "at-loading": "No local de carregamento",
                                     "loading": "Em carregamento",
                                     "waiting-documents": "À espera de documentos",
@@ -1864,13 +1864,77 @@
                     "OFFER_REQUIRED": "Escolha a oferta com que confirmar este pedido.",
                     "OFFER_NOT_PENDING": "Esta oferta já foi decidida.",
                     "NO_OFFERS": "Este pedido em prospectiva não tem ofertas pendentes. Adicione uma primeiro.",
-                    "INCOMPLETE_FOR_DISPATCH": "Atribua o motorista, o contacto dele e o camião antes de mover para \"A caminho do carregamento\".",
-                    "OFFER_UNPRICED": "Esta oferta ainda não tem a comissão da Appload. Edite-a e defina a comissão antes de confirmar com ela."
+                    "INCOMPLETE_FOR_DISPATCH": "Atribua o motorista, o contacto dele e o camião antes de mover para \"No local de carregamento\".",
+                    "PAPERS_MISSING": "Faltam documentos do motorista ou do camião. Abra os registos e submeta-os antes de o camião sair.",
+                    "OFFER_UNPRICED": "Esta oferta ainda não tem a comissão da Appload. Edite-a e defina a comissão antes de confirmar com ela.",
+                    "MANAGER_REQUIRED": "A verificação de carga encontrou uma divergência. Só um gestor pode deixar esta carga começar."
+                },
+                "papersOr": "ou",
+                "loadingCheck": {
+                    "none": "Ninguém verificou o camião e o motorista contra o que foi despachado. Este movimento fica registado como não verificado e o pedido fica sinalizado.",
+                    "partial": "A verificação de carga ficou incompleta. Este movimento fica registado como não verificado e o pedido fica sinalizado.",
+                    "mismatch": "A verificação de carga encontrou um camião ou um motorista diferente do que foi despachado. Explique na nota porque a carga avança."
                 },
                 "book": "Confirmar pedido"
             },
             "detailPage": {
                 "metaTitle": "Pedido {reference}",
+                "loadingCheck": {
+                    "title": "Verificação de carga",
+                    "description": "Antes de a carga começar, quem encomendou confirma que o camião e o motorista no portão são os que foram despachados.",
+                    "kinds": {
+                        "driver": "Motorista",
+                        "truck": "Camião",
+                        "trailer": "Reboque",
+                        "link": "Link"
+                    },
+                    "papers": {
+                        "show": "Ver documentos",
+                        "hide": "Esconder documentos",
+                        "none": "Sem documentos",
+                        "phone": "Telefone",
+                        "passport": "Documento"
+                    },
+                    "items": {
+                        "driver-identity": "O motorista é o que foi despachado",
+                        "rig-plates": "As matrículas são as que foram despachadas"
+                    },
+                    "answers": {
+                        "ok": "Corresponde",
+                        "no": "Não corresponde",
+                        "untouched": "Não verificado"
+                    },
+                    "outcome": {
+                        "passed": "Tudo correspondeu",
+                        "mismatch": "Divergência encontrada",
+                        "partial": "Ficou incompleta",
+                        "none": "Não verificado"
+                    },
+                    "recordedBy": "por {name} · {date}",
+                    "recordedUnknown": "Appload",
+                    "itemNote": "Nota (opcional)",
+                    "note": {
+                        "label": "Nota (opcional)",
+                        "placeholder": "Outra coisa que valha a pena registar sobre o conjunto no portão"
+                    },
+                    "photos": {
+                        "label": "Fotografias",
+                        "add": "Adicionar fotografias",
+                        "remove": "Remover a fotografia",
+                        "hint": "Até {max} fotografias do camião, das matrículas ou dos documentos do motorista. JPG e PNG.",
+                        "format": "Só são aceites fotografias JPG e PNG."
+                    },
+                    "submit": "Registar a verificação",
+                    "toast": "A verificação de carga foi registada",
+                    "errors": {
+                        "VERSION_CONFLICT": "Outra pessoa alterou este pedido primeiro. Atualize e tente de novo.",
+                        "NOT_ALLOWED": "O seu perfil não permite registar a verificação de carga.",
+                        "NOT_FOUND": "Este pedido já não existe.",
+                        "PHOTO_NOT_ON_ORDER": "Uma das fotografias não pertence a este pedido.",
+                        "UPLOAD_FAILED": "Não foi possível enviar uma fotografia. Tente de novo.",
+                        "UNKNOWN": "Ocorreu um erro inesperado. Tente de novo."
+                    }
+                },
                 "error": "Não foi possível carregar esta ordem.",
                 "back": "Voltar às ordens",
                 "more": "Mais ações",
@@ -1896,7 +1960,10 @@
                         "KYC_UNVERIFIED": "Motorista ou viaturas ainda não verificados",
                         "HIGH_RISK_SUBCONTRACTOR": "Viaturas pertencentes a terceiros",
                         "CARRIER_RISK_HIGH": "Transportador de alto risco",
-                        "CARRIER_RISK_WATCH": "Transportador em observação"
+                        "CARRIER_RISK_WATCH": "Transportador em observação",
+                        "PAPERS_UNREVIEWED": "Despachado com documentos que ainda ninguém tinha revisto",
+                        "LOADING_MISMATCH": "O camião ou o motorista no local de carregamento não era o despachado",
+                        "LOADING_CHECK_SKIPPED": "O carregamento começou sem conferência concluída"
                     }
                 },
                 "sections": {
@@ -1937,6 +2004,8 @@
                 },
                 "resume": "Retomar",
                 "openChat": "Abrir conversa",
+                "chatDriver": "Motorista (WhatsApp)",
+                "chatOrder": "Conversa do pedido",
                 "chatFailed": "Não foi possível abrir a conversa, tente novamente.",
                 "openMap": "Abrir no Mapa",
                 "trip": {
@@ -1972,6 +2041,13 @@
                 },
                 "operations": {
                     "assign": "Atribuir motorista e camião"
+                },
+                "papers": {
+                    "title": "Documentos submetidos",
+                    "ok": "Submetido",
+                    "pending": "Aguarda revisão",
+                    "missing": "Nada submetido",
+                    "review": "Abrir o registo"
                 }
             },
             "history": {
@@ -1991,7 +2067,15 @@
                     "system": "Evento do sistema",
                     "payment": "Pagamento",
                     "dispute": "Disputa",
-                    "offer": "Oferta de transportador"
+                    "offer": "Oferta de transportador",
+                    "check": "Verificação de carga"
+                },
+                "check": {
+                    "passed": "Verificação de carga registada por {actor}: tudo correspondeu",
+                    "mismatch": "Verificação de carga registada por {actor}: divergência encontrada",
+                    "recordedPartial": "Verificação de carga registada por {actor}: ficou incompleta",
+                    "skipped": "A carga começou sem verificação, movida por {actor}",
+                    "skippedPartial": "A carga começou com uma verificação incompleta, movida por {actor}"
                 },
                 "offer": {
                     "created": "Oferta de {carrier} · {amount} adicionada",
@@ -2116,6 +2200,7 @@
                     "proof-of-payment": "Comprovativo de pagamento",
                     "evidence": "Evidência",
                     "transport-order": "Ordem de transporte",
+                    "loading-photo": "Foto de carregamento",
                     "other": "Outro"
                 },
                 "parties": {
@@ -2515,7 +2600,7 @@
                     "title": "Oferta com que confirmar",
                     "description": "Escolha a oferta com que este pedido é confirmado. O transportador, o preço e a comissão vêm dela.",
                     "empty": "Este pedido em prospectiva não tem ofertas pendentes. Adicione uma primeiro na página do pedido.",
-                    "hint": "As restantes ofertas ficam marcadas como perdidas. O motorista e o camião podem ser atribuídos a qualquer momento antes de \"A caminho do carregamento\".",
+                    "hint": "As restantes ofertas ficam marcadas como perdidas. O motorista e o camião podem ser atribuídos a qualquer momento antes de o pedido seguir para o local de carregamento.",
                     "summary": {
                         "shipper": "O expedidor paga",
                         "carrier": "O transportador recebe",
@@ -2546,7 +2631,7 @@
             }
         },
         "messages": {
-            "title": "Mensagens",
+            "title": "Conversas",
             "description": "Envie mensagens aos motoristas e acompanhe os pedidos.",
             "unconfigured": {
                 "title": "As mensagens não estão configuradas",
@@ -2598,6 +2683,36 @@
                 "status": {
                     "changed": "Estado do pedido: {from} → {to}",
                     "created": "Pedido criado — {to}"
+                }
+            },
+            "threads": {
+                "modes": {
+                    "drivers": "Motoristas",
+                    "orders": "Conversas de pedidos"
+                },
+                "listEmptyTitle": "Ainda sem conversas de pedidos",
+                "listEmptyDescription": "Aparece aqui assim que um cliente ou um transportador escrever num pedido.",
+                "emptyTitle": "Escolha uma conversa",
+                "emptyDescription": "O cliente, o transportador e a Appload, num pedido.",
+                "noCarrier": "Sem transportador",
+                "empty": "Ainda ninguém escreveu aqui.",
+                "fileOnly": "Ficheiro enviado",
+                "placeholder": "Escreva uma mensagem…",
+                "send": "Enviar",
+                "attach": "Anexar ficheiro",
+                "remove": "Retirar ficheiro",
+                "loadMore": "Mensagens anteriores",
+                "you": "Você",
+                "appload": "Appload",
+                "errors": {
+                    "EMPTY_MESSAGE": "Escreva algo ou anexe um ficheiro.",
+                    "INVALID_ATTACHMENT_URL": "O ficheiro não pertence a esta conversa.",
+                    "THREAD_NOT_FOUND": "Esta conversa já não está disponível.",
+                    "UPLOAD_FAILED": "Não foi possível carregar o ficheiro.",
+                    "FILE_TYPE": "Só PDF, JPG e PNG.",
+                    "FILE_TOO_LARGE": "Cada ficheiro tem de ter até 10 MB.",
+                    "TOO_MANY_FILES": "No máximo 5 ficheiros por mensagem.",
+                    "UNKNOWN": "Não foi possível enviar a mensagem."
                 }
             },
             "panel": {
@@ -3075,6 +3190,10 @@
                     "CARRIER_CONTRACT_EXPIRED": "O contrato assinado deste transportador expirou, por isso não pode operar na plataforma.",
                     "CARRIER_SUSPENDED": "Este transportador está suspenso.",
                     "UNKNOWN": "Este transportador não pode ser contratado neste momento."
+                },
+                "papers": {
+                    "missing": "Sem documentos submetidos para {subjects} — o camião não pode seguir para o carregamento enquanto não forem submetidos.",
+                    "unreviewed": "Documentos submetidos mas ainda não revistos para {subjects}. O camião pode seguir; o pedido fica sinalizado."
                 }
             },
             "eyebrow": {
@@ -3702,7 +3821,8 @@
             "update": "Atualizou a ordem {orderId} ({changedFields})",
             "updateDeal": "Editou o negócio {orderId} ({status})",
             "transition": "Moveu a ordem {orderId} para {to}",
-            "resolveFlag": "Resolveu a sinalização de revisão da ordem {orderId}"
+            "resolveFlag": "Resolveu a sinalização de revisão da ordem {orderId}",
+            "recordLoadingCheck": "Registou a verificação de carga da ordem {orderId}: {outcome} ({photoCount} fotos)"
         },
         "documents": {
             "create": "Adicionou um documento {type} à ordem {orderId}",
@@ -3754,6 +3874,10 @@
             "update": "Atualizou a oferta {offerId} de {carrierName} ({total} {currency})",
             "decide": "Marcou a oferta {offerId} de {carrierName} como {status}",
             "remove": "Eliminou a oferta {offerId}"
+        },
+        "threads": {
+            "send": "Enviou uma mensagem em {subjectType} {subjectId} ({attachmentCount} anexos)",
+            "markRead": "Leu as mensagens em {subjectType} {subjectId}"
         }
     }
 }

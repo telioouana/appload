@@ -11,10 +11,13 @@ import { Button } from "@workspace/ui/components/button"
 import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 import { AddDocumentDialog } from "@/frontend/pages/orders/sections/add-document-dialog"
 import type { OrderDetail, OrgType } from "@/frontend/pages/orders/types"
-import { PARTNER_DOCUMENT_TYPES, type PartnerDocumentType } from "@/backend/schemas/dispatch"
+import { type PartnerDocumentType } from "@/backend/schemas/dispatch"
 
 /** The client only ever files evidence; the POD is the carrier's to produce. */
 const SHIPPER_TYPES: readonly PartnerDocumentType[] = ["evidence"]
+
+/** The loading photos are filed by the check card, not by hand. */
+const CARRIER_TYPES: readonly PartnerDocumentType[] = ["pod", "evidence"]
 
 /**
  * What is attached to this order: the proof of delivery, whatever else the
@@ -31,7 +34,7 @@ export function DocumentsCard({ order, orgType }: { order: OrderDetail; orgType:
     // own order — which is exactly what `isMine` says from either side, and
     // what the procedure re-checks
     const canAdd = order.permissions.isMine
-    const types = orgType === "shipper" ? SHIPPER_TYPES : PARTNER_DOCUMENT_TYPES
+    const types = orgType === "shipper" ? SHIPPER_TYPES : CARRIER_TYPES
 
     return (
         <>

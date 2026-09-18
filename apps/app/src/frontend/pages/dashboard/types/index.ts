@@ -18,22 +18,9 @@ export const LATEST_LIMIT = 5;
 export const yearInput = () => ({ year: currentYear() });
 
 /**
- * The newest orders of the list this organization type lands on: everything a
- * client filed, or the requests waiting on a carrier's answer — a carrier has
- * no "all" page. Leaving the section out is what lets one builder serve both,
- * because the procedure resolves each type's own default.
- */
-export const latestInput = () => ({
-    sort: "newest" as const,
-    dir: "desc" as const,
-    page: 1,
-    pageSize: LATEST_LIMIT,
-});
-
-/**
  * One of the company's own lists, newest first, for the "latest" table. The
  * lists page in 25s, so that is what is asked for; the table keeps the few
- * newest across these and the Appload orders.
+ * newest across the two.
  */
 export const latestLoadsInput = (scope: "orders" | "trips") => ({
     scope,

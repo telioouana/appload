@@ -37,10 +37,26 @@ export const TERMINAL_STATUSES = ["closed", "cancelled"] as const satisfies read
 
 /**
  * A truck on the load, from the loading site to offloading, interruptions
- * included: what the cron tracks and what a plan pays for. Stated in the
- * schema, which cannot import this module, and re-exported under its name here.
+ * included: what a plan pays for, and what counts as a load under way.
+ * Stated in the schema, which cannot import this module, and re-exported
+ * under its name here.
  */
 export const IN_PROGRESS_STATUSES = MOVEMENT_IN_PROGRESS_STATUSES;
+
+/**
+ * What the cron actually asks a driver about: from the moment he pulls away
+ * from the loading site until the load is off, interruptions and the border
+ * included. Pinging a truck that is still being loaded costs a message and
+ * tells nobody anything, so tracking starts one stage after billing does.
+ */
+export const TRACKED_STATUSES = [
+    "on-route",
+    "stopped",
+    "issue",
+    "at-border",
+    "at-offloading",
+    "offloading",
+] as const satisfies readonly MovementStatus[];
 
 /** Where a truck is held up; each resumes at the stage it interrupted (`resumeStatus`). */
 export const INTERRUPT_STATUSES = ["stopped", "issue"] as const satisfies readonly MovementStatus[];
@@ -91,6 +107,8 @@ export type MovementShape = {
     linked: boolean;
     /** Partner execution only: the executor can answer for itself on the portal */
     executorOnPortal: boolean;
+    /** The row follows an Appload order (mirror.ts): the order moves it, not its owner */
+    apploadLinked: boolean;
 };
 
 /**
@@ -105,7 +123,12 @@ export type MovementShape = {
  * procurement, which undoes an answer rather than a milestone.
  */
 export function ownerTargets(shape: MovementShape): MovementStatus[] {
-    const { execution, status, route, resumeStatus, linked, executorOnPortal } = shape;
+    const { execution, status, route, resumeStatus, linked, executorOnPortal, apploadLinked } = shape;
+
+    // The load is on an Appload order: every milestone on it comes down from
+    // that order (mirror.ts), and the one thing left to its owner is closing
+    // its own books once the load has arrived
+    if (apploadLinked) return status === "delivered" ? ["closed"] : [];
 
     // The truck is somebody else's: the load moves when their row does
     if (linked) {

@@ -12,6 +12,7 @@
         "orders": "Pedidos Appload",
         "quotes": "Cotações",
         "loads": "As suas cargas",
+        "messages": "Mensagens",
         "account": "Conta"
     },
     "actions": {
@@ -63,6 +64,7 @@
         "movement-document": "Documento adicionado",
         "movement-dispute-opened": "Disputa aberta",
         "movement-dispute-resolved": "Disputa resolvida",
+        "thread-message": "Nova mensagem",
         "subscription-changed": "Plano alterado"
     },
     "kinds": {
@@ -93,13 +95,14 @@
         "movement-document": "{type, select, pod {Um comprovativo de entrega} cmr {Um CMR} invoice {Uma fatura} receipt {Um recibo} other {Um documento}} foi adicionado à carga {ref}.",
         "movement-dispute-opened": "{named, select, true {{organizationName} abriu uma disputa na carga {ref} ({origin} → {destination}) por {reason, select, theft {roubo} loss {perda} damage {dano} other {outro motivo}}.} other {Uma empresa na carga {ref} ({origin} → {destination}) abriu uma disputa por {reason, select, theft {roubo} loss {perda} damage {dano} other {outro motivo}}.}}",
         "movement-dispute-resolved": "{named, select, true {{organizationName} resolveu a disputa na carga {ref} ({origin} → {destination}).} other {Uma empresa na carga {ref} ({origin} → {destination}) resolveu a disputa.}}",
+        "thread-message": "{attachments, plural, =0 {{senderName} escreveu em {reference}: {preview}} one {{senderName} enviou um ficheiro em {reference}.} other {{senderName} enviou # ficheiros em {reference}.}}",
         "subscription-changed": "{plan, select, starter{A sua empresa passou para o plano Starter.} business{A sua empresa passou para o plano Business.} enterprise{A sua empresa passou para o plano Enterprise.} other{A sua empresa ficou sem plano activo.}}"
     },
     "email": {
         "subject": "Appload — {title}",
         "greeting": "Olá, tem uma novidade na sua conta Appload.",
         "cta": "Abrir no portal",
-        "disclaimer": "Recebeu esta mensagem porque a sua empresa usa o portal Appload.",
+        "disclaimer": "Recebeu esta mensagem porque a sua empresa usa o Appload Enterprise.",
         "footer": "Pode acompanhar tudo no portal, a qualquer momento."
     },
     "alert-badge": "Alerta de localização"

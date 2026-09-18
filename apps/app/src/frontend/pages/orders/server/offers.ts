@@ -7,6 +7,7 @@ import { and, desc, eq, inArray, ne, notInArray, sql } from "drizzle-orm";
 import { order, orderHistory, orderOffer } from "@workspace/db/orders";
 import { orderRequest } from "@workspace/db/quotes";
 
+import { markApploadCandidateQuoted } from "@workspace/domain/appload/link";
 import { notify } from "@workspace/domain/notifications";
 import { carrierSnapshot } from "@workspace/domain/orders/carrier-snapshot";
 import { offerPricingColumns, priceOffer } from "@workspace/domain/orders/commission";
@@ -24,11 +25,13 @@ import {
 import type { OrderOfferView } from "@/frontend/pages/orders/types";
 import {
     assertOrgType,
+    assertShipperOf,
     loadVisibleOrder,
     offerColumns,
     orderContext,
     organizationName,
     scopeOf,
+    sideScope,
     toOfferView,
     visibleOffers,
     toTRPCError,
@@ -115,11 +118,14 @@ export const offersRouter = createTRPCRouter({
         .query(async ({ ctx, input }): Promise<OrderOfferView[]> => {
             const tenant = scopeOf(ctx.tenant);
             const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+            // The side this order puts the caller on decides what it reads:
+            // the client of a load handed to Appload sees the candidates
+            const reader = sideScope(tenant, row);
 
             const rows = await ctx.db
-                .select(offerColumns(tenant.orgType))
+                .select(offerColumns(reader.orgType))
                 .from(orderOffer)
-                .where(visibleOffers(row.id, tenant))
+                .where(visibleOffers(row.id, reader))
                 .orderBy(...OFFER_ORDER);
 
             return rows.map((offer) => toOfferView(offer, tenant.organizationId));
@@ -222,6 +228,14 @@ export const offersRouter = createTRPCRouter({
                     .update(orderRequest)
                     .set({ status: "quoted", respondedAt: new Date() })
                     .where(eq(orderRequest.id, request.id));
+
+                // An Appload order the carrier keeps its own row for: the row
+                // moves with the answer. Best-effort, like every write on the
+                // far side of an order
+                await markApploadCandidateQuoted(ctx.db, {
+                    orderPk: row.id,
+                    carrierOrgId: tenant.organizationId,
+                }).catch((error) => console.error(`appload candidate quote for ${row.orderId} failed`, error));
 
                 await notify(ctx.db, {
                     organizationId: row.shipperId,
@@ -395,9 +409,9 @@ export const offersRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; status: string; version: number }> => {
             try {
                 const tenant = scopeOf(ctx.tenant);
-                assertOrgType(tenant, "shipper");
-
                 const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
+
+                assertShipperOf(row, tenant);
 
                 // The winner and the losers are read before the transition
                 // settles them: afterwards every pending row is already "lost"
@@ -477,9 +491,9 @@ export const offersRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<{ offerId: string }> => {
             try {
                 const tenant = scopeOf(ctx.tenant);
-                assertOrgType(tenant, "shipper");
 
-                // The offer is reached through the order the tenant owns; an
+                // The offer is reached through the order the tenant ordered —
+                // which is also what puts it on the client's side of it; an
                 // id on its own never selects a row
                 const [current] = await ctx.db
                     .select({

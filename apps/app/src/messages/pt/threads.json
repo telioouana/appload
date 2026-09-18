@@ -1,0 +1,34 @@
+{
+    "title": "Conversa",
+    "empty": "Ainda ninguém escreveu aqui.",
+    "placeholder": "Escreva uma mensagem…",
+    "send": "Enviar",
+    "attach": "Anexar ficheiro",
+    "remove": "Retirar ficheiro",
+    "load-more": "Mensagens anteriores",
+    "you": "Você",
+    "appload": "Appload",
+    "page": {
+        "title": "Conversas",
+        "modes": {
+            "drivers": "Motoristas",
+            "orders": "Pedidos"
+        },
+        "drivers-empty": "Ainda não há conversas com motoristas",
+        "orders-empty": "Ainda não há conversas",
+        "file-only": "Anexo",
+        "pick": "Escolha uma conversa",
+        "error": "Não foi possível carregar as conversas."
+    },
+    "errors": {
+        "RATE_LIMITED": "Demasiadas mensagens nesta hora. Tente mais tarde.",
+        "EMPTY_MESSAGE": "Escreva algo ou anexe um ficheiro.",
+        "INVALID_ATTACHMENT_URL": "O ficheiro não pertence a esta conversa.",
+        "THREAD_NOT_FOUND": "Esta conversa já não está disponível.",
+        "UPLOAD_FAILED": "Não foi possível carregar o ficheiro.",
+        "FILE_TYPE": "Só PDF, JPG e PNG.",
+        "FILE_TOO_LARGE": "Cada ficheiro tem de ter até 10 MB.",
+        "TOO_MANY_FILES": "No máximo 5 ficheiros por mensagem.",
+        "UNKNOWN": "Não foi possível enviar a mensagem."
+    }
+}

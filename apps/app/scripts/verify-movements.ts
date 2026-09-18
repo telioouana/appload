@@ -36,12 +36,15 @@ import {
     movementRoute,
     movementTrackingAlert,
     movementTrackingRequest,
+    organizationCounter,
     type MovementStatus,
 } from "@workspace/db/movements";
 import { notification, type NotificationKind } from "@workspace/db/notifications";
 import { subscriptionUsage } from "@workspace/db/subscriptions";
 import { activityLog } from "@workspace/db/activity-log";
 import { member, organization } from "@workspace/db/users";
+import { nextReference } from "@workspace/domain/movements/counters";
+import { editableGroups } from "@workspace/domain/movements/policy";
 import { ownerTargets } from "@workspace/domain/movements/status";
 import { periodKey, trackingAllowance } from "@workspace/domain/subscription";
 import { normalizePhone } from "@workspace/comms/phone";
@@ -127,6 +130,10 @@ const B = { user: "a2R9UNA2NTiEo3FS7DxlwgBFUn8EDNU6", org: "9b7674e5-ea7b-416b-a
 const BM = { user: "AM6u6fxppa9LEkRiMnMDHyrMpThmNrQy", org: B.org }; // carrier, member
 const C = { user: "kU9US5NBPjNtS5HsSQBW3ZfEZvj7GQSm", org: "49db92eb-c131-467e-8bfc-fe42a7dcc149" }; // stranger
 
+/** What a reference looks like once the counters name a load (refs.ts). */
+const ORDER_REF = /^ORD-\d{4}-\d{2}$/;
+const REQUEST_REF = /^REQ-\d{4}-\d{2}$/;
+
 const origin = { state: "Nampula Province", address: "Nampula, Mozambique", country: "Mozambique", placeId: "ChIJOaE2a7M1xhgRdN3KTEt2F8I" };
 const destination = { state: "Gauteng", address: "Johannesburg, South Africa", country: "South Africa", placeId: "ChIJUWpA8GgMlR4RQUDTsdnJiiM" };
 
@@ -165,6 +172,8 @@ const threadsHere: string[] = [];
 const spentHere: string[] = [];
 /** Connection requests staged for the partner lists. */
 const connectionsHere: string[] = [];
+/** The years the reference checks minted in, on A's and B's counters, to delete again. */
+const countersHere: number[] = [];
 
 /**
  * The conversation and outbound message a location request leaves behind,
@@ -369,27 +378,44 @@ async function toldOnceOn(notices: readonly Notice[], organizationId: string, en
             && (notice.params as { organizationName?: string }).organizationName === name);
 }
 
+/** Every load in a list, and everything hanging off it. */
+async function purge(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+
+    await db.delete(notification).where(and(eq(notification.entityType, "movement"), inArray(notification.entityId, ids)));
+    await db.delete(subscriptionUsage).where(and(eq(subscriptionUsage.entityType, "movement"), inArray(subscriptionUsage.entityId, ids)));
+    // A dispute's rows hold both the dispute and the movements, and the
+    // dispute holds the row it was opened on: rows, then disputes, then loads
+    await db.delete(movementDisputeRow).where(inArray(movementDisputeRow.movementId, ids));
+    await db.delete(movementDispute).where(inArray(movementDispute.movementId, ids));
+    for (const table of [movementEvent, movementCost, movementDocument, movementLocation, movementTrackingAlert, movementTrackingRequest, movementRoute]) {
+        await db.delete(table).where(inArray(table.movementId, ids));
+    }
+    await db.update(movement).set({ executionMovementId: null }).where(inArray(movement.id, ids));
+    await db.delete(movement).where(inArray(movement.id, ids));
+}
+
 async function cleanup() {
     await releaseAllowance();
 
     if (connectionsHere.length > 0) await db.delete(partnerConnection).where(inArray(partnerConnection.id, connectionsHere));
+
+    // Only the invented years: the counters of the year the portal is really
+    // running in are the test tenants' own books
+    if (countersHere.length > 0) {
+        await db.delete(organizationCounter).where(and(
+            inArray(organizationCounter.organizationId, [A.org, B.org]),
+            inArray(organizationCounter.year, [...new Set(countersHere)]),
+        ));
+    }
+
     if (saidHere.length > 0) await db.delete(chatMessage).where(inArray(chatMessage.id, saidHere));
     if (threadsHere.length > 0) await db.delete(chatConversation).where(inArray(chatConversation.id, threadsHere));
 
     if (created.length === 0) return;
 
-    await db.delete(notification).where(and(eq(notification.entityType, "movement"), inArray(notification.entityId, created)));
-    await db.delete(subscriptionUsage).where(and(eq(subscriptionUsage.entityType, "movement"), inArray(subscriptionUsage.entityId, created)));
     await db.delete(activityLog).where(eq(activityLog.sessionId, SESSION_ID));
-    // A dispute's rows hold both the dispute and the movements, and the
-    // dispute holds the row it was opened on: rows, then disputes, then loads
-    await db.delete(movementDisputeRow).where(inArray(movementDisputeRow.movementId, created));
-    await db.delete(movementDispute).where(inArray(movementDispute.movementId, created));
-    for (const table of [movementEvent, movementCost, movementDocument, movementLocation, movementTrackingAlert, movementTrackingRequest, movementRoute]) {
-        await db.delete(table).where(inArray(table.movementId, created));
-    }
-    await db.update(movement).set({ executionMovementId: null }).where(inArray(movement.id, created));
-    await db.delete(movement).where(inArray(movement.id, created));
+    await purge(created);
     console.log(`\ncleaned up ${created.length} movements and everything hanging off them`);
 }
 
@@ -407,7 +433,7 @@ async function main() {
         buy: { total: 50000, currency: "MZN", fiscalRegime: "normal" },
     });
     created.push(filed.id);
-    check("A's load is an order (ORD-)", filed.ref.startsWith("ORD-"), filed);
+    check("A's load is a request of its own (REQ-0000-YY)", REQUEST_REF.test(filed.ref), filed);
 
     let aDetail = await a.get({ id: filed.id });
     check("A is the owner", aDetail.role === "owner", aDetail.role);
@@ -447,7 +473,7 @@ async function main() {
     console.log("\n— B accepts");
     const accepted = await b.respond({ id: filed.id, expectedVersion: offered.version, decision: "accept" });
     created.push(accepted.id);
-    check("B gets a trip of its own (TRP-)", accepted.ref?.startsWith("TRP-") ?? false, accepted);
+    check("B gets a load of its own, numbered in B's books", ORDER_REF.test(accepted.ref ?? ""), accepted);
 
     await expectError("accepting twice finds the offer taken", () =>
         b.respond({ id: filed.id, expectedVersion: offered.version, decision: "accept" }), "NOT_FOUND");
@@ -455,6 +481,8 @@ async function main() {
     aDetail = await a.get({ id: filed.id });
     check("A's order is confirmed", aDetail.status === "scheduled", aDetail.status);
     check("A's order is linked to B's truck", aDetail.isLinked);
+    check("…and takes A's own ORD number, its REQ kept as history",
+        ORDER_REF.test(aDetail.ref) && aDetail.ref !== filed.ref, { now: aDetail.ref, filedAs: filed.ref });
     check("A's agreed terms froze", !aDetail.permissions.editable.includes("details") && !aDetail.permissions.editable.includes("buy"), aDetail.permissions.editable);
 
     let bOwn = await b.get({ id: accepted.id });
@@ -462,7 +490,8 @@ async function main() {
     check("B's row is its own fleet, scheduled", bOwn.execution === "own-fleet" && bOwn.status === "scheduled", bOwn);
     check("B's client is A", bOwn.client?.id === A.org, bOwn.client);
     check("B's receivable is A's price", bOwn.money.receivable?.total === 50000, bOwn.money.receivable);
-    check("B's row carries A's reference", bOwn.clientReference === filed.ref, bOwn.clientReference);
+    check("B's row carries A's reference — the ORD A's load took on the accept, not the REQ it was filed as",
+        bOwn.clientReference === aDetail.ref, { carried: bOwn.clientReference, owner: aDetail.ref });
     check("B's row knows it is somebody's order", bOwn.hasParent);
     check("B cannot change the agreed price", !bOwn.permissions.editable.includes("sellAmounts"), bOwn.permissions.editable);
 
@@ -584,6 +613,15 @@ async function main() {
     const lastSaid = bThread.at(-1);
     check("B reads what was asked of its driver, through the conversation its own asking stamped",
         lastSaid?.id === asked && lastSaid.direction === "outbound" && lastSaid.status === "sent", bThread);
+
+    // The Chats page's Drivers side: the same four safeguards, as a list
+    const bDrivers = await b.threadList();
+    const listed = bDrivers.find((load) => load.id === accepted.id);
+    check("B's driver list has the started load, under its own reference",
+        listed?.ref === accepted.ref && listed.driverName === "HARNESS Driver", { listed, ref: accepted.ref });
+    const aDrivers = await a.threadList();
+    check("…and A's list has neither row: the order it placed, nor the truck that is not its own",
+        !aDrivers.some((load) => load.id === accepted.id || load.id === filed.id), aDrivers.map((load) => load.id));
 
     await db.update(movement).set({ driverPhone: null }).where(eq(movement.id, filed.id));
 
@@ -888,7 +926,7 @@ async function hardening() {
     await expectError("a cost line cannot be taken off a cancelled load", () => b.costs.remove({ id: cost.id }), "MOVEMENT_CLOSED");
 
     console.log("\n— a partner that joined after its load left keeps the load's lifecycle");
-    const late = ownerTargets({ execution: "partner", status: "on-route", route: "national", resumeStatus: null, linked: false, executorOnPortal: true });
+    const late = ownerTargets({ execution: "partner", status: "on-route", route: "national", resumeStatus: null, linked: false, executorOnPortal: true, apploadLinked: false });
     check("the owner can still take it on to offloading or call it off", late.includes("at-offloading") && late.includes("cancelled"), late);
     o = await b.get({ id: own.id });
     void o;
@@ -1169,7 +1207,7 @@ async function manualChain() {
     check("a national load on route is not offered the border", detail.permissions.transitions.map((option) => option.to).join(",") === "at-offloading,stopped,issue,cancelled", detail.permissions.transitions);
     await expectError("…and the door refuses it too", () =>
         b.transition({ id: trip.id, to: "at-border", expectedVersion: version }), "INVALID_STATUS");
-    check("…while a regional one is, first", ownerTargets({ execution: "own-fleet", status: "on-route", route: "regional", resumeStatus: null, linked: false, executorOnPortal: false })[0] === "at-border");
+    check("…while a regional one is, first", ownerTargets({ execution: "own-fleet", status: "on-route", route: "regional", resumeStatus: null, linked: false, executorOnPortal: false, apploadLinked: false })[0] === "at-border");
 
     await walk(b, trip.id, ["at-offloading", "offloading", "delivered"]);
     const done = await stampsOf(trip.id);
@@ -1360,6 +1398,14 @@ async function disputes({ order, executor }: { order: string; executor: string }
     check("…and A cannot swap the client off the load while it is open", !aOrder.permissions.editable.includes("client"), aOrder.permissions.editable);
     await expectError("…the door refuses the change too", () =>
         a.update({ id: order, expectedVersion: aOrder.version, clientName: "HARNESS somebody else" }), "FIELD_LOCKED");
+
+    // …and the same on a row following an Appload order, where who the load is
+    // for is otherwise still this company's own to write (policy.ts). Read off
+    // the rule itself: no Appload order can be linked until M2 writes them
+    const orderer = { execution: "partner", status: "booked", linked: true, hasParent: false, executorOnPortal: true, apploadLinked: true } as const;
+    const [whileOpen, whileQuiet] = [editableGroups({ ...orderer, disputeOpen: true }), editableGroups({ ...orderer, disputeOpen: false })];
+    check("…and a row following an Appload order holds its client the same way",
+        !whileOpen.includes("client") && whileQuiet.includes("client"), { whileOpen, whileQuiet });
 
     const [aDisputes, bDisputes, aRail, bRail, aStats, bStats] = await Promise.all([
         a.list({ scope: "orders", section: "disputes" }), b.list({ scope: "trips", section: "disputes" }),
@@ -1580,7 +1626,7 @@ async function ownTrucksFromClients() {
     const aTrip = await a.create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS client's own truck" });
     created.push(aTrip.id);
     const aTripView = await a.get({ id: aTrip.id });
-    check("A, a client, still files a truck of its own", aTrip.ref.startsWith("TRP-") && aTripView.execution === "own-fleet" && aTripView.role === "owner", aTrip);
+    check("A, a client, still files a truck of its own", ORDER_REF.test(aTrip.ref) && aTripView.execution === "own-fleet" && aTripView.role === "owner", aTrip);
     check("…under My trucks ▸ Procurement", scopeOf(aTripView) === "trips" && sectionOf(aTripView) === "procurement", { scope: scopeOf(aTripView), section: sectionOf(aTripView) });
     check("…and may hand it to a partner", aTripView.permissions.canConvert, aTripView.permissions);
 
@@ -1589,7 +1635,7 @@ async function ownTrucksFromClients() {
     const aDraftView = await a.get({ id: aDraft.id });
     check("…and take a partner's load in-house", aDraftView.permissions.canConvert, aDraftView.permissions);
     const taken = await a.convert({ id: aDraft.id, expectedVersion: aDraftView.version, to: "own-fleet" });
-    check("…which the door allows", taken.ref.startsWith("TRP-"), taken);
+    check("…which the door allows, and the load becomes an order of A's own", ORDER_REF.test(taken.ref), taken);
 
     const accepted = await ownTrip({ cargoDescription: "HARNESS accepted back link" });
     const acceptedView = await b.get({ id: accepted.id });
@@ -1719,6 +1765,66 @@ async function photosAtLoading() {
 }
 
 /**
+ * §2.1 — what a load is called. Every company numbers its own books, per kind
+ * and per year: a load it moves itself is an order from the start, one it is
+ * still placing is a request, and the counters that hand the numbers out are
+ * per company and race-proof. The two counter checks run in invented years so
+ * they never disturb the test tenants' real numbering (cleanup drops them).
+ */
+async function references() {
+    const a = as(A.user);
+
+    console.log("\n— §2.1 references, per company and per year");
+
+    const own = await a.create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS refs own truck" });
+    created.push(own.id);
+    check("a load on the company's own trucks is an order from the start", ORDER_REF.test(own.ref), own);
+
+    const booked = await a.create({
+        execution: "partner", carrierName: "HARNESS Off-Platform Lda", status: "booked",
+        origin, destination, cargoDescription: "HARNESS refs booked",
+    });
+    created.push(booked.id);
+    const [bookedRow] = await db
+        .select({ reference: movement.reference, requestReference: movement.requestReference })
+        .from(movement)
+        .where(eq(movement.id, booked.id));
+    check("one filed already booked takes both numbers at once",
+        ORDER_REF.test(bookedRow?.reference ?? "") && REQUEST_REF.test(bookedRow?.requestReference ?? ""), bookedRow);
+
+    countersHere.push(2098, 2099);
+    const [aFirst, bFirst] = await Promise.all([
+        nextReference(db, A.org, "ORD", new Date("2099-06-15T12:00:00Z")),
+        nextReference(db, B.org, "ORD", new Date("2099-06-15T12:00:00Z")),
+    ]);
+    check("two companies each get their own 0001 in the same year",
+        aFirst === "ORD-0001-99" && bFirst === "ORD-0001-99", { a: aFirst, b: bFirst });
+
+    const raced = await Promise.all(
+        Array.from({ length: 10 }, () => nextReference(db, A.org, "ORD", new Date("2098-06-15T12:00:00Z"))),
+    );
+    check("ten members filing at once get ten different numbers", new Set(raced).size === 10, raced);
+
+    console.log("\n— §3.1 a load is found by the name it is called");
+    const byRef = await a.list({ scope: "trips", section: "all", search: own.ref });
+    check("searching its full reference finds it", byRef.items.some((row) => row.id === own.id), { ref: own.ref, items: byRef.items.map((row) => row.ref) });
+
+    // "ORD-0001" — the number without the year, which is what a user types
+    const prefix = own.ref.slice(0, own.ref.lastIndexOf("-"));
+    const byPrefix = await a.list({ scope: "trips", section: "all", search: prefix, pageSize: 100 });
+    check("…and so does the part of it before the year", byPrefix.items.some((row) => row.id === own.id), { prefix, items: byPrefix.items.map((row) => row.ref) });
+
+    const palette = await searchFor(A.user).global({ query: own.ref });
+    check("…and the palette answers the same load", palette.loads.some((load) => load.id === own.id), palette.loads.map((load) => load.ref));
+
+    const requestRef = (await a.get({ id: booked.id })).ref;
+    const byRequest = await a.list({ scope: "orders", section: "all", search: bookedRow!.requestReference!, pageSize: 100 });
+    check("a load kept its request number as history, and is still found by it",
+        requestRef !== bookedRow!.requestReference && byRequest.items.some((row) => row.id === booked.id),
+        { ref: requestRef, request: bookedRow?.requestReference });
+}
+
+/**
  * §11.12 — one list per kind, holding what its pill counts; a shipper has no
  * clients. The test tenants' only connection is A and B's, accepted, so C's
  * request to B is staged straight on the table to give Requests a row.
@@ -1771,6 +1877,7 @@ migratedData()
     .then(ownTrucksFromClients)
     .then(sectionsAndTabs)
     .then(photosAtLoading)
+    .then(references)
     .then(partnerLists)
     .catch((error) => {
         console.error("\nharness crashed:", error);

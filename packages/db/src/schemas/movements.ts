@@ -5,9 +5,9 @@ import { boolean, check, doublePrecision, index, integer, jsonb, numeric, pgTabl
 // in modules that depend on this one and crash at runtime (TDZ)
 import { TRACKING_CHANNEL, TRACKING_SLOT, TRACKING_STATUS, chatConversation, chatMessage } from "@workspace/db/chats";
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
-import { Location, categoriesEnum, currencyEnum, fiscalRegimeEnum, paymentStatusEnum, routeTypeEnum, weightUnitEnum } from "@workspace/db/orders";
+import { Location, categoriesEnum, currencyEnum, fiscalRegimeEnum, order, paymentStatusEnum, routeTypeEnum, weightUnitEnum } from "@workspace/db/orders";
 import { LOCATION_SOURCE, ROUTE_SOURCE } from "@workspace/db/tracking";
-import { DISPUTE_REASON } from "@workspace/db/types";
+import { DISPUTE_REASON, REFERENCE_KIND } from "@workspace/db/types";
 import { organization, user } from "@workspace/db/users";
 
 /**
@@ -65,7 +65,9 @@ export type MovementStatus = (typeof MOVEMENT_STATUS)[number];
 /**
  * The statuses a load is in progress in, in chain order: from the truck at
  * the loading site to the truck offloading, the two interruptions included.
- * Tracking runs, and a plan is billed, from the moment a load enters this set.
+ * A plan is billed from the moment a load enters this set; the cron only
+ * asks the driver where he is once he has left the loading site
+ * (TRACKED_STATUSES in @workspace/domain/movements/status).
  * Exported here rather than from the domain because the db package cannot
  * import the domain; `movement_driver_phone_idx` below spells the same list.
  */
@@ -82,18 +84,21 @@ export const MOVEMENT_IN_PROGRESS_STATUSES = [
 ] as const satisfies readonly MovementStatus[];
 
 /**
- * One load a portal tenant is responsible for, with no Appload order behind
- * it. Two shapes of the same thing, told apart by `execution`: the tenant's
+ * One load a portal tenant is responsible for. Two shapes of the same thing,
+ * told apart by `execution`: the tenant's
  * own truck (a Trip) or somebody else's (an Order). One table because the two
  * differ by six columns out of forty, and because a Trip becomes an Order the
  * day a contract conflict forces a subcontract — that is a status of the same
  * load, not a different record, and it must keep its reference, its URL, its
  * trail and the costs already booked against it.
  *
- * These rows are the tenant's own books. They never reach the `order` table,
- * the Sheets logbook, Appload's KPIs or its commission, and the admin does
- * not list them. The only things they share with the brokerage are the
- * tracking machinery and the monthly tracked-movement allowance.
+ * These rows are the tenant's own books. A row with `orderId` set is the
+ * tenant's side of an Appload order — its own load, numbered with its own
+ * reference, whose status follows the order it is linked to. Every other row
+ * never reaches the `order` table, the Sheets logbook, Appload's KPIs or its
+ * commission, and the admin does not list it. The only things those share
+ * with the brokerage are the tracking machinery and the monthly
+ * tracked-movement allowance.
  *
  * `executionMovementId` is the cross-tenant seam: when the executor is a
  * portal tenant that accepted, THEIR movement is linked here and their
@@ -108,13 +113,28 @@ export const movement = pgTable(
         id: text("id")
             .primaryKey()
             .$defaultFn(() => crypto.randomUUID()),
-        // Display reference "TRP-<seq>" own-fleet, "ORD-<seq>" partner. One
-        // sequence for both, so a conversion keeps the number it was known by
+        // Insertion order, and nothing else. It used to spell the display
+        // reference ("TRP-41" / "ORD-41"); references are now per company and
+        // stored in `reference` / `requestReference` below
         seq: serial("seq").unique().notNull(),
         // The tenant whose books this row is in, client or carrier
         organizationId: text("organization_id")
             .notNull()
             .references(() => organization.id),
+        // The Appload order this row is the tenant's side of, when it is one:
+        // the orderer's row (partner execution, carrier Appload) or the
+        // executor's (own-fleet, client Appload). Null on every load the
+        // tenant runs off its own books. "set null" rather than restrict: a
+        // deleted order leaves the company's books standing
+        orderId: text("order_id").references(() => order.id, { onDelete: "set null" }),
+        // What this company calls the load: "ORD-0001-26", numbered per
+        // organization, per kind, per year (organizationCounter below).
+        // Null until it is committed to — a load still collecting offers has
+        // only `requestReference`
+        reference: text("reference"),
+        // The "REQ-0001-26" the load was filed under while it was collecting
+        // offers. Kept as history once `reference` is minted
+        requestReference: text("request_reference"),
         execution: text("execution", { enum: MOVEMENT_EXECUTION }).default("own-fleet").notNull(),
         status: text("status", { enum: MOVEMENT_STATUS }).default("procurement").notNull(),
         // Where a stopped load, or one with an issue, goes back to: written
@@ -222,10 +242,26 @@ export const movement = pgTable(
         // What has been offered to this company, and every load it executes
         index("movement_carrier_status_idx").on(table.carrierOrgId, table.status),
         index("movement_client_status_idx").on(table.clientOrgId, table.status),
-        // The tracking cron's working set: loads in progress with nobody
-        // downstream reporting for them. The link clause is the whole reason a
-        // subcontracted driver is asked once instead of once per company. The
-        // status list is typed out, never built from
+        // The rows of one Appload order, read on every mirror pass
+        index("movement_order_idx").on(table.orderId),
+        // One live row per company per order: a second candidate row for the
+        // same carrier would make the mirror ambiguous. Cancelled rows are
+        // outside it — a carrier that lost a round and is asked again gets a
+        // fresh row
+        uniqueIndex("movement_order_org_uidx")
+            .on(table.orderId, table.organizationId)
+            .where(sql`${table.orderId} is not null and ${table.status} <> 'cancelled'`),
+        // References are unique inside one company, not globally
+        uniqueIndex("movement_reference_uidx")
+            .on(table.organizationId, table.reference)
+            .where(sql`${table.reference} is not null`),
+        // Covers the tracking cron's working set: loads in progress with
+        // nobody downstream reporting for them. Deliberately the wider
+        // in-progress list — the cron now selects only the six tracked
+        // statuses (TRACKED_STATUSES in @workspace/domain/movements/status),
+        // a subset, so its narrower query still reads this index. The link
+        // clause is the whole reason a subcontracted driver is asked once
+        // instead of once per company. The status list is typed out, never built from
         // MOVEMENT_IN_PROGRESS_STATUSES: drizzle-kit would write an
         // interpolated list into the migration as $1..$9 placeholders
         index("movement_driver_phone_idx")
@@ -251,6 +287,32 @@ export const movement = pgTable(
 
 export type Movement = typeof movement.$inferSelect;
 export type CreateMovement = typeof movement.$inferInsert;
+
+/**
+ * The per-company reference counters: one row per (organization, kind, year)
+ * holding the last number handed out. A reference is minted with a single
+ * `insert … on conflict do update set last = last + 1 returning last`, which
+ * is what makes two members filing a load at the same moment get two numbers
+ * — neon-http has no transactions to serialize them in.
+ *
+ * The year is the Maputo calendar year the load was created in, so
+ * "ORD-0001-26" restarts every January per company.
+ */
+export const organizationCounter = pgTable(
+    "organization_counter",
+    {
+        organizationId: text("organization_id")
+            .notNull()
+            .references(() => organization.id, { onDelete: "cascade" }),
+        kind: text("kind", { enum: REFERENCE_KIND }).notNull(),
+        year: integer("year").notNull(),
+        last: integer("last").default(0).notNull(),
+    },
+    (table) => [primaryKey({ columns: [table.organizationId, table.kind, table.year] })],
+);
+
+export type OrganizationCounter = typeof organizationCounter.$inferSelect;
+export type CreateOrganizationCounter = typeof organizationCounter.$inferInsert;
 
 /**
  * Cached Google result for a movement's origin → destination leg, one row per

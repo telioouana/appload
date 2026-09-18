@@ -9,6 +9,8 @@ export const oac = createAccessControl({
     partner: ["read", "request", "respond", "remove"],
     trip: ["create", "read", "update", "list"],
     document: ["read", "upload", "approve"],
+    kyc: ["read", "upload"],
+    thread: ["read", "send"],
     dispute: ["open", "resolve"],
     report: ["read"],
     subscription: ["read"],
@@ -22,6 +24,8 @@ export const owner = oac.newRole({
     partner: ["read", "request", "respond", "remove"],
     trip: ["create", "read", "update", "list"],
     document: ["read", "upload", "approve"],
+    kyc: ["read", "upload"],
+    thread: ["read", "send"],
     dispute: ["open", "resolve"],
     report: ["read"],
     subscription: ["read"],
@@ -35,6 +39,8 @@ export const admin = oac.newRole({
     partner: ["read", "request", "respond"],
     trip: ["create", "read", "update", "list"],
     document: ["read", "upload", "approve"],
+    kyc: ["read", "upload"],
+    thread: ["read", "send"],
     dispute: ["open", "resolve"],
     report: ["read"],
     subscription: ["read"],
@@ -53,6 +59,11 @@ export const member = oac.newRole({
     // Anybody files a paper or a loading photo; approving one is answering
     // for what left the warehouse, and that is the manager's signature
     document: ["read", "upload"],
+    // The company's own drivers and vehicles: anybody may file their papers,
+    // and reviewing them is Appload's job either way
+    kyc: ["read", "upload"],
+    // Talking to the other party about a load is everyone's on that load
+    thread: ["read", "send"],
     // Anybody on a load can say something went wrong with it; declaring it
     // settled speaks for the company, a manager's signature like approving
     dispute: ["open"],

@@ -2,25 +2,36 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { IconAlertCircle, IconMessage } from "@tabler/icons-react";
+import { IconAlertCircle, IconInfoCircle, IconMessage } from "@tabler/icons-react";
 import { toast } from "sonner";
 
-import { useTranslations } from "@workspace/i18n";
+import { useFormatter, useTranslations } from "@workspace/i18n";
 
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
+import { Button } from "@workspace/ui/components/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@workspace/ui/components/empty";
 import { Separator } from "@workspace/ui/components/separator";
+import { cn } from "@workspace/ui/lib/utils";
 
 import { useTRPC } from "@/backend/api/client";
 import { useListParams } from "@workspace/ui/hooks/use-list-params";
 import type { ConversationSummary } from "@/backend/api/routers/chats";
 import { domainErrorCode } from "@workspace/trpc/errors";
-import { TRACKED_STATUSES } from "@workspace/domain/tracking/statuses";
+import { ACTIVE_STATUSES } from "@/frontend/pages/orders/types";
 
-import { ConversationList, type ConversationFilter } from "@/frontend/pages/chats/sections/conversation-list";
+import { ChatComposer } from "@workspace/ui/customs/chat/composer";
+import { ChatThread } from "@workspace/ui/customs/chat/thread-panel";
+
+import { ConversationList, type ChatMode, type ConversationFilter } from "@/frontend/pages/chats/sections/conversation-list";
 import { Thread } from "@/frontend/pages/chats/sections/thread";
 import { Composer } from "@/frontend/pages/chats/sections/composer";
 import { OrderPanel } from "@/frontend/pages/chats/sections/order-panel";
+import {
+    THREAD_ACCEPTED,
+    THREAD_MAX_BYTES,
+    THREAD_MAX_FILES,
+    useOrderThread,
+} from "@/frontend/pages/chats/hooks/use-order-thread";
 
 import { NewChatDialog } from "./new-chat";
 
@@ -28,7 +39,7 @@ const CONVERSATIONS_POLL_MS = 15_000;
 const MESSAGES_POLL_MS = 5_000;
 
 // Orders that still have a truck committed, plus fresh bookings
-const ACTIVE_ORDER_STATUSES = new Set<string>(["booked", ...TRACKED_STATUSES]);
+const ACTIVE_ORDER_STATUSES = new Set<string>(ACTIVE_STATUSES);
 
 const LOCATION_ERROR_KEYS = {
     NO_ACTIVE_ORDER: "noActiveOrder",
@@ -39,6 +50,7 @@ const LOCATION_ERROR_CODES = Object.keys(LOCATION_ERROR_KEYS) as (keyof typeof L
 
 export function ChatsView({ configured = true }: { configured?: boolean }) {
     const t = useTranslations("Admin.messages");
+    const f = useFormatter();
 
     const trpc = useTRPC();
     const queryClient = useQueryClient();
@@ -48,10 +60,20 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
     // the server reads nothing from it, and this page polls
     const params = useListParams()
     const [activeId, setActiveId] = useState<string | null>(params.get("c"))
+    // The order conversations are the same page's second list, with a deep
+    // link of their own: they are named by their order, not by their thread,
+    // so the order page can link one that has never been written in
+    const [activeOrderId, setActiveOrderId] = useState<string | null>(params.get("o"))
+    const [mode, setMode] = useState<ChatMode>(params.get("o") ? "orders" : "drivers")
 
     const selectConversation = (id: string) => {
         setActiveId(id)
         params.shallow({ key: "c", value: id })
+    };
+
+    const selectOrder = (orderId: string) => {
+        setActiveOrderId(orderId)
+        params.shallow({ key: "o", value: orderId })
     };
     const [draft, setDraft] = useState("");
     const [search, setSearch] = useState("");
@@ -87,6 +109,21 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
                 || (conversation.orderId ?? "").toLowerCase().includes(query);
         });
     }, [conversations, search, filter]);
+
+    // The order conversations beside them, polled the same way
+    const threadsQuery = useQuery(
+        trpc.threads.list.queryOptions(undefined, { refetchInterval: CONVERSATIONS_POLL_MS }),
+    );
+    const threads = useMemo(() => threadsQuery.data ?? [], [threadsQuery.data]);
+    // The list row, when there is one: an order nobody has written to yet is
+    // opened by its id alone
+    const activeThread = useMemo(
+        () => threads.find((thread) => thread.orderId === activeOrderId) ?? null,
+        [threads, activeOrderId],
+    );
+
+    // Opened, read and written through the same hook the order page uses
+    const orderChat = useOrderThread(mode === "orders" ? activeOrderId : null);
 
     // Active thread: polls to pick up inbound messages
     const messagesQuery = useQuery(
@@ -224,10 +261,98 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
                     onFilterChange={setFilter}
                     onSelect={selectConversation}
                     onNewChat={() => setNewChatOpen(true)}
+                    mode={mode}
+                    onModeChange={setMode}
+                    threads={threads}
+                    activeOrderId={activeOrderId}
+                    isLoadingThreads={threadsQuery.isPending}
+                    onSelectOrder={selectOrder}
                 />
 
                 <section className="flex min-w-0 flex-1 flex-col">
-                    {!activeConversation ? (
+                    {mode === "orders" ? (
+                        // An order whose thread cannot be opened — no such
+                        // order, or a reader who is not in the room — reads
+                        // like nothing is picked
+                        !activeOrderId || orderChat.unavailable ? (
+                            <Empty className="flex-1">
+                                <EmptyHeader>
+                                    <EmptyMedia variant="icon">
+                                        <IconMessage />
+                                    </EmptyMedia>
+                                    <EmptyTitle>{t("threads.emptyTitle")}</EmptyTitle>
+                                    <EmptyDescription>{t("threads.emptyDescription")}</EmptyDescription>
+                                </EmptyHeader>
+                            </Empty>
+                        ) : (
+                            <>
+                                <header className="flex items-center gap-3 p-4">
+                                    <div className="min-w-0 flex-1">
+                                        <div className="truncate font-medium">{activeOrderId}</div>
+                                        {/* The parties come off the list row, which
+                                            an order nobody has written to yet has not
+                                            got */}
+                                        {activeThread && (
+                                            <div className="truncate text-xs text-muted-foreground">
+                                                {[activeThread.shipperName, activeThread.carrierName ?? t("threads.noCarrier")]
+                                                    .filter(Boolean)
+                                                    .join(" · ")}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* The panel is one state for both lists, and
+                                        the driver header's toggle is the only other
+                                        one: without this, a panel closed there
+                                        could not be opened here */}
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className={cn("ml-auto", isPanelOpen && "bg-muted")}
+                                        aria-pressed={isPanelOpen}
+                                        onClick={() => setPanelOpen((open) => !open)}
+                                    >
+                                        <IconInfoCircle />
+                                        <span className="sr-only">{t("thread.info")}</span>
+                                    </Button>
+                                </header>
+
+                                <Separator />
+
+                                <div className="flex min-h-0 flex-1 flex-col gap-2 p-4">
+                                    <ChatThread
+                                        messages={orderChat.messages}
+                                        meUserId={orderChat.meUserId}
+                                        loading={orderChat.isLoading}
+                                        formatTime={(date) => f.dateTime(date, { dateStyle: "short", timeStyle: "short" })}
+                                        labels={{
+                                            empty: t("threads.empty"),
+                                            you: t("threads.you"),
+                                            loadMore: t("threads.loadMore"),
+                                        }}
+                                    />
+
+                                    <ChatComposer
+                                        onSend={orderChat.send}
+                                        disabled={!orderChat.threadId}
+                                        pending={orderChat.sending}
+                                        accept={THREAD_ACCEPTED}
+                                        maxBytes={THREAD_MAX_BYTES}
+                                        maxFiles={THREAD_MAX_FILES}
+                                        labels={{
+                                            placeholder: t("threads.placeholder"),
+                                            send: t("threads.send"),
+                                            attach: t("threads.attach"),
+                                            remove: t("threads.remove"),
+                                            badType: t("threads.errors.FILE_TYPE"),
+                                            tooLarge: t("threads.errors.FILE_TOO_LARGE"),
+                                            tooMany: t("threads.errors.TOO_MANY_FILES"),
+                                        }}
+                                    />
+                                </div>
+                            </>
+                        )
+                    ) : !activeConversation ? (
                         <Empty className="flex-1">
                             <EmptyHeader>
                                 <EmptyMedia variant="icon">
@@ -260,9 +385,11 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
                     )}
                 </section>
 
-                {isPanelOpen && activeConversation && (
+                {/* The same panel either way — an order conversation is
+                    already named by the order it hangs off */}
+                {isPanelOpen && (mode === "orders" ? activeOrderId : activeConversation) && (
                     <OrderPanel
-                        orderId={activeConversation.orderId}
+                        orderId={mode === "orders" ? activeOrderId : activeConversation?.orderId ?? null}
                         onClose={() => setPanelOpen(false)}
                     />
                 )}

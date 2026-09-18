@@ -12,6 +12,10 @@ import type { OrderDetail, OrderStatus } from "@/frontend/pages/orders/types"
 /** Nothing is driving yet, or nothing ever will: neither has a route worth buying. */
 const WITHOUT_TRACKING: OrderStatus[] = ["prospect", "cancelled", "underbid"]
 
+/** Whether this reader may be shown the truck on this order at all. */
+export const showsTracking = (order: OrderDetail) =>
+    order.permissions.isMine && !WITHOUT_TRACKING.includes(order.status)
+
 /**
  * The trip on a map: the planned road route in grey, the ground the driver
  * has actually covered in orange, and where they were last seen.
@@ -26,7 +30,7 @@ const WITHOUT_TRACKING: OrderStatus[] = ["prospect", "cancelled", "underbid"]
 export function TrackingCard({ order }: { order: OrderDetail }) {
     const t = useTranslations("App.orders.tracking")
 
-    if (!order.permissions.isMine || WITHOUT_TRACKING.includes(order.status)) {
+    if (!showsTracking(order)) {
         return null
     }
 
