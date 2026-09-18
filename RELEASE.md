@@ -514,7 +514,10 @@ it.
    ```
 
    (Dry-run first by omitting `--apply`.) This is a manual step — a deploy
-   alone never registers cron.
+   alone never registers cron. While dev and production share one QStash
+   account, register production with `--id-suffix -prod`
+   (`appload-tracking-prod`, …): re-registering an id repoints it, so
+   without the suffix production would take over dev's schedules.
 3. The portal has two schedules of its own, registered the same way against
    the portal's origin:
 
