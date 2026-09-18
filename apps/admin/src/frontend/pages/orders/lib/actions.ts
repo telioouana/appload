@@ -1,35 +1,46 @@
 import type { Order } from "@workspace/db/orders";
 
-import { primaryTransition, type OrderStatus } from "@/lib/orders/transitions";
+import { primaryTransition, type OrderStatus } from "@workspace/domain/orders/transitions";
 
 /**
- * What the primary button does. A prospect opens the deal form aimed at
- * booking instead of flipping the status: an order saved as a prospect
- * almost always has gaps, so completing the form IS the next step — and the
- * form is the only place the fleet-derived loading bay gets refilled.
+ * What the primary button does. A prospect is booked by accepting one of
+ * its carrier offers — never by flipping the status — so its primary step
+ * is the accept dialog, or adding the first offer when there is nothing to
+ * accept yet.
  */
 export type OrderPrimaryAction =
     | { kind: "transition"; to: OrderStatus }
-    | { kind: "confirm" };
+    | { kind: "accept-offer" }
+    | { kind: "add-offer" };
 
 /**
- * The single most relevant next step for an order — shared by the grid
- * card, the list row and the details page so every surface always agrees.
+ * The single most relevant next step for an order — shared by the table
+ * row actions, the order sheet and the details page so every surface
+ * always agrees.
  * Role-agnostic on purpose: forward steps never need special roles, and
- * the server re-guards regardless. Interrupted orders return null here
- * (their resume target lives server-side) — the transition dialog covers
- * them.
+ * the server re-guards regardless. An interrupted order's next step is
+ * wherever it resumes, which only a caller holding the order's history can
+ * know — pass `resumeStatus` (it rides on `order.get`) and the button names
+ * that stage; omit it, as the table rows do, and interrupts return null so
+ * the transition dialog covers them.
+ * `pendingOffers` splits the two prospect actions; callers that don't count
+ * offers leave it null and get accept-offer, whose dialog states the empty
+ * case itself.
  */
-export function primaryOrderAction(order: Pick<Order, "status" | "route">): OrderPrimaryAction | null {
+export function primaryOrderAction(
+    order: Pick<Order, "status" | "route">,
+    resumeStatus: OrderStatus | null = null,
+    pendingOffers: number | null = null,
+): OrderPrimaryAction | null {
     if (order.status === "prospect") {
-        return { kind: "confirm" };
+        return pendingOffers === 0 ? { kind: "add-offer" } : { kind: "accept-offer" };
     }
 
     const to = primaryTransition({
         status: order.status,
         route: order.route,
         role: "user",
-        resumeStatus: null,
+        resumeStatus,
     });
 
     return to === null ? null : { kind: "transition", to };

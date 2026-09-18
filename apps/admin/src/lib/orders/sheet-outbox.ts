@@ -3,9 +3,14 @@ import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { orderDocument, sheetSync, type DocumentParty, type NoteReason, type Order } from "@workspace/db/orders";
 import type { db as Database } from "@workspace/db/db";
 
-import { OrderError } from "@/lib/orders/errors";
-import { NOTE_TYPES } from "@/lib/orders/note-currency";
-import { paymentSums } from "@/lib/orders/payment-sums";
+import { OrderError } from "@workspace/domain/orders/errors";
+import { NOTE_TYPES } from "@workspace/domain/orders/note-currency";
+import { paymentSums } from "@workspace/domain/orders/payment-sums";
+
+// The outbox row and its re-derivation marker are written by both apps
+// (the portal defers every push to the cron), so they live in the package;
+// the Google client and the sheet mapping below stay here.
+import { RECOMPUTE_CONFLICT, recordSheetSync } from "@workspace/domain/orders/sheet-sync";
 import { applyDocumentSums } from "@/lib/orders/document-sums";
 import {
     appendRow,
@@ -27,6 +32,8 @@ import {
     type NoteBlock,
     type SheetCellOptions,
 } from "@/lib/orders/orders-sheet-mapping";
+
+export { RECOMPUTE_CONFLICT, recordSheetSync };
 
 /**
  * The legs whose paid block is derived from proofs of payment — the sheet
@@ -190,41 +197,6 @@ export async function pushOrderToSheets(
 
     await updateRow(accessToken, SHEET_NAME, existingRow, lastColumn, cells);
 }
-
-/** Upserts the outbox row: done resets the counter, failed increments it. */
-export async function recordSheetSync(
-    db: typeof Database,
-    orderPk: string,
-    state: "done" | "failed",
-    lastError?: string,
-): Promise<void> {
-    await db
-        .insert(sheetSync)
-        .values({
-            orderId: orderPk,
-            state,
-            attempts: state === "failed" ? 1 : 0,
-            lastError: lastError ?? null,
-        })
-        .onConflictDoUpdate({
-            target: sheetSync.orderId,
-            set: {
-                state,
-                lastError: lastError ?? null,
-                attempts: state === "failed" ? sql`${sheetSync.attempts} + 1` : 0,
-                updatedAt: new Date(),
-            },
-        });
-}
-
-/**
- * Outbox marker: a note/proof-of-payment row is committed but the order's
- * derived money block (note sums, remaining, POP paid columns) could not be
- * rebuilt — the write lost the optimistic lock on every attempt, or failed
- * midway. Nothing else rebuilds the note sums, so whoever next pushes this
- * order (syncSheetsAndRecord, the sheet-sync cron) re-derives it first.
- */
-export const RECOMPUTE_CONFLICT = "RECOMPUTE_CONFLICT";
 
 /**
  * Flags the order for re-derivation. The attempts counter is reset: the

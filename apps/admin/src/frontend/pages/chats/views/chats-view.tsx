@@ -1,72 +1,84 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { IconAlertCircle, IconCheck, IconClock, IconMessage, IconMessagePlus, IconSend } from "@tabler/icons-react";
+import { IconAlertCircle, IconInfoCircle, IconMessage } from "@tabler/icons-react";
+import { toast } from "sonner";
 
 import { useFormatter, useTranslations } from "@workspace/i18n";
-import type { ChatMessage } from "@workspace/db/chats";
 
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
-import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
-import { Spinner } from "@workspace/ui/components/spinner";
-import { Separator } from "@workspace/ui/components/separator";
-import { Avatar, AvatarFallback } from "@workspace/ui/components/avatar";
-import { Bubble, BubbleContent } from "@workspace/ui/components/bubble";
-import { InputGroup, InputGroupButton, InputGroupTextarea } from "@workspace/ui/components/input-group";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@workspace/ui/components/empty";
-import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@workspace/ui/components/item";
-import { Message, MessageContent, MessageAvatar, MessageFooter } from "@workspace/ui/components/message";
-import {
-    MessageScroller,
-    MessageScrollerButton,
-    MessageScrollerContent,
-    MessageScrollerItem,
-    MessageScrollerProvider,
-    MessageScrollerViewport,
-} from "@workspace/ui/components/message-scroller";
-
+import { Separator } from "@workspace/ui/components/separator";
 import { cn } from "@workspace/ui/lib/utils";
 
 import { useTRPC } from "@/backend/api/client";
+import { useListParams } from "@workspace/ui/hooks/use-list-params";
+import type { ConversationSummary } from "@/backend/api/routers/chats";
+import { domainErrorCode } from "@workspace/trpc/errors";
+import { ACTIVE_STATUSES } from "@/frontend/pages/orders/types";
+
+import { ChatComposer } from "@workspace/ui/customs/chat/composer";
+import { ChatThread } from "@workspace/ui/customs/chat/thread-panel";
+
+import { ConversationList, type ChatMode, type ConversationFilter } from "@/frontend/pages/chats/sections/conversation-list";
+import { Thread } from "@/frontend/pages/chats/sections/thread";
+import { Composer } from "@/frontend/pages/chats/sections/composer";
+import { OrderPanel } from "@/frontend/pages/chats/sections/order-panel";
+import {
+    THREAD_ACCEPTED,
+    THREAD_MAX_BYTES,
+    THREAD_MAX_FILES,
+    useOrderThread,
+} from "@/frontend/pages/chats/hooks/use-order-thread";
 
 import { NewChatDialog } from "./new-chat";
 
 const CONVERSATIONS_POLL_MS = 15_000;
 const MESSAGES_POLL_MS = 5_000;
 
-const initials = (name: string) =>
-    name
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((word) => word[0]!.toUpperCase())
-        .join("") || "?";
+// Orders that still have a truck committed, plus fresh bookings
+const ACTIVE_ORDER_STATUSES = new Set<string>(ACTIVE_STATUSES);
 
-function StatusIcon({ status }: { status: ChatMessage["status"] }) {
-    if (status === "failed") {
-        return <IconAlertCircle className="size-3.5 text-destructive" />;
-    }
-    if (status === "pending") {
-        return <IconClock className="size-3.5" />;
-    }
-    if (status === "sent" || status === "delivered" || status === "read") {
-        return <IconCheck className={cn("size-3.5", status === "read" && "text-primary")} />;
-    }
-
-    return null;
-}
+const LOCATION_ERROR_KEYS = {
+    NO_ACTIVE_ORDER: "noActiveOrder",
+    SEND_FAILED: "sendFailed",
+    UNKNOWN: "unknown",
+} as const;
+const LOCATION_ERROR_CODES = Object.keys(LOCATION_ERROR_KEYS) as (keyof typeof LOCATION_ERROR_KEYS)[];
 
 export function ChatsView({ configured = true }: { configured?: boolean }) {
-    const t = useTranslations("Admin.chats");
+    const t = useTranslations("Admin.messages");
     const f = useFormatter();
 
     const trpc = useTRPC();
     const queryClient = useQueryClient();
 
-    const [activeId, setActiveId] = useState<string | null>(null);
+    // The open conversation lives in the URL so the order page, the partner
+    // profile and a shared link can all point at one. Written shallowly:
+    // the server reads nothing from it, and this page polls
+    const params = useListParams()
+    const [activeId, setActiveId] = useState<string | null>(params.get("c"))
+    // The order conversations are the same page's second list, with a deep
+    // link of their own: they are named by their order, not by their thread,
+    // so the order page can link one that has never been written in
+    const [activeOrderId, setActiveOrderId] = useState<string | null>(params.get("o"))
+    const [mode, setMode] = useState<ChatMode>(params.get("o") ? "orders" : "drivers")
+
+    const selectConversation = (id: string) => {
+        setActiveId(id)
+        params.shallow({ key: "c", value: id })
+    };
+
+    const selectOrder = (orderId: string) => {
+        setActiveOrderId(orderId)
+        params.shallow({ key: "o", value: orderId })
+    };
     const [draft, setDraft] = useState("");
+    const [search, setSearch] = useState("");
+    const [filter, setFilter] = useState<ConversationFilter>("all");
+    const [isPanelOpen, setPanelOpen] = useState(true);
     const [isNewChatOpen, setNewChatOpen] = useState(false);
 
     // Conversation list: polls to pick up webhook-created threads
@@ -76,6 +88,43 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
     const conversations = useMemo(() => conversationsQuery.data ?? [], [conversationsQuery.data]);
     const isLoadingList = conversationsQuery.isPending;
 
+    const visibleConversations = useMemo(() => {
+        const query = search.trim().toLowerCase();
+        const digits = query.replace(/\D/g, "");
+
+        return conversations.filter((conversation) => {
+            if (filter === "unread" && conversation.unreadCount === 0) {
+                return false;
+            }
+            if (filter === "active"
+                && (!conversation.orderStatus || !ACTIVE_ORDER_STATUSES.has(conversation.orderStatus))) {
+                return false;
+            }
+            if (!query) {
+                return true;
+            }
+
+            return conversation.driverName.toLowerCase().includes(query)
+                || (digits.length > 0 && conversation.driverPhone.includes(digits))
+                || (conversation.orderId ?? "").toLowerCase().includes(query);
+        });
+    }, [conversations, search, filter]);
+
+    // The order conversations beside them, polled the same way
+    const threadsQuery = useQuery(
+        trpc.threads.list.queryOptions(undefined, { refetchInterval: CONVERSATIONS_POLL_MS }),
+    );
+    const threads = useMemo(() => threadsQuery.data ?? [], [threadsQuery.data]);
+    // The list row, when there is one: an order nobody has written to yet is
+    // opened by its id alone
+    const activeThread = useMemo(
+        () => threads.find((thread) => thread.orderId === activeOrderId) ?? null,
+        [threads, activeOrderId],
+    );
+
+    // Opened, read and written through the same hook the order page uses
+    const orderChat = useOrderThread(mode === "orders" ? activeOrderId : null);
+
     // Active thread: polls to pick up inbound messages
     const messagesQuery = useQuery(
         trpc.chats.messages.queryOptions(
@@ -83,16 +132,53 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
             { enabled: !!activeId, refetchInterval: MESSAGES_POLL_MS },
         ),
     );
-    const messages = (activeId && messagesQuery.data) || [];
+    const items = (activeId && messagesQuery.data) || [];
     const isLoadingThread = !!activeId && messagesQuery.isPending;
 
     const sendMessage = useMutation(trpc.chats.send.mutationOptions());
     const isSending = sendMessage.isPending;
 
+    const requestLocation = useMutation(trpc.chats.requestLocation.mutationOptions());
+    const isRequestingLocation = requestLocation.isPending;
+
+    // Read watermark: opening a thread (or new inbound arriving while it is
+    // open) marks it read once. No invalidation on success — the list cache
+    // is patched locally and the next poll returns the same server truth,
+    // so the effect can't loop.
+    const markRead = useMutation(trpc.chats.markRead.mutationOptions({
+        // A failed attempt only re-fires when the unread count changes, so
+        // ride out transient errors here instead
+        retry: 3,
+        onSuccess: (_data, variables) => {
+            queryClient.setQueriesData(
+                trpc.chats.list.queryFilter(),
+                (old: ConversationSummary[] | undefined) => old?.map((conversation) =>
+                    conversation.id === variables.conversationId
+                        ? { ...conversation, unreadCount: 0 }
+                        : conversation,
+                ),
+            );
+
+            // The sidebar counts threads, not messages: this one just went
+            // quiet, so recount now rather than at its next poll. A recount,
+            // not a decrement — the badge may not have counted this thread
+            // yet when the read is a fresh inbound on the open one
+            void queryClient.invalidateQueries(trpc.chats.unread.queryFilter());
+        },
+    }));
+
     const activeConversation = useMemo(
         () => conversations.find((conversation) => conversation.id === activeId) ?? null,
         [conversations, activeId],
     );
+    const activeUnread = activeConversation?.unreadCount ?? 0;
+
+    const markReadMutate = markRead.mutate;
+    useEffect(() => {
+        if (activeId && activeUnread > 0) {
+            markReadMutate({ conversationId: activeId });
+        }
+    }, [activeId, activeUnread, markReadMutate]);
 
     const draftRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -123,8 +209,38 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
         );
     }
 
+    function onRequestLocation() {
+        if (!activeId || isRequestingLocation) {
+            return;
+        }
+
+        requestLocation.mutate(
+            { conversationId: activeId },
+            {
+                onSuccess: (result) => {
+                    toast.success(result.mode === "native"
+                        ? t("thread.location.sentNative")
+                        : t("thread.location.sentTemplate"));
+                },
+                onError: (error) => {
+                    const code = domainErrorCode(error, LOCATION_ERROR_CODES, "UNKNOWN");
+                    toast.error(t(`thread.location.errors.${LOCATION_ERROR_KEYS[code]}`));
+                },
+                onSettled: async () => {
+                    // The mirror row is stored even on failure — refresh either way
+                    await Promise.all([
+                        queryClient.invalidateQueries(
+                            trpc.chats.messages.queryFilter({ conversationId: activeId }),
+                        ),
+                        queryClient.invalidateQueries(trpc.chats.list.queryFilter()),
+                    ]);
+                },
+            },
+        );
+    }
+
     return (
-        <div className="flex h-[calc(100svh-2rem)] min-h-0 flex-col gap-2 my-4">
+        <div className="flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden py-4">
             {!configured && (
                 <Alert variant="destructive">
                     <IconAlertCircle />
@@ -133,206 +249,157 @@ export function ChatsView({ configured = true }: { configured?: boolean }) {
                 </Alert>
             )}
 
-            <div className="flex flex-1 min-h-0 overflow-hidden rounded-3xl border">
-            {/* Conversation list */}
-            <aside className="flex w-80 shrink-0 flex-col border-r">
-                <div className="flex items-center justify-between gap-2 p-4">
-                    <div>
-                        <h1 className="text-lg font-semibold tracking-tight">{t("title")}</h1>
-                        <p className="text-xs text-muted-foreground">{t("description")}</p>
-                    </div>
-                    <Button size="icon-sm" onClick={() => setNewChatOpen(true)}>
-                        <IconMessagePlus />
-                        <span className="sr-only">{t("list.new")}</span>
-                    </Button>
-                </div>
+            <div className="flex flex-1 min-h-0 overflow-hidden rounded-3xl border bg-card">
+                <ConversationList
+                    conversations={visibleConversations}
+                    hasAny={conversations.length > 0}
+                    activeId={activeId}
+                    isLoading={isLoadingList}
+                    search={search}
+                    onSearchChange={setSearch}
+                    filter={filter}
+                    onFilterChange={setFilter}
+                    onSelect={selectConversation}
+                    onNewChat={() => setNewChatOpen(true)}
+                    mode={mode}
+                    onModeChange={setMode}
+                    threads={threads}
+                    activeOrderId={activeOrderId}
+                    isLoadingThreads={threadsQuery.isPending}
+                    onSelectOrder={selectOrder}
+                />
 
-                <Separator />
+                <section className="flex min-w-0 flex-1 flex-col">
+                    {mode === "orders" ? (
+                        // An order whose thread cannot be opened — no such
+                        // order, or a reader who is not in the room — reads
+                        // like nothing is picked
+                        !activeOrderId || orderChat.unavailable ? (
+                            <Empty className="flex-1">
+                                <EmptyHeader>
+                                    <EmptyMedia variant="icon">
+                                        <IconMessage />
+                                    </EmptyMedia>
+                                    <EmptyTitle>{t("threads.emptyTitle")}</EmptyTitle>
+                                    <EmptyDescription>{t("threads.emptyDescription")}</EmptyDescription>
+                                </EmptyHeader>
+                            </Empty>
+                        ) : (
+                            <>
+                                <header className="flex items-center gap-3 p-4">
+                                    <div className="min-w-0 flex-1">
+                                        <div className="truncate font-medium">{activeOrderId}</div>
+                                        {/* The parties come off the list row, which
+                                            an order nobody has written to yet has not
+                                            got */}
+                                        {activeThread && (
+                                            <div className="truncate text-xs text-muted-foreground">
+                                                {[activeThread.shipperName, activeThread.carrierName ?? t("threads.noCarrier")]
+                                                    .filter(Boolean)
+                                                    .join(" · ")}
+                                            </div>
+                                        )}
+                                    </div>
 
-                <div className="flex-1 overflow-y-auto">
-                    {isLoadingList ? (
-                        <div className="flex justify-center py-10">
-                            <Spinner className="size-5" />
-                        </div>
-                    ) : conversations.length === 0 ? (
-                        <Empty className="py-10">
+                                    {/* The panel is one state for both lists, and
+                                        the driver header's toggle is the only other
+                                        one: without this, a panel closed there
+                                        could not be opened here */}
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className={cn("ml-auto", isPanelOpen && "bg-muted")}
+                                        aria-pressed={isPanelOpen}
+                                        onClick={() => setPanelOpen((open) => !open)}
+                                    >
+                                        <IconInfoCircle />
+                                        <span className="sr-only">{t("thread.info")}</span>
+                                    </Button>
+                                </header>
+
+                                <Separator />
+
+                                <div className="flex min-h-0 flex-1 flex-col gap-2 p-4">
+                                    <ChatThread
+                                        messages={orderChat.messages}
+                                        meUserId={orderChat.meUserId}
+                                        loading={orderChat.isLoading}
+                                        formatTime={(date) => f.dateTime(date, { dateStyle: "short", timeStyle: "short" })}
+                                        labels={{
+                                            empty: t("threads.empty"),
+                                            you: t("threads.you"),
+                                            loadMore: t("threads.loadMore"),
+                                        }}
+                                    />
+
+                                    <ChatComposer
+                                        onSend={orderChat.send}
+                                        disabled={!orderChat.threadId}
+                                        pending={orderChat.sending}
+                                        accept={THREAD_ACCEPTED}
+                                        maxBytes={THREAD_MAX_BYTES}
+                                        maxFiles={THREAD_MAX_FILES}
+                                        labels={{
+                                            placeholder: t("threads.placeholder"),
+                                            send: t("threads.send"),
+                                            attach: t("threads.attach"),
+                                            remove: t("threads.remove"),
+                                            badType: t("threads.errors.FILE_TYPE"),
+                                            tooLarge: t("threads.errors.FILE_TOO_LARGE"),
+                                            tooMany: t("threads.errors.TOO_MANY_FILES"),
+                                        }}
+                                    />
+                                </div>
+                            </>
+                        )
+                    ) : !activeConversation ? (
+                        <Empty className="flex-1">
                             <EmptyHeader>
                                 <EmptyMedia variant="icon">
                                     <IconMessage />
                                 </EmptyMedia>
-                                <EmptyTitle>{t("list.emptyTitle")}</EmptyTitle>
-                                <EmptyDescription>{t("list.emptyDescription")}</EmptyDescription>
+                                <EmptyTitle>{t("thread.emptyTitle")}</EmptyTitle>
+                                <EmptyDescription>{t("thread.emptyDescription")}</EmptyDescription>
                             </EmptyHeader>
                         </Empty>
                     ) : (
-                        <ItemGroup className="gap-1 p-2">
-                            {conversations.map((conversation) => (
-                                <Item
-                                    key={conversation.id}
-                                    asChild
-                                    size="sm"
-                                    className={cn(
-                                        "cursor-pointer",
-                                        conversation.id === activeId && "bg-accent",
-                                    )}
-                                >
-                                    <button type="button" onClick={() => setActiveId(conversation.id)}>
-                                        <ItemMedia>
-                                            <Avatar className="size-9">
-                                                <AvatarFallback>{initials(conversation.driverName)}</AvatarFallback>
-                                            </Avatar>
-                                        </ItemMedia>
-                                        <ItemContent>
-                                            <ItemTitle className="flex w-full items-center justify-between gap-2">
-                                                <span className="truncate">{conversation.driverName}</span>
-                                                <span className="shrink-0 text-xs font-normal text-muted-foreground">
-                                                    {f.relativeTime(conversation.lastMessageAt)}
-                                                </span>
-                                            </ItemTitle>
-                                            <ItemDescription className="truncate">
-                                                {conversation.lastMessage ?? conversation.driverPhone}
-                                            </ItemDescription>
-                                        </ItemContent>
-                                    </button>
-                                </Item>
-                            ))}
-                        </ItemGroup>
+                        <>
+                            <Thread
+                                conversation={activeConversation}
+                                items={items}
+                                isLoading={isLoadingThread}
+                                panelOpen={isPanelOpen}
+                                onTogglePanel={() => setPanelOpen((open) => !open)}
+                            />
+                            <Separator />
+                            <Composer
+                                draft={draft}
+                                onDraftChange={setDraft}
+                                onSend={onSend}
+                                isSending={isSending}
+                                onRequestLocation={onRequestLocation}
+                                isRequestingLocation={isRequestingLocation}
+                                draftRef={draftRef}
+                            />
+                        </>
                     )}
-                </div>
-            </aside>
+                </section>
 
-            {/* Thread */}
-            <section className="flex min-w-0 flex-1 flex-col">
-                {!activeConversation ? (
-                    <Empty className="flex-1">
-                        <EmptyHeader>
-                            <EmptyMedia variant="icon">
-                                <IconMessage />
-                            </EmptyMedia>
-                            <EmptyTitle>{t("thread.emptyTitle")}</EmptyTitle>
-                            <EmptyDescription>{t("thread.emptyDescription")}</EmptyDescription>
-                        </EmptyHeader>
-                    </Empty>
-                ) : (
-                    <>
-                        <header className="flex items-center gap-3 p-4">
-                            <Avatar className="size-9">
-                                <AvatarFallback>{initials(activeConversation.driverName)}</AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0">
-                                <div className="truncate font-medium">{activeConversation.driverName}</div>
-                                <div className="truncate text-xs text-muted-foreground">
-                                    {activeConversation.driverPhone}
-                                </div>
-                            </div>
-                            {activeConversation.orderId && (
-                                <Badge variant="secondary" className="ml-auto">
-                                    {t("thread.order")} {activeConversation.orderId}
-                                </Badge>
-                            )}
-                        </header>
-
-                        <Separator />
-
-                        <MessageScrollerProvider>
-                            <MessageScroller className="flex-1">
-                                <MessageScrollerViewport className="px-4">
-                                    <MessageScrollerContent className="gap-4 py-4">
-                                        {isLoadingThread && messages.length === 0 ? (
-                                            <div className="flex justify-center py-10">
-                                                <Spinner className="size-5" />
-                                            </div>
-                                        ) : (
-                                            messages.map((message) => (
-                                                <MessageScrollerItem key={message.id}>
-                                                    {message.direction === "outbound" ? (
-                                                        <Message align="end">
-                                                            <MessageContent>
-                                                                <Bubble align="end">
-                                                                    <BubbleContent>{message.body}</BubbleContent>
-                                                                </Bubble>
-                                                                <MessageFooter className="gap-1">
-                                                                    {f.dateTime(message.createdAt, { hour: "2-digit", minute: "2-digit" })}
-                                                                    <StatusIcon status={message.status} />
-                                                                    {message.status === "failed" && (
-                                                                        <span className="text-destructive">{t("thread.failed")}</span>
-                                                                    )}
-                                                                </MessageFooter>
-                                                            </MessageContent>
-                                                        </Message>
-                                                    ) : (
-                                                        <Message>
-                                                            <MessageAvatar>
-                                                                <Avatar className="size-8">
-                                                                    <AvatarFallback className="text-xs">
-                                                                        {initials(activeConversation.driverName)}
-                                                                    </AvatarFallback>
-                                                                </Avatar>
-                                                            </MessageAvatar>
-                                                            <MessageContent>
-                                                                <Bubble variant="muted">
-                                                                    <BubbleContent>{message.body}</BubbleContent>
-                                                                </Bubble>
-                                                                <MessageFooter>
-                                                                    {f.dateTime(message.createdAt, { hour: "2-digit", minute: "2-digit" })}
-                                                                </MessageFooter>
-                                                            </MessageContent>
-                                                        </Message>
-                                                    )}
-                                                </MessageScrollerItem>
-                                            ))
-                                        )}
-                                    </MessageScrollerContent>
-                                </MessageScrollerViewport>
-                                <MessageScrollerButton />
-                            </MessageScroller>
-                        </MessageScrollerProvider>
-
-                        <Separator />
-
-                        <form
-                            className="p-4"
-                            onSubmit={(event) => {
-                                event.preventDefault();
-                                onSend();
-                            }}
-                        >
-                            <InputGroup>
-                                <InputGroupTextarea
-                                    ref={draftRef}
-                                    rows={1}
-                                    value={draft}
-                                    disabled={isSending}
-                                    placeholder={t("thread.composer")}
-                                    onChange={(event) => setDraft(event.target.value)}
-                                    onKeyDown={(event) => {
-                                        if (event.key === "Enter" && !event.shiftKey) {
-                                            event.preventDefault();
-                                            onSend();
-                                        }
-                                    }}
-                                />
-                                <InputGroupButton
-                                    type="submit"
-                                    size="icon-sm"
-                                    className="self-end"
-                                    disabled={isSending || !draft.trim()}
-                                >
-                                    {isSending ? <Spinner className="size-4" /> : <IconSend />}
-                                    <span className="sr-only">{t("thread.send")}</span>
-                                </InputGroupButton>
-                            </InputGroup>
-                        </form>
-                    </>
+                {/* The same panel either way — an order conversation is
+                    already named by the order it hangs off */}
+                {isPanelOpen && (mode === "orders" ? activeOrderId : activeConversation) && (
+                    <OrderPanel
+                        orderId={mode === "orders" ? activeOrderId : activeConversation?.orderId ?? null}
+                        onClose={() => setPanelOpen(false)}
+                    />
                 )}
-            </section>
 
                 <NewChatDialog
                     open={isNewChatOpen}
                     onOpenChange={setNewChatOpen}
                     onStarted={(conversation) => {
                         setNewChatOpen(false);
-                        setActiveId(conversation.id);
+                        selectConversation(conversation.id);
                         queryClient.invalidateQueries(trpc.chats.list.queryFilter());
                     }}
                 />

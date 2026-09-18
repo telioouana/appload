@@ -1,0 +1,109 @@
+{
+    "title": "Notificações",
+    "description": "Tudo o que aconteceu à sua empresa no portal.",
+    "unread": "Por ler",
+    "filters": {
+        "all": "Todas",
+        "unread": "Por ler",
+        "any-kind": "Todos os tipos"
+    },
+    "families": {
+        "connections": "Parceiros",
+        "orders": "Pedidos Appload",
+        "quotes": "Cotações",
+        "loads": "As suas cargas",
+        "messages": "Mensagens",
+        "account": "Conta"
+    },
+    "actions": {
+        "mark-all": "Marcar todas como lidas",
+        "mark-all-short": "Marcar todas"
+    },
+    "data": {
+        "empty": {
+            "title": "Ainda não há notificações.",
+            "description": "Assim que algo acontecer às suas cargas, pedidos ou parceiros, aparece aqui."
+        },
+        "no-results": {
+            "title": "Nada com estes filtros.",
+            "description": "Retire um filtro para ver mais."
+        },
+        "error": "Não foi possível carregar as notificações."
+    },
+    "toasts": {
+        "all-read": "{count, plural, =0 {Não havia nada por ler} one {# notificação marcada como lida} other {# notificações marcadas como lidas}}"
+    },
+    "errors": {
+        "unknown": "Não foi possível concluir. Tente novamente."
+    },
+    "kind-labels": {
+        "connection-requested": "Pedido de ligação",
+        "connection-accepted": "Ligação aceite",
+        "connection-declined": "Ligação recusada",
+        "connection-removed": "Ligação terminada",
+        "claim-approved": "Acesso aprovado",
+        "member-joined": "Novo membro",
+        "order-requested": "Pedido de cotação",
+        "order-quoted": "Pedido cotado",
+        "order-booked": "Pedido confirmado",
+        "order-status": "Mudança de estado",
+        "order-cancelled": "Pedido cancelado",
+        "order-document": "Documento anexado",
+        "quote-received": "Cotação recebida",
+        "quote-accepted": "Cotação aceite",
+        "quote-declined": "Cotação recusada",
+        "quote-withdrawn": "Cotação retirada",
+        "movement-offered": "Carga oferecida",
+        "movement-accepted": "Oferta aceite",
+        "movement-declined": "Oferta recusada",
+        "movement-started": "Carga em curso",
+        "movement-delivered": "Carga entregue",
+        "movement-cancelled": "Carga cancelada",
+        "movement-withdrawn": "Oferta retirada",
+        "movement-location-alert": "Alerta de localização",
+        "movement-document": "Documento adicionado",
+        "movement-dispute-opened": "Disputa aberta",
+        "movement-dispute-resolved": "Disputa resolvida",
+        "thread-message": "Nova mensagem",
+        "subscription-changed": "Plano alterado"
+    },
+    "kinds": {
+        "connection-requested": "{partnerName} quer ligar-se à sua empresa.",
+        "connection-accepted": "{partnerName} aceitou a sua ligação.",
+        "connection-declined": "{partnerName} recusou a sua ligação.",
+        "connection-removed": "{partnerName} terminou a ligação com a sua empresa.",
+        "claim-approved": "O seu acesso ao portal foi aprovado.",
+        "member-joined": "{memberName} entrou na sua empresa.",
+        "order-requested": "{shipperName} pediu-lhe uma cotação para o pedido {orderId}.",
+        "order-quoted": "{carrierName} cotou o pedido {orderId}.",
+        "order-booked": "O pedido {orderId} foi confirmado.",
+        "order-status": "{to, select, prospect{O pedido {orderId} voltou a cotação.} booked{O pedido {orderId} foi confirmado.} loading{O pedido {orderId} está em carregamento.} offloading{O pedido {orderId} está em descarregamento.} stopped{O pedido {orderId} está parado.} issue{O pedido {orderId} está com um problema.} delivered{O pedido {orderId} foi entregue.} completed{O pedido {orderId} está concluído.} cancelled{O pedido {orderId} foi cancelado.} underbid{O pedido {orderId} foi perdido por preço.} other{O pedido {orderId} mudou de estado.}}",
+        "order-cancelled": "O pedido {orderId} foi cancelado.",
+        "order-document": "Foi anexado {documentType, select, pod{um comprovativo de entrega} evidence{uma evidência} other{um documento}} ao pedido {orderId}.",
+        "quote-received": "{carrierName} enviou-lhe uma cotação.",
+        "quote-accepted": "{clientName} aceitou a sua cotação e o pedido {orderId} foi criado.",
+        "quote-declined": "Uma cotação sua foi recusada.",
+        "quote-withdrawn": "{carrierName} retirou a cotação que lhe tinha enviado.",
+        "movement-offered": "{organizationName} ofereceu-lhe a carga {ref}: {origin} → {destination}, por {total} {currency}.",
+        "movement-accepted": "{organizationName} aceitou a carga {ref} ({origin} → {destination}).",
+        "movement-declined": "{organizationName} recusou a carga {ref} ({origin} → {destination}); é preciso entregá-la a outro parceiro.",
+        "movement-started": "A carga {ref} está em curso: o camião chegou ao local de carregamento ({origin} → {destination}).",
+        "movement-delivered": "A carga {ref} chegou a {destination}.",
+        "movement-cancelled": "A carga {ref} ({origin} → {destination}) foi cancelada.",
+        "movement-withdrawn": "{organizationName} retirou a oferta da carga {ref} ({origin} → {destination}).",
+        "movement-location-alert": "{issue, select, noLocation{{driverName} não enviou a localização da carga {ref} nesta ronda.} shortDistance{{driverName} avançou menos de 20 km desde a última posição na carga {ref}.} pickedAddress{{driverName} enviou um endereço escolhido em vez da posição real na carga {ref}.} other{{driverName} não enviou uma posição válida na carga {ref}.}}{streak, plural, =1 {} =2 {{audience, select, client{ Segunda ronda seguida — o transportador também foi avisado.} other{ Segunda ronda seguida — o cliente também foi avisado.}}} other {{audience, select, client{ São já {streak} rondas seguidas — o transportador também foi avisado.} other{ São já {streak} rondas seguidas — o cliente também foi avisado.}}}}",
+        "movement-document": "{type, select, pod {Um comprovativo de entrega} cmr {Um CMR} invoice {Uma fatura} receipt {Um recibo} other {Um documento}} foi adicionado à carga {ref}.",
+        "movement-dispute-opened": "{named, select, true {{organizationName} abriu uma disputa na carga {ref} ({origin} → {destination}) por {reason, select, theft {roubo} loss {perda} damage {dano} other {outro motivo}}.} other {Uma empresa na carga {ref} ({origin} → {destination}) abriu uma disputa por {reason, select, theft {roubo} loss {perda} damage {dano} other {outro motivo}}.}}",
+        "movement-dispute-resolved": "{named, select, true {{organizationName} resolveu a disputa na carga {ref} ({origin} → {destination}).} other {Uma empresa na carga {ref} ({origin} → {destination}) resolveu a disputa.}}",
+        "thread-message": "{attachments, plural, =0 {{senderName} escreveu em {reference}: {preview}} one {{senderName} enviou um ficheiro em {reference}.} other {{senderName} enviou # ficheiros em {reference}.}}",
+        "subscription-changed": "{plan, select, starter{A sua empresa passou para o plano Starter.} business{A sua empresa passou para o plano Business.} enterprise{A sua empresa passou para o plano Enterprise.} other{A sua empresa ficou sem plano activo.}}"
+    },
+    "email": {
+        "subject": "Appload — {title}",
+        "greeting": "Olá, tem uma novidade na sua conta Appload.",
+        "cta": "Abrir no portal",
+        "disclaimer": "Recebeu esta mensagem porque a sua empresa usa o Appload Enterprise.",
+        "footer": "Pode acompanhar tudo no portal, a qualquer momento."
+    },
+    "alert-badge": "Alerta de localização"
+}

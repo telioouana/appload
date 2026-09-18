@@ -1,5 +1,13 @@
-import { isInfobipConfigured } from "@/lib/chats/infobip"
+import { getTranslations } from "@workspace/i18n/server"
+import { isInfobipConfigured } from "@workspace/comms/infobip"
+
 import { ChatsView } from "@/frontend/pages/chats/views/chats-view"
+
+export async function generateMetadata() {
+    const t = await getTranslations("Admin.messages")
+
+    return { title: t("title") }
+}
 
 export default function Chats() {
     // Server-derived so the operator sees, on the page itself, that sends

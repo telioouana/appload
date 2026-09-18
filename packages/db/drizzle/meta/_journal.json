@@ -50,6 +50,118 @@
       "when": 1787145957159,
       "tag": "0006_underbid_status",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788180871123,
+      "tag": "0007_normalize_chat_phones",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788261100219,
+      "tag": "0008_chat_last_read",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788423381905,
+      "tag": "0009_order_dispute",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788469850899,
+      "tag": "0010_order_tracking_map",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788721616334,
+      "tag": "0011_order_offer",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1788762514783,
+      "tag": "0012_order_offer_pricing",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788796869330,
+      "tag": "0013_fx_daily_rate",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1788972710524,
+      "tag": "0014_portal",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1789024762403,
+      "tag": "0015_subscription",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1789070623924,
+      "tag": "0016_movements",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789340863885,
+      "tag": "0017_movement_document_approval",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789347676507,
+      "tag": "0018_movement_tracking_alert",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789367814423,
+      "tag": "0019_movement_chain_disputes",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789470344023,
+      "tag": "0020_location_place_label",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789497864075,
+      "tag": "0021_dispatch_check_threads",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1789547358786,
+      "tag": "0022_appload_partner",
+      "breakpoints": true
     }
   ]
 }

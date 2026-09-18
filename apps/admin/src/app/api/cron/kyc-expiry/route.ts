@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@workspace/db/db";
+import { authorizeCron } from "@workspace/comms/cron";
 
-import { authorizeCron } from "@/lib/cron/verify";
-import { runExpirySweep } from "@/lib/kyc/expiry";
+import { runExpirySweep } from "@workspace/domain/kyc/expiry";
 
 // Sequential per-subject recomputation; the candidate set is bounded by how
 // many documents are near expiry, not by the size of the partner base.

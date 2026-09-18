@@ -1,57 +1,65 @@
 import { z } from "zod";
-import { and, desc, eq, isNull, max, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, max, notInArray, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
-import { order, orderDocument, orderHistory, sheetSync, type CreateOrder, type Order } from "@workspace/db/orders";
+import { order, orderDispute, orderDocument, orderHistory, orderOffer, sheetSync, type Order } from "@workspace/db/orders";
 import { user } from "@workspace/db/users";
 import { trailer, truck } from "@workspace/db/fleet";
 import type { db as Database } from "@workspace/db/db";
-import { ORDER_STATUS, type LoadingBay } from "@workspace/db/types";
+import { ACTIVE_DISPUTE_STATUSES, isActiveDispute, ORDER_STATUS, type LoadingBay } from "@workspace/db/types";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
-import { isAuthorized } from "@workspace/auth/user-permissions";
+import { isAuthorized, type StaffRole } from "@workspace/auth/user-permissions";
+import type { Auth } from "@workspace/auth/server";
 import { sendEmail } from "@workspace/auth/email";
 
 import { CreateOrderSchemaServer, UpdateOrderSchemaServer, type CreateOrderForm } from "@/backend/schemas/order";
 
-import { OrderError } from "@/lib/orders/errors";
-import { guardOrderGate } from "@/lib/kyc/order-gate";
-import { startConversation } from "@/lib/chats/conversations";
-import { foreignKeyViolationConstraint, uniqueViolationConstraint } from "@/lib/db-errors";
-import { deriveOrderFields, derivePaymentStatus } from "@/lib/orders/derive";
-import { allowedTransitions, transitionRequirements, validateTransition, type OrderStatus } from "@/lib/orders/transitions";
-import { isReadyToBook } from "@/lib/orders/booking-readiness";
+import { markApploadCandidateQuoted, syncApploadLinks } from "@workspace/domain/appload/link";
+import { OrderError } from "@workspace/domain/orders/errors";
+import { guardOrderGate } from "@workspace/domain/kyc/order-gate";
+import { FOLLOW_UP_STATUSES } from "@workspace/domain/tracking/conversations";
+import { foreignKeyViolationConstraint } from "@workspace/db/errors";
+import { deriveOrderFields } from "@workspace/domain/orders/derive";
+import { allowedTransitions, transitionRequirements } from "@workspace/domain/orders/transitions";
+import { isDispatchMove } from "@workspace/domain/orders/dispatch-readiness";
+import { loadDispatchReadiness } from "@workspace/domain/orders/dispatch-papers";
+import { loadDispatchPack, recordDispatch, rigChanged } from "@workspace/domain/orders/dispatch-pack";
+import { LoadingCheckInputSchema, loadingMoveRequirements } from "@workspace/domain/orders/loading-check";
+import { loadLoadingCheckState, openDispatchId, recordLoadingCheck } from "@workspace/domain/orders/loading-check-store";
+import type { Actor } from "@workspace/domain/orders/actor";
+import { ON_GOING_STATUSES } from "@workspace/domain/orders/status-groups";
+import { carrierSnapshot } from "@workspace/domain/orders/carrier-snapshot";
+import { offerPricingColumns, priceOffer } from "@workspace/domain/orders/commission";
 import { getSheetsAccessToken } from "@/lib/orders/google-token";
-import { currentOrderYear, maxSheetSeq, nextOrderId } from "@/lib/orders/order-id";
+import { currentOrderYear, maxSheetSeq, nextOrderId } from "@workspace/domain/orders/order-id";
 import { getRange } from "@/lib/orders/sheets-client";
 import { HEADER_ROW, SHEET_NAME, resolveColumns } from "@/lib/orders/orders-sheet-mapping";
 import { syncSheetsAndRecord } from "@/lib/orders/sheet-outbox";
-import { changedCurrencyParties, partiesWithMoneyDocuments } from "@/lib/orders/note-currency";
-import { changedPaymentParties, proofPaymentPatch, type PaymentSums } from "@/lib/orders/payments";
-import { paymentSums } from "@/lib/orders/payment-sums";
-import { diffChangedFields } from "@/lib/orders/order-facts";
+import { changedPaymentParties, proofPaymentPatch, type PaymentSums } from "@workspace/domain/orders/payments";
+import { paymentSums } from "@workspace/domain/orders/payment-sums";
+import { diffChangedFields } from "@workspace/domain/orders/order-facts";
+import { acceptedOfferOf, createOrder, decimal, toInsertValues, type CreateOrderOutput } from "@workspace/domain/orders/create";
+import {
+    acceptOffer,
+    applyTransition,
+    assertCurrencyUnlocked,
+    deriveResumeStatus,
+    liveStatus,
+    pendingOfferCount,
+    resumeFromHistory,
+    startFollowUpChat,
+    type TransitionOrderOutput,
+} from "@workspace/domain/orders/transition";
 
-/**
- * A leg's currency is what gives the stored note totals and proof-of-payment
- * sums their meaning, so it cannot be repointed once that party has live
- * notes or has ever had a proof — the totals would be silently
- * reinterpreted. Callers must have already loaded `current`.
- */
-async function assertCurrencyUnlocked(
-    db: typeof Database,
-    patch: { shipperCurrency?: string | null; carrierCurrency?: string | null },
-    current: { id: string; shipperCurrency: string | null; carrierCurrency: string | null },
-) {
-    const changing = changedCurrencyParties(patch, current);
+import { listOffers } from "./offers-procedures";
 
-    if (!changing.length) return;
-
-    const locked = await partiesWithMoneyDocuments(db, current.id);
-
-    if (changing.some((party) => locked.has(party))) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "NOTE_CURRENCY_LOCKED" });
-    }
-}
+// The order write itself lives in @workspace/domain/orders (both apps go
+// through the same door); these are re-exported so the routers, the
+// activity catalog and the orders list keep importing them from here.
+export { pendingOfferCount } from "@workspace/domain/orders/transition";
+export type { CreateOrderOutput } from "@workspace/domain/orders/create";
+export type { BookedOfferMetadata, TransitionOrderOutput } from "@workspace/domain/orders/transition";
 
 /**
  * A POP-governed leg derives its paid block from the recorded proofs, so a
@@ -111,183 +119,6 @@ export function toTRPCError(error: unknown): TRPCError {
     return new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN", cause: error });
 }
 
-const decimal = (value: number | undefined) => (value === undefined ? null : String(value));
-
-function toInsertValues(
-    input: CreateOrderForm,
-    id: { orderId: string; seq: number; year: number },
-    userId: string,
-): CreateOrder {
-    return {
-        orderId: id.orderId,
-        seq: id.seq,
-        year: id.year,
-
-        shipperName: input.shipperName,
-        shipperId: input.shipperId,
-
-        loadingAddress: input.loadingAddress,
-        expectedLoadingDate: input.expectedLoadingDate,
-
-        offloadingAddress: input.offloadingAddress,
-        expectedOffloadingDate: input.expectedOffloadingDate ?? null,
-
-        distance: input.distance,
-
-        category: input.category,
-        description: input.description,
-        weight: decimal(input.weight)!,
-        weightUnit: input.weightUnit,
-
-        status: input.status,
-        // Status-driven rule: prospect → not-applicable, booked → pending
-        carrierPaymentStatus: derivePaymentStatus(input.status, null) ?? null,
-        shipperPaymentStatus: derivePaymentStatus(input.status, null) ?? null,
-        route: input.routeType,
-        tripType: input.tripType,
-        loadType: input.loadType,
-        deliveries: input.deliveries,
-
-        carrierName: input.carrierName,
-        carrierId: input.carrierId ?? null,
-
-        driverName: input.driverName ?? null,
-        driverId: input.driverId ?? null,
-        driverPhoneNumber: input.driverContact ?? null,
-        driverPassport: input.driverPassport ?? null,
-
-        truckPlate: input.truckPlate,
-        truckAge: input.truckAge,
-        linkPlate: input.linkPlate || null,
-        trailerPlate: input.trailerPlate || null,
-
-        fiscalRegime: input.fiscalRegime ?? null,
-        carrierSubtotal: decimal(input.carrierSubtotal),
-        carrierVAT: decimal(input.carrierVAT),
-        carrierTotal: decimal(input.carrierTotal),
-        carrierCurrency: input.carrierCurrency,
-
-        shipperSubtotal: decimal(input.shipperSubtotal),
-        shipperVAT: decimal(input.shipperVAT),
-        shipperTotal: decimal(input.shipperTotal),
-        shipperCurrency: input.shipperCurrency,
-
-        insuranceSubscriber: input.insuranceSubscriber || null,
-        insuranceValue: decimal(input.insuranceValue),
-        insuranceCurrency: input.insuranceCurrency ?? null,
-        insuranceStatus: input.insuranceStatus ?? null,
-
-        dealDate: input.dealDate ?? null,
-        apploadCommissionSubtotal: decimal(input.commissionSubtotal),
-        apploadCommissionVAT: decimal(input.commissionVAT),
-        apploadCommissionTotal: decimal(input.commissionTotal),
-
-        createdBy: userId,
-    };
-}
-
-const isUniqueViolation = (error: unknown): boolean => uniqueViolationConstraint(error) !== null;
-
-// Only Date-valued keys, so the same object can feed both the drizzle
-// .set() clause and deriveOrderFields' patch parameter
-type TransitionStamps = Partial<Record<
-    | "arrivalAtLoading" | "actualLoadingDate" | "departureLoadingDate"
-    | "departureFromBorder" | "arrivalAtBorder" | "arrivalAtOffloading"
-    | "actualOffloadingDate" | "departureOffloadingDate",
-    Date
->>;
-
-/**
- * Milestone timestamps implied by a transition, stamped only when still
- * empty — arriving at the border IS the arrival time. Ops can correct the
- * exact time later through the edit form.
- */
-function transitionStamps(current: Order, to: OrderStatus): TransitionStamps {
-    const stamps: TransitionStamps = {};
-    const now = new Date();
-
-    switch (to) {
-        case "at-loading":
-            if (current.arrivalAtLoading === null) stamps.arrivalAtLoading = now;
-            break;
-        case "loading":
-            if (current.actualLoadingDate === null) stamps.actualLoadingDate = now;
-            break;
-        case "on-route":
-            if (current.status === "at-border" && current.departureFromBorder === null) {
-                stamps.departureFromBorder = now;
-            }
-            if ((current.status === "loading" || current.status === "waiting-documents") && current.departureLoadingDate === null) {
-                stamps.departureLoadingDate = now;
-            }
-            break;
-        case "at-border":
-            if (current.arrivalAtBorder === null) stamps.arrivalAtBorder = now;
-            break;
-        case "at-offloading":
-            if (current.arrivalAtOffloading === null) stamps.arrivalAtOffloading = now;
-            break;
-        case "offloading":
-            if (current.actualOffloadingDate === null) stamps.actualOffloadingDate = now;
-            break;
-        case "delivered":
-            if (current.departureOffloadingDate === null) stamps.departureOffloadingDate = now;
-            break;
-    }
-
-    return stamps;
-}
-
-/**
- * Booked side effect: open (or relink) the driver's follow-up conversation.
- * Skips silently when the order has no driver phone yet — the skip lands in
- * the history metadata so it is visible on the timeline.
- */
-async function startFollowUpChat(db: typeof Database, updated: Order, orderPk: string): Promise<void> {
-    if (!updated.driverPhoneNumber) {
-        await db.insert(orderHistory).values({
-            orderId: orderPk,
-            actorUserId: null,
-            kind: "system",
-            metadata: { followUpChat: "skipped-no-phone" },
-        });
-        return;
-    }
-
-    const { conversation, existing } = await startConversation(db, {
-        driverName: updated.driverName ?? updated.driverPhoneNumber,
-        driverPhone: updated.driverPhoneNumber,
-        orderId: updated.orderId,
-    });
-
-    await db.insert(orderHistory).values({
-        orderId: orderPk,
-        actorUserId: null,
-        kind: "system",
-        metadata: { followUpChat: existing ? "relinked" : "created", conversationId: conversation.id },
-    });
-}
-
-/**
- * The chain status an interrupted (stopped/issue) order returns to: the
- * last transition target outside the interrupt pair. Derived from history
- * instead of a denormalized column so it can never drift.
- */
-async function deriveResumeStatus(db: typeof Database, orderPk: string): Promise<OrderStatus | null> {
-    const [row] = await db
-        .select({ toStatus: orderHistory.toStatus })
-        .from(orderHistory)
-        .where(and(
-            eq(orderHistory.orderId, orderPk),
-            eq(orderHistory.kind, "transition"),
-            notInArray(orderHistory.toStatus, ["stopped", "issue"]),
-        ))
-        .orderBy(desc(orderHistory.createdAt))
-        .limit(1);
-
-    return row?.toStatus ?? null;
-}
-
 /**
  * The bay type only lives on the fleet registry; the trailer's bay wins over
  * the truck's — same precedence the create form applies when picking vehicles.
@@ -311,11 +142,116 @@ async function lookupLoadingBay(db: typeof Database, row: Order): Promise<Loadin
     return vehicle?.loadingBay?.type ?? null;
 }
 
-export type CreateOrderOutput = {
-    orderId: string;
-    status: Order["status"];
-    warning?: "SHEET_FAILED";
-};
+/**
+ * Brings a prospect's PENDING offers in line with a deal-form payload:
+ * rows carrying an id are re-priced, rows without one are added with a
+ * fresh carrier snapshot, and pending rows the payload dropped are
+ * deleted. The `status = pending` guard is what protects the record — a
+ * decided offer never travels with the form, and one decided between load
+ * and save is silently left alone rather than resurrected.
+ *
+ * Returns the id of the offer the payload marked accepted (its own, or
+ * the one just inserted for it), which is what the booking then accepts.
+ */
+async function syncDealOffers(
+    db: typeof Database,
+    orderPk: string,
+    offers: CreateOrderForm["offers"],
+    userId: string,
+    route: CreateOrderForm["routeType"],
+): Promise<string | null> {
+    const keptIds = offers.map((offer) => offer.id).filter((id): id is string => id !== undefined);
+
+    await db
+        .delete(orderOffer)
+        .where(and(
+            eq(orderOffer.orderId, orderPk),
+            eq(orderOffer.status, "pending"),
+            keptIds.length > 0 ? notInArray(orderOffer.id, keptIds) : undefined,
+        ));
+
+    let acceptedId: string | null = null;
+
+    for (const offer of offers) {
+        const values = {
+            carrierId: offer.carrierId,
+            carrierName: offer.carrierName,
+            fiscalRegime: offer.fiscalRegime,
+            subtotal: decimal(offer.subtotal),
+            vat: decimal(offer.vat),
+            total: String(offer.total),
+            currency: offer.currency,
+            includesGit: offer.includesGit,
+            includesGps: offer.includesGps,
+            notes: offer.notes || null,
+            // Priced against the route the same save carries, like the
+            // offers router prices against the stored one
+            ...offerPricingColumns(priceOffer({
+                carrierTotal: offer.total,
+                fiscalRegime: offer.fiscalRegime,
+                commissionTotal: offer.commissionTotal,
+                route,
+            })),
+        };
+
+        if (offer.id !== undefined) {
+            // Scoped to this order like the delete above: an id is client
+            // data, and one belonging to another order would be re-priced
+            // here long before the booking's ownership check sees it
+            const [stored] = await db
+                .select({ carrierId: orderOffer.carrierId })
+                .from(orderOffer)
+                .where(and(eq(orderOffer.id, offer.id), eq(orderOffer.orderId, orderPk)));
+
+            // A different carrier is a different track record, so the frozen
+            // snapshot follows it — the rule offers.update already applies
+            const moved = stored !== undefined && stored.carrierId !== offer.carrierId
+                ? await carrierSnapshot(db, offer.carrierId)
+                : null;
+
+            await db
+                .update(orderOffer)
+                .set({ ...values, ...(moved && { carrierSince: moved.since, carrierTrips: moved.trips }) })
+                .where(and(
+                    eq(orderOffer.orderId, orderPk),
+                    eq(orderOffer.id, offer.id),
+                    eq(orderOffer.status, "pending"),
+                ));
+
+            // The quote moved to another carrier: that one is now the one
+            // waiting on the decision (appload/link.ts), best-effort
+            if (moved) {
+                await markApploadCandidateQuoted(db, { orderPk, carrierOrgId: offer.carrierId })
+                    .catch((error: unknown) => console.error(`appload candidate failed for ${orderPk}`, error));
+            }
+
+            if (offer.accepted) acceptedId = offer.id;
+            continue;
+        }
+
+        const snapshot = await carrierSnapshot(db, offer.carrierId);
+
+        const [inserted] = await db
+            .insert(orderOffer)
+            .values({
+                orderId: orderPk,
+                ...values,
+                carrierSince: snapshot.since,
+                carrierTrips: snapshot.trips,
+                createdBy: userId,
+            })
+            .returning({ id: orderOffer.id });
+
+        // A price registered on the carrier's behalf answers the request its
+        // linked row is waiting on, the same hook the offers router runs
+        await markApploadCandidateQuoted(db, { orderPk, carrierOrgId: offer.carrierId })
+            .catch((error: unknown) => console.error(`appload candidate failed for ${orderPk}`, error));
+
+        if (offer.accepted && inserted) acceptedId = inserted.id;
+    }
+
+    return acceptedId;
+}
 
 export type UpdateOrderOutput = {
     orderId: string;
@@ -324,11 +260,68 @@ export type UpdateOrderOutput = {
     warning?: "SHEET_FAILED";
 };
 
-export type TransitionOrderOutput = {
-    orderId: string;
-    order: Order;
-    warning?: "SHEET_FAILED";
+export const TransitionSchema = z.object({
+    orderId: z.string(),
+    to: z.enum(ORDER_STATUS),
+    expectedVersion: z.number().int().min(1),
+    note: z.string().trim().min(5).max(2000).optional(),
+    // The carrier offer prospect → booked accepts; ignored by every other
+    // move, since booking is the only one that commits a carrier
+    offerId: z.string().optional(),
+    // Evidence/POD upload backing the move (EdgeStore URL). The
+    // document row itself is created by the documents router;
+    // here it also lands in the history metadata.
+    document: z.object({
+        url: z.url(),
+        name: z.string().max(200).optional(),
+        size: z.number().int().optional(),
+        mimeType: z.string().max(100).optional(),
+    }).optional(),
+});
+
+export type TransitionInput = z.infer<typeof TransitionSchema>;
+
+// What a transition needs from the request: the caller's session and role,
+// the database, and the auth handles the Sheets token is minted from
+export type TransitionContext = {
+    db: typeof Database;
+    session: { user: { id: string } };
+    staff: { role: StaffRole };
+    authApi: Auth["api"];
+    headers: Headers;
+    waitUntil?: (promise: Promise<unknown>) => void;
 };
+
+/**
+ * Admin's side of the shared door: the staff actor it acts as, and the
+ * Sheets push the package calls back into once the row has landed.
+ *
+ * `options.accessToken` lets a batch mint the Sheets token once; `null`
+ * means the caller already failed to get one.
+ */
+export async function transitionOrder(
+    ctx: TransitionContext,
+    input: TransitionInput,
+    options: { accessToken?: string | null } = {},
+): Promise<TransitionOrderOutput> {
+    return applyTransition(
+        {
+            db: ctx.db,
+            actor: { kind: "staff", userId: ctx.session.user.id, role: ctx.staff.role },
+            waitUntil: ctx.waitUntil,
+            sheets: {
+                push: async (row) => {
+                    const accessToken = options.accessToken === undefined
+                        ? await getSheetsAccessToken(ctx.authApi, ctx.headers, ctx.session.user.id)
+                        : options.accessToken;
+
+                    return { ok: accessToken !== null && await syncSheetsAndRecord(ctx.db, accessToken, row) };
+                },
+            },
+        },
+        input,
+    );
+}
 
 export const orderRouter = createTRPCRouter({
     create: authorizedProcedure("order", ["create"])
@@ -336,32 +329,7 @@ export const orderRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<CreateOrderOutput> => {
             try {
                 const userId = ctx.session.user.id;
-
-                // Verification only bites once a carrier is actually
-                // committed: a prospect is still a quote, and quoting an
-                // unverified carrier is how the backlog gets discovered
-                const { flagPatch } = input.status === "booked" && input.carrierId
-                    ? await guardOrderGate(
-                        ctx.db,
-                        {
-                            carrierId: input.carrierId,
-                            driverId: input.driverId,
-                            truckPlate: input.truckPlate,
-                            trailerPlate: input.trailerPlate,
-                            linkPlate: input.linkPlate,
-                        },
-                        { role: ctx.staff.role, actorId: userId },
-                    )
-                    : { flagPatch: null };
-
-                const accessToken = await getSheetsAccessToken(ctx.authApi, ctx.headers, userId);
-
-                // Refuse to write into a sheet whose columns were changed
-                const [headerRow] = await getRange(accessToken, SHEET_NAME, `${HEADER_ROW}:${HEADER_ROW}`);
-                resolveColumns(headerRow ?? []);
-
                 const year = currentOrderYear();
-                const sheetSeq = maxSheetSeq(await getRange(accessToken, SHEET_NAME, "A:A"), year);
 
                 const dbMaxSeq = async () => {
                     const [row] = await ctx.db
@@ -372,48 +340,50 @@ export const orderRouter = createTRPCRouter({
                     return row?.value ?? 0;
                 };
 
-                // The unique (year, seq) index arbitrates concurrent creates:
-                // retry once with a recomputed sequence if another create won
-                let saved: Order | undefined;
+                // The Sheets side of the id, resolved once and before the row
+                // is written: the header check refuses a sheet whose columns
+                // were changed, and the sheet's own max sequence covers rows
+                // added there by hand. The same token then rides into the push.
+                let sheet: { accessToken: string; sheetSeq: number } | null = null;
 
-                for (let attempt = 0; attempt < 2 && !saved; attempt++) {
-                    const id = nextOrderId(await dbMaxSeq(), sheetSeq, year);
+                const resolveSheet = async () => {
+                    if (sheet === null) {
+                        const accessToken = await getSheetsAccessToken(ctx.authApi, ctx.headers, userId);
 
-                    try {
-                        [saved] = await ctx.db
-                            .insert(order)
-                            // The flag lands with the row it describes, so a
-                            // booking can never exist without the reason it
-                            // was questionable
-                            .values({ ...toInsertValues(input, id, userId), ...flagPatch })
-                            .returning();
-                    } catch (error) {
-                        if (!isUniqueViolation(error) || attempt === 1) {
-                            throw error;
-                        }
+                        // Refuse to write into a sheet whose columns were changed
+                        const [headerRow] = await getRange(accessToken, SHEET_NAME, `${HEADER_ROW}:${HEADER_ROW}`);
+                        resolveColumns(headerRow ?? []);
+
+                        sheet = { accessToken, sheetSeq: maxSheetSeq(await getRange(accessToken, SHEET_NAME, "A:A"), year) };
                     }
-                }
 
-                if (!saved) {
-                    throw new OrderError("UNKNOWN");
-                }
+                    return sheet;
+                };
 
-                // Birth certificate: fromStatus null marks creation
-                await ctx.db.insert(orderHistory).values({
-                    orderId: saved.id,
-                    actorUserId: userId,
-                    kind: "transition",
-                    fromStatus: null,
-                    toStatus: saved.status,
-                });
+                return await createOrder(
+                    {
+                        db: ctx.db,
+                        actor: { kind: "staff", userId, role: ctx.staff.role },
+                        waitUntil: ctx.waitUntil,
+                        sheets: {
+                            push: async (row) => {
+                                const { accessToken } = await resolveSheet();
 
-                // The order is stored either way; failures land in the
-                // sheet_sync outbox and the retry cron heals them
-                if (!await syncSheetsAndRecord(ctx.db, accessToken, saved)) {
-                    return { orderId: saved.orderId, status: saved.status, warning: "SHEET_FAILED" };
-                }
+                                return { ok: await syncSheetsAndRecord(ctx.db, accessToken, row) };
+                            },
+                        },
+                    },
+                    input,
+                    // The unique (year, seq) index arbitrates concurrent creates:
+                    // every attempt recomputes the sequence from the database
+                    {
+                        nextOrderId: async () => {
+                            const { sheetSeq } = await resolveSheet();
 
-                return { orderId: saved.orderId, status: saved.status };
+                            return nextOrderId(await dbMaxSeq(), sheetSeq, year);
+                        },
+                    },
+                );
             } catch (error) {
                 throw toTRPCError(error);
             }
@@ -436,6 +406,15 @@ export const orderRouter = createTRPCRouter({
                 // where the state machine guards them
                 if (input.patch.status !== undefined) {
                     throw new TRPCError({ code: "BAD_REQUEST", message: "USE_TRANSITION" });
+                }
+
+                // The carrier is not typed onto an order either: it is
+                // copied from the offer the order books with, so changing
+                // it means moving back to prospect and accepting another
+                // one. Carrier MONEY stays editable here — invoices,
+                // notes and payments are their own reality.
+                if (input.patch.carrierId !== undefined || input.patch.carrierName !== undefined) {
+                    throw new TRPCError({ code: "BAD_REQUEST", message: "USE_OFFER" });
                 }
 
                 const accessToken = await getSheetsAccessToken(
@@ -507,8 +486,6 @@ export const orderRouter = createTRPCRouter({
                         ...(data.temperatureInstructions !== undefined && { temperatureInstructions: data.temperatureInstructions || null }),
                         ...(data.loadType !== undefined && { loadType: data.loadType }),
                         ...(data.podStatus !== undefined && { podStatus: data.podStatus }),
-                        ...(data.carrierName !== undefined && { carrierName: data.carrierName }),
-                        ...(data.carrierId !== undefined && { carrierId: data.carrierId || null }),
                         ...(data.fiscalRegime !== undefined && { fiscalRegime: data.fiscalRegime }),
                         ...(data.truckPlate !== undefined && { truckPlate: data.truckPlate }),
                         ...(data.trailerPlate !== undefined && { trailerPlate: data.trailerPlate || null }),
@@ -597,6 +574,42 @@ export const orderRouter = createTRPCRouter({
                     });
                 }
 
+                // Ops correcting the rig on a trip already running re-writes
+                // the dispatch pack (D7): the loading site has to be checked
+                // against the truck that is actually coming, and the papers
+                // of the one that was replaced stay on the superseded pack.
+                // Best-effort like the hooks below — the edit itself landed.
+                if (ON_GOING_STATUSES.includes(updated.status) && rigChanged(data, current)) {
+                    await recordDispatch(ctx.db, {
+                        orderPk: current.id,
+                        row: updated,
+                        actor: ctx.session.user.id,
+                    }).catch((error: unknown) => console.error(`dispatch pack failed for ${input.orderId}`, error));
+                }
+
+                // The two companies' own rows carry the corrected money, rig
+                // and driver. Best-effort like the pack above: an edit made in
+                // Admin never blocks on a tenant's books
+                await syncApploadLinks(ctx.db, {
+                    order: updated,
+                    from: liveStatus(current.status),
+                    dispatch: true,
+                }).catch((error: unknown) => console.error(`appload link sync failed for ${input.orderId}`, error));
+
+                // A driver phone landing on an already booked/tracked order
+                // opens the follow-up thread the booked transition skipped
+                // (or reroutes it to the corrected number). Best-effort,
+                // like the transition hook.
+                const phoneAdded = updated.driverPhoneNumber !== null
+                    && updated.driverPhoneNumber !== current.driverPhoneNumber;
+
+                if (phoneAdded && FOLLOW_UP_STATUSES.includes(updated.status)) {
+                    const followUp = startFollowUpChat(ctx.db, updated, current.id)
+                        .catch((error: unknown) => console.error(`follow-up chat failed for ${input.orderId}`, error));
+
+                    if (ctx.waitUntil) ctx.waitUntil(followUp); else await followUp;
+                }
+
                 // Resolved after the write so plate changes in this same
                 // patch are reflected; the client fills the PDF templates
                 // from the returned row + bay type
@@ -614,10 +627,11 @@ export const orderRouter = createTRPCRouter({
 
     /**
      * Full edit of a PROSPECT through the create-shaped payload — the same
-     * schema (and booked-completeness refines) creation runs, so confirming
-     * a prospect can never dodge the validation creation applies. When the
-     * payload books it, the transition (history row, payment scaffolding,
-     * follow-up chat) rides in the same write.
+     * schema (and the same offer refines) creation runs, so booking from
+     * here can never dodge the validation creation applies. The payload
+     * also owns the prospect's pending offers; when it marks one accepted,
+     * the booking (history row, payment scaffolding, follow-up chat) rides
+     * in the same write.
      *
      * A booked order is past this door: it edits through order.update's
      * tabbed patch form, and its status moves only via order.transition.
@@ -645,29 +659,77 @@ export const orderRouter = createTRPCRouter({
                 if (current.status !== "prospect") {
                     throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATE" });
                 }
-
-                await assertCurrencyUnlocked(ctx.db, input.values, current);
+                // The offers are written before the row's own optimistic
+                // lock is taken (the booking has to accept a stored row),
+                // so a stale form is refused here rather than after its
+                // offer edits landed. The lock on the update still stands.
+                if (current.version !== input.expectedVersion) {
+                    throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
+                }
 
                 const booking = input.values.status === "booked";
+                const acceptedInput = acceptedOfferOf(input.values);
+
+                // The carrier leg's currency arrives with the offer this
+                // payload books with, not as a field of its own
+                await assertCurrencyUnlocked(
+                    ctx.db,
+                    { shipperCurrency: input.values.shipperCurrency, carrierCurrency: acceptedInput?.currency },
+                    current,
+                );
 
                 if (booking && !isAuthorized(ctx.staff.role, "order", ["transition"])) {
                     throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
                 }
 
                 // Same gate as create, at the moment the deal is committed
-                const { flagPatch } = booking && input.values.carrierId
+                const { flagPatch } = acceptedInput
                     ? await guardOrderGate(
                         ctx.db,
                         {
-                            carrierId: input.values.carrierId,
+                            carrierId: acceptedInput.carrierId,
                             driverId: input.values.driverId,
                             truckPlate: input.values.truckPlate,
                             trailerPlate: input.values.trailerPlate,
                             linkPlate: input.values.linkPlate,
                         },
-                        { role: ctx.staff.role, actorId: ctx.session.user.id },
+                        { kind: "staff", userId: ctx.session.user.id, role: ctx.staff.role },
                     )
                     : { flagPatch: null };
+
+                // The form owns the prospect's pending offers, so they are
+                // brought in line first — the booking below has to accept a
+                // STORED row, including one this payload just added
+                const acceptedId = await syncDealOffers(ctx.db, current.id, input.values.offers, ctx.session.user.id, input.values.routeType);
+
+                let accepted: Awaited<ReturnType<typeof acceptOffer>> | null = null;
+
+                if (booking) {
+                    if (acceptedId === null) {
+                        throw new TRPCError({ code: "BAD_REQUEST", message: "OFFER_REQUIRED" });
+                    }
+
+                    const [offer] = await ctx.db
+                        .select()
+                        .from(orderOffer)
+                        .where(eq(orderOffer.id, acceptedId));
+
+                    if (!offer) {
+                        throw new TRPCError({ code: "BAD_REQUEST", message: "OFFER_NOT_PENDING" });
+                    }
+
+                    // Only its verdict, its settlement and its history
+                    // metadata are used here: the payload is a full form
+                    // snapshot, so the carrier leg and the commission below
+                    // already come from this same offer through the
+                    // schema's transform.
+                    accepted = await acceptOffer(
+                        ctx.db,
+                        current,
+                        offer,
+                        { userId: ctx.session.user.id },
+                    );
+                }
 
                 const accessToken = await getSheetsAccessToken(ctx.authApi, ctx.headers, ctx.session.user.id);
 
@@ -695,15 +757,21 @@ export const orderRouter = createTRPCRouter({
                     .update(order)
                     .set({
                         ...fields,
+                        // The booking patch on top of the same offer's money
+                        // the transform already mapped: what it adds is the
+                        // empty cab of a carrier change, since the driver and
+                        // the rig prefilled from the previous booking belong
+                        // to the carrier that named them, not to this one.
+                        ...accepted?.patch,
                         // Booked payment scaffolding, dealDate, counters —
                         // derived columns win last, exactly like update
                         ...deriveOrderFields(current, {
                             status: input.values.status,
                             route: input.values.routeType,
-                            fiscalRegime: input.values.fiscalRegime,
+                            fiscalRegime: acceptedInput?.fiscalRegime,
                             weight: input.values.weight,
                             shipperTotal: input.values.shipperTotal,
-                            carrierTotal: input.values.carrierTotal,
+                            carrierTotal: acceptedInput?.total,
                         }),
                         ...proofPaymentPatch({
                             ...current,
@@ -724,6 +792,12 @@ export const orderRouter = createTRPCRouter({
                     throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
                 }
 
+                // Same ordering as the transition door: the offers are
+                // settled only once the order row itself has landed
+                if (accepted) {
+                    await accepted.settle();
+                }
+
                 const { status: _status, ...changed } = diffChangedFields(current, fields);
 
                 if (Object.keys(changed).length > 0) {
@@ -742,13 +816,25 @@ export const orderRouter = createTRPCRouter({
                         kind: "transition",
                         fromStatus: "prospect",
                         toStatus: "booked",
+                        ...(accepted && { metadata: { offer: accepted.historyOffer } }),
                     });
 
+                    // No skip row: a booking rarely names a driver now, and
+                    // order.update opens the thread when the phone arrives
                     const followUp = startFollowUpChat(ctx.db, updated, current.id)
                         .catch((error: unknown) => console.error(`follow-up chat failed for ${input.orderId}`, error));
 
                     if (ctx.waitUntil) ctx.waitUntil(followUp); else await followUp;
                 }
+
+                // The deal form is the other door onto a booking, so the rows
+                // linked to the order follow it exactly as they follow the
+                // transition. Best-effort (appload/link.ts)
+                await syncApploadLinks(ctx.db, {
+                    order: updated,
+                    from: liveStatus(current.status),
+                    ...(booking && { candidates: "settle" as const }),
+                }).catch((error: unknown) => console.error(`appload link sync failed for ${input.orderId}`, error));
 
                 const loadingBay = await lookupLoadingBay(ctx.db, updated);
 
@@ -762,196 +848,12 @@ export const orderRouter = createTRPCRouter({
             }
         }),
 
-    /**
-     * The one door for status changes. Validates the move against the
-     * declarative state machine (current status + route + actor role),
-     * enforces the payload the move demands (note / evidence / POD),
-     * stamps implied milestone dates, applies the derived side effects
-     * (booked payment scaffolding, dealDate, podStatus...), raises the
-     * review flag on risky moves, and appends the history row.
-     */
+    /** One status change; see transitionOrder for the rules it enforces. */
     transition: authorizedProcedure("order", ["transition"])
-        .input(
-            z.object({
-                orderId: z.string(),
-                to: z.enum(ORDER_STATUS),
-                expectedVersion: z.number().int().min(1),
-                note: z.string().trim().min(5).max(2000).optional(),
-                // Evidence/POD upload backing the move (EdgeStore URL). The
-                // document row itself is created by the documents router;
-                // here it also lands in the history metadata.
-                document: z.object({
-                    url: z.url(),
-                    name: z.string().max(200).optional(),
-                    size: z.number().int().optional(),
-                    mimeType: z.string().max(100).optional(),
-                }).optional(),
-            }),
-        )
+        .input(TransitionSchema)
         .mutation(async ({ ctx, input }): Promise<TransitionOrderOutput> => {
             try {
-                const [current] = await ctx.db
-                    .select()
-                    .from(order)
-                    .where(eq(order.orderId, input.orderId));
-
-                if (!current) {
-                    throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
-                }
-
-                // Closing an order as lost (cancelled or underbid) is its own
-                // permission on top of transition
-                if ((input.to === "cancelled" || input.to === "underbid") && !isAuthorized(ctx.staff.role, "order", ["cancel"])) {
-                    throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
-                }
-
-                // Booking a prospect demands the full carrier/driver/fleet/
-                // amount block. Same stored-row bar the deal form reaches
-                // through its refines, minus the fleet-derived loading bay no
-                // column carries — incomplete prospects go through that form
-                // (order.updateDeal, "Confirm order"), never this door.
-                if (input.to === "booked" && current.status === "prospect" && !isReadyToBook(current)) {
-                    throw new TRPCError({ code: "BAD_REQUEST", message: "INCOMPLETE_FOR_BOOKING" });
-                }
-
-                // Verification is checked once, at the moment the cargo is
-                // committed to this carrier and rig. Later transitions move
-                // an order that was already gated.
-                const { flagPatch: gateFlag } = input.to === "booked" && current.carrierId
-                    ? await guardOrderGate(
-                        ctx.db,
-                        {
-                            carrierId: current.carrierId,
-                            driverId: current.driverId,
-                            truckPlate: current.truckPlate,
-                            trailerPlate: current.trailerPlate,
-                            linkPlate: current.linkPlate,
-                        },
-                        { role: ctx.staff.role, actorId: ctx.session.user.id, note: input.note },
-                    )
-                    : { flagPatch: null };
-
-                const resumeStatus =
-                    current.status === "stopped" || current.status === "issue"
-                        ? await deriveResumeStatus(ctx.db, current.id)
-                        : null;
-
-                const verdict = validateTransition(
-                    { status: current.status, route: current.route, role: ctx.staff.role, resumeStatus },
-                    input.to,
-                );
-
-                if (!verdict.ok) {
-                    throw new TRPCError({
-                        code: verdict.code === "NOT_ALLOWED" ? "FORBIDDEN" : "BAD_REQUEST",
-                        message: verdict.code,
-                    });
-                }
-
-                if (verdict.requirements.includes("note") && !input.note) {
-                    throw new TRPCError({ code: "BAD_REQUEST", message: "NOTE_REQUIRED" });
-                }
-                if (verdict.requirements.includes("evidence") && !input.document) {
-                    throw new TRPCError({ code: "BAD_REQUEST", message: "EVIDENCE_REQUIRED" });
-                }
-                if (verdict.requirements.includes("pod") && !input.document) {
-                    throw new TRPCError({ code: "BAD_REQUEST", message: "POD_REQUIRED" });
-                }
-
-                const flag = verdict.requirements.includes("flag");
-                const stamps = transitionStamps(current, input.to);
-                const payments = await paymentSums(ctx.db, current.id);
-
-                const [updated] = await ctx.db
-                    .update(order)
-                    .set({
-                        ...stamps,
-                        status: input.to,
-                        ...(input.to === "delivered" && current.podStatus === null && {
-                            podStatus: "pending-collection" as const,
-                        }),
-                        // A verification flag outranks a transition one: its
-                        // reason names the specific gap, where the transition
-                        // flag only carries the operator's note
-                        ...gateFlag,
-                        ...(flag && !gateFlag && {
-                            flaggedForReview: true,
-                            flagReason: input.note ?? null,
-                            flaggedAt: new Date(),
-                            flaggedBy: ctx.session.user.id,
-                        }),
-                        // Derived columns (dealDate, payment scaffolding,
-                        // loaded/offloaded weight, day counters) win last
-                        ...deriveOrderFields(current, { status: input.to, ...stamps }),
-                        // ...except on POP-governed legs, where the recorded
-                        // proofs beat the booked "pending" scaffold and the
-                        // prospect/cancelled rules apply to the NEW status
-                        ...proofPaymentPatch({ ...current, status: input.to }, payments),
-                        version: sql`${order.version} + 1`,
-                    })
-                    .where(and(
-                        eq(order.id, current.id),
-                        eq(order.version, input.expectedVersion),
-                    ))
-                    .returning();
-
-                if (!updated) {
-                    throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
-                }
-
-                await ctx.db.insert(orderHistory).values({
-                    orderId: current.id,
-                    actorUserId: ctx.session.user.id,
-                    kind: "transition",
-                    fromStatus: current.status,
-                    toStatus: input.to,
-                    metadata: {
-                        ...(input.note && { note: input.note }),
-                        ...(flag && { flagged: true }),
-                        ...(input.document && { document: input.document }),
-                    },
-                });
-
-                // The upload that backed the move becomes a first-class
-                // document on the order (POD for completion, evidence for
-                // cancels), so it shows up in the documents section
-                if (input.document && (verdict.requirements.includes("pod") || verdict.requirements.includes("evidence"))) {
-                    await ctx.db.insert(orderDocument).values({
-                        orderId: current.id,
-                        type: verdict.requirements.includes("pod") ? "pod" : "evidence",
-                        title: input.document.name ?? null,
-                        url: input.document.url,
-                        size: input.document.size ?? null,
-                        mimeType: input.document.mimeType ?? null,
-                        reason: input.note ?? null,
-                        uploadedBy: ctx.session.user.id,
-                    });
-                }
-
-                // Booked orders get a follow-up chat with the driver. Post-
-                // response and best-effort: a chat/Infobip failure must never
-                // fail the booking.
-                if (input.to === "booked") {
-                    const followUp = startFollowUpChat(ctx.db, updated, current.id)
-                        .catch((error: unknown) => console.error(`follow-up chat failed for ${input.orderId}`, error));
-
-                    if (ctx.waitUntil) ctx.waitUntil(followUp); else await followUp;
-                }
-
-                try {
-                    const accessToken = await getSheetsAccessToken(ctx.authApi, ctx.headers, ctx.session.user.id);
-
-                    if (!await syncSheetsAndRecord(ctx.db, accessToken, updated)) {
-                        return { orderId: input.orderId, order: updated, warning: "SHEET_FAILED" };
-                    }
-                } catch (error) {
-                    // Token acquisition failed — the outbox cron retries with
-                    // the service account
-                    console.error(`sheet sync failed on transition for ${input.orderId}`, error);
-                    return { orderId: input.orderId, order: updated, warning: "SHEET_FAILED" };
-                }
-
-                return { orderId: input.orderId, order: updated };
+                return await transitionOrder(ctx, input);
             } catch (error) {
                 throw toTRPCError(error);
             }
@@ -1104,8 +1006,8 @@ export const orderRouter = createTRPCRouter({
 
     /**
      * The details page in one round: the full row, its live documents, the
-     * history timeline (with actor names snapshot-joined) and the sheet
-     * sync state for the badge.
+     * history timeline (with actor names snapshot-joined), the sheet sync
+     * state for the badge and the carrier offers.
      */
     get: authorizedProcedure("order", ["read"])
         .input(z.object({ orderId: z.string() }))
@@ -1119,7 +1021,7 @@ export const orderRouter = createTRPCRouter({
                 throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
             }
 
-            const [documents, history, [sync]] = await Promise.all([
+            const [documents, history, [sync], [dispute], offers] = await Promise.all([
                 ctx.db
                     .select()
                     .from(orderDocument)
@@ -1144,9 +1046,123 @@ export const orderRouter = createTRPCRouter({
                     .select()
                     .from(sheetSync)
                     .where(eq(sheetSync.orderId, row.id)),
+                // The active dispute, if any: the banner, the payment holds
+                // and the closure block all read it from here
+                ctx.db
+                    .select({
+                        id: orderDispute.id,
+                        status: orderDispute.status,
+                        reason: orderDispute.reason,
+                        holdShipperPayments: orderDispute.holdShipperPayments,
+                        holdCarrierPayments: orderDispute.holdCarrierPayments,
+                        openedAt: orderDispute.openedAt,
+                    })
+                    .from(orderDispute)
+                    .where(and(eq(orderDispute.orderId, row.id), inArray(orderDispute.status, [...ACTIVE_DISPUTE_STATUSES])))
+                    .limit(1),
+                // The same read the offers router serves, so the card the
+                // page renders and the list its dialogs fetch never differ
+                listOffers(ctx.db, row.id),
             ]);
 
-            return { order: row, documents, history, sheetSync: sync ?? null };
+            // Free: the timeline above already holds every row the rule reads,
+            // so the header can name the resume step without a second query
+            const resumeStatus = row.status === "stopped" || row.status === "issue"
+                ? resumeFromHistory(history)
+                : null;
+
+            return { order: row, documents, history, sheetSync: sync ?? null, dispute: dispute ?? null, resumeStatus, offers };
+        }),
+
+    /**
+     * The loading check: the pack the truck left with, what was confirmed
+     * at the site, and the photos taken there. Read by anyone who may read
+     * the order; only `order:update` may record one.
+     */
+    loadingCheck: authorizedProcedure("order", ["read"])
+        .input(z.object({ orderId: z.string() }))
+        .query(async ({ ctx, input }) => {
+            const [row] = await ctx.db
+                .select({ id: order.id })
+                .from(order)
+                .where(eq(order.orderId, input.orderId));
+
+            if (!row) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+            }
+
+            // A pack is null on an order dispatched before packs existed;
+            // the state then falls back to the order's latest check
+            const pack = await loadDispatchPack(ctx.db, row.id);
+            const state = await loadLoadingCheckState(ctx.db, row.id, pack?.id ?? null);
+
+            // The photos OF THIS CHECK, not every loading photo on the
+            // order: a re-check has its own evidence, and an upload nobody's
+            // check references is not evidence of anything
+            const photos = state.check && state.check.photoDocumentIds.length > 0
+                ? await ctx.db
+                    .select({
+                        id: orderDocument.id,
+                        title: orderDocument.title,
+                        url: orderDocument.url,
+                        mimeType: orderDocument.mimeType,
+                        createdAt: orderDocument.createdAt,
+                    })
+                    .from(orderDocument)
+                    .where(and(
+                        eq(orderDocument.orderId, row.id),
+                        inArray(orderDocument.id, state.check.photoDocumentIds),
+                        isNull(orderDocument.deletedAt),
+                    ))
+                    .orderBy(orderDocument.createdAt)
+                : [];
+
+            const [checker] = state.check?.checkedBy
+                ? await ctx.db.select({ name: user.name }).from(user).where(eq(user.id, state.check.checkedBy))
+                : [];
+
+            return {
+                pack,
+                state,
+                checkedByName: checker?.name ?? null,
+                photos,
+                canCheck: isAuthorized(ctx.staff.role, "order", ["update"]),
+            };
+        }),
+
+    /**
+     * Ops confirming the rig at the loading site on the orderer's behalf. A
+     * mismatch flags the order, which is what makes the move into "loading"
+     * a supervisory decision afterwards.
+     */
+    recordLoadingCheck: authorizedProcedure("order", ["update"])
+        .input(LoadingCheckInputSchema)
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const [current] = await ctx.db
+                    .select()
+                    .from(order)
+                    .where(eq(order.orderId, input.orderId));
+
+                if (!current) {
+                    throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+                }
+
+                const { check, order: updated } = await recordLoadingCheck(ctx.db, {
+                    current,
+                    actor: { kind: "staff", userId: ctx.session.user.id, role: ctx.staff.role },
+                    input,
+                });
+
+                return {
+                    orderId: input.orderId,
+                    checkId: check.id,
+                    outcome: check.outcome,
+                    version: updated.version,
+                };
+            } catch (error) {
+                throw toTRPCError(error);
+            }
         }),
 
     /**
@@ -1158,7 +1174,7 @@ export const orderRouter = createTRPCRouter({
     transitionOptions: authorizedProcedure("order", ["read"])
         .input(z.object({ orderId: z.string() }))
         .query(async ({ ctx, input }) => {
-            const [row] = await ctx.db
+            const [loaded] = await ctx.db
                 .select({
                     id: order.id,
                     status: order.status,
@@ -1166,29 +1182,37 @@ export const orderRouter = createTRPCRouter({
                     version: order.version,
                     flaggedForReview: order.flaggedForReview,
                     flagReason: order.flagReason,
-                    // Booking readiness is decided on the stored row, so a
-                    // prospect is never advertised as bookable when the
-                    // mutation would refuse it
-                    carrierId: order.carrierId,
-                    carrierName: order.carrierName,
-                    fiscalRegime: order.fiscalRegime,
+                    // Both gates are decided on the stored row, so a move is
+                    // never advertised as takeable when the mutation would
+                    // refuse it: booking needs an offer still awaiting a
+                    // decision, dispatch needs the driver and the truck
                     truckPlate: order.truckPlate,
+                    trailerPlate: order.trailerPlate,
+                    linkPlate: order.linkPlate,
                     truckAge: order.truckAge,
                     driverId: order.driverId,
                     driverName: order.driverName,
                     driverPhoneNumber: order.driverPhoneNumber,
                     driverPassport: order.driverPassport,
-                    carrierSubtotal: order.carrierSubtotal,
-                    carrierTotal: order.carrierTotal,
-                    carrierCurrency: order.carrierCurrency,
+                    pendingOffers: pendingOfferCount,
+                    // The offer picker prices the commission against the
+                    // shipper's leg while the operator is still choosing
+                    shipperTotal: order.shipperTotal,
+                    shipperVAT: order.shipperVAT,
                     shipperCurrency: order.shipperCurrency,
+                    disputeStatus: order.disputeStatus,
                 })
                 .from(order)
                 .where(eq(order.orderId, input.orderId));
 
-            if (!row) {
+            if (!loaded) {
                 throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
             }
+
+            // A row the retirement script has not moved yet is still stored on
+            // "to-loading", which the state machine no longer knows: read it
+            // as the status that replaced it or the dialog offers nothing
+            const row = { ...loaded, status: liveStatus(loaded.status) };
 
             const resumeStatus =
                 row.status === "stopped" || row.status === "issue"
@@ -1197,16 +1221,69 @@ export const orderRouter = createTRPCRouter({
 
             const context = { status: row.status, route: row.route, role: ctx.staff.role, resumeStatus };
 
-            // Advertised but not takeable: the deal form is the way to the
-            // rest of the data. Always a boolean — a conditional spread would
-            // infer a union and break `entry.blocked` in the dialog.
-            const bookingBlocked = row.status === "prospect" && !isReadyToBook(row);
+            // Advertised but not takeable: nothing to accept, no rig to
+            // dispatch, or a dispute that must be settled before the cargo
+            // closes. Always a boolean — a conditional spread would infer a
+            // union and break `entry.blocked` in the dialog.
+            const disputeBlocked = isActiveDispute(row.disputeStatus);
+            const allowed = allowedTransitions(context);
 
-            const targets = allowedTransitions(context).map((to) => ({
-                to,
-                requirements: transitionRequirements(row.status, to, { resumeStatus }) ?? [],
-                blocked: to === "booked" && bookingBlocked,
-            }));
+            // The dispatch gate reads the rig's papers out of the KYC store,
+            // so it only runs when the dispatch is actually on the table
+            const dispatch = allowed.some((to) => isDispatchMove(row.status, to))
+                ? await loadDispatchReadiness(ctx.db, row)
+                : null;
+
+            // What the orderer confirmed at the loading site, read against
+            // the pack in force. Only the move that STARTS the load asks —
+            // the same edge the shared door gates; coming back from a stop
+            // is a free resume
+            const loadingCheck = row.status === "at-loading" && allowed.includes("loading")
+                ? await loadLoadingCheckState(ctx.db, row.id, await openDispatchId(ctx.db, row.id))
+                : null;
+            const actor: Actor = { kind: "staff", userId: ctx.session.user.id, role: ctx.staff.role };
+
+            const targets = allowed.map((to) => {
+                const base = transitionRequirements(row.status, to, { resumeStatus }) ?? [];
+                const dispatching = isDispatchMove(row.status, to) ? dispatch : null;
+                const checking = to === "loading" ? loadingCheck : null;
+                const loadingMove = checking ? loadingMoveRequirements(checking, actor) : null;
+                // A mismatch a manager may accept is accepted in writing
+                const requirements = loadingMove?.note ? [...base, "note" as const] : base;
+
+                // Keyed on the requirement, not on the target: an admin
+                // reversal back to booked does not accept an offer, and
+                // must not be blocked for lacking one
+                const blockedReason: "NO_OFFERS" | "INCOMPLETE_FOR_DISPATCH" | "PAPERS_MISSING" | "DISPUTE_OPEN" | "MANAGER_REQUIRED" | null =
+                    requirements.includes("offer") && row.pendingOffers === 0 ? "NO_OFFERS"
+                        : dispatching && dispatching.fields.length > 0 ? "INCOMPLETE_FOR_DISPATCH"
+                            : dispatching && dispatching.papers.length > 0 ? "PAPERS_MISSING"
+                                : loadingMove?.blocked === "MANAGER_REQUIRED" ? "MANAGER_REQUIRED"
+                                    : to === "completed" && disputeBlocked ? "DISPUTE_OPEN"
+                                        : null;
+
+                return {
+                    to,
+                    requirements,
+                    blocked: blockedReason !== null,
+                    blockedReason,
+                    // What the dispatch still owes, so the dialog names the
+                    // subject and the paper instead of saying "not ready".
+                    // Null on every other move — never a conditional spread,
+                    // which would infer a union the dialog cannot read.
+                    dispatch: dispatching
+                        ? {
+                            missingFields: dispatching.fields,
+                            missingPapers: dispatching.papers,
+                            unreviewed: dispatching.unreviewed,
+                        }
+                        : null,
+                    // Where the loading check stands, so the dialog can warn
+                    // that this move will be recorded as unchecked. Null on
+                    // every other move.
+                    loadingCheck: checking,
+                };
+            });
 
             return {
                 status: row.status,
@@ -1216,6 +1293,12 @@ export const orderRouter = createTRPCRouter({
                 resumeStatus,
                 canResolveFlag: isAuthorized(ctx.staff.role, "order", ["flag-resolve"]),
                 targets,
+                pendingOffers: row.pendingOffers,
+                shipper: {
+                    total: row.shipperTotal === null ? null : Number(row.shipperTotal),
+                    vat: row.shipperVAT === null ? null : Number(row.shipperVAT),
+                    currency: row.shipperCurrency ?? "MZN",
+                },
             };
         }),
 });

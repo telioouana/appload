@@ -28,13 +28,21 @@ import { useEdgeStore } from "@workspace/edgestore/client"
 import { orderDocumentPath } from "@workspace/edgestore/path"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
-import type { OrderStatus } from "@/lib/orders/transitions"
+import { domainErrorCode } from "@workspace/trpc/errors"
+import type { OrderStatus } from "@workspace/domain/orders/transitions"
+import { offerAcceptable } from "@workspace/domain/orders/booking-readiness"
+import { OfferPicker } from "@/frontend/pages/order/components/offer-picker"
 
 const DIALOG_ERROR_CODES = [
     "INVALID_STATE", "NOT_ALLOWED", "VERSION_CONFLICT",
     "NOTE_REQUIRED", "EVIDENCE_REQUIRED", "POD_REQUIRED",
-    "INCOMPLETE_FOR_BOOKING", "NOT_FOUND", "UPLOAD_FAILED", "UNKNOWN",
+    "DISPUTE_OPEN", "NOT_FOUND", "UPLOAD_FAILED", "UNKNOWN",
+    // Booking is the acceptance of a carrier offer, and dispatch needs the
+    // rig the offer did not have to name
+    "OFFER_REQUIRED", "OFFER_NOT_PENDING", "NO_OFFERS", "OFFER_UNPRICED",
+    "INCOMPLETE_FOR_DISPATCH", "PAPERS_MISSING",
+    // The loading check: only a manager may let a mismatched rig load
+    "MANAGER_REQUIRED",
     // Verification gate, raised when booking commits cargo to a carrier
     "CARRIER_NOT_VERIFIED", "CARRIER_CONTRACT_MISSING", "CARRIER_CONTRACT_EXPIRED",
     "CARRIER_SUSPENDED", "RISK_ACK_NOT_ALLOWED", "RISK_ACK_NOTE_REQUIRED",
@@ -56,19 +64,26 @@ export function TransitionDialog({
     orderId,
     open,
     initialTarget,
+    initialOfferId,
     onClose,
     onSuccess,
 }: {
     orderId: string
     open: boolean
     initialTarget?: OrderStatus
+    /** The offer the caller already chose — accepting from an offer row lands here */
+    initialOfferId?: string
     onClose: () => void
     onSuccess?: (order: Order) => void
 }) {
     const t = useTranslations("Admin.orders.transitionDialog")
     const tStatus = useTranslations("Admin.orders.header.filters.status.options")
+    // The paper names are the review sheet's, so a gap is named here exactly
+    // as it is on the record the operator will open
+    const tDoc = useTranslations("Admin.partners.documents")
 
     const [target, setTarget] = useState<OrderStatus | undefined>(initialTarget)
+    const [offerId, setOfferId] = useState<string | null>(initialOfferId ?? null)
     const [note, setNote] = useState("")
     const [file, setFile] = useState<File | null>(null)
     const [submitting, setSubmitting] = useState(false)
@@ -84,34 +99,52 @@ export function TransitionDialog({
         { enabled: open },
     ))
 
+    // The quotes to choose from when the move is a booking. Fetched with
+    // the options rather than on the target's requirements, so the picker
+    // is already there the moment booked is selected.
+    const offers = useQuery(trpc.offers.list.queryOptions(
+        { orderId },
+        { enabled: open },
+    ))
+
     const { mutateAsync } = useMutation(trpc.order.transition.mutationOptions())
 
     // Reset per open so a reused dialog never carries a stale note/file
     useEffect(() => {
         if (open) {
             setTarget(initialTarget)
+            setOfferId(initialOfferId ?? null)
             setNote("")
             setFile(null)
             setError(null)
         }
-    }, [open, initialTarget])
+    }, [open, initialTarget, initialOfferId])
 
     const targets = options.data?.targets ?? []
     const selected = targets.find((entry) => entry.to === target)
     const requirements = selected?.requirements ?? []
 
     const needsNote = requirements.includes("note")
+    const needsOffer = requirements.includes("offer")
     const needsDocument = requirements.includes("evidence") || requirements.includes("pod")
     const documentKind = requirements.includes("pod") ? "pod" : "evidence"
 
     // Advertised so the operator sees the move exists, but the stored row
-    // cannot carry it yet — "Confirm order" opens the form that can
+    // cannot carry it yet — nothing to accept, or no rig to dispatch
     const blocked = selected?.blocked ?? false
+
+    // A picked id is not by itself a booking: the picker also lists quotes
+    // written before pricing existed (disabled until the operator prices
+    // them), and the caller may hand one in. Book stays disabled unless the
+    // mutation would accept the offer — the same rules it guards with.
+    const picked = (offers.data ?? []).find((offer) => offer.id === offerId) ?? null
+    const bookable = picked !== null && offerAcceptable(picked) === "ok" && picked.commissionTotal !== null
 
     const ready =
         Boolean(selected) &&
         !blocked &&
         (!needsNote || note.trim().length >= 5) &&
+        (!needsOffer || bookable) &&
         (!needsDocument || file !== null)
 
     async function confirm() {
@@ -142,12 +175,15 @@ export function TransitionDialog({
                 to: selected.to,
                 expectedVersion: options.data.version,
                 note: note.trim() || undefined,
+                offerId: needsOffer ? offerId ?? undefined : undefined,
                 document,
             })
 
-            queryClient.invalidateQueries(trpc.orders.list.queryFilter())
+            queryClient.invalidateQueries(trpc.orders.pathFilter())
             queryClient.invalidateQueries(trpc.order.get.queryFilter({ orderId }))
             queryClient.invalidateQueries(trpc.order.transitionOptions.queryFilter({ orderId }))
+            // Booking settles every other quote on the order
+            queryClient.invalidateQueries(trpc.offers.list.queryFilter({ orderId }))
 
             if (result.warning === "SHEET_FAILED") {
                 toast(t("sheetWarning"))
@@ -169,7 +205,9 @@ export function TransitionDialog({
 
     return (
         <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
-            <DialogContent className="w-full sm:max-w-md">
+            {/* The offer picker carries three lines per quote plus the
+                commission summary, so it gets the wider dialog */}
+            <DialogContent className={cn("w-full", needsOffer ? "sm:max-w-lg" : "sm:max-w-md")}>
                 <DialogHeader>
                     <DialogTitle>{t("title")}</DialogTitle>
                     <DialogDescription>{t("description", { orderId })}</DialogDescription>
@@ -205,8 +243,40 @@ export function TransitionDialog({
 
                         {blocked && (
                             <Alert variant="destructive">
-                                <AlertDescription>{t("errors.INCOMPLETE_FOR_BOOKING")}</AlertDescription>
+                                <AlertDescription className="flex flex-col gap-1">
+                                    <span>{t(`errors.${selected?.blockedReason ?? "UNKNOWN"}`)}</span>
+
+                                    {/* Which subject owes which paper — the
+                                        operator has to know whose record to
+                                        open, not merely that something is
+                                        missing */}
+                                    {selected?.blockedReason === "PAPERS_MISSING" && (
+                                        <span className="text-xs">
+                                            {(selected.dispatch?.missingPapers ?? [])
+                                                .map((gap) => `${gap.label}: ${gap.needs.map((type) => tDoc(type)).join(` ${t("papersOr")} `)}`)
+                                                .join(" · ")}
+                                        </span>
+                                    )}
+                                </AlertDescription>
                             </Alert>
+                        )}
+
+                        {/* What the loading check found, on the move into
+                            "loading": a mismatch a manager is about to accept
+                            in writing, or a load nobody checked at all */}
+                        {selected?.loadingCheck && selected.loadingCheck.state !== "passed" && !blocked && (
+                            <Alert variant={selected.loadingCheck.state === "mismatch" ? "destructive" : "default"}>
+                                <IconAlertTriangle />
+                                <AlertDescription>{t(`loadingCheck.${selected.loadingCheck.state}`)}</AlertDescription>
+                            </Alert>
+                        )}
+
+                        {needsOffer && !blocked && (
+                            <OfferPicker
+                                offers={offers.data ?? []}
+                                value={offerId}
+                                onChange={setOfferId}
+                            />
                         )}
 
                         {requirements.includes("flag") && (
@@ -292,7 +362,7 @@ export function TransitionDialog({
                     {targets.length > 0 && (
                         <Button type="button" onClick={confirm} disabled={!ready || submitting}>
                             {submitting && <Spinner />}
-                            {t("confirm")}
+                            {t(selected?.to === "booked" ? "book" : "confirm")}
                         </Button>
                     )}
                 </DialogFooter>

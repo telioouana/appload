@@ -5,6 +5,8 @@ import type { DriverOption, VehicleOption } from "./routers/fleet";
 import type { ChatConversation } from "@workspace/db/chats";
 import type { KycDocument } from "@workspace/db/kyc-documents";
 import type { CreateOrderOutput } from "@/frontend/pages/order/server/procedures";
+import type { TransitionOrderOutput } from "@workspace/domain/orders/transition";
+import type { OfferRow } from "@/frontend/pages/order/server/offers-procedures";
 
 // (transition/resolveFlag rows carry ids and statuses only — never notes
 // or document URLs, which may be sensitive)
@@ -31,7 +33,9 @@ export const activityCatalog: ActivityCatalog = {
         params: (input, output?: CreateOrderOutput) => ({
             orderId: output?.orderId ?? "",
             shipperName: input?.shipperName ?? "",
-            carrierName: input?.carrierName ?? "",
+            // An order carries no carrier of its own any more: the one it is
+            // created with is the carrier of the offer the payload accepts
+            carrierName: input?.offers?.find((offer: { accepted?: boolean }) => offer?.accepted)?.carrierName ?? "",
             truckPlate: input?.truckPlate ?? "",
             status: output?.status ?? input?.status ?? "",
         }),
@@ -57,9 +61,32 @@ export const activityCatalog: ActivityCatalog = {
     "order.transition": {
         entity: (input) =>
             input?.orderId ? { type: "order", id: String(input.orderId) } : null,
-        params: (input) => ({
+        // The dispatch pack this move wrote, so the row that sent the truck
+        // points at the papers it left with. Empty on every other move.
+        params: (input, output?: TransitionOrderOutput) => ({
             orderId: input?.orderId ?? "",
             to: input?.to ?? "",
+            dispatchId: output?.dispatchId ?? "",
+            // What the loading check said when the load started — "none" and
+            // "partial" are the rows that answer "who let it load unchecked"
+            loadingCheck: output?.loadingCheck ?? "",
+        }),
+    },
+    // The orderer's confirmation at the loading site: what it came to and
+    // which items failed (their keys — the checker's notes stay on the row)
+    "order.recordLoadingCheck": {
+        entity: (input) =>
+            input?.orderId ? { type: "order", id: String(input.orderId) } : null,
+        params: (input, output?: { outcome?: string }) => ({
+            orderId: input?.orderId ?? "",
+            outcome: output?.outcome ?? "",
+            mismatchItems: Array.isArray(input?.items)
+                ? input.items
+                    .filter((item: { ok?: boolean | null }) => item?.ok === false)
+                    .map((item: { key?: string }) => item?.key ?? "")
+                    .join(", ")
+                : "",
+            photoCount: Array.isArray(input?.photoDocumentIds) ? input.photoDocumentIds.length : 0,
         }),
     },
     "order.resolveFlag": {
@@ -67,6 +94,84 @@ export const activityCatalog: ActivityCatalog = {
             input?.orderId ? { type: "order", id: String(input.orderId) } : null,
         params: (input) => ({
             orderId: input?.orderId ?? "",
+        }),
+    },
+    // One row for the batch: the target and how many rows made it, never
+    // the note (it is a free text the transition rows keep per order)
+    "orders.bulkTransition": {
+        params: (input, output?: { results: { ok: boolean }[] }) => ({
+            to: input?.to ?? "",
+            count: Array.isArray(input?.orders) ? input.orders.length : 0,
+            failed: output?.results.filter((result) => !result.ok).length ?? 0,
+        }),
+    },
+    // Carrier offers: who quoted, for how much, and where the offer ended
+    // up. The price is the one figure that is deliberately logged — it is
+    // the whole point of the record and it is Appload's own commercial
+    // data, not partner PII. The free-text notes and decision reasons stay
+    // out. Only `create` names an order: the other three are addressed by
+    // the offer's uuid, and the row's `order_id` is a primary key, not the
+    // human "APPL021.26" the log links on.
+    "offers.create": {
+        entity: (input) =>
+            input?.orderId ? { type: "order", id: String(input.orderId) } : null,
+        params: (input, output?: OfferRow) => ({
+            orderId: input?.orderId ?? "",
+            carrierName: output?.carrierName ?? input?.values?.carrierName ?? "",
+            total: output?.total ?? "",
+            currency: output?.currency ?? input?.values?.currency ?? "",
+            status: output?.status ?? "",
+        }),
+    },
+    "offers.update": {
+        params: (input, output?: OfferRow) => ({
+            offerId: input?.offerId ?? "",
+            carrierName: output?.carrierName ?? "",
+            total: output?.total ?? "",
+            currency: output?.currency ?? "",
+            status: output?.status ?? "",
+        }),
+    },
+    "offers.decide": {
+        params: (input, output?: OfferRow) => ({
+            offerId: input?.offerId ?? "",
+            carrierName: output?.carrierName ?? "",
+            total: output?.total ?? "",
+            currency: output?.currency ?? "",
+            status: output?.status ?? input?.status ?? "",
+        }),
+    },
+    // A removed offer leaves nothing to report but its id — the mutation
+    // returns only that, and the row it described is gone
+    "offers.remove": {
+        params: (input) => ({
+            offerId: input?.offerId ?? "",
+        }),
+    },
+    // Disputes log the order, the cause and the state — never the
+    // description or the amounts claimed
+    "disputes.open": {
+        entity: (input) =>
+            input?.orderId ? { type: "order", id: String(input.orderId) } : null,
+        params: (input) => ({
+            orderId: input?.orderId ?? "",
+            reason: input?.reason ?? "",
+        }),
+    },
+    "disputes.update": {
+        entity: (_input, output?: { orderId: string }) =>
+            output ? { type: "order", id: output.orderId } : null,
+        params: (input, output?: { orderId: string }) => ({
+            orderId: output?.orderId ?? "",
+            changedFields: Object.keys(input?.patch ?? {}).join(", "),
+        }),
+    },
+    "disputes.resolve": {
+        entity: (_input, output?: { orderId: string }) =>
+            output ? { type: "order", id: output.orderId } : null,
+        params: (input, output?: { orderId: string }) => ({
+            orderId: output?.orderId ?? "",
+            status: input?.status ?? "",
         }),
     },
     "documents.create": {
@@ -186,6 +291,76 @@ export const activityCatalog: ActivityCatalog = {
             type: input?.type ?? "",
         }),
     },
+    // The plan and its end date are commercial terms Appload set, not
+    // partner data — both are logged
+    "organizations.setSubscription": {
+        entity: (input) =>
+            input?.id ? { type: "organization", id: String(input.id) } : null,
+        params: (input, output?: { name: string; plan: string | null; expiresAt: Date | null }) => ({
+            name: output?.name ?? "",
+            // A null plan is "no plan agreed", which the log names rather
+            // than leaving blank
+            plan: output?.plan ?? input?.plan ?? "none",
+            expiresAt: output?.expiresAt ? output.expiresAt.toISOString().slice(0, 10) : "",
+        }),
+    },
+    // Portal claims: who was answered and how. The rejection note is staff
+    // reasoning about their own decision, and the claim row is the only
+    // other place it is kept — truncated, like the suspension notes above
+    "partners.decideClaim": {
+        entity: (_input, output?: { id: string }) =>
+            output ? { type: "claim", id: output.id } : null,
+        params: (input, output?: { status: string }) => ({
+            claimId: input?.id ?? "",
+            decision: output?.status ?? input?.decision ?? "",
+            note: String(input?.note ?? "").slice(0, 300),
+        }),
+    },
+    // The invited address is the whole point of the record: it is who was
+    // handed the keys to a partner's portal account
+    "partners.inviteOwner": {
+        entity: (input) =>
+            input?.organizationId ? { type: "organization", id: String(input.organizationId) } : null,
+        params: (input) => ({
+            organizationId: input?.organizationId ?? "",
+            email: input?.email ?? "",
+        }),
+    },
+    // Partner edits log which fields changed, never the values (contact
+    // details and addresses are personal data)
+    "organizations.update": {
+        entity: (input) =>
+            input?.id ? { type: "organization", id: String(input.id) } : null,
+        params: (input, output?: OrgOption) => ({
+            name: output?.name ?? "",
+            changedFields: Object.keys(input?.patch ?? {}).join(", "),
+        }),
+    },
+    "fleet.updateDriver": {
+        entity: (input) =>
+            input?.id ? { type: "driver", id: String(input.id) } : null,
+        params: (input) => ({
+            driverId: input?.id ?? "",
+            changedFields: Object.keys(input?.patch ?? {}).join(", "),
+        }),
+    },
+    "fleet.updateVehicle": {
+        entity: (input) =>
+            input?.id ? { type: String(input.kind ?? "truck"), id: String(input.id) } : null,
+        params: (input, output?: { regPlate: string }) => ({
+            kind: input?.kind ?? "",
+            regPlate: output?.regPlate ?? "",
+            changedFields: Object.keys(input?.patch ?? {}).join(", "),
+        }),
+    },
+    "fleet.assignDriver": {
+        entity: (input) =>
+            input?.driverId ? { type: "driver", id: String(input.driverId) } : null,
+        params: (input) => ({
+            driverId: input?.driverId ?? "",
+            truckId: input?.truckId ?? "",
+        }),
+    },
     "chats.start": {
         entity: (_input, output?: { conversation: ChatConversation; existing: boolean }) =>
             output ? { type: "conversation", id: output.conversation.id } : null,
@@ -202,6 +377,25 @@ export const activityCatalog: ActivityCatalog = {
         // Deliberately no message body — metadata only
         params: (input) => ({
             conversationId: input?.conversationId ?? "",
+        }),
+    },
+    "threads.send": {
+        entity: (input) =>
+            input?.subjectId ? { type: String(input.subjectType ?? "order"), id: String(input.subjectId) } : null,
+        // Deliberately no body and no attachment URLs — metadata only, the
+        // same line the driver conversations hold
+        params: (input) => ({
+            subjectType: input?.subjectType ?? "",
+            subjectId: input?.subjectId ?? "",
+            attachmentCount: Array.isArray(input?.attachments) ? input.attachments.length : 0,
+        }),
+    },
+    "threads.markRead": {
+        entity: (input) =>
+            input?.subjectId ? { type: String(input.subjectType ?? "order"), id: String(input.subjectId) } : null,
+        params: (input) => ({
+            subjectType: input?.subjectType ?? "",
+            subjectId: input?.subjectId ?? "",
         }),
     },
     // No params by design: the whole input is the new password. Uncatalogued

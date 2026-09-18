@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog";
 
 import { useTRPC } from "@/backend/api/client";
-import { domainErrorCode } from "@/lib/trpc-error";
+import { domainErrorCode } from "@workspace/trpc/errors";
 import type { DriverOption } from "@/backend/api/routers/fleet";
 import { RegisterDriverSchema, type RegisterDriverForm } from "@/backend/schemas/register-driver";
 
@@ -92,7 +92,16 @@ export function RegisterDriverDialog({
                     <DialogDescription>{t("register.description")}</DialogDescription>
                 </DialogHeader>
 
-                <form id="register-driver-form" onSubmit={form.handleSubmit(onSubmit)}>
+                <form
+                    id="register-driver-form"
+                    onSubmit={(event) => {
+                        // The dialog renders in a portal, so React bubbles this
+                        // submit to the order form that opened it and submits
+                        // that one too
+                        event.stopPropagation();
+                        void form.handleSubmit(onSubmit)(event);
+                    }}
+                >
                     <FieldGroup className="gap-4">
                         <TextInput
                             name="name"

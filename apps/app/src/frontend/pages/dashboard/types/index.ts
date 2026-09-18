@@ -1,0 +1,32 @@
+import { currentYear } from "@/frontend/pages/analytics/types";
+
+/**
+ * The board's shared vocabulary: the RSC page prefetches with these builders
+ * and the client cards query with them, so both sides hash to the same key
+ * and nothing refetches on hydration.
+ */
+
+/** Rows in the "latest" table — a glance, not a list. */
+export const LATEST_LIMIT = 5;
+
+/**
+ * The board is always the current year; it has no year control of its own.
+ * The number is the analytics page's own, rather than a `new Date()` here, so
+ * the chart on this page and the chart on that one ask for the same twelve
+ * months and share one entry in the cache.
+ */
+export const yearInput = () => ({ year: currentYear() });
+
+/**
+ * One of the company's own lists, newest first, for the "latest" table. The
+ * lists page in 25s, so that is what is asked for; the table keeps the few
+ * newest across the two.
+ */
+export const latestLoadsInput = (scope: "orders" | "trips") => ({
+    scope,
+    section: "all" as const,
+    sort: "newest" as const,
+    dir: "desc" as const,
+    page: 1,
+    pageSize: 25,
+});

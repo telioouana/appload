@@ -5,7 +5,12 @@ type AuthTranslator = ReturnType<typeof useTranslations<"Admin.auth">>;
 
 export function ForgotPasswordSchema(t: AuthTranslator) {
     return z.object({
-        username: z.string().nonempty({ error: t("username.error") }),
+        // Same shape the sign-in form demands: a bare username, which
+        // `staffEmail` folds into the staff domain
+        username: z
+            .string()
+            .nonempty({ error: t("username.error") })
+            .regex(/^[^@\s]+$/, { error: t("username.invalid") }),
     });
 }
 

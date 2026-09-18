@@ -23,6 +23,7 @@ const createContext = cache(async () => {
     return createTRPCContext({
         headers: heads,
         auth,
+        app: "admin",
         // Keeps activity-log writes alive after the response is sent
         waitUntil: (promise) => after(promise),
     });

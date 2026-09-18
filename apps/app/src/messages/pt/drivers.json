@@ -1,0 +1,167 @@
+{
+    "eyebrow": "Frota",
+    "title": "Motoristas",
+    "description": "Os motoristas registados da sua empresa",
+    "add": "Registar motorista",
+    "status": {
+        "draft": "Rascunho",
+        "pending-review": "Por rever",
+        "verified": "Verificado",
+        "rejected": "Rejeitado",
+        "expired": "Expirado",
+        "suspended": "Suspenso"
+    },
+    "state": {
+        "active": "Em serviço",
+        "idle": "Parado",
+        "free": "Disponível"
+    },
+    "columns": {
+        "driver": "Motorista",
+        "phone": "Telefone",
+        "email": "Email",
+        "passport": "Passaporte",
+        "truck": "Camião",
+        "state": "Disponibilidade",
+        "status": "Verificação",
+        "documents": "Carta",
+        "actions": "Acções"
+    },
+    "values": {
+        "none": "Nenhum",
+        "unassigned": "Sem camião",
+        "no-email": "Sem email",
+        "passport": "Passaporte {number}",
+        "progress": "{approved}/{required}"
+    },
+    "sort": {
+        "name": "Nome",
+        "status": "Verificação",
+        "created": "Data de registo"
+    },
+    "filters": {
+        "search": "Pesquisar nome, telefone, passaporte ou matrícula",
+        "clear": "Limpar pesquisa",
+        "all": "Todos",
+        "issues": "Problemas",
+        "any": "Qualquer",
+        "state": "Disponibilidade",
+        "assignment": "Atribuição",
+        "unassigned": "Sem camião",
+        "unassigned-hint": "Não está atribuído a nenhum veículo"
+    },
+    "tiles": {
+        "idle": "Parados",
+        "idle-hint": "sem viagem neste momento",
+        "pending-review": "Por rever",
+        "pending-review-hint": "cartas à espera da Appload",
+        "active": "Em serviço",
+        "active-hint": "numa viagem agora",
+        "free": "Disponíveis",
+        "free-hint": "prontos para uma viagem",
+        "unassigned": "Sem camião",
+        "unassigned-hint": "ainda sem veículo atribuído"
+    },
+    "data": {
+        "empty": "Ainda não há nada aqui",
+        "empty-description": "Registe o primeiro motorista para o poder despachar nas suas ordens.",
+        "no-results": "Nenhum resultado corresponde aos filtros",
+        "error": "Não foi possível carregar esta lista, tente novamente"
+    },
+    "actions": {
+        "menu": "Mais acções",
+        "open": "Abrir perfil",
+        "edit": "Editar motorista",
+        "copy-phone": "Copiar telefone",
+        "copy-email": "Copiar email"
+    },
+    "assign": {
+        "assign-truck": "Atribuir camião",
+        "change-truck": "Mudar de camião",
+        "search-truck": "Pesquisar os seus camiões…",
+        "no-trucks": "Nenhum camião corresponde",
+        "unassign": "Retirar do camião",
+        "assigned": "Camião atribuído",
+        "failed": "Não foi possível atribuir o camião"
+    },
+    "profile": {
+        "title": "Perfil do motorista",
+        "description": "Contactos, verificação e atribuição do motorista escolhido",
+        "error": "Não foi possível carregar este motorista.",
+        "close": "Fechar",
+        "contact": "Contacto",
+        "verification": "Verificação",
+        "assignment": "Atribuição",
+        "documents": "Documentos",
+        "registered": "Registado em",
+        "kyc": "Estado",
+        "none": "Nenhum",
+        "loads": {
+            "title": "Cargas",
+            "empty": "Este motorista ainda não foi indicado em nenhuma carga."
+        }
+    },
+    "edit": {
+        "title": "Editar motorista",
+        "description": "Só os campos que alterar são enviados.",
+        "save": "Guardar",
+        "saving": "A guardar...",
+        "cancel": "Cancelar",
+        "success": "Motorista actualizado",
+        "errors": {
+            "DUPLICATE_EMAIL": "Já existe uma conta com este email.",
+            "DUPLICATE_PHONE": "Já existe uma conta com este telefone.",
+            "EMAIL_LOCKED": "Este motorista já entra com o email dele; só a Appload o pode alterar. Fale connosco.",
+            "NOT_ALLOWED": "A sua função não permite editar motoristas.",
+            "NOT_FOUND": "Este motorista já não existe.",
+            "UNKNOWN": "Ocorreu um erro inesperado. Tente novamente."
+        }
+    },
+    "register": {
+        "title": "Registar motorista",
+        "description": "O motorista recebe uma conta na app; define a sua própria senha ao aderir.",
+        "fields": {
+            "name": {
+                "label": "Nome",
+                "placeholder": "João Silva"
+            },
+            "phone": {
+                "label": "Telefone",
+                "description": "É por aqui que o motorista recebe os pedidos de localização"
+            },
+            "email": {
+                "label": "Email",
+                "placeholder": "motorista@exemplo.com",
+                "description": "Opcional. Sem email, criamos um endereço interno para a conta."
+            },
+            "passport": {
+                "label": "Passaporte",
+                "placeholder": "AB1234567 (opcional)"
+            }
+        },
+        "actions": {
+            "save": "Registar",
+            "saving": "A registar...",
+            "cancel": "Cancelar"
+        },
+        "errors": {
+            "invalid": "Os dados são inválidos.",
+            "unauthorized": "Sessão inválida. Inicie a sessão novamente.",
+            "notAllowed": "A sua função não permite registar motoristas.",
+            "duplicateEmail": "Já existe uma conta com este email.",
+            "duplicatePhone": "Já existe uma conta com este telefone.",
+            "unknown": "Ocorreu um erro inesperado. Tente novamente.",
+            "validation": {
+                "name": "O nome é obrigatório",
+                "email": "Email inválido",
+                "phone": "Use um número válido, ex. 84 000 0000",
+                "country": "Escolha o país"
+            }
+        }
+    },
+    "combobox": {
+        "loading": "A procurar...",
+        "empty": "Sem resultados",
+        "register": "Registar \"{name}\""
+    }
+}

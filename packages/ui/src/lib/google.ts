@@ -1,12 +1,19 @@
 "use server"
 
-import { getLocale } from "@workspace/i18n/server"
+import { hasLocale, LOCALES } from "@workspace/i18n"
 import { Client, TravelMode, UnitSystem } from "@googlemaps/google-maps-services-js"
 
 const client = new Client()
 
-export async function autoComplete(input: string) {
-    const locale = await getLocale()
+// Server Actions can't read the request locale (`next/root-params` throws in
+// the action phase, and next-intl's getLocale resolves through it), so callers
+// pass the client's locale explicitly. Anything outside the supported list is
+// dropped rather than forwarded to Google.
+function language(locale: string | undefined) {
+    return locale && hasLocale(LOCALES, locale) ? { language: locale } : {}
+}
+
+export async function autoComplete(input: string, locale?: string) {
     if (!input) return []
 
     try {
@@ -14,7 +21,7 @@ export async function autoComplete(input: string) {
             params: {
                 input,
                 key: process.env.GOOGLE_MAPS_API_KEY!,
-                language: locale,
+                ...language(locale),
             }
         })
 
@@ -24,8 +31,7 @@ export async function autoComplete(input: string) {
     }
 }
 
-export async function distanceCalculator(origins: string, destinations: string) {
-    const locale = await getLocale()
+export async function distanceCalculator(origins: string, destinations: string, locale?: string) {
     try {
         const response = await client.distancematrix({
             params: {
@@ -33,7 +39,7 @@ export async function distanceCalculator(origins: string, destinations: string) 
                 destinations: [`place_id:${destinations}`],
                 mode: TravelMode.driving,
                 key: process.env.GOOGLE_MAPS_API_KEY!,
-                language: locale,
+                ...language(locale),
                 units: UnitSystem.metric,
             }
         })

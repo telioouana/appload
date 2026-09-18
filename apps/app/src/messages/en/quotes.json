@@ -1,0 +1,387 @@
+{
+    "metadata": "Quotes",
+    "title": {
+        "carrier": "Quotes sent",
+        "shipper": "Quotes received"
+    },
+    "description": {
+        "carrier": "The lanes and prices you have offered your clients, and what came of them.",
+        "shipper": "The lanes and prices your transporters have offered you, ready to turn into an order."
+    },
+    "search": {
+        "placeholder": "Search by company or lane",
+        "clear": "Clear the search"
+    },
+    "columns": {
+        "partner": "Company",
+        "lane": "Lane",
+        "loading": "Loading",
+        "capacity": "Capacity",
+        "total": "Price",
+        "cover": "Includes",
+        "valid": "Valid until",
+        "status": "Status"
+    },
+    "sort": {
+        "newest": "Newest first",
+        "partner": "Company",
+        "total": "Price",
+        "valid": "Validity"
+    },
+    "filters": {
+        "all": "All",
+        "validity": "Validity",
+        "expiring": "Expiring soon",
+        "expiring-hint": "Standing quotes that lapse within seven days"
+    },
+    "status": {
+        "sent": "Standing",
+        "accepted": "Accepted",
+        "declined": "Declined",
+        "withdrawn": "Withdrawn",
+        "expired": "Expired"
+    },
+    "cover": {
+        "git": "Goods in transit",
+        "gps": "Tracking",
+        "none": "Transport only"
+    },
+    "values": {
+        "open-date": "Any day",
+        "no-expiry": "No end date",
+        "not-stated": "Not stated",
+        "pending": "Awaiting an answer"
+    },
+    "unit": {
+        "ton": "t",
+        "kg": "kg",
+        "liter": "L"
+    },
+    "route": {
+        "national": "National",
+        "regional": "Regional"
+    },
+    "regime": {
+        "normal": "Normal (16%)",
+        "simplified-5": "Simplified (5%)",
+        "simplified-3": "Simplified (3%)",
+        "n/a": "Not applicable"
+    },
+    "bay": {
+        "flatbed": "Flatbed",
+        "dropsides": "Dropsides",
+        "tautliner": "Tautliner",
+        "rigid-body": "Rigid body",
+        "refrigerated": "Refrigerated",
+        "tipper": "Tipper",
+        "side-tipper": "Side tipper",
+        "tanker": "Tanker",
+        "lowbed": "Lowbed"
+    },
+    "category": {
+        "agriculture-inputs": "Agriculture inputs",
+        "agriculture-products": "Agriculture products",
+        "construction": "Construction",
+        "machinery-equipment": "Machinery & equipment",
+        "fmcg": "FMCG",
+        "general-cargo": "General cargo",
+        "medicine": "Medicine",
+        "mining": "Mining",
+        "oil-gas": "Oil & gas",
+        "vehicles": "Vehicles",
+        "other": "Other"
+    },
+    "load-type": {
+        "dedicated": "Dedicated truck",
+        "groupage": "Groupage"
+    },
+    "packing": {
+        "bags-1kg": "1 kg bags",
+        "bags-2kg": "2 kg bags",
+        "bags-5kg": "5 kg bags",
+        "bags-25kg": "25 kg bags",
+        "bags-30kg": "30 kg bags",
+        "bags-50kg": "50 kg bags",
+        "bags-100kg": "100 kg bags",
+        "bags-1ton": "1 ton bags (big bags)",
+        "bottle-1l": "1 L bottles",
+        "bottle-5l": "5 L bottles",
+        "bottle-10l": "10 L bottles",
+        "bottle-20l": "20 L bottles",
+        "bottle-25l": "25 L bottles",
+        "container-20ft": "20 ft container",
+        "container-40ft": "40 ft container",
+        "boxes": "Boxes",
+        "pallets": "Pallets",
+        "noPacking": "In bulk / no packing",
+        "other": "Other"
+    },
+    "tiles": {
+        "standing": {
+            "carrier": "On the table",
+            "shipper": "Waiting on you"
+        },
+        "standing-hint": {
+            "carrier": "Quotes your clients have not answered",
+            "shipper": "Prices you can still accept"
+        },
+        "expiring": "Expiring soon",
+        "expiring-hint": "Valid for less than seven days",
+        "accepted": "Accepted",
+        "accepted-hint": "{count, plural, =0 {None this month} one {# this month} other {# this month}}"
+    },
+    "data": {
+        "empty": "No quotes yet",
+        "empty-description": {
+            "carrier": "Offer a client a lane and a price, and it shows up here.",
+            "shipper": "Prices your transporters offer you land here, ready to accept."
+        },
+        "no-results": "No quote matches this search",
+        "error": "The quotes could not be loaded."
+    },
+    "add": {
+        "trigger": "New quote",
+        "title": "New quote",
+        "description": "Offer one of your clients a lane and a price. They can turn it into an order in one click.",
+        "client": "Client",
+        "lane": "Lane",
+        "capacity": "Truck",
+        "price": "Price",
+        "terms": "Terms",
+        "client-price": "What the client pays",
+        "fields": {
+            "client": {
+                "label": "Client",
+                "placeholder": "Choose a client",
+                "description": "Only the clients you are connected to",
+                "empty": "You have no connected clients yet. Add one on the Partners page first."
+            },
+            "origin": {
+                "label": "Loading place",
+                "placeholder": "Search for a place"
+            },
+            "destination": {
+                "label": "Offloading place",
+                "placeholder": "Search for a place"
+            },
+            "route": {
+                "label": "Route",
+                "placeholder": "Choose a route"
+            },
+            "loadingDate": {
+                "label": "Loading date",
+                "placeholder": "Leave empty for any day"
+            },
+            "bay": {
+                "label": "Body type",
+                "placeholder": "Choose a body type"
+            },
+            "capacity": {
+                "label": "Capacity offered",
+                "placeholder": "e.g. 30"
+            },
+            "regime": {
+                "label": "Fiscal regime",
+                "placeholder": "Choose a regime"
+            },
+            "currency": {
+                "label": "Currency",
+                "placeholder": "Choose a currency"
+            },
+            "subtotal": {
+                "label": "Subtotal",
+                "placeholder": "0.00"
+            },
+            "vat": {
+                "label": "VAT",
+                "placeholder": "0.00"
+            },
+            "total": {
+                "label": "Total",
+                "placeholder": "0.00",
+                "description": "VAT included; the subtotal and VAT follow from your regime"
+            },
+            "git": {
+                "label": "Goods in transit cover included",
+                "description": "The price already covers the cargo insurance"
+            },
+            "gps": {
+                "label": "Tracking included",
+                "description": "The truck is tracked for the whole trip"
+            },
+            "validUntil": {
+                "label": "Valid until",
+                "placeholder": "Leave empty to keep it open",
+                "description": "After this date the price is no longer on the table"
+            },
+            "notes": {
+                "label": "Notes",
+                "placeholder": "Anything the client should know about this price"
+            }
+        },
+        "actions": {
+            "send": "Send quote",
+            "sending": "Sending…"
+        }
+    },
+    "panel": {
+        "title": "Quote",
+        "description": "The lane, the price and what can still be decided.",
+        "error": "This quote could not be loaded.",
+        "role": {
+            "carrier": "Client",
+            "shipper": "Transporter"
+        },
+        "lane": "Lane",
+        "capacity": "Truck",
+        "price": "Price",
+        "price-note": "This is what the client pays: Appload adds nothing to a quote sent through the portal.",
+        "notes": "Notes",
+        "history": "History",
+        "open-order": "Open order {orderId}",
+        "fields": {
+            "route": "Route",
+            "loading": "Loading date",
+            "valid": "Valid until",
+            "bay": "Body type",
+            "capacity": "Capacity offered",
+            "subtotal": "Subtotal",
+            "vat": "VAT",
+            "total": "Total",
+            "regime": "Fiscal regime",
+            "sent": "Sent",
+            "decided": "Answered"
+        }
+    },
+    "accept": {
+        "title": "Accept this quote",
+        "description": "The lane, the transporter and the price are already set. Tell us what is being carried and the order is booked.",
+        "cargo": "Cargo",
+        "schedule": "Schedule",
+        "handling": "Handling",
+        "fields": {
+            "category": {
+                "label": "Category",
+                "placeholder": "Choose a category"
+            },
+            "description": {
+                "label": "Description",
+                "placeholder": "What is being carried"
+            },
+            "weight": {
+                "label": "Weight",
+                "placeholder": "e.g. 28"
+            },
+            "loadType": {
+                "label": "Load type",
+                "placeholder": "Choose a load type"
+            },
+            "packing": {
+                "label": "Packing",
+                "placeholder": "Choose a packing"
+            },
+            "deliveries": {
+                "label": "Deliveries",
+                "placeholder": "1"
+            },
+            "trucks": {
+                "label": "Trucks",
+                "placeholder": "1"
+            },
+            "loadingDate": {
+                "label": "Loading date",
+                "placeholder": "Choose a date"
+            },
+            "offloadingDate": {
+                "label": "Offloading date",
+                "placeholder": "Choose a date"
+            },
+            "distance": {
+                "label": "Distance (km)",
+                "placeholder": "0",
+                "description": "Measured from the two places on the quote; correct it if the road is different"
+            },
+            "hazardous": {
+                "label": "Hazardous cargo",
+                "description": "Dangerous goods that need a hazchem code"
+            },
+            "hazchem": {
+                "label": "Hazchem code",
+                "placeholder": "e.g. 3YE"
+            },
+            "refrigerated": {
+                "label": "Refrigerated cargo",
+                "description": "The load has to travel at a set temperature"
+            },
+            "temperature": {
+                "label": "Temperature (°C)",
+                "placeholder": "e.g. -18"
+            },
+            "temperatureInstructions": {
+                "label": "Temperature instructions",
+                "placeholder": "Anything the driver has to keep to"
+            }
+        },
+        "actions": {
+            "book": "Accept and book",
+            "booking": "Booking…"
+        }
+    },
+    "decline": {
+        "title": "Decline this quote",
+        "description": "The transporter is told the price was turned down. A short reason helps them come back with a better one.",
+        "fields": {
+            "note": {
+                "label": "Reason",
+                "placeholder": "e.g. the price is above our budget for this lane",
+                "description": "Optional, and only the transporter sees it"
+            }
+        }
+    },
+    "actions": {
+        "accept": "Accept",
+        "decline": "Decline",
+        "withdraw": "Withdraw",
+        "cancel": "Cancel"
+    },
+    "toasts": {
+        "created": "Quote sent",
+        "withdrawn": "Quote withdrawn",
+        "declined": "Quote declined",
+        "accepted": "Order {orderId} booked"
+    },
+    "form": {
+        "errors": {
+            "address": "Pick a place from the suggestions",
+            "category": "Choose a category",
+            "client": "Choose a client",
+            "count": "Enter a whole number above zero",
+            "currency": "Choose a currency",
+            "date": "Choose a valid date",
+            "description": "Say what is being carried",
+            "distance": "Enter the distance in kilometres",
+            "list": "Choose one of the options",
+            "note": "The note is too long",
+            "total": "Enter the total price",
+            "value": "Enter a valid value",
+            "weight": "Enter a valid weight"
+        }
+    },
+    "errors": {
+        "notFound": "This quote no longer exists.",
+        "notSent": "This quote has already been answered.",
+        "alreadyDecided": "Someone else answered this quote first.",
+        "expired": "This quote is past its validity date.",
+        "loadingDate": "Choose a loading date for the order.",
+        "clientNotConnected": "You are not connected to this client.",
+        "notAllowed": "You are not allowed to do this.",
+        "subscription": "Your company has no active plan. Talk to us to activate one.",
+        "quotaExceeded": "This month's tracked movements are all used up. The allowance starts again at the beginning of next month.",
+        "carrierNotVerified": "This transporter is not verified by Appload yet, so the order cannot be booked.",
+        "carrierContractMissing": "This transporter has no signed contract with Appload yet.",
+        "carrierContractExpired": "This transporter's contract with Appload has expired.",
+        "carrierSuspended": "This transporter is suspended.",
+        "riskReview": "Appload has to review this transporter before an order can be booked with them.",
+        "unknown": "Something went wrong. Please try again."
+    }
+}

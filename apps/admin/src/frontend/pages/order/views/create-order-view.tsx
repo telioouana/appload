@@ -6,7 +6,7 @@ import { FormProvider, useForm } from "react-hook-form"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { IconCancel, IconCheck, IconX } from "@tabler/icons-react"
 
-import { useTranslations } from "@workspace/i18n"
+import { useLocale, useTranslations } from "@workspace/i18n"
 import { authClient } from "@workspace/auth/client"
 
 import { Button } from "@workspace/ui/components/button"
@@ -17,8 +17,8 @@ import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHe
 import { distanceCalculator, getLogisticsTripType } from "@workspace/ui/lib/google"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
-import { ORDER_ERROR_CODES } from "@/lib/orders/errors"
+import { domainErrorCode } from "@workspace/trpc/errors"
+import { ORDER_ERROR_CODES } from "@workspace/domain/orders/errors"
 import { CreateOrderSchema, orderToCreateDefaults, type CreateOrderForm, type CreateOrderFormInput } from "@/backend/schemas/order";
 
 import { NewOrderForm } from "../forms/new-order-form"
@@ -37,6 +37,9 @@ const VIEW_ERROR_CODES = [
     // updateDeal rewrites the leg currencies, which are frozen once a
     // party has notes or proofs of payment
     "NOTE_CURRENCY_LOCKED",
+    // The offer this payload books with was decided elsewhere while the
+    // sheet was open
+    "OFFER_NOT_PENDING",
 ] as const;
 type ViewErrorCode = (typeof VIEW_ERROR_CODES)[number];
 
@@ -62,13 +65,16 @@ const ERROR_MESSAGE_KEYS = {
     "RISK_ACK_NOT_ALLOWED": "riskAckNotAllowed",
     "RISK_ACK_NOTE_REQUIRED": "riskAckNoteRequired",
     "NOTE_CURRENCY_LOCKED": "noteCurrencyLocked",
+    "OFFER_NOT_PENDING": "offerNotPending",
     "UNKNOWN": "unknown",
 } as const satisfies Record<ViewErrorCode, string>;
 
 const DEFAULT_VALUES: CreateOrderFormInput = {
     shipperId: "",
     shipperName: "",
-    status: undefined as never,
+    // Every order starts as a quote; booking it means marking one of its
+    // offers accepted, which the form only allows on "booked"
+    status: "prospect",
     loadingAddress: {
         address: "",
         placeId: "",
@@ -96,6 +102,7 @@ const DEFAULT_VALUES: CreateOrderFormInput = {
     shipperVAT: undefined,
     shipperTotal: undefined,
     shipperCurrency: undefined as never,
+    offers: [],
     // driverId: crypto.randomUUID(),
 }
 
@@ -110,20 +117,19 @@ export function CreateOrderView() {
 
     // `order` set = editing a prospect through this same form, so the
     // prospect → booked move runs the exact validation creation runs
-    const { isOpen, order, intent, onClose } = useCreateOrder()
+    const { isOpen, order, offers, onClose } = useCreateOrder()
     const t = useTranslations("Admin.order.create")
+    // Passed to the distance server action: it can't read the request locale itself
+    const locale = useLocale()
 
     const FormSchema = useMemo(() => CreateOrderSchema(t), [t])
 
-    // Entering through "Confirm order" aims the form at booking: the status
-    // starts on "booked" so Save books it and every still-required field
-    // fails validation at once. A plain edit opens the stored status.
-    const values = useMemo(() => {
-        if (!order) return DEFAULT_VALUES
-
-        const defaults = orderToCreateDefaults(order)
-        return intent === "confirm" ? { ...defaults, status: "booked" as const } : defaults
-    }, [order, intent])
+    // The prospect's pending offers are part of the form: switching the
+    // status to booked and marking one of them accepted is what books it
+    const values = useMemo(
+        () => (order ? orderToCreateDefaults(order, offers) : DEFAULT_VALUES),
+        [order, offers],
+    )
 
     const trpc = useTRPC()
     const queryClient = useQueryClient()
@@ -147,7 +153,7 @@ export function CreateOrderView() {
             const token = ++routeToken.current
 
             const [rows, trip] = await Promise.all([
-                distanceCalculator(origin, destination),
+                distanceCalculator(origin, destination, locale),
                 getLogisticsTripType(origin, destination),
             ])
             // A newer address pick superseded this request while it was in flight
@@ -169,8 +175,8 @@ export function CreateOrderView() {
             const round = (value: number) => value.toFixed(2)
             const hasValue = (value: unknown) => value !== undefined && value !== null && value !== ""
             // Derived writes go through here so they don't re-trigger this callback;
-            // routeType/fiscalRegime are set directly (unguarded) because their
-            // recompute branches are exactly the cascade we want
+            // routeType is set directly (unguarded) because its recompute
+            // branch is exactly the cascade we want
             const write = (apply: () => void) => {
                 syncing.current = true
                 apply()
@@ -179,8 +185,8 @@ export function CreateOrderView() {
 
             // Keep subtotal/VAT/total in sync as the user types. VAT derived from a
             // subtotal is sub * 0.16; from a VAT-inclusive total it is total * (0.16/1.16).
-            // Regional shipper routes and non-"normal" carrier regimes carry no VAT.
-            // routeType/fiscalRegime are also triggers so a late change recomputes VAT
+            // Regional shipper routes carry no VAT, and routeType is also a trigger so
+            // a late change recomputes it. Each offer derives its own leg in OfferFields.
             if ((name === "shipperSubtotal" || name === "routeType") && hasValue(values.shipperSubtotal)) {
                 const subtotal = amount(values.shipperSubtotal)
                 const vat = values.routeType === "national" ? subtotal * 0.16 : 0
@@ -199,21 +205,15 @@ export function CreateOrderView() {
                 })
             }
 
-            if ((name === "carrierSubtotal" || name === "fiscalRegime") && hasValue(values.carrierSubtotal)) {
-                const subtotal = amount(values.carrierSubtotal)
-                const vat = values.fiscalRegime === "normal" ? subtotal * 0.16 : 0
+            // Only a booked payload names a winning offer, and the control
+            // that names one is only rendered while the status says booked —
+            // so leaving booked has to clear the choice, or the schema
+            // refuses a payload the form no longer shows any way to fix
+            if (name === "status" && values.status !== "booked") {
                 write(() => {
-                    form.setValue("carrierVAT", round(vat))
-                    form.setValue("carrierTotal", round(subtotal + vat))
-                })
-            }
-
-            if (name === "carrierTotal" && hasValue(values.carrierTotal)) {
-                const total = amount(values.carrierTotal)
-                const vat = values.fiscalRegime === "normal" ? total * 0.16 / 1.16 : 0
-                write(() => {
-                    form.setValue("carrierVAT", round(vat))
-                    form.setValue("carrierSubtotal", round(total - vat))
+                    values.offers?.forEach((offer, index) => {
+                        if (offer?.accepted) form.setValue(`offers.${index}.accepted`, false)
+                    })
                 })
             }
 
@@ -225,9 +225,6 @@ export function CreateOrderView() {
                 if (origin && destination) {
                     const routeType = values.loadingAddress?.country === values.offloadingAddress?.country ? "national" : "regional"
                     form.setValue("routeType", routeType)
-                    if (routeType === "regional") {
-                        form.setValue("fiscalRegime", "n/a")
-                    }
                     void fillRouteInfo(origin, destination)
                 }
             }
@@ -235,7 +232,7 @@ export function CreateOrderView() {
         })
 
         return unsubscribe
-    }, [form])
+    }, [form, locale])
 
     function handleClose() {
         form.reset()
@@ -252,17 +249,17 @@ export function CreateOrderView() {
                     onSuccess: (result) => {
                         form.reset()
                         onClose()
-                        queryClient.invalidateQueries(trpc.orders.list.queryFilter())
+                        queryClient.invalidateQueries(trpc.orders.pathFilter())
                         queryClient.invalidateQueries(trpc.order.get.queryFilter({ orderId: result.orderId }))
                         setCreated({
                             orderId: result.orderId,
-                            status: result.order.status as ["prospect", "booked"][number],
                             // "Order created" is a lie after an edit; only a
                             // prospect reaches this door, so a booked result
-                            // means it was just confirmed
+                            // means it was just booked
                             mode: result.order.status === "booked" ? "booked" : "saved",
                             warning: result.warning,
-                            values: submitted,
+                            order: result.order,
+                            loadingBay: result.loadingBay,
                         })
                     },
                     onError: (err) => {
@@ -273,7 +270,7 @@ export function CreateOrderView() {
                         // moved on; refresh it so "try again" reopens on the
                         // current data
                         if (code === "VERSION_CONFLICT") {
-                            queryClient.invalidateQueries(trpc.orders.list.queryFilter())
+                            queryClient.invalidateQueries(trpc.orders.pathFilter())
                             queryClient.invalidateQueries(trpc.order.get.queryFilter({ orderId: order.orderId }))
                         }
                     },
@@ -286,13 +283,15 @@ export function CreateOrderView() {
             onSuccess: (result) => {
                 form.reset()
                 onClose()
-                queryClient.invalidateQueries(trpc.orders.list.queryFilter())
+                queryClient.invalidateQueries(trpc.orders.pathFilter())
                 setCreated({
                     orderId: result.orderId,
-                    status: result.status as ["prospect", "booked"][number],
                     mode: "created",
                     warning: result.warning,
-                    values: submitted,
+                    order: result.order,
+                    // create() does not look the bay up: it is whatever the
+                    // fleet pickers just filled in, or nothing at all
+                    loadingBay: submitted.loadingBay ?? null,
                 })
             },
             onError: (err) => {
@@ -311,12 +310,8 @@ export function CreateOrderView() {
 
     const needsGoogleReconnect = error === "GOOGLE_NOT_LINKED" || error === "INSUFFICIENT_SCOPE"
 
-    // Create, plain edit, and "complete this and book it" are three different
-    // jobs and each says so
     const heading = order
-        ? intent === "confirm"
-            ? { title: t("confirmTitle", { orderId: order.orderId }), description: t("confirmDescription") }
-            : { title: t("editTitle", { orderId: order.orderId }), description: t("editDescription") }
+        ? { title: t("editTitle", { orderId: order.orderId }), description: t("editDescription") }
         : { title: t("title"), description: t("description") }
 
     return (
@@ -395,7 +390,7 @@ export function CreateOrderView() {
                 </SheetContent>
             </Sheet>
 
-            <CreateOrderSuccess order={created} onClose={() => setCreated(null)} />
+            <CreateOrderSuccess result={created} onClose={() => setCreated(null)} />
         </>
     )
 }

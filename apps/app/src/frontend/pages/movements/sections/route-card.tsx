@@ -1,0 +1,83 @@
+"use client"
+
+import { IconArrowNarrowRight } from "@tabler/icons-react"
+
+import { useFormatter, useTranslations } from "@workspace/i18n"
+
+import { DetailRow, SectionCard } from "@workspace/ui/customs/detail/section-card"
+import { Dash } from "@workspace/ui/customs/list/table-cells"
+
+import { MovementRouteMap } from "@/frontend/pages/movements/components/movement-route-map"
+import { ApploadOrderMap } from "@/frontend/pages/movements/sections/appload-panels"
+import type { MovementDetail } from "@/frontend/pages/movements/types"
+
+const MAP_CLASS = "h-72 overflow-hidden rounded-xl"
+
+/**
+ * Where the load goes, when, and what it carries. The map is the lane Google
+ * drew and, once the truck is moving, where it has been.
+ *
+ * On a load that follows an Appload order the map is the order's, because
+ * that is where Appload files the truck's positions; the row's own trail
+ * would be empty. A company still quoting sees the plain load map — the
+ * server hands the order's route to its two parties only.
+ *
+ * The vocabularies shared with Appload's orders — the same database enums —
+ * are read from App.orders rather than restated.
+ */
+export function RouteCard({ load }: { load: MovementDetail }) {
+    const t = useTranslations("App.loads.detail")
+    const tv = useTranslations("App.orders")
+    const f = useFormatter()
+
+    const date = (value: Date | null) => value ? f.dateTime(value, { dateStyle: "medium" }) : <Dash />
+
+    const ownMap = <MovementRouteMap loadId={load.id} status={load.status} className={MAP_CLASS} />
+
+    return (
+        <SectionCard title={t("route")} aside={tv(`routeType.${load.route}`)}>
+            <div className="flex flex-col gap-1.5 text-sm">
+                <span>{load.origin.address}</span>
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                    <IconArrowNarrowRight className="size-4 shrink-0" stroke={1.5} />
+                    {load.destination.address}
+                </span>
+            </div>
+
+            {load.appload && load.appload.role !== "candidate"
+                ? <ApploadOrderMap orderId={load.appload.orderId} className={MAP_CLASS} fallback={ownMap} />
+                : ownMap}
+
+            <div className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+                <dl className="flex flex-col gap-2">
+                    <DetailRow label={t("fields.loading")}>{date(load.expectedLoadingDate)}</DetailRow>
+                    <DetailRow label={t("fields.due")}>{date(load.expectedDeliveryAt)}</DetailRow>
+                    <DetailRow label={t("fields.started")}>{date(load.startedAt)}</DetailRow>
+                    <DetailRow label={t("fields.delivered")}>{date(load.deliveredAt)}</DetailRow>
+                </dl>
+
+                <dl className="flex flex-col gap-2">
+                    <DetailRow label={t("fields.category")}>
+                        {load.category ? tv(`category.${load.category}`) : <Dash />}
+                    </DetailRow>
+                    <DetailRow label={t("fields.weight")}>
+                        {load.weight !== null
+                            ? `${f.number(load.weight, { maximumFractionDigits: 3 })} ${load.weightUnit ? tv(`weightUnit.${load.weightUnit}`) : ""}`
+                            : <Dash />}
+                    </DetailRow>
+                    <DetailRow label={t("fields.cargo")}>
+                        {load.cargoDescription
+                            ? <span className="line-clamp-3 text-left whitespace-pre-line">{load.cargoDescription}</span>
+                            : <Dash />}
+                    </DetailRow>
+                </dl>
+            </div>
+
+            {load.notes && (
+                <p className="bg-muted/40 text-muted-foreground rounded-xl px-4 py-3 text-[13px] whitespace-pre-line">
+                    {load.notes}
+                </p>
+            )}
+        </SectionCard>
+    )
+}

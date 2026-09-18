@@ -1,3 +1,12 @@
-/// <reference types="@workspace/i18n" />
+import type { Locale } from "@workspace/i18n";
 
-// NOTE: This file should not be edited otherwise translation related types may not work
+import type messages from "./src/messages/pt.json";
+
+// Admin message keys are typed against the app-local pt.json — the admin
+// owns its translations, mirroring the website's setup.
+declare module "next-intl" {
+    interface AppConfig {
+        Locale: Locale;
+        Messages: typeof messages;
+    }
+}

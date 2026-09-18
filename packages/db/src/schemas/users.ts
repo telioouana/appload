@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
 import { bigint, pgTable, text, timestamp, boolean, index, integer, uniqueIndex, jsonb, primaryKey, } from "drizzle-orm/pg-core";
 
-import { Address, KYC_STATUS, RISK_LEVEL, Urls } from "@workspace/db/types";
+import { Address, KYC_STATUS, ORGANIZATION_TYPE, RISK_LEVEL, SUBSCRIPTION_PLAN, Urls } from "@workspace/db/types";
 
 export const user = pgTable(
     "user",
@@ -102,11 +102,23 @@ export const organization = pgTable(
         logo: text("logo"),
         createdAt: timestamp("created_at").notNull(),
         metadata: text("metadata"),
-        subscriptionPlan: text("subscription_plan", { enum: ["free", "pro"] })
-            .default("free")
-            .notNull(),
+        // Null until staff record the tier that was agreed commercially:
+        // there is no free plan, and no plan is not a tier of its own
+        subscriptionPlan: text("subscription_plan", { enum: SUBSCRIPTION_PLAN }),
+        // When the plan runs out; null on a subscription with no end date. The
+        // gate is `plan is not null and (expires is null or expires > now())`,
+        // and what the tier buys is its monthly quota of tracked movements
+        // (@workspace/domain/subscription). Written by Drizzle only, never a
+        // Better Auth additional field
+        subscriptionExpiresAt: timestamp("subscription_expires_at"),
+        // Set when the organization's first owner joins the partner portal;
+        // null means it exists in the database but nobody uses the portal yet
+        portalActivatedAt: timestamp("portal_activated_at"),
         nuit: text("nuit").notNull().unique(),
-        type: text("type", { enum: ["shipper", "carrier"] }).notNull(),
+        // A text column, so widening the vocabulary is no DDL at all. Better
+        // Auth's `additionalFields.type` stays shipper|carrier: "appload" is
+        // the seeded brokerage row and nobody ever signs up as one
+        type: text("type", { enum: ORGANIZATION_TYPE }).notNull(),
         status: text("status", { enum: ["pending", "active", "closed"] })
             .default("pending")
             .notNull(),

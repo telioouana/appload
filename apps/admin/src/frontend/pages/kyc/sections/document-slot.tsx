@@ -99,7 +99,7 @@ export function DocumentSlot({
  * else falls back to a link, because a reviewer who cannot see the document
  * must not be able to approve it by accident.
  */
-function DocumentPreview({ page, index }: { page: KycPage; index: number }) {
+export function DocumentPreview({ page, index }: { page: KycPage; index: number }) {
     const t = useTranslations("Admin.partners.review")
     const isPdf = page.mimeType === "application/pdf" || page.url.toLowerCase().endsWith(".pdf")
     const isImage = page.mimeType?.startsWith("image/") ?? /\.(png|jpe?g)$/i.test(page.url)

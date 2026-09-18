@@ -3,11 +3,13 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, eq, ilike, or } from "drizzle-orm";
 
 import { organization } from "@workspace/db/schema";
+import { SUBSCRIPTION_PLAN } from "@workspace/db/subscriptions";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedProcedure } from "@workspace/trpc/permissions";
+import { notify } from "@workspace/domain/notifications";
 
-import { uniqueViolationConstraint } from "@/lib/db-errors";
-import { RegisterOrganizationBaseSchema } from "@/backend/schemas/register-organization";
+import { uniqueViolationConstraint } from "@workspace/db/errors";
+import { RegisterOrganizationBaseSchema, UpdateOrganizationBaseSchema } from "@/backend/schemas/register-organization";
 
 export type OrganizationType = "shipper" | "carrier";
 
@@ -135,4 +137,129 @@ export const organizationsRouter = createTRPCRouter({
 
             throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
         }),
+
+    /**
+     * Partial edit of a registered organization. Every field is optional so
+     * the one-field "Add NUIT" popover on a list row and the full edit form
+     * share one mutation; the same unique constraints as registration apply.
+     */
+    update: authorizedProcedure("organizations", ["update"])
+        .input(z.object({ id: z.string().nonempty(), patch: UpdateOrganizationBaseSchema }))
+        .mutation(async ({ ctx, input }): Promise<OrgOption> => {
+            const { representee, phone, ...fields } = input.patch;
+            const values: Partial<typeof organization.$inferInsert> = {};
+
+            if (fields.name !== undefined) values.name = fields.name;
+            if (fields.nuit !== undefined) values.nuit = fields.nuit;
+            if (fields.email !== undefined) values.email = fields.email;
+            if (phone !== undefined) values.phoneNumber = phone;
+            if (fields.billingAddress !== undefined) values.billingAddress = fields.billingAddress;
+            if (fields.physicalAddress !== undefined) values.physicalAddress = fields.physicalAddress;
+
+            if (representee !== undefined) {
+                const [current] = await ctx.db
+                    .select({ metadata: organization.metadata })
+                    .from(organization)
+                    .where(eq(organization.id, input.id));
+
+                if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+
+                // The column is free-form JSON shared with other writers
+                // (the party sync stores the representee there too); merge
+                // rather than replace so nothing else in it is lost
+                values.metadata = JSON.stringify({
+                    ...parseMetadata(current.metadata),
+                    representee: representee || undefined,
+                });
+            }
+
+            if (Object.keys(values).length === 0) {
+                const [row] = await ctx.db
+                    .select({ id: organization.id, name: organization.name })
+                    .from(organization)
+                    .where(eq(organization.id, input.id));
+
+                if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+
+                return row;
+            }
+
+            try {
+                const [updated] = await ctx.db
+                    .update(organization)
+                    .set(values)
+                    .where(eq(organization.id, input.id))
+                    .returning({ id: organization.id, name: organization.name });
+
+                if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+
+                return updated;
+            } catch (error) {
+                mapOrganizationUniqueViolation(error);
+            }
+        }),
+
+    /**
+     * The partner's portal plan. There are no payments: ops agrees a plan
+     * commercially and records it here, and the portal gates booking,
+     * dispatch and trips on the tier's monthly quota of tracked movements.
+     * Null is no plan agreed yet — everything else stays open to them.
+     * Supervisory — a plan is a commercial decision, not day-to-day ops.
+     */
+    setSubscription: authorizedProcedure("subscription", ["update"])
+        .input(z.object({
+            id: z.string().nonempty(),
+            plan: z.enum(SUBSCRIPTION_PLAN).nullable(),
+            // Null is an open-ended subscription, not an expired one
+            expiresAt: z.date().nullable(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const [updated] = await ctx.db
+                .update(organization)
+                .set({ subscriptionPlan: input.plan, subscriptionExpiresAt: input.expiresAt })
+                .where(eq(organization.id, input.id))
+                .returning({
+                    id: organization.id,
+                    name: organization.name,
+                    plan: organization.subscriptionPlan,
+                    expiresAt: organization.subscriptionExpiresAt,
+                });
+
+            if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+
+            // Everyone on the partner's side hears about it; an organization
+            // with nobody on the portal yet notifies nobody
+            await notify(ctx.db, {
+                organizationId: updated.id,
+                kind: "subscription.changed",
+                // The plan lives on the portal's settings page, which is where
+                // both the row and its email send the reader
+                entityType: "subscription",
+                params: { plan: updated.plan ?? "none" },
+                email: true,
+            });
+
+            return updated;
+        }),
 });
+
+function parseMetadata(metadata: string | null): Record<string, unknown> {
+    if (!metadata) return {};
+    try {
+        const parsed: unknown = JSON.parse(metadata);
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : {};
+    } catch {
+        return {};
+    }
+}
+
+function mapOrganizationUniqueViolation(error: unknown): never {
+    const constraint = uniqueViolationConstraint(error);
+
+    if (constraint === null) throw error;
+    if (constraint.includes("nuit")) throw new TRPCError({ code: "CONFLICT", message: "DUPLICATE_NUIT" });
+    if (constraint.includes("email")) throw new TRPCError({ code: "CONFLICT", message: "DUPLICATE_EMAIL" });
+    if (constraint.includes("phone")) throw new TRPCError({ code: "CONFLICT", message: "DUPLICATE_PHONE" });
+
+    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
+}

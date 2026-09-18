@@ -12,7 +12,7 @@ import { Label } from "@workspace/ui/components/label"
 import { Button } from "@workspace/ui/components/button"
 import { Textarea } from "@workspace/ui/components/textarea"
 
-import { OWNERSHIP_DOC } from "@/lib/kyc/requirements"
+import { OWNERSHIP_DOC } from "@workspace/domain/kyc/requirements"
 
 export type ReviewPayload = {
     documentId: string

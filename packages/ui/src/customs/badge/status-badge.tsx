@@ -1,8 +1,9 @@
-import { IconAlertTriangle, IconBan, IconCancel, IconCircleCheck, IconClock, IconCoinOff, IconContract, IconEyeExclamation, IconFileTime, IconForklift, IconHelpCircle, IconInvoice, IconNavigationPause, IconPencilMinus, IconRosetteDiscountCheck, IconRoute, IconSearch, IconShieldCheck, IconTruckDelivery, IconTruckLoading, IconUrgent, IconUserExclamation, IconX, } from "@tabler/icons-react";
+import { IconAlertTriangle, IconBan, IconCancel, IconCircleCheck, IconCoinOff, IconContract, IconEyeExclamation, IconFileTime, IconForklift, IconHelpCircle, IconInvoice, IconNavigationPause, IconPencilMinus, IconRosetteDiscountCheck, IconRoute, IconSearch, IconShieldCheck, IconTruckDelivery, IconTruckLoading, IconUrgent, IconUserExclamation, IconX, } from "@tabler/icons-react";
 
 import { Badge } from "@workspace/ui/components/badge";
+import { cn } from "@workspace/ui/lib/utils";
 
-export type OrderStatusKey = "drafted" | "prospect" | "open" | "booked" | "to-loading" | "at-loading" | "loading" | "on-route" | "at-border" | "stopped" | "issue" | "at-offloading" | "offloading" | "delivered" | "completed" | "cancelled" | "underbid" | "waiting-documents";
+export type OrderStatusKey = "prospect" | "booked" | "to-loading" | "at-loading" | "loading" | "on-route" | "at-border" | "stopped" | "issue" | "at-offloading" | "offloading" | "delivered" | "completed" | "cancelled" | "underbid" | "waiting-documents";
 
 // Partner verification, risk and vehicle ownership. Every key here needs a
 // matching --status-{key}-text/-bg pair in globals.css, in both themes.
@@ -12,10 +13,10 @@ export type OwnershipStatusKey = "owner-verified" | "third-party" | "unverified"
 
 export type StatusKey = OrderStatusKey | KycStatusKey | RiskStatusKey | OwnershipStatusKey;
 
-const statusIcons: Record<StatusKey, React.ReactNode> = {
-    drafted: <IconPencilMinus size={14} />,
+// Exported so anything that renders a status outside a badge — the map pins,
+// for one — shows the same glyph as the badge does.
+export const statusIcons: Record<StatusKey, React.ReactNode> = {
     prospect: <IconInvoice size={14} />,
-    open: <IconClock size={14} />,
     booked: <IconContract size={14} />,
     "to-loading": <IconRoute size={14} />,
     "at-loading": <IconTruckLoading size={14} />,
@@ -50,13 +51,14 @@ const statusIcons: Record<StatusKey, React.ReactNode> = {
 interface Props {
     label: string
     status: StatusKey
+    className?: string
 }
 
-export function StatusBadge({ label, status }: Props) {
+export function StatusBadge({ label, status, className }: Props) {
     return (
         <Badge
             variant="secondary"
-            className="status px-2 py-1 gap-1.5 inline-flex items-center rounded-full text-sm border-none"
+            className={cn("status px-2 py-1 gap-1.5 inline-flex items-center rounded-full text-sm border-none", className)}
             style={{
                 ["--status-text" as string]: `var(--status-${status}-text)`,
                 ["--status-bg" as string]: `var(--status-${status}-bg)`,

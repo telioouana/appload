@@ -16,7 +16,7 @@ import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog";
 
 import { useTRPC } from "@/backend/api/client";
-import { domainErrorCode } from "@/lib/trpc-error";
+import { domainErrorCode } from "@workspace/trpc/errors";
 import type { OrganizationType, OrgOption } from "@/backend/api/routers/organizations";
 import { RegisterOrganizationSchema, type RegisterOrganizationForm } from "@/backend/schemas/register-organization";
 
@@ -143,7 +143,16 @@ export function RegisterOrganizationDialog({
                     <DialogDescription>{t("register.description")}</DialogDescription>
                 </DialogHeader>
 
-                <form id="register-organization-form" onSubmit={form.handleSubmit(onSubmit)}>
+                <form
+                    id="register-organization-form"
+                    onSubmit={(event) => {
+                        // The dialog renders in a portal, so React bubbles this
+                        // submit to the order form that opened it and submits
+                        // that one too
+                        event.stopPropagation();
+                        void form.handleSubmit(onSubmit)(event);
+                    }}
+                >
                     <FieldGroup className="gap-4">
                         <TextInput
                             name="name"

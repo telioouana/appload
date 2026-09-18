@@ -4,7 +4,7 @@ import { IconMapPin } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
 
-import { EmptyValue } from "@/components/list/labeled-field"
+import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import type { TripSummary } from "@/frontend/pages/partners/types"
 
 /**

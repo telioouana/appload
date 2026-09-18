@@ -1,0 +1,33 @@
+{
+    "title": "Pesquisar",
+    "description": "Encontre uma carga, um parceiro, um motorista ou uma matrícula",
+    "placeholder": "Procurar cargas, parceiros, motoristas, matrículas",
+    "typing": "Escreva pelo menos dois caracteres",
+    "empty": "Nada encontrado",
+    "groups": {
+        "loads": "Cargas",
+        "partners": "Parceiros",
+        "drivers": "Motoristas",
+        "vehicles": "Veículos",
+        "actions": "Acções"
+    },
+    "actions": {
+        "own": "Procurar nos pedidos · Os meus camiões",
+        "orders-transporters": "Procurar nos pedidos · Transportadoras",
+        "orders-partners": "Procurar nos pedidos · Parceiros",
+        "partners": "Procurar nos parceiros",
+        "transporters": "Procurar nas transportadoras",
+        "drivers": "Procurar nos motoristas",
+        "fleet": "Procurar na frota"
+    },
+    "kind": {
+        "truck": "Camião",
+        "trailer": "Reboque",
+        "link": "Semi-reboque"
+    },
+    "hints": {
+        "move": "mover",
+        "open": "abrir",
+        "close": "fechar"
+    }
+}

@@ -1,0 +1,100 @@
+import { defineRouting } from "@workspace/i18n/routing";
+
+import { LOCALES, DEFAULT_LOCALE } from "@workspace/i18n/locales";
+
+// Portal-owned routing config (each app defines its own; only the locale
+// list is shared). Like the admin, the partner portal keeps locales out of
+// its URLs entirely — the Portuguese slugs below are what a pt visitor
+// sees, and the English keys are the internal names every `Link` uses.
+export const routing = defineRouting({
+    locales: LOCALES,
+    defaultLocale: DEFAULT_LOCALE,
+
+    localeDetection: true,
+    localePrefix: "never",
+
+    pathnames: {
+        "/": "/",
+        "/dashboard": "/dashboard",
+        "/partners": {
+            pt: "/parceiros"
+        },
+        "/partners/[kind]": {
+            pt: "/parceiros/[kind]"
+        },
+        "/fleet/[kind]": {
+            pt: "/frota/[kind]"
+        },
+        "/drivers": {
+            pt: "/motoristas"
+        },
+        // The company's own loads, on one page: the ones its own trucks move
+        // and the ones somebody else moves are two tabs (`?tab=own | partners`)
+        // of the same section. A load's page is a static segment beside the
+        // section, so a trip handed to a partner keeps its address
+        "/orders": {
+            pt: "/pedidos"
+        },
+        "/orders/[section]": {
+            pt: "/pedidos/[section]"
+        },
+        "/orders/load/[loadId]": {
+            pt: "/pedidos/carga/[loadId]"
+        },
+        // The standing prices the company keeps with Appload, under My
+        // company beside the rest of what it owns
+        "/quotes": {
+            pt: "/cotacoes"
+        },
+        // Where Appload's brokerage used to be. Appload is a partner like any
+        // other now and its loads are on the Orders page, so every one of
+        // these addresses is a redirect — kept because the notifications and
+        // emails already sent point at them
+        "/appload": "/appload",
+        "/appload/[section]": "/appload/[section]",
+        "/appload/details/[orderId]": {
+            pt: "/appload/detalhes/[orderId]"
+        },
+        "/appload/quotes": {
+            pt: "/appload/cotacoes"
+        },
+        // Every conversation the company is in: the parties of its orders,
+        // and what its own drivers said on WhatsApp
+        "/chats": {
+            pt: "/conversas"
+        },
+        "/map": {
+            pt: "/mapa"
+        },
+        "/analytics": {
+            pt: "/analises"
+        },
+        "/notifications": {
+            pt: "/notificacoes"
+        },
+        "/settings": {
+            pt: "/definicoes"
+        },
+        "/onboarding": {
+            pt: "/registo-empresa"
+        },
+        "/sign-in": {
+            pt: "/iniciar-sessao"
+        },
+        "/sign-up": {
+            pt: "/criar-conta"
+        },
+        "/forgot-password": {
+            pt: "/recuperar-palavra-passe"
+        },
+        "/reset-password": {
+            pt: "/redefinir-palavra-passe"
+        },
+        "/verify-email": {
+            pt: "/verificar-email"
+        },
+        "/accept-invitation/[id]": {
+            pt: "/aceitar-convite/[id]"
+        }
+    },
+});

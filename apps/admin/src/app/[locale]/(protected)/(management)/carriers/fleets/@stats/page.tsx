@@ -1,21 +1,10 @@
 import { Suspense } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 
-import { Skeleton } from "@workspace/ui/components/skeleton"
-
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
+import { TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 import { VehicleStatsView } from "@/frontend/pages/partners/views/partners-stats-view"
-import { currentKind } from "@/frontend/pages/partners/types"
-
-function StatsSkeleton() {
-    return (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton key={index} className="h-20 w-full rounded-xl" />
-            ))}
-        </div>
-    )
-}
+import { currentKind, currentOwner } from "@/frontend/pages/partners/types"
 
 export default async function Stats({
     searchParams,
@@ -24,18 +13,22 @@ export default async function Stats({
 }) {
     const search = await searchParams
 
-    // Trucks, trailers and links share this page; the kind is a filter
-    const kind = currentKind((key) => {
+    const get = (key: string) => {
         const value = search[key]
         return typeof value === "string" ? value : null
-    })
+    }
 
-    prefetch(trpc.partners.vehicleStats.queryOptions({ kind }))
+    // Trucks, trailers and links share this page; the kind is a filter, and
+    // so is whose fleet is listed — the tiles follow both
+    const kind = currentKind(get)
+    const owner = currentOwner(get)
+
+    prefetch(trpc.partners.vehicleStats.queryOptions({ kind, owner }))
 
     return (
         <HydrateClient>
-            <ErrorBoundary fallback={<StatsSkeleton />}>
-                <Suspense fallback={<StatsSkeleton />}>
+            <ErrorBoundary fallback={<TilesSkeleton />}>
+                <Suspense fallback={<TilesSkeleton />}>
                     <VehicleStatsView />
                 </Suspense>
             </ErrorBoundary>

@@ -19,6 +19,13 @@ export const driver = pgTable(
             .unique()
             .notNull()
             .references(() => user.id, { onDelete: "cascade" }),
+        // The organization that employs the driver. Named for the only
+        // owner it could have when the column was created; since the portal
+        // opened fleet registration to shippers running their own trucks it
+        // is any organization, carrier or shipper. Renaming it would touch
+        // thirty call sites in the admin for no behaviour, so the name stayed
+        // and this comment was written instead — the same holds on the three
+        // vehicle tables below
         carrierId: text("carrier_id")
             .notNull()
             .references(() => organization.id, { onDelete: "cascade" }),
@@ -90,6 +97,13 @@ export const trailer = pgTable(
         id: text("id").primaryKey().$default(() => crypto.randomUUID()),
         legacyId: serial("legacy_id").unique().notNull(),
         internalId: text("internal_id"),
+        // The organization that employs the driver. Named for the only
+        // owner it could have when the column was created; since the portal
+        // opened fleet registration to shippers running their own trucks it
+        // is any organization, carrier or shipper. Renaming it would touch
+        // thirty call sites in the admin for no behaviour, so the name stayed
+        // and this comment was written instead — the same holds on the three
+        // vehicle tables below
         carrierId: text("carrier_id")
             .notNull()
             .references(() => organization.id, { onDelete: "cascade" }),

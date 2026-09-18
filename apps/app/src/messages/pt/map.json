@@ -1,0 +1,66 @@
+{
+    "title": "Mapa",
+    "description": "Última posição conhecida de tudo o que a sua empresa tem em movimento",
+    "search": "Pesquisar pedido, viagem, parceiro, motorista ou matrícula",
+    "clear-search": "Limpar pesquisa",
+    "count": "{count, plural, =1 {# transporte em curso} other {# transportes em curso}}",
+    "matches": "{count, plural, =0 {Sem resultados} =1 {# resultado} other {# resultados}}",
+    "show-all": "Mostrar todos",
+    "error": "Não foi possível carregar o mapa",
+    "empty": {
+        "title": "Nada em movimento",
+        "description": "Os pedidos e as viagens aparecem aqui assim que estiverem em curso"
+    },
+    "list": {
+        "no-location": "Ainda sem localização",
+        "last-seen": "Visto {ago}",
+        "toggle": "Transportes"
+    },
+    "views": {
+        "map": "Mapa",
+        "table": "Tabela"
+    },
+    "table": {
+        "columns": {
+            "ref": "Referência",
+            "status": "Estado",
+            "counterparty": "Parceiro",
+            "driver": "Motorista",
+            "plate": "Matrícula",
+            "place": "Local",
+            "last-update": "Última atualização",
+            "hours": "Horas",
+            "latitude": "Latitude",
+            "longitude": "Longitude"
+        },
+        "stale": "Sem atualização há mais de 12 horas",
+        "stale-filter": "Há mais de 12 horas",
+        "status": "Qualquer estado",
+        "kind": "Qualquer tipo",
+        "kinds": {
+            "order": "Pedido",
+            "load": "Viagem"
+        },
+        "no-position": "Ainda sem posição",
+        "export": "Exportar CSV",
+        "empty": "Nenhum transporte corresponde",
+        "empty-description": "Experimente outra pesquisa ou retire um filtro"
+    },
+    "selected": {
+        "open": {
+            "order": "Abrir pedido",
+            "trip": "Abrir viagem"
+        },
+        "close": "Fechar",
+        "last-seen": "Última localização {ago}",
+        "no-pings": "Ainda sem atualizações de localização"
+    },
+    "detail": {
+        "no-pings": "Ainda sem atualizações de localização",
+        "unavailable": "Rota indisponível",
+        "missing-key": "Mapa não configurado (falta a chave do browser)",
+        "last-seen": "Última localização {date}",
+        "legend-route": "Rota planeada",
+        "legend-covered": "Percorrido"
+    }
+}

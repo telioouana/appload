@@ -10,6 +10,10 @@
  *   node apps/admin/scripts/qstash-schedules.mjs                 # list only
  *   node apps/admin/scripts/qstash-schedules.mjs --apply         # create/update
  *   node apps/admin/scripts/qstash-schedules.mjs --apply --base https://admin.example.com
+ *   node apps/admin/scripts/qstash-schedules.mjs --apply --base https://admin.appload.co.mz --id-suffix -prod
+ *
+ * --id-suffix lets a second environment share one QStash account: the ids are
+ * what a re-run replaces, so without it production would repoint dev's schedules.
  *
  * Reads QSTASH_TOKEN and NEXT_PUBLIC_APP_URL from apps/admin/.env or the
  * environment. The destination must be a public production URL — QStash
@@ -75,6 +79,8 @@ if (!token) {
 const args = process.argv.slice(2);
 const apply = args.includes("--apply");
 const baseFlag = args.indexOf("--base");
+const suffixFlag = args.indexOf("--id-suffix");
+const idSuffix = suffixFlag !== -1 ? args[suffixFlag + 1] : "";
 const baseUrl = (baseFlag !== -1 ? args[baseFlag + 1] : env("NEXT_PUBLIC_APP_URL"))?.replace(/\/$/, "");
 
 if (!baseUrl) {
@@ -108,7 +114,8 @@ console.log(`${existing?.length ?? 0} schedule(s) currently registered\n`);
 
 const report = [];
 
-for (const schedule of SCHEDULES) {
+for (const { id: baseId, ...rest } of SCHEDULES) {
+    const schedule = { id: baseId + idSuffix, ...rest };
     const destination = `${baseUrl}${schedule.path}`;
     const current = byId.get(schedule.id);
     const unchanged = current?.cron === schedule.cron && current?.destination === destination;
@@ -127,8 +134,10 @@ for (const schedule of SCHEDULES) {
         continue;
     }
 
-    // Publishing with the same schedule id replaces the previous definition
-    await qstash("POST", `/schedules/${encodeURIComponent(destination)}`, {
+    // Publishing with the same schedule id replaces the previous definition.
+    // The destination goes into the path raw — QStash reads the scheme from
+    // it and rejects a percent-encoded URL as "invalid scheme".
+    await qstash("POST", `/schedules/${destination}`, {
         headers: {
             "Upstash-Cron": schedule.cron,
             "Upstash-Schedule-Id": schedule.id,

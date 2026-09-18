@@ -145,7 +145,8 @@ const mapWith = (aliases, fallback = null) => (value) => aliases[norm(value)] ??
 const status = mapWith({
     "prospect": "prospect", "prospects": "prospect",
     "booked": "booked",
-    "to loading": "to-loading",
+    // "To Loading" was retired: the sheet's rows land on its replacement
+    "to loading": "at-loading",
     "at loading": "at-loading",
     "loading": "loading",
     "waiting for documents": "waiting-documents", "waiting documents": "waiting-documents",
@@ -343,8 +344,8 @@ async function ensureOrganization(name, type) {
 
     if (!DRY) {
         await q(
-            `INSERT INTO organization (id, name, slug, created_at, nuit, type, status, email, phone_number, subscription_plan)
-             VALUES ($1, $2, $3, now(), $4, $5, 'active', $6, $7, 'free')
+            `INSERT INTO organization (id, name, slug, created_at, nuit, type, status, email, phone_number)
+             VALUES ($1, $2, $3, now(), $4, $5, 'active', $6, $7)
              ON CONFLICT (slug) DO NOTHING`,
             [id, name.trim(), slug, `IMP-${slug}`.slice(0, 30), type, `${slug}@import.appload.local`, `+258-imp-${slug}`.slice(0, 30)],
         );

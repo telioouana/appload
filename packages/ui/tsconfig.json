@@ -1,6 +1,16 @@
 {
   "extends": "@workspace/typescript-config/react-library.json",
   "compilerOptions": {
+    // This package is source, not a build: the apps pull it in through
+    // `transpilePackages` and bundle it, and nothing ever runs it under Node.
+    // So it resolves the way its consumers do. Under the default NodeNext the
+    // package's own `"type": "module"` puts resolution in ESM mode, where an
+    // extensionless subpath of a package without an `exports` map — which is
+    // what `next/navigation` is — cannot be found at all.
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "declaration": false,
+    "declarationMap": false,
     "paths": {
       "@workspace/ui/*": ["./src/*"]
     }

@@ -18,9 +18,56 @@ export const PAYMENT_STATUS = ["pending", "partially", "completed", "not-applica
 export const POD_STATUS = ["pending-collection", "pending-delivery", "delivered", "verified"] as const
 export const LOADING_BAY = ["flatbed", "dropsides", "tautliner", "rigid-body", "refrigerated", "tipper", "side-tipper", "tanker", "lowbed"] as const
 export const CATEGORIES = ["agriculture-inputs", "agriculture-products", "construction", "machinery-equipment", "fmcg", "general-cargo", "medicine", "mining", "oil-gas", "vehicles", "other"] as const
-export const ORDER_STATUS = ["prospect", "booked", "to-loading", "at-loading", "loading", "waiting-documents", "on-route", "stopped", "issue", "at-border", "at-offloading", "offloading", "delivered", "completed", "cancelled", "underbid"] as const
+// Every value the pg enum `order_status_enum` holds, in its stored order.
+// "to-loading" was retired from the vocabulary but stays here: the type
+// exists in the database and dropping a value from a pg enum is not an
+// additive migration. Only schemas/orders.ts reads this one.
+export const ORDER_STATUS_ENUM = ["prospect", "booked", "to-loading", "at-loading", "loading", "waiting-documents", "on-route", "stopped", "issue", "at-border", "at-offloading", "offloading", "delivered", "completed", "cancelled", "underbid"] as const
+// The live vocabulary: what the state machine, the filters and the selects
+// iterate. The dispatch edge is booked -> at-loading, so "to-loading" is
+// gone from it and only survives on historic rows.
+export const ORDER_STATUS = ["prospect", "booked", "at-loading", "loading", "waiting-documents", "on-route", "stopped", "issue", "at-border", "at-offloading", "offloading", "delivered", "completed", "cancelled", "underbid"] as const
 export const PACKING = ["bags-1kg", "bags-2kg", "bags-5kg", "bags-25kg", "bags-30kg", "bags-50kg", "bags-100kg", "bags-1ton", "bottle-1l", "bottle-5l", "bottle-10l", "bottle-20l", "bottle-25l", "container-20ft", "container-40ft", "boxes", "pallets", "noPacking", "other"] as const
 export const YEARS = ["1981", "1982", "1983", "1984", "1985", "1986", "1987", "1988", "1989", "1990", "1991", "1992", "1993", "1994", "1995", "1996", "1997", "1998", "1999", "2000", "2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"] as const
+
+// The order lifecycle as a union. The tuple above stays the single source of
+// truth; consumers that only need the type (map contract, tracking helpers)
+// import this instead of re-deriving it.
+export type OrderStatus = (typeof ORDER_STATUS)[number]
+
+// Retired values a stored row may still carry, and what each one means
+// today. Read by anything that maps `order_history` rows back onto the live
+// vocabulary — the timeline, the milestones, the resume-target rule.
+export const LEGACY_ORDER_STATUS_ALIAS: Record<string, OrderStatus> = {
+    "to-loading": "at-loading",
+}
+
+// What one dispatched pack is made of: the driver and the pieces of the rig.
+// Text + TS const like every other vocabulary here, never a pg enum.
+export const ORDER_DISPATCH_SUBJECT = ["driver", "truck", "trailer", "link"] as const
+
+// What the orderer confirms at the loading site before loading starts, and
+// how the whole check came out.
+export const LOADING_CHECK_ITEM = ["driver-identity", "rig-plates"] as const
+export const LOADING_CHECK_OUTCOME = ["passed", "mismatch", "skipped"] as const
+
+// What a chat thread hangs off: an Appload order, or a portal load.
+export const THREAD_SUBJECT = ["order", "movement"] as const
+
+export type OrderDispatchSubject = (typeof ORDER_DISPATCH_SUBJECT)[number]
+export type LoadingCheckItem = (typeof LOADING_CHECK_ITEM)[number]
+export type LoadingCheckOutcome = (typeof LOADING_CHECK_OUTCOME)[number]
+export type ThreadSubject = (typeof THREAD_SUBJECT)[number]
+
+// The subscription tiers. Declared here, with the other vocabularies, rather
+// than in schemas/subscriptions.ts: `organization` carries the column and
+// users.ts must keep importing nothing but this module, or the two table
+// modules would reference each other and crash at runtime (TDZ). Consumers
+// read it from @workspace/db/subscriptions, which re-exports it next to the
+// usage table.
+export const SUBSCRIPTION_PLAN = ["starter", "business", "enterprise"] as const
+
+export type SubscriptionPlan = (typeof SUBSCRIPTION_PLAN)[number]
 
 // Partner verification. Every KYC vocabulary is text + TS const, never a pg
 // enum: adding a document type or status must not require an ALTER TYPE on
@@ -58,6 +105,36 @@ export type KycStatus = (typeof KYC_STATUS)[number]
 export type RiskLevel = (typeof RISK_LEVEL)[number]
 export type OwnershipStatus = (typeof OWNERSHIP_STATUS)[number]
 
+// Who an organization is on the platform. The two partner types are the only
+// ones a portal account may belong to; "appload" is the brokerage's own row,
+// seeded with a fixed id so a load handed to Appload names an organization
+// like any other partner. Text + TS const, never a pg enum: widening the
+// column must not need an ALTER TYPE on the shared database.
+export const PARTNER_ORG_TYPE = ["shipper", "carrier"] as const
+export const ORGANIZATION_TYPE = [...PARTNER_ORG_TYPE, "appload"] as const
+
+export type PartnerOrgType = (typeof PARTNER_ORG_TYPE)[number]
+export type OrganizationType = (typeof ORGANIZATION_TYPE)[number]
+
+/** Whether this organization type is one a portal tenant may be. */
+export const isPartnerOrgType = (type: string | null | undefined): type is PartnerOrgType =>
+    type === "shipper" || type === "carrier"
+
+/** The brokerage's own organization row — one fixed id, never a member. */
+export const APPLOAD_ORG_ID = "appload"
+export const APPLOAD_ORG_NAME = "Appload"
+
+/** Whether this organization id is Appload's own row. */
+export const isApploadOrg = (organizationId: string | null | undefined): boolean =>
+    organizationId === APPLOAD_ORG_ID
+
+// What a per-company movement reference counts. "REQ" is a load still
+// collecting offers, "ORD" the one it becomes once somebody is committed to
+// moving it; both are numbered per organization, per kind, per year.
+export const REFERENCE_KIND = ["REQ", "ORD"] as const
+
+export type ReferenceKind = (typeof REFERENCE_KIND)[number]
+
 // A document is one logical paper; its scans are the pages. Mirrors the
 // Urls shape already used across the schema, plus the file metadata the
 // review UI needs to render a preview without a HEAD request.
@@ -92,3 +169,26 @@ export const AddressSchema = z.object({
 export type Urls = z.infer<typeof URLSchema>
 export type Address = z.infer<typeof AddressSchema>
 export type LoadingBay = z.infer<typeof LoadingBaySchema>
+// Cargo disputes (theft, loss, damage…). Text + TS const like the KYC
+// vocabularies: the dispute table and the order's mirror column store them
+// as text, so growing the lists never needs an ALTER TYPE.
+export const DISPUTE_REASON = ["theft", "loss", "damage", "other"] as const
+export const DISPUTE_STATUS = ["open", "under-review", "settled", "closed"] as const
+// open and under-review are "active": they hold payments and block closure
+export const ACTIVE_DISPUTE_STATUSES = ["open", "under-review"] as const
+export const DISPUTE_LIABLE_PARTY = ["carrier", "shipper", "appload", "third-party", "unknown"] as const
+
+export type DisputeReason = (typeof DISPUTE_REASON)[number]
+export type DisputeStatus = (typeof DISPUTE_STATUS)[number]
+export type DisputeLiableParty = (typeof DISPUTE_LIABLE_PARTY)[number]
+
+// Carrier offers on an order. Text + TS const like the dispute vocabularies,
+// so the list can grow without an ALTER TYPE. See orderOffer in
+// packages/db/src/schemas/orders.ts for what each status means.
+export const OFFER_STATUS = ["pending", "accepted", "declined", "withdrawn", "lost", "recorded"] as const
+
+export type OfferStatus = (typeof OFFER_STATUS)[number]
+
+/** Whether a dispute in this state still holds the order: payments on hold, no completion. */
+export const isActiveDispute = (status: DisputeStatus | string | null | undefined): boolean =>
+    status !== null && status !== undefined && (ACTIVE_DISPUTE_STATUSES as readonly string[]).includes(status)

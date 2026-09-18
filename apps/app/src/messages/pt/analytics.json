@@ -1,0 +1,141 @@
+{
+    "title": "Análises",
+    "description": "Como a sua empresa se moveu em {period}",
+    "error": "Não foi possível carregar este cartão.",
+    "none": "—",
+    "period": {
+        "label": "Período",
+        "month": "Mês",
+        "quarter": "Trimestre",
+        "year": "Ano",
+        "quarter-label": "{quarter}.º trimestre de {year}",
+        "year-select": "Escolher ano"
+    },
+    "loads": {
+        "title": "As suas cargas",
+        "hint": "Pedidos e viagens da sua empresa com carregamento em {year}, dentro ou fora da Appload",
+        "empty": "Ainda não há cargas em {year}",
+        "no-money": "Ainda não há valores registados {count, plural, one {na sua carga} other {nas suas # cargas}}.",
+        "receivable": "A receber dos clientes",
+        "received": "Recebido",
+        "payable": "A pagar a parceiros",
+        "paid": "Pago",
+        "costs": "Custos de operação",
+        "rechargeable": "dos quais {amount} a refaturar",
+        "gross": "Margem bruta ({count, plural, one {# carga} other {# cargas}})",
+        "net": "Margem líquida",
+        "comparable": "{comparable} de {finished} cargas entregues têm margem comparável: as outras não têm preço ou estão em duas moedas.",
+        "partners": {
+            "title": "Com quem trabalhou",
+            "client": "Cliente",
+            "partner": "Parceiro",
+            "loads": "{count, plural, one {# carga} other {# cargas}}"
+        }
+    },
+    "pipeline": {
+        "title": "Pedidos Appload",
+        "hint": "A contagem de hoje, seja qual for o período escolhido acima",
+        "total": "{count, plural, one {# pedido} other {# pedidos}}",
+        "sections": {
+            "prospects": "Por adjudicar",
+            "booked": "Confirmados",
+            "onGoing": "Em trânsito",
+            "delivered": "Entregues",
+            "completed": "Concluídos",
+            "cancelled": "Cancelados"
+        },
+        "attention": {
+            "awaitingOffers": "À espera de propostas",
+            "offersToReview": "Propostas por decidir",
+            "newRequests": "Novas solicitações",
+            "toDispatch": "Para despachar",
+            "onTheRoad": "Em trânsito",
+            "deliveredPending": "Entregues por fechar"
+        },
+        "empty": "Ainda não há pedidos para contar"
+    },
+    "monthly": {
+        "title": "Pedidos Appload por mês",
+        "total": "{count} em {year}",
+        "series": {
+            "orders": "Pedidos",
+            "delivered": "Entregues",
+            "tons": "Toneladas"
+        },
+        "empty": "Nenhum pedido em {year}"
+    },
+    "money": {
+        "title": "Valores dos pedidos Appload",
+        "shipper": {
+            "outstanding": "A pagar",
+            "settled": "Pago",
+            "hint": "O que ainda deve aos seus transportadores e o que já lhes pagou"
+        },
+        "carrier": {
+            "outstanding": "A receber",
+            "settled": "Recebido",
+            "hint": "O que os seus clientes ainda lhe devem e o que já recebeu"
+        },
+        "insurance": "Seguro",
+        "empty": "Ainda não há valores para mostrar"
+    },
+    "kpis": {
+        "title": "Desempenho nos pedidos Appload",
+        "empty": "Sem transportes analisados neste período",
+        "days-value": "{days} dias",
+        "tiles": {
+            "on-time": "Pontual na descarga",
+            "on-time-hint": "{loading} na carga",
+            "days": "Duração média do transporte",
+            "days-hint": "{count} de {total} transportes com datas registadas",
+            "demurrage": "Transportes com sobrestadia",
+            "demurrage-hint": "{days, plural, one {# dia cobrado} other {# dias cobrados}}",
+            "incidents": "Incidentes",
+            "incidents-hint": "{days, plural, one {# dia de atraso} other {# dias de atraso}}",
+            "damage": "Transportes com danos",
+            "damage-hint": "{claims} com reclamação",
+            "co2": "Redução de CO₂",
+            "co2-hint": "kg / tonelada transportada",
+            "backload": "Cargas de retorno",
+            "backload-hint": "{count, plural, one {# transporte de retorno} other {# transportes de retorno}}"
+        }
+    },
+    "charts": {
+        "transports": {
+            "title": "Transportes e pontualidade",
+            "transports": "Transportes",
+            "on-time": "Pontual na descarga",
+            "empty": "Sem transportes neste período"
+        },
+        "price": {
+            "title": "Valor transportado (USD)",
+            "total": "Valor do período",
+            "per-transport": "Valor por transporte",
+            "note": "Valores em USD, convertidos à taxa do dia da carga",
+            "provisional": "{count, plural, one {# transporte usa} other {# transportes usam}} a taxa anterior mais próxima",
+            "unrated": "{count, plural, one {# transporte não pôde ser convertido} other {# transportes não puderam ser convertidos}}",
+            "empty": "Sem transportes neste período",
+            "no-values": "Sem valores convertidos neste período"
+        }
+    },
+    "partners": {
+        "title": "Parceiros nos pedidos Appload",
+        "hint": "A outra parte de cada pedido do período",
+        "columns": {
+            "partner": "Parceiro",
+            "orders": "Pedidos",
+            "tons": "Toneladas",
+            "on-time": "Pontualidade",
+            "usd": "Valor (USD)",
+            "share": "Quota"
+        },
+        "sort": {
+            "label": "Ordenar por",
+            "orders": "Pedidos",
+            "tons": "Toneladas",
+            "usd": "Valor",
+            "onTime": "Pontualidade"
+        },
+        "empty": "Nenhum parceiro moveu carga neste período"
+    }
+}

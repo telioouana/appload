@@ -1,0 +1,660 @@
+{
+    "General": {
+        "app-name": "appload",
+        "slogan": "Going the extra mile",
+        "inputs": {
+            "file": {
+                "delete": {
+                    "label": "Apagar",
+                    "tooltip": "Apagar ficheiro",
+                    "error": "Erro ao apagar o ficheiro, tente novamente"
+                },
+                "upload": {
+                    "label": "Carregar",
+                    "tooltip": "Carregar ficheiro",
+                    "error": "Erro ao carregar o ficheiro, tente novamente"
+                },
+                "remove": {
+                    "label": "Remover",
+                    "tooltip": "Remover campo"
+                },
+                "errors": {
+                    "size": "O ficheiro excede o tamanho máximo permitido",
+                    "format": "O formato do ficheiro não é suportado"
+                }
+            }
+        }
+    },
+    "List": {
+        "ascending": "Ascendente",
+        "breadcrumb": "Está aqui",
+        "clear-all": "Limpar tudo",
+        "clear-selection": "Limpar selecção",
+        "columns": "Colunas",
+        "command": "Pesquisar em todo o lado (⌘K)",
+        "copied": "Copiado",
+        "currency": "Moeda",
+        "descending": "Descendente",
+        "empty": {
+            "adjust": "Tente outra pesquisa ou retire um filtro."
+        },
+        "export": "Exportar CSV",
+        "filters": "Filtros",
+        "next": "Página seguinte",
+        "pagination": "Páginas",
+        "per-page": "{count} por página",
+        "previous": "Página anterior",
+        "remove-filter": "Retirar o filtro {filter}",
+        "select-all": "Seleccionar todas as linhas desta página",
+        "select-row": "Seleccionar linha",
+        "selected": "{count, plural, one {# seleccionado} other {# seleccionados}}",
+        "showing": "A mostrar {from}–{to} de {total}",
+        "sort": "Ordenar",
+        "sort-by": "Ordenar por",
+        "status": "Estado",
+        "suggestions": "Sugestões"
+    },
+    "App": {
+        "metadata": {
+            "title": "Appload Enterprise",
+            "description": "Appload Enterprise: pedidos, cotações, viagens e frota para clientes e transportadores."
+        },
+        "auth": {
+            "title": "Appload Enterprise",
+            "description": "Introduza as suas credenciais para iniciar a sessão",
+            "email": {
+                "label": "Email",
+                "placeholder": "nome@empresa.co.mz",
+                "error": "Introduza um email válido"
+            },
+            "password": {
+                "label": "Palavra-passe",
+                "placeholder": "••••••••••",
+                "error": "A palavra-passe é obrigatória"
+            },
+            "errors": {
+                "invalid_credentials": "Email ou palavra-passe errados",
+                "email_not_verified": "Confirme o seu email antes de iniciar a sessão",
+                "too_many_requests": "Demasiadas tentativas. Aguarde um momento e tente novamente",
+                "default": "Falha ao iniciar a sessão. Tente novamente"
+            },
+            "sign-in": "Iniciar sessão",
+            "forgot-link": "Esqueceu-se da palavra-passe?",
+            "no-account": "Ainda não tem conta?",
+            "sign-up-link": "Criar conta",
+            "have-account": "Já tem conta?",
+            "sign-in-link": "Iniciar sessão",
+            "sign-up": {
+                "title": "Criar a sua conta",
+                "description": "Uma conta para os pedidos, cotações e viagens da sua empresa",
+                "name": {
+                    "label": "Nome completo",
+                    "placeholder": "O seu nome",
+                    "error": "O seu nome é obrigatório"
+                },
+                "email": {
+                    "label": "Email de trabalho",
+                    "placeholder": "nome@empresa.co.mz",
+                    "error": "Introduza um email válido"
+                },
+                "password": {
+                    "label": "Palavra-passe",
+                    "placeholder": "••••••••••",
+                    "error": "A palavra-passe deve ter pelo menos 8 caracteres"
+                },
+                "company-type": {
+                    "label": "O que faz a sua empresa?",
+                    "shipper": "Cliente (dono da carga)",
+                    "shipper-hint": "Tem carga para transportar",
+                    "carrier": "Transportador",
+                    "carrier-hint": "Transporta a carga de outras empresas",
+                    "error": "Escolha o tipo de empresa"
+                },
+                "invited": {
+                    "title": "Recebeu um convite",
+                    "description": "Crie a sua conta com {email} para entrar na {organization}"
+                },
+                "submit": "Criar conta",
+                "sent": {
+                    "title": "Verifique a sua caixa de entrada",
+                    "description": "Enviámos um link de confirmação para {email}. Abra-o para terminar a criação da conta.",
+                    "resend": "Enviar novamente",
+                    "resent": "Link enviado novamente",
+                    "sign-in": "Voltar ao início de sessão"
+                },
+                "errors": {
+                    "emailTaken": "Esse email já tem conta. Inicie a sessão",
+                    "invitationInvalid": "Este convite já não é válido",
+                    "rateLimited": "Demasiadas tentativas de registo. Tente mais tarde",
+                    "unknown": "Não foi possível criar a conta. Tente novamente"
+                }
+            },
+            "forgot": {
+                "title": "Recuperar palavra-passe",
+                "description": "Introduza o seu email e enviaremos um link de redefinição",
+                "submit": "Enviar link de redefinição",
+                "sent-title": "Verifique a sua caixa de entrada",
+                "sent-description": "Se essa conta existir, o link de redefinição está a caminho. O link expira ao fim de uma hora",
+                "back": "Voltar ao início de sessão"
+            },
+            "reset": {
+                "title": "Definir nova palavra-passe",
+                "description": "Escolha uma nova palavra-passe para a sua conta",
+                "password": {
+                    "label": "Nova palavra-passe",
+                    "placeholder": "••••••••••",
+                    "error": "A palavra-passe deve ter pelo menos 8 caracteres"
+                },
+                "confirm": {
+                    "label": "Confirmar palavra-passe",
+                    "placeholder": "••••••••••",
+                    "error": "Confirme a nova palavra-passe",
+                    "mismatch": "As palavras-passe não coincidem"
+                },
+                "submit": "Redefinir palavra-passe",
+                "success": "Palavra-passe actualizada. Inicie a sessão com a nova palavra-passe",
+                "request-again": "Pedir um novo link",
+                "errors": {
+                    "invalid_token": "Este link de redefinição é inválido ou expirou",
+                    "invalid_token_hint": "Peça um novo link abaixo e utilize-o no prazo de uma hora"
+                }
+            },
+            "verify": {
+                "title": "Confirme o seu email",
+                "description": "Enviámos um link de confirmação para {email}. Abra-o e já está.",
+                "description-generic": "Abra o link de confirmação que lhe enviámos e já está.",
+                "hint": "Não está na caixa de entrada? Veja o spam antes de pedir outro link.",
+                "resend": "Enviar o link novamente",
+                "resend-wait": "Enviar novamente daqui a {seconds}s",
+                "resent": "Link enviado novamente",
+                "error": "Não foi possível enviar o link. Tente novamente",
+                "sign-in": "Voltar ao início de sessão"
+            },
+            "invitation": {
+                "title": "Entrar na {organization}",
+                "loading": "A carregar o convite…",
+                "accept": "Aceitar convite",
+                "accepting": "A entrar…",
+                "signed-in": {
+                    "description": "Tem a sessão iniciada como {email}. Aceite para entrar na {organization}."
+                },
+                "mismatch": {
+                    "title": "Está com outra conta",
+                    "description": "Este convite é para {invited}, mas tem a sessão iniciada como {current}. Termine a sessão e abra o link novamente.",
+                    "sign-out": "Terminar sessão"
+                },
+                "errors": {
+                    "notFound": "Este convite não existe",
+                    "expired": "Este convite expirou. Peça um novo",
+                    "settled": "Este convite já foi utilizado",
+                    "emailUnverified": "Confirme o seu email antes de aceitar o convite",
+                    "unknown": "Não foi possível abrir este convite. Tente novamente"
+                }
+            }
+        },
+        "onboarding": {
+            "title": "Registar a sua empresa",
+            "type": {
+                "label": "Tipo de conta",
+                "shipper": "Cliente",
+                "carrier": "Transportador"
+            },
+            "nuit": {
+                "title": "Encontrar a sua empresa",
+                "description": "Quase todas as empresas com que trabalhamos já estão nos nossos registos. Procure pelo NUIT para ver se a sua está.",
+                "label": "NUIT da empresa",
+                "placeholder": "9 dígitos",
+                "error": "O NUIT tem 9 dígitos",
+                "submit": "Procurar",
+                "searching": "A procurar…"
+            },
+            "found": {
+                "title": "{name}",
+                "claim": {
+                    "title": "Já temos esta empresa",
+                    "description": "Ainda ninguém a usa no portal. Peça para ser o responsável e nós verificamos o pedido.",
+                    "description-match": "Ainda ninguém a usa no portal e o email da sua conta é o que temos registado para ela — por isso entra já.",
+                    "submit": "Pedir esta empresa",
+                    "enter": "Entrar nesta empresa",
+                    "submitting": "A enviar…",
+                    "sent-title": "Pedido enviado",
+                    "sent-description": "A Appload vai analisar e responder por email."
+                },
+                "taken": {
+                    "title": "Esta empresa já está no portal",
+                    "description": "Peça ao responsável que o convide — pode fazê-lo em Definições, Membros."
+                }
+            },
+            "pending": {
+                "title": "Pedido em análise",
+                "description": "Pediu para entrar na {name} a {date}. A Appload responde por email.",
+                "hint": "Por agora não há nada a fazer aqui — nós escrevemos-lhe."
+            },
+            "create": {
+                "title": "Dados da empresa",
+                "description": "Estes dados vão nos seus pedidos e facturas.",
+                "fields": {
+                    "name": {
+                        "label": "Nome da empresa",
+                        "placeholder": "Nome registado",
+                        "error": "O nome da empresa é obrigatório"
+                    },
+                    "nuit": {
+                        "label": "NUIT",
+                        "placeholder": "9 dígitos",
+                        "error": "O NUIT tem 9 dígitos"
+                    },
+                    "email": {
+                        "label": "Email da empresa",
+                        "placeholder": "facturacao@empresa.co.mz",
+                        "description": "Deixe vazio para usar o seu endereço",
+                        "error": "Introduza um email válido"
+                    },
+                    "phone": {
+                        "label": "Telefone",
+                        "placeholder": "+258 84 000 0000",
+                        "error": "Introduza o telefone da empresa"
+                    },
+                    "billingAddress": {
+                        "label": "Endereço de facturação",
+                        "placeholder": "Procure o endereço",
+                        "error": "Escolha um endereço da lista"
+                    },
+                    "physicalAddress": {
+                        "label": "Endereço físico",
+                        "placeholder": "Procure o endereço",
+                        "error": "Escolha um endereço da lista"
+                    }
+                },
+                "submit": "Registar empresa",
+                "submitting": "A registar…",
+                "back": "Procurar outro NUIT"
+            },
+            "signed-in": "Sessão iniciada como {email}.",
+            "sign-out": "Terminar sessão",
+            "errors": {
+                "alreadyMember": "A sua conta já pertence a uma empresa",
+                "emailUnverified": "Confirme o seu email antes de registar uma empresa",
+                "hasMembers": "Esta empresa já está no portal",
+                "claimPending": "Já tem um pedido em análise",
+                "duplicateNuit": "Esse NUIT já está registado",
+                "duplicateEmail": "Esse email já é usado por outra empresa",
+                "duplicatePhone": "Esse telefone já é usado por outra empresa",
+                "notFound": "Não encontrámos essa empresa",
+                "unknown": "Algo correu mal. Tente novamente"
+            }
+        },
+        "shell": {
+            "sidebar": {
+                "work": {
+                    "label": "Operações",
+                    "dashboard": "Painel",
+                    "orders": "Pedidos",
+                    "map": "Mapa",
+                    "chats": "Conversas",
+                    "notifications": "Notificações"
+                },
+                "company": {
+                    "label": "A minha empresa",
+                    "fleet": "Frota",
+                    "drivers": "Motoristas",
+                    "team": "Equipa",
+                    "partners": "Parceiros",
+                    "my-transporters": "As minhas transportadoras",
+                    "quotes": "Cotações",
+                    "analytics": "Análises"
+                },
+                "new-load": "Nova carga"
+            },
+            "user": {
+                "settings": "Definições",
+                "language": "Idioma",
+                "theme": {
+                    "label": "Tema",
+                    "light": "Claro",
+                    "dark": "Escuro",
+                    "system": "Sistema"
+                },
+                "sign-out": "Terminar sessão"
+            }
+        },
+        "access-denied": {
+            "title": "Acesso restrito",
+            "description": "O Appload Enterprise é para contas de clientes e transportadores. Inicie a sessão com a conta da sua empresa para continuar",
+            "closed": "A conta desta empresa está encerrada. Fale com a Appload para a reabrir",
+            "sign-out": "Terminar sessão"
+        },
+        "errors": {
+            "not-found": {
+                "title": "Página não encontrada",
+                "description": "A página que procura não existe ou mudou de lugar",
+                "home": "Ir para o painel"
+            },
+            "boundary": {
+                "title": "Algo correu mal",
+                "description": "A página encontrou um erro inesperado. Tente novamente — se persistir, contacte o suporte",
+                "retry": "Tentar novamente"
+            }
+        },
+        "dashboard": {
+            "title": "Painel",
+            "greeting": "Bem-vindo, {name}",
+            "description": "{date} · o que precisa da sua atenção hoje",
+            "error": "Não foi possível carregar esta parte do painel.",
+            "open-map": "Abrir mapa",
+            "view-all": "Ver todos",
+            "type": {
+                "shipper": "Cliente",
+                "carrier": "Transportador"
+            },
+            "total": {
+                "label": "Total de pedidos",
+                "hint": {
+                    "shipper": "Tudo o que a sua empresa registou",
+                    "carrier": "Tudo o que lhe chegou"
+                }
+            },
+            "queue": {
+                "title": "Precisa de si",
+                "connections": "Parceiros à espera de resposta",
+                "clear-title": "Tudo em ordem",
+                "clear-description": "Não há nada à sua espera neste momento",
+                "offered": "Cargas oferecidas por parceiros",
+                "declined": "Recusadas — por entregar a outro parceiro",
+                "silent-trips": "Motoristas sem resposta hoje",
+                "silent-orders": "Motoristas de parceiros sem resposta hoje"
+            },
+            "road": {
+                "title": "Em curso agora",
+                "empty-title": "Nada em movimento",
+                "empty-description": "Os pedidos e as viagens aparecem aqui assim que estiverem em curso"
+            },
+            "trips": {
+                "title": "Os meus camiões",
+                "in-progress": "Em curso",
+                "no-response": "Sem resposta hoje"
+            },
+            "loads": {
+                "planning": "Os meus camiões por planear",
+                "planning-hint": "Ainda por agendar",
+                "own-road": "Frota própria em curso",
+                "own-road-hint": "Os seus camiões com cargas em curso",
+                "partner-road": "Parceiros em curso",
+                "partner-road-hint": "Cargas que parceiros transportam para si",
+                "latest": {
+                    "title": "Últimas cargas",
+                    "empty": "Ainda não registou nenhuma carga",
+                    "amount": "Valor"
+                }
+            }
+        },
+        "settings": {
+            "title": "Definições",
+            "description": "A sua conta e os dados da sua empresa no portal",
+            "error": "Não foi possível carregar as definições",
+            "tabs": {
+                "profile": "Perfil",
+                "company": "Empresa",
+                "members": "Equipa",
+                "subscription": "Subscrição"
+            },
+            "profile": {
+                "title": "O seu perfil",
+                "description": "O nome e a fotografia que aparecem para a sua equipa e para a Appload",
+                "image": {
+                    "label": "Fotografia",
+                    "description": "JPG ou PNG, até 2 MB",
+                    "format": "Escolha um ficheiro JPG ou PNG",
+                    "size": "A fotografia não pode passar de 2 MB"
+                },
+                "name": {
+                    "label": "Nome",
+                    "placeholder": "O seu nome",
+                    "error": "Indique o seu nome"
+                },
+                "email": {
+                    "label": "Email",
+                    "description": "O email da conta não se altera aqui. Fale com a Appload se precisar de o mudar"
+                },
+                "role": {
+                    "label": "Função na empresa",
+                    "options": {
+                        "owner": "Responsável",
+                        "admin": "Administrador",
+                        "member": "Membro"
+                    }
+                },
+                "save": "Guardar",
+                "success": "Perfil actualizado",
+                "error": "Não foi possível guardar o perfil"
+            },
+            "password": {
+                "title": "Palavra-passe",
+                "description": "Altere a palavra-passe desta conta",
+                "current": {
+                    "label": "Palavra-passe actual",
+                    "placeholder": "A sua palavra-passe actual",
+                    "error": "Indique a palavra-passe actual",
+                    "invalid": "Palavra-passe actual incorrecta"
+                },
+                "new": {
+                    "label": "Nova palavra-passe",
+                    "placeholder": "Nova palavra-passe",
+                    "description": "Pelo menos 8 caracteres",
+                    "error": "A palavra-passe tem de ter pelo menos 8 caracteres"
+                },
+                "confirm": {
+                    "label": "Confirmar a nova palavra-passe",
+                    "placeholder": "Repita a nova palavra-passe",
+                    "error": "Repita a nova palavra-passe",
+                    "mismatch": "As palavras-passe não coincidem"
+                },
+                "revoke": {
+                    "label": "Terminar as outras sessões",
+                    "description": "Fecha a sessão nos outros dispositivos onde esta conta está aberta"
+                },
+                "submit": "Alterar palavra-passe",
+                "success": "Palavra-passe alterada",
+                "errors": {
+                    "PASSWORD_TOO_SHORT": "A palavra-passe é demasiado curta",
+                    "PASSWORD_TOO_LONG": "A palavra-passe é demasiado longa",
+                    "CREDENTIAL_ACCOUNT_NOT_FOUND": "Esta conta ainda não tem palavra-passe. Use a recuperação de palavra-passe",
+                    "UNKNOWN": "Não foi possível alterar a palavra-passe"
+                }
+            },
+            "company": {
+                "title": "A sua empresa",
+                "description": "Os contactos e as moradas que a Appload usa nos documentos e no seguimento",
+                "readonly": {
+                    "name": "Nome da empresa",
+                    "nuit": "NUIT",
+                    "type": "Tipo",
+                    "status": "Estado",
+                    "kyc": "Verificação",
+                    "hint": "O nome e o NUIT ficam como estão no registo da Appload. Para os corrigir, fale connosco"
+                },
+                "type": {
+                    "shipper": "Cliente",
+                    "carrier": "Transportador"
+                },
+                "status": {
+                    "pending": "Por confirmar",
+                    "active": "Activa",
+                    "closed": "Encerrada"
+                },
+                "kyc": {
+                    "draft": "Rascunho",
+                    "pending-review": "Por rever",
+                    "verified": "Verificada",
+                    "rejected": "Rejeitada",
+                    "expired": "Expirada",
+                    "suspended": "Suspensa"
+                },
+                "fields": {
+                    "email": {
+                        "label": "Email da empresa",
+                        "placeholder": "geral@empresa.co.mz",
+                        "description": "Para onde seguem as facturas e os documentos dos pedidos",
+                        "error": "Indique um email válido"
+                    },
+                    "phone": {
+                        "label": "Telefone",
+                        "placeholder": "+258 84 000 0000",
+                        "error": "Indique um telefone válido"
+                    },
+                    "billingAddress": {
+                        "label": "Morada de facturação",
+                        "placeholder": "Procure a morada",
+                        "error": "Escolha uma morada das sugestões"
+                    },
+                    "physicalAddress": {
+                        "label": "Morada física",
+                        "placeholder": "Procure a morada",
+                        "error": "Escolha uma morada das sugestões"
+                    }
+                },
+                "save": "Guardar alterações",
+                "success": "Dados da empresa actualizados",
+                "read-only": "Só o responsável e os administradores podem alterar os dados da empresa",
+                "errors": {
+                    "DUPLICATE_EMAIL": "Esse email já é usado por outra empresa",
+                    "DUPLICATE_PHONE": "Esse telefone já é usado por outra empresa",
+                    "NOT_ALLOWED": "Não tem permissão para alterar os dados da empresa",
+                    "NOT_FOUND": "Não encontrámos a sua empresa",
+                    "UNKNOWN": "Não foi possível guardar. Tente novamente"
+                }
+            },
+            "members": {
+                "title": "Equipa",
+                "description": "Quem entra no portal em nome da sua empresa",
+                "columns": {
+                    "member": "Pessoa",
+                    "role": "Função",
+                    "joined": "Desde",
+                    "actions": "Acções"
+                },
+                "roles": {
+                    "owner": "Responsável",
+                    "admin": "Administrador",
+                    "member": "Membro"
+                },
+                "you": "Você",
+                "actions": "Acções desta pessoa",
+                "promote": {
+                    "owner": "Tornar responsável",
+                    "admin": "Tornar administrador",
+                    "member": "Tornar membro"
+                },
+                "remove": "Remover do portal",
+                "remove-dialog": {
+                    "title": "Remover {name}?",
+                    "description": "Perde o acesso ao portal da sua empresa de imediato. Pode voltar a convidar esta pessoa mais tarde",
+                    "cancel": "Cancelar",
+                    "confirm": "Remover"
+                },
+                "last-owner": "A empresa tem de ter sempre um responsável",
+                "role-changed": "Função actualizada",
+                "removed": "Membro removido",
+                "error": "Não foi possível concluir a operação",
+                "empty": "Ainda é a única pessoa da sua empresa no portal",
+                "read-only": "Só o responsável e os administradores podem convidar ou alterar membros"
+            },
+            "invite": {
+                "button": "Convidar colega",
+                "title": "Convidar colega",
+                "description": "Enviamos um email com o link de acesso ao portal da {organization}",
+                "fields": {
+                    "name": {
+                        "label": "Nome",
+                        "placeholder": "Nome do colega",
+                        "error": "Indique o nome"
+                    },
+                    "email": {
+                        "label": "Email",
+                        "placeholder": "colega@empresa.co.mz",
+                        "error": "Indique um email válido"
+                    },
+                    "role": {
+                        "label": "Função",
+                        "placeholder": "Escolha uma função",
+                        "error": "Escolha uma função"
+                    }
+                },
+                "roles": {
+                    "admin": "Administrador — gere a empresa e a equipa",
+                    "member": "Membro — trabalha nos pedidos"
+                },
+                "submit": "Enviar convite",
+                "submitting": "A enviar…",
+                "cancel": "Cancelar",
+                "success": "Convite enviado para {email}",
+                "errors": {
+                    "alreadyMember": "Esta pessoa já faz parte da sua equipa",
+                    "alreadyInvited": "Já existe um convite pendente para este email",
+                    "notAllowed": "Não tem permissão para convidar pessoas",
+                    "unknown": "Não foi possível enviar o convite. Tente novamente"
+                }
+            },
+            "invitations": {
+                "title": "Convites pendentes",
+                "description": "Convites enviados que ainda não foram aceites",
+                "columns": {
+                    "email": "Email",
+                    "role": "Função",
+                    "expires": "Expira",
+                    "actions": "Acções"
+                },
+                "cancel": "Cancelar convite",
+                "cancelled": "Convite cancelado",
+                "expired": "Expirado",
+                "error": "Não foi possível cancelar o convite",
+                "empty": "Não há convites pendentes"
+            },
+            "subscription": {
+                "title": "Subscrição",
+                "description": "O plano da sua empresa no portal",
+                "expires": "Válido até {date}",
+                "no-expiry": "Sem data de fim",
+                "expired": "A subscrição terminou a {date}",
+                "none": "Ainda sem plano activo — fale connosco para escolher um.",
+                "since": "No portal desde {date}",
+                "tiers": {
+                    "title": "Planos",
+                    "quota": "{quota} movimentos seguidos por mês",
+                    "unlimited": "Movimentos seguidos sem limite",
+                    "current": "Plano actual"
+                },
+                "contact": {
+                    "title": "Quer mudar de plano?",
+                    "description": "Fale com a equipa da Appload — tratamos da mudança consigo",
+                    "button": "Falar com a Appload",
+                    "subject": "Appload Enterprise — plano da {organization}"
+                }
+            }
+        },
+        "plan": {
+            "names": {
+                "none": "Sem plano",
+                "starter": "Starter",
+                "business": "Business",
+                "enterprise": "Enterprise"
+            },
+            "usage": "{used} de {quota} movimentos seguidos em {month}",
+            "unlimited": "Movimentos seguidos sem limite",
+            "dialog": {
+                "no-plan": {
+                    "title": "A sua empresa ainda não tem plano",
+                    "description": "Reservar uma carga e enviá-la para carregamento precisa de um plano activo. O resto do portal — parceiros, frota, pedidos e cotações — continua aberto."
+                },
+                "quota": {
+                    "title": "Movimentos deste mês esgotados",
+                    "description": "O plano da sua empresa já seguiu todos os movimentos deste mês. O limite volta a zero no início do mês seguinte."
+                },
+                "close": "Agora não",
+                "settings": "Ver subscrição",
+                "contact": "Falar com a Appload",
+                "subject": "Appload Enterprise — plano da {organization}"
+            }
+        }
+    }
+}

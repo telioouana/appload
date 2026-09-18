@@ -15,6 +15,7 @@ const createContext = async (request: NextRequest) => {
     return createTRPCContext({
         headers: request.headers,
         auth,
+        app: "admin",
         // Keeps activity-log writes alive after the response is sent
         waitUntil: (promise) => after(promise),
     });

@@ -1,11 +1,13 @@
-import { check, index, pgTable, text, timestamp, boolean, integer, numeric, uniqueIndex, serial, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import { check, date, index, pgTable, primaryKey, text, timestamp, boolean, integer, numeric, uniqueIndex, serial, jsonb, pgEnum } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 // Direct module imports, never the schema barrel: going through it would pull
 // in modules that depend on this one and crash at runtime (TDZ)
 import { user, organization } from "@workspace/db/users";
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
-import { CATEGORIES, CURRENCY, FISCAL_REGIME, INSURANCE_PAYMENT_STATUS, LOAD_TYPE, LOADING_BAY, ORDER_STATUS, PACKING, PAYMENT_STATUS, POD_STATUS, ROUTE_TYPE, TRIP_TYPE, TRUCK_AGE, WEIGHT_UNIT, } from "@workspace/db/types";
+import { CATEGORIES, CURRENCY, DISPUTE_LIABLE_PARTY, DISPUTE_REASON, DISPUTE_STATUS, FISCAL_REGIME, INSURANCE_PAYMENT_STATUS, KYC_DOCUMENT_TYPE, LOAD_TYPE, LOADING_BAY, LOADING_CHECK_OUTCOME, OFFER_STATUS, ORDER_DISPATCH_SUBJECT, ORDER_STATUS_ENUM, PACKING, PAYMENT_STATUS, POD_STATUS, ROUTE_TYPE, TRIP_TYPE, TRUCK_AGE, WEIGHT_UNIT, } from "@workspace/db/types";
+import { KYC_DOCUMENT_STATUS } from "@workspace/db/types";
+import type { LoadingCheckItem, OrderStatus } from "@workspace/db/types";
 
 export const packingEnum = pgEnum("packing_enum", PACKING)
 export const currencyEnum = pgEnum("currency_enum", CURRENCY)
@@ -17,7 +19,11 @@ export const routeTypeEnum = pgEnum("route_type_enum", ROUTE_TYPE)
 export const categoriesEnum = pgEnum("categories_enum", CATEGORIES)
 export const loadingBayEnum = pgEnum("loading_bay_enum", LOADING_BAY)
 export const weightUnitEnum = pgEnum("weight_unit_enum", WEIGHT_UNIT)
-export const orderStatusEnum = pgEnum("order_status_enum", ORDER_STATUS)
+// Built from the stored enum values, not the live vocabulary: "to-loading"
+// is retired but still exists in the database type, and dropping it would
+// be a destructive migration. `.$type<OrderStatus>()` on the columns below
+// is what keeps the retired value out of the application's types.
+export const orderStatusEnum = pgEnum("order_status_enum", ORDER_STATUS_ENUM)
 export const fiscalRegimeEnum = pgEnum("fiscal_regime_enum", FISCAL_REGIME)
 export const paymentStatusEnum = pgEnum("payment_status_enum", PAYMENT_STATUS)
 export const insurancePaymentStatusEnum = pgEnum("insurance_payment_status_enum", INSURANCE_PAYMENT_STATUS)
@@ -30,6 +36,12 @@ export type Location = {
     country: string;
     state: string;
 };
+
+// Which app the order was created in. Text + TS const so a new front door
+// never needs an ALTER TYPE on the shared database.
+export const ORDER_SOURCE = ["admin", "client", "carrier"] as const;
+
+export type OrderSource = (typeof ORDER_SOURCE)[number];
 
 export const order = pgTable(
     "order",
@@ -94,7 +106,7 @@ export const order = pgTable(
         temperature: numeric("temperature", { precision: 10, scale: 2 }),
         temperatureInstructions: text("temperature_instructions"),
 
-        status: orderStatusEnum("status").notNull(),
+        status: orderStatusEnum("status").$type<OrderStatus>().notNull(),
         route: routeTypeEnum("route").default("national").notNull(),
         tripType: tripTypeEnum("trip_type").default("normal").notNull(),
         loadType: loadTypeEnum("load_type").notNull(),
@@ -200,6 +212,17 @@ export const order = pgTable(
         flaggedAt: timestamp("flagged_at"),
         flaggedBy: text("flagged_by").references(() => user.id, { onDelete: "set null" }),
 
+        // Mirror of the order's active dispute (see order_dispute below):
+        // null when none is open, so the list can filter and the payment
+        // and completion gates can check without a join. Maintained by the
+        // dispute mutations only; never bumps `version`, since ops forms
+        // never edit it
+        disputeStatus: text("dispute_status", { enum: DISPUTE_STATUS }),
+
+        // Where the order came from: Admin ops, or a portal tenant on either
+        // side of the deal
+        source: text("source", { enum: ORDER_SOURCE }).default("admin").notNull(),
+
         createdBy: text("created_by").references(() => user.id),
         createdAt: timestamp("created_at").defaultNow().notNull(),
         updatedAt: timestamp("updated_at")
@@ -207,8 +230,14 @@ export const order = pgTable(
             .$onUpdate(() => /* @__PURE__ */ new Date())
             .notNull(),
     },
-    // Single arbiter for concurrent Order Id generation
-    (table) => [uniqueIndex("order_year_seq_idx").on(table.year, table.seq)],
+    (table) => [
+        // Single arbiter for concurrent Order Id generation
+        uniqueIndex("order_year_seq_idx").on(table.year, table.seq),
+        // Tenant lists: one party's orders, newest loading date first
+        index("order_shipper_loading_idx").on(table.shipperId, table.expectedLoadingDate),
+        index("order_carrier_loading_idx").on(table.carrierId, table.expectedLoadingDate),
+        index("order_status_idx").on(table.status),
+    ],
 );
 
 export type Order = typeof order.$inferSelect
@@ -224,6 +253,9 @@ export const ORDER_HISTORY_KIND = [
     "note",
     "payment",
     "flag",
+    "dispute",
+    "offer",
+    "check",
     "system",
 ] as const;
 
@@ -249,15 +281,21 @@ export const orderHistory = pgTable(
         // Null actor = system event (cron, webhook)
         actorUserId: text("actor_user_id").references(() => user.id, { onDelete: "set null" }),
         kind: text("kind", { enum: ORDER_HISTORY_KIND }).notNull(),
-        // Transition rows only; fromStatus null = order creation
-        fromStatus: orderStatusEnum("from_status"),
-        toStatus: orderStatusEnum("to_status"),
+        // Transition rows only; fromStatus null = order creation. Unlike the
+        // order's own column these keep "to-loading": the trail is what it
+        // was, and rows written before the status was retired still say so
+        fromStatus: orderStatusEnum("from_status").$type<OrderStatus | "to-loading">(),
+        toStatus: orderStatusEnum("to_status").$type<OrderStatus | "to-loading">(),
         changedFields: jsonb("changed_fields").$type<ChangedFields>(),
         // Free-form context: note text, flag reason, document id, cron slot...
         metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}).notNull(),
         createdAt: timestamp("created_at").defaultNow().notNull(),
     },
-    (table) => [index("order_history_order_created_idx").on(table.orderId, table.createdAt)],
+    (table) => [
+        index("order_history_order_created_idx").on(table.orderId, table.createdAt),
+        // The portal materializes notifications by sweeping the trail by time
+        index("order_history_created_idx").on(table.createdAt),
+    ],
 );
 
 export type OrderHistory = typeof orderHistory.$inferSelect
@@ -277,6 +315,7 @@ export const ORDER_DOCUMENT_TYPE = [
     "proof-of-payment",
     "evidence",
     "transport-order",
+    "loading-photo",
     "other",
 ] as const;
 
@@ -420,3 +459,270 @@ export const sheetSync = pgTable("sheet_sync", {
 
 export type SheetSync = typeof sheetSync.$inferSelect;
 export type CreateSheetSync = typeof sheetSync.$inferInsert;
+
+/**
+ * Terms under which a carrier's debt from a settled dispute is recovered.
+ * Next stage: nothing writes it yet; the column exists so settled disputes
+ * can carry terms without another migration.
+ */
+export type DisputeDeductionTerms = {
+    mode?: "credit-note-on-later-orders" | "invoice" | "write-off";
+    installments?: number;
+    startAfter?: string;
+    note?: string;
+};
+
+/**
+ * A dispute on an order — theft, loss, damage or another event that puts
+ * the closure of the cargo in question. Not a status: the trip keeps its
+ * own status while the dispute is active, but the parties' payments can be
+ * held and the order cannot be completed until it is settled or closed.
+ * At most one active dispute per order (partial unique index); settled and
+ * closed ones stay as the record.
+ */
+export const orderDispute = pgTable(
+    "order_dispute",
+    {
+        id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+        orderId: text("order_id").notNull().references(() => order.id, { onDelete: "restrict" }),
+        reason: text("reason", { enum: DISPUTE_REASON }).notNull(),
+        status: text("status", { enum: DISPUTE_STATUS }).default("open").notNull(),
+        description: text("description").notNull(),
+        claimedAmount: numeric("claimed_amount", { precision: 14, scale: 2 }),
+        claimedCurrency: currencyEnum("claimed_currency"),
+        liableParty: text("liable_party", { enum: DISPUTE_LIABLE_PARTY }),
+        // Holds default on: a dispute is opened precisely to stop money
+        // moving until someone decides otherwise
+        holdShipperPayments: boolean("hold_shipper_payments").default(true).notNull(),
+        holdCarrierPayments: boolean("hold_carrier_payments").default(true).notNull(),
+        // Next stage — carrier debt recovered from later shipments; columns
+        // only, no writers yet
+        carrierDebtAmount: numeric("carrier_debt_amount", { precision: 14, scale: 2 }),
+        carrierDebtCurrency: currencyEnum("carrier_debt_currency"),
+        deductionTerms: jsonb("deduction_terms").$type<DisputeDeductionTerms>(),
+        resolution: text("resolution"),
+        openedBy: text("opened_by").references(() => user.id, { onDelete: "set null" }),
+        openedAt: timestamp("opened_at").defaultNow().notNull(),
+        resolvedBy: text("resolved_by").references(() => user.id, { onDelete: "set null" }),
+        resolvedAt: timestamp("resolved_at"),
+        // Optimistic lock, same handshake as the order row
+        version: integer("version").default(1).notNull(),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+        updatedAt: timestamp("updated_at")
+            .defaultNow()
+            .$onUpdate(() => /* @__PURE__ */ new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("order_dispute_order_idx").on(table.orderId),
+        index("order_dispute_status_idx").on(table.status),
+        uniqueIndex("order_dispute_active_uidx").on(table.orderId).where(sql`${table.status} in ('open', 'under-review')`),
+    ],
+);
+
+export type OrderDispute = typeof orderDispute.$inferSelect;
+export type CreateOrderDispute = typeof orderDispute.$inferInsert;
+
+/**
+ * A carrier's quote for an order. Every order collects offers; a prospect
+ * becomes booked only by accepting one, and the accepted offer is what the
+ * order's carrier identity, fiscal regime, carrier price and Appload
+ * commission are copied from. What the quote includes (GIT, GPS) and the
+ * carrier's track record at the moment it was made are recorded here, so a
+ * later reader sees what Appload knew when it chose.
+ *
+ * Statuses:
+ *   pending    awaiting a decision — only ever on a prospect
+ *   accepted   booked the order; at most one per order (partial unique index)
+ *   declined   Appload or the shipper said no
+ *   withdrawn  the carrier pulled out, or the booking was reverted
+ *   lost       another offer was accepted, or the prospect was lost
+ *   recorded   registered on a booked-or-later order for Appload's data only:
+ *              never acceptable, never changes the order, never client-visible
+ *
+ * The accepted offer is the row under the partial unique index, not a column
+ * on `order`: an `accepted_offer_id` there would be a circular foreign key.
+ */
+export const orderOffer = pgTable(
+    "order_offer",
+    {
+        id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+        // Offers only exist for their order and carry no money of their own,
+        // so unlike the financial records they follow the order out
+        orderId: text("order_id").notNull().references(() => order.id, { onDelete: "cascade" }),
+        carrierId: text("carrier_id").notNull().references(() => organization.id),
+        // Snapshot of the carrier's name as quoted, mirroring order.carrierName
+        carrierName: text("carrier_name").notNull(),
+        fiscalRegime: fiscalRegimeEnum("fiscal_regime").notNull(),
+        subtotal: numeric("subtotal", { precision: 14, scale: 2 }),
+        vat: numeric("vat", { precision: 14, scale: 2 }),
+        total: numeric("total", { precision: 14, scale: 2 }).notNull(),
+        currency: currencyEnum("currency").notNull(),
+        // Appload's cut on top of the quote, and the price the client is
+        // asked for (quote + commission, VAT split by the route). Saved with
+        // the offer so what the shipper is shown is what gets booked, never
+        // a later recomputation. Null on rows written before pricing existed.
+        commissionSubtotal: numeric("commission_subtotal", { precision: 14, scale: 2 }),
+        commissionVAT: numeric("commission_vat", { precision: 14, scale: 2 }),
+        commissionTotal: numeric("commission_total", { precision: 14, scale: 2 }),
+        clientSubtotal: numeric("client_subtotal", { precision: 14, scale: 2 }),
+        clientVAT: numeric("client_vat", { precision: 14, scale: 2 }),
+        clientTotal: numeric("client_total", { precision: 14, scale: 2 }),
+        // What the quoted price covers
+        includesGit: boolean("includes_git").default(false).notNull(),
+        includesGps: boolean("includes_gps").default(false).notNull(),
+        notes: text("notes"),
+        status: text("status", { enum: OFFER_STATUS }).default("pending").notNull(),
+        // The carrier's track record as of this offer, frozen at creation:
+        // recomputing it later would rewrite what the decision was based on
+        carrierSince: timestamp("carrier_since"),
+        carrierTrips: integer("carrier_trips"),
+        decidedAt: timestamp("decided_at"),
+        // Null once the shipper decides for itself — that step is not built yet
+        decidedBy: text("decided_by").references(() => user.id, { onDelete: "set null" }),
+        decisionNote: text("decision_note"),
+        createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+        updatedAt: timestamp("updated_at")
+            .defaultNow()
+            .$onUpdate(() => /* @__PURE__ */ new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("order_offer_order_idx").on(table.orderId),
+        // A carrier's own offers, the portal's quote list
+        index("order_offer_carrier_status_idx").on(table.carrierId, table.status),
+        // One accepted offer per order: the booking itself
+        uniqueIndex("order_offer_accepted_uidx").on(table.orderId).where(sql`${table.status} = 'accepted'`),
+    ],
+);
+
+export type OrderOffer = typeof orderOffer.$inferSelect;
+export type CreateOrderOffer = typeof orderOffer.$inferInsert;
+
+
+/**
+ * The rig and the driver an order was dispatched with, frozen at the moment
+ * of the dispatch (booked → at-loading) together with the papers that were
+ * on file for them. The order row keeps the LIVE rig; this keeps what was
+ * submitted, so a later swap can never rewrite what the loading site was
+ * told to expect.
+ *
+ * One open pack per order (the partial unique index): re-dispatching an
+ * on-going order supersedes the previous pack rather than editing it. The
+ * vehicle ids carry no foreign key — a snapshot must survive the vehicle
+ * being retired from the registry — while the plates are copied alongside
+ * them so the pack reads on its own.
+ */
+export const orderDispatch = pgTable(
+    "order_dispatch",
+    {
+        id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+        orderId: text("order_id").notNull().references(() => order.id, { onDelete: "restrict" }),
+
+        driverId: text("driver_id").references(() => driver.id, { onDelete: "set null" }),
+        driverName: text("driver_name"),
+        driverPhoneNumber: text("driver_phone_number"),
+        driverPassport: text("driver_passport"),
+
+        truckId: text("truck_id"),
+        trailerId: text("trailer_id"),
+        linkId: text("link_id"),
+        truckPlate: text("truck_plate"),
+        trailerPlate: text("trailer_plate"),
+        linkPlate: text("link_plate"),
+
+        // Null = written by a backfill, not by a person
+        dispatchedBy: text("dispatched_by").references(() => user.id, { onDelete: "set null" }),
+        dispatchedAt: timestamp("dispatched_at").defaultNow().notNull(),
+        supersededAt: timestamp("superseded_at"),
+        // The PERSON who superseded this pack, not the pack that replaced it
+        // — the same actor+time pairing as dispatched_by/dispatched_at. The
+        // successor is found by the open pack of the same order.
+        supersededBy: text("superseded_by").references(() => user.id, { onDelete: "set null" }),
+    },
+    (table) => [
+        index("order_dispatch_order_idx").on(table.orderId, table.dispatchedAt),
+        // The pack that is currently in force, one per order
+        uniqueIndex("order_dispatch_open_uidx").on(table.orderId).where(sql`${table.supersededAt} is null`),
+    ],
+);
+
+export type OrderDispatch = typeof orderDispatch.$inferSelect;
+export type CreateOrderDispatch = typeof orderDispatch.$inferInsert;
+
+
+/**
+ * One paper that was on file for one subject of a dispatch pack, as it stood
+ * when the pack was written. `kyc_document_id` carries no foreign key, same
+ * trade as kyc_document's own polymorphic subject: the snapshot outlives a
+ * purged document, and referential integrity is the writer's business.
+ */
+export const orderDispatchDocument = pgTable(
+    "order_dispatch_document",
+    {
+        dispatchId: text("dispatch_id").notNull().references(() => orderDispatch.id, { onDelete: "cascade" }),
+        subjectType: text("subject_type", { enum: ORDER_DISPATCH_SUBJECT }).notNull(),
+        subjectId: text("subject_id").notNull(),
+        kycDocumentId: text("kyc_document_id").notNull(),
+        type: text("type", { enum: KYC_DOCUMENT_TYPE }).notNull(),
+        statusAtSnapshot: text("status_at_snapshot", { enum: KYC_DOCUMENT_STATUS }).notNull(),
+        expiresAt: date("expires_at"),
+    },
+    (table) => [
+        primaryKey({ columns: [table.dispatchId, table.kycDocumentId] }),
+        // "is this document in any pack", which is how the portal's proxy
+        // decides whether a tenant may read a page of somebody else's paper
+        index("order_dispatch_document_kyc_idx").on(table.kycDocumentId),
+    ],
+);
+
+export type OrderDispatchDocument = typeof orderDispatchDocument.$inferSelect;
+export type CreateOrderDispatchDocument = typeof orderDispatchDocument.$inferInsert;
+
+
+/**
+ * One item of the loading check, as recorded. `ok` is null while the item
+ * was left untouched — an unanswered question is not a pass.
+ */
+export type LoadingCheckItemRow = {
+    key: LoadingCheckItem;
+    ok: boolean | null;
+    note?: string;
+};
+
+/**
+ * The orderer's confirmation at the loading site that the truck and the
+ * driver who turned up are the ones the dispatch pack names. Recorded by
+ * Appload ops or by the shipper in the portal — whoever did it is on the
+ * row; the carrier only ever reads it.
+ *
+ * Append-only: a second look writes a second row, and the newest one is the
+ * state. `dispatch_id` is nullable because a legacy order can be at the
+ * loading site with no pack behind it.
+ */
+export const orderLoadingCheck = pgTable(
+    "order_loading_check",
+    {
+        id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+        orderId: text("order_id").notNull().references(() => order.id, { onDelete: "restrict" }),
+        dispatchId: text("dispatch_id").references(() => orderDispatch.id, { onDelete: "restrict" }),
+
+        items: jsonb("items").$type<LoadingCheckItemRow[]>().default([]).notNull(),
+        outcome: text("outcome", { enum: LOADING_CHECK_OUTCOME }).notNull(),
+        // order_document ids of the photos taken at the site
+        photoDocumentIds: jsonb("photo_document_ids").$type<string[]>().default([]).notNull(),
+        note: text("note"),
+
+        checkedBy: text("checked_by").references(() => user.id, { onDelete: "set null" }),
+        // Null = Appload staff did the check; otherwise the orderer's org
+        checkedByOrgId: text("checked_by_org_id").references(() => organization.id, { onDelete: "set null" }),
+        checkedAt: timestamp("checked_at").defaultNow().notNull(),
+    },
+    (table) => [
+        index("order_loading_check_order_idx").on(table.orderId, table.checkedAt),
+    ],
+);
+
+export type OrderLoadingCheck = typeof orderLoadingCheck.$inferSelect;
+export type CreateOrderLoadingCheck = typeof orderLoadingCheck.$inferInsert;

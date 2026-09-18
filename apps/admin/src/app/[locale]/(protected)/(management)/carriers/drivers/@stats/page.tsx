@@ -1,28 +1,30 @@
 import { Suspense } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 
-import { Skeleton } from "@workspace/ui/components/skeleton"
-
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
+import { TilesSkeleton } from "@workspace/ui/customs/list/list-fallbacks"
 import { DriverStatsView } from "@/frontend/pages/partners/views/partners-stats-view"
+import { currentOwner } from "@/frontend/pages/partners/types"
 
-function StatsSkeleton() {
-    return (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton key={index} className="h-20 w-full rounded-xl" />
-            ))}
-        </div>
-    )
-}
+export default async function Stats({
+    searchParams,
+}: {
+    searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+    const search = await searchParams
 
-export default async function Stats() {
-    prefetch(trpc.partners.driverStats.queryOptions())
+    // Whose fleet is listed is a filter; the tiles follow it
+    const owner = currentOwner((key: string) => {
+        const value = search[key]
+        return typeof value === "string" ? value : null
+    })
+
+    prefetch(trpc.partners.driverStats.queryOptions({ owner }))
 
     return (
         <HydrateClient>
-            <ErrorBoundary fallback={<StatsSkeleton />}>
-                <Suspense fallback={<StatsSkeleton />}>
+            <ErrorBoundary fallback={<TilesSkeleton />}>
+                <Suspense fallback={<TilesSkeleton />}>
                     <DriverStatsView />
                 </Suspense>
             </ErrorBoundary>

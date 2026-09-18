@@ -3,7 +3,6 @@ import { TRPCError } from "@trpc/server";
 import { APIError } from "better-auth/api";
 
 import { createTRPCRouter, protectedProcedure } from "@workspace/trpc/init";
-import { getStaffGates } from "@workspace/trpc/staff-gate";
 
 /**
  * Self-service: the actor is always the session user. Deliberately not
@@ -13,7 +12,7 @@ import { getStaffGates } from "@workspace/trpc/staff-gate";
  * needs the staff gate and nothing beyond it.
  */
 const selfProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-    const staff = await getStaffGates(ctx.db, { userId: ctx.session.user.id });
+    const staff = await ctx.staffGates(ctx.session.user.id);
 
     if (!staff.isStaff) throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
 

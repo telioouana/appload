@@ -1,0 +1,5713 @@
+{
+  "addresses": {
+    "nacala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.5656065,
+      "lng": 40.6854309,
+      "isArea": false,
+      "location": {
+        "address": "Nacala, Mozambique",
+        "placeId": "ChIJ9e5eYZOruRgR2akVwWFdd2I",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "beira": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.8315949,
+      "lng": 34.8370183,
+      "isArea": false,
+      "location": {
+        "address": "Beira, Mozambique",
+        "placeId": "ChIJwUegXV9qKh8R5razUC7d06E",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "moz agri, catandica, chimoio": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "carne e peixe ltd, av. das indústrias, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.8925714,
+      "lng": 32.4412487,
+      "isArea": false,
+      "location": {
+        "address": "Av. das Indústrias, Mozambique",
+        "placeId": "ChIJjzZO4DWJ5h4RC3-zz28PTGk",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "johannesburg": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.205647,
+      "lng": 28.0337185,
+      "isArea": false,
+      "location": {
+        "address": "Johannesburg, South Africa",
+        "placeId": "ChIJUWpA8GgMlR4RQUDTsdnJiiM",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "nampula": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.1266347,
+      "lng": 39.2687161,
+      "isArea": false,
+      "location": {
+        "address": "Nampula, Mozambique",
+        "placeId": "ChIJOaE2a7M1xhgRdN3KTEt2F8I",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "merec socimol, machava, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.8815798,
+      "lng": 32.4768831,
+      "isArea": false,
+      "location": {
+        "address": "4F9G+9Q6, Matola, Mozambique",
+        "placeId": "ChIJzc3fMJOO5h4RxcV7oQmT124",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "manica": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.1747162,
+      "lng": 33.438353,
+      "isArea": true,
+      "location": {
+        "address": "Manica Province, Mozambique",
+        "placeId": "ChIJ-2zfazdGKxkRI1uGRELDAk8",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "tete": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.1328104,
+      "lng": 33.6063855,
+      "isArea": false,
+      "location": {
+        "address": "Tete, Mozambique",
+        "placeId": "ChIJubCl_4hHJhkRgiIROY03S3U",
+        "country": "Mozambique",
+        "state": "Tete Province"
+      }
+    },
+    "pemba": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -12.9656468,
+      "lng": 40.4923515,
+      "isArea": false,
+      "location": {
+        "address": "Pemba, Mozambique",
+        "placeId": "ChIJER8ougDJvxgRtwcMyYN_Ip0",
+        "country": "Mozambique",
+        "state": "Cabo Delgado Province"
+      }
+    },
+    "sasol temane, inhambane": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -23.8790203,
+      "lng": 35.4025048,
+      "isArea": false,
+      "location": {
+        "address": "Inhambane, Mozambique",
+        "placeId": "ChIJOc7QUwHQIR8R9cG0pVmylTw",
+        "country": "Mozambique",
+        "state": "Inhambane Province"
+      }
+    },
+    "sondela animal feeds, delmas, mpumalanga": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.181984,
+      "lng": 28.6031028,
+      "isArea": false,
+      "location": {
+        "address": "247 Sonja St, Eloff SH, Delmas, 2210, South Africa",
+        "placeId": "ChIJO7jMmN4tlR4RS0GSwA8AG_U",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "numbi feeds, hazyview, mpumalanga": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.1382198,
+      "lng": 31.1614274,
+      "isArea": false,
+      "location": {
+        "address": "Numbi Gate Rd, South Africa",
+        "placeId": "ChIJpW9bhcgm6B4Rh_-5I7bJTxI",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "merec industries, beira": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.7951875,
+      "lng": 34.8591215,
+      "isArea": false,
+      "location": {
+        "address": "6V35+WJH, Beira, Mozambique",
+        "placeId": "ChIJrUSDDglqKh8Rpgtrl4HiA0A",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "rica piggery, magaliesburg, gauteng": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.9761385,
+      "lng": 27.4082645,
+      "isArea": false,
+      "location": {
+        "address": "386jq Portion 53 Farm Zandfontein, Magaliesberg Rd, Magaliesburg, 1739, South Africa",
+        "placeId": "ChIJE5GZNGWZlR4R1ZdDFMEYS2c",
+        "country": "South Africa",
+        "state": "North West"
+      }
+    },
+    "mocuba": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.8402212,
+      "lng": 36.9648534,
+      "isArea": false,
+      "location": {
+        "address": "Mocuba, Mozambique",
+        "placeId": "ChIJ86L0OdHq0RgR7g3hswSkWmY",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "dalein agriplan (pty) ltd, roodeplaat, gauteng": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.6689972,
+      "lng": 28.385016,
+      "isArea": false,
+      "location": {
+        "address": "229-JR, Roodeplaat, 0039, South Africa",
+        "placeId": "ChIJo7VtWIzhvx4RKaUF3INEiDI",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "alzu feeds, middleburg, mpumalanga": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.769902,
+      "lng": 29.4639354,
+      "isArea": false,
+      "location": {
+        "address": "Middelburg, South Africa",
+        "placeId": "ChIJh33Ls5lh6h4RRkdBCu9-el8",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "riversdale, meyerton, gauteng": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.5980891,
+      "lng": 28.0419844,
+      "isArea": false,
+      "location": {
+        "address": "Riversdale, Meyerton, 1961, South Africa",
+        "placeId": "ChIJg_Gp-jX6lB4RCSGcBzK7pAw",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "rietfontein 63-ir, germiston, 1401, áfrica do sul": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.1580268,
+      "lng": 28.1780919,
+      "isArea": false,
+      "location": {
+        "address": "Rietfontein 63-Ir, Germiston, 1411, South Africa",
+        "placeId": "ChIJoe8dkhgRlR4RsUOl_3Nvgd0",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "swineline piggery, roodeplat, gauteng": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.6740406,
+      "lng": 28.3394842,
+      "isArea": false,
+      "location": {
+        "address": "Roodeplaat, South Africa",
+        "placeId": "ChIJj6X69Bbhvx4Rfm89pTXDOWI",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "lichinga": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -13.3023564,
+      "lng": 35.2478112,
+      "isArea": false,
+      "location": {
+        "address": "Lichinga, Mozambique",
+        "placeId": "ChIJldjLUtj04BgRaCFwOMkYWMo",
+        "country": "Mozambique",
+        "state": "Niassa Province"
+      }
+    },
+    "sandton": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.0910296,
+      "lng": 28.0855317,
+      "isArea": false,
+      "location": {
+        "address": "Sandton, South Africa",
+        "placeId": "ChIJFwX0y5hzlR4RTLcevyG9-A0",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "huntersvlei viljoenskroon, free state, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -27.2070135,
+      "lng": 26.9245219,
+      "isArea": false,
+      "location": {
+        "address": "6 Fortuna St, Industria, Viljoenskroon, 9520, South Africa",
+        "placeId": "ChIJE4VJwnC6lh4RrZUS1Z7ENs8",
+        "country": "South Africa",
+        "state": "Free State"
+      }
+    },
+    "dondo, beira": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.6140727,
+      "lng": 34.7408046,
+      "isArea": false,
+      "location": {
+        "address": "Dondo, Mozambique",
+        "placeId": "ChIJcTOXWKhjKh8Rn8otlGIhKEQ",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "changing tides (pty) ltd, meyerton, gauteng": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.568205,
+      "lng": 27.996871,
+      "isArea": false,
+      "location": {
+        "address": "CXJW+VM, Meyerton, South Africa",
+        "placeId": "ChIJJ-_PigT5lB4ROgaqhBwXkX4",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "inhassoro": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -21.5394174,
+      "lng": 35.1872321,
+      "isArea": false,
+      "location": {
+        "address": "Inhassoro, Mozambique",
+        "placeId": "ChIJKwn6YznTJx8RhOe4Zk5_AYA",
+        "country": "Mozambique",
+        "state": "Inhambane Province"
+      }
+    },
+    "rockdale, middelburg, mpumalanga": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.819169,
+      "lng": 29.5209004,
+      "isArea": false,
+      "location": {
+        "address": "Rockdale, South Africa",
+        "placeId": "ChIJTylXn9xd6h4Rk660ibbvGaA",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "catacha, tete": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.1328104,
+      "lng": 33.6063855,
+      "isArea": false,
+      "location": {
+        "address": "Tete, Mozambique",
+        "placeId": "ChIJubCl_4hHJhkRgiIROY03S3U",
+        "country": "Mozambique",
+        "state": "Tete Province"
+      }
+    },
+    "midrand": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.9819021,
+      "lng": 28.1329403,
+      "isArea": false,
+      "location": {
+        "address": "Midrand, South Africa",
+        "placeId": "ChIJixllSf1xlR4RIv6LHFwQsoc",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "milange": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.0970343,
+      "lng": 35.7710875,
+      "isArea": false,
+      "location": {
+        "address": "Milange, Mozambique",
+        "placeId": "ChIJv5Yi7tpX1xgRpJKwqNbKv7E",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "busi": {
+      "ok": true,
+      "country": "TZ",
+      "lat": -4.7354634,
+      "lng": 36.18719,
+      "isArea": false,
+      "location": {
+        "address": "Busi, Tanzania",
+        "placeId": "ChIJNUaBohZySRgRglqCMEv8qyY",
+        "country": "Tanzania",
+        "state": "Dodoma Region"
+      }
+    },
+    "afrique pet food, isando, gauteng": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.1495213,
+      "lng": 28.2055217,
+      "isArea": false,
+      "location": {
+        "address": "9 Quality Rd, Isando, Kempton Park, 1601, South Africa",
+        "placeId": "ChIJkxr_aloTlR4R0CYhSpKmueQ",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "chimoio": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "tropigalia": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.933591,
+      "lng": 32.5754955,
+      "isArea": false,
+      "location": {
+        "address": "2732 Avenida Angola, Maputo 4725, Mozambique",
+        "placeId": "ChIJ7_pB4I6a5h4Ry7MG4gz-R54",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "boane - compal": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -26.0442742,
+      "lng": 32.3304887,
+      "isArea": false,
+      "location": {
+        "address": "Boane, Mozambique",
+        "placeId": "ChIJNdmixOd85h4RjhVhv13wM0Y",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "piet rietif, ethandakukhanya, mpumalanga": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -27.0305746,
+      "lng": 30.7780948,
+      "isArea": false,
+      "location": {
+        "address": "Ethandakukhanya, Mkhondo, 2380, South Africa",
+        "placeId": "ChIJ0S2kDcbk7h4RIhl6twsZZcs",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "matola": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9240937,
+      "lng": 32.4657006,
+      "isArea": false,
+      "location": {
+        "address": "Matola, Mozambique",
+        "placeId": "ChIJHTpG-OqF5h4RPMgtvLMqoDE",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "meadow, delmas, mpumalanga": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.1403469,
+      "lng": 28.6786903,
+      "isArea": false,
+      "location": {
+        "address": "Delmas, South Africa",
+        "placeId": "ChIJYZvKulPN6h4RU045RYaYBbs",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "alrode, alberton, 1451, áfrica do sul": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.3049175,
+      "lng": 28.1298234,
+      "isArea": false,
+      "location": {
+        "address": "Alrode, Alberton, 1451, South Africa",
+        "placeId": "ChIJUTrxLDgblR4RNbW3y8Tkci0",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "kenmare, moma, nampula": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.5566178,
+      "lng": 39.2375507,
+      "isArea": false,
+      "location": {
+        "address": "Moma, Mozambique",
+        "placeId": "ChIJ30yZ76mAyRgRg68Mbovfbqk",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "mutuali": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.8759552,
+      "lng": 37.0024533,
+      "isArea": false,
+      "location": {
+        "address": "Mutuali, Mozambique",
+        "placeId": "ChIJ19mWLfpA2xgR5N4kEUryBJo",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "mirrote": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -13.8405401,
+      "lng": 39.5782274,
+      "isArea": false,
+      "location": {
+        "address": "Mirrote, Mozambique",
+        "placeId": "ChIJx3cX08nDwBgR0uNnLsXZju4",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "machai, muanza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.9055675,
+      "lng": 34.7906495,
+      "isArea": false,
+      "location": {
+        "address": "Muanza, Mozambique",
+        "placeId": "ChIJvf7w4Za2Kh8RsRBZzh6E4EE",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "lusaka": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.2235019,
+      "lng": 29.1099157,
+      "isArea": false,
+      "location": {
+        "address": "Lusaka, South Africa",
+        "placeId": "ChIJvcWXfRo_wB4R6tewj1jhWII",
+        "country": "South Africa",
+        "state": "Limpopo"
+      }
+    },
+    "nacaroa": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.3688284,
+      "lng": 39.914466,
+      "isArea": false,
+      "location": {
+        "address": "Nacaroa, Mozambique",
+        "placeId": "ChIJO5RaJt5gxxgRadrfXHv2EFg",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "xai-xai": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0411497,
+      "lng": 33.6406317,
+      "isArea": false,
+      "location": {
+        "address": "Xai-Xai, Mozambique",
+        "placeId": "ChIJE99mKob74B4RWgTXV5_5y5I",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "delmas, mpumalanga": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.1403469,
+      "lng": 28.6786903,
+      "isArea": false,
+      "location": {
+        "address": "Delmas, South Africa",
+        "placeId": "ChIJYZvKulPN6h4RU045RYaYBbs",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "rossgro eloff, delmas, mpumalanga": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.1730117,
+      "lng": 28.5979302,
+      "isArea": false,
+      "location": {
+        "address": "57 Eloff St, Eloff, Delmas, 2211, South Africa",
+        "placeId": "ChIJXaZQUWkylR4RRDA0xrsUMXU",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "caia (sede)": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -17.8176872,
+      "lng": 35.3411388,
+      "isArea": false,
+      "location": {
+        "address": "Caia, Mozambique",
+        "placeId": "ChIJE393MFVI1BgR2w2j7KPgQrM",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "nhamapassa, chimoio": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "maxixe": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -23.8606069,
+      "lng": 35.3468034,
+      "isArea": false,
+      "location": {
+        "address": "Maxixe, Mozambique",
+        "placeId": "ChIJzwX-qSvOIR8RDjMex5AqDME",
+        "country": "Mozambique",
+        "state": "Inhambane Province"
+      }
+    },
+    "mozagri, catandica, chimoio": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.0972043,
+      "lng": 33.481456,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJ78LtMTU1KxkR4wTpuT21b6Y",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "ressano garcia": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.4433372,
+      "lng": 31.9923555,
+      "isArea": false,
+      "location": {
+        "address": "Ressano Garcia, Mozambique",
+        "placeId": "ChIJpUK2BdjJ5x4RZo5u4-GyiJE",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "afgri eloff, delmas, mpumalanga": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.1723522,
+      "lng": 28.5993477,
+      "isArea": false,
+      "location": {
+        "address": "Eloff, &nbsp, Delmas, 2211, South Africa",
+        "placeId": "ChIJ4wWBdestlR4Ro5KIougXvvM",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "xinavane": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0471609,
+      "lng": 32.7853555,
+      "isArea": false,
+      "location": {
+        "address": "Xinavane, Mozambique",
+        "placeId": "ChIJMefj8mk_5x4RvYj2IKP5wKI",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "nicoadala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -17.6007422,
+      "lng": 36.8115686,
+      "isArea": false,
+      "location": {
+        "address": "Nicuadala, Mozambique",
+        "placeId": "ChIJb6QyD6lF0hgRs3SbkTWBWJk",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "meadow feeds, delmas, mpumalanga": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.1500049,
+      "lng": 28.687566,
+      "isArea": false,
+      "location": {
+        "address": "Delmas Ext 8, Delmas, 2210, South Africa",
+        "placeId": "ChIJAeBYgtTT6h4RIf7rF9Yzkt0",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "inharrime": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -24.4733653,
+      "lng": 35.0250484,
+      "isArea": false,
+      "location": {
+        "address": "Inharrime, Mozambique",
+        "placeId": "ChIJq_VixT69Hx8RxQjKKr3Zf80",
+        "country": "Mozambique",
+        "state": "Inhambane Province"
+      }
+    },
+    "etg, zona industrial ii, antigo control, nacala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.5921831,
+      "lng": 40.68106119999999,
+      "isArea": false,
+      "location": {
+        "address": "BAIRRO ONTUPAIA II, ZONA INDUSTRIAL N°11, Nacala, Mozambique",
+        "placeId": "ChIJe5Ml4hOtuRgRCuGHAqh3Ydg",
+        "country": "Mozambique",
+        "state": "Nampula"
+      }
+    },
+    "335 angus cres, hoogland, johannesburg, 2162, áfrica do sul": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.0328761,
+      "lng": 27.9574087,
+      "isArea": false,
+      "location": {
+        "address": "335 Angus Cres, Hoogland, Randburg, 2169, South Africa",
+        "placeId": "EjYzMzUgQW5ndXMgQ3JlcywgSG9vZ2xhbmQsIFJhbmRidXJnLCAyMTY5LCBTb3V0aCBBZnJpY2EiMRIvChQKEgnFMJwrcHaVHhGjprihh7FrLxDPAioUChIJ3fhcJ3B2lR4RWfv1R3ivqPE",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "226 brakpan rd, boksburg east, boksburg, 1469, áfrica do sul": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.2194234,
+      "lng": 28.277586,
+      "isArea": false,
+      "location": {
+        "address": "226 Brakpan Rd, Boksburg East, Boksburg, 1469, South Africa",
+        "placeId": "ChIJsQPmn-wXlR4RBuH3z294Urg",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "multipigs, rayton, gauteng": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.7404652,
+      "lng": 28.5286486,
+      "isArea": false,
+      "location": {
+        "address": "Rayton, 1001, South Africa",
+        "placeId": "ChIJ4aEyodhWlR4RWiMYdMPegII",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "bergendal group, nelspruit, mpumalanga": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.3347091,
+      "lng": 30.933216,
+      "isArea": false,
+      "location": {
+        "address": "Nelspruit, South Africa",
+        "placeId": "ChIJCQlfl_oy6B4R57inY8ej2Cw",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "cuamba": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.8013744,
+      "lng": 36.5357504,
+      "isArea": false,
+      "location": {
+        "address": "Cuamba, Mozambique",
+        "placeId": "ChIJR2r5z2WD2xgRm2BgicVN4T8",
+        "country": "Mozambique",
+        "state": "Niassa Province"
+      }
+    },
+    "marracuene": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.73863,
+      "lng": 32.6729085,
+      "isArea": false,
+      "location": {
+        "address": "Marracuene District, Mozambique",
+        "placeId": "ChIJw6Xg5CeV5h4RWHaq7Zi9H4A",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "inhambane": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -23.8790203,
+      "lng": 35.4025048,
+      "isArea": false,
+      "location": {
+        "address": "Inhambane, Mozambique",
+        "placeId": "ChIJOc7QUwHQIR8R9cG0pVmylTw",
+        "country": "Mozambique",
+        "state": "Inhambane Province"
+      }
+    },
+    "mooiriver, kwazulo natal": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -29.2136791,
+      "lng": 30.0004985,
+      "isArea": false,
+      "location": {
+        "address": "Mooi River, 3300, South Africa",
+        "placeId": "ChIJCS-tMUXl8x4R6BVgFLQGPrI",
+        "country": "South Africa",
+        "state": "KwaZulu-Natal"
+      }
+    },
+    "moamba, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.6024561,
+      "lng": 32.2453622,
+      "isArea": false,
+      "location": {
+        "address": "Moamba, Mozambique",
+        "placeId": "ChIJG8n_GyNR5h4RQ91sFeIuf5E",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "namaahacha, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9851081,
+      "lng": 32.019841,
+      "isArea": false,
+      "location": {
+        "address": "Namaacha, Mozambique",
+        "placeId": "ChIJUSI3io9s5h4RoeAKZHjQ52w",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "synag dairy farm 2, meyerton, gauteng": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.4723266,
+      "lng": 28.0896022,
+      "isArea": false,
+      "location": {
+        "address": "Joan Rd, Meyerton, 1873, South Africa",
+        "placeId": "ChIJHz-12j_9lB4RcDsGoxSFB9U",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "meadow feeds, standerton, mpumalanga": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.966011,
+      "lng": 29.239585,
+      "isArea": false,
+      "location": {
+        "address": "6 Valley Rd, Standerton, 2430, South Africa",
+        "placeId": "ChIJX6c7NFGD7B4RY5Bb1yqkj-Y",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "moatize": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.1172827,
+      "lng": 33.7279198,
+      "isArea": false,
+      "location": {
+        "address": "Moatize, Mozambique",
+        "placeId": "ChIJ9flgyEFKJhkR1Hkq9TrlEtA",
+        "country": "Mozambique",
+        "state": "Tete Province"
+      }
+    },
+    "domue": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.5295463,
+      "lng": 34.0836297,
+      "isArea": false,
+      "location": {
+        "address": "Domue, Mozambique",
+        "placeId": "ChIJ95D0PQ30IBkRfBfufpbftF8",
+        "country": "Mozambique",
+        "state": "Tete Province"
+      }
+    },
+    "tete, moatize & angonia": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.6720771,
+      "lng": 34.2421597,
+      "isArea": false,
+      "location": {
+        "address": "Angónia, Mozambique",
+        "placeId": "ChIJF33nW3-PIBkR0z_d4M4n000",
+        "country": "Mozambique",
+        "state": "Tete Province"
+      }
+    },
+    "inhambane/maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9692434,
+      "lng": 32.573163,
+      "isArea": false,
+      "location": {
+        "address": "2HJF+873, Maputo, Mozambique",
+        "placeId": "ChIJYbmVPwCb5h4RJCsbDorSLEM",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "gorongosa": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.6870901,
+      "lng": 34.0724943,
+      "isArea": false,
+      "location": {
+        "address": "Gorongosa, Mozambique",
+        "placeId": "ChIJjYOaxyPqKhkRdcJTdz7nGZQ",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "champ's choice feeds cc, roodeplat, gauteng": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.6496256,
+      "lng": 28.3346887,
+      "isArea": false,
+      "location": {
+        "address": "Plot 143 Kameeldrfit Road Zeekoegat, Roodeplaat, Pretoria, 0186, South Africa",
+        "placeId": "ChIJwVV1ze_gvx4RYJD6T9qfe1k",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "chimoio, armazens nadat": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "pambara & maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "etc adubos, beira": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.8315949,
+      "lng": 34.8370183,
+      "isArea": false,
+      "location": {
+        "address": "Beira, Mozambique",
+        "placeId": "ChIJwUegXV9qKh8R5razUC7d06E",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "blantyre": {
+      "ok": true,
+      "country": "MW",
+      "lat": -15.7879694,
+      "lng": 35.0133228,
+      "isArea": false,
+      "location": {
+        "address": "Blantyre, Malawi",
+        "placeId": "ChIJXwDAyxNF2BgR5hHY5NpYYyM",
+        "country": "Malawi",
+        "state": "Southern Region"
+      }
+    },
+    "rapale": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.0626667,
+      "lng": 39.1933733,
+      "isArea": false,
+      "location": {
+        "address": "Rapale, Mozambique",
+        "placeId": "ChIJYfsuK7NJxhgRGl5vP_jqlC0",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "macia, maputo & matola": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.8427571,
+      "lng": 32.61976,
+      "isArea": false,
+      "location": {
+        "address": "R. da Macia, Maputo, Mozambique",
+        "placeId": "ChIJYXBfGkmR5h4R8CdEPHaYhgU",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "chimoio, beira, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9578448,
+      "lng": 32.5839855,
+      "isArea": false,
+      "location": {
+        "address": "R. de Chimoio, Maputo, Mozambique",
+        "placeId": "ChIJB82mm1Wa5h4RAIkHW3PDM1s",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "inchope": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.209867,
+      "lng": 33.9359756,
+      "isArea": false,
+      "location": {
+        "address": "Inchope, Mozambique",
+        "placeId": "ChIJN3K6nggv1R4RXHFe6rhMiMc",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "vilanculos": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -21.9996225,
+      "lng": 35.3186918,
+      "isArea": false,
+      "location": {
+        "address": "Vilankulos, Mozambique",
+        "placeId": "ChIJnzyBzbBWJh8RIXTaEZ5ol6I",
+        "country": "Mozambique",
+        "state": "Inhambane Province"
+      }
+    },
+    "lilongwe": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -34.0604425,
+      "lng": 18.4635091,
+      "isArea": false,
+      "location": {
+        "address": "Malawi Rd, Diep River, Cape Town, 7945, South Africa",
+        "placeId": "ChIJO7aUAgBBzB0RmaUJohpnwmQ",
+        "country": "South Africa",
+        "state": "Western Cape"
+      }
+    },
+    "casa do agricultor, chimoio": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1092708,
+      "lng": 33.4651488,
+      "isArea": false,
+      "location": {
+        "address": "Avenida 25 de Junho, Talhão 72B, Zona Industrial, Chimoio, Mozambique",
+        "placeId": "ChIJj8nCor41KxkRT8gNQCCGrgg",
+        "country": "Mozambique",
+        "state": "Manica"
+      }
+    },
+    "mocuba, nampula, lichinga & montepuez": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.1266347,
+      "lng": 39.2687161,
+      "isArea": false,
+      "location": {
+        "address": "Nampula, Mozambique",
+        "placeId": "ChIJOaE2a7M1xhgRdN3KTEt2F8I",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "mpadue & matema": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.8473743,
+      "lng": 33.5104418,
+      "isArea": false,
+      "location": {
+        "address": "Matema, Mozambique",
+        "placeId": "ChIJPyRt7Iv1JhkRsOizgG9EeZs",
+        "country": "Mozambique",
+        "state": "Tete"
+      }
+    },
+    "macia & maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.8427571,
+      "lng": 32.61976,
+      "isArea": false,
+      "location": {
+        "address": "R. da Macia, Maputo, Mozambique",
+        "placeId": "ChIJYXBfGkmR5h4R8CdEPHaYhgU",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "ruace, gurue": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.4714925,
+      "lng": 36.9809701,
+      "isArea": false,
+      "location": {
+        "address": "GXHJ+C95, Gurue, Mozambique",
+        "placeId": "ChIJgz_tGADB2hgRSzO-BXC4YO8",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "porto pesca, beira": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.8315949,
+      "lng": 34.8370183,
+      "isArea": false,
+      "location": {
+        "address": "Beira, Mozambique",
+        "placeId": "ChIJwUegXV9qKh8R5razUC7d06E",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "joannesburgo": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.205647,
+      "lng": 28.0337185,
+      "isArea": false,
+      "location": {
+        "address": "Johannesburg, South Africa",
+        "placeId": "ChIJUWpA8GgMlR4RQUDTsdnJiiM",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "nampula & pemba": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -12.9656468,
+      "lng": 40.4923515,
+      "isArea": false,
+      "location": {
+        "address": "2FMR+PWX, Pemba, Mozambique",
+        "placeId": "ChIJJXsZSQDJvxgRo1pfHoZT0P0",
+        "country": "Mozambique",
+        "state": "Cabo Delgado Province"
+      }
+    },
+    "beira & tete": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.8315949,
+      "lng": 34.8370183,
+      "isArea": false,
+      "location": {
+        "address": "Beira, Mozambique",
+        "placeId": "ChIJwUegXV9qKh8R5razUC7d06E",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "vilanculos, maputo & matola": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9240937,
+      "lng": 32.4657006,
+      "isArea": false,
+      "location": {
+        "address": "Matola, Mozambique",
+        "placeId": "ChIJHTpG-OqF5h4RPMgtvLMqoDE",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "caia": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -17.8176872,
+      "lng": 35.3411388,
+      "isArea": false,
+      "location": {
+        "address": "Caia, Mozambique",
+        "placeId": "ChIJE393MFVI1BgR2w2j7KPgQrM",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "quelimane": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -17.8502636,
+      "lng": 36.9218584,
+      "isArea": false,
+      "location": {
+        "address": "Quelimane, Mozambique",
+        "placeId": "ChIJNVCkSpLz0hgRrJ9cHLj0HTA",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "randfontein": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.1701459,
+      "lng": 27.7010725,
+      "isArea": false,
+      "location": {
+        "address": "Randfontein, South Africa",
+        "placeId": "ChIJ__5IC_69lR4RcnRq6RTZbto",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "macia": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0263578,
+      "lng": 33.1070309,
+      "isArea": false,
+      "location": {
+        "address": "Macia, Mozambique",
+        "placeId": "ChIJmZa3tVzL4B4RB7-twi0A7kk",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "mocuba & nampula": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.8402212,
+      "lng": 36.9648534,
+      "isArea": false,
+      "location": {
+        "address": "Mocuba, Mozambique",
+        "placeId": "ChIJ86L0OdHq0RgR7g3hswSkWmY",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "temane": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -21.7416113,
+      "lng": 35.0685763,
+      "isArea": false,
+      "location": {
+        "address": "7359+9C, Maimelane, Mozambique",
+        "placeId": "ChIJaT8YCxnJJx8RCjAUmaclQLg",
+        "country": "Mozambique",
+        "state": "Inhambane Province"
+      }
+    },
+    "angonia, tete": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.6720771,
+      "lng": 34.2421597,
+      "isArea": false,
+      "location": {
+        "address": "Angónia, Mozambique",
+        "placeId": "ChIJF33nW3-PIBkR0z_d4M4n000",
+        "country": "Mozambique",
+        "state": "Tete Province"
+      }
+    },
+    "porto da pesca, beira": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.8172349,
+      "lng": 34.8486199,
+      "isArea": false,
+      "location": {
+        "address": "5RMX+4C5, Beira, Mozambique",
+        "placeId": "ChIJc-mxMgBrKh8RpEpZExw89gw",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "boane": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -26.0442742,
+      "lng": 32.3304887,
+      "isArea": false,
+      "location": {
+        "address": "Boane, Mozambique",
+        "placeId": "ChIJNdmixOd85h4RjhVhv13wM0Y",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "biri-biri, mitengo, tsangano & mpenha - tete": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.1328104,
+      "lng": 33.6063855,
+      "isArea": false,
+      "location": {
+        "address": "Tete, Mozambique",
+        "placeId": "ChIJubCl_4hHJhkRgiIROY03S3U",
+        "country": "Mozambique",
+        "state": "Tete Province"
+      }
+    },
+    "mpasse, nkondedzi & zobue - tete": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.5302007,
+      "lng": 34.3116978,
+      "isArea": false,
+      "location": {
+        "address": "F896+WM, Candie, Mozambique",
+        "placeId": "ChIJB8OcMS5vJxkR7Fz7WblwCE0",
+        "country": "Mozambique",
+        "state": "Tete"
+      }
+    },
+    "mulomba, chifunde, furancungo & mpandula - tete": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.8988832,
+      "lng": 34.3171552,
+      "isArea": false,
+      "location": {
+        "address": "Mulomba, Mozambique",
+        "placeId": "ChIJL2zAaJW6IBkReDt9SGdyBj8",
+        "country": "Mozambique",
+        "state": "Tete Province"
+      }
+    },
+    "fingoe, chitima & maroera - tete": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.7412689,
+      "lng": 32.7660295,
+      "isArea": false,
+      "location": {
+        "address": "Chitima, Mozambique",
+        "placeId": "ChIJd1_VoqJHJBkRljE2-MEqj5g",
+        "country": "Mozambique",
+        "state": "Tete Province"
+      }
+    },
+    "maxixe, macia & maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "white river, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.3299357,
+      "lng": 31.0153589,
+      "isArea": false,
+      "location": {
+        "address": "White River, 1240, South Africa",
+        "placeId": "ChIJFyXQJnEx6B4RG29ueuQ9Hbo",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "etg, matola": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9165308,
+      "lng": 32.4164161,
+      "isArea": false,
+      "location": {
+        "address": "3CM8+9H, Matola, Mozambique",
+        "placeId": "ChIJe4zbOACJ5h4REmGmG1TUv5E",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "palmeiras, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.263763,
+      "lng": 32.8704925,
+      "isArea": false,
+      "location": {
+        "address": "Palmeira, Mozambique",
+        "placeId": "ChIJNc5DlXkm5x4R2jdIadcT0PQ",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "blantyre, malawi": {
+      "ok": true,
+      "country": "MW",
+      "lat": -15.7879694,
+      "lng": 35.0133228,
+      "isArea": false,
+      "location": {
+        "address": "Blantyre, Malawi",
+        "placeId": "ChIJXwDAyxNF2BgR5hHY5NpYYyM",
+        "country": "Malawi",
+        "state": "Southern Region"
+      }
+    },
+    "nampula, rapale": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.0626667,
+      "lng": 39.1933733,
+      "isArea": false,
+      "location": {
+        "address": "Rapale, Mozambique",
+        "placeId": "ChIJYfsuK7NJxhgRGl5vP_jqlC0",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "muanza, sofala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.9055675,
+      "lng": 34.7906495,
+      "isArea": false,
+      "location": {
+        "address": "Muanza, Mozambique",
+        "placeId": "ChIJvf7w4Za2Kh8RsRBZzh6E4EE",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "inhaminga": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.4152051,
+      "lng": 35.0242803,
+      "isArea": false,
+      "location": {
+        "address": "Inhaminga, Mozambique",
+        "placeId": "ChIJt--2XaIQ1RgR5PLqlKoQ1jk",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "johannesburg, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.205647,
+      "lng": 28.0337185,
+      "isArea": false,
+      "location": {
+        "address": "Johannesburg, South Africa",
+        "placeId": "ChIJUWpA8GgMlR4RQUDTsdnJiiM",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "namaacha": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9851081,
+      "lng": 32.019841,
+      "isArea": false,
+      "location": {
+        "address": "Namaacha, Mozambique",
+        "placeId": "ChIJUSI3io9s5h4RoeAKZHjQ52w",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "inhassouro": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -21.5394174,
+      "lng": 35.1872321,
+      "isArea": false,
+      "location": {
+        "address": "Inhassoro, Mozambique",
+        "placeId": "ChIJKwn6YznTJx8RhOe4Zk5_AYA",
+        "country": "Mozambique",
+        "state": "Inhambane Province"
+      }
+    },
+    "chokwe": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -24.5314899,
+      "lng": 32.9990676,
+      "isArea": false,
+      "location": {
+        "address": "Chokwe, Mozambique",
+        "placeId": "ChIJhZzz_hj63R4R-ooJ53K-_Nc",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "tropigalia, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.933591,
+      "lng": 32.5754955,
+      "isArea": false,
+      "location": {
+        "address": "2732 Avenida Angola, Maputo 4725, Mozambique",
+        "placeId": "ChIJ7_pB4I6a5h4Ry7MG4gz-R54",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "delmas": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.1403469,
+      "lng": 28.6786903,
+      "isArea": false,
+      "location": {
+        "address": "Delmas, South Africa",
+        "placeId": "ChIJYZvKulPN6h4RU045RYaYBbs",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "dondo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.6140727,
+      "lng": 34.7408046,
+      "isArea": false,
+      "location": {
+        "address": "Dondo, Mozambique",
+        "placeId": "ChIJcTOXWKhjKh8Rn8otlGIhKEQ",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "maputo, machava": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9114653,
+      "lng": 32.4911132,
+      "isArea": false,
+      "location": {
+        "address": "Machava, Mozambique",
+        "placeId": "ChIJS2r_pQeP5h4RqiJAHIzIWwQ",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "maxixe, chokwe & maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.8403963,
+      "lng": 32.6408456,
+      "isArea": false,
+      "location": {
+        "address": "5J5R+R8X, R. de Gaza, Maputo, Mozambique",
+        "placeId": "ChIJ7Uz5QACX5h4RRk0Du8UJLxs",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "beira, chimoio & tete": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "xai-xai & maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "nampula, erati": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -13.8998638,
+      "lng": 39.81674840000001,
+      "isArea": false,
+      "location": {
+        "address": "Eráti, Mozambique",
+        "placeId": "ChIJFbhuLCW6wBgR1DHWn34MD9o",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "nampula,erati": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -13.8998638,
+      "lng": 39.81674840000001,
+      "isArea": false,
+      "location": {
+        "address": "Eráti, Mozambique",
+        "placeId": "ChIJFbhuLCW6wBgR1DHWn34MD9o",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "chimoio iac": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "chimoio cidade": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "cabo delgado, palma": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -10.7754281,
+      "lng": 40.47242809999999,
+      "isArea": false,
+      "location": {
+        "address": "Palma, Mozambique",
+        "placeId": "ChIJlziLJi_ukhgRZPflQJhxoQk",
+        "country": "Mozambique",
+        "state": "Cabo Delgado Province"
+      }
+    },
+    "xai-xai, matola e machava": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9114653,
+      "lng": 32.4911132,
+      "isArea": false,
+      "location": {
+        "address": "Machava, Mozambique",
+        "placeId": "ChIJS2r_pQeP5h4RqiJAHIzIWwQ",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "theron boerdery, bapsfontein, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.9586459,
+      "lng": 28.3654981,
+      "isArea": false,
+      "location": {
+        "address": "Elandsfontein AH, 1510, South Africa",
+        "placeId": "ChIJHYo2qYFBlR4RgjzxCFKZF40",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "malema": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.7506801,
+      "lng": 37.3827234,
+      "isArea": false,
+      "location": {
+        "address": "Malema, Mozambique",
+        "placeId": "ChIJffM_10GzxBgRWV2ISIdxCbY",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "aqi, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9438575,
+      "lng": 32.6213602,
+      "isArea": false,
+      "location": {
+        "address": "Baía Mall, Av. da Marginal, Maputo, Mozambique",
+        "placeId": "ChIJC_-7NWya5h4R5d-4u7xAyGQ",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "mooiriver": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -29.2136791,
+      "lng": 30.0004985,
+      "isArea": false,
+      "location": {
+        "address": "Mooi River, 3300, South Africa",
+        "placeId": "ChIJCS-tMUXl8x4R6BVgFLQGPrI",
+        "country": "South Africa",
+        "state": "KwaZulu-Natal"
+      }
+    },
+    "maputo, moamba": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.6024561,
+      "lng": 32.2453622,
+      "isArea": false,
+      "location": {
+        "address": "Moamba, Mozambique",
+        "placeId": "ChIJG8n_GyNR5h4RQ91sFeIuf5E",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "vilankulo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -21.9996225,
+      "lng": 35.3186918,
+      "isArea": false,
+      "location": {
+        "address": "Vilankulos, Mozambique",
+        "placeId": "ChIJnzyBzbBWJh8RIXTaEZ5ol6I",
+        "country": "Mozambique",
+        "state": "Inhambane Province"
+      }
+    },
+    "port elisabeth": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -33.91369299999999,
+      "lng": 25.5826876,
+      "isArea": false,
+      "location": {
+        "address": "Gqeberha, South Africa",
+        "placeId": "ChIJK9b_RQApex4RJkKJzTcj_YY",
+        "country": "South Africa",
+        "state": "Eastern Cape"
+      }
+    },
+    "mugema": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.665695,
+      "lng": 35.529562,
+      "isArea": true,
+      "location": {
+        "address": "Mozambique",
+        "placeId": "ChIJxUr95uqs1BgRFaEWrrm_uxI",
+        "country": "Mozambique",
+        "state": ""
+      },
+      "weak": true
+    },
+    "alto-molocue": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.6404439,
+      "lng": 37.6833411,
+      "isArea": false,
+      "location": {
+        "address": "Alto Molócuè, Mozambique",
+        "placeId": "ChIJibW6CNNmxRgR58xOFZlDki8",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "macia e maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "xai-xai & chibuto": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0411497,
+      "lng": 33.6406317,
+      "isArea": false,
+      "location": {
+        "address": "Xai-Xai, Mozambique",
+        "placeId": "ChIJE99mKob74B4RWgTXV5_5y5I",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "corromana, sofala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.2039073,
+      "lng": 34.8624166,
+      "isArea": true,
+      "location": {
+        "address": "Sofala Province, Mozambique",
+        "placeId": "ChIJwUegXV9qKh8RWRu0BHB0JTA",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "beira, mafambisse": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.8315949,
+      "lng": 34.8370183,
+      "isArea": false,
+      "location": {
+        "address": "Beira, Mozambique",
+        "placeId": "ChIJwUegXV9qKh8R5razUC7d06E",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "machava": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9114653,
+      "lng": 32.4911132,
+      "isArea": false,
+      "location": {
+        "address": "Machava, Mozambique",
+        "placeId": "ChIJS2r_pQeP5h4RqiJAHIzIWwQ",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "namialo, nampula": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.9155949,
+      "lng": 39.9863677,
+      "isArea": false,
+      "location": {
+        "address": "Namialo, Mozambique",
+        "placeId": "ChIJWcPKf1p1uBgR7dNlsqWZ--Q",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "maxixe, vilanculos, xai-xai e maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "douglas, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -29.0576806,
+      "lng": 23.7716442,
+      "isArea": false,
+      "location": {
+        "address": "Douglas, 8730, South Africa",
+        "placeId": "ChIJZegVueK_nB4RQLaZQjE1LNw",
+        "country": "South Africa",
+        "state": "Northern Cape"
+      }
+    },
+    "moamba, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.6024561,
+      "lng": 32.2453622,
+      "isArea": false,
+      "location": {
+        "address": "Moamba, Mozambique",
+        "placeId": "ChIJG8n_GyNR5h4RQ91sFeIuf5E",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "gaza (mapai)": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -22.8519483,
+      "lng": 31.9672182,
+      "isArea": false,
+      "location": {
+        "address": "Mapai, Mozambique",
+        "placeId": "ChIJWaQDWhYg2x4RFY3AXGkzfvM",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "ile": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.0095409,
+      "lng": 37.3827234,
+      "isArea": false,
+      "location": {
+        "address": "Ile, Mozambique",
+        "placeId": "ChIJFXBuW_PDzxgRooeMcryrEBY",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "namacurra": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -17.4970436,
+      "lng": 37.0306406,
+      "isArea": false,
+      "location": {
+        "address": "Namacurra, Mozambique",
+        "placeId": "ChIJp1Ik3_Jr0hgR-LYjfUjmSTU",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "gurue": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.4664268,
+      "lng": 36.97868709999999,
+      "isArea": false,
+      "location": {
+        "address": "Gurue, Mozambique",
+        "placeId": "ChIJdyAqdZjB2hgRV1DuU0iAKdE",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "magige": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.665695,
+      "lng": 35.529562,
+      "isArea": true,
+      "location": {
+        "address": "Mozambique",
+        "placeId": "ChIJxUr95uqs1BgRFaEWrrm_uxI",
+        "country": "Mozambique",
+        "state": ""
+      },
+      "weak": true
+    },
+    "maxixe, xai-xai & maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "namuno": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -13.6189251,
+      "lng": 38.8153157,
+      "isArea": false,
+      "location": {
+        "address": "Namuno, Mozambique",
+        "placeId": "ChIJNQJMFLSCwRgR-yVRsnsfGyU",
+        "country": "Mozambique",
+        "state": "Cabo Delgado Province"
+      }
+    },
+    "montepuez": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -13.1340453,
+      "lng": 38.9981052,
+      "isArea": false,
+      "location": {
+        "address": "Montepuez, Mozambique",
+        "placeId": "ChIJYdAZ1EbdwRgR2BvM3ky1vKM",
+        "country": "Mozambique",
+        "state": "Cabo Delgado Province"
+      }
+    },
+    "zambezia": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.5638987,
+      "lng": 36.6093926,
+      "isArea": true,
+      "location": {
+        "address": "Zambezia Province, Mozambique",
+        "placeId": "ChIJeaYGHfLz0hgRB9ptWDCfGjw",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "zimpeto, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9086344,
+      "lng": 32.6378806,
+      "isArea": false,
+      "location": {
+        "address": "3JRQ+G5R, Maputo, Mozambique",
+        "placeId": "ChIJEa-W9OKZ5h4REYnDsZrk-oo",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "lioma": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.1764638,
+      "lng": 36.8061843,
+      "isArea": false,
+      "location": {
+        "address": "Lioma, Mozambique",
+        "placeId": "ChIJIbggRl0b2xgRPylc72RI-Bw",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "joanesburgo, africa do sul": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.205647,
+      "lng": 28.0337185,
+      "isArea": false,
+      "location": {
+        "address": "Johannesburg, South Africa",
+        "placeId": "ChIJUWpA8GgMlR4RQUDTsdnJiiM",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "maxixe, xaixai & maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "miloco": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.665695,
+      "lng": 35.529562,
+      "isArea": true,
+      "location": {
+        "address": "Mozambique",
+        "placeId": "ChIJxUr95uqs1BgRFaEWrrm_uxI",
+        "country": "Mozambique",
+        "state": ""
+      },
+      "weak": true
+    },
+    "nhamatanda, sofala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.269413,
+      "lng": 34.2084678,
+      "isArea": false,
+      "location": {
+        "address": "Nhamatanda, Mozambique",
+        "placeId": "ChIJO5ftXSRB1R4RmT5lQT9AsDU",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "inchope, gorongosa, caia, & murrumbala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.9980937,
+      "lng": 35.6532848,
+      "isArea": false,
+      "location": {
+        "address": "Morrumbala, Mozambique",
+        "placeId": "ChIJqQUbmgzJ1hgRjNo2rxYfg-U",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "maxixe, xai-xai": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0411497,
+      "lng": 33.6406317,
+      "isArea": false,
+      "location": {
+        "address": "Xai-Xai, Mozambique",
+        "placeId": "ChIJE99mKob74B4RWgTXV5_5y5I",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "cuamba, nampula": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.1153182,
+      "lng": 39.2662131,
+      "isArea": false,
+      "location": {
+        "address": "Rua de Cuamba, Nampula, Mozambique",
+        "placeId": "ChIJM2GSqrM1xhgRM-xZIx0MmGM",
+        "country": "Mozambique",
+        "state": "Nampula"
+      }
+    },
+    "malawi, zalewa": {
+      "ok": true,
+      "country": "MW",
+      "lat": -15.4432915,
+      "lng": 34.8624628,
+      "isArea": false,
+      "location": {
+        "address": "Zalewa, Malawi",
+        "placeId": "ChIJyxK6zFLt2BgRteCWB9e8Y1I",
+        "country": "Malawi",
+        "state": "Southern Region"
+      }
+    },
+    "nampula-rapale": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.1266347,
+      "lng": 39.2687161,
+      "isArea": false,
+      "location": {
+        "address": "Nampula, Mozambique",
+        "placeId": "ChIJOaE2a7M1xhgRdN3KTEt2F8I",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "zembe, chimoio": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "xai xai": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0411497,
+      "lng": 33.6406317,
+      "isArea": false,
+      "location": {
+        "address": "Xai-Xai, Mozambique",
+        "placeId": "ChIJE99mKob74B4RWgTXV5_5y5I",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "xai-xai, chokwe, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "joanesburgo": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.205647,
+      "lng": 28.0337185,
+      "isArea": false,
+      "location": {
+        "address": "Johannesburg, South Africa",
+        "placeId": "ChIJUWpA8GgMlR4RQUDTsdnJiiM",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "vilanculos, xai-xai & maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "namialo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.9155949,
+      "lng": 39.9863677,
+      "isArea": false,
+      "location": {
+        "address": "Namialo, Mozambique",
+        "placeId": "ChIJWcPKf1p1uBgR7dNlsqWZ--Q",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "inhassune, inhambane": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -23.8790203,
+      "lng": 35.4025048,
+      "isArea": false,
+      "location": {
+        "address": "Inhambane, Mozambique",
+        "placeId": "ChIJOc7QUwHQIR8R9cG0pVmylTw",
+        "country": "Mozambique",
+        "state": "Inhambane Province"
+      }
+    },
+    "impaputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9895717,
+      "lng": 32.1502507,
+      "isArea": false,
+      "location": {
+        "address": "2562+54, Bongolo, Mozambique",
+        "placeId": "ChIJZd2_GgBv5h4RnxS42a8GBRk",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "muxungue": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -20.3883235,
+      "lng": 33.9377161,
+      "isArea": false,
+      "location": {
+        "address": "Muxúnguè, Mozambique",
+        "placeId": "ChIJnamCrXlx1h4RoSgdsyBvcDw",
+        "country": "Mozambique",
+        "state": "Sofala"
+      }
+    },
+    "maxixe, xai-xai, chokwe e maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "harrismith, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -28.2726951,
+      "lng": 29.1269383,
+      "isArea": false,
+      "location": {
+        "address": "iNtabazwe, South Africa",
+        "placeId": "ChIJxQLj1uRh7R4RlmXqmO9K53c",
+        "country": "South Africa",
+        "state": "Free State"
+      }
+    },
+    "matola, xinavane": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0471609,
+      "lng": 32.7853555,
+      "isArea": false,
+      "location": {
+        "address": "Xinavane, Mozambique",
+        "placeId": "ChIJMefj8mk_5x4RvYj2IKP5wKI",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "malawi": {
+      "ok": true,
+      "country": "MW",
+      "lat": -13.254308,
+      "lng": 34.301525,
+      "isArea": true,
+      "location": {
+        "address": "Malawi",
+        "placeId": "ChIJ18ATk91b2BgRQ4VmKRcuo0Q",
+        "country": "Malawi",
+        "state": ""
+      },
+      "weak": true
+    },
+    "xai-xai, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "2HJF+873, Maputo, Mozambique",
+        "placeId": "ChIJicPjbACb5h4RUl-7YrwTKO8",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "gurué": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.4664268,
+      "lng": 36.97868709999999,
+      "isArea": false,
+      "location": {
+        "address": "Gurue, Mozambique",
+        "placeId": "ChIJdyAqdZjB2hgRV1DuU0iAKdE",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "bindura, zimbabwe": {
+      "ok": true,
+      "country": "ZW",
+      "lat": -17.3040996,
+      "lng": 31.3274387,
+      "isArea": false,
+      "location": {
+        "address": "Bindura, Zimbabwe",
+        "placeId": "ChIJ3yO_9co-MBkRVaxGars-BkE",
+        "country": "Zimbabwe",
+        "state": "Mashonaland Central Province"
+      }
+    },
+    "chimoio & beira": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "vilanculos, xai-xai, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "marbel": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.665695,
+      "lng": 35.529562,
+      "isArea": true,
+      "location": {
+        "address": "Mozambique",
+        "placeId": "ChIJxUr95uqs1BgRFaEWrrm_uxI",
+        "country": "Mozambique",
+        "state": ""
+      },
+      "weak": true
+    },
+    "inhassune": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.0825981,
+      "lng": 36.8250274,
+      "isArea": false,
+      "location": {
+        "address": "Inhassunge, Mozambique",
+        "placeId": "ChIJlQ8UHc7o0hgR-YlDLLNxkvY",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "beira, sofala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.8315949,
+      "lng": 34.8370183,
+      "isArea": false,
+      "location": {
+        "address": "Beira, Mozambique",
+        "placeId": "ChIJwUegXV9qKh8R5razUC7d06E",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "nacala, nampula": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.5656065,
+      "lng": 40.6854309,
+      "isArea": false,
+      "location": {
+        "address": "Nacala, Mozambique",
+        "placeId": "ChIJ9e5eYZOruRgR2akVwWFdd2I",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "mocuba, zambézia": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.8402212,
+      "lng": 36.9648534,
+      "isArea": false,
+      "location": {
+        "address": "Mocuba, Mozambique",
+        "placeId": "ChIJ86L0OdHq0RgR7g3hswSkWmY",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "chemba, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -17.1638999,
+      "lng": 34.8886242,
+      "isArea": false,
+      "location": {
+        "address": "Chemba, Mozambique",
+        "placeId": "ChIJXdPMmsNA1hgRw4C2rHzMSYw",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "matola, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9240937,
+      "lng": 32.4657006,
+      "isArea": false,
+      "location": {
+        "address": "Matola, Mozambique",
+        "placeId": "ChIJHTpG-OqF5h4RPMgtvLMqoDE",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "catandica, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.0650446,
+      "lng": 33.1745097,
+      "isArea": false,
+      "location": {
+        "address": "Catandica, Mozambique",
+        "placeId": "ChIJf1dBs6nwKxkRZ9OFL3DXrXg",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "xai-xai, gaza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0411497,
+      "lng": 33.6406317,
+      "isArea": false,
+      "location": {
+        "address": "Xai-Xai, Mozambique",
+        "placeId": "ChIJE99mKob74B4RWgTXV5_5y5I",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "sofala, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.2039073,
+      "lng": 34.8624166,
+      "isArea": true,
+      "location": {
+        "address": "Sofala Province, Mozambique",
+        "placeId": "ChIJwUegXV9qKh8RWRu0BHB0JTA",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "chimoio, manica": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "pemba, cabo delgado": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -12.9656468,
+      "lng": 40.4923515,
+      "isArea": false,
+      "location": {
+        "address": "Pemba, Mozambique",
+        "placeId": "ChIJER8ougDJvxgRtwcMyYN_Ip0",
+        "country": "Mozambique",
+        "state": "Cabo Delgado Province"
+      }
+    },
+    "maputo, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "nampula, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.1266347,
+      "lng": 39.2687161,
+      "isArea": false,
+      "location": {
+        "address": "Nampula, Mozambique",
+        "placeId": "ChIJOaE2a7M1xhgRdN3KTEt2F8I",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "mavalane, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9258227,
+      "lng": 32.5853469,
+      "isArea": false,
+      "location": {
+        "address": "Mavalane, Maputo, Mozambique",
+        "placeId": "ChIJUd4-5Xqa5h4RKdswYLZ0QfQ",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "ressano garcia, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.4433372,
+      "lng": 31.9923555,
+      "isArea": false,
+      "location": {
+        "address": "Ressano Garcia, Mozambique",
+        "placeId": "ChIJpUK2BdjJ5x4RZo5u4-GyiJE",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "lusaka, zambia": {
+      "ok": true,
+      "country": "ZM",
+      "lat": -15.4154677,
+      "lng": 28.2773267,
+      "isArea": false,
+      "location": {
+        "address": "Lusaka, Zambia",
+        "placeId": "ChIJSaq8PH3zQBkR6xMgRsGT0NA",
+        "country": "Zambia",
+        "state": "Lusaka Province"
+      }
+    },
+    "nacala, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.5656065,
+      "lng": 40.6854309,
+      "isArea": false,
+      "location": {
+        "address": "Nacala, Mozambique",
+        "placeId": "ChIJ9e5eYZOruRgR2akVwWFdd2I",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "rapale, nampula, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.0626667,
+      "lng": 39.1933733,
+      "isArea": false,
+      "location": {
+        "address": "Rapale, Mozambique",
+        "placeId": "ChIJYfsuK7NJxhgRGl5vP_jqlC0",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "xinavane, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0471609,
+      "lng": 32.7853555,
+      "isArea": false,
+      "location": {
+        "address": "Xinavane, Mozambique",
+        "placeId": "ChIJMefj8mk_5x4RvYj2IKP5wKI",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "dondo, sofala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.6140727,
+      "lng": 34.7408046,
+      "isArea": false,
+      "location": {
+        "address": "Dondo, Mozambique",
+        "placeId": "ChIJcTOXWKhjKh8Rn8otlGIhKEQ",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "gurue, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.4664268,
+      "lng": 36.97868709999999,
+      "isArea": false,
+      "location": {
+        "address": "Gurue, Mozambique",
+        "placeId": "ChIJdyAqdZjB2hgRV1DuU0iAKdE",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "barue, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -17.9778233,
+      "lng": 33.16888830000001,
+      "isArea": false,
+      "location": {
+        "address": "Báruè, Mozambique",
+        "placeId": "ChIJ3YxJjK_8KxkRTuFF1nJgnlI",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "gorongoza, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.6870901,
+      "lng": 34.0724943,
+      "isArea": false,
+      "location": {
+        "address": "Gorongosa, Mozambique",
+        "placeId": "ChIJjYOaxyPqKhkRdcJTdz7nGZQ",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "tica, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.4111843,
+      "lng": 34.4392348,
+      "isArea": false,
+      "location": {
+        "address": "Tica, Mozambique",
+        "placeId": "ChIJV22p2Zhj1R4RRdtvuyNc6OM",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "vanduzi, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.94525,
+      "lng": 33.26263,
+      "isArea": false,
+      "location": {
+        "address": "Vandúzi, Nova Vanduzi, Mozambique",
+        "placeId": "ChIJkSJas01DKxkReocKHphPyWE",
+        "country": "Mozambique",
+        "state": "Manica"
+      }
+    },
+    "angonia, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.6720771,
+      "lng": 34.2421597,
+      "isArea": false,
+      "location": {
+        "address": "Angónia, Mozambique",
+        "placeId": "ChIJF33nW3-PIBkR0z_d4M4n000",
+        "country": "Mozambique",
+        "state": "Tete Province"
+      }
+    },
+    "junta, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.934997,
+      "lng": 32.5505054,
+      "isArea": false,
+      "location": {
+        "address": "Junta, Maputo, Mozambique",
+        "placeId": "ChIJgdzmDqWa5h4R0Ml2M8OQKUQ",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "baixa, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9686387,
+      "lng": 32.5690895,
+      "isArea": false,
+      "location": {
+        "address": "Baixa, Maputo, Mozambique",
+        "placeId": "ChIJh-AVnRyb5h4Rwn1_XnOiBmo",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "marble hall, africa do sul": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -24.9685352,
+      "lng": 29.2919717,
+      "isArea": false,
+      "location": {
+        "address": "Marble Hall, 0450, South Africa",
+        "placeId": "ChIJ3QHUO9BRwB4RoWcr5qsKeuQ",
+        "country": "South Africa",
+        "state": "Limpopo"
+      }
+    },
+    "merec, machava socimol, maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9026089,
+      "lng": 32.4730373,
+      "isArea": false,
+      "location": {
+        "address": "3FWF+X63, Jamo, Mozambique",
+        "placeId": "ChIJ--vawOGO5h4RCD_pecBzpy4",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "pietermaritzburg, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -29.6015249,
+      "lng": 30.3790245,
+      "isArea": false,
+      "location": {
+        "address": "Pietermaritzburg, South Africa",
+        "placeId": "ChIJMwKXmti99h4RzXCr0febEtg",
+        "country": "South Africa",
+        "state": "KwaZulu-Natal"
+      }
+    },
+    "temane, moçambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.0364493,
+      "lng": 40.7323311,
+      "isArea": false,
+      "location": {
+        "address": "Island of Mozambique, Mozambique",
+        "placeId": "ChIJsc8uDmDWuRgRwf1qYzreDsQ",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "tete, moçambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.1328104,
+      "lng": 33.6063855,
+      "isArea": false,
+      "location": {
+        "address": "Tete, Mozambique",
+        "placeId": "ChIJubCl_4hHJhkRgiIROY03S3U",
+        "country": "Mozambique",
+        "state": "Tete Province"
+      }
+    },
+    "lilongwe, malawi": {
+      "ok": true,
+      "country": "MW",
+      "lat": -13.9865252,
+      "lng": 33.76806,
+      "isArea": false,
+      "location": {
+        "address": "Lilongwe, Malawi",
+        "placeId": "ChIJBZgp_B_TIRkR-T-gIJ_rtwQ",
+        "country": "Malawi",
+        "state": "Central Region"
+      }
+    },
+    "mooiriver, kwazulu natal": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -29.2136791,
+      "lng": 30.0004985,
+      "isArea": false,
+      "location": {
+        "address": "Mooi River, 3300, South Africa",
+        "placeId": "ChIJCS-tMUXl8x4R6BVgFLQGPrI",
+        "country": "South Africa",
+        "state": "KwaZulu-Natal"
+      }
+    },
+    "bon accord, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.616667,
+      "lng": 28.2,
+      "isArea": false,
+      "location": {
+        "address": "Bon Accord, Bon Accord AH, Pretoria, 0009, South Africa",
+        "placeId": "ChIJD2nWzI7bvx4RfR3CXWH0seM",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "bethlhemen, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -28.2326094,
+      "lng": 28.3065263,
+      "isArea": false,
+      "location": {
+        "address": "Bethlehem, South Africa",
+        "placeId": "ChIJ73wo-6G9kh4RU19AoCGvgBw",
+        "country": "South Africa",
+        "state": "Free State"
+      }
+    },
+    "sussundenga, manica": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.4134348,
+      "lng": 33.2836722,
+      "isArea": false,
+      "location": {
+        "address": "Sussundenga, Mozambique",
+        "placeId": "ChIJ79DEvgK71B4RQzqbiofbLVA",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "macia, gaza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0263578,
+      "lng": 33.1070309,
+      "isArea": false,
+      "location": {
+        "address": "Macia, Mozambique",
+        "placeId": "ChIJmZa3tVzL4B4RB7-twi0A7kk",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "tambara, manica": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -16.9816165,
+      "lng": 34.0641419,
+      "isArea": false,
+      "location": {
+        "address": "Tambara, Mozambique",
+        "placeId": "ChIJx0yTFC80KBkRw4y0H-mco3M",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "alto-molocue, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.6404439,
+      "lng": 37.6833411,
+      "isArea": false,
+      "location": {
+        "address": "Alto Molócuè, Mozambique",
+        "placeId": "ChIJibW6CNNmxRgR58xOFZlDki8",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "etatara, niassa": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.1071485,
+      "lng": 36.6323701,
+      "isArea": false,
+      "location": {
+        "address": "VJVJ+4WX, Mozambique",
+        "placeId": "ChIJkwFQPUAI2xgRmm7eW4-Cg9E",
+        "country": "Mozambique",
+        "state": "Niassa Province"
+      }
+    },
+    "cuamba, niassa": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.8013744,
+      "lng": 36.5357504,
+      "isArea": false,
+      "location": {
+        "address": "Cuamba, Mozambique",
+        "placeId": "ChIJR2r5z2WD2xgRm2BgicVN4T8",
+        "country": "Mozambique",
+        "state": "Niassa Province"
+      }
+    },
+    "chibuto, gaza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -24.6893815,
+      "lng": 33.5319806,
+      "isArea": false,
+      "location": {
+        "address": "Chibuto, Mozambique",
+        "placeId": "ChIJCeu5ZLOQ4B4RXzhfqV9EuH4",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "nanjua, cabo delgado": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -12.3335474,
+      "lng": 39.3206241,
+      "isArea": true,
+      "location": {
+        "address": "Cabo Delgado Province, Mozambique",
+        "placeId": "ChIJFb8REtFrkxgRToDo2vgrYks",
+        "country": "Mozambique",
+        "state": "Cabo Delgado Province"
+      }
+    },
+    "kondue, sofala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.2039073,
+      "lng": 34.8624166,
+      "isArea": true,
+      "location": {
+        "address": "Sofala Province, Mozambique",
+        "placeId": "ChIJwUegXV9qKh8RWRu0BHB0JTA",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "lichinga, niassa": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -13.3023564,
+      "lng": 35.2478112,
+      "isArea": false,
+      "location": {
+        "address": "Lichinga, Mozambique",
+        "placeId": "ChIJldjLUtj04BgRaCFwOMkYWMo",
+        "country": "Mozambique",
+        "state": "Niassa Province"
+      }
+    },
+    "namuno, cabo delgado": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -13.6189251,
+      "lng": 38.8153157,
+      "isArea": false,
+      "location": {
+        "address": "Namuno, Mozambique",
+        "placeId": "ChIJNQJMFLSCwRgR-yVRsnsfGyU",
+        "country": "Mozambique",
+        "state": "Cabo Delgado Province"
+      }
+    },
+    "molumbo, zambezia": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.4891988,
+      "lng": 36.272575,
+      "isArea": false,
+      "location": {
+        "address": "Molumbo, Mozambique",
+        "placeId": "ChIJqQAlQiNI2hgRYdz59mLdKxQ",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "harare, zimbabué": {
+      "ok": true,
+      "country": "ZW",
+      "lat": -17.8262928,
+      "lng": 31.0503723,
+      "isArea": false,
+      "location": {
+        "address": "Harare, Zimbabwe",
+        "placeId": "ChIJNdvdG-6kMRkRL08T5Zs7FKU",
+        "country": "Zimbabwe",
+        "state": "Harare Province"
+      }
+    },
+    "namialo, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.9155949,
+      "lng": 39.9863677,
+      "isArea": false,
+      "location": {
+        "address": "Namialo, Mozambique",
+        "placeId": "ChIJWcPKf1p1uBgR7dNlsqWZ--Q",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "namatoria, nampula": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -15.1266347,
+      "lng": 39.2687161,
+      "isArea": false,
+      "location": {
+        "address": "Nampula, Mozambique",
+        "placeId": "ChIJOaE2a7M1xhgRdN3KTEt2F8I",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "namaacha, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9851081,
+      "lng": 32.019841,
+      "isArea": false,
+      "location": {
+        "address": "Namaacha, Mozambique",
+        "placeId": "ChIJUSI3io9s5h4RoeAKZHjQ52w",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "condue, sofala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.722686,
+      "lng": 34.84462490000001,
+      "isArea": false,
+      "location": {
+        "address": "Condué, Mozambique",
+        "placeId": "ChIJ_6GvGQ9I1RgRkdBV7uvj0qs",
+        "country": "Mozambique",
+        "state": "Sofala"
+      }
+    },
+    "xinavane, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0471609,
+      "lng": 32.7853555,
+      "isArea": false,
+      "location": {
+        "address": "Xinavane, Mozambique",
+        "placeId": "ChIJMefj8mk_5x4RvYj2IKP5wKI",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "chimoio, iac": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "beira,sofala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.8315949,
+      "lng": 34.8370183,
+      "isArea": false,
+      "location": {
+        "address": "Beira, Mozambique",
+        "placeId": "ChIJwUegXV9qKh8R5razUC7d06E",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "chimoio,manica": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "chimoio,mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "chimoio,iac": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "chimoio, cidade": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "inhassorro": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -21.5394174,
+      "lng": 35.1872321,
+      "isArea": false,
+      "location": {
+        "address": "Inhassoro, Mozambique",
+        "placeId": "ChIJKwn6YznTJx8RhOe4Zk5_AYA",
+        "country": "Mozambique",
+        "state": "Inhambane Province"
+      }
+    },
+    "magaliesburg, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.9981063,
+      "lng": 27.5439415,
+      "isArea": false,
+      "location": {
+        "address": "Magaliesburg, 1739, South Africa",
+        "placeId": "ChIJSV6LJ9OMlR4RsBEtT6ywVlQ",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "maputo,mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "tzaneen, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -23.8355066,
+      "lng": 30.1623061,
+      "isArea": false,
+      "location": {
+        "address": "Tzaneen, South Africa",
+        "placeId": "ChIJOeiHss-pxh4RYdJwF1kHelg",
+        "country": "South Africa",
+        "state": "Limpopo"
+      }
+    },
+    "delmas, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.1403469,
+      "lng": 28.6786903,
+      "isArea": false,
+      "location": {
+        "address": "Delmas, South Africa",
+        "placeId": "ChIJYZvKulPN6h4RU045RYaYBbs",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "matola, mocambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9240937,
+      "lng": 32.4657006,
+      "isArea": false,
+      "location": {
+        "address": "Matola, Mozambique",
+        "placeId": "ChIJHTpG-OqF5h4RPMgtvLMqoDE",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "alzu, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -30.559482,
+      "lng": 22.937506,
+      "isArea": true,
+      "location": {
+        "address": "South Africa",
+        "placeId": "ChIJURLu2YmmNBwRoOikHwxjXeg",
+        "country": "South Africa",
+        "state": ""
+      },
+      "weak": true
+    },
+    "nacala,mocambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.5656065,
+      "lng": 40.6854309,
+      "isArea": false,
+      "location": {
+        "address": "Nacala, Mozambique",
+        "placeId": "ChIJ9e5eYZOruRgR2akVwWFdd2I",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    },
+    "moanza, sofala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.9055675,
+      "lng": 34.7906495,
+      "isArea": false,
+      "location": {
+        "address": "Muanza, Mozambique",
+        "placeId": "ChIJvf7w4Za2Kh8RsRBZzh6E4EE",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "xaixai-gaza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0411497,
+      "lng": 33.6406317,
+      "isArea": false,
+      "location": {
+        "address": "Xai-Xai, Mozambique",
+        "placeId": "ChIJE99mKob74B4RWgTXV5_5y5I",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "cmc maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.8967013,
+      "lng": 32.6077404,
+      "isArea": false,
+      "location": {
+        "address": "4J35+839, Maputo, Mozambique",
+        "placeId": "ChIJk47seQCR5h4Rs74izgWwPRY",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "mahotas maputo": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.8767097,
+      "lng": 32.6136146,
+      "isArea": false,
+      "location": {
+        "address": "Bairro das Mahotas, Maputo, Mozambique",
+        "placeId": "ChIJBbgfyNqQ5h4R79AIpR8dLAo",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "xaixai,gaza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0411497,
+      "lng": 33.6406317,
+      "isArea": false,
+      "location": {
+        "address": "Xai-Xai, Mozambique",
+        "placeId": "ChIJE99mKob74B4RWgTXV5_5y5I",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "maxixe, inhambane": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -23.8606069,
+      "lng": 35.3468034,
+      "isArea": false,
+      "location": {
+        "address": "Maxixe, Mozambique",
+        "placeId": "ChIJzwX-qSvOIR8RDjMex5AqDME",
+        "country": "Mozambique",
+        "state": "Inhambane Province"
+      }
+    },
+    "xaixai, gaza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0411497,
+      "lng": 33.6406317,
+      "isArea": false,
+      "location": {
+        "address": "Xai-Xai, Mozambique",
+        "placeId": "ChIJE99mKob74B4RWgTXV5_5y5I",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "inhassune, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -18.0825981,
+      "lng": 36.8250274,
+      "isArea": false,
+      "location": {
+        "address": "Inhassunge, Mozambique",
+        "placeId": "ChIJlQ8UHc7o0hgR-YlDLLNxkvY",
+        "country": "Mozambique",
+        "state": "Zambezia Province"
+      }
+    },
+    "manjacaze, gaza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -24.7057037,
+      "lng": 33.8801952,
+      "isArea": false,
+      "location": {
+        "address": "Manjacaze, Mozambique",
+        "placeId": "ChIJhQ0NB9Vg4B4RMoxKNc28pZw",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "whiteriver, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -25.3299357,
+      "lng": 31.0153589,
+      "isArea": false,
+      "location": {
+        "address": "White River, 1240, South Africa",
+        "placeId": "ChIJFyXQJnEx6B4RG29ueuQ9Hbo",
+        "country": "South Africa",
+        "state": "Mpumalanga"
+      }
+    },
+    "swineline, africa do sul": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -30.559482,
+      "lng": 22.937506,
+      "isArea": true,
+      "location": {
+        "address": "South Africa",
+        "placeId": "ChIJURLu2YmmNBwRoOikHwxjXeg",
+        "country": "South Africa",
+        "state": ""
+      },
+      "weak": true
+    },
+    "chokwe, gaza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -24.5314899,
+      "lng": 32.9990676,
+      "isArea": false,
+      "location": {
+        "address": "Chokwe, Mozambique",
+        "placeId": "ChIJhZzz_hj63R4R-ooJ53K-_Nc",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "machanga, sofala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -20.9757561,
+      "lng": 35.0048107,
+      "isArea": false,
+      "location": {
+        "address": "Machanga, Mozambique",
+        "placeId": "ChIJTbr801gt1h4R9lNr_bd6X5Q",
+        "country": "Mozambique",
+        "state": "Sofala"
+      }
+    },
+    "chibabava, sofala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -20.327374,
+      "lng": 33.88577470000001,
+      "isArea": false,
+      "location": {
+        "address": "Chibabava, Mozambique",
+        "placeId": "ChIJd3UvdtvT1R4RMDDb0L_kuT8",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "caia, sofala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -17.8176872,
+      "lng": 35.3411388,
+      "isArea": false,
+      "location": {
+        "address": "Caia, Mozambique",
+        "placeId": "ChIJE393MFVI1BgR2w2j7KPgQrM",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "buzi, sofala": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -20.1463938,
+      "lng": 34.3310364,
+      "isArea": false,
+      "location": {
+        "address": "Buzi, Mozambique",
+        "placeId": "ChIJVzfVaQny1R4R34xpT5Lpt4o",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "multipigs, africa do sul": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -30.559482,
+      "lng": 22.937506,
+      "isArea": true,
+      "location": {
+        "address": "South Africa",
+        "placeId": "ChIJURLu2YmmNBwRoOikHwxjXeg",
+        "country": "South Africa",
+        "state": ""
+      },
+      "weak": true
+    },
+    "reitz, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -27.8001178,
+      "lng": 28.4370044,
+      "isArea": false,
+      "location": {
+        "address": "Reitz, 9810, South Africa",
+        "placeId": "ChIJ2xbAxQHZkh4RCuxDPrvh77M",
+        "country": "South Africa",
+        "state": "Free State"
+      }
+    },
+    "boane, moçambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -26.0442742,
+      "lng": 32.3304887,
+      "isArea": false,
+      "location": {
+        "address": "Boane, Mozambique",
+        "placeId": "ChIJNdmixOd85h4RjhVhv13wM0Y",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "limpompo, gaza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0015164,
+      "lng": 33.3934943,
+      "isArea": false,
+      "location": {
+        "address": "Limpopo, Mozambique",
+        "placeId": "ChIJH9Gc4eXm4B4R6O_Vj68Jdh0",
+        "country": "Mozambique",
+        "state": "Gaza"
+      }
+    },
+    "mooiriver, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -29.2136791,
+      "lng": 30.0004985,
+      "isArea": false,
+      "location": {
+        "address": "Mooi River, 3300, South Africa",
+        "placeId": "ChIJCS-tMUXl8x4R6BVgFLQGPrI",
+        "country": "South Africa",
+        "state": "KwaZulu-Natal"
+      }
+    },
+    "moamba, moçambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.6024561,
+      "lng": 32.2453622,
+      "isArea": false,
+      "location": {
+        "address": "Moamba, Mozambique",
+        "placeId": "ChIJG8n_GyNR5h4RQ91sFeIuf5E",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "maputo province": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.593649,
+      "lng": 32.5372741,
+      "isArea": true,
+      "location": {
+        "address": "Maputo Province, Mozambique",
+        "placeId": "ChIJt9Hrnhyb5h4RM_h14sKP6mE",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "chibuto": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -24.6893815,
+      "lng": 33.5319806,
+      "isArea": false,
+      "location": {
+        "address": "Chibuto, Mozambique",
+        "placeId": "ChIJCeu5ZLOQ4B4RXzhfqV9EuH4",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "bethlehem, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -28.2326094,
+      "lng": 28.3065263,
+      "isArea": false,
+      "location": {
+        "address": "Bethlehem, South Africa",
+        "placeId": "ChIJ73wo-6G9kh4RU19AoCGvgBw",
+        "country": "South Africa",
+        "state": "Free State"
+      }
+    },
+    "matola mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.9240937,
+      "lng": 32.4657006,
+      "isArea": false,
+      "location": {
+        "address": "Matola, Mozambique",
+        "placeId": "ChIJHTpG-OqF5h4RPMgtvLMqoDE",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "chaimite, gaza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -24.6591207,
+      "lng": 33.3214393,
+      "isArea": false,
+      "location": {
+        "address": "Chaimite, Mozambique",
+        "placeId": "ChIJbWAlokWi4B4RxNE1ScHU71Y",
+        "country": "Mozambique",
+        "state": "Gaza"
+      }
+    },
+    "kristiana, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -27.6110551,
+      "lng": 25.3785719,
+      "isArea": false,
+      "location": {
+        "address": "Lekwa-Teemane Local Municipality, South Africa",
+        "placeId": "ChIJZRvlyWj0mR4RGT4WWsshNOA",
+        "country": "South Africa",
+        "state": "North West"
+      }
+    },
+    "malakwane, gaza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -23.0221928,
+      "lng": 32.7181375,
+      "isArea": true,
+      "location": {
+        "address": "Gaza Province, Mozambique",
+        "placeId": "ChIJl5VPKj774B4R8xnsDO0QOL4",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "gaza, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -23.0221928,
+      "lng": 32.7181375,
+      "isArea": true,
+      "location": {
+        "address": "Gaza Province, Mozambique",
+        "placeId": "ChIJl5VPKj774B4R8xnsDO0QOL4",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "mabalane, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -23.4225517,
+      "lng": 32.8084496,
+      "isArea": false,
+      "location": {
+        "address": "Mabalane, Mozambique",
+        "placeId": "ChIJr4PiiRYT3B4Ri-GEApH-tVg",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "massingir, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -23.9239146,
+      "lng": 32.1660901,
+      "isArea": false,
+      "location": {
+        "address": "Massingir, Mozambique",
+        "placeId": "ChIJtbKt0q6U3B4RQT2wH_6rW5M",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "alto changane, chibuto": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -24.3141536,
+      "lng": 33.6316622,
+      "isArea": false,
+      "location": {
+        "address": "Alto Changane, Mozambique",
+        "placeId": "ChIJK8nUKV1H3h4RbMZnXhIkoBE",
+        "country": "Mozambique",
+        "state": "Gaza"
+      }
+    },
+    "durban, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -29.85868039999999,
+      "lng": 31.0218404,
+      "isArea": false,
+      "location": {
+        "address": "Durban, South Africa",
+        "placeId": "ChIJt2G8AQCq9x4RgW6qxEZVp8w",
+        "country": "South Africa",
+        "state": "KwaZulu-Natal"
+      }
+    },
+    "chimoio, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "joanesburgo, áfrica do sul": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -26.205647,
+      "lng": 28.0337185,
+      "isArea": false,
+      "location": {
+        "address": "Johannesburg, South Africa",
+        "placeId": "ChIJUWpA8GgMlR4RQUDTsdnJiiM",
+        "country": "South Africa",
+        "state": "Gauteng"
+      }
+    },
+    "beira, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.8315949,
+      "lng": 34.8370183,
+      "isArea": false,
+      "location": {
+        "address": "Beira, Mozambique",
+        "placeId": "ChIJwUegXV9qKh8R5razUC7d06E",
+        "country": "Mozambique",
+        "state": "Sofala Province"
+      }
+    },
+    "chissano, gaza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -24.9340609,
+      "lng": 33.3594896,
+      "isArea": false,
+      "location": {
+        "address": "Chissano, Mozambique",
+        "placeId": "ChIJG5iS1aXH4B4RGvwsy2BLS_E",
+        "country": "Mozambique",
+        "state": "Gaza"
+      }
+    },
+    "chiconela, gaza": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -24.9708822,
+      "lng": 33.5370283,
+      "isArea": false,
+      "location": {
+        "address": "2GHP+MQ, Chiconela, Mozambique",
+        "placeId": "ChIJDeWKHbjv4B4RZiPIe2cctXs",
+        "country": "Mozambique",
+        "state": "Gaza"
+      }
+    },
+    "kroon pakhuis, south africa": {
+      "ok": true,
+      "country": "ZA",
+      "lat": -30.559482,
+      "lng": 22.937506,
+      "isArea": true,
+      "location": {
+        "address": "South Africa",
+        "placeId": "ChIJURLu2YmmNBwRoOikHwxjXeg",
+        "country": "South Africa",
+        "state": ""
+      },
+      "weak": true
+    },
+    "maputo, mocambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.969248,
+      "lng": 32.5731746,
+      "isArea": false,
+      "location": {
+        "address": "Maputo, Mozambique",
+        "placeId": "ChIJVdpmtiOX5h4RQrRrmld_SUI",
+        "country": "Mozambique",
+        "state": "Maputo"
+      }
+    },
+    "boane, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -26.0442742,
+      "lng": 32.3304887,
+      "isArea": false,
+      "location": {
+        "address": "Boane, Mozambique",
+        "placeId": "ChIJNdmixOd85h4RjhVhv13wM0Y",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "muxungue, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -20.3883235,
+      "lng": 33.9377161,
+      "isArea": false,
+      "location": {
+        "address": "Muxúnguè, Mozambique",
+        "placeId": "ChIJnamCrXlx1h4RoSgdsyBvcDw",
+        "country": "Mozambique",
+        "state": "Sofala"
+      }
+    },
+    "chimoio. manica": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -19.1105203,
+      "lng": 33.4744665,
+      "isArea": false,
+      "location": {
+        "address": "Chimoio, Mozambique",
+        "placeId": "ChIJKZkgp6A1KxkRivS8_1jfx60",
+        "country": "Mozambique",
+        "state": "Manica Province"
+      }
+    },
+    "xai-xai, mozambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.0411497,
+      "lng": 33.6406317,
+      "isArea": false,
+      "location": {
+        "address": "Xai-Xai, Mozambique",
+        "placeId": "ChIJE99mKob74B4RWgTXV5_5y5I",
+        "country": "Mozambique",
+        "state": "Gaza Province"
+      }
+    },
+    "merec / socimol moageira, matola, moçambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -25.8815798,
+      "lng": 32.4768831,
+      "isArea": false,
+      "location": {
+        "address": "4F9G+9Q6, Matola, Mozambique",
+        "placeId": "ChIJzc3fMJOO5h4RxcV7oQmT124",
+        "country": "Mozambique",
+        "state": "Maputo Province"
+      }
+    },
+    "nampula, moçambique": {
+      "ok": true,
+      "country": "MZ",
+      "lat": -14.7604931,
+      "lng": 39.3206241,
+      "isArea": true,
+      "location": {
+        "address": "Nampula Province, Mozambique",
+        "placeId": "ChIJVwKjPco1xhgR1PxuN70x_oQ",
+        "country": "Mozambique",
+        "state": "Nampula Province"
+      }
+    }
+  },
+  "distances": {
+    "Nacala, Mozambique|Beira, Mozambique": {
+      "ok": true,
+      "km": 1148,
+      "hours": 21.2,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Av. das Indústrias, Mozambique": {
+      "ok": true,
+      "km": 1173,
+      "hours": 18.3,
+      "source": "distance-matrix"
+    },
+    "Johannesburg, South Africa|Nampula, Mozambique": {
+      "ok": true,
+      "km": 2246,
+      "hours": 33.8,
+      "source": "distance-matrix"
+    },
+    "Nampula, Mozambique|Johannesburg, South Africa": {
+      "ok": true,
+      "km": 2255,
+      "hours": 33.6,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Johannesburg, South Africa": {
+      "ok": true,
+      "km": 541,
+      "hours": 6.9,
+      "source": "distance-matrix"
+    },
+    "Nampula, Mozambique|Manica Province, Mozambique": {
+      "ok": true,
+      "km": 1038,
+      "hours": 18.3,
+      "source": "distance-matrix"
+    },
+    "Nampula, Mozambique|Tete, Mozambique": {
+      "ok": true,
+      "km": 913,
+      "hours": 15.3,
+      "source": "distance-matrix"
+    },
+    "Pemba, Mozambique|Inhambane, Mozambique": {
+      "ok": true,
+      "km": 2051,
+      "hours": 35.4,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|247 Sonja St, Eloff SH, Delmas, 2210, South Africa": {
+      "ok": true,
+      "km": 481,
+      "hours": 6.3,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Numbi Gate Rd, South Africa": {
+      "ok": true,
+      "km": 226,
+      "hours": 3.9,
+      "source": "distance-matrix"
+    },
+    "6V35+WJH, Beira, Mozambique|386jq Portion 53 Farm Zandfontein, Magaliesberg Rd, Magaliesburg, 1739, South Africa": {
+      "ok": true,
+      "km": 1449,
+      "hours": 19.4,
+      "source": "distance-matrix"
+    },
+    "Mocuba, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 1670,
+      "hours": 29.5,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|229-JR, Roodeplaat, 0039, South Africa": {
+      "ok": true,
+      "km": 506,
+      "hours": 6.6,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Middelburg, South Africa": {
+      "ok": true,
+      "km": 380,
+      "hours": 5.4,
+      "source": "distance-matrix"
+    },
+    "Nampula, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 2064,
+      "hours": 34.8,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Riversdale, Meyerton, 1961, South Africa": {
+      "ok": true,
+      "km": 581,
+      "hours": 7.3,
+      "source": "distance-matrix"
+    },
+    "Rietfontein 63-Ir, Germiston, 1411, South Africa|Beira, Mozambique": {
+      "ok": true,
+      "km": 1412,
+      "hours": 19.3,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Roodeplaat, South Africa": {
+      "ok": true,
+      "km": 506,
+      "hours": 6.6,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Lichinga, Mozambique": {
+      "ok": true,
+      "km": 2207,
+      "hours": 38.1,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Tete, Mozambique": {
+      "ok": true,
+      "km": 1547,
+      "hours": 25.4,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Sandton, South Africa": {
+      "ok": true,
+      "km": 552,
+      "hours": 7,
+      "source": "distance-matrix"
+    },
+    "Nampula, Mozambique|6 Fortuna St, Industria, Viljoenskroon, 9520, South Africa": {
+      "ok": true,
+      "km": 2426,
+      "hours": 35.5,
+      "source": "distance-matrix"
+    },
+    "Johannesburg, South Africa|Dondo, Mozambique": {
+      "ok": true,
+      "km": 1386,
+      "hours": 18.7,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|CXJW+VM, Meyerton, South Africa": {
+      "ok": true,
+      "km": 574,
+      "hours": 7.2,
+      "source": "distance-matrix"
+    },
+    "Inhassoro, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 759,
+      "hours": 11.6,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Rockdale, South Africa": {
+      "ok": true,
+      "km": 373,
+      "hours": 5.2,
+      "source": "distance-matrix"
+    },
+    "Tete, Mozambique|Midrand, South Africa": {
+      "ok": true,
+      "km": 1473,
+      "hours": 19.3,
+      "source": "distance-matrix"
+    },
+    "Milange, Mozambique|Nacala, Mozambique": {
+      "ok": true,
+      "km": 775,
+      "hours": 11,
+      "source": "distance-matrix"
+    },
+    "Johannesburg, South Africa|Busi, Tanzania": {
+      "ok": true,
+      "km": 3302,
+      "hours": null,
+      "source": "great-circle-estimate"
+    },
+    "4F9G+9Q6, Matola, Mozambique|9 Quality Rd, Isando, Kempton Park, 1601, South Africa": {
+      "ok": true,
+      "km": 522,
+      "hours": 6.7,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|2732 Avenida Angola, Maputo 4725, Mozambique": {
+      "ok": true,
+      "km": 1163,
+      "hours": 18.2,
+      "source": "distance-matrix"
+    },
+    "2732 Avenida Angola, Maputo 4725, Mozambique|Boane, Mozambique": {
+      "ok": true,
+      "km": 33,
+      "hours": 0.9,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Ethandakukhanya, Mkhondo, 2380, South Africa": {
+      "ok": true,
+      "km": 438,
+      "hours": 6.1,
+      "source": "distance-matrix"
+    },
+    "Johannesburg, South Africa|Maputo, Mozambique": {
+      "ok": true,
+      "km": 551,
+      "hours": 7.2,
+      "source": "distance-matrix"
+    },
+    "Johannesburg, South Africa|Matola, Mozambique": {
+      "ok": true,
+      "km": 537,
+      "hours": 6.9,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Delmas, South Africa": {
+      "ok": true,
+      "km": 471,
+      "hours": 6.1,
+      "source": "distance-matrix"
+    },
+    "Alrode, Alberton, 1451, South Africa|Moma, Mozambique": {
+      "ok": true,
+      "km": 2324,
+      "hours": 36,
+      "source": "distance-matrix"
+    },
+    "Mutuali, Mozambique|Mirrote, Mozambique": {
+      "ok": true,
+      "km": 441,
+      "hours": 6.9,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Muanza, Mozambique": {
+      "ok": true,
+      "km": 1221,
+      "hours": 21.7,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Lusaka, South Africa": {
+      "ok": true,
+      "km": 1280,
+      "hours": 18,
+      "source": "distance-matrix"
+    },
+    "Nacaroa, Mozambique|Xai-Xai, Mozambique": {
+      "ok": true,
+      "km": 2003,
+      "hours": 33.3,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 1174,
+      "hours": 19.2,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|57 Eloff St, Eloff, Delmas, 2211, South Africa": {
+      "ok": true,
+      "km": 480,
+      "hours": 6.2,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Caia, Mozambique": {
+      "ok": true,
+      "km": 278,
+      "hours": 7.2,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Chimoio, Mozambique": {
+      "ok": true,
+      "km": 201,
+      "hours": 3.8,
+      "source": "distance-matrix"
+    },
+    "Midrand, South Africa|Chimoio, Mozambique": {
+      "ok": true,
+      "km": 1188,
+      "hours": 15.5,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 1167,
+      "hours": 18.3,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Beira, Mozambique": {
+      "ok": true,
+      "km": 1174,
+      "hours": 19.6,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Xai-Xai, Mozambique": {
+      "ok": true,
+      "km": 960,
+      "hours": 15.5,
+      "source": "distance-matrix"
+    },
+    "Nacala, Mozambique|Maxixe, Mozambique": {
+      "ok": true,
+      "km": 1781,
+      "hours": 30.4,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Ressano Garcia, Mozambique": {
+      "ok": true,
+      "km": 1233,
+      "hours": 19.2,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Eloff, &nbsp, Delmas, 2211, South Africa": {
+      "ok": true,
+      "km": 480,
+      "hours": 6.3,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Xinavane, Mozambique": {
+      "ok": true,
+      "km": 1057,
+      "hours": 17.1,
+      "source": "distance-matrix"
+    },
+    "Nicuadala, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 1553,
+      "hours": 27.8,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Delmas Ext 8, Delmas, 2210, South Africa": {
+      "ok": true,
+      "km": 478,
+      "hours": 6.2,
+      "source": "distance-matrix"
+    },
+    "Inharrime, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 389,
+      "hours": 6.3,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 15,
+      "hours": 0.5,
+      "source": "distance-matrix"
+    },
+    "BAIRRO ONTUPAIA II, ZONA INDUSTRIAL N°11, Nacala, Mozambique|335 Angus Cres, Hoogland, Randburg, 2169, South Africa": {
+      "ok": true,
+      "km": 2437,
+      "hours": 36.6,
+      "source": "distance-matrix"
+    },
+    "BAIRRO ONTUPAIA II, ZONA INDUSTRIAL N°11, Nacala, Mozambique|226 Brakpan Rd, Boksburg East, Boksburg, 1469, South Africa": {
+      "ok": true,
+      "km": 2445,
+      "hours": 36.7,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|Beira, Mozambique": {
+      "ok": true,
+      "km": 1179,
+      "hours": 19.9,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Rayton, 1001, South Africa": {
+      "ok": true,
+      "km": 485,
+      "hours": 6.3,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Nelspruit, South Africa": {
+      "ok": true,
+      "km": 192,
+      "hours": 3.2,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|Cuamba, Mozambique": {
+      "ok": true,
+      "km": 1983,
+      "hours": 35.7,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Matola, Mozambique": {
+      "ok": true,
+      "km": 1188,
+      "hours": 19.5,
+      "source": "distance-matrix"
+    },
+    "Marracuene District, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 42,
+      "hours": 1.1,
+      "source": "distance-matrix"
+    },
+    "Inhambane, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 480,
+      "hours": 7.7,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Chimoio, Mozambique": {
+      "ok": true,
+      "km": 1167,
+      "hours": 18.8,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|Av. das Indústrias, Mozambique": {
+      "ok": true,
+      "km": 10,
+      "hours": 0.4,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Nampula, Mozambique": {
+      "ok": true,
+      "km": 1029,
+      "hours": 18,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Av. das Indústrias, Mozambique": {
+      "ok": true,
+      "km": 8,
+      "hours": 0.4,
+      "source": "distance-matrix"
+    },
+    "Mooi River, 3300, South Africa|Moamba, Mozambique": {
+      "ok": true,
+      "km": 692,
+      "hours": 8.9,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Lichinga, Mozambique": {
+      "ok": true,
+      "km": 1049,
+      "hours": 19.6,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Lichinga, Mozambique": {
+      "ok": true,
+      "km": 2206,
+      "hours": 38.3,
+      "source": "distance-matrix"
+    },
+    "Mooi River, 3300, South Africa|Namaacha, Mozambique": {
+      "ok": true,
+      "km": 739,
+      "hours": 9.3,
+      "source": "distance-matrix"
+    },
+    "Nampula, Mozambique|Av. das Indústrias, Mozambique": {
+      "ok": true,
+      "km": 2070,
+      "hours": 34.8,
+      "source": "distance-matrix"
+    },
+    "Lichinga, Mozambique|Chimoio, Mozambique": {
+      "ok": true,
+      "km": 1049,
+      "hours": 18.9,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Joan Rd, Meyerton, 1873, South Africa": {
+      "ok": true,
+      "km": 562,
+      "hours": 7.1,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|386jq Portion 53 Farm Zandfontein, Magaliesberg Rd, Magaliesburg, 1739, South Africa": {
+      "ok": true,
+      "km": 601,
+      "hours": 7.6,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|6 Valley Rd, Standerton, 2430, South Africa": {
+      "ok": true,
+      "km": 476,
+      "hours": 6.5,
+      "source": "distance-matrix"
+    },
+    "Moatize, Mozambique|Domue, Mozambique": {
+      "ok": true,
+      "km": 267,
+      "hours": 6.4,
+      "source": "distance-matrix"
+    },
+    "Mooi River, 3300, South Africa|Angónia, Mozambique": {
+      "ok": true,
+      "km": 2196,
+      "hours": 31.2,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|2HJF+873, Maputo, Mozambique": {
+      "ok": true,
+      "km": 1167,
+      "hours": 18.3,
+      "source": "distance-matrix"
+    },
+    "Mooi River, 3300, South Africa|Gorongosa, Mozambique": {
+      "ok": true,
+      "km": 1761,
+      "hours": 22.6,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Plot 143 Kameeldrfit Road Zeekoegat, Roodeplaat, Pretoria, 0186, South Africa": {
+      "ok": true,
+      "km": 518,
+      "hours": 6.7,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Nampula, Mozambique": {
+      "ok": true,
+      "km": 949,
+      "hours": 18,
+      "source": "distance-matrix"
+    },
+    "Cuamba, Mozambique|Chimoio, Mozambique": {
+      "ok": true,
+      "km": 961,
+      "hours": 18.6,
+      "source": "distance-matrix"
+    },
+    "Nampula, Mozambique|Chimoio, Mozambique": {
+      "ok": true,
+      "km": 1038,
+      "hours": 18.3,
+      "source": "distance-matrix"
+    },
+    "Nampula, Mozambique|Beira, Mozambique": {
+      "ok": true,
+      "km": 959,
+      "hours": 18.1,
+      "source": "distance-matrix"
+    },
+    "Blantyre, Malawi|Rapale, Mozambique": {
+      "ok": true,
+      "km": 686,
+      "hours": 10,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|R. da Macia, Maputo, Mozambique": {
+      "ok": true,
+      "km": 1155,
+      "hours": 18,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|R. de Chimoio, Maputo, Mozambique": {
+      "ok": true,
+      "km": 1164,
+      "hours": 18.2,
+      "source": "distance-matrix"
+    },
+    "Milange, Mozambique|Beira, Mozambique": {
+      "ok": true,
+      "km": 590,
+      "hours": 12.1,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Pemba, Mozambique": {
+      "ok": true,
+      "km": 2460,
+      "hours": 42.1,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Inchope, Mozambique": {
+      "ok": true,
+      "km": 68,
+      "hours": 1.2,
+      "source": "distance-matrix"
+    },
+    "Nacala, Mozambique|Vilankulos, Mozambique": {
+      "ok": true,
+      "km": 1576,
+      "hours": 27.7,
+      "source": "distance-matrix"
+    },
+    "Malawi Rd, Diep River, Cape Town, 7945, South Africa|Matola, Mozambique": {
+      "ok": true,
+      "km": 1946,
+      "hours": 21.7,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Avenida 25 de Junho, Talhão 72B, Zona Industrial, Chimoio, Mozambique": {
+      "ok": true,
+      "km": 0,
+      "hours": 0,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Matema, Mozambique": {
+      "ok": true,
+      "km": 425,
+      "hours": 7.4,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|GXHJ+C95, Gurue, Mozambique": {
+      "ok": true,
+      "km": 828,
+      "hours": 15.4,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Cuamba, Mozambique": {
+      "ok": true,
+      "km": 952,
+      "hours": 18.3,
+      "source": "distance-matrix"
+    },
+    "Nacala, Mozambique|Johannesburg, South Africa": {
+      "ok": true,
+      "km": 2445,
+      "hours": 36.7,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|2FMR+PWX, Pemba, Mozambique": {
+      "ok": true,
+      "km": 1436,
+      "hours": 25,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Beira, Mozambique": {
+      "ok": true,
+      "km": 203,
+      "hours": 3.6,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Matola, Mozambique": {
+      "ok": true,
+      "km": 1181,
+      "hours": 18.5,
+      "source": "distance-matrix"
+    },
+    "Caia, Mozambique|Beira, Mozambique": {
+      "ok": true,
+      "km": 278,
+      "hours": 7.2,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Quelimane, Mozambique": {
+      "ok": true,
+      "km": 484,
+      "hours": 12,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Cuamba, Mozambique": {
+      "ok": true,
+      "km": 872,
+      "hours": 18.2,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Randfontein, South Africa": {
+      "ok": true,
+      "km": 585,
+      "hours": 7.5,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Macia, Mozambique": {
+      "ok": true,
+      "km": 1022,
+      "hours": 16.4,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Mocuba, Mozambique": {
+      "ok": true,
+      "km": 554,
+      "hours": 12.4,
+      "source": "distance-matrix"
+    },
+    "7359+9C, Maimelane, Mozambique|Tete, Mozambique": {
+      "ok": true,
+      "km": 822,
+      "hours": 14.2,
+      "source": "distance-matrix"
+    },
+    "Angónia, Mozambique|Chimoio, Mozambique": {
+      "ok": true,
+      "km": 663,
+      "hours": 12.7,
+      "source": "distance-matrix"
+    },
+    "5RMX+4C5, Beira, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 1172,
+      "hours": 19.1,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Boane, Mozambique": {
+      "ok": true,
+      "km": 1192,
+      "hours": 18.9,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Tete, Mozambique": {
+      "ok": true,
+      "km": 388,
+      "hours": 6.8,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|F896+WM, Candie, Mozambique": {
+      "ok": true,
+      "km": 512,
+      "hours": 9.7,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Mulomba, Mozambique": {
+      "ok": true,
+      "km": 709,
+      "hours": 13.8,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Chitima, Mozambique": {
+      "ok": true,
+      "km": 479,
+      "hours": 7.9,
+      "source": "distance-matrix"
+    },
+    "Nampula, Mozambique|White River, 1240, South Africa": {
+      "ok": true,
+      "km": 2211,
+      "hours": 34.1,
+      "source": "distance-matrix"
+    },
+    "3CM8+9H, Matola, Mozambique|Palmeira, Mozambique": {
+      "ok": true,
+      "km": 109,
+      "hours": 2.1,
+      "source": "distance-matrix"
+    },
+    "Muanza, Mozambique|Inhaminga, Mozambique": {
+      "ok": true,
+      "km": 68,
+      "hours": 1.7,
+      "source": "distance-matrix"
+    },
+    "Inhaminga, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 1298,
+      "hours": 22.2,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|Namaacha, Mozambique": {
+      "ok": true,
+      "km": 68,
+      "hours": 1.4,
+      "source": "distance-matrix"
+    },
+    "Inhassoro, Mozambique|Tete, Mozambique": {
+      "ok": true,
+      "km": 814,
+      "hours": 14.1,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Chokwe, Mozambique": {
+      "ok": true,
+      "km": 879,
+      "hours": 15.3,
+      "source": "distance-matrix"
+    },
+    "Tete, Mozambique|Inhassoro, Mozambique": {
+      "ok": true,
+      "km": 813,
+      "hours": 13.2,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Vilankulos, Mozambique": {
+      "ok": true,
+      "km": 490,
+      "hours": 8.1,
+      "source": "distance-matrix"
+    },
+    "7359+9C, Maimelane, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 732,
+      "hours": 11.1,
+      "source": "distance-matrix"
+    },
+    "Dondo, Mozambique|Machava, Mozambique": {
+      "ok": true,
+      "km": 1142,
+      "hours": 18.7,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|5J5R+R8X, R. de Gaza, Maputo, Mozambique": {
+      "ok": true,
+      "km": 1151,
+      "hours": 17.9,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Johannesburg, South Africa": {
+      "ok": true,
+      "km": 554,
+      "hours": 7,
+      "source": "distance-matrix"
+    },
+    "Tete, Mozambique|Eráti, Mozambique": {
+      "ok": true,
+      "km": 1052,
+      "hours": 18.6,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Eráti, Mozambique": {
+      "ok": true,
+      "km": 1171,
+      "hours": 21.6,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Eráti, Mozambique": {
+      "ok": true,
+      "km": 2276,
+      "hours": 38.8,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|White River, 1240, South Africa": {
+      "ok": true,
+      "km": 214,
+      "hours": 3.5,
+      "source": "distance-matrix"
+    },
+    "Tete, Mozambique|Rapale, Mozambique": {
+      "ok": true,
+      "km": 913,
+      "hours": 15.6,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Palma, Mozambique": {
+      "ok": true,
+      "km": 2720,
+      "hours": 46.4,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Machava, Mozambique": {
+      "ok": true,
+      "km": 1169,
+      "hours": 18.5,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Elandsfontein AH, 1510, South Africa": {
+      "ok": true,
+      "km": 493,
+      "hours": 6.4,
+      "source": "distance-matrix"
+    },
+    "Malema, Mozambique|Nampula, Mozambique": {
+      "ok": true,
+      "km": 269,
+      "hours": null,
+      "source": "great-circle-estimate"
+    },
+    "Baía Mall, Av. da Marginal, Maputo, Mozambique|Chimoio, Mozambique": {
+      "ok": true,
+      "km": 1159,
+      "hours": 18.5,
+      "source": "distance-matrix"
+    },
+    "Vilankulos, Mozambique|Gqeberha, South Africa": {
+      "ok": true,
+      "km": 2307,
+      "hours": 27.8,
+      "source": "distance-matrix"
+    },
+    "Mozambique|Nacala, Mozambique": {
+      "ok": true,
+      "km": 2243,
+      "hours": 38.2,
+      "source": "distance-matrix"
+    },
+    "Mozambique|Nampula, Mozambique": {
+      "ok": true,
+      "km": 2054,
+      "hours": 35.2,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Chokwe, Mozambique": {
+      "ok": true,
+      "km": 212,
+      "hours": 3.7,
+      "source": "distance-matrix"
+    },
+    "Alto Molócuè, Mozambique|Nampula, Mozambique": {
+      "ok": true,
+      "km": 210,
+      "hours": 3.2,
+      "source": "distance-matrix"
+    },
+    "Malema, Mozambique|Nacala, Mozambique": {
+      "ok": true,
+      "km": 463,
+      "hours": null,
+      "source": "great-circle-estimate"
+    },
+    "Maputo, Mozambique|Nampula, Mozambique": {
+      "ok": true,
+      "km": 2054,
+      "hours": 35.2,
+      "source": "distance-matrix"
+    },
+    "Nacala, Mozambique|Xai-Xai, Mozambique": {
+      "ok": true,
+      "km": 2039,
+      "hours": 34.1,
+      "source": "distance-matrix"
+    },
+    "Nacala, Mozambique|Sofala Province, Mozambique": {
+      "ok": true,
+      "km": 1148,
+      "hours": 21.2,
+      "source": "distance-matrix"
+    },
+    "Sofala Province, Mozambique|Nacala, Mozambique": {
+      "ok": true,
+      "km": 1138,
+      "hours": 20.9,
+      "source": "distance-matrix"
+    },
+    "Milange, Mozambique|Mocuba, Mozambique": {
+      "ok": true,
+      "km": 191,
+      "hours": 2.5,
+      "source": "distance-matrix"
+    },
+    "Namialo, Mozambique|Mocuba, Mozambique": {
+      "ok": true,
+      "km": 488,
+      "hours": 7,
+      "source": "distance-matrix"
+    },
+    "Douglas, 8730, South Africa|Moamba, Mozambique": {
+      "ok": true,
+      "km": 1109,
+      "hours": 12.7,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Mapai, Mozambique": {
+      "ok": true,
+      "km": 645,
+      "hours": 9.7,
+      "source": "distance-matrix"
+    },
+    "Ile, Mozambique|Mocuba, Mozambique": {
+      "ok": true,
+      "km": 161,
+      "hours": 2.2,
+      "source": "distance-matrix"
+    },
+    "Namacurra, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 1587,
+      "hours": 28.4,
+      "source": "distance-matrix"
+    },
+    "Douglas, 8730, South Africa|Inhambane, Mozambique": {
+      "ok": true,
+      "km": 1606,
+      "hours": 20.6,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Gurue, Mozambique": {
+      "ok": true,
+      "km": 749,
+      "hours": 15.3,
+      "source": "distance-matrix"
+    },
+    "Xinavane, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 136,
+      "hours": 2.8,
+      "source": "distance-matrix"
+    },
+    "Mutuali, Mozambique|Nacala, Mozambique": {
+      "ok": true,
+      "km": 480,
+      "hours": 7.4,
+      "source": "distance-matrix"
+    },
+    "Namuno, Mozambique|Nacala, Mozambique": {
+      "ok": true,
+      "km": 347,
+      "hours": 6.4,
+      "source": "distance-matrix"
+    },
+    "Montepuez, Mozambique|Nacala, Mozambique": {
+      "ok": true,
+      "km": 413,
+      "hours": 6.9,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Zambezia Province, Mozambique": {
+      "ok": true,
+      "km": 564,
+      "hours": 12.1,
+      "source": "distance-matrix"
+    },
+    "Vilankulos, Mozambique|3JRQ+G5R, Maputo, Mozambique": {
+      "ok": true,
+      "km": 704,
+      "hours": 10.5,
+      "source": "distance-matrix"
+    },
+    "Lioma, Mozambique|Nacala, Mozambique": {
+      "ok": true,
+      "km": 528,
+      "hours": 8.2,
+      "source": "distance-matrix"
+    },
+    "Johannesburg, South Africa|Rapale, Mozambique": {
+      "ok": true,
+      "km": 2246,
+      "hours": 33.7,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|Xinavane, Mozambique": {
+      "ok": true,
+      "km": 141,
+      "hours": 3,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Nhamatanda, Mozambique": {
+      "ok": true,
+      "km": 105,
+      "hours": 1.9,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Morrumbala, Mozambique": {
+      "ok": true,
+      "km": 354,
+      "hours": 8.6,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Xai-Xai, Mozambique": {
+      "ok": true,
+      "km": 953,
+      "hours": 14.5,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Rua de Cuamba, Nampula, Mozambique": {
+      "ok": true,
+      "km": 1027,
+      "hours": 17.9,
+      "source": "distance-matrix"
+    },
+    "Zalewa, Malawi|Nampula, Mozambique": {
+      "ok": true,
+      "km": 735,
+      "hours": 11,
+      "source": "distance-matrix"
+    },
+    "Tete, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 1547,
+      "hours": 24.4,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Xinavane, Mozambique": {
+      "ok": true,
+      "km": 136,
+      "hours": 2.7,
+      "source": "distance-matrix"
+    },
+    "Alto Molócuè, Mozambique|Chimoio, Mozambique": {
+      "ok": true,
+      "km": 829,
+      "hours": 15.2,
+      "source": "distance-matrix"
+    },
+    "Nacala, Mozambique|Gurue, Mozambique": {
+      "ok": true,
+      "km": 582,
+      "hours": 9.1,
+      "source": "distance-matrix"
+    },
+    "Namialo, Mozambique|Inhambane, Mozambique": {
+      "ok": true,
+      "km": 1735,
+      "hours": 29.9,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|2562+54, Bongolo, Mozambique": {
+      "ok": true,
+      "km": 58,
+      "hours": 1.3,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|2562+54, Bongolo, Mozambique": {
+      "ok": true,
+      "km": 49,
+      "hours": 1.1,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|Chokwe, Mozambique": {
+      "ok": true,
+      "km": 218,
+      "hours": 4,
+      "source": "distance-matrix"
+    },
+    "Nacala, Mozambique|Muxúnguè, Mozambique": {
+      "ok": true,
+      "km": 1325,
+      "hours": 23.9,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Namaacha, Mozambique": {
+      "ok": true,
+      "km": 1243,
+      "hours": 20.6,
+      "source": "distance-matrix"
+    },
+    "Namaacha, Mozambique|Matola, Mozambique": {
+      "ok": true,
+      "km": 68,
+      "hours": 1.4,
+      "source": "distance-matrix"
+    },
+    "iNtabazwe, South Africa|Xinavane, Mozambique": {
+      "ok": true,
+      "km": 761,
+      "hours": 10.5,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|7359+9C, Maimelane, Mozambique": {
+      "ok": true,
+      "km": 450,
+      "hours": 8.2,
+      "source": "distance-matrix"
+    },
+    "7359+9C, Maimelane, Mozambique|Beira, Mozambique": {
+      "ok": true,
+      "km": 449,
+      "hours": 8.4,
+      "source": "distance-matrix"
+    },
+    "Malawi|Matola, Mozambique": {
+      "ok": true,
+      "km": 2015,
+      "hours": 33.8,
+      "source": "distance-matrix"
+    },
+    "Gurue, Mozambique|Rapale, Mozambique": {
+      "ok": true,
+      "km": 394,
+      "hours": 6,
+      "source": "distance-matrix"
+    },
+    "Dondo, Mozambique|Matola, Mozambique": {
+      "ok": true,
+      "km": 1154,
+      "hours": 18.7,
+      "source": "distance-matrix"
+    },
+    "Johannesburg, South Africa|Chimoio, Mozambique": {
+      "ok": true,
+      "km": 1219,
+      "hours": 15.9,
+      "source": "distance-matrix"
+    },
+    "Namialo, Mozambique|Bindura, Zimbabwe": {
+      "ok": true,
+      "km": 1474,
+      "hours": 24.3,
+      "source": "distance-matrix"
+    },
+    "Nacala, Mozambique|Chimoio, Mozambique": {
+      "ok": true,
+      "km": 1227,
+      "hours": 21.3,
+      "source": "distance-matrix"
+    },
+    "Nacala, Mozambique|Manica Province, Mozambique": {
+      "ok": true,
+      "km": 1227,
+      "hours": 21.3,
+      "source": "distance-matrix"
+    },
+    "Tete, Mozambique|Chimoio, Mozambique": {
+      "ok": true,
+      "km": 388,
+      "hours": 6.3,
+      "source": "distance-matrix"
+    },
+    "Mozambique|Rapale, Mozambique": {
+      "ok": true,
+      "km": 2055,
+      "hours": 35,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Nacala, Mozambique": {
+      "ok": true,
+      "km": 1138,
+      "hours": 20.9,
+      "source": "distance-matrix"
+    },
+    "Pemba, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 2471,
+      "hours": 41.9,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Tete, Mozambique": {
+      "ok": true,
+      "km": 589,
+      "hours": 10.5,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Inhassunge, Mozambique": {
+      "ok": true,
+      "km": 1675,
+      "hours": 34.6,
+      "source": "distance-matrix"
+    },
+    "Mocuba, Mozambique|Chemba, Mozambique": {
+      "ok": true,
+      "km": 389,
+      "hours": 8.5,
+      "source": "distance-matrix"
+    },
+    "Catandica, Mozambique|Matola, Mozambique": {
+      "ok": true,
+      "km": 1315,
+      "hours": 20.6,
+      "source": "distance-matrix"
+    },
+    "Xai-Xai, Mozambique|Sofala Province, Mozambique": {
+      "ok": true,
+      "km": 960,
+      "hours": 15.8,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|Moamba, Mozambique": {
+      "ok": true,
+      "km": 49,
+      "hours": 1.1,
+      "source": "distance-matrix"
+    },
+    "Mavalane, Maputo, Mozambique|Ressano Garcia, Mozambique": {
+      "ok": true,
+      "km": 97,
+      "hours": 1.9,
+      "source": "distance-matrix"
+    },
+    "Lusaka, Zambia|Nampula, Mozambique": {
+      "ok": true,
+      "km": 1512,
+      "hours": 23.9,
+      "source": "distance-matrix"
+    },
+    "Catandica, Mozambique|Beira, Mozambique": {
+      "ok": true,
+      "km": 343,
+      "hours": 5.9,
+      "source": "distance-matrix"
+    },
+    "Catandica, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 1302,
+      "hours": 20.4,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Xinavane, Mozambique": {
+      "ok": true,
+      "km": 1050,
+      "hours": 16.2,
+      "source": "distance-matrix"
+    },
+    "Dondo, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 1141,
+      "hours": 18.5,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Gurue, Mozambique": {
+      "ok": true,
+      "km": 829,
+      "hours": 15.4,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Báruè, Mozambique": {
+      "ok": true,
+      "km": 153,
+      "hours": 2.6,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Gorongosa, Mozambique": {
+      "ok": true,
+      "km": 128,
+      "hours": 2.4,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Tica, Mozambique": {
+      "ok": true,
+      "km": 128,
+      "hours": 2.2,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Vandúzi, Nova Vanduzi, Mozambique": {
+      "ok": true,
+      "km": 36,
+      "hours": 0.7,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Angónia, Mozambique": {
+      "ok": true,
+      "km": 664,
+      "hours": 13.2,
+      "source": "distance-matrix"
+    },
+    "Junta, Maputo, Mozambique|Baixa, Maputo, Mozambique": {
+      "ok": true,
+      "km": 6,
+      "hours": 0.2,
+      "source": "distance-matrix"
+    },
+    "Marble Hall, 0450, South Africa|Rapale, Mozambique": {
+      "ok": true,
+      "km": 2067,
+      "hours": 32.2,
+      "source": "distance-matrix"
+    },
+    "3FWF+X63, Jamo, Mozambique|Pietermaritzburg, South Africa": {
+      "ok": true,
+      "km": 625,
+      "hours": 8.2,
+      "source": "distance-matrix"
+    },
+    "Island of Mozambique, Mozambique|Tete, Mozambique": {
+      "ok": true,
+      "km": 1089,
+      "hours": 18.2,
+      "source": "distance-matrix"
+    },
+    "Lilongwe, Malawi|Maputo, Mozambique": {
+      "ok": true,
+      "km": 1900,
+      "hours": 32,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|Bon Accord, Bon Accord AH, Pretoria, 0009, South Africa": {
+      "ok": true,
+      "km": 526,
+      "hours": 6.6,
+      "source": "distance-matrix"
+    },
+    "Bethlehem, South Africa|Matola, Mozambique": {
+      "ok": true,
+      "km": 676,
+      "hours": 8.7,
+      "source": "distance-matrix"
+    },
+    "Sussundenga, Mozambique|White River, 1240, South Africa": {
+      "ok": true,
+      "km": 1114,
+      "hours": 15.4,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|Pietermaritzburg, South Africa": {
+      "ok": true,
+      "km": 625,
+      "hours": 8.2,
+      "source": "distance-matrix"
+    },
+    "Macia, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 153,
+      "hours": 2.9,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Tambara, Mozambique": {
+      "ok": true,
+      "km": 318,
+      "hours": null,
+      "source": "great-circle-estimate"
+    },
+    "Beira, Mozambique|Alto Molócuè, Mozambique": {
+      "ok": true,
+      "km": 740,
+      "hours": 14.8,
+      "source": "distance-matrix"
+    },
+    "VJVJ+4WX, Mozambique|Nacala, Mozambique": {
+      "ok": true,
+      "km": 572,
+      "hours": null,
+      "source": "great-circle-estimate"
+    },
+    "Beira, Mozambique|Chibuto, Mozambique": {
+      "ok": true,
+      "km": 993,
+      "hours": 15.9,
+      "source": "distance-matrix"
+    },
+    "Cabo Delgado Province, Mozambique|Nacala, Mozambique": {
+      "ok": true,
+      "km": 423,
+      "hours": 7.4,
+      "source": "distance-matrix"
+    },
+    "Sofala Province, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 1174,
+      "hours": 19.2,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Lichinga, Mozambique": {
+      "ok": true,
+      "km": 1219,
+      "hours": 23.5,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Molumbo, Mozambique": {
+      "ok": true,
+      "km": 750,
+      "hours": 16.4,
+      "source": "distance-matrix"
+    },
+    "Harare, Zimbabwe|Namialo, Mozambique": {
+      "ok": true,
+      "km": 1429,
+      "hours": 23.4,
+      "source": "distance-matrix"
+    },
+    "Sofala Province, Mozambique|Matola, Mozambique": {
+      "ok": true,
+      "km": 1188,
+      "hours": 19.5,
+      "source": "distance-matrix"
+    },
+    "Condué, Mozambique|Matola, Mozambique": {
+      "ok": true,
+      "km": 1259,
+      "hours": 22.3,
+      "source": "distance-matrix"
+    },
+    "Nacala, Mozambique|Angónia, Mozambique": {
+      "ok": true,
+      "km": 1010,
+      "hours": 16.4,
+      "source": "distance-matrix"
+    },
+    "Nacala, Mozambique|Xinavane, Mozambique": {
+      "ok": true,
+      "km": 2136,
+      "hours": 35.8,
+      "source": "distance-matrix"
+    },
+    "Inhassoro, Mozambique|Matola, Mozambique": {
+      "ok": true,
+      "km": 772,
+      "hours": 11.9,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|Magaliesburg, 1739, South Africa": {
+      "ok": true,
+      "km": 601,
+      "hours": 7.4,
+      "source": "distance-matrix"
+    },
+    "Nacala, Mozambique|Maputo, Mozambique": {
+      "ok": true,
+      "km": 2254,
+      "hours": 37.9,
+      "source": "distance-matrix"
+    },
+    "Tzaneen, South Africa|Xai-Xai, Mozambique": {
+      "ok": true,
+      "km": 474,
+      "hours": 8.4,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|Delmas, South Africa": {
+      "ok": true,
+      "km": 471,
+      "hours": 6,
+      "source": "distance-matrix"
+    },
+    "Nacala, Mozambique|Matola, Mozambique": {
+      "ok": true,
+      "km": 2267,
+      "hours": 38.1,
+      "source": "distance-matrix"
+    },
+    "Matola, Mozambique|South Africa": {
+      "ok": true,
+      "km": 1377,
+      "hours": 15.4,
+      "source": "distance-matrix"
+    },
+    "Muanza, Mozambique|Moatize, Mozambique": {
+      "ok": true,
+      "km": 565,
+      "hours": 11.3,
+      "source": "distance-matrix"
+    },
+    "4J35+839, Maputo, Mozambique|Bairro das Mahotas, Maputo, Mozambique": {
+      "ok": true,
+      "km": 4,
+      "hours": 0.2,
+      "source": "distance-matrix"
+    },
+    "Tzaneen, South Africa|Maxixe, Mozambique": {
+      "ok": true,
+      "km": 733,
+      "hours": 12.2,
+      "source": "distance-matrix"
+    },
+    "Namialo, Mozambique|Inhassunge, Mozambique": {
+      "ok": true,
+      "km": 962,
+      "hours": 19.9,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Chibuto, Mozambique": {
+      "ok": true,
+      "km": 986,
+      "hours": 15,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Manjacaze, Mozambique": {
+      "ok": true,
+      "km": 898,
+      "hours": 14.3,
+      "source": "distance-matrix"
+    },
+    "3FWF+X63, Jamo, Mozambique|South Africa": {
+      "ok": true,
+      "km": 1373,
+      "hours": 15.3,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Machanga, Mozambique": {
+      "ok": true,
+      "km": 394,
+      "hours": 7.1,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Chibabava, Mozambique": {
+      "ok": true,
+      "km": 233,
+      "hours": 4.3,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Nhamatanda, Mozambique": {
+      "ok": true,
+      "km": 98,
+      "hours": 1.7,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Caia, Mozambique": {
+      "ok": true,
+      "km": 358,
+      "hours": 7.3,
+      "source": "distance-matrix"
+    },
+    "Chimoio, Mozambique|Buzi, Mozambique": {
+      "ok": true,
+      "km": 190,
+      "hours": null,
+      "source": "great-circle-estimate"
+    },
+    "Reitz, 9810, South Africa|Boane, Mozambique": {
+      "ok": true,
+      "km": 655,
+      "hours": 8.7,
+      "source": "distance-matrix"
+    },
+    "Xai-Xai, Mozambique|Limpopo, Mozambique": {
+      "ok": true,
+      "km": 41,
+      "hours": 0.9,
+      "source": "distance-matrix"
+    },
+    "Xai-Xai, Mozambique|Chibuto, Mozambique": {
+      "ok": true,
+      "km": 54,
+      "hours": 1,
+      "source": "distance-matrix"
+    },
+    "Maputo Province, Mozambique|Xai-Xai, Mozambique": {
+      "ok": true,
+      "km": 214,
+      "hours": 3.7,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Chaimite, Mozambique": {
+      "ok": true,
+      "km": 1016,
+      "hours": 16.3,
+      "source": "distance-matrix"
+    },
+    "Lekwa-Teemane Local Municipality, South Africa|Maputo, Mozambique": {
+      "ok": true,
+      "km": 885,
+      "hours": 11.1,
+      "source": "distance-matrix"
+    },
+    "Xai-Xai, Mozambique|Gaza Province, Mozambique": {
+      "ok": true,
+      "km": 0,
+      "hours": 0,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Gaza Province, Mozambique": {
+      "ok": true,
+      "km": 960,
+      "hours": 15.5,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Mabalane, Mozambique": {
+      "ok": true,
+      "km": 806,
+      "hours": 15.3,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Massingir, Mozambique": {
+      "ok": true,
+      "km": 971,
+      "hours": 16.5,
+      "source": "distance-matrix"
+    },
+    "Chibuto, Mozambique|Alto Changane, Mozambique": {
+      "ok": true,
+      "km": 53,
+      "hours": 1.5,
+      "source": "distance-matrix"
+    },
+    "Bethlehem, South Africa|Moamba, Mozambique": {
+      "ok": true,
+      "km": 641,
+      "hours": 8.1,
+      "source": "distance-matrix"
+    },
+    "Durban, South Africa|Beira, Mozambique": {
+      "ok": true,
+      "km": 1715,
+      "hours": 26.6,
+      "source": "distance-matrix"
+    },
+    "Xai-Xai, Mozambique|Chissano, Mozambique": {
+      "ok": true,
+      "km": 33,
+      "hours": 0.5,
+      "source": "distance-matrix"
+    },
+    "Chokwe, Mozambique|Limpopo, Mozambique": {
+      "ok": true,
+      "km": 98,
+      "hours": 1.7,
+      "source": "distance-matrix"
+    },
+    "Maputo, Mozambique|Cabo Delgado Province, Mozambique": {
+      "ok": true,
+      "km": 2460,
+      "hours": 42.1,
+      "source": "distance-matrix"
+    },
+    "Beira, Mozambique|Vandúzi, Nova Vanduzi, Mozambique": {
+      "ok": true,
+      "km": 236,
+      "hours": 4.4,
+      "source": "distance-matrix"
+    },
+    "Xai-Xai, Mozambique|2GHP+MQ, Chiconela, Mozambique": {
+      "ok": true,
+      "km": 17,
+      "hours": null,
+      "source": "great-circle-estimate"
+    },
+    "South Africa|Maputo, Mozambique": {
+      "ok": true,
+      "km": 1388,
+      "hours": 15.9,
+      "source": "distance-matrix"
+    },
+    "4F9G+9Q6, Matola, Mozambique|Nampula Province, Mozambique": {
+      "ok": true,
+      "km": 2053,
+      "hours": 35.3,
+      "source": "distance-matrix"
+    }
+  }
+}

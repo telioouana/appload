@@ -60,6 +60,63 @@ const KYC_SEGMENT = {
     docType: /^[a-z][a-z-]{0,63}$/,
 } as const
 
+/**
+ * The subjects a company keeps in its own registry, and may therefore file
+ * papers for from the portal. Spelled out rather than imported, like
+ * ORGANIZATION_DOCS below: this package knows nothing of @workspace/db, where
+ * the same four strings are ORDER_DISPATCH_SUBJECT.
+ */
+const FLEET_SUBJECTS = new Set(["driver", "truck", "trailer", "link"])
+
+/**
+ * The papers a company may file for itself from the portal: every type its
+ * own checklist can hold, minus the contract — Appload files that one after
+ * signature. Spelled out rather than imported, like the subjects above: this
+ * package knows nothing of @workspace/domain, where REQUIRED_DOCS names the
+ * same strings for the shipper and carrier kinds.
+ */
+const ORGANIZATION_DOCS = new Set([
+    "nuit",
+    "id-card",
+    "commercial-certificate",
+    "alvara",
+    "bank-letter",
+    "republic-bulletin",
+    "commercial-exercise",
+])
+
+/**
+ * Who a fleet subject belongs to, supplied by the host app — this package
+ * has no database of its own. See `configureEdgeStore`.
+ */
+type ResolveKycSubjectOwner = (subjectType: string, subjectId: string) => Promise<string | null>
+
+/** Whether a company is a party to a thread, likewise asked of the host. */
+type ResolveThreadParty = (threadId: string, organizationId: string) => Promise<boolean>
+
+let resolveKycSubjectOwner: ResolveKycSubjectOwner | undefined
+
+let resolveThreadParty: ResolveThreadParty | undefined
+
+/**
+ * Hands the buckets the one lookup they cannot do themselves.
+ *
+ * It cannot travel on the context the way `resolveStaff` and `resolveOrgId`
+ * do: the context is built before the upload's input is known, and the
+ * question here — "whose driver is this?" — is a question about the input.
+ * So the host routes (apps/admin and apps/app `/api/edgestore`) set them at
+ * module scope beside `createEdgeStoreHandler`. Left unset, the portal's
+ * fleet uploads and every partner's chat attachment are refused, and the
+ * buckets behave exactly as they did before.
+ */
+export const configureEdgeStore = (config: {
+    resolveKycSubjectOwner: ResolveKycSubjectOwner
+    resolveThreadParty: ResolveThreadParty
+}) => {
+    resolveKycSubjectOwner = config.resolveKycSubjectOwner
+    resolveThreadParty = config.resolveThreadParty
+}
+
 export const edgeStoreRouter = es.router({
     apploadFiles: es
         .fileBucket({
@@ -79,15 +136,28 @@ export const edgeStoreRouter = es.router({
             { owner: ctx.userId },
             { path: input.path },
         ])
-        // Staff-only, not merely authenticated: shipper, carrier and driver
-        // accounts exist in the same auth system, and a bare session check
-        // would let any of them overwrite or delete order documents
+        // Staff or a member of an organization, never merely authenticated:
+        // shipper, carrier and driver accounts exist in the same auth system,
+        // and a bare session check would let any of them — including accounts
+        // that belong to no organization at all — overwrite or delete order
+        // documents. Partners upload POD and evidence under their own
+        // `[owner: userId, path]` prefix; which document may be attached to
+        // which order is decided by the tRPC insert, the real guard.
         .beforeUpload(({ ctx, input }) =>
-            ctx.isStaff === "true" &&
+            (ctx.isStaff === "true" || ctx.orgId !== null) &&
             isLegal("bucket path", input.path, STORAGE_PATH_RE),
         )
-        // Without this hook, client-side `delete()` calls are always rejected
-        .beforeDelete(({ ctx }) => ctx.isStaff === "true"),
+        // Without this hook, client-side `delete()` calls are always rejected.
+        // Staff delete any object in the bucket; a member deletes only what it
+        // uploaded itself — `owner` is the path's first segment, so the check
+        // is the ownership the path already records. Membership alone is not
+        // enough here: unlike an upload, a delete has no tRPC insert behind it
+        // to decide what it may touch, so any member could otherwise destroy
+        // another tenant's POD or evidence.
+        .beforeDelete(({ ctx, fileInfo }) =>
+            ctx.isStaff === "true" ||
+            (ctx.orgId !== null && fileInfo.path.owner === ctx.userId),
+        ),
 
     /**
      * Verification documents: ID cards, NUIT certificates, licences,
@@ -106,10 +176,23 @@ export const edgeStoreRouter = es.router({
      * uploads too.
      *
      * So the URLs are treated as secrets instead. They are never sent to a
-     * browser: the host app rewrites every page to a session-gated route
-     * (apps/admin/src/app/api/kyc/file/[documentId]/[page]) that re-checks
-     * staff status against the database and streams the bytes itself. Writing
-     * and deleting stay staff-only through the hooks below.
+     * browser: both host apps rewrite every page to a session-gated route
+     * (`/api/kyc/file/[documentId]/[page]`) that re-checks the caller against
+     * the database and streams the bytes itself. Destroying an object stays
+     * staff-only: deleting through the hook below, and overwriting — a
+     * delete in disguise — refused in `beforeUpload`.
+     *
+     * Writing is staff plus two narrow cases, both a company filing its own
+     * paperwork from the portal: its own verification papers, under its own
+     * `organization/<its own id>/` prefix — the signed contract excepted,
+     * which Appload files after signature — and the papers of a driver or
+     * vehicle in its own registry. The organization prefix IS its tenancy; a
+     * vehicle id is not, so that one is decided by asking the host app who
+     * the subject belongs to (`configureEdgeStore`). Either way a member can
+     * no more reach another company's papers than a stranger can.
+     *
+     * Reading stays the gated proxy in both apps — staff in Admin, the
+     * tenant's own subjects and its orders' dispatch packs in the portal.
      *
      * That leaves one residue this design cannot fix — an object whose URL
      * leaked BEFORE the proxy existed is still fetchable by whoever holds it.
@@ -145,13 +228,102 @@ export const edgeStoreRouter = es.router({
         ])
         // Rejected rather than folded: these are identity keys, and folding
         // two distinct subject ids onto one segment would file one
-        // subject's ID documents under another
-        .beforeUpload(({ ctx, input }) =>
-            ctx.isStaff === "true" &&
-            Object.entries(KYC_SEGMENT).every(([key, pattern]) =>
+        // subject's ID documents under another.
+        //
+        // The shape is settled first, before any of the values reach a
+        // database lookup below.
+        .beforeUpload(async ({ ctx, input, fileInfo }) => {
+            const legal = Object.entries(KYC_SEGMENT).every(([key, pattern]) =>
                 isLegal(`kyc ${key}`, (input as Record<string, unknown>)[key], pattern),
-            ),
-        )
+            )
+
+            if (!legal) return false
+
+            if (ctx.isStaff === "true") return true
+
+            // A replace overwrites the bytes behind an existing object
+            // without running `beforeDelete`, which is staff-only — and the
+            // row that says the document was approved would not change.
+            // Partners only ever add pages.
+            if (fileInfo.replaceTargetUrl) return false
+
+            // `orgId` is resolved live from the database by the host app, so
+            // a removed member loses the bucket at once rather than when the
+            // cookie next refreshes.
+            if (ctx.orgId === null) return false
+
+            // The company's own papers, under its own prefix — everything
+            // its checklist holds except the contract, which is Appload's to
+            // file.
+            if (input.subjectType === "organization") {
+                return input.subjectId === ctx.orgId && ORGANIZATION_DOCS.has(input.docType)
+            }
+
+            // A company's own drivers and vehicles: the papers a carrier
+            // files for the rig it is about to dispatch. The prefix is not
+            // the tenancy here — a vehicle id says nothing about who owns it
+            // — so ownership is asked of the host app's registry.
+            if (!FLEET_SUBJECTS.has(input.subjectType) || !resolveKycSubjectOwner) return false
+
+            return (await resolveKycSubjectOwner(input.subjectType, input.subjectId)) === ctx.orgId
+        })
+        .beforeDelete(({ ctx }) => ctx.isStaff === "true"),
+
+    /**
+     * Files hung off a chat message: a delivery note, a photo of the load,
+     * a PDF.
+     *
+     * The thread id is the whole path, and it is the gate: the send mutation
+     * refuses any URL that does not carry `/threads/<threadId>/`, so a party
+     * to one shipment cannot post a file uploaded against another. Who may
+     * write into a thread is a question about the participants, which this
+     * package cannot answer — the host apps supply the lookup
+     * (`configureEdgeStore`), the same rows the send mutation counts unread
+     * against.
+     *
+     * Public-if-the-URL-is-known, like the order documents and unlike the
+     * KYC scans: these are read as `<a>` links in the conversation rather
+     * than through a proxy. Deleting stays staff-only — a message already
+     * sent is not the sender's to unsay.
+     */
+    threadFiles: es
+        .fileBucket({
+            accept: ["application/pdf", "image/jpeg", "image/png"],
+            maxSize: 10 * 1024 * 1024,
+        })
+        // Built with `threadAttachmentPath`, like the order buckets above:
+        // only an accessor on `input` or `ctx` may appear in `.path()`, so
+        // the "threads" segment the send mutation looks for travels as part
+        // of the value rather than as a constant here
+        .input(z.object({ path: z.string().max(512) }))
+        .path(({ input }) => [
+            { path: input.path },
+        ])
+        .beforeUpload(async ({ ctx, input, fileInfo }) => {
+            if (!isLegal("bucket path", input.path, STORAGE_PATH_RE)) return false
+
+            // A replace overwrites the bytes behind an object already hanging
+            // off a sent message, without running `beforeDelete` — which is
+            // staff-only — and the message would still name its first sender.
+            // Chat only ever adds files.
+            if (fileInfo.replaceTargetUrl) return false
+
+            // Exactly `threads/<threadId>`: the id is what the party check
+            // below is asked about, and what the stored URL is checked
+            // against when the message is sent
+            const [folder, threadId, ...rest] = input.path.split("/")
+
+            if (folder !== "threads" || !threadId || rest.length > 0) {
+                console.error("edgestore: illegal thread path", input.path)
+                return false
+            }
+
+            if (ctx.isStaff === "true") return true
+
+            if (ctx.orgId === null || !resolveThreadParty) return false
+
+            return resolveThreadParty(threadId, ctx.orgId)
+        })
         .beforeDelete(({ ctx }) => ctx.isStaff === "true"),
 })
 
@@ -165,10 +337,20 @@ export type EdgeStoreRouter = typeof edgeStoreRouter
  * `resolveStaff` is supplied by the host app rather than resolved here, so
  * this package stays a thin wrapper with no database dependency of its own.
  * Omitting it leaves `isStaff` false, which closes the KYC bucket entirely.
+ *
+ * `resolveOrgId` is the same arrangement for the organization: when given,
+ * membership is read live from the database instead of the session cookie's
+ * cached `activeOrganizationId`, which a just-accepted invitation or a
+ * removed member leaves stale until the session refreshes. A host that
+ * supplies it has opted into that live answer — including the null a removed
+ * member now resolves to, which is the case the lookup exists for, so there
+ * is no fallback to the session value. Omitting it uses the session value
+ * alone.
  */
 export const createEdgeStoreHandler = (
     auth: Auth,
     resolveStaff?: (userId: string) => Promise<boolean>,
+    resolveOrgId?: (userId: string) => Promise<string | null>,
 ) =>
     createEdgeStoreNextHandler({
         router: edgeStoreRouter,
@@ -177,10 +359,13 @@ export const createEdgeStoreHandler = (
         }: CreateContextOptions): Promise<Context> => {
             const session = await auth.api.getSession({ headers: req.headers })
             const userId = session?.user.id ?? null
+            const sessionOrgId = session?.session.activeOrganizationId ?? null
 
             return {
                 userId,
-                orgId: session?.session.activeOrganizationId ?? null,
+                orgId: userId !== null && resolveOrgId !== undefined
+                    ? await resolveOrgId(userId)
+                    : sessionOrgId,
                 isStaff: userId !== null && resolveStaff !== undefined && await resolveStaff(userId)
                     ? "true"
                     : "false",

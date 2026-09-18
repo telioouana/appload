@@ -48,7 +48,7 @@ export function ContractChip({ state }: { state: ContractState }) {
         return (
             <Badge variant="outline" className="gap-1.5 rounded-full border-none bg-[var(--status-verified-bg)] text-[var(--status-verified-text)]">
                 <IconContract size={14} />
-                {t("fields.contract")}
+                {t("columns.contract")}
             </Badge>
         )
     }
@@ -76,6 +76,13 @@ export function DocProgressChip({ progress }: { progress: DocProgress }) {
     )
 }
 
+/** Whole days from `today` to `date`; negative once it has passed. */
+export function daysUntil(date: string, today: string) {
+    return Math.round(
+        (new Date(`${date}T00:00:00Z`).getTime() - new Date(`${today}T00:00:00Z`).getTime()) / 86_400_000,
+    )
+}
+
 /**
  * The soonest expiry among a subject's valid documents. Silent when nothing
  * expires within the month — a date far out is noise on a list row.
@@ -85,9 +92,7 @@ export function ExpiryHint({ date, today }: { date: string | null; today: string
 
     if (!date) return null
 
-    const days = Math.round(
-        (new Date(`${date}T00:00:00Z`).getTime() - new Date(`${today}T00:00:00Z`).getTime()) / 86_400_000,
-    )
+    const days = daysUntil(date, today)
 
     if (days > 30) return null
 

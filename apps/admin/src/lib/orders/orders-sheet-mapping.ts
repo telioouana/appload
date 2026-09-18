@@ -1,6 +1,6 @@
 import type { DocumentParty, NoteReason, Order } from "@workspace/db/orders";
 
-import { OrderError } from "./errors";
+import { OrderError } from "@workspace/domain/orders/errors";
 
 /**
  * The "DATABASE LOGBOOK" spreadsheet keeps every order in one Google Sheets
@@ -52,7 +52,6 @@ export type SheetCellOptions = {
 const STATUS_LABELS: Record<Order["status"], string> = {
     "prospect": "Prospects",
     "booked": "Booked",
-    "to-loading": "To Loading",
     "at-loading": "At Loading",
     "loading": "Loading",
     "waiting-documents": "Waiting Documents",
@@ -324,7 +323,10 @@ export const OWNED_COLUMNS: readonly OwnedColumn[] = [
     { header: "Travel Temperature", cell: (o) => decimal(o.temperature) },
     { header: "Travel Temperatarute Intructions", cell: (o) => text(o.temperatureInstructions) },
     { header: "Load type", cell: (o) => label(LOAD_TYPE_LABELS, o.loadType) },
-    { header: "Status", cell: (o) => STATUS_LABELS[o.status] },
+    // `?? null` leaves the accountant's cell untouched rather than writing an
+    // undefined: an order still stored on a retired status (pre-0021 data, see
+    // scripts/retire-to-loading.mjs) has no label here
+    { header: "Status", cell: (o) => STATUS_LABELS[o.status] ?? null },
     { header: "POD Status", cell: (o) => label(POD_STATUS_LABELS, o.podStatus) },
     { header: "Carrier", cell: (o) => text(o.carrierName) },
     { header: "Truck Plate", cell: (o) => text(o.truckPlate) },

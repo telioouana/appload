@@ -1,7 +1,7 @@
 import { useFormContext } from "react-hook-form";
 
-import { useTranslations } from "@workspace/i18n";
-import { CATEGORIES, FISCAL_REGIME, LOAD_TYPE, ORDER_STATUS, PACKING, POD_STATUS, ROUTE_TYPE, TRIP_TYPE, TRUCK_AGE, WEIGHT_UNIT } from "@workspace/db/types";
+import { useFormatter, useTranslations } from "@workspace/i18n";
+import { CATEGORIES, LOAD_TYPE, ORDER_STATUS, PACKING, POD_STATUS, ROUTE_TYPE, TRIP_TYPE, TRUCK_AGE, WEIGHT_UNIT } from "@workspace/db/types";
 
 import { DateInput } from "@workspace/ui/inputs/date";
 import { TextInput } from "@workspace/ui/inputs/text";
@@ -17,7 +17,7 @@ import { FieldGroup, FieldLegend, FieldSeparator, FieldSet, FieldTitle } from "@
 
 import { FleetInput } from "@/components/inputs/fleet";
 import { DriverInput } from "@/components/inputs/driver";
-import { OrganizationInput } from "@/components/inputs/organization";
+import { DetailRow } from "@workspace/ui/customs/detail/section-card";
 import { KycGateBanner } from "@/frontend/pages/order/components/kyc-gate-banner";
 import { truckAgeFromYear } from "@/lib/fleet";
 import { UpdateOrderForm, UpdateOrderFormInput } from "@/backend/schemas/order";
@@ -31,7 +31,14 @@ const EARLIEST_DATE = new Date(2020, 0, 1);
 
 export function OrderUpdateForm({ isPending }: FormProps) {
     const t = useTranslations("Admin.order.update.form")
+    const f = useFormatter()
     const { control, setValue, watch } = useFormContext<UpdateOrderFormInput, unknown, UpdateOrderForm>()
+
+    const carrierName = watch("carrierName")
+    const carrierTotal = watch("carrierTotal")
+    const carrierPrice = carrierTotal === undefined || carrierTotal === null || carrierTotal === ""
+        ? null
+        : `${f.number(Number(carrierTotal), { maximumFractionDigits: 0 })} ${watch("carrierCurrency") ?? "MZN"}`
 
     return (
         <FieldGroup>
@@ -268,6 +275,23 @@ export function OrderUpdateForm({ isPending }: FormProps) {
                 </FieldLegend>
                 <FieldSeparator />
                 <FieldGroup>
+                    {/* The carrier and its price are copied from the offer the
+                        order was booked with, so neither is typed here: another
+                        carrier means moving back to prospect and accepting
+                        another offer */}
+                    <div className="flex flex-col gap-1.5">
+                        <dl className="rounded-2xl border px-3 py-2">
+                            <DetailRow label={t("carrier.fromOffer")}>
+                                <span className="truncate font-medium">
+                                    {carrierName || <span className="text-muted-foreground/60">&mdash;</span>}
+                                </span>
+                                {carrierPrice && <span className="text-muted-foreground">{carrierPrice}</span>}
+                            </DetailRow>
+                        </dl>
+
+                        <p className="text-muted-foreground text-xs">{t("carrier.fromOfferHint")}</p>
+                    </div>
+
                     {/* The same verdict the server enforces on booking */}
                     <KycGateBanner
                         carrierId={watch("carrierId")}
@@ -276,26 +300,6 @@ export function OrderUpdateForm({ isPending }: FormProps) {
                         trailerPlate={watch("trailerPlate")}
                         linkPlate={watch("linkPlate")}
                     />
-
-                    <OrganizationInput
-                        control={control}
-                        name="carrierName"
-                        label={t("carrier.fields.carrier.label")}
-                        placeholder={t("carrier.fields.carrier.placeholder")}
-                        isPending={isPending}
-                        orgType="carrier"
-                        setOrgId={(id) => setValue("carrierId", id, { shouldDirty: true })}
-                    />
-
-                    <SelectInput
-                        control={control}
-                        name="fiscalRegime"
-                        label={t("carrier.fields.fiscalRegime.label")}
-                        placeholder={t("carrier.fields.fiscalRegime.placeholder")}
-                        isPending={isPending}
-                    >
-                        {FISCAL_REGIME.map((item, index) => <SelectItem key={index} value={item}>{t(`carrier.fields.fiscalRegime.options.${item}`)}</SelectItem>)}
-                    </SelectInput>
 
                     <FieldSet>
                         <FieldLegend>

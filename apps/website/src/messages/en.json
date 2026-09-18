@@ -1,0 +1,1129 @@
+{
+    "navigation": {
+        "home": "Home",
+        "shipper": "Shipper",
+        "carrier": "Carrier",
+        "team": "Team",
+        "contact": "Contact",
+        "faq": "FAQ"
+    },
+    "footer": {
+        "reach": {
+            "title": "Reach us",
+            "linkedin": "LinkedIn",
+            "facebook": "Facebook",
+            "instagram": "Instagram",
+            "whatsapp": "WhatsApp",
+            "youtube": "YouTube",
+            "address": "829, Avenida Agostinho Neto, Maputo, Mozambique"
+        },
+        "company": {
+            "title": "Company",
+            "about": "About",
+            "team": "Team",
+            "contact": "Contact",
+            "careers": "Careers"
+        },
+        "legal": {
+            "title": "Legal",
+            "privacy_policy": "Privacy Policy",
+            "terms_and_conditions": "Terms & Conditions"
+        },
+        "quick_links": {
+            "title": "Quick links",
+            "faq": "FAQs",
+            "files": "Files",
+            "insurance": "Agriculture insurance"
+        },
+        "newsletter": {
+            "title": "Join our news letter",
+            "input": "Your email address",
+            "button": "Subscribe",
+            "note": "*Will send you weekly updates for your better tool management."
+        },
+        "copyright": {
+            "company": "APPLOAD",
+            "text": "All rights reserved."
+        }
+    },
+    "try_appload": {
+        "part1": "Ready to give appload",
+        "part2": "a try"
+    },
+    "home": {
+        "slogan": "GOING THE EXTRA MILE",
+        "button": {
+            "shipper": "I am a Shipper",
+            "carrier": "I am a Carrier"
+        },
+        "description": {
+            "title": {
+                "part1": "Good for carriers, good for shippers",
+                "part2": "A solution for the whole supply chain"
+            },
+            "body": {
+                "part1": "Appload’s online marketplace connects logistics companies and clients wanting to ship cargo, creating an efficient and professional network throughout the supply chain.",
+                "part2": "From one online hub, shippers and carriers can plan, book and track shipments right across Mozambique and across SADC."
+            }
+        },
+        "features": {
+            "feature1": "Instant market access nationwide and across SADC",
+            "feature2": "Cargo geolocation and trip monitoring",
+            "feature3": "Insurance",
+            "feature4": "Rating system for reliable service you can trust"
+        },
+        "partners": "Partnerships",
+        "reviews": "Reviews"
+    },
+    "shipper": {
+        "title": {
+            "part1": "Choice, efficiency",
+            "part2": "with competitive rates."
+        },
+        "description": {
+            "title": {
+                "part1": "Whatever and wherever",
+                "part2": "you want to ship"
+            },
+            "body": {
+                "part1": "From booking to delivery, Appload supports your logistics operations to ensure they are easier, more efficient, and better value for money.",
+                "part2": "Through one single platform, we connect you with reliable transporters and manage your trips until your cargo is safely delivered."
+            }
+        },
+        "features": {
+            "feature1": {
+                "title": "Instant access to professional transporters nationwide and across SADC",
+                "description": "Goodbye endless phone calls: Place your shipping request just once on Appload then compare quotes from professional transporters."
+            },
+            "feature2": {
+                "title": "Smart transport request system",
+                "description": "One form fit all. Make a request within a few steps and reach all transporters registered into the platform."
+            },
+            "feature3": {
+                "title": "One account for all",
+                "description": "Invite coworkers to the platform and create a workflow with seamless information in realtime."
+            },
+            "feature4": {
+                "title": "Realtime tracking",
+                "description": "Conveniently access the status and location of your cargos from your personal dashboard on appload."
+            },
+            "feature5": {
+                "title": "Affordable cargo insurance",
+                "description": "Appload has patterned with Hollard to provide GIT insurance for all shipments made with the app or through appload services."
+            },
+            "feature6": {
+                "title": "Secure, transparent, cashless payment system ",
+                "description": "Appload requires to be paid in full before loading, and pay 50% of the amount to the carrier after proof of loading and keep the remaing amount until the cargo is delivered and POD confirmed."
+            }
+        },
+        "deliveries": {
+            "title": "All order in one place",
+            "description": "Lorem ipsum dolor met"
+        },
+        "chat": {
+            "title": "Connect with the fleet managers",
+            "description": "Lorem ipsum dolor met"
+        },
+        "how_to": {
+            "title": "How to use appload",
+            "description": "Tutorials",
+            "video1": {
+                "title": "Features",
+                "link": "https://www.youtube.com/embed/y2KdVfJvnCE?list=PLK90w1UYTyhOwcHftLnXDH3DJUobcC-38"
+            },
+            "video2": {
+                "title": "Download & Registration",
+                "link": "https://www.youtube.com/embed/9_iBOcL9TZs?list=PLK90w1UYTyhOwcHftLnXDH3DJUobcC-38"
+            },
+            "video3": {
+                "title": "Usage Instructions",
+                "link": "https://www.youtube.com/embed/5L7Cj6v3aZk?list=PLK90w1UYTyhOwcHftLnXDH3DJUobcC-38"
+            }
+        },
+        "feedback": {
+            "title": "Feedback",
+            "description": "Reviews"
+        }
+    },
+    "carrier": {
+        "title": {
+            "part1": "Make the most",
+            "part2": "of your fleet."
+        },
+        "description": {
+            "title": "However big or small",
+            "body": {
+                "part1": "With any type of truck, anywhere in Mozambique, find trips with market leading companies via Appload’s online logistics marketplace. ",
+                "part2": "Benefit from fewer empty trips, faster payment and choice of clients, growing your business and professional reputation."
+            }
+        },
+        "features": {
+            "feature1": {
+                "title": "Market opportunity: instant access to clients through one central online hub",
+                "description": "Access shipping requests from clients nationwide or across and provide instant quotes to win more business."
+            },
+            "feature2": {
+                "title": "Fill your empty trucks using appload's intelligent backload system, with real time access to cargo",
+                "description": "Plan better, return full: Check for available cargo to ship on your return journey using appload's cargo search function."
+            },
+            "feature3": {
+                "title": "One account for all",
+                "description": "Invite coworkers to the platform and create a workflow with seamless information in realtime."
+            },
+            "feature4": {
+                "title": "Monitor your fleet and drivers using appload's dashboard",
+                "description": "Conveniently access the status and location of your trucks and drivers from your personal dashboard on appload."
+            },
+            "feature5": {
+                "title": "Faster payment through secure system",
+                "description": "Peace of mind and better cash flow: Receive 50% payment as soon as you loaded the cargo, knowing that your client has paid appload in full and the remaing amount will be paid to you electronically 15 days after safe delivery of the cargo."
+            },
+            "feature6": {
+                "title": "Build a track record through appload's ratings system",
+                "description": "Be rewarded for good service: However small your operation, build a reputation on appload's platform through customer ratings after every trip."
+            }
+        },
+        "management": {
+            "title": "Manage your fleet",
+            "description": "Lorem ipsum dolor met"
+        },
+        "tracking": {
+            "title": "Keep your clients updated",
+            "description": "Lorem ipsum dolor met"
+        },
+        "how_to": {
+            "title": "How to use appload",
+            "description": "Tutorials",
+            "video1": {
+                "title": "Features",
+                "link": "https://www.youtube.com/embed/hSYtXkz3q4Y?list=PLK90w1UYTyhO2YBvkCUoq4t6UV2MxgW4Q"
+            },
+            "video2": {
+                "title": "Usage Instructions",
+                "link": "https://www.youtube.com/embed/2U_YOEc-TlU?list=PLK90w1UYTyhO2YBvkCUoq4t6UV2MxgW4Q"
+            }
+        },
+        "feedback": {
+            "title": "Feedback",
+            "description": "Reviews"
+        }
+    },
+    "contact": {
+        "title": "Contact",
+        "subtitle": "Contact lines",
+        "description": "Say something to start a live chat!",
+        "call_center": "Call Center",
+        "required": "All fields are required",
+        "name": {
+            "label": "First name",
+            "placeholder": "Type your first name"
+        },
+        "surname": {
+            "label": "Last name",
+            "placeholder": "Type your last name"
+        },
+        "email": {
+            "label": "Email",
+            "placeholder": "Enter your email"
+        },
+        "phone": {
+            "label": "Phone number",
+            "placeholder": "Enter your phone number"
+        },
+        "subject": {
+            "label": "Subject",
+            "placeholder": "Enter the message subject"
+        },
+        "message": {
+            "label": "Message",
+            "placeholder": "Type your message here..."
+        }
+    },
+    "privacy": {
+        "title": {
+            "part1": "Privacy policy for appload",
+            "part2": "Services"
+        },
+        "article": {
+            "p1": "This privacy policy describes how appload collects and uses the personal information you provide to appload. It also describes the choices available to you regarding our use of your personal information and how you can access and update this information. appload is committed to protecting the privacy of users of its website and services.",
+            "p2": "All your personal information collected will be used to help make your visit to our site as productive and enjoyable as possible. For applications, web services, and other works produced by appload, the information collected will be done to improve the experience and optimize results. It may also be used in other products developed by the company, as well as studies. Note that the company does not intend to collect personal information. where information is collected, it will be anonymously where no personal or login information is explicitly requested.",
+            "p3": "Ensuring the confidentiality of the personal data of our website users is vital for appload.",
+            "p4": "To better inform you of our policy concerning user privacy, we have adopted the following terms, which adhere to the General Data Protection Regulation (GDPR) and Protection of Personal Information Act (POPIA) 4 of 2013, and the Personal Data Protection Act of October 26, 1998 (Law No. 67/98)."
+        },
+        "article1": {
+            "title": "THE INFORMATION WE COLLECT",
+            "p1": "appload processes Personal Information in a manner that is reasonable, adequate, relevant, non-excessive, and purpose-specific. For you to access and use our website, we collect and process some Personal Information. When you become a registered user, we have to collect and process your Personal Information to render our services to you.",
+            "p2": {
+                "info": "When you register to use our website, we may collect the following Personal Information:",
+                "bullet1": "Name and surname.",
+                "bullet2": "Email address.",
+                "bullet3": "Physical address.",
+                "bullet4": "Mobile phone number.",
+                "bullet5": "Date of birth."
+            },
+            "p3": "You warrant that the information you have provided is accurate, current, true, and correct and that does not impersonate or misrepresent any person or entity or falsely state or otherwise misrepresent your affiliation with anyone or anything.",
+            "p4": {
+                "info": "When you access our website, whether or not you are a registered user, appload processes some of your Personal Information. Depending on how you access and use our website, we may receive:",
+                "bullet1": "Log information, through online identifiers, including information on how, when and for how long you use our website and other services, the content you view and search queries you submit and the time of your visit, and which pages you visited within our website.",
+                "bullet2": "Information about the equipment you use to access or use our website, including the type of device you are using, how you access our website, your browser (such as Internet Explorer or Firefox), or operating system, your IP (Internet Protocol) address, and your ISP (Internet Service Provider), such as TVCabo, Vodacom, or other.",
+                "bullet3": "The geographic location from which you accessed our website, including your device's global positioning system signal and information about nearby wifi networks and cell towers. We get this information when you use location-enabled services.",
+                "bullet4": "Other information about you from third parties, such as social media."
+            }
+        },
+        "article2": {
+            "title": "USE OF THE INFORMATION",
+            "p": {
+                "info": "appload uses the personal information collected in ways that are compatible with the purposes for which it was intended to be used:",
+                "bullet1": "Enable your use of the websites and services.",
+                "bullet2": "Respond to your inquiries.",
+                "bullet3": "Improve features and website content.",
+                "bullet4": "Allowing further customization of the Site according to the User's preferences and making it easier to use.",
+                "bullet5": "Verify your identity and the information you provide.",
+                "bullet6": "To enable us to enforce AppLoad's Terms and Conditions.",
+                "bullet7": "Aggregate form, to track and analyze site usage."
+            }
+        },
+        "article3": {
+            "title": "COOKIE DOUBLECLICK DART",
+            "p1": "Google, as a third-party vendor, uses cookies to serve ads on our website.",
+            "p2": "With the DART cookie, Google can display ads based on visits the reader has made to other websites on the Internet.",
+            "p3": "Users can disable the DART cookie by visiting the Google Ads and Content Network Privacy Policy."
+        },
+        "article4": {
+            "title": "COOKIES AND WEB BEACONS",
+            "p1": "We use cookies to store information such as your personal preferences when you visit our website. This may include a simple popup, or a link to various services we provide, such as forums.",
+            "p2": "Além disso, também utilizamos publicidade de terceiros no nosso website para suportar os custos de manutenção. Alguns destes anunciantes podem utilizar tecnologias tais como cookies e/ou web beacons quando anunciam no nosso website, o que fará com que estes anunciantes (tais como o Google através do Google AdSense) também recebam as suas informações pessoais, tais como o seu endereço IP, o seu ISP, o seu browser, etc. Esta função é geralmente utilizada para segmentação geográfica (mostrando publicidade de Lisboa apenas aos leitores de Lisboa, por exemplo) ou para exibir publicidade dirigida a um tipo de utilizador (tal como mostrar publicidade de restaurantIn addition, we also use third-party advertising on our website to support maintenance costs. Some of these advertisers may use technologies such as cookies and/or web beacons when they advertise on our website, which will make these advertisers (such as Google through Google AdSense) also receive your personal information, such as your IP address, your ISP, your browser, etc. This function is generally used for geotargeting (showing Lisbon advertising only to readers from Lisbon for example) or displaying advertising targeted to a type of user (such as showing restaurant advertising to a user who visits cooking sites regularly, for example).e a um utilizador que visita regularmente sítios de culinária, por exemplo).",
+            "p3": "You have the power to turn off your cookies, in your browser options, or by making changes to Anti-Virus program tools, such as Norton Internet Security. However, this may change the way you interact with our website or other websites. This may or may not affect your ability to log in to programs, sites, or forums on our and other networks."
+        },
+        "article5": {
+            "title": "HOW WE SHARE PERSONAL DATA",
+            "p1": "We do not sell your Personal Information to third parties for their marketing or any other purposes.",
+            "p2": {
+                "info": "We may provide or make your Personal Information available to:",
+                "bullet1": "Our employees, the staff of the companies in the AppLoad Group, and/or third-party service providers enable them to assist us to interact with you via our website.",
+                "bullet2": "Law enforcement, government officials, fraud detection agencies, or other third parties when the disclosure of Personal Information is necessary or appropriate in connection with an investigation of fraud, intellectual property infringements, or other activity that is illegal or may expose us to legal liability or financial loss, to report or support the investigation into suspected illegal activity.",
+                "bullet3": "Third parties (such as a potential purchaser and its professional advisors) in the event of any reorganization, merger, consolation, sale, joint venture, or other disposition of any or all of our assets.",
+                "bullet4": "Our service providers (under contract with us) help with parts of our business operations (fraud prevention, marketing, public relations, technology services, etc). However, our contracts dictate that these service providers may only use your Personal Information in connection with the services they perform for us and not for their benefit or any other purpose, and must treat such information as confidential information."
+            },
+            "p3": "Please note that other Users i.e Transporters / Shippers you may contract with have their respective privacy policies, and although AppLoads Terms and Conditions do not allow the other transacting party to use your information for anything other than as authorized by you, Appload is not responsible for their actions, including their data protection practices. If you provide personal data to any of those third parties or allow us to share personal data with them, that data is governed by their privacy policies."
+        },
+        "article6": {
+            "title": "SECURING YOUR PERSONAL INFORMATION",
+            "p1": "We protect your personal information from unauthorized access and disclosure through the use of passwords, physical security measures, managerial measures, and in connection with credit card information for use of the Application encryption through our third-party service providers. We nonetheless recognize that third parties may obtain access to information through unlawful actions, and thus do not promise that your information will always remain private, despite our efforts and the importance we place on maintaining your privacy. In addition, we do not claim any responsibility for information collected by or from websites linking to or from appload.",
+            "p2": {
+                "text": "If we discover or are notified of a security breach where personal information is at risk, we will notify you electronically if we have your email address. If you do not wish to be notified via email in the event of a breach, please contact us at",
+                "email": "info@apploadafrica.com"
+            }
+        },
+        "article7": {
+            "title": "DATA RETENTION",
+            "p": {
+                "text1": "We will retain your information for as long as your account is active or as needed to provide you services or required by law. If you wish to cancel your account or request that we no longer use your information to provide you services contact us at",
+                "email": "info@apploadafrica.com",
+                "text2": "We will retain and use your information as necessary to comply with our legal obligations, resolve disputes, and enforce our agreements."
+            }
+        },
+        "article8": {
+            "title": "OPT OUT FROM DIRECT MARKETING",
+            "p": "You have the right to request us not to contact you for purposes of direct marketing by any form of electronic communication such as automatic calling machines, email, and/or SMS notifications by \"opting out\" of any direct marketing communications we may send to you."
+        },
+        "article9": {
+            "title": "KNOW YOUR RIGHTS",
+            "p": {
+                "info": "Having provided adequate proof of your identity, you have the right to:",
+                "bullet1": "View, correct, and/or amend the Personal Information we process. Please note that as a registered user, you can do this through your user account for the Personal Information reflected therein.",
+                "bullet2": "Request a record or description of your Personal Information. appload may charge a fee to provide you with this record of your Personal Information. Where requests to access and amend your Personal Information are manifestly unfounded, excessive, or repetitive appload may charge an additional administrative fee or refuse the request.",
+                "bullet3": "Request to have your Personal Information corrected, destroyed, or deleted. Please note that you can stop being a registered user by canceling your account. In this instance, appload will only retain your Personal Information subject to any legislative requirement and/or our internal retention policy.",
+                "bullet4": "We comply with your requests upon receipt unless we have a credible reason why we cannot comply.",
+                "bullet5": "We indicate where, if we cannot agree whether to correct or delete your Personal Information as requested, a correction or deletion was requested but was not made.",
+                "bullet6": "Inform you if reasonably practicable, should we change your Personal Information and this has an impact on decisions about you.",
+                "bullet7": "Notify you of the action taken by us because of your request.",
+                "bullet8": "Notify you of unauthorized access to your Personal Information.",
+                "bullet9": "Provide you with reasonable evidence of our compliance with our obligations under this Privacy Policy on reasonable notice and request."
+            }
+        },
+        "article10": {
+            "title": "LINKS TO THIRD-PARTY SITES",
+            "p": "appload has links to other sites, which, in our view, may contain useful information/tools for our visitors. Our privacy policy is not applied to third-party sites, so if you visit another site from ours, you should read its privacy policy."
+        },
+        "article11": {
+            "title": "NOTIFICATION OF PRIVACY CHANGES",
+            "p": "The use of appload presupposes acceptance of this Privacy Agreement and you are informed that the content of this website appload is protected by the Copyright Law (Law 4/90). The appload team reserves the right to change this agreement without prior notice. Therefore, we recommend that you consult our privacy policy regularly so that you are always up to date."
+        },
+        "article12": {
+            "title": "FOR SOUTH AFRICAN USERS",
+            "p1": "In addition to the above clauses stated herein, the following terms are also applicable to South African Users only.",
+            "p2": {
+                "text": "If you have any complaints about this Privacy Policy or our compliance with this Privacy Policy you can complain to the Information Regulator. The contact details of the Information Regulator are available on its website at:",
+                "link": "https://justice.gov.za/inforeg/"
+            }
+        },
+        "article13": {
+            "title": "SENDING YOUR PERSONAL INFORMATION OUTSIDE SOUTH AFRICA",
+            "p1": "We may transfer certain Personal Information outside the geographic borders of South Africa to Users for purposes set out above headed Why we process your Personal Information, including for data storage and backup purposes to ensure the integrity of our systems.",
+            "p2": "When we transfer your Personal Information outside of the geographic borders of South Africa, we will ensure that we do so following the requirements for lawful transfer outside of South Africa as set out in POPI.",
+            "p3": "By accessing and using our Platforms, you consent to us transferring your Personal Information outside of South Africa as set out in POPI."
+        },
+        "article14": {
+            "title": "CONTACT US",
+            "p": {
+                "text": "If you have any inquiries about this Privacy Policy or its implementation, you may contact us at",
+                "email": "info@apploadafrica.com"
+            }
+        }
+    },
+    "terms": {
+        "title": {
+            "part1": "GENERAL TERMS & CONDITIONS OF USE OF THE",
+            "part2": "APPLOAD DIGITAL PLATFORM"
+        },
+        "article": {
+            "p1": "The present document regulates the general terms and conditions of use of the Appload platform that you have just accessed (hereinafter the Application or platform, which meaning is the same). The same consists of an online digital tool composed of this Application and an online portal. The Appload platform intermediate services and connects professional Transporters and customers who wish to use the services of such Transporters. Appload is authorized to use, update, manage, assign any rights of any kind, nature, duration or type over the Appload platform.",
+            "p2": {
+                "info": "Appload has 2 operational subsidiaries:",
+                "bullet1": "APPLOAD Limitada, a private limited company incorporated under the laws of the Republic of Mozambique, with registered office at Rua Jeronimo Osorio, N°73, Maputo, registered at the Legal Entities Registrar Office under number one zero zero nine five four eight two six.",
+                "bullet2": "APPLOAD (PTY) LTD, (Registration Number 2021/140339/07), a private company with limited liability duly registered and incorporated according to the laws of the Republic of South Africa, with registered address at 45 KINGFISHER DRIVE, FOURWAYS, SANDTON, GAUTENG."
+            },
+            "p3": "By the present, represented by its CEO Claire Hassoun, who holds the necessary powers for this act (hereinafter referred to as 'APPLOAD')",
+            "p4": "Through this document, Appload clarifies the terms and conditions for the use of the platform (but never for the sale of the same) by any Users, therefore it can only be used in the ways established here. For this reason, the use of the platform does not include any cession of intellectual property rights or patents and all data provided by the User is the property of the user and only for use by Appload."
+        },
+        "article1": {
+            "title": "1 – GENERAL ASPECTS",
+            "p1": "The use of the Application automatically attributes the condition of User and implies full and unreserved acceptance of all the provisions included in these Terms and Conditions in the form in force for each use. Regardless of the part of the territory in which you are located or the business sector in which you operate, these terms and conditions will always apply to you.",
+            "p2": "If you do not accept in full any of the conditions set out, you must not access/use the Application. By consulting, using or downloading the content of the Application, you are agreeing to comply with the conditions set out in this document.",
+            "p3": "The Application is intended for the following types of Users: companies that have cargo to transport in SADC and companies or individual entrepreneurs that, for the terms and effects of the General Conditions and Services Agreement, are accepted by Appload, and for the period that Appload determines, as able to render the transport service, by virtue of having fulfilled all the obligations foreseen in this Agreement, in these Terms and Conditions and hold a professional licence to transport cargo, national or international.",
+            "p4": "The Application may be downloaded free of charge through mobile devices with Android and IoS operating systems. If you do not fully accept any of the conditions set out, you must not access/use the Site and or the platform. By consulting, using or downloading the content of the Site, you are undertaking to respect the conditions established in this document.",
+            "p5": "The User may use the Site without any need to register. However, some of the functionalities of the Site may require registration.",
+            "p6": {
+                "info": "For the purpose of using this website, it is understood that:",
+                "bullet1": "\"Application or Platform\" consists of a computer application, developed by Appload, of authentication necessary for the use of the respective services, intended for mobile devices or computer provided that with compatible operating system, which allows the User to perform the functionalities available in that service;",
+                "bullet2": "\"Customer” / “Shipper\" the natural or legal person who hires or benefits from a transport service through the Appload platform and/or who has contracted the transport service for himself or for any third party.",
+                "bullet3": "\"Insurance Company\", the legal person that Appload will advertise in the App as providing insurance services that may be contracted by the User, like the transport services, on a supplementary basis.",
+                "bullet4": "\"Transporter\" means whenever applicable the User and also, in particular, the natural or legal entity that, depending on its licensing as a professional Transporter, and through the intermediation service offered by the Application and Appload, will conclude a “Transport Contract” with the User as well as any and all transport service providers, their agents, freight forwarders or any entities that intervene in the transport relationship acting on behalf and in representation of the Transporter;",
+                "bullet5": "\"User\" (natural / legal person) who through the Application intends to acquire or has acquired a service made available by Appload, comprising Transporter and also Customer."
+            },
+            "p7": "For all purposes and unless otherwise provided in writing, any references made in this document to \"User\" shall always and without any doubt mean not only the Users but also the Transporters, who shall always be classified as Users for all purposes."
+        },
+        "article2": {
+            "title": "2 – COOKIES",
+            "p1": "To provide better service to the User, the Application uses cookies, which are small text files that are placed on a hard drive by a Web page server. All Appload Applications that ask for User's password and name to log in, or that can be personalized, require that cookies be accepted to have access to all available features.",
+            "p2": {
+                "info": "This tool is used by Appload mainly to:",
+                "bullet1": "Collect IP addresses of Users. The cookie information identifies the User, allowing further customization of the Site according to the User's preferences and making it easier to use.",
+                "bullet2": "To carry out statistical studies to distinguish between regular Users, to be able to calculate the quantity of Users and their growth.",
+                "bullet3": "To recognize if the Users had visualized a certain part of the Application and thus to prevent the repetitive appearance of the same one."
+            },
+            "p3": "The Application may collect information through temporary or session cookies. These cookies disappear when the web browser is closed, not being recorded on the User's hard disk and being stored only in temporary memory that is erased after closing the browser. The use of these cookies is intended to determine, for example, how the Application is used by Users, thus allowing us to improve its design and functionality. Temporary cookies are not associated with any type of personally identifiable information.",
+            "p4": "The User may, at any time, limit or restrict the admission of cookies through the options of the browser used."
+        },
+        "article3": {
+            "title": "3 – PREVIOUS REGISTRATION",
+            "p1": "The use of the Application depends on the previous registration of the User's profile.",
+            "p2": {
+                "info": "For this effect, the User should fill in a form, in which the following data should be indicated:",
+                "bullet1": "First and last name;",
+                "bullet2": "Telephone contact;",
+                "bullet3": "E-mail address;",
+                "bullet4": "Company that the User represents;",
+                "bullet5": "Position in the company;",
+                "bullet6": "Company Address;",
+                "bullet7": "Company Bank Details;",
+                "bullet8": "Password;",
+                "bullet9": "ID or passport scan;",
+                "bullet10": "Commercial certificate;",
+                "bullet11": "(Where applicable) Bank details;",
+                "bullet12": "(When applicable) Documentation relating to licensing as Transporter;",
+                "bullet13": "(When applicable) Identification details of vehicles owned by the Transporter and used for transportation and relating to drivers and/or employees of the Transporter;"
+            },
+            "p3": "The User must provide truthful information and update it whenever it changes. To remain registered with Appload at all times, the User shall update the information whenever necessary and/or required by Appload, and the User understands that the nature of the services in question requires diligent, voluntary, attentive and zealous behaviour regarding the sharing of elements and information. Appload reserves the right at any time and in any manner to restrict or completely terminate the use of its platform to those Users that do not provide all required information. The provisions contained in this paragraph apply to all interactions entered into between Appload and any User, i.e., and for the avoidance of doubt, also to the binding (e.g. signing) of any forms, agreements or other documents governing the relationship between Appload and Users.",
+            "p4": {
+                "part1": "The User must provide complete and accurate information and details regarding the goods. Any inaccuracies or omissions in the Application request form may lead to trip delays while the solution is reassessed, and the price adjusted. This information is essential for accurately identifying and pricing the transport solution. In the specific case of equipment, it is mandatory to provide dimensions for equipment and list of equipment.",
+                "part2": "When using the app, the User is required to review and confirm the accuracy of all entered details before publishing any information  . The User is also asked to check the details sent by email at confirmation of the booking, Appload shall not be held liable for any inaccuracies or omissions and damages or losses of any kind arising therefrom."
+            },
+            "p5": "Appload shall not be liable for any damages arising from the improper or negligent use of the password defined by the User to access the profile. The User shall ensure the confidentiality of its password.",
+            "p6": "After submission of the registration form, it will be subject to analysis by Appload. Only after its approval the User will have its account active and access to all services and content available in the Application.",
+            "p7": "The User may not in any way enter unique data or records into the Appload service and thereby alter or corrupt the Appload system or open it to third parties. The User agree to indemnify Appload for any third-party claims that are brought as result of User's entry of incorrect User data."
+        },
+        "article4": {
+            "title": "4 – FUNCTIONALITIES AND USE OF THE APPLICATION",
+            "p1": "The Application provides the User a digital marketplace and online logistics, common access to all other users of the Application and a private User area of exclusive access of the User.",
+            "p2": "On the public communication platform, the User can make a freight request, view the offers (quote, truck and driver assigned to the journey), of Transporters interested in transporting, select a Transporter, pay online, as well as monitor the journey, follow the status and location of the driver who transports the cargo, from origin (loading site) to destination (unloading site), view the delivery note of the journey, and evaluate the journey.",
+            "p3": {
+                "info": "Appload connects professional Transporters with Customers who wish to send cargo. Appload offers the following services.",
+                "bullet1": "Easy, transparent and competitive access to transportation service providers across the country;",
+                "bullet2": "Faster service by meeting real-time demand;",
+                "bullet3": "Tracking of cargo for added security;",
+                "bullet4": "Rating system for reliable service;",
+                "bullet5": "Secure booking and payment system,",
+                "bullet6": "If you wish, you can insure the transported cargo with APPLOAD’s insurance partners."
+            }
+        },
+        "article5": {
+            "title": "5 – WARRANTIES GIVEN BY THE TRANSPORTERS",
+            "p": {
+                "info": "Without prejudice to the other obligations set out in these Terms and Conditions and taking into consideration all obligations and warranties provided by the Transporters under the General Conditions and Service Contract, the Transporters warrant the following, both to Appload and to the other Users:",
+                "bullet1": "Acknowledges and agrees that is entitled to a limited, non-exclusive and non-transferable access to the Appload platform;",
+                "bullet2": "Accepts and consents that both the Users and Appload shall be able to introduce any tracking or service status verification systems designed to verify the geographic location of the goods or cargo being shipped during the course of any transportation;",
+                "bullet3": "Accepts and will make available to Users information regarding certifications held, licenses, training and company policies, including health and safety at work and also accepts that its services will be subject to evaluation by Users on the platform;",
+                "bullet4": "That the choice by the Users in the selection of the Transporters will be made at the full and sole discretion of the Users, there being on the part of Appload no duty or legitimate expectation on the part of the Transporter to be engaged;",
+                "bullet5": "It shall ensure that the information made available on the platform is correct and current, and always perceptible, with regard to the values charged, transport methodology, cargo and transport insurance, as well as availability to provide the service in a timely manner;",
+                "bullet6": "The Transporter's employees and officers appointed by the Transporter for any service provided through the App must also be registered on the platform and the Transporter ensures that they will be provided with a smartphone with the Appload platform and that the employees and officers will ensure that they will have their phone charged and switched on at all times, both battery and data traffic available during any journey and that the Appload platform will be kept on for verification and geolocation of the provision of services;",
+                "bullet7": "For all journeys made between different countries the Transporter's employees must have a SIM card with mobile data to ensure monitoring of their location and must make their numbers known to Appload;",
+                "bullet8": "Whenever determined by Appload, specific rules for loading and unloading of goods must be followed and the sharing of this information must be ensured on the platform;",
+                "bullet9": "Only vehicles and means of transport registered by the platform may and will be used to provide any services contracted via the platform and Users may have access to vehicle characteristics, photographs, whereby any modifications to the same must be previously informed to the User and accepted by the latter."
+            }
+        },
+        "article6": {
+            "title": "6 – CONDITIONS OF USE",
+            "p1": {
+                "text1": "The Application has been developed to be used in the connection of Customers and Transporters for the carriage of cargo together with any electronic document made available with the Application (the",
+                "text2": "Documents"
+            },
+            "p2": "IF YOU DO NOT ACCEPT THE TERMS AND CONDITIONS SET FORTH IN THIS LICENSE, YOU MUST STOP THE DOWNLOAD/INSTALL PROCESS AND NOT DOWNLOAD, INSTALL OR USE THE APPLICATION.",
+            "p3": "As with any computer program the User acknowledges that the App is undergoing development, which involves constant testing and evaluation and is therefore not yet a final product.",
+            "p4": "The User acknowledges and declares that he is aware that the use of this App is not equivalent to the execution of a contract of transport with Appload or its appointment as a freight forwarder, as the contract of transport will be concluded between the User and the Transporter, who will provide, prior to the shipment of the cargo, the respective terms and conditions for the performance of the transport. If the User does not receive such terms and conditions, shall report to Appload who will endeavour to ensure that such terms and conditions are met as soon as possible until loading.",
+            "p5": "Anything that concerns, and for the purposes of the contract of transport of goods, the following aspects: a) indication of the make, number, quantity or weight of the goods; b) statement of the nature or value of the goods; c) issue of receipt for the goods; d) confirmation of the loading of the goods; e) notification of the terms and conditions of the contract; f) giving instructions to the Transporter; g) claiming delivery of the goods; h) authorisation to take delivery of the goods; i) notification of breakdown or loss of the goods; j) provision of any other information regarding the fulfilment of the contract; k) promise to deliver the goods to the designated person or the person authorized to claim the delivery; l) granting, acquisition, withdrawal, refund, transfer or negotiation of rights over the goods; m) acquisition or transfer of rights and obligations arising from the contract, will be subject to agreement and exchange of correspondence between the Transporter and the User.",
+            "p6": "Appload is not a freight forwarder or Transporter and as such the User agrees and acknowledges that we have no responsibility or liability for (a) any cargo which, for the avoidance of doubt, will at no time be in our possession, custody or control; (b) transportation or insurance of any cargo; (c) choice of Transporter; (d) approval of the Shipper (f) compliance between the Shipper and Transporter with the Transporter's Terms and Conditions or associated policies and procedures, regardless of whether the Shipper and/or Transporter use the Application; or (h) processing claims for loss of or damage to cargo, which shall be resolved between the Shipper and Transporter in accordance with the Transporter's Terms and Conditions.",
+            "p7": "Appload and Transporter shall not, under any circumstance be liable for any loss or damage of any nature whatsoever, for any delays in loading, offloading, or transport due to unforeseen circumstances beyond the control of the transporter, including but not limited to poor road conditions, adverse weather conditions, heavy traffic along the route, unrest in specific areas, and armed conflicts. To the extent, that the any such delay is caused by the Transporter then in such event the Customer must institute a claim, if any, against the Transporter directly in terms of the Transport contract. Appload shall have no liability or responsibility for any consequences arising out of any delays whatsoever.",
+            "p8": "Access to loading and offloading sites shall be the responsibility of the Customer and shall be prepared within a reasonable time prior to the arrival of the Transporter to enable safe and expeditious passage and loading or offloading. Unless otherwise agreed between the Customer and Transporter, the Customer will be responsible for the loading and offloading processes of goods at all times, (which includes but is not limited to loading the cargo in the quantity specified in the loading guide, securing it properly to minimize damage during transportation, and providing the necessary documents to the transporter), without involving the transporter’s personnel. If loading or offloading exceeds 24 hours, Transporters have the right to charge demurrage costs to the Customer."
+        },
+        "article7": {
+            "title": "7 – TRANSPORT SERVICES",
+            "subtitle": "National or International Transport",
+            "p1": "The Transporter guarantees that all transportation of goods carried out through a service contracted through the Appload platform will comply with all applicable legislation and that the Transporter's liability will be determined under the general terms of law applicable to the transport service.",
+            "p2": "The User who wishes to contract a transport service through Appload assumes all responsibility regarding costs, operation and management of refunds or returns of any goods sent and that the recipient is entitled to a refund under applicable law.",
+            "p3": "In addition to the general conditions of transport, the User may indicate special conditions under which he wishes to see the transport service provided which, upon prior validation by Appload, will be accepted by the Transporter when confirming the service unless otherwise agreed in writing with the User.",
+            "p4": "In addition to the general conditions of transport, the Transporter can indicate special conditions under which he accepts to provide the transport service, which, upon prior validation by Appload, will be accepted by the User when confirming the service, unless he and the Transporter agree otherwise in writing.",
+            "p5": {
+                "info": "Appload shall not be held accountable and obliged to provide operational updates to the Client more than once a day:",
+                "bullet1": "During the Trip: For safety reasons, communication regarding the trip will be limited to once per day.",
+                "bullet2": "During Loading, Offloading, and at the Border: If the Customer requires more detailed updates during loading, offloading, or at border crossings, they must contact their own personnel or agents responsible for these activities."
+            }
+        },
+        "article8": {
+            "title": "8 – INSURANCE",
+            "p1": "Appload shall not under any circumstances, unless explicitly agreed otherwise, be obliged to insure any goods being loaded, transported, conveyed, offloaded by the Transporter and it shall be the sole responsibility of the Shipper and/or owner of the goods to insure, at his / her cost and in a timely manner the goods against loss or damage of whatsoever nature and from whatsoever cause whilst being transported, conveyed, loaded, offloaded by the Transporter. ",
+            "p2": "The Transporter will be responsible for third party insurance in respect of claims by the third parties and specifically claims resulting from carrying hazardous goods, as applicable and in accordance with what is agreed between the parties in the Transport Contract. Appload shall under no circumstances accept liability for such claims. ",
+            "p3": "In cases where the Transporter has goods-in-transit insurance in place for the goods being loaded, transported, transferred, or unloaded by them, and declares it, Appload will inform the Shipper. In  this case, the Transporter will also be responsible for the Shipper's claims, and Appload cannot be held liable under any circumstances for such claims.",
+            "p4": "Appload, if requested by the Shipper, may assist the Shipper in obtaining a cargo insurance policy for the goods being transported for their journey. Upon express instructions and agreement provided in writing by the User and accepted in writing by Appload, Appload will contact Hollard and potentially other insurance partners to get a quotation and share them with the User. Appload may effect insurance for the goods as an insurance aggregator for Hollard insurance, or put the User directly in contact with their partnering insurance providers to agree and pay the insurance policy. All insurances effected by Appload are subject to the usual exceptions and conditions of the policies of the insurers or underwriters assuming the risk. The User must provide the value of the goods, complete information on the goods, and explicitly request insurance to enable Appload to provide an accurate quote for the insurance coverage, acting at all times as insurance aggregator for Hollard insurance or as a linking platform to other insurance service providers.",
+            "p5": "Appload may, from time to time, partner with third-party service providers, such as Hollard and other insurance companies (“Partners”) to offer promotional benefits or bundled services to the User. These offers may include discounts, special rates, or enhanced services. Participation in promotional offers is subject to separate agreements between Appload and its Partners. The User agree to abide by the terms of this Agreement as well as the specific terms and conditions of each promotional offer, which may vary in availability, eligibility criteria, and duration. Appload reserves the right to modify, suspend, or terminate any promotional offer at its discretion. The User participates voluntarily and accept any associated risks or liabilities.",
+            "p6": "If the User decides to purchase a goods-in-transit insurance policy through the Appload Platform, he / she will be entering into a separate contract: a contract between the User and the Insurance Company regarding the provision of insurance, subject to the terms and conditions mentioned in the insurance policy without Appload performing any mediation function. The insurer will charge the User the insurance premium together with applicable taxes (if any) on behalf of the Insurer and will also charge a fee for the mediation service (if any). In either case, the Client will have access to the insurance policy before being bound by a contract or payment obligation. We recommend the carefully reading of the terms and conditions of your insurance policy.",
+            "p7": "The Platform may in this context contain links or forwarding's to third party websites where third party products and/or services are offered. These links or redirects may lead to completely independent websites or to a micro website technologically managed by Appload or the provider, depending on the current commercial partnerships at any given time. In both circumstances, if the User purchases any product or service from such a website, he will be bound by a direct contract with the respective provider without Appload's mediation. As such, he will have to accept and apply the terms and conditions imposed by such entity.",
+            "p8": "Should the insurer dispute its liability in terms of any insurance policy in respect of any goods, the User concerned shall have recourse against such insurer only and Appload shall not have any responsibility or liability whatsoever in relation thereto. "
+        },
+        "article9": {
+            "title": "9 – RULES FOR CANCELLATION AND RESCHEDULING OF THE SERVICE",
+            "p1": {
+                "info": "If the Customer:",
+                "bullet1": "Cancels up to 48 hours before the date on which the service will be provided he/she will be entitled to a refund of the full transportation cost already paid and 50% (fifty percent) of the amounts paid to Appload;",
+                "bullet2": "Cancels less than 48 hours before the service is to be provided, he/she will be entitled to a refund of 40% (forty percent) of the transport costs already paid and 10% (ten percent) of the amounts paid to Appload;",
+                "bullet3": "Cancels on the date that the service will be provided, he/she will be entitled to a refund of 25 % (twenty-five percent) of the transport costs already paid and 0 % (zero percent) of the amounts paid to Appload.",
+                "bullet4": "Needs to reschedule the transport service, the Shipper must reschedule the transport service with the same Transporter. In case of rescheduling, additional amounts may be charged by the said Transporter calculated by the costs and penalties that this may be due. Appload will not charge any additional values in case of rescheduling. If the Shipper r wishes to reschedule the transport service and it is found that the Transporter will not be in a position to provide the service, the cancellation rules set out in this section will apply."
+            },
+            "p2": {
+                "info": "If the Transporter:",
+                "bullet1": "Cancels at any time the Customer will be entitled to full reimbursement of the amounts paid to the Transporter and Appload and without prejudice to the right of compensation that the Customer will still have on the Transporter for any damages caused. The Customer accepts and declares that he understands that Appload will be a mere intermediary in the provision of the transport service and that any cancellation made by the Transporter will not be imputable to Appload nor will Appload have to assume any responsibility for damages caused to any Customer. Appload undertakes to collaborate with the Customer and to make every effort to minimize the damage caused, namely, and depending on the circumstances of each case, to collaborate in finding an alternative solution in the shortest possible time..",
+                "bullet2": "Needs to reschedule the transportation services the Customer may choose to cancel the transportation service and all amounts provided or paid to both the Transporter and Appload will be refunded without prejudice to the right to compensation for damages. The Customer accepts and declares that he understands that Appload will be a mere intermediary in the provision of the transport service and that any rescheduling carried out by the Transporter will not be attributable to Appload nor will Appload have to assume any responsibility for damages caused to any Customer. Appload undertakes to collaborate with the Customer and to do its utmost to minimize the damage caused, namely, and depending on the circumstances of each case, to collaborate in finding an alternative solution in the shortest possible time."
+            },
+            "p3": "Regarding the refunds provided for in the points above of this Clause, Appload commits to processing them in the shortest possible time, considering the circumstances related to the payment method used, as well as the limitations imposed by third parties, in compliance with all applicable legislation on this matter, and therefore, making all efforts to process the refunds within a period of less than 20 business days."
+        },
+        "article10": {
+            "title": "10 – APPLICATION",
+            "p1": "Whereas you agree to comply with the Terms and Conditions of this Application, and subject to compliance with the above rules, we make available this revocable, non-exclusive, and non-transferable license to use the Application, for a period of six weeks.",
+            "p2": {
+                "info": "The User may:",
+                "bullet1": "Download, install and use the Application only for (a) pursuing its commercial business and to make contact with Users; and (b) engage with Appload in Beta version testing, including sharing feedback (as defined in Clause 19);",
+                "bullet2": "Access the platform to offer transportation services to Users under the terms and conditions set by Appload;",
+                "bullet3": "To become aware of the terms and conditions under which the Appload will provide the intermediation services and what terms and conditions the Transporter will provide its services to the User and what insurance will be taken out for this purpose by the Transporter;",
+                "bullet4": "Monitor the delivery of the cargo through the location of the Transporter's drivers who will have the platform installed on their smartphones;",
+                "bullet5": "Make a copy of the App for back-up purposes only, provided that it always complies with the assumptions in Clause 11 (restrictions); and",
+                "bullet6": "Use any Documents in support of the use permitted under Clause 6 and make a copy of these Documents so long as reasonably necessary for your lawful use."
+            },
+            "p3": {
+                "info": "By using the App, the User agrees to:",
+                "bullet1": "The disclosure of all information and documentation (including all applicable licences and permits) reasonably necessary for arranging transport in accordance with all regulatory, legal and industry standards;",
+                "bullet2": "The responsibility to ensure the accuracy and veracity of all information disclosed through the App or otherwise in connection with the use of the App."
+            },
+            "p4": {
+                "info": "The User confirms that, the App being a Beta version:",
+                "bullet1": "Appload is under no obligation to provide support, maintenance or other services in relation to the App."
+            },
+            "p5": "Users are required to use the App correctly and in accordance with its intended purpose. Misuse of the App may result in various issues during the trip, for which Appload shall not be held liable for. Proper App usage is imperative to ensure the smooth operation of services. The User irrevocably agrees that it shall be solely liable for any risks and loss that arise from misuse of the App.",
+            "p6": "Appload is under no obligation to provide updates to the Application, malware signatures, or any other updates to content used by the Application, such as virus and spyware definitions, firewall rules, and vulnerability data. If Appload decides to provide such updates, they will be part of the Application for all purposes assumed in this Application. The User acknowledges that the ratings given by Users with respect to the Shipper or the Transporter represent the opinions of the Users who posted those ratings and not the opinions of Appload."
+        },
+        "article11": {
+            "title": "11 – RESTRICTIONS",
+            "p1": {
+                "info": "Except as already expressly set forth in this App, or as permitted by any local law, User compromises to:",
+                "bullet1": "Don't copy the App or the Documents, except where such copying is necessary for normal use of the App or where necessary for backup or operational security;",
+                "bullet2": "Don't sell, resell, rent, lease, sublicense, distribute, loan, translate, integrate, adapt, vary, or modify the App or the Documents;",
+                "bullet3": "Not make changes or modifications to all or any part of the App, nor permit the App, or any part thereof, to be merged or incorporated into other programs;",
+                "bullet4": "Don't decompile, decrypt, disassemble, or reduce, reverse engineer, or create derivative works of the whole or any part of the Application, except where these actions may not be prohibited by applicable law because they are essential to achieve the interoperability of the Application with another software program, and provided that the information obtained during these activities is: (a) used for the purpose of ensuring the interoperability of the Application with another software program; (b) not unnecessarily disclosed or communicated to any third party without Appload's prior written consent; and (c) not used to create any software that is substantially similar to the Application or to monitor its availability, performance or functionality, or for any other competitive or benchmarking purposes;",
+                "bullet5": "Keep all copies of the Application secure and maintain accurate and up-to-date records of the number and location of all copies of the Application.",
+                "bullet6": "Supervise and control the use of the Application and ensure that it is used by your employees and representatives in accordance with the Terms and Conditions of this Application;",
+                "bullet7": "Include our copyright notice on all full and partial copies that are made of the Application (to the extent permitted under this Application), in any medium;",
+                "bullet8": "Don't provide or otherwise make available the Application, in whole or in part, (including but not limited to program listings, object and program source listings, object code, and source code) in any form to any person without our prior written consent;",
+                "bullet9": "Comply with all applicable technology control or export laws and regulations;",
+                "bullet10": "Comply with all applicable laws and regulations regarding data protection and privacy"
+            },
+            "p2": {
+                "info": "The User warrants that it will not encourage or authorize any third party directly or indirectly, to:",
+                "bullet1": "Make any fictitious, fraudulent or abusive application or submission;",
+                "bullet2": "Use or permit the use of the Application: (a) for the communication, transmission or receipt of any defamatory, offensive or abusive material or material of an obscene, harassing, threatening nature; (b) in a manner that constitutes a violation or infringement of the rights of any person, company or corporation (including, but not limited to, copyright, privacy or confidentiality rights; (c) in a way that is associated with a crime, or for illegal purposes; (d) causing annoyance, inconvenience, or needless anxiety; (e) sending or providing unsolicited advertising or promotional materials; or (f) downloading or uploading files that you know, or should have known, cannot be legally distributed through the Application.",
+                "bullet3": "Enter any code, files, text, agent, or program designed to cause damage (including, but not limited to, viruses, trojans, worms, time bombs, and override programs), or other computer programming actions that may damage or impair the operation of the Application or any personal data or information maintained on or in connection with the Application;",
+                "bullet4": "Engage in any commercial activity, including advertising or offers for the sale of goods or business opportunities, conducting contests or surveys, or advertising any employment, self-employment positions, marketing opportunities at various levels or titles;",
+                "bullet5": "Posting, sending or transporting cargo that is dangerous or illegal or does not belong to the Shipper (unless the Shipper has given all necessary rights to do so);",
+                "bullet6": "Publish, send or disclose confidential information, trade secrets or other confidential data to and/or from any entity or person (including Appload or any of its affiliates);",
+                "bullet7": "Collect or store information from the Application in bulk (including information about other Users of the Application or offers, products or services available on or through the Application) using a software tool or manually;",
+                "bullet8": "Integrate or link any open source or freeware software with the Application;",
+                "bullet9": "Relate in any other behaviour that is or is deemed to be in conflict with this Application;",
+                "bullet10": "In the case of the Shipper, enter or accept any, direct or indirect, relationship with the Transporter that you first learned of through the Application; or",
+                "bullet11": "In the case of the transporter, enter or accept any, direct or indirect, relationship with the Shipper that you first learned of through the Application."
+            },
+            "p3": "Agrees to indemnify and defend us against all liabilities, costs and expenses (including all interest, penalties, legal fees and other reasonable professional costs and expenses), damages and losses suffered or incurred by us arising out of or in connection with any breach by you of this Application."
+        },
+        "article12": {
+            "title": "12 – LIMITED WARRANTY AND LIABILITY",
+            "p1": "The User acknowledges that the Application is not a finished product and as such may contain various errors, defects and may be unstable for technical reasons not attributable to Appload. The Application is provided to you on an ‘as is' basis, and these Terms and Conditions set out the full extent of our obligations and liabilities in relation to the provision of the Application and the Documents in connection with the provision of the transportation intermediation services. Except as expressly stated in these Terms and Conditions, there are no conditions, warranties, representations or other terms, express or implied, that are binding on us. Any condition, warranty, representation or other term concerning the provision of the Application and Documents that may be implied or incorporated into these terms and conditions, whether by statute, common law or otherwise, is excluded to the fullest extent permitted by law.",
+            "p2": "The User acknowledges that the Application has not been developed to meet his/her individual needs and it is therefore User responsibility to ensure that the facilities and functions of the Application, as described in the Documents, meet your requirements.",
+            "p3": "The User shall be responsible for the content of information sent or transmitted to the Application. The User acknowledges that the use of the Site may not be 100% secure, that information sent to or received from the Site may be intercepted by unauthorized parties, that Appload is not responsible for breaches of communication security, and that Appload assumes no responsibility for any third-party misuse of your information. The User acknowledges that access to and use of the Application may be interrupted and that the information in the Application may contain software errors of any kind, server or access failures, viruses, bugs, errors, technical failures, problems or other limitations. To the fullest extent permitted by law, Appload excludes any liability, direct or indirect, for your use of the Application.",
+            "p4": "The Application does not configure the provision of transport services and its use in no case replaces the need to conclude a contract of transport between the User and the Transporter. The Application only performs an intermediary role, never acting on behalf and/or in representation of any of the parties, and all issues relating to transport and the provision of transport service should be coordinated and established directly between the Transporter and the User.",
+            "p5": "The Application does not assume any responsibility related to the cargo Transported, its embarkation or disembarkation or any other conditions and benefits of responsibility of the Transporter, to which the User has had access by consulting the terms and conditions of transport. For the purpose of this Clause, Appload also makes it clear to the Users (i.e. the Transporters) that all limitations of liability and forms of exclusion and limitation of liability in Clause Seven, Eight and Nine of the General Conditions and Service Contract are reproduced for these purposes, and therefore Appload shall not assume any liability to the Transporter, nor be jointly or severally liable to the other Users in respect of any damages, losses or breaches caused by or as a result of the provision of the transportation services.",
+            "p6": "Appload only provides the Application and Documents for your internal business use and the User agrees not to use it for resale purposes.",
+            "p7": {
+                "info": "Appload shall not in any circumstances be liable to the User (for the avoidance of doubt also the Transporter), whether in contract, tort / delict (including negligence), breach of statutory duty or otherwise, arising out of or in connection with this Beta Licence for:",
+                "bullet1": "Loss of profits, sales, business or revenue;",
+                "bullet2": "Business interruption;",
+                "bullet3": "Loss of anticipated savings;",
+                "bullet4": "Loss of or damage to data or information;",
+                "bullet5": "Loss of business opportunities, customers or reputation;",
+                "bullet6": "or any indirect or consequential loss or damage."
+            },
+            "p8": "It is User's responsibility to take precautions against possible harm resulting from the use of the Application and to maintain and protect all data and information that you retrieve, retrieve, transform, upload, store, or process using the Application. The Application should never be used for confidential and/or valuable information except as expressly requested.",
+            "p9": "The Application may contain links to third-party websites, services, and advertisements. These sites, services and advertisements are not under our control and we are not responsible for them, nor do we monitor, review, approve, warrant or have any representation in relation to them. Your use of all such sites/services/advertisements is at your own risk and sole responsibility",
+            "p10": "The location data made available on the Application is for basic location purposes only and is not intended for situations where accurate location data is relied upon or for situations where incorrect, inaccurate or incomplete data could lead to death, personal injury, damage to property or the environment or any other loss. Neither we nor any of our content providers can guarantee the availability, accuracy, completeness, reliability or timeliness of any location data displayed on the Application. The geolocation data that You upload, provide, or post to the Application may be accessible to certain other Users of the Application, and You assume all risk and liability in connection with providing such data to other Users of the Application."
+        },
+        "article13": {
+            "title": "13 – INTELLECTUAL PROPERTY",
+            "p1": "The User acknowledges that all intellectual property rights in the Application and the Documents belong to Appload, anywhere in the world; that the rights in the Application are licensed (not sold) to User and that User have no rights in or to the Application or the Documents other than the right to use them in accordance with the Terms and Conditions of this Application.",
+            "p2": "User confirms that has no rights to access the Application in source code form."
+        },
+        "article14": {
+            "title": "14 – CONFIDENTIALITY",
+            "p1": {
+                "text1": "The App, any information relating to the progress and results of the Beta testing, feedback (as defined in Clause 19), any product-related information and any other business, technology or know-how-related information provided to you in any way by us by any means in connection with the testing and evaluation of the App is confidential",
+                "text2": "Confidential Information"
+            },
+            "p2": "The User will maintain and warrant that any and all persons, companies, corporations or organizations associated with him/her will hold all Confidential Information in confidence and will not disclose them to any person unless permitted under Clause 6.",
+            "p3": {
+                "info": "This obligation of confidentiality does not apply to the disclosure of Confidential Information that:",
+                "bullet1": "Is or enters the public domain except by breach of the confidentiality obligation under this Clause;",
+                "bullet2": "Lawfully comes into your possession through third parties who are not bound by a confidentiality obligation relating to that Confidential Information;",
+                "bullet3": "Shall be disclosed to any court of competent jurisdiction or by any competent judicial, governmental, supervisory or regulatory body or by any law, provided that User notifies Appload promptly in writing; or",
+                "bullet4": "Is disclosed by the User with our prior written consent."
+            }
+        },
+        "article15": {
+            "title": "15 – DATA & PRIVACY",
+            "p1": "Appload will only use personal information in accordance with the data protection laws applicable in Mozambique.",
+            "p2": {
+                "info": {
+                    "text1": "Having into consideration our availability to provide the license to use the Application as described in this Application, you will grant us a non-exclusive, royalty-free, irrevocable, perpetual license to use any information submitted by you or collected by us in connection with your use of the Application",
+                    "text2": "Data:"
+                },
+                "bullet1": "for the purpose of providing the Application;",
+                "bullet2": "in the course of our business (in an anonymized and/or aggregated format) for the purposes of maintaining our infrastructure, planning capability, providing services to other Users and developing new software and services.",
+                "bullet3": "for the purposes of analyzing and commenting on industry trends and developments and to develop business with existing and new Users (where the Data concerned is anonymized and/or aggregated)."
+            },
+            "p3": {
+                "info": "Privacy",
+                "bullet1": {
+                    "text1": "Appload respects the Users privacy and will take all reasonable measures to protect it, as more fully detailed in our ",
+                    "link": "Privacy Policy",
+                    "text2": "which is incorporated by reference."
+                }
+            }
+        },
+        "article16": {
+            "title": "16 – INTERCEPTION AND COMMUNICATIONS",
+            "p1": "If applicable to the User, subject to the provisions of the Regulation of Interception of Communications (RIC) Act 70 of 2002, the User agrees to Appload's right to intercept, block, filter, read, delete, disclose and use all communications sent or posted by the User to the Website, App, WhatsApp Groups, Social Media Account of Appload or its staff and employees.",
+            "p2": "The User agrees and acknowledges that the consent provided by the User herein satisfies any \"writing\" requirement."
+        },
+        "article17": {
+            "title": "17 – CHANGES AND AMENDMENTS",
+            "p1": "Appload may, in its sole discretion, change any of these Terms and Conditions at any time. It is the Users responsibility to regularly check these Terms and Conditions and make sure that they are satisfied with the changes. Should the User not be satisfied, then it must not in any other way use, the Application. Your continued access to or use of the Application will constitute acceptance of the revised Terms and Conditions.",
+            "p2": "Any such change will only apply to the Users use of the Application after the change is displayed on the Application. If the User use the Application after such amended Terms and Conditions have been displayed on same, the User will be deemed to have accepted such changes."
+        },
+        "article18": {
+            "title": "18 – TERMINATION",
+            "p1": "The right to use the Application will terminate automatically at the end of the time described in Section 2.1.",
+            "p2": "We may at any time and for any reason modify, suspend, discontinue, or deny access to the Application (or any part thereof) or terminate this Beta Licence without notice to you and without any liability or obligation whatsoever in connection with such action, if there shall be no record of any contracted or outstanding service.",
+            "p3": {
+                "info": "Upon termination for any reason:",
+                "bullet1": "All rights granted to the User under this License shall terminate immediately;",
+                "bullet2": "All activities authorized by this Beta Licence shall cease; and",
+                "bullet3": "User shall delete or remove the Application from all your computer devices or other equipment in your possession or promptly destroy or return to Appload (at our option) all copies of the Application and Documents once in your possession, custody or control and, in the case of destruction, certify that it has been done."
+            }
+        },
+        "article19": {
+            "title": "19 – FEEDBACK",
+            "p": {
+                "info": {
+                    "text1": "User may be asked (or may volunteer) to provide Appload with feedback regarding the features and functionality of the Application, including, without limitation, suggestions, comments, and any other feedback",
+                    "text2": "Feedback",
+                    "text3": "If User provide any feedback regarding the Application, all right, title and interest, will be irrevocably transferred to us and with respect to such feedback, You agree that:"
+                },
+                "bullet1": "Appload may freely use, disclose, reproduce, license, distribute and otherwise market the commentary on the Application or any other product, specification or other documentation produced by or for us;",
+                "bullet2": "User will not acquire any rights or licenses in the Application or any intellectual property rights in the account of this Beta License or performance of your obligations in respect thereof, even if Appload incorporates any commentary in the Application or any other product, specification or other documentation; and will not provide any opinion (a) that will have reason to believe that are subject to any intellectual property assertion or third party right; or (b) that is subject to licensing terms that seek to impose an obligation on us to share or grant any license to any third party to the commentary, the Application, and any other product that incorporates or derives from the commentary or any other intellectual property."
+            }
+        },
+        "article20": {
+            "title": "20 – ADDITIONAL IMPORTANT TERMS",
+            "p1": {
+                "text": "All communications to Appload should be made to the following address:",
+                "email": "info@apploadafrica.com"
+            },
+            "p2": "Notice and Communications. Please note that any notice given by you to us or from us to you will be deemed received and properly served: immediately when posted on our website, 24 hours after an email is sent, or 7 days after the date of posting of a letter using a recognized international courier service. To prove the sending of any notice, it shall be sufficient, in the case of a letter, that such letter has been correctly addressed, paid for and posted, and, in the case of an email, that such email has been sent to the specific email address of the addressee and no notice of non-delivery has been received. Assignment. Appload may transfer our rights and obligations under this Application to another organization, however, it will have no effect on your rights and obligations under this license.",
+            "p3": "Entire Agreement. The Application and these Terms and Conditions constitute the entire agreement between both parties and supersedes and extinguishes all prior agreements, commitments, insurance, warranties, representations, and understandings between both parties, whether written or oral, relating to the subject matter hereof. You agree that you will have no recourse in respect of any statement, representation, warranty, or guarantee (whether made innocently or negligently) which is not set out in this license, or any document expressly referred to in this license. The User agrees that it shall have no claim for innocent or negligent misrepresentation or misrepresentation based on any statement contained in these Terms and Conditions or arising out of the use of this Beta Licence or any document expressly referred to in it.",
+            "p4": "Severability. Each of the Terms and Conditions of this Beta Licence operates separately. If any court or competent authority decides that any of them is illegal or unenforceable, the remaining Terms and Conditions shall remain, in full force and effect.",
+            "p5": "Waiver. If Appload does not insist on User's performance of any obligation under this license, or if we do not enforce our rights against you, or if we delay in doing so, it does not mean that we have withdrawn our rights against you, and it does not mean that you will not have to perform those obligations. If we waive a default by you, we will only do so in writing, and that does not mean that we will automatically waive any subsequent default by you.",
+            "p6": "Language. These Terms and Conditions are written in English and Portuguese. In the event of any discrepancy the English version shall prevail.",
+            "p7": "No Agency or Partnership. Nothing contained in this Beta License shall be construed as creating any agency, partnership or other form of joint venture between Appload and User or the Transporter",
+            "p8": "Third Party Rights. A person who is not a party to this Beta License shall have no rights to enforce any term.",
+            "p9": "Applicable Law and Jurisdiction. These terms and conditions and access to the Application are governed by the Laws in Force in the Republic of Mozambique, alternatively if the User is not domiciled / registered in Mozambique then these terms and conditions shall be governed and interpreted in accordance with the laws of the Republic of South Africa. In case of any dispute, the same shall be settled amicably between the parties or by arbitration under the terms and regulations provided for by the Arbitration, Conciliation and Mediation Center based in Maputo alternatively if the User is not domiciled / registered in Mozambique then the dispute will be arbitrated in terms of the Rules of the Arbitration Foundation of South Africa, in Gauteng. Each party shall be entitled to appoint an arbitrator, the arbitration shall be conducted in Portuguese language alternatively if the User is not domiciled/registered in Mozambique then in English and its decision shall be unappealable."
+        },
+        "article21": {
+            "title": "21 – PAYMENT METHODS",
+            "p": "The payments of the services advertised by Appload will be made through bank wire transfer to the bank details and in the currency indicated in Appload invoice sent by email."
+        },
+        "article22": {
+            "title": "22 - PAYMENT TERMS AND REMEDIES",
+            "p1": {
+                "info": "For Shippers:",
+                "bullet1": {
+                    "intro": "Full Payment at Booking:",
+                    "meaning": "Shippers are required to pay 100% of the transportation invoice at the time of booking."
+                },
+                "bullet2": {
+                    "intro": "Payment Before Loading:",
+                    "meaning": "Payment must be completed no later than before loading, unless a different arrangement has been previously agreed upon with Appload and the transporter."
+                }
+            },
+            "p2": {
+                "info": "For Carriers:",
+                "bullet1": {
+                    "intro": "Standard Payment Timeline:",
+                    "meaning": "Carriers are usually paid within 15 (fifteen) days after successful offloading."
+                },
+                "bullet2": {
+                    "intro": "Early Payment Eligibility:",
+                    "meaning": "Carriers with a very good history and ratings on Appload are eligible for a 50% payment upon successful loading. This early payment option must be approved by Appload and is not automatic."
+                },
+                "bullet3": {
+                    "intro": "Conditions for Early Payment:",
+                    "point1": "The transporter and the driver must have downloaded the Appload app.",
+                    "point2": "The full documentation for the trip must be shared.",
+                    "point3": "Without these conditions being met, no 50% payment can be made."
+                }
+            },
+            "p3": {
+                "info": "Without prejudice to any other rights or remedies of Appload (whether expressly specified in the Agreement or otherwise), in the event that the Customer fails to pay any sums due under this Agreement on their due dates for payment, such non-payment may cause a delay in offloading and Appload shall be entitled to:",
+                "bullet1": "Cancel or suspend further transportation of goods without written notice thereof to the Customer, notwithstanding that the Customer may have placed an order for the transport of goods prior to the cancellation or suspension hereof;",
+                "bullet2": "Retain in its possession any goods of the Customer until these amounts have been paid;",
+                "bullet3": "Terminate this Agreement; and",
+                "bullet4": "Retain any payment made by the User to Appload prior to the due date of the payment in question"
+            },
+            "p4": "Appload’s rights in terms of this clause shall not be exhaustive and shall be in addition to any of its other rights under this Agreement, in law or otherwise."
+        },
+        "article23": {
+            "title": "23 - ALTERNATIVE REGISTRATION METHODS",
+            "p1": {
+                "info": "In exceptional circumstances where the use of the Appload application is not possible, the following alternative registration / use of Appload may be utilised:",
+                "bullet1": {
+                    "intro": "Email Requests:",
+                    "meaning": "If a User is unable to use the Appload application due to internal policies, communication and service requests may be conducted via email. In such cases, all communications and agreements made via email shall be binding, and the User agrees to adhere to Appload’s terms and conditions."
+                },
+                "bullet2": {
+                    "intro": "WhatsApp Requests:",
+                    "meaning": "In situations where Users use WhatsApp for communication, service requests may be conducted via WhatsApp. Appload is currently working on integrating WhatsApp into its system for automated processing. Until such integration is complete, all communications and agreements made via WhatsApp shall be binding, and the User agrees to adhere to Appload’s terms and conditions."
+                }
+            },
+            "p2": "In both scenarios, the User acknowledges that by using these alternative communication methods, they accept and agree to Appload’s terms and conditions as if the transactions were conducted through the App."
+        }
+    },
+    "team": {
+        "claire": {
+            "title": "Founder & CEO",
+            "p1": "An Infrastructure engineer by training, Claire also holds a Masters degree in Public Administration from Harvard University’s Kennedy School of Government.",
+            "p2": "Claire has more than ten years experience working as a project director in international development and consultant in the infrastructure sector, with a broad experience of working with both the private and public sector. She has led the implementation of projects in numerous sectors, including transportation.",
+            "p3": "Based in Mozambique’s capital Maputo, Claire has extensively studied the country’s logistics sector and supply chains. She identified huge potential to improve the sector, creating the idea of Appload as a solution."
+        },
+        "fred": {
+            "title": "Co-Founder & Head of Marketing",
+            "p1": "Frederico Silva is a Mozambican seasoned entrepreneur and individual investor in the field of technology. Frederico has recently sold his stake at UX, an internationally acclaimed ICT4D company, recognised for its work in job creation, financial inclusion and e-government. His 7 year role as UX's co-founder and CEO, includes establishing today's largest online recruitment platform (emprego.co.mz) in Mozambique, and further expanding it to Angola and Greece.",
+            "p2": "In his professional career, he acted as a country manager at LG Electronics and accumulated over 7 years experience in sales and marketing working for companies such as MultiChoice and RioTinto. Frederico holds a BBA in Marketing Management from the IMM Graduate School of Marketing, South Africa."
+        },
+        "catherine": {
+            "title": "Co-Founder & Advisor",
+            "p1": "A business consultant specialised in investigating and analysing opportunities and risk, Catherine also has a background in strategic communications and holds a Masters degree in African Studies from the University of Cambridge.",
+            "p2": "For the past 9 years, Catherine has run her own business advising international clients on investing and doing business in a diverse range of sectors in Sub-Saharan Africa. Her experience includes the extractives industry, agriculture, and the associated supply chains; particularly in Mozambique and its neighbouring countries.",
+            "p3": "Based between Europe and Africa, Catherine has used her experience in business and longstanding connection with Mozambique to develop Appload with Claire."
+        },
+        "ebelina": "Operations Officer",
+        "elonia": "Administration Assistant & Transporters Vetting",
+        "hugo": "Regional Representative (Zambézia)",
+        "khiven": "Sales and Operations Officer",
+        "millat": "Administration & Accounting Officer",
+        "raufa": "Customer Care - Shippers",
+        "telio": "Software Developer & Tech Adoption"
+    },
+    "faq": {
+        "general": {
+            "title": "General",
+            "faq1": {
+                "title": "What is Appload?",
+                "description": "Appload is a digital marketplace for logistics services. Using Appload’s app or web-based platform, shippers and carriers can connect to plan, book, and monitor cargo shipments."
+            },
+            "faq2": {
+                "title": "Who can use Appload?",
+                "description": {
+                    "p1": "If you are a licensed transport provider, you may register to provide services through Appload. If you have cargo to ship, provided that it is in compliance with Appload’s terms and conditions, you may register to ship your goods using Appload.",
+                    "p2": "Appload is accessible to anyone with sufficient internet connection to download and operate the app, which is designed to function even in low bandwidth areas."
+                }
+            },
+            "faq3": {
+                "title": "What services does Appload provide?",
+                "description": "Appload acts as a neutral indermediary, providing a digital platform on which transporters and their customers can connect, giving both shippers and carriers greater market access. Appload also offers a secure booking and electronic payments system; cargo insurance through a third party partner; and monitors trips arranged through Appload until proof of successful delivery. Appload provides its users with a customer review system, allowing them to rate each other as clients and service providers and making this information available to other customers, allowing them to make more informed business choices. "
+            },
+            "faq4": {
+                "title": "Does Appload have its own fleet of trucks?",
+                "description": "Appload is an agent that connects professional transporters and their customers and oversees trips arranged through its platform. It does not own or operate its own vehicles. "
+            },
+            "faq5": {
+                "title": "What kind of transport can be arranged through Appload?",
+                "description": "Appload currently works with road transporters. Any vehicle that is legal and operated by a licensed transporter may offer services on the platform."
+            },
+            "faq6": {
+                "title": "Does it cost money to register on and use Appload?",
+                "description": "It is free to register for Appload’s core package of services. A modest seller’s fee is included in the overall transport price per trip. This is charged on a sliding scale, depending on factors including the number of trucks registered by a provider on the platform, trip volume and distance. "
+            },
+            "faq7": {
+                "title": "What are Appload’s key principles and business ethos?",
+                "description": "Appload is committed to the development of an increasingly professional and reliable logistics industry that ensures value for money at every level of the supply chain. Our modern, digital platform and focus on facilitating excellent communication aims to build trust among our customers, creating a more cohesive logistics community and a more structured, efficient and transparent system that works for everybody. "
+            },
+            "faq8": {
+                "title": "Is Appload hiring staff?",
+                "description": {
+                    "text": "Appload is interested in competent, motivated individuals to join its team in a variety of different roles,",
+                    "link": "Click here"
+                }
+            },
+            "faq9": {
+                "title": "What do I need to download and use appload",
+                "description": "To download and run appload you need an a mobile phone with connection to internet running atleast Android 8 (Oreo) or iOS 16"
+            }
+        },
+        "shipper": {
+            "title": "Shipper",
+            "faq1": {
+                "title": "What do I need to register on Appload?",
+                "description": {
+                    "text": "All legally registered businesses may register on Appload. You will be asked for certain documents to validate your identity and enable you to use our online booking and payments system, including ",
+                    "bullet1": "a scan of your ID",
+                    "bullet2": "the company’s administrative info (Address, Contact Info, )",
+                    "bullet3": "the company’s NUIT",
+                    "bullet4": "the company’s alvara or updated commercial certification"
+                }
+            },
+            "faq2": {
+                "title": "What are the terms of payment on Appload?",
+                "description": "The shipper pays 100% of the total cost upfront to Appload. Appload pays the transporter 50% of its fee after successful loading of the cargo, and 50% seven business days after the successful delivery of the cargo."
+            },
+            "faq3": {
+                "title": "Can I insure my cargo on Appload?",
+                "description": "Appload indicates if the transporter has a cargo insurance of their own and what this covers. Many transporters do have Goods In Transit insurance and Appload encourages them to do so. In cases where they may not, you can insure your cargo for competive prices on Appload’s platform through our partner broker. You may also wish to purchase this insurance as an extra, even if the transporter has GIT insurance. "
+            },
+            "faq4": {
+                "title": "What kind of cargo can be transported by Appload’s transporters?",
+                "description": "Any type of cargo (eg grain, fruit, construction material, medicines) as long as it complies with Appload’s terms and conditions, which prohibit the transport of illegal or dangerous cargo."
+            },
+            "faq5": {
+                "title": "Where does Appload ship in Mozambique?",
+                "description": "Appload is a nationwide service. You can ship anywhere in Mozambique, depending on the availability of Appload’s transporters and the current condition of the roads and other infrastructure. "
+            },
+            "faq6": {
+                "title": "Does Appload cover regional trips?",
+                "description": "Appload’s current services focus on domestic trips within Mozambique. We will inform our customers when Appload starts covering regional trips."
+            },
+            "faq7": {
+                "title": "Do I pay to use Appload?",
+                "description": "Shippers using Appload’s standard service are not required to pay any fee to Appload; all charges are included in the quotation made by the transporter. If Shippers wish to set prices and invite transporters to accept them, rather than receiving quotations, they may sign up to a Corporate Package with Appload. This arrangement is currently agreed on a case by case basis, and will be offered for exceptionally competitive rates during Appload’s pilot phase. "
+            },
+            "faq8": {
+                "title": "How do I pay on Appload?",
+                "description": "Once you’ve accepted the offer of a transporter, and once he’s confirmed his availability, you will be redirected to the web page powered by our partner PagaLu, which will offer you several means of payment (visa/mastercard debit/credit cards powered by Standard Bank, Mobile payment (as of now, MPesa is available), or alternatively, you can select the bank transfers and will have access to our bank account details for different banks."
+            }
+        },
+        "carrier": {
+            "title": "Carrier",
+            "faq1": {
+                "title": "What do I need to register on Appload?",
+                "description": {
+                    "text1": "Any legally registered transporter may register on Appload. You must provide your bank account details and a set of documents including:",
+                    "bullet1": "The ID of the company representant",
+                    "bullet2": "Transport License (Transport Permit)",
+                    "bullet3": "B.R. - Boletim da República - Mozambican companies only",
+                    "bullet4": "Commercial Certificate (Registration Certificate)",
+                    "bullet5": "Start of business - Mozambican companies only",
+                    "bullet6": "VAT Model (Model 02) - Mozambican companies only",
+                    "bullet7": "Fiscal or VAT Number",
+                    "bullet8": "Bank Letter (With the company details for payments)",
+                    "bullet9": "GIT Insurance (If available)",
+                    "bullet10": "Fleet Size and Fleet Type",
+                    "bullet11": "Loading preferences and Operational Corridors",
+                    "bullet12": "Reference Letters from previous clients",
+                    "text2": "Currently it is also necessary to make personal contact with Appload (phone meeting first, and then a visit by Appload’s staff). This is part of a due diligence process to ensure the highest possible quality service is provided to Appload’s clients, and also to assist Carriers with the registration process, making it as easy as possible. "
+                }
+            },
+            "faq2": {
+                "title": "What are the terms of payment on Appload?",
+                "description": {
+                    "p1": {
+                        "text1": "The Shipper pays Appload 100% of the total cost upfront, the transporter is paid 50% of their fee after successful loading of the cargo (",
+                        "bold": "in order for this to be effected it is essential that the status of ‘Loaded’ is updated by the driver on the app",
+                        "text2": "), and 50% seven business days after successful delivery of the cargo (and update of the status ‘Completed’ by the driver on the app)."
+                    },
+                    "p2": "If cargo loss or damage is reported by the Shipper, payment may take longer to be processed while the matter is investigated and resolved to the satisfaction of all parties. "
+                }
+            },
+            "faq3": {
+                "title": "Do I need a license to register on Appload?",
+                "description": {
+                    "p1": "You need to have a formally registered and operating company to register on Appload.",
+                    "p2": "Depending on the size of your fleet, you might need a company license or a license per truck to be a partner transporter of Appload."
+                }
+            },
+            "faq4": {
+                "title": "Do I need an insurance?",
+                "description": "You need to prove that you hold third party insurance for each truck registered on the platform (It can be a common third party insurance policy covering all the fleet owned by your company). GIT insurance is not currently mandatory but is encouraged. "
+            },
+            "faq5": {
+                "title": "Does Appload cover regional trips?",
+                "description": "Appload’s current services focus on domestic trips within Mozambique. We will inform our customers when Appload starts covering regional trips."
+            },
+            "faq6": {
+                "title": "Do I pay to use Appload?",
+                "description": "It is free to register on Appload. Appload charges a modest commission for its services, which is a percentage of the quotation you offer to the client. You will see this clearly stated when you insert your quotation, and may raise the quotation before submitting it as a formal offer if required. This commission will be deducted by Appload from the total paid by the client, and you will receive the full fee that you listed as a quotation. "
+            },
+            "faq7": {
+                "title": "Do my drivers need a smartphone?",
+                "description": {
+                    "p1": "Yes they do, but these phones can be very simple and cheap (as little as MZN 1,100) and the driver app is very intuitive and easy to use, as proven during operational use by drivers. ",
+                    "p2": "If your driver does not have the required type of phone, Appload can for a small fee provide your company with feature phones with the App already installed and ready to use.  ",
+                    "p3": "Appload provides training on the App to all interested drivers."
+                }
+            },
+            "faq8": {
+                "title": "Will the drivers of my company have contact with the client on a specific trip? What information will drivers have access to?",
+                "description": {
+                    "p1": "Appload is aware of the commercial and internal management needs of transport companies vis a vis driver management and control of client relationships. ",
+                    "p2": "If the driver works for a company, they will not have access to the clients’ detailed contacts, and reciprocally, the communication will be done through Appload. Drivers will have no direct communication with the shipper and vice versa, so you as the company remain in control of your business. ",
+                    "p3": "The driver will also not have access to commercially sensitive information such as the price of the transport or the value of the goods. Driver access is limited to essential information and input via the Driver app which is needed to ensure proper monitoring of the trip. You the transport company have full access to this data and can see what is happening during each trip. "
+                }
+            }
+        }
+    },
+    "insurance_faq": {
+        "header": {
+            "title": "INSURANCE OF GOODS IN TRANSIT",
+            "subtitle": "FAQs"
+        },
+        "faq1": {
+            "question": "WHAT IS CARGO TRANSPORT INSURANCE?",
+            "answer": "Cargo transport insurance is a type of insurance product that protects goods against losses or damages that occur during their transportation."
+        },
+        "faq2": {
+            "question": "WHAT ARE THE BENEFITS OF CARGO TRANSPORT INSURANCE?",
+            "answer": "Cargo transport insurance provides financial stability to the business. It helps manage risks and conduct business with fewer worries. It compensates for financial losses incurred during the transit of goods under the policy."
+        },
+        "faq3": {
+            "question": "WHAT TYPE OF GOODS ARE COVERED UNDER APPLOAD/HOLLARD'S COMMERCIAL OFFER THAT CAN BE INSURED FOR FREE?",
+            "answer": "Only dry agricultural goods may be eligible for free insurance, within the budget limit available by Appload. In each case, Appload and Hollard will confirm if the type of goods and the type of transport (route, trucks, etc.) are eligible for free insurance."
+        },
+        "faq4": {
+            "question": "WHAT DOES CARGO INSURANCE COVER?",
+            "answer": {
+                "description": "Here are the three types of cargo insurance available, along with the corresponding events they cover:",
+                "bullet1": "Basic Insurance: Covers Fire, Collision, and Overturning.",
+                "bullet2": "Basic Insurance + Theft: Covers Fire, Collision, Overturning, and Theft.",
+                "bullet3": "Multi risk insurance.Please contact Hollard for the detailed policy for each type of insurance."
+            }
+        },
+        "faq5": {
+            "question": "WHAT DOES CARGO INSURANCE NOT COVER?",
+            "answer": {
+                "description": "Regardless of the type of insurance you subscribe to, the cargo insurance does not cover the following:",
+                "bullet1": "Intentional misconduct by the insured.",
+                "bullet2": "Normal leakage, loss in weight or volume.",
+                "bullet3": "Inadequate packaging or preparation.",
+                "bullet4": "Delay.",
+                "bullet5": "Financial insolvency or default or absence of employees.",
+                "bullet6": "Malicious damage.",
+                "bullet7": "Nuclear weapons.",
+                "bullet8": "Inadequate transport.",
+                "bullet9": "War, Terrorism, Strikes & Riots."
+            }
+        },
+        "faq6": {
+            "question": "WHAT IS THE BASIS FOR CALCULATING THE CARGO TRANSPORT INSURANCE PREMIUM?",
+            "answer": {
+                "description": "The cargo transport insurance premium is calculated based on several factors, such as:",
+                "bullet1": "The value of the goods.",
+                "bullet2": "The type of goods and their risk level.",
+                "bullet3": "The route and mode of transport (land, sea, air).",
+                "bullet4": "The duration of the transport.",
+                "bullet5": "The insured's claims history."
+            }
+        },
+        "faq7": {
+            "question": "WHAT IS A DEDUCTIBLE?",
+            "answer": "A deductible is the initial amount that the insured must pay in the event of a claim. The insured pays the deductible amount for each claim, and if the loss is less than the deductible, the insurer does not make any payment."
+        },
+        "faq8": {
+            "question": "WHAT SHOULD I DO IN CASE OF AN INCIDENT DURING TRANSPORT?",
+            "answer": {
+                "description": "Em caso de incidente durante o transporte, por favor proceda da seguinte forma:",
+                "bullet1": "Immediately notify the insurer Hollard.",
+                "bullet2": "Take reasonable measures to minimize damages.",
+                "bullet3": "Collect and preserve all evidence of the incident(photos, reports, witnesses).",
+                "bullet4": "Provide all necessary documents to the insurer, such as the insurance policy, commercial invoice, shipping guide, and inspection report."
+            }
+        },
+        "faq9": {
+            "question": "HOW CAN I BE SURE THAT THE CARRIERS LISTED IN THE APP ARE QUALIFIED AND RELIABLE?",
+            "answer": {
+                "description": "Before authorizing a carrier to use Appload, Appload conducts a thorough verification process, which includes checking the following information:",
+                "bullet1": "up-to-date administrative documents of the company",
+                "bullet2": "the transport license of the company, or in the case of small businesses, the truck logbook, updated",
+                "bullet3": "references from clients regarding past work. For any confirmed trip on Appload, Appload has ongoing truck logbooks and driver documents.",
+                "bullet4": "For any confirmed trip on Appload, Appload has ongoing truck logbooks and driver documents"
+            }
+        },
+        "faq10": {
+            "question": "CAN I SCHEDULE TRANSPORTS IN ADVANCE OR MAKE CHANGES TO AN EXISTING TRANSPORT THROUGH THE APP?",
+            "answer": {
+                "bullet1": "For any request on Appload, it is necessary to specify the desired loading date. You can request a date of your choice.",
+                "bullet2": "Additionally, you can make changes to certain parameters of the request, which will require validation from the carrier. If there is a change in cost, depending on the progress of the request (whether it has not yet been confirmed by the carrier or is in progress), the client and the carrier must agree on revising the quotation. If the cargo is insured, depending on the change, Hollard must also be informed and may need to adjust the cost of coverage.",
+                "bullet3": {
+                    "text": "Further details regarding changes or cancellation of requests on Appload can be found in the Appload's terms and conditions:",
+                    "link": "/terms-and-conditions"
+                }
+            }
+        },
+        "faq11": {
+            "question": "WHAT KIND OF INFORMATION CAN I TRACK ABOUT THE TRANSPORT OF MY CARGO?",
+            "answer": {
+                "description": "Appload shares updates twice a day during the week, including:",
+                "bullet1": "The driver's location",
+                "bullet2": "The progress of loading or unloading",
+                "bullet3": "Any problems encountered on the road, reported by the driver. Additionally, Appload is always available to resolve any difficulties encountered during transport until the cargo arrives safely"
+            }
+        },
+        "faq12": {
+            "question": "WHAT IS APPLOAD'S ROLE AND RESPONSIBILITY IN THE INSURANCE POLICY?",
+            "answer": {
+                "text": "Appload acts solely as an intermediary or aggregator for Hollard. It bears no responsibility for the issuance of the policy. Please refer to Appload's terms and conditions, Section 8, for additional information regarding Appload's general terms on insurance:",
+                "link": "/terms-and-conditions"
+            }
+        }
+    },
+    "metadata": {
+        "title": "Appload — Digital freight marketplace in Mozambique and SADC",
+        "description": "Book, track and insure cargo across Mozambique and the SADC region. Live operational metrics straight from Appload's freight marketplace.",
+        "shipper": {
+            "title": "Ship cargo with vetted carriers",
+            "description": "Instant access to professional transporters nationwide and across SADC — smart requests, realtime tracking, insurance and cashless payment."
+        },
+        "carrier": {
+            "title": "Fill every truck",
+            "description": "Find loads from market-leading companies, cut empty trips with backloads, manage your fleet and get paid faster."
+        },
+        "team": {
+            "title": "Our team",
+            "description": "The people behind Appload — logistics, operations and technology, going the extra mile from Maputo."
+        },
+        "contact": {
+            "title": "Contact us",
+            "description": "Reach Appload's support, administration and sales teams — call, email or visit us in Maputo."
+        },
+        "faq": {
+            "title": "Frequently asked questions",
+            "description": "Everything shippers and carriers ask about using Appload's freight marketplace."
+        },
+        "insurance": {
+            "title": "Goods-in-transit insurance",
+            "description": "How cargo insurance works on Appload, in partnership with Hollard."
+        },
+        "terms": {
+            "title": "Terms and conditions",
+            "description": "The terms governing use of Appload's platform and services."
+        },
+        "privacy": {
+            "title": "Privacy policy",
+            "description": "How Appload collects, uses and protects your personal information."
+        }
+    },
+    "header": {
+        "get_started": "Get started",
+        "menu": "Menu",
+        "home": "Home",
+        "theme": "Theme"
+    },
+    "hero": {
+        "badge": "Live metrics from our platform",
+        "subtitle": "The digital freight marketplace moving cargo across Mozambique and SADC — booked, tracked and insured in one hub.",
+        "scroll": "Scroll"
+    },
+    "metrics": {
+        "title": "Appload is growing",
+        "updated": "From our operations database, updated hourly",
+        "headline_tons_yoy": "the cargo volume of a year ago",
+        "headline_tons_qoq": "the cargo volume of the previous quarter",
+        "headline_loads_yoy": "the loads of a year ago",
+        "headline_loads_qoq": "the loads of the previous quarter",
+        "tiles": {
+            "years": "Years in operation",
+            "repeat_shippers": "Shippers who ship again",
+            "corridors": "Transport corridors served",
+            "provinces": "of Mozambique's 10 provinces served"
+        },
+        "quality": {
+            "tracked": "Every load tracked",
+            "insurance": "Insurance available on every load"
+        },
+        "chart_title": "Cargo moved per quarter",
+        "chart_note": "Relative scale"
+    },
+    "not_found": {
+        "title": "Page not found",
+        "description": "The page you're looking for doesn't exist or has been moved.",
+        "home": "Back to home"
+    },
+    "team_page": {
+        "title": "Meet the team",
+        "subtitle": "The people moving Mozambique's cargo the extra mile."
+    },
+    "faq_header": {
+        "title": "Frequently asked questions",
+        "subtitle": "Everything about using Appload as a shipper or a carrier."
+    },
+    "contact_lines": {
+        "support": "Support",
+        "administration": "Administration",
+        "sales": "Sales & Ops",
+        "email_title": "Email",
+        "address_title": "Office",
+        "whatsapp_title": "WhatsApp",
+        "whatsapp_action": "Start a conversation"
+    }
+}

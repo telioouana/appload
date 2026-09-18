@@ -19,7 +19,7 @@ import { FieldGroup, FieldSet, FieldLegend, FieldTitle } from "@workspace/ui/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog";
 
 import { useTRPC } from "@/backend/api/client";
-import { domainErrorCode } from "@/lib/trpc-error";
+import { domainErrorCode } from "@workspace/trpc/errors";
 import type { VehicleOption } from "@/backend/api/routers/fleet";
 import { RegisterVehicleSchema, type RegisterTruckForm, type RegisterVehicleFormInput, type VehicleKind } from "@/backend/schemas/register-fleet";
 
@@ -141,7 +141,16 @@ export function RegisterVehicleDialog({
                     <DialogDescription>{t("register.description")}</DialogDescription>
                 </DialogHeader>
 
-                <form id="register-vehicle-form" onSubmit={form.handleSubmit(onSubmit)}>
+                <form
+                    id="register-vehicle-form"
+                    onSubmit={(event) => {
+                        // The dialog renders in a portal, so React bubbles this
+                        // submit to the order form that opened it and submits
+                        // that one too
+                        event.stopPropagation();
+                        void form.handleSubmit(onSubmit)(event);
+                    }}
+                >
                     <FieldGroup className="gap-4">
                         <TextInput
                             name="regPlate"

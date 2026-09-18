@@ -1,4 +1,12 @@
-import { ListPageShell } from "@/components/list/list-page-shell"
+import { getTranslations } from "@workspace/i18n/server"
+
+import { ListPageShell } from "@workspace/ui/customs/list/list-page-shell"
+
+export async function generateMetadata() {
+    const t = await getTranslations("Admin.partners")
+
+    return { title: t("fleet.title") }
+}
 
 export default function Layout({
     header,

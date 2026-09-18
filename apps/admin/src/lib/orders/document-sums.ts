@@ -6,11 +6,11 @@ import { TRPCError } from "@trpc/server";
 import { order, orderDocument, orderHistory, type Order } from "@workspace/db/orders";
 import type { db as Database } from "@workspace/db/db";
 
-import { NOTE_TYPES } from "./note-currency";
-import { remainingPatch } from "./totals";
-import { proofPaymentPatch } from "./payments";
-import { paymentSums } from "./payment-sums";
-import { changedOrderFields, type OrderFieldPatch } from "./order-facts";
+import { NOTE_TYPES } from "@workspace/domain/orders/note-currency";
+import { remainingPatch } from "@workspace/domain/orders/totals";
+import { proofPaymentPatch } from "@workspace/domain/orders/payments";
+import { paymentSums } from "@workspace/domain/orders/payment-sums";
+import { changedOrderFields, type OrderFieldPatch } from "@workspace/domain/orders/order-facts";
 
 /** Optimistic-lock retries before giving up (each attempt re-reads the row) */
 const RECOMPUTE_ATTEMPTS = 5;

@@ -1,0 +1,225 @@
+"use client"
+
+import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { IconPencil } from "@tabler/icons-react"
+
+import { useTranslations } from "@workspace/i18n"
+
+import { Button } from "@workspace/ui/components/button"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@workspace/ui/components/sheet"
+
+import { Link } from "@/i18n/navigation"
+import { useTRPC } from "@/backend/api/client"
+import { initials, Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
+import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
+import { KycBadge, StateBadge } from "@/frontend/pages/fleet/sections/badges"
+import {
+    DateValue,
+    KeyValue,
+    ProfileBody,
+    ProfileCard,
+    ProfileHeader,
+    ProfileSkeleton,
+} from "@/frontend/pages/fleet/sections/profile-parts"
+import { PapersCard } from "@/frontend/pages/fleet/sections/papers-card"
+import { MovementStatusChip, place as loadPlace } from "@/frontend/pages/movements/components/badges"
+import { EditDriverDialog } from "@/frontend/pages/drivers/sections/edit-driver-dialog"
+import { AssignTruckPopover } from "@/frontend/pages/drivers/sections/assign-truck-popover"
+import { useEntitySheet } from "@workspace/ui/hooks/use-entity-sheet"
+import { useVerifiedFleet } from "@/frontend/pages/fleet/hooks/use-verified-fleet"
+import { isPlaceholderEmail, type DriverProfile } from "@/frontend/pages/drivers/types"
+
+/**
+ * The profile panel the drivers list mounts once, keyed by `?id=`.
+ *
+ * The licence and ID card are filed from here — a carrier that cannot file
+ * them cannot dispatch a driver — and reviewed by Appload, so what the
+ * carrier sees is what is missing, what is still pending, and the contact
+ * details behind it.
+ */
+export function DriverProfileSheet() {
+    const t = useTranslations("App.drivers.profile")
+    const { id, close } = useEntitySheet()
+
+    return (
+        <Sheet open={Boolean(id)} onOpenChange={(next) => { if (!next) close() }}>
+            <SheetContent
+                side="right"
+                showCloseButton={false}
+                className="gap-0 p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-none md:data-[side=right]:w-3/5 2xl:data-[side=right]:w-[760px]"
+            >
+                <SheetHeader className="sr-only">
+                    <SheetTitle>{t("title")}</SheetTitle>
+                    <SheetDescription>{t("description")}</SheetDescription>
+                </SheetHeader>
+
+                {id && <Panel key={id} id={id} onClose={close} />}
+            </SheetContent>
+        </Sheet>
+    )
+}
+
+function Panel({ id, onClose }: { id: string; onClose: () => void }) {
+    const t = useTranslations("App.drivers")
+    const trpc = useTRPC()
+    const verified = useVerifiedFleet()
+
+    const [editing, setEditing] = useState(false)
+
+    const { data, isPending, isError } = useQuery(trpc.drivers.get.queryOptions({ id }))
+
+    if (isPending) return <ProfileSkeleton />
+
+    // An id that is not this carrier's own comes back NOT_FOUND, and the query
+    // does not throw — without this the sheet would sit on grey bars for ever
+    if (isError || !data) return <p className="text-destructive p-6 text-sm">{t("profile.error")}</p>
+
+    return (
+        <div className="flex h-full min-h-0 flex-col">
+            <div className="px-5 pt-5 pb-4 md:px-6">
+                <ProfileHeader
+                    image={data.image}
+                    fallback={initials(data.name)}
+                    name={data.name}
+                    subtitle={data.passport ? t("values.passport", { number: data.passport }) : undefined}
+                    badges={
+                        <>
+                            {verified && <KycBadge status={data.kycStatus} />}
+                            <StateBadge state={data.status} />
+                        </>
+                    }
+                    actions={
+                        <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                            <IconPencil className="size-4" stroke={1.5} />
+                            {t("actions.edit")}
+                        </Button>
+                    }
+                    closeLabel={t("profile.close")}
+                    onClose={onClose}
+                />
+            </div>
+
+            <ProfileBody>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <Contact profile={data} />
+                    {verified && <Verification profile={data} />}
+                    <Assignment profile={data} />
+                    {verified && (
+                        <PapersCard
+                            subjectType="driver"
+                            subjectId={data.id}
+                            title={t("profile.documents")}
+                            className="lg:col-span-2"
+                        />
+                    )}
+                    <Loads profile={data} />
+                </div>
+            </ProfileBody>
+
+            <EditDriverDialog driver={data} open={editing} onOpenChange={setEditing} />
+        </div>
+    )
+}
+
+function Contact({ profile }: { profile: DriverProfile }) {
+    const t = useTranslations("App.drivers")
+
+    return (
+        <ProfileCard title={t("profile.contact")}>
+            <dl className="flex flex-col gap-2">
+                <KeyValue label={t("columns.phone")}>
+                    {profile.phoneNumber
+                        ? <Mono>{profile.phoneNumber}</Mono>
+                        : <EmptyValue label={t("values.none")} />}
+                </KeyValue>
+                <KeyValue label={t("columns.email")}>
+                    {isPlaceholderEmail(profile.email)
+                        ? <EmptyValue label={t("values.no-email")} />
+                        : <span className="truncate">{profile.email}</span>}
+                </KeyValue>
+                <KeyValue label={t("columns.passport")}>
+                    {profile.passport
+                        ? <Mono>{profile.passport}</Mono>
+                        : <EmptyValue label={t("values.none")} />}
+                </KeyValue>
+            </dl>
+        </ProfileCard>
+    )
+}
+
+function Verification({ profile }: { profile: DriverProfile }) {
+    const t = useTranslations("App.drivers")
+
+    return (
+        <ProfileCard title={t("profile.verification")}>
+            <dl className="flex flex-col gap-2">
+                <KeyValue label={t("profile.kyc")}><KycBadge status={profile.kycStatus} /></KeyValue>
+                <KeyValue label={t("columns.documents")}>{t("values.progress", profile.progress)}</KeyValue>
+                <KeyValue label={t("profile.registered")}>
+                    <DateValue value={profile.createdAt} fallback={t("profile.none")} />
+                </KeyValue>
+            </dl>
+        </ProfileCard>
+    )
+}
+
+function Assignment({ profile }: { profile: DriverProfile }) {
+    const t = useTranslations("App.drivers")
+
+    return (
+        <ProfileCard
+            title={t("profile.assignment")}
+            aside={<AssignTruckPopover driverId={profile.id} currentTruckId={profile.truckId} />}
+        >
+            <dl className="flex flex-col gap-2">
+                <KeyValue label={t("columns.state")}><StateBadge state={profile.status} /></KeyValue>
+                <KeyValue label={t("columns.truck")}>
+                    {profile.truck ? (
+                        <span className="inline-flex items-center gap-2">
+                            <PlateChip plate={profile.truck.regPlate} />
+                            <span className="text-muted-foreground text-xs">
+                                {[profile.truck.brand, profile.truck.model].filter(Boolean).join(" ")}
+                            </span>
+                        </span>
+                    ) : <EmptyValue label={t("values.unassigned")} />}
+                </KeyValue>
+            </dl>
+        </ProfileCard>
+    )
+}
+
+/**
+ * The last loads this driver was named on, whichever way they were named —
+ * from the fleet picker or by typing their number. Each is a door into the
+ * load itself; what any of them was worth is read there, not here.
+ */
+function Loads({ profile }: { profile: DriverProfile }) {
+    const t = useTranslations("App.drivers.profile.loads")
+
+    return (
+        <ProfileCard title={t("title")} className="lg:col-span-2">
+            {profile.loads.length === 0 ? (
+                <p className="text-muted-foreground text-[13px]">{t("empty")}</p>
+            ) : (
+                <ul className="flex flex-col gap-2">
+                    {profile.loads.map((load) => (
+                        <li key={load.id} className="flex items-center justify-between gap-3 text-[13px]">
+                            <Link
+                                href={{ pathname: "/orders/load/[loadId]", params: { loadId: load.id } }}
+                                className="flex min-w-0 items-center gap-2"
+                            >
+                                <Mono>{load.ref}</Mono>
+                                <span className="text-muted-foreground truncate">
+                                    {`${loadPlace(load.origin)} → ${loadPlace(load.destination)}`}
+                                </span>
+                            </Link>
+                            <MovementStatusChip status={load.status} className="shrink-0" />
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </ProfileCard>
+    )
+}
+

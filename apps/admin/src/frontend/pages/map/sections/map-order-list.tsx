@@ -1,0 +1,160 @@
+"use client"
+
+import { useMemo, useState } from "react"
+import { IconSearch, IconX } from "@tabler/icons-react"
+
+import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
+
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@workspace/ui/components/input-group"
+import { Separator } from "@workspace/ui/components/separator"
+
+import { cn } from "@workspace/ui/lib/utils"
+
+import { OrderStatusBadge } from "@/frontend/pages/orders/sections/order-item-shared"
+import type { MapOrder } from "@/frontend/pages/map/types"
+
+/** Newest ping first; loads that have never pinged sink to the bottom. */
+const seenAt = (order: MapOrder) => order.lastLocation?.recordedAt.getTime() ?? 0
+
+/**
+ * The map's index: every on-going load, always all of them. A search never
+ * removes a row — it pushes the matches to the top and fades the rest, so the
+ * operator keeps the fleet in view while hunting for one truck.
+ */
+export function MapOrderList({
+    orders,
+    matches,
+    query,
+    onQueryChange,
+    selected,
+    onSelect,
+    className,
+}: {
+    orders: MapOrder[]
+    matches: Set<string>
+    query: string
+    onQueryChange: (value: string) => void
+    selected: string | null
+    onSelect: (orderId: string) => void
+    className?: string
+}) {
+    const t = useTranslations("Admin.map")
+    const f = useFormatter()
+    // Explicit now keeps relativeTime warning-free and ticks the labels over
+    const now = useNow({ updateInterval: 60_000 })
+
+    // Typing stays local so each keystroke re-renders the list, not the map
+    const [text, setText] = useState(query)
+
+    // `?q=` can also change from outside the box — the command palette lands
+    // on /map with a term, and back/forward rewrites it. Adjusting the state
+    // during render is React's own answer to that (an effect would render the
+    // stale text once and then render again). `lastQuery` is the previous
+    // value of the prop, so this only fires on a real external change.
+    const [lastQuery, setLastQuery] = useState(query)
+
+    if (query !== lastQuery) {
+        setLastQuery(query)
+
+        // Typing writes the trimmed text to the URL, so "beira " coming back
+        // as "beira" is our own echo, not somebody else's edit.
+        if (text.trim() !== query) setText(query)
+    }
+
+    const sorted = useMemo(() => {
+        const missed = (order: MapOrder) => (query && !matches.has(order.orderId) ? 1 : 0)
+
+        return [...orders].sort((a, b) => missed(a) - missed(b) || seenAt(b) - seenAt(a))
+    }, [orders, matches, query])
+
+    const update = (value: string) => {
+        setText(value)
+        onQueryChange(value)
+    }
+
+    return (
+        <aside className={cn("flex w-80 shrink-0 flex-col border-r bg-card", className)}>
+            <div className="flex flex-col gap-2 p-3">
+                <InputGroup>
+                    <InputGroupAddon>
+                        <IconSearch className="size-4" stroke={1.5} />
+                    </InputGroupAddon>
+
+                    <InputGroupInput
+                        value={text}
+                        placeholder={t("search")}
+                        onChange={(event) => update(event.target.value)}
+                    />
+
+                    {text && (
+                        <InputGroupAddon align="inline-end">
+                            <InputGroupButton
+                                size="icon-xs"
+                                variant="ghost"
+                                aria-label={t("clear-search")}
+                                onClick={() => update("")}
+                            >
+                                <IconX className="size-4" stroke={1.5} />
+                            </InputGroupButton>
+                        </InputGroupAddon>
+                    )}
+                </InputGroup>
+
+                <p className="text-muted-foreground text-xs">
+                    {query ? t("matches", { count: matches.size }) : t("count", { count: orders.length })}
+                </p>
+            </div>
+
+            <Separator />
+
+            <div className="flex-1 overflow-y-auto container-snap">
+                {sorted.map((order) => {
+                    const isSelected = order.orderId === selected
+                    const isDimmed = !!query && !matches.has(order.orderId)
+
+                    return (
+                        <button
+                            key={order.orderId}
+                            type="button"
+                            onClick={() => onSelect(order.orderId)}
+                            className={cn(
+                                "hover:bg-muted/60 flex w-full cursor-pointer flex-col gap-1 border-l-2 border-transparent px-3 py-2.5 text-left transition-colors",
+                                isSelected && "border-primary bg-accent/10",
+                                isDimmed && "opacity-50",
+                            )}
+                        >
+                            <span className="flex items-center justify-between gap-2">
+                                <span className="min-w-0 truncate text-sm font-medium">{order.orderId}</span>
+                                <OrderStatusBadge status={order.status} className="shrink-0 px-1.5 py-0.5 text-xs" />
+                            </span>
+
+                            <span className="text-muted-foreground truncate text-xs">
+                                {[order.driverName, order.truckPlate].filter(Boolean).join(" · ") || "—"}
+                            </span>
+
+                            <span className="text-muted-foreground truncate text-[11px]">
+                                {[order.shipperName, order.carrierName].filter(Boolean).join(" → ")}
+                            </span>
+
+                            <span className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
+                                {order.lastLocation ? (
+                                    <>
+                                        <span>{t("list.last-seen", { ago: f.relativeTime(order.lastLocation.recordedAt, now) })}</span>
+                                        {order.pingCount > 0 && (
+                                            <>
+                                                <span aria-hidden>·</span>
+                                                <span>{t("list.pings", { count: order.pingCount })}</span>
+                                            </>
+                                        )}
+                                    </>
+                                ) : (
+                                    <span>{t("list.no-location")}</span>
+                                )}
+                            </span>
+                        </button>
+                    )
+                })}
+            </div>
+        </aside>
+    )
+}

@@ -1,6 +1,6 @@
 import { google } from "googleapis";
 
-import { OrderError } from "./errors";
+import { OrderError } from "@workspace/domain/orders/errors";
 import { SPREADSHEETS_SCOPE } from "./google-token";
 
 // Derived from the constructor so it can't drift to another hoisted copy

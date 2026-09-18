@@ -1,10 +1,12 @@
-import { FILTER } from "@/frontend/pages/orders/types";
-import { OrdersHeaderView } from "@/frontend/pages/orders/views/orders-header-view";
+import { notFound } from "next/navigation"
 
-export default async function Header({ params }: { params: Promise<{ filter: FILTER }> }) {
+import { isSection } from "@/frontend/pages/orders/types"
+import { OrdersHeaderView } from "@/frontend/pages/orders/views/orders-header-view"
+
+export default async function Header({ params }: { params: Promise<{ filter: string }> }) {
     const { filter } = await params
 
-    return (
-        <OrdersHeaderView filter={filter} />
-    )
+    if (!isSection(filter)) notFound()
+
+    return <OrdersHeaderView section={filter} />
 }

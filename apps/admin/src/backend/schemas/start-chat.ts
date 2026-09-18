@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { useTranslations } from "@workspace/i18n";
 
-type ChatsTranslator = ReturnType<typeof useTranslations<"Admin.chats">>;
+type ChatsTranslator = ReturnType<typeof useTranslations<"Admin.messages">>;
 
 type MessageField = "driverName" | "driverPhone" | "orderId";
 

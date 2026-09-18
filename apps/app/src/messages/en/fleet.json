@@ -1,0 +1,341 @@
+{
+    "eyebrow": "Fleet",
+    "title": {
+        "truck": "Trucks",
+        "trailer": "Trailers",
+        "link": "Links"
+    },
+    "description": {
+        "truck": "Your company's registered trucks",
+        "trailer": "Your company's registered trailers",
+        "link": "Your company's registered links"
+    },
+    "add": {
+        "truck": "Register truck",
+        "trailer": "Register trailer",
+        "link": "Register link"
+    },
+    "kind": {
+        "truck": "Trucks",
+        "trailer": "Trailers",
+        "link": "Links"
+    },
+    "status": {
+        "draft": "Draft",
+        "pending-review": "Pending review",
+        "verified": "Verified",
+        "rejected": "Rejected",
+        "expired": "Expired",
+        "suspended": "Suspended"
+    },
+    "ownership": {
+        "unverified": "Unverified",
+        "owner-verified": "Owned",
+        "third-party": "Third party"
+    },
+    "state": {
+        "active": "On a trip",
+        "idle": "Idle",
+        "free": "Available"
+    },
+    "columns": {
+        "vehicle": "Vehicle",
+        "ownership": "Ownership",
+        "driver": "Driver",
+        "hitched": "Hitched to",
+        "capacity": "Capacity",
+        "bay": "Body",
+        "state": "Availability",
+        "status": "Verification",
+        "documents": "Documents",
+        "year": "Year",
+        "actions": "Actions"
+    },
+    "values": {
+        "none": "None",
+        "unassigned": "No driver",
+        "not-hitched": "Not hitched",
+        "progress": "{approved}/{required}",
+        "tons": "{tons} t",
+        "truck-type": {
+            "articulated": "Articulated",
+            "non-articulated": "Rigid"
+        }
+    },
+    "sort": {
+        "plate": "Plate",
+        "status": "Verification",
+        "year": "Year",
+        "created": "Registered"
+    },
+    "filters": {
+        "search": "Search plate, brand, model or VIN",
+        "clear": "Clear search",
+        "all": "All",
+        "issues": "Issues",
+        "any": "Any",
+        "state": "Availability",
+        "ownership": "Ownership",
+        "assignment": "Assignment",
+        "unassigned": {
+            "truck": "No driver",
+            "trailer": "Not hitched",
+            "link": "Not hitched"
+        },
+        "unassigned-hint": {
+            "truck": "Nobody is assigned to it",
+            "trailer": "No truck pulls this trailer",
+            "link": "No trailer carries this link"
+        }
+    },
+    "tiles": {
+        "idle": "Idle",
+        "idle-hint": "no trip right now",
+        "pending-review": "Pending review",
+        "pending-review-hint": "papers waiting on Appload",
+        "active": "On a trip",
+        "active-hint": "travelling now",
+        "ownership": "Ownership unverified",
+        "ownership-hint": "no proof of ownership yet",
+        "unassigned": {
+            "truck": "No driver",
+            "trailer": "Not hitched",
+            "link": "Not hitched"
+        },
+        "unassigned-hint": {
+            "truck": "trucks with nobody assigned",
+            "trailer": "trailers with no truck",
+            "link": "links with no trailer"
+        }
+    },
+    "data": {
+        "empty": "Nothing here yet",
+        "empty-description": {
+            "truck": "Register your first truck to start using it on your orders.",
+            "trailer": "Register your first trailer to start using it on your orders.",
+            "link": "Register your first link to start using it on your orders."
+        },
+        "no-results": "No rows match the filters",
+        "error": "This list could not be loaded, please try again"
+    },
+    "actions": {
+        "menu": "More actions",
+        "open": "Open profile",
+        "edit": "Edit vehicle",
+        "copy-plate": "Copy plate",
+        "copy-vin": "Copy VIN"
+    },
+    "assign": {
+        "assign-driver": "Assign driver",
+        "change-driver": "Change driver",
+        "search-driver": "Search your drivers…",
+        "no-drivers": "No driver matches",
+        "assigned": "Driver assigned",
+        "failed": "The driver could not be assigned"
+    },
+    "profile": {
+        "title": "Vehicle profile",
+        "description": "Details, verification and assignment of the selected vehicle",
+        "error": "This vehicle could not be loaded.",
+        "close": "Close",
+        "details": "Vehicle details",
+        "verification": "Verification",
+        "operation": "Operation",
+        "documents": "Documents",
+        "registered": "Registered on",
+        "owner": "Owner",
+        "make": "Make and model",
+        "loading-bay": "Loading bay",
+        "bay-on-trailer": "Carried on the trailer",
+        "vehicle-type": "Truck type",
+        "driver": "Driver",
+        "hitched": "Hitched to",
+        "kyc": "Status",
+        "none": "None"
+    },
+    "papers": {
+        "missing": "Missing",
+        "not-filed": "Nothing filed yet",
+        "expires": "Valid until {date}",
+        "no-expiry": "No expiry",
+        "add-pages": "Add pages",
+        "remove-page": "Remove page",
+        "submit": "File document",
+        "issued": "Issued on",
+        "expiry": "Valid until",
+        "number": "Document number",
+        "preview": "Page",
+        "open-file": "Open the file",
+        "no-preview": "This file cannot be shown here.",
+        "review-note": "Appload reviews every document filed here. It stays pending review until someone has looked at it.",
+        "company-title": "Company documents",
+        "contract-note": "Uploaded by Appload after signature",
+        "doc-status": {
+            "pending": "Pending review",
+            "approved": "Approved",
+            "rejected": "Rejected"
+        },
+        "doc-type": {
+            "driver-license": "Driving licence",
+            "id-card": "ID card",
+            "vehicle-booklet": "Vehicle booklet",
+            "proof-of-ownership": "Proof of ownership",
+            "nuit": "NUIT registration",
+            "commercial-certificate": "Commercial certificate",
+            "alvara": "Transport licence (alvará)",
+            "bank-letter": "Bank letter",
+            "republic-bulletin": "Republic bulletin",
+            "commercial-exercise": "Commercial exercise",
+            "signed-contract": "Signed contract"
+        },
+        "errors": {
+            "LOAD_FAILED": "These documents could not be loaded.",
+            "DOCUMENT_NOT_APPLICABLE": "This document is not one this record needs.",
+            "INVALID_DOCUMENT_URL": "This file could not be accepted. Pick it again.",
+            "NOT_ALLOWED": "Your role cannot file documents.",
+            "NOT_FOUND": "This record could not be found.",
+            "UPLOAD_FAILED": "The file could not be uploaded. Try again.",
+            "FILE_TOO_LARGE": "Each page must be 5 MB or less.",
+            "FILE_TYPE": "Only PDF, JPG and PNG files are accepted.",
+            "UNKNOWN": "Something went wrong. Try again."
+        }
+    },
+    "edit": {
+        "title": "Edit vehicle",
+        "description": "Only the fields you change are sent.",
+        "save": "Save",
+        "saving": "Saving...",
+        "cancel": "Cancel",
+        "success": "Vehicle updated",
+        "fields": {
+            "plate": "Plate",
+            "internalId": "Internal id",
+            "brand": "Brand",
+            "model": "Model",
+            "year": "Year",
+            "vin": "VIN"
+        },
+        "errors": {
+            "DUPLICATE_PLATE": "This plate is already in your fleet.",
+            "DUPLICATE_VIN": "This VIN is already in your fleet.",
+            "PLATE_UNAVAILABLE": "This plate cannot be registered. If the vehicle is yours, talk to us.",
+            "VIN_UNAVAILABLE": "This VIN cannot be registered. If the vehicle is yours, talk to us.",
+            "PLATE_LOCKED": "This plate already appears on issued orders and cannot be changed. Talk to us.",
+            "BAY_REQUIRED": "Trailers and links always need a loading bay.",
+            "NOT_ALLOWED": "Your role cannot edit the fleet.",
+            "NOT_FOUND": "This vehicle no longer exists.",
+            "UNKNOWN": "Something went wrong. Please try again."
+        }
+    },
+    "register": {
+        "title": {
+            "truck": "Register truck",
+            "trailer": "Register trailer",
+            "link": "Register link"
+        },
+        "description": "Fill in the vehicle's details to add it to your fleet.",
+        "fields": {
+            "plate": {
+                "label": "Plate",
+                "placeholder": "AAA 000 MC"
+            },
+            "internalId": {
+                "label": "Internal id",
+                "placeholder": "Your own fleet code (optional)"
+            },
+            "brand": {
+                "label": "Brand",
+                "placeholder": "Volvo"
+            },
+            "model": {
+                "label": "Model",
+                "placeholder": "FH16"
+            },
+            "year": {
+                "label": "Year",
+                "placeholder": "Pick the year"
+            },
+            "vin": {
+                "label": "VIN",
+                "placeholder": "Chassis number (17 characters)"
+            },
+            "type": {
+                "label": "Truck type",
+                "placeholder": "Pick the type",
+                "description": "Articulated trucks carry the loading bay on the trailer",
+                "options": {
+                    "articulated": "Articulated",
+                    "non-articulated": "Non-articulated"
+                }
+            },
+            "bay": {
+                "title": "Loading bay",
+                "type": {
+                    "label": "Body type",
+                    "placeholder": "Pick the type",
+                    "options": {
+                        "flatbed": "Flatbed",
+                        "dropsides": "Dropsides",
+                        "tautliner": "Tautliner",
+                        "rigid-body": "Rigid body",
+                        "refrigerated": "Refrigerated",
+                        "tipper": "Tipper",
+                        "side-tipper": "Side tipper",
+                        "tanker": "Tanker",
+                        "lowbed": "Lowbed"
+                    }
+                },
+                "width": {
+                    "label": "Width (m)",
+                    "placeholder": "2.5"
+                },
+                "length": {
+                    "label": "Length (m)",
+                    "placeholder": "13.6"
+                },
+                "height": {
+                    "label": "Height (m)",
+                    "placeholder": "2.7"
+                },
+                "volume": {
+                    "label": "Volume (m³)",
+                    "placeholder": "W x L x H"
+                },
+                "capacity": {
+                    "label": "Capacity (tons)",
+                    "placeholder": "34"
+                }
+            }
+        },
+        "actions": {
+            "save": "Register",
+            "saving": "Registering...",
+            "cancel": "Cancel"
+        },
+        "errors": {
+            "invalid": "The details are not valid.",
+            "unauthorized": "Your session is not valid. Please sign in again.",
+            "notAllowed": "Your role cannot register vehicles.",
+            "duplicatePlate": "This plate is already in your fleet.",
+            "duplicateVin": "This VIN is already in your fleet.",
+            "plateUnavailable": "This plate cannot be registered. If the vehicle is yours, talk to us.",
+            "vinUnavailable": "This VIN cannot be registered. If the vehicle is yours, talk to us.",
+            "unknown": "Something went wrong. Please try again.",
+            "validation": {
+                "plate": "The plate is required",
+                "brand": "The brand is required",
+                "model": "The model is required",
+                "year": "Pick the year",
+                "vin": "The VIN must be 17 characters (the letters I, O and Q are not used)",
+                "type": "Pick the truck type",
+                "bayValue": "Enter a positive number",
+                "bayType": "Pick the body type"
+            }
+        }
+    },
+    "combobox": {
+        "loading": "Searching...",
+        "empty": "No results",
+        "register": "Register \"{plate}\""
+    }
+}

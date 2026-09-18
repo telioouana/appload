@@ -6,6 +6,19 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "admin", "dev"],
       "port": 3000
+    },
+    {
+      "name": "website",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "website", "dev"],
+      "port": 3100,
+      "autoPort": true
+    },
+    {
+      "name": "app",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "app", "dev"],
+      "port": 3001
     }
   ]
 }

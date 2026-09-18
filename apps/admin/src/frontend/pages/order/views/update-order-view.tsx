@@ -16,8 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/componen
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@workspace/ui/components/sheet"
 
 import { useTRPC } from "@/backend/api/client"
-import { domainErrorCode } from "@/lib/trpc-error"
-import { ORDER_ERROR_CODES } from "@/lib/orders/errors"
+import { domainErrorCode } from "@workspace/trpc/errors"
+import { ORDER_ERROR_CODES } from "@workspace/domain/orders/errors"
 import { PDF_RELEVANT_FIELDS } from "@/lib/orders/pdf"
 import { PATCH_ANCHORS, UpdateOrderSchema, orderToUpdateDefaults, type UpdateOrderForm, type UpdateOrderFormInput } from "@/backend/schemas/order"
 
@@ -85,14 +85,15 @@ const hasDirt = (value: unknown): boolean =>
  * the activity log's `changedFields` stays meaningful. A nested dirty flag
  * (e.g. loadingAddress.country) sends the whole jsonb object. Status never
  * travels in a patch — the server rejects it; transitions have their own
- * guarded mutation.
+ * guarded mutation. Neither does the carrier's identity, which is copied
+ * from the offer the order books with (the server rejects that too).
  */
 function buildPatch(values: UpdateOrderForm, dirty: Partial<Record<keyof UpdateOrderFormInput, unknown>>): Partial<UpdateOrderForm> {
     const patch: Record<string, unknown> = {};
 
     for (const key of Object.keys(dirty) as (keyof UpdateOrderForm)[]) {
         if (!hasDirt(dirty[key])) continue;
-        if (key === "status") continue;
+        if (key === "status" || key === "carrierId" || key === "carrierName") continue;
         patch[key] = values[key];
     }
 
@@ -274,7 +275,7 @@ export function UpdateOrderView() {
                 // Only the submitted form resets; the other tabs keep any
                 // unsaved edits (their stale clean values never get sent)
                 form.reset(orderToUpdateDefaults(result.order))
-                queryClient.invalidateQueries(trpc.orders.list.queryFilter())
+                queryClient.invalidateQueries(trpc.orders.pathFilter())
                 // A total change re-derives the paid figures on governed
                 // legs, so the details page and the lock state must refetch
                 queryClient.invalidateQueries(trpc.order.get.queryFilter({ orderId: order.orderId }))

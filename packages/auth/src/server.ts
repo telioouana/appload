@@ -8,6 +8,7 @@ import { admin, organization, phoneNumber, twoFactor } from "better-auth/plugins
 import { db } from "@workspace/db/db";
 import { activityLog } from "@workspace/db/activity-log";
 import { member as memberSchema } from "@workspace/db/schema";
+import { SUBSCRIPTION_PLAN } from "@workspace/db/subscriptions";
 import { brandedEmail, sendEmail } from "@workspace/auth/email";
 import { admin as userAdmin, manager, uac, user } from "@workspace/auth/user-permissions";
 import { admin as orgAdmin, oac, owner, member } from "@workspace/auth/organization-permissions";
@@ -48,6 +49,11 @@ export const auth = betterAuth({
     baseURL: {
         allowedHosts: [
             process.env.BETTER_AUTH_URL,
+            // The partner portal is a second origin on this one instance. Without
+            // it here a portal request falls through to the fallback, and the
+            // verification and reset links are built on the admin origin —
+            // where /verify-email does not exist and /reset-password is staff's
+            process.env.NEXT_PUBLIC_PORTAL_URL,
             "http://localhost:3000",
             "http://localhost:3001",
             "http://localhost:3002",
@@ -56,7 +62,11 @@ export const auth = betterAuth({
             .filter((url): url is string => Boolean(url))
             .map(url => {
                 try {
-                    return new URL(url).hostname; // Strips https:// and paths, leaving just the host
+                    // .host keeps the port — Better Auth matches against the
+                    // request's Host header ("localhost:3000"), so .hostname
+                    // ("localhost") would never match and every dev request
+                    // would fall through to the deployed fallback URL
+                    return new URL(url).host;
                 } catch {
                     return url; // Fallback if it's already a plain host
                 }
@@ -65,8 +75,20 @@ export const auth = betterAuth({
         // above (a request's own host wins when it matches one of them).
         fallback: process.env.BETTER_AUTH_URL || "http://localhost:3000",
     },
+    // Outside production the localhost dev ports are trusted too — matching
+    // allowedHosts above, so local sign-in works even when BETTER_AUTH_URL
+    // points at a deployed origin
     trustedOrigins: [
         process.env.BETTER_AUTH_URL,
+        process.env.NEXT_PUBLIC_PORTAL_URL,
+        ...(process.env.NODE_ENV !== "production"
+            ? [
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://localhost:3002",
+                "http://localhost:3003",
+            ]
+            : []),
     ].filter((url): url is string => !!url),
     trustHost: true,
     // The default limiter stores counters in memory, which on serverless is
@@ -120,16 +142,29 @@ export const auth = betterAuth({
                 // and mapProfileToUser legitimately supply at creation time.
                 // Nothing in this app updates either field through Better Auth,
                 // so any attempt to is an escalation attempt.
+                //
+                // `phoneNumber` joins them because it is UNIQUE: the portal
+                // leaves /update-user open for profile edits, and a partner
+                // that took a driver's number on its own account would make
+                // that number unregistrable for every carrier and for staff.
+                // Driver phones are written by direct Drizzle update, and the
+                // phoneNumber plugin's OTP is a stub, so nothing legitimate
+                // sets it through Better Auth.
                 before: async (changes) => {
                     const patch = changes as typeof changes & {
                         type?: unknown;
                         status?: unknown;
+                        phoneNumber?: unknown;
                     };
 
-                    if (patch.type !== undefined || patch.status !== undefined) {
+                    if (
+                        patch.type !== undefined ||
+                        patch.status !== undefined ||
+                        patch.phoneNumber !== undefined
+                    ) {
                         throw new APIError("FORBIDDEN", {
                             code: "FIELD_NOT_UPDATABLE",
-                            message: "type and status cannot be changed",
+                            message: "type, status and phoneNumber cannot be changed",
                         });
                     }
 
@@ -247,13 +282,14 @@ export const auth = betterAuth({
         sendResetPassword: async ({ user, url }) => {
             const result = await sendEmail({
                 to: [user.email],
-                subject: "Reset your password",
+                subject: "Redefinir a sua palavra-passe",
                 html: brandedEmail({
-                    title: "Reset your password",
-                    lines: ["A password reset was requested for your Appload account. The link below expires after one hour."],
-                    ctaLabel: "Reset password",
+                    locale: "pt",
+                    title: "Redefinir a sua palavra-passe",
+                    lines: ["Foi pedida a redefinição da palavra-passe da sua conta Appload. O link abaixo expira ao fim de uma hora."],
+                    ctaLabel: "Redefinir palavra-passe",
                     ctaUrl: url,
-                    disclaimer: "If you did not request this, you can safely ignore this email — your password stays unchanged.",
+                    disclaimer: "Se não foi você que pediu, pode ignorar este email — a sua palavra-passe fica como está.",
                 }),
             });
 
@@ -292,13 +328,14 @@ export const auth = betterAuth({
         sendVerificationEmail: async ({ user, url }) => {
             await sendEmail({
                 to: [user.email],
-                subject: "Verify your email",
+                subject: "Confirme o seu email",
                 html: brandedEmail({
-                    title: "Verify your email",
-                    lines: ["Confirm the email address on your Appload account to finish setting it up."],
-                    ctaLabel: "Verify email",
+                    locale: "pt",
+                    title: "Confirme o seu email",
+                    lines: ["Confirme o endereço de email da sua conta Appload para terminar de a configurar."],
+                    ctaLabel: "Confirmar email",
                     ctaUrl: url,
-                    disclaimer: "If you did not create an Appload account, you can safely ignore this email.",
+                    disclaimer: "Se não criou uma conta Appload, pode ignorar este email.",
                 }),
             });
         },
@@ -374,6 +411,18 @@ export const auth = betterAuth({
             // into that registry beside the gate
             allowUserToCreateOrganization: false,
             organizationLimit: 1,
+            // Nothing deletes organizations — Admin closes them with
+            // `status: "closed"`. Left open, POST /organization/delete needs
+            // only `organization:delete` (which every owner holds) and would
+            // wipe the registry row plus its cascades; on neon-http, which has
+            // no transactions, a delete blocked by an order's FK still leaves
+            // the member rows gone and every portal user of that partner out
+            disableOrganizationDeletion: true,
+            // Otherwise an invitation link is enough on its own: accept only
+            // checks that the signed-in address equals the invited one, never
+            // that the address was proven. Every other portal door already
+            // requires a verified address
+            requireEmailVerificationOnInvitation: true,
             ac: oac,
             roles: {
                 owner,
@@ -383,22 +432,41 @@ export const auth = betterAuth({
             schema: {
                 organization: {
                     additionalFields: {
+                        // `input: false` on the four below is the gate on
+                        // POST /organization/update: it builds its body from
+                        // every additional field that does not opt out, and
+                        // the only permission it asks for is
+                        // `organization:update` — which owners and admins hold.
+                        // An array type even degrades to z.any() there, so the
+                        // enum would not be enforced either. These four are
+                        // authorization and registry state (the tier the
+                        // tracking quota comes from, the approval status, which
+                        // procedures the tenant passes, the key the logbook and
+                        // every document are keyed on); Admin writes them by
+                        // direct Drizzle insert/update, which is unaffected.
+                        //
+                        // The plan is optional and has no default: a partner
+                        // that signs up owes nothing until a tier is agreed
+                        // commercially and staff record it.
                         subscriptionPlan: {
-                            type: ["free", "pro"],
-                            required: true,
-                            defaultValue: "free"
+                            type: [...SUBSCRIPTION_PLAN],
+                            required: false,
+                            input: false,
                         },
                         nuit: {
                             type: "string",
                             required: true,
+                            input: false,
                             unique: true,
                         },
                         type: {
                             required: true,
+                            input: false,
                             type: ["shipper", "carrier"]
                         },
                         status: {
                             required: true,
+                            input: false,
                             type: ["pending", "active", "closed"],
                             defaultValue: "pending"
                         },
@@ -430,16 +498,18 @@ export const auth = betterAuth({
                 }
             },
             sendInvitationEmail: async ({ email, inviter, invitation, organization }) => {
-                const base = process.env.NEXT_PUBLIC_APP_URL ?? "";
+                // The accept page lives in the partner portal
+                const base = process.env.NEXT_PUBLIC_PORTAL_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
                 await sendEmail({
                     to: [email],
-                    subject: `Invitation to join ${organization.name}`,
+                    subject: `Convite para entrar na ${organization.name}`,
                     html: brandedEmail({
-                        title: `Join ${organization.name} on Appload`,
-                        lines: [`${inviter.user.email} invited you to join ${organization.name} on Appload.`],
-                        ctaLabel: "Accept the invitation",
+                        locale: "pt",
+                        title: `Entrar na ${organization.name} na Appload`,
+                        lines: [`${inviter.user.name} convidou-o para entrar na ${organization.name} na Appload.`],
+                        ctaLabel: "Aceitar o convite",
                         ctaUrl: `${base}/accept-invitation/${invitation.id}`,
-                        disclaimer: "If you were not expecting this invitation, you can safely ignore this email.",
+                        disclaimer: "Se não estava à espera deste convite, pode ignorar este email.",
                     }),
                 });
             }

@@ -11,13 +11,14 @@ import { cn } from "@workspace/ui/lib/utils";
 
 import type { OrderValues } from "@/frontend/pages/orders/types";
 
-export function OrderStatusBadge({ status }: { status: OrderValues["status"] }) {
+export function OrderStatusBadge({ status, className }: { status: OrderValues["status"]; className?: string }) {
     const t = useTranslations("Admin.orders.header.filters.status.options");
 
     return (
         <StatusBadge
             label={t(status)}
             status={status as StatusKey}
+            className={className}
         />
     )
 }

@@ -3,7 +3,7 @@
 import { IconLock, IconLogout } from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
-import { useRouter } from "@workspace/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@workspace/auth/client";
 
 import { Button } from "@workspace/ui/components/button";

@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { IconAlertCircle, IconBrandGoogle, IconLogin } from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
-import { Link } from "@workspace/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { authClient } from "@workspace/auth/client";
 
 import { Button } from "@workspace/ui/components/button";
@@ -19,6 +19,7 @@ import { Marker, MarkerContent } from "@workspace/ui/components/marker";
 import { Alert, AlertTitle } from "@workspace/ui/components/alert";
 import { Card, CardContent, CardDescription, CardTitle } from "@workspace/ui/components/card";
 
+import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 import { SignInSchema, staffEmail } from "@/backend/schemas/sign-in";
 
 const KNOWN_AUTH_ERRORS = ["unable_to_get_user_info", "access_denied"] as const
@@ -42,7 +43,7 @@ export function SignInView() {
     const callbackUrl =
         callbackParam?.startsWith("/") && !callbackParam.startsWith("//")
             ? callbackParam
-            : "/orders/all"
+            : DEFAULT_LOGIN_REDIRECT
 
     const FormSchema = useMemo(() => SignInSchema(t), [t])
     type TypeSchema = z.infer<typeof FormSchema>
