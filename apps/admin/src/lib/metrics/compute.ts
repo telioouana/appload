@@ -39,15 +39,12 @@ import {
 
 export type ComputeInput = {
     months: SheetMonth[];
-    /** One entry per month key on the timeline — `resolveRates` never returns a partial map */
+    /** One entry per month key on the timeline — `monthRates` never returns a partial map */
     rates: Record<string, MonthRate>;
     /** `YYYY-MM` in Maputo time: the month marked "to date" */
     currentMonth: string;
     /** Names counted once per month, year and lifetime, from the same orders */
     parties: PartyCounts;
-    fetchedAt: string;
-    stale: boolean;
-    sheetUrl: string;
 };
 
 const CURRENCIES: Currency[] = ["MZN", "ZAR", "USD"];
@@ -336,8 +333,5 @@ export function computeOverview(input: ComputeInput): MetricsOverview {
         years,
         lifetime: summarise(sumMonths(raw, input.currentMonth), input.parties.lifetime),
         currentMonth: input.currentMonth,
-        fetchedAt: input.fetchedAt,
-        stale: input.stale,
-        sheetUrl: input.sheetUrl,
     };
 }

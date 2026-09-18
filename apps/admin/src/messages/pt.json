@@ -140,13 +140,11 @@
         },
         "metrics": {
             "title": "Estatísticas",
-            "description": "Desde março de 2022 · {currency} à taxa de abertura de cada mês",
-            "open-sheet": "Abrir folha",
+            "description": "{currency} à taxa de abertura de cada mês",
             "error": "Não foi possível carregar esta parte das estatísticas.",
             "currency": "Moeda",
             "to-date": "até à data",
             "year-to-date": "{year} até à data",
-            "stale": "A mostrar a última leitura bem-sucedida de {time}",
             "tiles": {
                 "sales": "Vendas ({currency})",
                 "commission": "Comissão ({currency})",
@@ -220,7 +218,7 @@
                 "zar-trend": "USD → ZAR por mês",
                 "provisional": "≈ taxa provisória, retirada de um mês próximo",
                 "provisional-months": "{count, plural, one {# mês usa a taxa de um mês próximo} other {# meses usam a taxa de um mês próximo}}",
-                "note": "Cada mês converte à taxa do seu primeiro dia, fixada uma vez no separador MONTHLY RATES da folha. Edite a linha aí para a alterar.",
+                "note": "Cada mês converte à taxa do seu primeiro dia, da tabela de câmbios diários da Appload.",
                 "empty": "Ainda não há taxa fixada para este mês"
             },
             "table": {
@@ -231,7 +229,7 @@
                 "empty": "Nada registado em {year}",
                 "empty-years": "Ainda nada registado",
                 "parties-note": "Clientes e transportadores contam-se uma única vez nos pedidos do ano.",
-                "empty-description": "Escolha outro ano ou verifique o separador STATS na folha",
+                "empty-description": "Escolha outro ano",
                 "columns": {
                     "year": "Ano",
                     "month": "Mês",
