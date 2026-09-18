@@ -1,10 +1,14 @@
+import { maputoToday } from "@workspace/domain/kpis/types";
+
 const ORDER_ID_PATTERN = /^APPL(\d+)\.(\d{2})$/;
 
 /**
  * Full calendar year stored on the order row (the list filter queries it
  * as e.g. 2026); the Order Id suffix uses the two-digit form (".26").
+ * Maputo's year, not the server's: Vercel runs in UTC, which would still
+ * number orders ".26" for the first two hours of 1 January in Maputo.
  */
-export const currentOrderYear = () => new Date().getFullYear();
+export const currentOrderYear = () => Number(maputoToday().slice(0, 4));
 
 export const formatOrderId = (seq: number, year: number) =>
     `APPL${String(seq).padStart(3, "0")}.${String(year % 100).padStart(2, "0")}`;

@@ -436,23 +436,10 @@ the admin projects is harmless but does nothing.
    predate the change carry `To Loading` as well; the app no longer writes
    it, so leave it in the dropdown only for as long as old rows still
    show it.
-4. **Seed the logbook's `MONTHLY RATES` tab once per environment.** The
-   Metrics page reads the same logbook the sync writes to (step 2) and pins
-   each month's opening exchange rate in a `MONTHLY RATES` tab there,
-   appending one row a month — the editor access step 2 requires covers it.
-   Backfill the history once per logbook: dry-run first, read the table it
-   prints, then write:
-
-   ```bash
-   node packages/db/scripts/seed-monthly-rates.mjs
-   node packages/db/scripts/seed-monthly-rates.mjs --yes
-   ```
-
-   The script reads `apps/admin/.env`, i.e. the dev logbook; for production
-   add `--spreadsheet <production logbook id>`. It fills every month from
-   2022-01 to the current one (Yahoo Finance before March 2024, the daily
-   currency feed after) and never overwrites a month already present, so it
-   is safe to re-run.
+4. **Exchange rates live in the database.** Metrics and KPIs both convert
+   with `fx_daily_rate` (seeded in §1, `0013_fx_daily_rate`); nothing in the
+   logbook to seed. A `MONTHLY RATES` tab left over in a logbook is no longer
+   read and can be deleted.
 5. **Maps (live tracking map).** Enable the **Routes API** on the server key
    behind `GOOGLE_MAPS_API_KEY` — it already carries Places and Geocoding;
    without Routes every order draws a straight line between geocoded
