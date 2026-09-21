@@ -14,6 +14,7 @@ import {
     movementDocument,
     movementEvent,
     movementLocation,
+    movementTrackingAlert,
     movementTrackingRequest,
     type Movement,
     type MovementDispute,
@@ -199,6 +200,51 @@ export const silentToday = (tenantId: string, now: Date): SQL =>
                 gte(movementLocation.recordedAt, startOfDay(now)),
             )}
         )`,
+    ) as SQL;
+
+// ponytail: 18h ≈ one slot cycle — an off-route alert counts until the next
+// day's same slot has had its say; per-slot precision if stale flags annoy
+const OFF_ROUTE_RECENT_HOURS = 18;
+
+/**
+ * Loads whose truck answered a recent slot from beyond the planned route's
+ * corridor (movement-review.ts writes the alert). The company's own rows
+ * only, like `silentToday`: how a partner's driver drives is the partner's
+ * business until the escalation says otherwise.
+ */
+export const offRouteRecently = (tenantId: string): SQL =>
+    and(
+        eq(movement.organizationId, tenantId),
+        inArray(movement.status, IN_PROGRESS_STATUSES),
+        sql`exists (
+            select 1 from ${movementTrackingAlert} where ${and(
+                eq(movementTrackingAlert.movementId, movement.id),
+                eq(movementTrackingAlert.issue, "off-route"),
+                sql`${movementTrackingAlert.createdAt} >= now() - interval '${sql.raw(String(OFF_ROUTE_RECENT_HOURS))} hours'`,
+            )}
+        )`,
+    ) as SQL;
+
+/** The owner's rows with at least one live cost line — the "has costs" toggle. */
+export const hasCosts = (tenantId: string): SQL =>
+    and(
+        eq(movement.organizationId, tenantId),
+        sql`exists (
+            select 1 from ${movementCost} where ${and(
+                eq(movementCost.movementId, movement.id),
+                isNull(movementCost.deletedAt),
+            )}
+        )`,
+    ) as SQL;
+
+/**
+ * The owner's rows a given partner is on, as client or as carrier. Owner
+ * rows only: who is on a row the tenant does not own is not its to filter by.
+ */
+export const withPartner = (partnerId: string, tenantId: string): SQL =>
+    and(
+        eq(movement.organizationId, tenantId),
+        or(eq(movement.clientOrgId, partnerId), eq(movement.carrierOrgId, partnerId)),
     ) as SQL;
 
 /** Loads somebody else moves for this company. */
@@ -618,6 +664,8 @@ export function toMovementRow(
         terminalRig?: TerminalRig | null;
         /** Read by whoever shows it: the list (`loadDisputed`) and the detail */
         inDispute?: boolean;
+        /** A recent off-route alert covers the row (`loadOffRoute`); owner only */
+        offRoute?: boolean;
         /** The Appload ids of the orders these rows follow (`loadApploadRefs`) */
         apploadRefs?: Map<string, string>;
     },
@@ -653,6 +701,7 @@ export function toMovementRow(
         receivable: headline(money.receivable),
         isLinked: owner && row.executionMovementId !== null,
         inDispute: ctx.inDispute ?? false,
+        offRoute: owner && (ctx.offRoute ?? false),
         lastPing: ctx.pings.last.get(ctx.trailId) ?? null,
         pingCount: ctx.pings.counts.get(ctx.trailId) ?? 0,
         version: row.version,
@@ -709,6 +758,8 @@ type DetailExtras = {
     apploadRefs?: Map<string, string>;
     hasParent: boolean;
     executorOnPortal: boolean;
+    /** A recent off-route alert covers the row (`loadOffRoute`) */
+    offRoute: boolean;
     costs: readonly CostRow[];
     documents: readonly MovementDocumentView[];
     /** Loading photos nobody has validated on the row the papers are read from */
@@ -1155,6 +1206,18 @@ export async function loadDisputed(db: Db, ids: readonly string[]): Promise<Set<
         .select({ id: movement.id })
         .from(movement)
         .where(and(inArray(movement.id, [...ids]), inDispute()));
+
+    return new Set(rows.map((row) => row.id));
+}
+
+/** The rows of a page a recent off-route alert covers (`offRouteRecently`). */
+export async function loadOffRoute(db: Db, ids: readonly string[], tenantId: string): Promise<Set<string>> {
+    if (ids.length === 0) return new Set();
+
+    const rows = await db
+        .select({ id: movement.id })
+        .from(movement)
+        .where(and(inArray(movement.id, [...ids]), offRouteRecently(tenantId)));
 
     return new Set(rows.map((row) => row.id));
 }

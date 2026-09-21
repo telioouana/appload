@@ -1,7 +1,7 @@
 "use client"
 
-import { useCallback } from "react"
-import { useIsFetching, useSuspenseQuery } from "@tanstack/react-query"
+import { useCallback, useState } from "react"
+import { useIsFetching, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
 
 import { useTranslations } from "@workspace/i18n"
 
@@ -11,14 +11,17 @@ import { DataTable, useDataTable } from "@workspace/ui/customs/list/data-table"
 import { ListCard } from "@workspace/ui/customs/list/list-card"
 import { ListFooter } from "@workspace/ui/customs/list/list-footer"
 import { ListToolbar } from "@workspace/ui/customs/list/list-toolbar"
-import { FilterToggle } from "@workspace/ui/customs/list/filter-controls"
+import { downloadCsv, stamp } from "@workspace/ui/lib/csv"
 
 import { useRouter } from "@/i18n/navigation"
+import { MOVEMENT_COST_KIND } from "@/backend/schemas/movement"
 import { useTRPC } from "@/backend/api/client"
+import { useQuery } from "@tanstack/react-query"
 import { useStatusLabel } from "@/frontend/pages/movements/components/badges"
 import { useMovementColumns } from "@/frontend/pages/movements/columns/movement-columns"
 import { useMovementsList } from "@/frontend/pages/movements/hooks/use-movements-list"
 import { useNewLoad } from "@/frontend/pages/movements/hooks/use-new-load"
+import { MovementFilters } from "@/frontend/pages/movements/sections/movement-filters"
 import {
     DEFAULT_DIR,
     DEFAULT_SORT,
@@ -52,7 +55,7 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
     const trpc = useTRPC()
     const router = useRouter()
 
-    const { get, sort, onSort } = useMovementsList()
+    const { get, sort, onSort, activeFilters } = useMovementsList()
     const { open: openNewLoad } = useNewLoad()
 
     const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
@@ -91,9 +94,50 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
         ...statuses.map((status) => ({ value: status, label: statusLabel(status), count: statusCount(status) })),
     ]
 
-    const chips = get("silent") === "1"
-        ? [{ key: "silent", label: t("filters.tracking"), value: t("filters.silent") }]
-        : []
+    // The chips name the chosen partner, when the options have arrived; the
+    // popover fetches the same query, so this only reads the cache
+    const { data: filterOptions } = useQuery(trpc.movements.formOptions.queryOptions())
+    const chips = activeFilters(filterOptions)
+
+    const queryClient = useQueryClient()
+    const [isExporting, setExporting] = useState(false)
+
+    // A kind's cell: its lines' sums, one per currency, "1234.56 MZN" apiece
+    const cell = (lines: Array<{ currency: string; amount?: number; total?: number }>) =>
+        lines.map((line) => `${line.amount ?? line.total} ${line.currency}`).join(" · ")
+
+    const exportRows = async () => {
+        setExporting(true)
+        try {
+            const { page: _page, pageSize: _pageSize, ...rest } = input
+            const items = await queryClient.fetchQuery(trpc.movements.export.queryOptions(rest))
+            const date = (value: Date | null) => (value ? value.toISOString().slice(0, 10) : "")
+
+            downloadCsv(
+                `loads-${scope}-${section}-${stamp()}.csv`,
+                [
+                    "Ref", "Order", "Status", "From", "To", "Client", "Carrier", "Owner", "Driver", "Truck",
+                    "Expected loading", "Delivered", "Receivable", "Payable",
+                    ...MOVEMENT_COST_KIND.map((kind) => `Cost: ${kind}`),
+                    "Costs total", "Margin",
+                ],
+                items.map((row) => [
+                    row.ref, row.apploadOrderId ?? "", row.status,
+                    row.origin.address, row.destination.address,
+                    row.client?.name ?? "", row.carrier?.name ?? "", row.owner?.name ?? "",
+                    row.driverName ?? "", row.truckPlate ?? "",
+                    date(row.expectedLoadingDate), date(row.deliveredAt),
+                    row.receivable ? `${row.receivable.total} ${row.receivable.currency}` : "",
+                    row.payable ? `${row.payable.total} ${row.payable.currency}` : "",
+                    ...MOVEMENT_COST_KIND.map((kind) => cell(row.costs.filter((line) => line.kind === kind))),
+                    cell(row.costTotals),
+                    row.margin ? `${row.margin.amount} ${row.margin.currency}` : "",
+                ]),
+            )
+        } finally {
+            setExporting(false)
+        }
+    }
 
     // A transporter's own trucks come from its clients; nobody files one
     const ownTripsFromClients = scope === "trips" && orgType === "carrier"
@@ -105,17 +149,9 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
                 tabs={{ param: "status", items: tabs, as: section === "in-progress" ? "menu" : "tabs" }}
                 filterCount={chips.length}
                 activeFilters={chips}
-                filters={
-                    <div className="flex flex-col gap-1">
-                        <FilterToggle
-                            label={t("filters.silent")}
-                            hint={t("filters.silent-hint")}
-                            param="silent"
-                            value="1"
-                            count={stats.silent}
-                        />
-                    </div>
-                }
+                filters={<MovementFilters stats={stats} />}
+                onExport={exportRows}
+                isExporting={isExporting}
                 sort={{
                     defaultValue: DEFAULT_SORT,
                     defaultDir: DEFAULT_DIR,

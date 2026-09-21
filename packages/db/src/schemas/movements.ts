@@ -443,10 +443,12 @@ export type CreateMovementTrackingRequest = typeof movementTrackingRequest.$infe
  * What was wrong with a slot's tracking. "no-location" is the driver who
  * never answered; "short-distance" the one who answered from where he already
  * was; "picked-address" the one who chose a place off his phone's list
- * instead of sharing where the truck actually is — the only one of the three
- * that looks like compliance from a distance, which is why it is named.
+ * instead of sharing where the truck actually is — the only one of them
+ * that looks like compliance from a distance, which is why it is named;
+ * "off-route" the truck that answered from beyond the planned route's
+ * corridor.
  */
-export const TRACKING_ALERT_ISSUE = ["no-location", "short-distance", "picked-address"] as const;
+export const TRACKING_ALERT_ISSUE = ["no-location", "short-distance", "picked-address", "off-route"] as const;
 export type TrackingAlertIssue = (typeof TRACKING_ALERT_ISSUE)[number];
 
 /**

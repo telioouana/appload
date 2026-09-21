@@ -1146,6 +1146,34 @@ async function reviewedSlots() {
     check("on route, six kilometres is standing still", (await alertOn(road, judged["on-route"]))?.issue === "short-distance", await alertOn(road, judged["on-route"]));
     check("…at the border the same two pings raise nothing", run.reviewed === 2 && run.alerts === 1 && await alertOn(road, judged["at-border"]) === undefined,
         { run, border: await alertOn(road, judged["at-border"]) });
+
+    console.log("\n— off the planned route");
+    // B's truck answering from 46 km off the cached route's line, then from
+    // on it having covered ground — the second slot proves both that a truck
+    // near the line is not judged off-route and that its round resets
+    const detour: SlotInfo = { slotDate: "2099-03-06", slot: "morning", minutesIntoSlot: 95 };
+    const back: SlotInfo = { slotDate: "2099-03-06", slot: "afternoon", minutesIntoSlot: 95 };
+
+    const routed = await ownTrip({ cargoDescription: "HARNESS review off-route", driverName: "HARNESS Detour", driverPhone: "+258840000994" });
+    await db.update(movement).set({ status: "on-route" }).where(eq(movement.id, routed.id));
+    // A straight line (-15,39) → (-16,40), encoded at the usual 1e-5 precision
+    await db.insert(movementRoute).values({
+        movementId: routed.id,
+        originPlaceId: "HARNESS-origin", destinationPlaceId: "HARNESS-destination",
+        originLat: -15, originLng: 39, destinationLat: -16, destinationLng: 40,
+        encodedPolyline: "~tpzA_e`mF~hbE_ibE", source: "routes",
+    });
+
+    await asked(detour, "responded", routed.id);
+    await db.insert(movementLocation).values({ movementId: routed.id, latitude: -15.2, longitude: 39.8, placeName: null, recordedAt: new Date(slotStart(detour).getTime() + 30 * 60_000) });
+    run = await reviewMovementSlot(db, detour);
+    check("forty-six kilometres off the planned line is off-route", (await alertOn(detour, routed.id))?.issue === "off-route" && run.alerts === 1, await alertOn(detour, routed.id));
+
+    await asked(back, "responded", routed.id);
+    await db.insert(movementLocation).values({ movementId: routed.id, latitude: -15.9, longitude: 39.9, placeName: null, recordedAt: new Date(slotStart(back).getTime() + 30 * 60_000) });
+    run = await reviewMovementSlot(db, back);
+    check("back on the line, having covered ground, raises nothing", run.reviewed === 1 && run.alerts === 0 && await alertOn(back, routed.id) === undefined,
+        { run, alert: await alertOn(back, routed.id) });
 }
 
 /** §11.13 — what the dev script had to leave behind: not one row of the removed status. */

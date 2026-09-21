@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, lt, lte, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 
 import { chatConversation, chatMessage } from "@workspace/db/chats";
 import { partnerConnection } from "@workspace/db/connections";
@@ -36,7 +36,7 @@ import { nextReference } from "@workspace/domain/movements/counters";
 import { activeDisputeFor, openDispute, resolveDispute } from "@workspace/domain/movements/disputes";
 import { unapprovedPhotos } from "@workspace/domain/movements/documents";
 import { isConnected, isOnPortal, organizationName, terminalMovementId } from "@workspace/domain/movements/link";
-import { settlementStatus } from "@workspace/domain/movements/money";
+import { costTotals, exVat, margin, settlementStatus, type Currency } from "@workspace/domain/movements/money";
 import { assertExecutor, convertMovement, offerMovement, respondToOffer, withdrawOffer } from "@workspace/domain/movements/offer";
 import { editableGroups, isExecutorOf, movementRole, type EditableGroup } from "@workspace/domain/movements/policy";
 import { movementRef, needsOrderReference } from "@workspace/domain/movements/refs";
@@ -87,7 +87,9 @@ import {
 } from "@/backend/schemas/movement";
 import { assertEdgeStoreUrl } from "@/frontend/pages/orders/server/projection";
 import {
+    hasCosts,
     hasParentRow,
+    inDispute,
     loadApploadRefs,
     loadCosts,
     loadDisputed,
@@ -95,6 +97,7 @@ import {
     loadDocuments,
     loadEvents,
     loadNames,
+    loadOffRoute,
     loadOrgEmail,
     loadOwn,
     loadPings,
@@ -102,6 +105,7 @@ import {
     loadTerminalRigs,
     loadTrailerPlate,
     loadVisible,
+    offRouteRecently,
     partnerMoveNeeds,
     received,
     sectionPredicate,
@@ -111,6 +115,7 @@ import {
     toMovementRow,
     trailIds,
     visibleMovements,
+    withPartner,
 } from "@/frontend/pages/movements/server/projection";
 import {
     MOVEMENT_SCOPES,
@@ -118,6 +123,7 @@ import {
     PAGE_SIZES,
     SECTIONS,
     type LoadFormOptions,
+    type MovementCashflow,
     type MovementDetail,
     type MovementRow,
     type MovementStats,
@@ -136,6 +142,12 @@ type Db = typeof Database;
  * ask, and hands every response to projection.ts to be cut down to what the
  * caller may see.
  */
+
+// Rows an export may carry, the same ceiling admin's orders export keeps
+const EXPORT_LIMIT = 2000;
+
+/** A numeric column as the number it is, or the null it is. */
+const numOrNull = (value: string | null) => (value === null ? null : Number(value));
 
 const actorOf = (tenant: { organizationId: string; userId: string }): MovementActor => ({
     organizationId: tenant.organizationId,
@@ -294,6 +306,15 @@ const ListInput = z.object({
     search: z.string().trim().max(120).optional(),
     /** The tile: asked for a position today and still silent */
     silent: z.literal(true).optional(),
+    disputed: z.literal(true).optional(),
+    offRoute: z.literal(true).optional(),
+    hasCosts: z.literal(true).optional(),
+    /** A partner company on the load; only the owner's own rows match */
+    partner: z.string().max(64).optional(),
+    /** The loading period: a month of the current year, or an explicit range that wins over it */
+    month: z.number().int().min(1).max(12).optional(),
+    from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     sort: z.enum(MOVEMENT_SORTS).default("newest"),
     dir: z.enum(["asc", "desc"]).default("desc"),
     page: z.number().int().positive().default(1),
@@ -324,6 +345,30 @@ function searchWhere(term: string, tenantId: string): SQL | undefined {
     );
 }
 
+/**
+ * The loading period, the way admin's orders list cuts it: an explicit range
+ * wins over a month, and a month means that month of the current year.
+ */
+function loadingPeriod(input: Pick<ListInput, "month" | "from" | "to">): SQL | undefined {
+    if (input.from || input.to) {
+        return and(
+            input.from ? gte(movement.expectedLoadingDate, new Date(`${input.from}T00:00:00`)) : undefined,
+            input.to ? lte(movement.expectedLoadingDate, new Date(`${input.to}T23:59:59.999`)) : undefined,
+        );
+    }
+
+    if (input.month) {
+        const year = new Date().getFullYear();
+
+        return and(
+            gte(movement.expectedLoadingDate, new Date(year, input.month - 1, 1)),
+            lt(movement.expectedLoadingDate, new Date(year, input.month, 1)),
+        );
+    }
+
+    return undefined;
+}
+
 function ordering(sort: ListInput["sort"], dir: "asc" | "desc"): SQL[] {
     const by = (column: AnyColumn) =>
         dir === "desc" ? sql`${column} desc nulls last` : sql`${column} asc nulls last`;
@@ -340,11 +385,12 @@ async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<
     const roles = rows.map((row) => ({ row, role: roleOrThrow(row, tenantId) }));
     const trails = await trailIds(db, rows);
     const linkedTerminals = rows.filter((row) => row.executionMovementId).map((row) => trails.get(row.id) ?? row.id);
-    const [names, pings, rigs, disputed, apploadRefs] = await Promise.all([
+    const [names, pings, rigs, disputed, offRoute, apploadRefs] = await Promise.all([
         loadNames(db, rows.flatMap((row) => [row.organizationId, row.clientOrgId, row.carrierOrgId])),
         loadPings(db, [...trails.values()]),
         loadTerminalRigs(db, linkedTerminals),
         loadDisputed(db, rows.map((row) => row.id)),
+        loadOffRoute(db, rows.map((row) => row.id), tenantId),
         loadApploadRefs(db, rows.map((row) => row.orderId)),
     ]);
 
@@ -363,6 +409,7 @@ async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<
             // opened on a load still being asked about. The detail page,
             // which reads the trail, is exact
             inDispute: role !== "executor" && disputed.has(row.id),
+            offRoute: offRoute.has(row.id),
         });
     });
 }
@@ -405,7 +452,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
 
     const linked = row.executionMovementId !== null;
 
-    const [names, pings, costs, documents, events, disputes, hasParent, executorOnPortal, rigs, terminalProofs, carrierEmail, trailerPlate, photosWaiting, apploadRefs] = await Promise.all([
+    const [names, pings, costs, documents, events, disputes, hasParent, executorOnPortal, rigs, terminalProofs, carrierEmail, trailerPlate, photosWaiting, apploadRefs, offRoute] = await Promise.all([
         loadNames(db, [row.organizationId, row.clientOrgId, row.carrierOrgId]),
         loadPings(db, [trailId]),
         owner ? loadCosts(db, row.id) : Promise.resolve([]),
@@ -423,6 +470,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
         // for them: what a load still lacks is the owner's own reading
         owner ? unapprovedPhotos(db, row.id) : Promise.resolve(0),
         loadApploadRefs(db, [row.orderId]),
+        owner ? loadOffRoute(db, [row.id], tenantId) : Promise.resolve(new Set<string>()),
     ]);
 
     return toMovementDetail(row, role, {
@@ -437,6 +485,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
         apploadRefs,
         hasParent,
         executorOnPortal,
+        offRoute: offRoute.has(row.id),
         costs,
         documents,
         events,
@@ -526,6 +575,11 @@ export const movementsRouter = createTRPCRouter({
                 input.status ? statusFilter(input.status) : undefined,
                 input.search ? searchWhere(input.search, tenantId) : undefined,
                 input.silent ? silentToday(tenantId, new Date()) : undefined,
+                input.disputed ? inDispute() : undefined,
+                input.offRoute ? offRouteRecently(tenantId) : undefined,
+                input.hasCosts ? hasCosts(tenantId) : undefined,
+                input.partner ? withPartner(input.partner, tenantId) : undefined,
+                loadingPeriod(input),
             );
 
             const [rows, [counted]] = await Promise.all([
@@ -570,6 +624,11 @@ export const movementsRouter = createTRPCRouter({
                 silentToday(tenantId, new Date()),
             )})::int`.mapWith(Number);
 
+            select.offRoute = sql<number>`count(*) filter (where ${and(
+                sectionPredicate(input.scope, "all", tenantId),
+                offRouteRecently(tenantId),
+            )})::int`.mapWith(Number);
+
             if (input.scope === "trips") {
                 select.received = sql<number>`count(*) filter (where ${received(tenantId)})::int`.mapWith(Number);
             }
@@ -596,7 +655,180 @@ export const movementsRouter = createTRPCRouter({
                 byStatus: Object.fromEntries(statuses.map((entry) => [entry.status, entry.value])),
                 received: Number(row?.received ?? 0),
                 silent: Number(row?.silent ?? 0),
+                offRoute: Number(row?.offRoute ?? 0),
             };
+        }),
+
+    /**
+     * The money strip above the list: what the company's own rows of the
+     * section on screen earn and cost, per currency. Revenue is the sell
+     * legs before VAT; costs the buy legs before VAT plus the absorbed cost
+     * lines (a rechargeable line passes to the client — money.ts); margin
+     * their difference within one currency, never converted and never
+     * summed across two. Its own procedure rather than more of `stats`,
+     * which the header calls for both scopes and has to stay cheap.
+     */
+    cashflow: tenantProcedure
+        .input(z.object({ scope: z.enum(MOVEMENT_SCOPES), section: z.enum(SECTIONS).default("all") }))
+        .query(async ({ ctx, input }): Promise<MovementCashflow> => {
+            const tenantId = ctx.tenant.organizationId;
+            const owned = and(
+                visibleMovements(tenantId),
+                sectionPredicate(input.scope, input.section, tenantId),
+                eq(movement.organizationId, tenantId),
+            );
+
+            const [rows, costGroups] = await Promise.all([
+                ctx.db
+                    .select({
+                        sellSubtotal: movement.sellSubtotal,
+                        sellVat: movement.sellVat,
+                        sellTotal: movement.sellTotal,
+                        sellCurrency: movement.sellCurrency,
+                        buySubtotal: movement.buySubtotal,
+                        buyVat: movement.buyVat,
+                        buyTotal: movement.buyTotal,
+                        buyCurrency: movement.buyCurrency,
+                    })
+                    .from(movement)
+                    .where(owned),
+                ctx.db
+                    .select({
+                        currency: movementCost.currency,
+                        total: sql<number>`coalesce(sum(${movementCost.amount}), 0)`.mapWith(Number),
+                        rechargeable: sql<number>`coalesce(sum(${movementCost.amount}) filter (where ${movementCost.rechargeable}), 0)`.mapWith(Number),
+                    })
+                    .from(movementCost)
+                    .innerJoin(movement, eq(movement.id, movementCost.movementId))
+                    .where(and(owned, isNull(movementCost.deletedAt)))
+                    .groupBy(movementCost.currency),
+            ]);
+
+            // ponytail: folded in memory over the tenant's own rows; move the
+            // exVat arithmetic into SQL if row counts ever make this slow
+            const lines = new Map<Currency, { revenue: number; costs: number }>();
+            const at = (currency: Currency) => {
+                const line = lines.get(currency) ?? { revenue: 0, costs: 0 };
+                lines.set(currency, line);
+                return line;
+            };
+
+            for (const row of rows) {
+                if (row.sellTotal !== null && row.sellCurrency) {
+                    at(row.sellCurrency).revenue += exVat({ subtotal: numOrNull(row.sellSubtotal), vat: numOrNull(row.sellVat), total: Number(row.sellTotal) });
+                }
+                if (row.buyTotal !== null && row.buyCurrency) {
+                    at(row.buyCurrency).costs += exVat({ subtotal: numOrNull(row.buySubtotal), vat: numOrNull(row.buyVat), total: Number(row.buyTotal) });
+                }
+            }
+
+            for (const group of costGroups) {
+                at(group.currency).costs += group.total - group.rechargeable;
+            }
+
+            const round = (value: number) => Math.round(value * 100) / 100;
+
+            return {
+                lines: [...lines.entries()]
+                    .map(([currency, line]) => ({
+                        currency,
+                        revenue: round(line.revenue),
+                        costs: round(line.costs),
+                        margin: round(line.revenue - line.costs),
+                    }))
+                    .sort((a, b) => a.currency.localeCompare(b.currency)),
+            };
+        }),
+
+    /**
+     * The list as a file: the same predicate and order the page shows,
+     * uncut by paging, each owned row carrying its cost lines summed per
+     * kind and its margin (money.ts — net of what the client repays, blank
+     * when the legs disagree on currency). Capped like admin's export.
+     */
+    export: tenantProcedure
+        .input(ListInput.omit({ page: true, pageSize: true }))
+        .query(async ({ ctx, input }) => {
+            const tenantId = ctx.tenant.organizationId;
+            const where = and(
+                visibleMovements(tenantId),
+                sectionPredicate(input.scope, input.section, tenantId),
+                input.status ? statusFilter(input.status) : undefined,
+                input.search ? searchWhere(input.search, tenantId) : undefined,
+                input.silent ? silentToday(tenantId, new Date()) : undefined,
+                input.disputed ? inDispute() : undefined,
+                input.offRoute ? offRouteRecently(tenantId) : undefined,
+                input.hasCosts ? hasCosts(tenantId) : undefined,
+                input.partner ? withPartner(input.partner, tenantId) : undefined,
+                loadingPeriod(input),
+            );
+
+            const rows = await ctx.db
+                .select()
+                .from(movement)
+                .where(where)
+                .orderBy(...ordering(input.sort, input.dir))
+                .limit(EXPORT_LIMIT);
+
+            const items = await projectRows(ctx.db, rows, tenantId);
+
+            // Cost lines are the owner's own book; other roles export blanks
+            const ownedIds = rows.filter((row) => row.organizationId === tenantId).map((row) => row.id);
+            const costRows = ownedIds.length === 0 ? [] : await ctx.db
+                .select({
+                    movementId: movementCost.movementId,
+                    kind: movementCost.kind,
+                    currency: movementCost.currency,
+                    rechargeable: movementCost.rechargeable,
+                    amount: sql<number>`sum(${movementCost.amount})`.mapWith(Number),
+                })
+                .from(movementCost)
+                .where(and(inArray(movementCost.movementId, ownedIds), isNull(movementCost.deletedAt)))
+                .groupBy(movementCost.movementId, movementCost.kind, movementCost.currency, movementCost.rechargeable);
+
+            const costsOf = new Map<string, typeof costRows>();
+            for (const line of costRows) {
+                const list = costsOf.get(line.movementId);
+                if (list) list.push(line); else costsOf.set(line.movementId, [line]);
+            }
+
+            const legAmount = (row: Movement, side: "sell" | "buy") => {
+                const total = side === "sell" ? row.sellTotal : row.buyTotal;
+                const currency = side === "sell" ? row.sellCurrency : row.buyCurrency;
+
+                if (total === null || currency === null) return null;
+
+                return {
+                    amount: exVat({
+                        subtotal: numOrNull(side === "sell" ? row.sellSubtotal : row.buySubtotal),
+                        vat: numOrNull(side === "sell" ? row.sellVat : row.buyVat),
+                        total: Number(total),
+                    }),
+                    currency,
+                };
+            };
+
+            return items.map((item, index) => {
+                const row = rows[index]!;
+                const owner = row.organizationId === tenantId;
+                const costs = costsOf.get(item.id) ?? [];
+                const totals = costTotals(costs);
+                const net = owner
+                    ? margin({
+                        sell: legAmount(row, "sell"),
+                        buy: legAmount(row, "buy"),
+                        ownFleet: row.execution === "own-fleet",
+                        costs: totals,
+                    }).net
+                    : null;
+
+                return {
+                    ...item,
+                    costs: costs.map(({ kind, currency, amount }) => ({ kind, currency, amount })),
+                    costTotals: totals,
+                    margin: net,
+                };
+            });
         }),
 
     /**

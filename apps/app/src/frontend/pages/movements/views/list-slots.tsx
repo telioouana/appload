@@ -138,6 +138,7 @@ export async function MovementsStatsSlot({ params, searchParams }: SectionParams
 
     prefetch(trpc.me.session.queryOptions())
     prefetch(trpc.movements.stats.queryOptions({ scope }))
+    prefetch(trpc.movements.cashflow.queryOptions({ scope, section }))
 
     return (
         <HydrateClient>
