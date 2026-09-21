@@ -1,0 +1,18 @@
+{
+    "title": "Relatório de viagens",
+    "description": "As suas cargas num período, com custos e margem",
+    "columns": {
+        "load": "Carga",
+        "status": "Estado",
+        "lane": "Rota",
+        "partner": "Parceiro",
+        "loading": "Carregamento",
+        "revenue": "Receita",
+        "costs": "Custos",
+        "margin": "Margem"
+    },
+    "export": "Exportar CSV",
+    "empty": "Sem cargas neste período",
+    "no-results": "Nada corresponde a estes filtros",
+    "error": "Não foi possível carregar o relatório"
+}

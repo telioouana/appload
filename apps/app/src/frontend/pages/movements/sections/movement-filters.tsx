@@ -54,9 +54,10 @@ export function MovementFilters({ stats }: { stats: MovementStats }) {
 /**
  * A month of the current year or a from/to pair, on the expected loading
  * date. The two are one filter: choosing a month clears the dates and vice
- * versa, and all three params travel in a single URL replace.
+ * versa, and all three params travel in a single URL replace. The report
+ * page reuses it outside the popover.
  */
-function PeriodFilter() {
+export function PeriodFilter() {
     const t = useTranslations("App.loads.filters")
     const { get, set } = useListParams()
 

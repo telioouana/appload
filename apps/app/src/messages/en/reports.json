@@ -1,0 +1,18 @@
+{
+    "title": "Trip report",
+    "description": "Your loads over a period, with their costs and margin",
+    "columns": {
+        "load": "Load",
+        "status": "Status",
+        "lane": "Route",
+        "partner": "Partner",
+        "loading": "Loading",
+        "revenue": "Revenue",
+        "costs": "Costs",
+        "margin": "Margin"
+    },
+    "export": "Export CSV",
+    "empty": "No loads in this period",
+    "no-results": "Nothing matches these filters",
+    "error": "The report could not load"
+}

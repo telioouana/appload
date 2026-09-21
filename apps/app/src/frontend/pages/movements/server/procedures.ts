@@ -380,6 +380,122 @@ function ordering(sort: ListInput["sort"], dir: "asc" | "desc"): SQL[] {
     }
 }
 
+type MoneyLegRow = Pick<
+    Movement,
+    "sellSubtotal" | "sellVat" | "sellTotal" | "sellCurrency" | "buySubtotal" | "buyVat" | "buyTotal" | "buyCurrency"
+>;
+
+/**
+ * Money legs and cost sums folded into strip lines, one per currency:
+ * revenue is the sell legs before VAT, costs the buy legs before VAT plus
+ * the absorbed cost lines (a rechargeable line passes to the client —
+ * money.ts), margin their difference. Never converted, never summed
+ * across two currencies.
+ *
+ * ponytail: folded in memory over the tenant's own rows; move the exVat
+ * arithmetic into SQL if row counts ever make this slow
+ */
+function foldCashflow(
+    rows: MoneyLegRow[],
+    costGroups: Array<{ currency: Currency; total: number; rechargeable: number }>,
+): MovementCashflow["lines"] {
+    const lines = new Map<Currency, { revenue: number; costs: number }>();
+    const at = (currency: Currency) => {
+        const line = lines.get(currency) ?? { revenue: 0, costs: 0 };
+        lines.set(currency, line);
+        return line;
+    };
+
+    for (const row of rows) {
+        if (row.sellTotal !== null && row.sellCurrency) {
+            at(row.sellCurrency).revenue += exVat({ subtotal: numOrNull(row.sellSubtotal), vat: numOrNull(row.sellVat), total: Number(row.sellTotal) });
+        }
+        if (row.buyTotal !== null && row.buyCurrency) {
+            at(row.buyCurrency).costs += exVat({ subtotal: numOrNull(row.buySubtotal), vat: numOrNull(row.buyVat), total: Number(row.buyTotal) });
+        }
+    }
+
+    for (const group of costGroups) {
+        at(group.currency).costs += group.total - group.rechargeable;
+    }
+
+    const round = (value: number) => Math.round(value * 100) / 100;
+
+    return [...lines.entries()]
+        .map(([currency, line]) => ({
+            currency,
+            revenue: round(line.revenue),
+            costs: round(line.costs),
+            margin: round(line.revenue - line.costs),
+        }))
+        .sort((a, b) => a.currency.localeCompare(b.currency));
+}
+
+/**
+ * Each owned row's cost lines summed per kind and its margin (money.ts —
+ * net of what the client repays, null when the legs disagree on currency),
+ * stapled onto the projected rows. Cost lines are the owner's own book;
+ * other roles get blanks.
+ */
+async function withCostColumns(db: Db, rows: Movement[], items: MovementRow[], tenantId: string) {
+    const ownedIds = rows.filter((row) => row.organizationId === tenantId).map((row) => row.id);
+    const costRows = ownedIds.length === 0 ? [] : await db
+        .select({
+            movementId: movementCost.movementId,
+            kind: movementCost.kind,
+            currency: movementCost.currency,
+            rechargeable: movementCost.rechargeable,
+            amount: sql<number>`sum(${movementCost.amount})`.mapWith(Number),
+        })
+        .from(movementCost)
+        .where(and(inArray(movementCost.movementId, ownedIds), isNull(movementCost.deletedAt)))
+        .groupBy(movementCost.movementId, movementCost.kind, movementCost.currency, movementCost.rechargeable);
+
+    const costsOf = new Map<string, typeof costRows>();
+    for (const line of costRows) {
+        const list = costsOf.get(line.movementId);
+        if (list) list.push(line); else costsOf.set(line.movementId, [line]);
+    }
+
+    const legAmount = (row: Movement, side: "sell" | "buy") => {
+        const total = side === "sell" ? row.sellTotal : row.buyTotal;
+        const currency = side === "sell" ? row.sellCurrency : row.buyCurrency;
+
+        if (total === null || currency === null) return null;
+
+        return {
+            amount: exVat({
+                subtotal: numOrNull(side === "sell" ? row.sellSubtotal : row.buySubtotal),
+                vat: numOrNull(side === "sell" ? row.sellVat : row.buyVat),
+                total: Number(total),
+            }),
+            currency,
+        };
+    };
+
+    return items.map((item, index) => {
+        const row = rows[index]!;
+        const owner = row.organizationId === tenantId;
+        const costs = costsOf.get(item.id) ?? [];
+        const totals = costTotals(costs);
+        const net = owner
+            ? margin({
+                sell: legAmount(row, "sell"),
+                buy: legAmount(row, "buy"),
+                ownFleet: row.execution === "own-fleet",
+                costs: totals,
+            }).net
+            : null;
+
+        return {
+            ...item,
+            costs: costs.map(({ kind, currency, amount }) => ({ kind, currency, amount })),
+            costTotals: totals,
+            margin: net,
+        };
+    });
+}
+
 /** A page of rows cut down for this caller, with the names and trails it needs. */
 async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<MovementRow[]> {
     const roles = rows.map((row) => ({ row, role: roleOrThrow(row, tenantId) }));
@@ -704,40 +820,7 @@ export const movementsRouter = createTRPCRouter({
                     .groupBy(movementCost.currency),
             ]);
 
-            // ponytail: folded in memory over the tenant's own rows; move the
-            // exVat arithmetic into SQL if row counts ever make this slow
-            const lines = new Map<Currency, { revenue: number; costs: number }>();
-            const at = (currency: Currency) => {
-                const line = lines.get(currency) ?? { revenue: 0, costs: 0 };
-                lines.set(currency, line);
-                return line;
-            };
-
-            for (const row of rows) {
-                if (row.sellTotal !== null && row.sellCurrency) {
-                    at(row.sellCurrency).revenue += exVat({ subtotal: numOrNull(row.sellSubtotal), vat: numOrNull(row.sellVat), total: Number(row.sellTotal) });
-                }
-                if (row.buyTotal !== null && row.buyCurrency) {
-                    at(row.buyCurrency).costs += exVat({ subtotal: numOrNull(row.buySubtotal), vat: numOrNull(row.buyVat), total: Number(row.buyTotal) });
-                }
-            }
-
-            for (const group of costGroups) {
-                at(group.currency).costs += group.total - group.rechargeable;
-            }
-
-            const round = (value: number) => Math.round(value * 100) / 100;
-
-            return {
-                lines: [...lines.entries()]
-                    .map(([currency, line]) => ({
-                        currency,
-                        revenue: round(line.revenue),
-                        costs: round(line.costs),
-                        margin: round(line.revenue - line.costs),
-                    }))
-                    .sort((a, b) => a.currency.localeCompare(b.currency)),
-            };
+            return { lines: foldCashflow(rows, costGroups) };
         }),
 
     /**
@@ -772,63 +855,78 @@ export const movementsRouter = createTRPCRouter({
 
             const items = await projectRows(ctx.db, rows, tenantId);
 
-            // Cost lines are the owner's own book; other roles export blanks
-            const ownedIds = rows.filter((row) => row.organizationId === tenantId).map((row) => row.id);
-            const costRows = ownedIds.length === 0 ? [] : await ctx.db
-                .select({
-                    movementId: movementCost.movementId,
-                    kind: movementCost.kind,
-                    currency: movementCost.currency,
-                    rechargeable: movementCost.rechargeable,
-                    amount: sql<number>`sum(${movementCost.amount})`.mapWith(Number),
-                })
-                .from(movementCost)
-                .where(and(inArray(movementCost.movementId, ownedIds), isNull(movementCost.deletedAt)))
-                .groupBy(movementCost.movementId, movementCost.kind, movementCost.currency, movementCost.rechargeable);
+            return withCostColumns(ctx.db, rows, items, tenantId);
+        }),
 
-            const costsOf = new Map<string, typeof costRows>();
-            for (const line of costRows) {
-                const list = costsOf.get(line.movementId);
-                if (list) list.push(line); else costsOf.set(line.movementId, [line]);
-            }
+    /**
+     * The report page: the company's own rows over a loading period, each
+     * with its cost lines per kind and its margin, plus the strip totals of
+     * the whole selection — the same figures the cashflow strip shows, cut
+     * by the report's own filters instead of a section.
+     */
+    costReport: tenantProcedure
+        .input(z.object({
+            partner: z.string().max(64).optional(),
+            month: z.number().int().min(1).max(12).optional(),
+            from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+            to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+            page: z.number().int().positive().default(1),
+            // Any of the page sizes, or the export's one full pull
+            pageSize: z.number().int().min(1).max(EXPORT_LIMIT).default(25),
+        }))
+        .query(async ({ ctx, input }) => {
+            const tenantId = ctx.tenant.organizationId;
+            const where = and(
+                eq(movement.organizationId, tenantId),
+                input.partner
+                    ? or(eq(movement.clientOrgId, input.partner), eq(movement.carrierOrgId, input.partner))
+                    : undefined,
+                loadingPeriod(input),
+            );
 
-            const legAmount = (row: Movement, side: "sell" | "buy") => {
-                const total = side === "sell" ? row.sellTotal : row.buyTotal;
-                const currency = side === "sell" ? row.sellCurrency : row.buyCurrency;
+            const [rows, [counted], moneyRows, costGroups] = await Promise.all([
+                ctx.db
+                    .select()
+                    .from(movement)
+                    .where(where)
+                    .orderBy(sql`${movement.expectedLoadingDate} desc nulls last`, desc(movement.seq))
+                    .limit(input.pageSize)
+                    .offset((input.page - 1) * input.pageSize),
+                ctx.db.select({ value: count() }).from(movement).where(where),
+                ctx.db
+                    .select({
+                        sellSubtotal: movement.sellSubtotal,
+                        sellVat: movement.sellVat,
+                        sellTotal: movement.sellTotal,
+                        sellCurrency: movement.sellCurrency,
+                        buySubtotal: movement.buySubtotal,
+                        buyVat: movement.buyVat,
+                        buyTotal: movement.buyTotal,
+                        buyCurrency: movement.buyCurrency,
+                    })
+                    .from(movement)
+                    .where(where),
+                ctx.db
+                    .select({
+                        currency: movementCost.currency,
+                        total: sql<number>`coalesce(sum(${movementCost.amount}), 0)`.mapWith(Number),
+                        rechargeable: sql<number>`coalesce(sum(${movementCost.amount}) filter (where ${movementCost.rechargeable}), 0)`.mapWith(Number),
+                    })
+                    .from(movementCost)
+                    .innerJoin(movement, eq(movement.id, movementCost.movementId))
+                    .where(and(where, isNull(movementCost.deletedAt)))
+                    .groupBy(movementCost.currency),
+            ]);
 
-                if (total === null || currency === null) return null;
+            const items = await projectRows(ctx.db, rows, tenantId);
 
-                return {
-                    amount: exVat({
-                        subtotal: numOrNull(side === "sell" ? row.sellSubtotal : row.buySubtotal),
-                        vat: numOrNull(side === "sell" ? row.sellVat : row.buyVat),
-                        total: Number(total),
-                    }),
-                    currency,
-                };
+            return {
+                items: await withCostColumns(ctx.db, rows, items, tenantId),
+                total: counted?.value ?? 0,
+                page: input.page,
+                pageSize: input.pageSize,
+                lines: foldCashflow(moneyRows, costGroups),
             };
-
-            return items.map((item, index) => {
-                const row = rows[index]!;
-                const owner = row.organizationId === tenantId;
-                const costs = costsOf.get(item.id) ?? [];
-                const totals = costTotals(costs);
-                const net = owner
-                    ? margin({
-                        sell: legAmount(row, "sell"),
-                        buy: legAmount(row, "buy"),
-                        ownFleet: row.execution === "own-fleet",
-                        costs: totals,
-                    }).net
-                    : null;
-
-                return {
-                    ...item,
-                    costs: costs.map(({ kind, currency, amount }) => ({ kind, currency, amount })),
-                    costTotals: totals,
-                    margin: net,
-                };
-            });
         }),
 
     /**

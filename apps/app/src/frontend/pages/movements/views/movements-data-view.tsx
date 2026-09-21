@@ -11,10 +11,9 @@ import { DataTable, useDataTable } from "@workspace/ui/customs/list/data-table"
 import { ListCard } from "@workspace/ui/customs/list/list-card"
 import { ListFooter } from "@workspace/ui/customs/list/list-footer"
 import { ListToolbar } from "@workspace/ui/customs/list/list-toolbar"
-import { downloadCsv, stamp } from "@workspace/ui/lib/csv"
 
 import { useRouter } from "@/i18n/navigation"
-import { MOVEMENT_COST_KIND } from "@/backend/schemas/movement"
+import { downloadLoadsCsv } from "@/frontend/pages/movements/lib/export-csv"
 import { useTRPC } from "@/backend/api/client"
 import { useQuery } from "@tanstack/react-query"
 import { useStatusLabel } from "@/frontend/pages/movements/components/badges"
@@ -102,38 +101,12 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
     const queryClient = useQueryClient()
     const [isExporting, setExporting] = useState(false)
 
-    // A kind's cell: its lines' sums, one per currency, "1234.56 MZN" apiece
-    const cell = (lines: Array<{ currency: string; amount?: number; total?: number }>) =>
-        lines.map((line) => `${line.amount ?? line.total} ${line.currency}`).join(" · ")
-
     const exportRows = async () => {
         setExporting(true)
         try {
             const { page: _page, pageSize: _pageSize, ...rest } = input
             const items = await queryClient.fetchQuery(trpc.movements.export.queryOptions(rest))
-            const date = (value: Date | null) => (value ? value.toISOString().slice(0, 10) : "")
-
-            downloadCsv(
-                `loads-${scope}-${section}-${stamp()}.csv`,
-                [
-                    "Ref", "Order", "Status", "From", "To", "Client", "Carrier", "Owner", "Driver", "Truck",
-                    "Expected loading", "Delivered", "Receivable", "Payable",
-                    ...MOVEMENT_COST_KIND.map((kind) => `Cost: ${kind}`),
-                    "Costs total", "Margin",
-                ],
-                items.map((row) => [
-                    row.ref, row.apploadOrderId ?? "", row.status,
-                    row.origin.address, row.destination.address,
-                    row.client?.name ?? "", row.carrier?.name ?? "", row.owner?.name ?? "",
-                    row.driverName ?? "", row.truckPlate ?? "",
-                    date(row.expectedLoadingDate), date(row.deliveredAt),
-                    row.receivable ? `${row.receivable.total} ${row.receivable.currency}` : "",
-                    row.payable ? `${row.payable.total} ${row.payable.currency}` : "",
-                    ...MOVEMENT_COST_KIND.map((kind) => cell(row.costs.filter((line) => line.kind === kind))),
-                    cell(row.costTotals),
-                    row.margin ? `${row.margin.amount} ${row.margin.currency}` : "",
-                ]),
-            )
+            downloadLoadsCsv(`loads-${scope}-${section}`, items)
         } finally {
             setExporting(false)
         }
