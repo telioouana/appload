@@ -506,9 +506,11 @@ export const MOVEMENT_COST_KIND = [
 export type MovementCostKind = (typeof MOVEMENT_COST_KIND)[number];
 
 /**
- * What one load actually cost to run, line by line. Only the movement's OWNER
- * ever reads these: a cost line is that company's own margin working, and the
- * partner on the other side has no business seeing it.
+ * What one load actually cost to run, line by line. A cost line is one
+ * company's own margin working, and the partner on the other side has no
+ * business seeing it — so every line names its company, each party on a
+ * load keeps its own book, and nobody reads another's (projection.ts
+ * `loadCosts`).
  *
  * Financial records, so the same rules as `order_document`: `restrict` on the
  * movement, and a soft delete rather than a row that disappears from a total
@@ -524,6 +526,9 @@ export const movementCost = pgTable(
         movementId: text("movement_id")
             .notNull()
             .references(() => movement.id, { onDelete: "restrict" }),
+        // The company whose book the line is in; backfilled to the row's
+        // owner, so nullable only in the schema
+        organizationId: text("organization_id").references(() => organization.id),
         kind: text("kind", { enum: MOVEMENT_COST_KIND }).notNull(),
         description: text("description"),
         amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),

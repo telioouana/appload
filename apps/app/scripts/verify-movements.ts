@@ -680,6 +680,18 @@ async function main() {
     const aReport = await loadsLine(A.user, "MZN");
     check("A's report counts what it paid B, and no margin — it sells nothing", aReport.paid - aReportBefore.paid === 50000 && aReport.gross === aReportBefore.gross, { before: aReportBefore, after: aReport });
 
+    console.log("\n— each company's cost book is its own");
+    const aParking = await a.costs.add({ movementId: accepted.id, kind: "parking", amount: 700, currency: "MZN" });
+    const aBook = await a.get({ id: accepted.id });
+    check("a client keeps its own cost lines on a load moved for it", aBook.costs.length === 1 && aBook.costs[0]?.kind === "parking", aBook.costs);
+    check("…and may manage them", aBook.permissions.canManageCosts === true, aBook.permissions.canManageCosts);
+    bOwn = await b.get({ id: accepted.id });
+    check("B reads neither the line nor a trail event for it", bOwn.costs.length === 3 && bOwn.events.filter((event) => event.kind === "cost").length === 3, { costs: bOwn.costs.length, events: bOwn.events.filter((event) => event.kind === "cost").length });
+    check("…and its margin does not move", bOwn.money.margin?.net?.amount === 38000, bOwn.money.margin);
+    await expectError("B cannot take A's line off the load", () => b.costs.remove({ id: aParking.id }), "NOT_FOUND");
+    await a.costs.remove({ id: aParking.id });
+    check("A withdraws its own line", (await a.get({ id: accepted.id })).costs.length === 0);
+
     const bMoney = await b.recordPayment({ id: accepted.id, expectedVersion: bOwn.version, leg: "sell", amount: 50000 });
     await b.transition({ id: accepted.id, to: "closed", expectedVersion: bMoney.version });
     bOwn = await b.get({ id: accepted.id });

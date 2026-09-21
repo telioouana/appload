@@ -432,14 +432,14 @@ function foldCashflow(
 }
 
 /**
- * Each owned row's cost lines summed per kind and its margin (money.ts —
- * net of what the client repays, null when the legs disagree on currency),
- * stapled onto the projected rows. Cost lines are the owner's own book;
- * other roles get blanks.
+ * Each row's cost lines from the company's OWN book, summed per kind, and
+ * the owned rows' margin (money.ts — net of what the client repays, null
+ * when the legs disagree on currency), stapled onto the projected rows.
+ * Another party's lines never leave its book, and only an owner's legs
+ * make a margin.
  */
 async function withCostColumns(db: Db, rows: Movement[], items: MovementRow[], tenantId: string) {
-    const ownedIds = rows.filter((row) => row.organizationId === tenantId).map((row) => row.id);
-    const costRows = ownedIds.length === 0 ? [] : await db
+    const costRows = rows.length === 0 ? [] : await db
         .select({
             movementId: movementCost.movementId,
             kind: movementCost.kind,
@@ -448,7 +448,11 @@ async function withCostColumns(db: Db, rows: Movement[], items: MovementRow[], t
             amount: sql<number>`sum(${movementCost.amount})`.mapWith(Number),
         })
         .from(movementCost)
-        .where(and(inArray(movementCost.movementId, ownedIds), isNull(movementCost.deletedAt)))
+        .where(and(
+            inArray(movementCost.movementId, rows.map((row) => row.id)),
+            eq(movementCost.organizationId, tenantId),
+            isNull(movementCost.deletedAt),
+        ))
         .groupBy(movementCost.movementId, movementCost.kind, movementCost.currency, movementCost.rechargeable);
 
     const costsOf = new Map<string, typeof costRows>();
@@ -571,7 +575,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
     const [names, pings, costs, documents, events, disputes, hasParent, executorOnPortal, rigs, terminalProofs, carrierEmail, trailerPlate, photosWaiting, apploadRefs, offRoute] = await Promise.all([
         loadNames(db, [row.organizationId, row.clientOrgId, row.carrierOrgId]),
         loadPings(db, [trailId]),
-        owner ? loadCosts(db, row.id) : Promise.resolve([]),
+        owner || role === "client" ? loadCosts(db, row.id, tenantId) : Promise.resolve([]),
         loadDocuments(db, row.id),
         loadEvents(db, row.id),
         loadDisputes(db, row),
@@ -816,7 +820,7 @@ export const movementsRouter = createTRPCRouter({
                     })
                     .from(movementCost)
                     .innerJoin(movement, eq(movement.id, movementCost.movementId))
-                    .where(and(owned, isNull(movementCost.deletedAt)))
+                    .where(and(owned, eq(movementCost.organizationId, tenantId), isNull(movementCost.deletedAt)))
                     .groupBy(movementCost.currency),
             ]);
 
@@ -914,7 +918,7 @@ export const movementsRouter = createTRPCRouter({
                     })
                     .from(movementCost)
                     .innerJoin(movement, eq(movement.id, movementCost.movementId))
-                    .where(and(where, isNull(movementCost.deletedAt)))
+                    .where(and(where, eq(movementCost.organizationId, tenantId), isNull(movementCost.deletedAt)))
                     .groupBy(movementCost.currency),
             ]);
 
@@ -1521,12 +1525,20 @@ export const movementsRouter = createTRPCRouter({
         }),
 
     costs: createTRPCRouter({
-        /** What the load cost to run, one line at a time. Owner only, always. */
+        /**
+         * What the load cost to run, one line at a time, into the caller's
+         * own book: the owner's, or the client's on a load moved for it.
+         * The executor works its own child row.
+         */
         add: tenantProcedure
             .input(AddCostBaseSchema)
             .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
-                const row = await loadOwn(ctx.db, input.movementId, ctx.tenant.organizationId);
+                const { row, role } = await loadVisible(ctx.db, input.movementId, ctx.tenant.organizationId);
                 assertCan(ctx.tenant.role, "trip", "update");
+
+                if (role !== "owner" && role !== "client") {
+                    throw new TRPCError({ code: "FORBIDDEN", message: "FORBIDDEN" });
+                }
 
                 if (row.status === "closed" || row.status === "cancelled") {
                     throw new TRPCError({ code: "BAD_REQUEST", message: "MOVEMENT_CLOSED" });
@@ -1536,6 +1548,7 @@ export const movementsRouter = createTRPCRouter({
                     .insert(movementCost)
                     .values({
                         movementId: row.id,
+                        organizationId: ctx.tenant.organizationId,
                         kind: input.kind,
                         description: input.description || null,
                         amount: String(Math.round(input.amount * 100) / 100),
@@ -1548,12 +1561,16 @@ export const movementsRouter = createTRPCRouter({
 
                 if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
 
-                await recordEvent(ctx.db, {
-                    movementId: row.id,
-                    kind: "cost",
-                    actor: actorOf(ctx.tenant),
-                    metadata: { action: "added", kind: input.kind, amount: input.amount, currency: input.currency },
-                });
+                // The trail's cost line is owner-readable, and a client's
+                // spend is its own business — no event on another's row
+                if (role === "owner") {
+                    await recordEvent(ctx.db, {
+                        movementId: row.id,
+                        kind: "cost",
+                        actor: actorOf(ctx.tenant),
+                        metadata: { action: "added", kind: input.kind, amount: input.amount, currency: input.currency },
+                    });
+                }
 
                 return created;
             }),
@@ -1566,12 +1583,19 @@ export const movementsRouter = createTRPCRouter({
             .input(z.object({ id: z.string().nonempty() }))
             .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
                 const [cost] = await ctx.db
-                    .select({ id: movementCost.id, movementId: movementCost.movementId, status: movement.status })
+                    .select({
+                        id: movementCost.id,
+                        movementId: movementCost.movementId,
+                        status: movement.status,
+                        ownerOrgId: movement.organizationId,
+                    })
                     .from(movementCost)
                     .innerJoin(movement, eq(movement.id, movementCost.movementId))
                     .where(and(
                         eq(movementCost.id, input.id),
-                        eq(movement.organizationId, ctx.tenant.organizationId),
+                        // The line's own book, not the row's owner: each
+                        // company withdraws only its own lines
+                        eq(movementCost.organizationId, ctx.tenant.organizationId),
                         sql`${movementCost.deletedAt} is null`,
                     ))
                     .limit(1);
@@ -1589,12 +1613,14 @@ export const movementsRouter = createTRPCRouter({
                     .set({ deletedAt: new Date(), deletedBy: ctx.tenant.userId })
                     .where(eq(movementCost.id, cost.id));
 
-                await recordEvent(ctx.db, {
-                    movementId: cost.movementId,
-                    kind: "cost",
-                    actor: actorOf(ctx.tenant),
-                    metadata: { action: "removed" },
-                });
+                if (cost.ownerOrgId === ctx.tenant.organizationId) {
+                    await recordEvent(ctx.db, {
+                        movementId: cost.movementId,
+                        kind: "cost",
+                        actor: actorOf(ctx.tenant),
+                        metadata: { action: "removed" },
+                    });
+                }
 
                 return { id: cost.id };
             }),
