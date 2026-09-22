@@ -20,7 +20,6 @@ import {
     IconMap2,
     IconMapPinOff,
     IconMessages,
-    IconReportMoney,
     IconPlus,
     IconSearch,
     IconTruck,
@@ -175,7 +174,6 @@ export function Sidenav({
             path: "/dashboard",
         },
         { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", path: "/analytics" },
-        { Icon: IconReportMoney, name: t("company.reports"), match: "/reports", path: "/reports" },
     ]
 
     // A badge is the two tabs' counts added: a section's number is what waits

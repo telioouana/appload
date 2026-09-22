@@ -95,22 +95,49 @@ export const IN_PROGRESS_STATUSES = [
 export const isInProgress = (status: MovementStatus): boolean =>
     (IN_PROGRESS_STATUSES as readonly MovementStatus[]).includes(status);
 
+// The whole chain, in order, for the sections that span it (All, Disputes).
+// "offered" is deliberately absent: "prospect" stands for prospect and
+// offered both — the same wait for an answer, asked by hand or through the
+// portal — and the list reads it that way (projection.ts statusFilter).
+const EVERY_STATUS = [
+    "procurement",
+    "prospect",
+    "declined",
+    "scheduled",
+    "booked",
+    ...IN_PROGRESS_STATUSES,
+    "delivered",
+    "closed",
+    "cancelled",
+] as const satisfies readonly MovementStatus[];
+
+// Only a partner can turn a load down, so Declined is the partners side's
+const EVERY_TRIP_STATUS = EVERY_STATUS.filter((status) => status !== "declined");
+
 /**
- * The statuses a section's tabs narrow it to, per scope, in tab order, after
- * the "all" tab (which is no param at all). "prospect" stands for prospect
- * and offered both — the same wait for an answer, asked by hand or through
- * the portal — and the list reads it that way. Only a partner can turn a
- * load down, so Declined is a tab on the partners side alone. A section with
- * no entry has no tabs.
+ * The statuses a section's status menu narrows it to, per scope, in chain
+ * order, after the "all" entry (which is no param at all). Every section
+ * carries the menu, so the toolbar reads the same on all of them; a
+ * single-status section's menu is just All and that status.
  */
-export const STATUS_TABS: Record<MovementScope, Partial<Record<MovementSection, readonly MovementStatus[]>>> = {
+export const STATUS_TABS: Record<MovementScope, Record<MovementSection, readonly MovementStatus[]>> = {
     orders: {
+        all: EVERY_STATUS,
         procurement: ["procurement", "prospect", "scheduled", "declined"],
+        booked: ["booked"],
         "in-progress": IN_PROGRESS_STATUSES,
+        delivered: ["delivered"],
+        disputes: EVERY_STATUS,
+        history: ["closed", "cancelled"],
     },
     trips: {
+        all: EVERY_TRIP_STATUS,
         procurement: ["procurement", "prospect", "scheduled"],
+        booked: ["booked"],
         "in-progress": IN_PROGRESS_STATUSES,
+        delivered: ["delivered"],
+        disputes: EVERY_TRIP_STATUS,
+        history: ["closed", "cancelled"],
     },
 };
 
@@ -444,6 +471,8 @@ export type MovementStats = {
     silent: number;
     /** In progress and covered by a recent off-route alert */
     offRoute: number;
+    /** The disputed rows by status, so the Disputes menu's numbers agree with its list */
+    disputedByStatus: Partial<Record<MovementStatus, number>>;
 };
 
 // ---------------------------------------------------------------------------

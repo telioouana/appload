@@ -82,13 +82,16 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
     })
 
     // The sections are the rail's and the two sides are the page header's
-    // pills; the toolbar's tabs are the statuses inside the section on
-    // screen. A prospect waits on an answer whether it was asked by hand or
-    // offered on the portal, so its tab counts both
+    // pills; the toolbar's menu is the statuses inside the section on
+    // screen — every section carries one, so the toolbar reads the same on
+    // all of them. A prospect waits on an answer whether it was asked by
+    // hand or offered on the portal, so its entry counts both. Disputes
+    // spans every status and counts its own rows, not the scope's
     const statuses = STATUS_TABS[scope][section] ?? []
+    const counts = section === "disputes" ? stats.disputedByStatus : stats.byStatus
     const statusCount = (status: (typeof statuses)[number]) =>
-        (stats.byStatus[status] ?? 0) + (status === "prospect" ? stats.byStatus.offered ?? 0 : 0)
-    const tabs = statuses.length === 0 ? [] : [
+        (counts[status] ?? 0) + (status === "prospect" ? counts.offered ?? 0 : 0)
+    const tabs = [
         { value: "all", label: t("tabs.all"), count: stats.bySection[section] ?? 0 },
         ...statuses.map((status) => ({ value: status, label: statusLabel(status), count: statusCount(status) })),
     ]
@@ -119,7 +122,7 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
         <ListCard>
             <ListToolbar
                 table={table}
-                tabs={{ param: "status", items: tabs, as: section === "in-progress" ? "menu" : "tabs" }}
+                tabs={{ param: "status", items: tabs, as: "menu" }}
                 filterCount={chips.length}
                 activeFilters={chips}
                 filters={<MovementFilters stats={stats} />}

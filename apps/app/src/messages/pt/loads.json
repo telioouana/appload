@@ -114,11 +114,7 @@
         "delivered": "Entregues",
         "delivered-hint": "Chegaram e aguardam fecho de contas",
         "silent": "Sem resposta hoje",
-        "silent-hint": "Motoristas que ainda não responderam",
-        "off-route": "Fora da rota",
-        "off-route-hint": "Camiões a reportar fora da rota planeada",
-        "disputed": "Em disputa",
-        "disputed-hint": "Cargas retidas por uma disputa aberta"
+        "silent-hint": "Motoristas que ainda não responderam"
     },
     "cashflow": {
         "title": "Fluxo de caixa",

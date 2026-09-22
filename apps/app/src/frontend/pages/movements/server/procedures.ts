@@ -753,7 +753,7 @@ export const movementsRouter = createTRPCRouter({
                 select.received = sql<number>`count(*) filter (where ${received(tenantId)})::int`.mapWith(Number);
             }
 
-            const [[row], statuses] = await Promise.all([
+            const [[row], statuses, disputedStatuses] = await Promise.all([
                 ctx.db
                     .select(select as Record<string, SQL<number>>)
                     .from(movement)
@@ -762,6 +762,14 @@ export const movementsRouter = createTRPCRouter({
                     .select({ status: movement.status, value: count() })
                     .from(movement)
                     .where(and(visibleMovements(tenantId), sectionPredicate(input.scope, "all", tenantId)))
+                    .groupBy(movement.status),
+                // The Disputes section's own numbers: its menu spans every
+                // status, and the scope-wide counts above would not agree
+                // with the disputed list it opens
+                ctx.db
+                    .select({ status: movement.status, value: count() })
+                    .from(movement)
+                    .where(and(visibleMovements(tenantId), sectionPredicate(input.scope, "disputes", tenantId)))
                     .groupBy(movement.status),
             ]);
 
@@ -773,6 +781,7 @@ export const movementsRouter = createTRPCRouter({
                 total: bySection.all ?? 0,
                 bySection,
                 byStatus: Object.fromEntries(statuses.map((entry) => [entry.status, entry.value])),
+                disputedByStatus: Object.fromEntries(disputedStatuses.map((entry) => [entry.status, entry.value])),
                 received: Number(row?.received ?? 0),
                 silent: Number(row?.silent ?? 0),
                 offRoute: Number(row?.offRoute ?? 0),
@@ -860,77 +869,6 @@ export const movementsRouter = createTRPCRouter({
             const items = await projectRows(ctx.db, rows, tenantId);
 
             return withCostColumns(ctx.db, rows, items, tenantId);
-        }),
-
-    /**
-     * The report page: the company's own rows over a loading period, each
-     * with its cost lines per kind and its margin, plus the strip totals of
-     * the whole selection — the same figures the cashflow strip shows, cut
-     * by the report's own filters instead of a section.
-     */
-    costReport: tenantProcedure
-        .input(z.object({
-            partner: z.string().max(64).optional(),
-            month: z.number().int().min(1).max(12).optional(),
-            from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-            to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-            page: z.number().int().positive().default(1),
-            // Any of the page sizes, or the export's one full pull
-            pageSize: z.number().int().min(1).max(EXPORT_LIMIT).default(25),
-        }))
-        .query(async ({ ctx, input }) => {
-            const tenantId = ctx.tenant.organizationId;
-            const where = and(
-                eq(movement.organizationId, tenantId),
-                input.partner
-                    ? or(eq(movement.clientOrgId, input.partner), eq(movement.carrierOrgId, input.partner))
-                    : undefined,
-                loadingPeriod(input),
-            );
-
-            const [rows, [counted], moneyRows, costGroups] = await Promise.all([
-                ctx.db
-                    .select()
-                    .from(movement)
-                    .where(where)
-                    .orderBy(sql`${movement.expectedLoadingDate} desc nulls last`, desc(movement.seq))
-                    .limit(input.pageSize)
-                    .offset((input.page - 1) * input.pageSize),
-                ctx.db.select({ value: count() }).from(movement).where(where),
-                ctx.db
-                    .select({
-                        sellSubtotal: movement.sellSubtotal,
-                        sellVat: movement.sellVat,
-                        sellTotal: movement.sellTotal,
-                        sellCurrency: movement.sellCurrency,
-                        buySubtotal: movement.buySubtotal,
-                        buyVat: movement.buyVat,
-                        buyTotal: movement.buyTotal,
-                        buyCurrency: movement.buyCurrency,
-                    })
-                    .from(movement)
-                    .where(where),
-                ctx.db
-                    .select({
-                        currency: movementCost.currency,
-                        total: sql<number>`coalesce(sum(${movementCost.amount}), 0)`.mapWith(Number),
-                        rechargeable: sql<number>`coalesce(sum(${movementCost.amount}) filter (where ${movementCost.rechargeable}), 0)`.mapWith(Number),
-                    })
-                    .from(movementCost)
-                    .innerJoin(movement, eq(movement.id, movementCost.movementId))
-                    .where(and(where, eq(movementCost.organizationId, tenantId), isNull(movementCost.deletedAt)))
-                    .groupBy(movementCost.currency),
-            ]);
-
-            const items = await projectRows(ctx.db, rows, tenantId);
-
-            return {
-                items: await withCostColumns(ctx.db, rows, items, tenantId),
-                total: counted?.value ?? 0,
-                page: input.page,
-                pageSize: input.pageSize,
-                lines: foldCashflow(moneyRows, costGroups),
-            };
         }),
 
     /**

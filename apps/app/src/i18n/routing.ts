@@ -69,9 +69,6 @@ export const routing = defineRouting({
         "/analytics": {
             pt: "/analises"
         },
-        "/reports": {
-            pt: "/relatorios"
-        },
         "/notifications": {
             pt: "/notificacoes"
         },

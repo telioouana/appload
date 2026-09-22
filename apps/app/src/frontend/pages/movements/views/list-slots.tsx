@@ -137,7 +137,6 @@ export async function MovementsStatsSlot({ params, searchParams }: SectionParams
     const { scope } = await inputOrRedirect(section, searchParams)
 
     prefetch(trpc.me.session.queryOptions())
-    prefetch(trpc.movements.stats.queryOptions({ scope }))
     prefetch(trpc.movements.cashflow.queryOptions({ scope, section }))
 
     return (

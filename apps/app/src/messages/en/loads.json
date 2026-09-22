@@ -114,11 +114,7 @@
         "delivered": "Delivered",
         "delivered-hint": "Arrived, waiting for the books to close",
         "silent": "Silent today",
-        "silent-hint": "Drivers who have not answered yet",
-        "off-route": "Off route",
-        "off-route-hint": "Trucks reporting off the planned route",
-        "disputed": "In dispute",
-        "disputed-hint": "Loads held by an open dispute"
+        "silent-hint": "Drivers who have not answered yet"
     },
     "cashflow": {
         "title": "Cashflow",
