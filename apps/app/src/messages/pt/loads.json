@@ -116,6 +116,13 @@
         "silent": "Sem resposta hoje",
         "silent-hint": "Motoristas que ainda não responderam"
     },
+    "cashflow": {
+        "title": "Fluxo de caixa",
+        "revenue": "Receita",
+        "costs": "Custos",
+        "margin": "Margem",
+        "empty": "Ainda não há valores aqui"
+    },
     "sort": {
         "newest": "Mais recentes",
         "loading": "Data de carregamento",
@@ -124,7 +131,35 @@
     "filters": {
         "tracking": "Localização",
         "silent": "Sem resposta hoje",
-        "silent-hint": "Em curso, a quem pedimos a posição hoje e que ainda não respondeu"
+        "silent-hint": "Em curso, a quem pedimos a posição hoje e que ainda não respondeu",
+        "any": "Todos",
+        "partner": "Parceiro",
+        "selected": "Selecionado",
+        "period": "Período de carga",
+        "from": "De",
+        "to": "Até",
+        "disputes": "Disputas",
+        "disputed": "Em disputa",
+        "disputed-hint": "Coberta por uma disputa aberta",
+        "off-route": "Fora da rota",
+        "off-route-hint": "Reportou a mais de 10 km da rota planeada",
+        "costs": "Custos",
+        "has-costs": "Com custos registados",
+        "has-costs-hint": "As suas cargas com pelo menos um custo lançado",
+        "month": {
+            "jan": "Janeiro",
+            "feb": "Fevereiro",
+            "mar": "Março",
+            "apr": "Abril",
+            "may": "Maio",
+            "jun": "Junho",
+            "jul": "Julho",
+            "aug": "Agosto",
+            "sep": "Setembro",
+            "oct": "Outubro",
+            "nov": "Novembro",
+            "dec": "Dezembro"
+        }
     },
     "data": {
         "empty": {
@@ -403,7 +438,9 @@
         "empty": "Ainda sem posições",
         "not-started": "As posições começam a chegar quando o camião estiver no local de carregamento",
         "unnamed": "Local sem nome",
-        "picked": "endereço escolhido"
+        "picked": "endereço escolhido",
+        "off-route-chip": "Fora da rota",
+        "off-route": "O camião reportou a última posição a mais de 10 km da rota planeada."
     },
     "thread": {
         "title": "Mensagens com o motorista",

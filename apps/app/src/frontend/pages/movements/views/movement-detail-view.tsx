@@ -76,8 +76,9 @@ export function MovementDetailView({ loadId }: { loadId: string }) {
 
                     {!candidate && hasMoney && <MoneyCard load={load} />}
 
-                    {/* What the load cost to run is the owner's alone */}
-                    {!candidate && owner && <CostsCard load={load} />}
+                    {/* Each company's own cost book: the owner's, or the
+                        client's on a load moved for it */}
+                    {!candidate && (owner || load.role === "client") && <CostsCard load={load} />}
 
                     {!candidate && <DocumentsCard load={load} />}
 

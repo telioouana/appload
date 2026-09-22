@@ -443,10 +443,12 @@ export type CreateMovementTrackingRequest = typeof movementTrackingRequest.$infe
  * What was wrong with a slot's tracking. "no-location" is the driver who
  * never answered; "short-distance" the one who answered from where he already
  * was; "picked-address" the one who chose a place off his phone's list
- * instead of sharing where the truck actually is — the only one of the three
- * that looks like compliance from a distance, which is why it is named.
+ * instead of sharing where the truck actually is — the only one of them
+ * that looks like compliance from a distance, which is why it is named;
+ * "off-route" the truck that answered from beyond the planned route's
+ * corridor.
  */
-export const TRACKING_ALERT_ISSUE = ["no-location", "short-distance", "picked-address"] as const;
+export const TRACKING_ALERT_ISSUE = ["no-location", "short-distance", "picked-address", "off-route"] as const;
 export type TrackingAlertIssue = (typeof TRACKING_ALERT_ISSUE)[number];
 
 /**
@@ -504,9 +506,11 @@ export const MOVEMENT_COST_KIND = [
 export type MovementCostKind = (typeof MOVEMENT_COST_KIND)[number];
 
 /**
- * What one load actually cost to run, line by line. Only the movement's OWNER
- * ever reads these: a cost line is that company's own margin working, and the
- * partner on the other side has no business seeing it.
+ * What one load actually cost to run, line by line. A cost line is one
+ * company's own margin working, and the partner on the other side has no
+ * business seeing it — so every line names its company, each party on a
+ * load keeps its own book, and nobody reads another's (projection.ts
+ * `loadCosts`).
  *
  * Financial records, so the same rules as `order_document`: `restrict` on the
  * movement, and a soft delete rather than a row that disappears from a total
@@ -522,6 +526,9 @@ export const movementCost = pgTable(
         movementId: text("movement_id")
             .notNull()
             .references(() => movement.id, { onDelete: "restrict" }),
+        // The company whose book the line is in; backfilled to the row's
+        // owner, so nullable only in the schema
+        organizationId: text("organization_id").references(() => organization.id),
         kind: text("kind", { enum: MOVEMENT_COST_KIND }).notNull(),
         description: text("description"),
         amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),

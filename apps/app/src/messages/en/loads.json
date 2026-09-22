@@ -116,6 +116,13 @@
         "silent": "Silent today",
         "silent-hint": "Drivers who have not answered yet"
     },
+    "cashflow": {
+        "title": "Cashflow",
+        "revenue": "Revenue",
+        "costs": "Costs",
+        "margin": "Margin",
+        "empty": "Nothing priced here yet"
+    },
     "sort": {
         "newest": "Newest",
         "loading": "Loading date",
@@ -124,7 +131,35 @@
     "filters": {
         "tracking": "Tracking",
         "silent": "Silent today",
-        "silent-hint": "In progress, asked for a position today and not answered yet"
+        "silent-hint": "In progress, asked for a position today and not answered yet",
+        "any": "Any",
+        "partner": "Partner",
+        "selected": "Selected",
+        "period": "Loading period",
+        "from": "From",
+        "to": "To",
+        "disputes": "Disputes",
+        "disputed": "In dispute",
+        "disputed-hint": "Covered by an open dispute",
+        "off-route": "Off route",
+        "off-route-hint": "Reported from more than 10 km off the planned route",
+        "costs": "Costs",
+        "has-costs": "With recorded costs",
+        "has-costs-hint": "Your loads with at least one cost line",
+        "month": {
+            "jan": "January",
+            "feb": "February",
+            "mar": "March",
+            "apr": "April",
+            "may": "May",
+            "jun": "June",
+            "jul": "July",
+            "aug": "August",
+            "sep": "September",
+            "oct": "October",
+            "nov": "November",
+            "dec": "December"
+        }
     },
     "data": {
         "empty": {
@@ -403,7 +438,9 @@
         "empty": "No positions yet",
         "not-started": "Positions start arriving once the truck is at the loading site",
         "unnamed": "Unnamed place",
-        "picked": "picked address"
+        "picked": "picked address",
+        "off-route-chip": "Off route",
+        "off-route": "The truck last reported from more than 10 km off the planned route."
     },
     "thread": {
         "title": "Driver messages",

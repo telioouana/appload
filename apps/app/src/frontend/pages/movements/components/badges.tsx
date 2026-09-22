@@ -1,6 +1,6 @@
 "use client"
 
-import { IconArrowNarrowRight, IconGavel, IconMapPinOff } from "@tabler/icons-react"
+import { IconArrowNarrowRight, IconFlag, IconGavel, IconMapPinOff, IconRouteOff } from "@tabler/icons-react"
 
 import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
 
@@ -74,6 +74,43 @@ export function InDisputeChip() {
         <Badge variant="outline" className="border-destructive/40 text-destructive gap-1 rounded-full font-normal">
             <IconGavel className="size-3" stroke={1.5} />
             {t("chip")}
+        </Badge>
+    )
+}
+
+/**
+ * The row's own warning, beside its number, so a load that needs a hand is
+ * seen without opening it: a flag for what the load still lacks (named on
+ * hover), and a pin for a driver asked today who has not answered.
+ */
+export function AttentionMarks({ flags, silent }: { flags: MovementFlag[]; silent: boolean }) {
+    const t = useTranslations("App.loads.filters")
+    const label = useFlagLabel()
+
+    return (
+        <>
+            {flags.length > 0 && (
+                <span title={flags.map(label).join(" · ")} className="flex shrink-0">
+                    <IconFlag className="text-destructive size-3.5" stroke={1.5} aria-label={flags.map(label).join(", ")} />
+                </span>
+            )}
+            {silent && (
+                <span title={t("silent")} className="flex shrink-0">
+                    <IconMapPinOff className="size-3.5 text-amber-600 dark:text-amber-400" stroke={1.5} aria-label={t("silent")} />
+                </span>
+            )}
+        </>
+    )
+}
+
+/** The truck answered a recent slot from beyond the planned route's corridor. */
+export function OffRouteChip() {
+    const t = useTranslations("App.loads.tracking")
+
+    return (
+        <Badge variant="outline" className="gap-1 rounded-full border-amber-500/40 font-normal text-amber-600 dark:text-amber-400">
+            <IconRouteOff className="size-3" stroke={1.5} />
+            {t("off-route-chip")}
         </Badge>
     )
 }

@@ -14,6 +14,7 @@ import {
     movementDocument,
     movementEvent,
     movementLocation,
+    movementTrackingAlert,
     movementTrackingRequest,
     type Movement,
     type MovementDispute,
@@ -199,6 +200,49 @@ export const silentToday = (tenantId: string, now: Date): SQL =>
                 gte(movementLocation.recordedAt, startOfDay(now)),
             )}
         )`,
+    ) as SQL;
+
+// ponytail: 18h ≈ one slot cycle — an off-route alert counts until the next
+// day's same slot has had its say; per-slot precision if stale flags annoy
+const OFF_ROUTE_RECENT_HOURS = 18;
+
+/**
+ * Loads whose truck answered a recent slot from beyond the planned route's
+ * corridor (movement-review.ts writes the alert). The company's own rows
+ * only, like `silentToday`: how a partner's driver drives is the partner's
+ * business until the escalation says otherwise.
+ */
+export const offRouteRecently = (tenantId: string): SQL =>
+    and(
+        eq(movement.organizationId, tenantId),
+        inArray(movement.status, IN_PROGRESS_STATUSES),
+        sql`exists (
+            select 1 from ${movementTrackingAlert} where ${and(
+                eq(movementTrackingAlert.movementId, movement.id),
+                eq(movementTrackingAlert.issue, "off-route"),
+                sql`${movementTrackingAlert.createdAt} >= now() - interval '${sql.raw(String(OFF_ROUTE_RECENT_HOURS))} hours'`,
+            )}
+        )`,
+    ) as SQL;
+
+/** The rows this company keeps at least one live cost line on — the "with costs" toggle. */
+export const hasCosts = (tenantId: string): SQL =>
+    sql`exists (
+        select 1 from ${movementCost} where ${and(
+            eq(movementCost.movementId, movement.id),
+            eq(movementCost.organizationId, tenantId),
+            isNull(movementCost.deletedAt),
+        )}
+    )`;
+
+/**
+ * The owner's rows a given partner is on, as client or as carrier. Owner
+ * rows only: who is on a row the tenant does not own is not its to filter by.
+ */
+export const withPartner = (partnerId: string, tenantId: string): SQL =>
+    and(
+        eq(movement.organizationId, tenantId),
+        or(eq(movement.clientOrgId, partnerId), eq(movement.carrierOrgId, partnerId)),
     ) as SQL;
 
 /** Loads somebody else moves for this company. */
@@ -618,6 +662,12 @@ export function toMovementRow(
         terminalRig?: TerminalRig | null;
         /** Read by whoever shows it: the list (`loadDisputed`) and the detail */
         inDispute?: boolean;
+        /** A recent off-route alert covers the row (`loadOffRoute`); owner only */
+        offRoute?: boolean;
+        /** Asked today and not answered (`loadSilent`); owner only */
+        silent?: boolean;
+        /** Loading photos nobody validated, for the row's flags (`loadUnapprovedPhotos`) */
+        unapprovedPhotos?: number;
         /** The Appload ids of the orders these rows follow (`loadApploadRefs`) */
         apploadRefs?: Map<string, string>;
     },
@@ -653,6 +703,11 @@ export function toMovementRow(
         receivable: headline(money.receivable),
         isLinked: owner && row.executionMovementId !== null,
         inDispute: ctx.inDispute ?? false,
+        offRoute: owner && (ctx.offRoute ?? false),
+        silent: owner && (ctx.silent ?? false),
+        // What the load is missing as it stands — the row's attention mark,
+        // and the owner's own reading of its own books, like the detail's
+        flags: owner ? movementFlags(guardsOf(row, ctx.unapprovedPhotos ?? 0, ctx.inDispute ?? false), row.status) : [],
         lastPing: ctx.pings.last.get(ctx.trailId) ?? null,
         pingCount: ctx.pings.counts.get(ctx.trailId) ?? 0,
         version: row.version,
@@ -709,6 +764,8 @@ type DetailExtras = {
     apploadRefs?: Map<string, string>;
     hasParent: boolean;
     executorOnPortal: boolean;
+    /** A recent off-route alert covers the row (`loadOffRoute`) */
+    offRoute: boolean;
     costs: readonly CostRow[];
     documents: readonly MovementDocumentView[];
     /** Loading photos nobody has validated on the row the papers are read from */
@@ -785,7 +842,9 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
         // its own books: nobody else is told what its paperwork lacks
         flags: owner ? movementFlags(guardsOf(row, extras.unapprovedPhotos, disputeOpen), row.status) : [],
         money,
-        costs: owner
+        // Each company's own book (loadCosts is tenant-cut): the owner's
+        // margin working, or the client's own spend on a load moved for it
+        costs: owner || role === "client"
             ? extras.costs.map((cost) => ({
                 id: cost.id,
                 kind: cost.kind,
@@ -934,7 +993,9 @@ function permissionsFor(
         canWithdraw: false,
         canRespond: role === "executor" && row.status === "offered" && can("offer", "update"),
         canConvert: false,
-        canManageCosts: false,
+        // A client keeps its own cost book on a load moved for it; the
+        // executor works its own child row, so nothing to manage here
+        canManageCosts: role === "client" && !isTerminal(row.status) && can("trip", "update"),
         canManageDocuments: false,
         canApproveDocuments: false,
         canRecordPayment: false,
@@ -1037,7 +1098,8 @@ function permissionsFor(
 // The detail page's satellites
 // ---------------------------------------------------------------------------
 
-export async function loadCosts(db: Db, movementId: string): Promise<CostRow[]> {
+/** One company's own cost lines on a load — never another party's book. */
+export async function loadCosts(db: Db, movementId: string, tenantId: string): Promise<CostRow[]> {
     const rows = await db
         .select({
             id: movementCost.id,
@@ -1051,7 +1113,7 @@ export async function loadCosts(db: Db, movementId: string): Promise<CostRow[]> 
             deletedAt: movementCost.deletedAt,
         })
         .from(movementCost)
-        .where(eq(movementCost.movementId, movementId))
+        .where(and(eq(movementCost.movementId, movementId), eq(movementCost.organizationId, tenantId)))
         .orderBy(desc(movementCost.incurredAt));
 
     return rows.filter((row) => row.deletedAt === null);
@@ -1157,4 +1219,46 @@ export async function loadDisputed(db: Db, ids: readonly string[]): Promise<Set<
         .where(and(inArray(movement.id, [...ids]), inDispute()));
 
     return new Set(rows.map((row) => row.id));
+}
+
+/** The rows of a page a recent off-route alert covers (`offRouteRecently`). */
+export async function loadOffRoute(db: Db, ids: readonly string[], tenantId: string): Promise<Set<string>> {
+    if (ids.length === 0) return new Set();
+
+    const rows = await db
+        .select({ id: movement.id })
+        .from(movement)
+        .where(and(inArray(movement.id, [...ids]), offRouteRecently(tenantId)));
+
+    return new Set(rows.map((row) => row.id));
+}
+
+/** The rows of a page whose driver was asked today and has not answered (`silentToday`). */
+export async function loadSilent(db: Db, ids: readonly string[], tenantId: string): Promise<Set<string>> {
+    if (ids.length === 0) return new Set();
+
+    const rows = await db
+        .select({ id: movement.id })
+        .from(movement)
+        .where(and(inArray(movement.id, [...ids]), silentToday(tenantId, new Date())));
+
+    return new Set(rows.map((row) => row.id));
+}
+
+/** Loading photos nobody validated, per row of a page — what the rows' flags read. */
+export async function loadUnapprovedPhotos(db: Db, ids: readonly string[]): Promise<Map<string, number>> {
+    if (ids.length === 0) return new Map();
+
+    const rows = await db
+        .select({ movementId: movementDocument.movementId, value: count() })
+        .from(movementDocument)
+        .where(and(
+            inArray(movementDocument.movementId, [...ids]),
+            eq(movementDocument.type, "loading-photo"),
+            isNull(movementDocument.approvedAt),
+            isNull(movementDocument.deletedAt),
+        ))
+        .groupBy(movementDocument.movementId);
+
+    return new Map(rows.map((row) => [row.movementId, row.value]));
 }

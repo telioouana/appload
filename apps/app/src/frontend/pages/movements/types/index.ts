@@ -95,22 +95,49 @@ export const IN_PROGRESS_STATUSES = [
 export const isInProgress = (status: MovementStatus): boolean =>
     (IN_PROGRESS_STATUSES as readonly MovementStatus[]).includes(status);
 
+// The whole chain, in order, for the sections that span it (All, Disputes).
+// "offered" is deliberately absent: "prospect" stands for prospect and
+// offered both — the same wait for an answer, asked by hand or through the
+// portal — and the list reads it that way (projection.ts statusFilter).
+const EVERY_STATUS = [
+    "procurement",
+    "prospect",
+    "declined",
+    "scheduled",
+    "booked",
+    ...IN_PROGRESS_STATUSES,
+    "delivered",
+    "closed",
+    "cancelled",
+] as const satisfies readonly MovementStatus[];
+
+// Only a partner can turn a load down, so Declined is the partners side's
+const EVERY_TRIP_STATUS = EVERY_STATUS.filter((status) => status !== "declined");
+
 /**
- * The statuses a section's tabs narrow it to, per scope, in tab order, after
- * the "all" tab (which is no param at all). "prospect" stands for prospect
- * and offered both — the same wait for an answer, asked by hand or through
- * the portal — and the list reads it that way. Only a partner can turn a
- * load down, so Declined is a tab on the partners side alone. A section with
- * no entry has no tabs.
+ * The statuses a section's status menu narrows it to, per scope, in chain
+ * order, after the "all" entry (which is no param at all). Every section
+ * carries the menu, so the toolbar reads the same on all of them; a
+ * single-status section's menu is just All and that status.
  */
-export const STATUS_TABS: Record<MovementScope, Partial<Record<MovementSection, readonly MovementStatus[]>>> = {
+export const STATUS_TABS: Record<MovementScope, Record<MovementSection, readonly MovementStatus[]>> = {
     orders: {
+        all: EVERY_STATUS,
         procurement: ["procurement", "prospect", "scheduled", "declined"],
+        booked: ["booked"],
         "in-progress": IN_PROGRESS_STATUSES,
+        delivered: ["delivered"],
+        disputes: EVERY_STATUS,
+        history: ["closed", "cancelled"],
     },
     trips: {
+        all: EVERY_TRIP_STATUS,
         procurement: ["procurement", "prospect", "scheduled"],
+        booked: ["booked"],
         "in-progress": IN_PROGRESS_STATUSES,
+        delivered: ["delivered"],
+        disputes: EVERY_TRIP_STATUS,
+        history: ["closed", "cancelled"],
     },
 };
 
@@ -242,6 +269,12 @@ export type MovementRow = {
     isLinked: boolean;
     /** Covered by an open dispute, as far as the caller may know (see projection.ts) */
     inDispute: boolean;
+    /** Owner only: the truck answered a recent slot from off the planned route */
+    offRoute: boolean;
+    /** Owner only: asked for a position today and still silent */
+    silent: boolean;
+    /** What the load is missing right now; the owner's own reading, empty for anybody else */
+    flags: MovementFlag[];
     lastPing: MovementPing | null;
     pingCount: number;
     version: number;
@@ -406,8 +439,6 @@ export type MovementDetail = MovementRow & {
     responseNote: string | null;
     /** This row is an executor's copy of an order another company placed */
     hasParent: boolean;
-    /** What the load is missing right now; the owner's own reading, empty for anybody else */
-    flags: MovementFlag[];
     money: MovementMoney;
     costs: MovementCostView[];
     documents: MovementDocumentView[];
@@ -426,6 +457,11 @@ export type LoadFormOptions = {
     trucks: Array<{ id: string; plate: string }>;
 };
 
+/** The money strip's figures: one line per currency, never summed across two. */
+export type MovementCashflow = {
+    lines: Array<{ currency: Currency; revenue: number; costs: number; margin: number }>;
+};
+
 export type MovementStats = {
     total: number;
     bySection: Partial<Record<MovementSection, number>>;
@@ -435,6 +471,10 @@ export type MovementStats = {
     received: number;
     /** In progress, asked for a position today, and silent since midnight */
     silent: number;
+    /** In progress and covered by a recent off-route alert */
+    offRoute: number;
+    /** The disputed rows by status, so the Disputes menu's numbers agree with its list */
+    disputedByStatus: Partial<Record<MovementStatus, number>>;
 };
 
 // ---------------------------------------------------------------------------
@@ -474,6 +514,18 @@ const parsePageSize = (value: string | null): number => {
     return (PAGE_SIZES as readonly number[]).includes(parsed) ? parsed : DEFAULT_PAGE_SIZE;
 };
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+const isoDate = (value: string | null): string | undefined =>
+    value && ISO_DATE.test(value) ? value : undefined;
+
+const parseMonth = (value: string | null): number | undefined => {
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed >= 1 && parsed <= 12 ? parsed : undefined;
+};
+
+const flag = (value: string | null) => (value === "1" ? (true as const) : undefined);
+
 /**
  * The list input for one section page. The section comes from the route; the
  * tab (`?tab=own | partners`, the company's own default when absent) says
@@ -489,7 +541,16 @@ export const movementsListInput = (section: MovementSection, get: Get, orgType: 
         status: oneOf(get("status"), STATUS_TABS[scope][section] ?? []),
         search: get("search")?.trim() || undefined,
         /** Asked for a position today and still silent — the tile's filter */
-        silent: get("silent") === "1" ? (true as const) : undefined,
+        silent: flag(get("silent")),
+        disputed: flag(get("disputed")),
+        offRoute: flag(get("offRoute")),
+        hasCosts: flag(get("hasCosts")),
+        /** A partner company on the load, the owner's own rows only */
+        partner: get("partner")?.trim() || undefined,
+        /** The loading period: a month of the current year, or an explicit range */
+        month: parseMonth(get("month")),
+        from: isoDate(get("from")),
+        to: isoDate(get("to")),
         sort: oneOf(get("sort"), MOVEMENT_SORTS) ?? DEFAULT_SORT,
         dir: get("dir") === "asc" ? ("asc" as const) : DEFAULT_DIR,
         page: parsePage(get("page")),
@@ -500,7 +561,7 @@ export const movementsListInput = (section: MovementSection, get: Get, orgType: 
 export type MovementsListInput = ReturnType<typeof movementsListInput>;
 
 /** Every URL key a filter control owns, so "nothing yet" is told from "nothing matched". */
-export const FILTER_KEYS = ["search", "status", "silent"] as const;
+export const FILTER_KEYS = ["search", "status", "silent", "disputed", "offRoute", "hasCosts", "partner", "month", "from", "to"] as const;
 
 export const isFilteredMovements = (get: Get) => FILTER_KEYS.some((key) => Boolean(get(key)));
 
