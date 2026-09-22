@@ -6,11 +6,12 @@ import { useTranslations } from "@workspace/i18n"
 
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@workspace/ui/components/tooltip"
 
 import type { TrackingAllowance } from "@workspace/domain/subscription"
 
 import { Link } from "@/i18n/navigation"
-import { ExecutionChip, MovementStatusChip, RoleChip, place } from "@/frontend/pages/movements/components/badges"
+import { ExecutionChip, MovementStatusChip, RoleChip, place, useFlagLabel } from "@/frontend/pages/movements/components/badges"
 import { sectionHref, tabLabelKey } from "@/frontend/pages/movements/components/section-links"
 import { LoadActions } from "@/frontend/pages/movements/sections/load-actions"
 import { scopeOf, sectionOf, type MovementDetail, type OrgType } from "@/frontend/pages/movements/types"
@@ -36,6 +37,7 @@ export function LoadHeader({
     actions?: boolean
 }) {
     const t = useTranslations("App.loads")
+    const flagLabel = useFlagLabel()
 
     const scope = scopeOf(load)
     const section = sectionOf(load)
@@ -81,11 +83,19 @@ export function LoadHeader({
                             </Badge>
                         )}
                         {load.role === "owner" ? <ExecutionChip execution={load.execution} /> : <RoleChip role={load.role} />}
-                        {/* How much of the load is still to be filled in; the cards below say what */}
+                        {/* How much of the load is still to be filled in — named
+                            right here, the same words the cards below use */}
                         {load.flags.length > 0 && (
-                            <Badge variant="outline" className="border-destructive/40 text-destructive rounded-full font-normal">
-                                {t("header.flags", { count: load.flags.length })}
-                            </Badge>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Badge tabIndex={0} variant="outline" className="border-destructive/40 text-destructive cursor-default rounded-full font-normal">
+                                        {t("header.flags", { count: load.flags.length })}
+                                    </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-64">
+                                    {load.flags.map(flagLabel).join(" · ")}
+                                </TooltipContent>
+                            </Tooltip>
                         )}
                     </div>
 
