@@ -664,6 +664,10 @@ export function toMovementRow(
         inDispute?: boolean;
         /** A recent off-route alert covers the row (`loadOffRoute`); owner only */
         offRoute?: boolean;
+        /** Asked today and not answered (`loadSilent`); owner only */
+        silent?: boolean;
+        /** Loading photos nobody validated, for the row's flags (`loadUnapprovedPhotos`) */
+        unapprovedPhotos?: number;
         /** The Appload ids of the orders these rows follow (`loadApploadRefs`) */
         apploadRefs?: Map<string, string>;
     },
@@ -700,6 +704,10 @@ export function toMovementRow(
         isLinked: owner && row.executionMovementId !== null,
         inDispute: ctx.inDispute ?? false,
         offRoute: owner && (ctx.offRoute ?? false),
+        silent: owner && (ctx.silent ?? false),
+        // What the load is missing as it stands — the row's attention mark,
+        // and the owner's own reading of its own books, like the detail's
+        flags: owner ? movementFlags(guardsOf(row, ctx.unapprovedPhotos ?? 0, ctx.inDispute ?? false), row.status) : [],
         lastPing: ctx.pings.last.get(ctx.trailId) ?? null,
         pingCount: ctx.pings.counts.get(ctx.trailId) ?? 0,
         version: row.version,
@@ -1223,4 +1231,34 @@ export async function loadOffRoute(db: Db, ids: readonly string[], tenantId: str
         .where(and(inArray(movement.id, [...ids]), offRouteRecently(tenantId)));
 
     return new Set(rows.map((row) => row.id));
+}
+
+/** The rows of a page whose driver was asked today and has not answered (`silentToday`). */
+export async function loadSilent(db: Db, ids: readonly string[], tenantId: string): Promise<Set<string>> {
+    if (ids.length === 0) return new Set();
+
+    const rows = await db
+        .select({ id: movement.id })
+        .from(movement)
+        .where(and(inArray(movement.id, [...ids]), silentToday(tenantId, new Date())));
+
+    return new Set(rows.map((row) => row.id));
+}
+
+/** Loading photos nobody validated, per row of a page — what the rows' flags read. */
+export async function loadUnapprovedPhotos(db: Db, ids: readonly string[]): Promise<Map<string, number>> {
+    if (ids.length === 0) return new Map();
+
+    const rows = await db
+        .select({ movementId: movementDocument.movementId, value: count() })
+        .from(movementDocument)
+        .where(and(
+            inArray(movementDocument.movementId, [...ids]),
+            eq(movementDocument.type, "loading-photo"),
+            isNull(movementDocument.approvedAt),
+            isNull(movementDocument.deletedAt),
+        ))
+        .groupBy(movementDocument.movementId);
+
+    return new Map(rows.map((row) => [row.movementId, row.value]));
 }

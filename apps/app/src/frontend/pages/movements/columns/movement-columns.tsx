@@ -8,7 +8,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
 
-import { InDisputeChip, LaneCell, LastPingCell, LoadDate, Money, MovementStatusChip, OffRouteChip, RoleChip } from "@/frontend/pages/movements/components/badges"
+import { AttentionMarks, InDisputeChip, LaneCell, LastPingCell, LoadDate, Money, MovementStatusChip, OffRouteChip, RoleChip } from "@/frontend/pages/movements/components/badges"
 import { isInProgress, type MovementRow, type MovementScope, type OrgType } from "@/frontend/pages/movements/types"
 
 /**
@@ -42,14 +42,17 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                 accessorKey: "ref",
                 header: t("columns.ref"),
                 enableHiding: false,
-                size: 110,
+                size: 130,
                 meta: { label: t("columns.ref") },
                 // A load that follows an Appload order carries two numbers:
                 // the company's own, and Appload's under it — until it has one
                 // of its own, when the order's is already what names the row
                 cell: ({ row }) => (
                     <span className="flex min-w-0 flex-col">
-                        <Mono className="font-medium">{row.original.ref}</Mono>
+                        <span className="flex min-w-0 items-center gap-1.5">
+                            <Mono className="font-medium">{row.original.ref}</Mono>
+                            <AttentionMarks flags={row.original.flags} silent={row.original.silent} />
+                        </span>
                         {row.original.apploadOrderId && row.original.apploadOrderId !== row.original.ref && (
                             <Mono className="text-muted-foreground text-xs">{row.original.apploadOrderId}</Mono>
                         )}

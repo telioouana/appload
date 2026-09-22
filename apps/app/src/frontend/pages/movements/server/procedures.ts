@@ -101,9 +101,11 @@ import {
     loadOrgEmail,
     loadOwn,
     loadPings,
+    loadSilent,
     loadTerminalProofs,
     loadTerminalRigs,
     loadTrailerPlate,
+    loadUnapprovedPhotos,
     loadVisible,
     offRouteRecently,
     partnerMoveNeeds,
@@ -505,12 +507,14 @@ async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<
     const roles = rows.map((row) => ({ row, role: roleOrThrow(row, tenantId) }));
     const trails = await trailIds(db, rows);
     const linkedTerminals = rows.filter((row) => row.executionMovementId).map((row) => trails.get(row.id) ?? row.id);
-    const [names, pings, rigs, disputed, offRoute, apploadRefs] = await Promise.all([
+    const [names, pings, rigs, disputed, offRoute, silent, photos, apploadRefs] = await Promise.all([
         loadNames(db, rows.flatMap((row) => [row.organizationId, row.clientOrgId, row.carrierOrgId])),
         loadPings(db, [...trails.values()]),
         loadTerminalRigs(db, linkedTerminals),
         loadDisputed(db, rows.map((row) => row.id)),
         loadOffRoute(db, rows.map((row) => row.id), tenantId),
+        loadSilent(db, rows.map((row) => row.id), tenantId),
+        loadUnapprovedPhotos(db, rows.map((row) => row.id)),
         loadApploadRefs(db, rows.map((row) => row.orderId)),
     ]);
 
@@ -530,6 +534,8 @@ async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<
             // which reads the trail, is exact
             inDispute: role !== "executor" && disputed.has(row.id),
             offRoute: offRoute.has(row.id),
+            silent: silent.has(row.id),
+            unapprovedPhotos: photos.get(row.id) ?? 0,
         });
     });
 }

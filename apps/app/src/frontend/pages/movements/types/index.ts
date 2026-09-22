@@ -271,6 +271,10 @@ export type MovementRow = {
     inDispute: boolean;
     /** Owner only: the truck answered a recent slot from off the planned route */
     offRoute: boolean;
+    /** Owner only: asked for a position today and still silent */
+    silent: boolean;
+    /** What the load is missing right now; the owner's own reading, empty for anybody else */
+    flags: MovementFlag[];
     lastPing: MovementPing | null;
     pingCount: number;
     version: number;
@@ -435,8 +439,6 @@ export type MovementDetail = MovementRow & {
     responseNote: string | null;
     /** This row is an executor's copy of an order another company placed */
     hasParent: boolean;
-    /** What the load is missing right now; the owner's own reading, empty for anybody else */
-    flags: MovementFlag[];
     money: MovementMoney;
     costs: MovementCostView[];
     documents: MovementDocumentView[];
