@@ -512,7 +512,18 @@ export type LoadFormOptions = {
 
 /** The money strip's figures: one line per currency, never summed across two. */
 export type MovementCashflow = {
-    lines: Array<{ currency: Currency; revenue: number; costs: number; margin: number }>;
+    lines: Array<{
+        currency: Currency;
+        /** The company's own rows before VAT (money.ts): what they earn, cost and leave */
+        revenue: number;
+        costs: number;
+        margin: number;
+        /** The invoices as written, VAT included: cash still to move, and cash that did */
+        receivable: number;
+        received: number;
+        payable: number;
+        paid: number;
+    }>;
 };
 
 export type MovementStats = {

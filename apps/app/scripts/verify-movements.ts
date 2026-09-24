@@ -110,6 +110,10 @@ const loadsLine = async (userId: string, currency: string) => {
         costs: line?.costs.total ?? 0,
     };
 };
+/** One currency of the list's money strip, over a tab's every section, zero when it has none. */
+const flowLine = async (userId: string, scope: "orders" | "trips", currency: string) =>
+    (await as(userId).cashflow({ scope, section: "all" })).lines.find((line) => line.currency === currency)
+    ?? { revenue: 0, costs: 0, margin: 0, receivable: 0, received: 0, payable: 0, paid: 0 };
 const meFor = (userId: string) => createMeCaller(contextFor(userId));
 const partnersFor = (userId: string) => createPartnersCaller(contextFor(userId));
 const searchFor = (userId: string) => createSearchCaller(contextFor(userId));
@@ -640,6 +644,8 @@ async function main() {
     console.log("\n— delivery, money, and the books closing");
     const bReportBefore = await loadsLine(B.user, "MZN");
     const aReportBefore = await loadsLine(A.user, "MZN");
+    const aFlowBefore = await flowLine(A.user, "orders", "MZN");
+    const bFlowBefore = await flowLine(B.user, "trips", "MZN");
     await walk(b, accepted.id, ["loading", "on-route", "at-offloading", "offloading", "delivered"]);
     aDetail = await a.get({ id: filed.id });
     check("A's order was delivered with B's truck", aDetail.status === "delivered", aDetail.status);
@@ -681,6 +687,16 @@ async function main() {
     const aReport = await loadsLine(A.user, "MZN");
     check("A's report counts what it paid B, and no margin — it sells nothing", aReport.paid - aReportBefore.paid === 50000 && aReport.gross === aReportBefore.gross, { before: aReportBefore, after: aReport });
 
+    console.log("\n— the list's money strip reads the same load");
+    const aFlow = await flowLine(A.user, "orders", "MZN");
+    check("A's strip moves the 50 000 from to-pay to paid, and earns nothing",
+        aFlow.paid - aFlowBefore.paid === 50000 && aFlowBefore.payable - aFlow.payable === 50000 && aFlow.revenue === aFlowBefore.revenue,
+        { before: aFlowBefore, after: aFlow });
+    const bFlow = await flowLine(B.user, "trips", "MZN");
+    check("B's strip absorbs only the fuel and still waits for the 50 000",
+        bFlow.costs - bFlowBefore.costs === 12000 && bFlow.receivable === bFlowBefore.receivable,
+        { before: bFlowBefore, after: bFlow });
+
     console.log("\n— each company's cost book is its own");
     const aParking = await a.costs.add({ movementId: accepted.id, kind: "parking", amount: 700, currency: "MZN" });
     const aBook = await a.get({ id: accepted.id });
@@ -697,6 +713,10 @@ async function main() {
     await b.transition({ id: accepted.id, to: "closed", expectedVersion: bMoney.version });
     bOwn = await b.get({ id: accepted.id });
     check("B closes its own books once paid", bOwn.status === "closed", bOwn.status);
+    const bSettled = await flowLine(B.user, "trips", "MZN");
+    check("…and its strip reads the 50 000 received",
+        bSettled.received - bFlow.received === 50000 && bFlow.receivable - bSettled.receivable === 50000,
+        { before: bFlow, after: bSettled });
 
     console.log("\n— and a truck that loads on a photo nobody looked at loads anyway, on the record");
     const unseen = await ownTrip({

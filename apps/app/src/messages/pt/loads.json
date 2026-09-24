@@ -122,6 +122,12 @@
         "revenue": "Receita",
         "costs": "Custos",
         "margin": "Margem",
+        "receivable": "A receber",
+        "payable": "A pagar",
+        "spend": "Despesa com fretes",
+        "fleetCosts": "Custos da frota",
+        "freight": "Fretes",
+        "paid": "Pago",
         "empty": "Ainda não há valores aqui"
     },
     "sort": {

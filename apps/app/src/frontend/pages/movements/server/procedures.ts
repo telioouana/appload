@@ -426,38 +426,54 @@ function ordering(sort: ListInput["sort"], dir: "asc" | "desc"): SQL[] {
     }
 }
 
-type MoneyLegRow = Pick<
-    Movement,
-    "sellSubtotal" | "sellVat" | "sellTotal" | "sellCurrency" | "buySubtotal" | "buyVat" | "buyTotal" | "buyCurrency"
->;
-
 /**
- * Money legs and cost sums folded into strip lines, one per currency:
- * revenue is the sell legs before VAT, costs the buy legs before VAT plus
- * the absorbed cost lines (a rechargeable line passes to the client —
- * money.ts), margin their difference. Never converted, never summed
- * across two currencies.
+ * The rows on screen folded into strip lines, one per currency, each leg
+ * read the way this caller reads it (projectMoney). Revenue is the sell
+ * legs before VAT, costs the owner's buy legs before VAT plus the absorbed
+ * cost lines (a rechargeable line passes to the client — money.ts), margin
+ * their difference. Beside them the cash, VAT included as invoiced: what is
+ * still to receive and to pay, and what already was. A client's payable is
+ * cash out, never a cost of its books; an offer or a quote in front of the
+ * company is not money yet. Never converted, never summed across two
+ * currencies.
  *
- * ponytail: folded in memory over the tenant's own rows; move the exVat
- * arithmetic into SQL if row counts ever make this slow
+ * ponytail: folded in memory over the section's rows; move the arithmetic
+ * into SQL if row counts ever make this slow
  */
 function foldCashflow(
-    rows: MoneyLegRow[],
+    rows: Movement[],
     costGroups: Array<{ currency: Currency; total: number; rechargeable: number }>,
+    tenantId: string,
 ): MovementCashflow["lines"] {
-    const lines = new Map<Currency, { revenue: number; costs: number }>();
+    const lines = new Map<Currency, { revenue: number; costs: number; receivable: number; received: number; payable: number; paid: number }>();
     const at = (currency: Currency) => {
-        const line = lines.get(currency) ?? { revenue: 0, costs: 0 };
+        const line = lines.get(currency) ?? { revenue: 0, costs: 0, receivable: 0, received: 0, payable: 0, paid: 0 };
         lines.set(currency, line);
         return line;
     };
+    // A price nobody has agreed to yet is owed by nobody, and a cancelled
+    // load owes nothing more; what already moved still moved
+    const owed = (leg: MoneyLeg, open: boolean) =>
+        !open || legSettled(leg.total, leg.settlement) ? 0 : Math.max(leg.total - leg.settled, 0);
 
     for (const row of rows) {
-        if (row.sellTotal !== null && row.sellCurrency) {
-            at(row.sellCurrency).revenue += exVat({ subtotal: numOrNull(row.sellSubtotal), vat: numOrNull(row.sellVat), total: Number(row.sellTotal) });
+        const role = roleOf(row, tenantId);
+        if (role === "executor") continue;
+
+        const { receivable, payable } = projectMoney(row, role, []);
+        const open = !isAskable(row.status) && row.status !== "cancelled";
+
+        if (receivable) {
+            const line = at(receivable.currency);
+            line.revenue += exVat(receivable);
+            line.receivable += owed(receivable, open);
+            line.received += receivable.settled;
         }
-        if (row.buyTotal !== null && row.buyCurrency) {
-            at(row.buyCurrency).costs += exVat({ subtotal: numOrNull(row.buySubtotal), vat: numOrNull(row.buyVat), total: Number(row.buyTotal) });
+        if (payable) {
+            const line = at(payable.currency);
+            if (role === "owner") line.costs += exVat(payable);
+            line.payable += owed(payable, open);
+            line.paid += payable.settled;
         }
     }
 
@@ -473,6 +489,10 @@ function foldCashflow(
             revenue: round(line.revenue),
             costs: round(line.costs),
             margin: round(line.revenue - line.costs),
+            receivable: round(line.receivable),
+            received: round(line.received),
+            payable: round(line.payable),
+            paid: round(line.paid),
         }))
         .sort((a, b) => a.currency.localeCompare(b.currency));
 }
@@ -841,38 +861,22 @@ export const movementsRouter = createTRPCRouter({
         }),
 
     /**
-     * The money strip above the list: what the company's own rows of the
-     * section on screen earn and cost, per currency. Revenue is the sell
-     * legs before VAT; costs the buy legs before VAT plus the absorbed cost
-     * lines (a rechargeable line passes to the client — money.ts); margin
-     * their difference within one currency, never converted and never
-     * summed across two. Its own procedure rather than more of `stats`,
+     * The money strip above the list, for the section on screen, per
+     * currency (foldCashflow): what the company's own rows earn, cost and
+     * leave, and the cash still to receive and to pay on every row it is
+     * owner or client of. Its own procedure rather than more of `stats`,
      * which the header calls for both scopes and has to stay cheap.
      */
     cashflow: tenantProcedure
         .input(z.object({ scope: z.enum(MOVEMENT_SCOPES), section: z.enum(SECTIONS).default("all") }))
         .query(async ({ ctx, input }): Promise<MovementCashflow> => {
             const tenantId = ctx.tenant.organizationId;
-            const owned = and(
-                visibleMovements(tenantId),
-                sectionPredicate(input.scope, input.section, tenantId),
-                eq(movement.organizationId, tenantId),
-            );
+            const shown = and(visibleMovements(tenantId), sectionPredicate(input.scope, input.section, tenantId));
+            // Cost lines only touch the margin, and only an owner has one
+            const owned = and(shown, eq(movement.organizationId, tenantId));
 
             const [rows, costGroups] = await Promise.all([
-                ctx.db
-                    .select({
-                        sellSubtotal: movement.sellSubtotal,
-                        sellVat: movement.sellVat,
-                        sellTotal: movement.sellTotal,
-                        sellCurrency: movement.sellCurrency,
-                        buySubtotal: movement.buySubtotal,
-                        buyVat: movement.buyVat,
-                        buyTotal: movement.buyTotal,
-                        buyCurrency: movement.buyCurrency,
-                    })
-                    .from(movement)
-                    .where(owned),
+                ctx.db.select().from(movement).where(shown),
                 ctx.db
                     .select({
                         currency: movementCost.currency,

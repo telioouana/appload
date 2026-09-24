@@ -122,6 +122,12 @@
         "revenue": "Revenue",
         "costs": "Costs",
         "margin": "Margin",
+        "receivable": "To receive",
+        "payable": "To pay",
+        "spend": "Freight spend",
+        "fleetCosts": "Fleet costs",
+        "freight": "Freight",
+        "paid": "Paid",
         "empty": "Nothing priced here yet"
     },
     "sort": {
