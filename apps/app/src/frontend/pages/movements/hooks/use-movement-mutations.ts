@@ -37,7 +37,32 @@ export function useMovementMutations() {
     const planAware = (error: unknown) => { if (planRefusal(error) === null) fail(error) }
 
     const create = useMutation(trpc.movements.create.mutationOptions({
-        onSuccess: (data) => { void refresh(); toast.success(t("toasts.created", { ref: data.ref })) },
+        onSuccess: (data) => {
+            void refresh()
+            toast.success(data.asked > 0 ? t("toasts.created-asked", { ref: data.ref, count: data.asked }) : t("toasts.created", { ref: data.ref }))
+        },
+    }))
+
+    const sendRequests = useMutation(trpc.movements.sendRequests.mutationOptions({
+        onSuccess: (data) => { void refresh(); toast.success(t("quotes.toasts.sent", { count: data.sent })) },
+    }))
+
+    const withdrawRequest = useMutation(trpc.movements.withdrawRequest.mutationOptions({
+        onSuccess: () => { void refresh(); toast.success(t("quotes.toasts.withdrawn")) },
+        onError: fail,
+    }))
+
+    const quote = useMutation(trpc.movements.quote.mutationOptions({
+        onSuccess: () => { void refresh(); toast.success(t("quotes.toasts.quoted")) },
+    }))
+
+    const declineRequest = useMutation(trpc.movements.declineRequest.mutationOptions({
+        onSuccess: () => { void refresh(); toast.success(t("quotes.toasts.declined")) },
+    }))
+
+    const award = useMutation(trpc.movements.award.mutationOptions({
+        onSuccess: () => { void refresh(); toast.success(t("quotes.toasts.awarded")) },
+        onError: planAware,
     }))
 
     const update = useMutation(trpc.movements.update.mutationOptions({
@@ -135,6 +160,11 @@ export function useMovementMutations() {
         offer,
         withdraw,
         respond,
+        sendRequests,
+        withdrawRequest,
+        quote,
+        declineRequest,
+        award,
         convert,
         recordPayment,
         addCost,

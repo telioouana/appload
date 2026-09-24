@@ -36,7 +36,7 @@ import type { NotificationKind } from "@workspace/db/notifications";
 import { ensureOrderReference } from "@workspace/domain/movements/counters";
 import { unapprovedPhotos } from "@workspace/domain/movements/documents";
 import { legSettled } from "@workspace/domain/movements/money";
-import { isOnPortal, MAX_HOPS, organizationName, parentMovement } from "@workspace/domain/movements/link";
+import { isOnPortal, MAX_HOPS, openRequestCount, organizationName, parentMovement } from "@workspace/domain/movements/link";
 import { FOLLOWS_APPLOAD_ORDER } from "@workspace/domain/movements/mirror";
 import { counterpartyRef, movementRef, needsOrderReference } from "@workspace/domain/movements/refs";
 import {
@@ -246,7 +246,11 @@ export async function transitionMovement(
         throw new TRPCError({ code: "BAD_REQUEST", message: FOLLOWS_APPLOAD_ORDER });
     }
 
-    const executorOnPortal = row.execution === "partner" && await isOnPortal(db, row.carrierOrgId);
+    // A load out for quotes is being asked about the same way one offered to
+    // a partner is: the transporters asked answer for themselves, and the
+    // owner's only moves are taking it back or calling it off
+    const executorOnPortal = row.execution === "partner"
+        && (await isOnPortal(db, row.carrierOrgId) || await openRequestCount(db, row.id) > 0);
     const targets = ownerTargets({
         execution: row.execution,
         status: row.status,

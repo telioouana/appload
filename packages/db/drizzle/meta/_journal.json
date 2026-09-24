@@ -169,6 +169,13 @@
       "when": 1790028774908,
       "tag": "0023_right_starbolt",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790167940562,
+      "tag": "0024_movement_request",
+      "breakpoints": true
     }
   ]
 }

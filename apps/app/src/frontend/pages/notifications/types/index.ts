@@ -17,6 +17,8 @@ export const KINDS_BY_FAMILY: Record<KindFamily, NotificationKind[]> = {
     connections: ["connection.requested", "connection.accepted", "connection.declined", "connection.removed"],
     // The company's own orders and trips, whoever moves them
     loads: [
+        "movement.requested",
+        "movement.quoted",
         "movement.offered",
         "movement.accepted",
         "movement.declined",

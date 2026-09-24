@@ -8,7 +8,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
 
-import { AttentionMarks, InDisputeChip, LaneCell, LastPingCell, LoadDate, Money, MovementStatusChip, OffRouteChip, RoleChip } from "@/frontend/pages/movements/components/badges"
+import { AttentionMarks, InDisputeChip, LaneCell, LastPingCell, LoadDate, Money, MovementStatusChip, OffRouteChip, QuotesChip, RoleChip } from "@/frontend/pages/movements/components/badges"
 import { isInProgress, type MovementRow, type MovementScope, type OrgType } from "@/frontend/pages/movements/types"
 
 /**
@@ -63,7 +63,11 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                 meta: { label: t("columns.status") },
                 cell: ({ row }) => (
                     <span className="flex min-w-0 items-center gap-1.5">
-                        <MovementStatusChip status={row.original.status} />
+                        <MovementStatusChip status={row.original.status} quoteRequested={row.original.quoteRequested} />
+                        {/* A round out for quotes says how many came back, right here */}
+                        {row.original.quotes && row.original.quotes.asked > 0 && (
+                            <QuotesChip loadId={row.original.id} quotes={row.original.quotes} />
+                        )}
                         {row.original.inDispute && <InDisputeChip />}
                         {row.original.offRoute && <OffRouteChip />}
                         <RoleChip role={row.original.role} />

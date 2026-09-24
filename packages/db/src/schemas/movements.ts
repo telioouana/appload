@@ -288,6 +288,67 @@ export const movement = pgTable(
 export type Movement = typeof movement.$inferSelect;
 export type CreateMovement = typeof movement.$inferInsert;
 
+/** Lifecycle of one transporter's place in a load's quote round — see `movementRequest.status`. */
+export const MOVEMENT_REQUEST_STATUS = ["requested", "quoted", "declined", "withdrawn", "closed", "awarded"] as const;
+export type MovementRequestStatus = (typeof MOVEMENT_REQUEST_STATUS)[number];
+
+/**
+ * A load's quote round: the owner asking its connected transporters what
+ * they would move it for. The `order_request` idea (quotes.ts) on a tenant's
+ * own load, with one difference — a transporter answers one round with one
+ * price, so the quote lives on the request row instead of in a table of its
+ * own. The round sits on the owner's row at "prospect"; awarding one quote
+ * copies it into the row's buy leg and places the load through the offer
+ * door (offer.ts), which is where the transporter's yes is written.
+ *
+ * One row per (movement, carrier): asking the same transporter again reopens
+ * its row rather than stacking requests. The FK cascades — a request carries
+ * nothing of its own once the load is gone.
+ */
+export const movementRequest = pgTable(
+    "movement_request",
+    {
+        id: text("id")
+            .primaryKey()
+            .$defaultFn(() => crypto.randomUUID()),
+        movementId: text("movement_id")
+            .notNull()
+            .references(() => movement.id, { onDelete: "cascade" }),
+        carrierOrgId: text("carrier_org_id")
+            .notNull()
+            .references(() => organization.id),
+        status: text("status", { enum: MOVEMENT_REQUEST_STATUS }).default("requested").notNull(),
+        // What the owner wrote to the transporter with the request
+        message: text("message"),
+        // The transporter's answer: the same shape as the row's buy leg, so an
+        // award copies it across as it is. VAT-inclusive total, like every
+        // money block in the repo
+        quoteSubtotal: numeric("quote_subtotal", { precision: 14, scale: 2 }),
+        quoteVat: numeric("quote_vat", { precision: 14, scale: 2 }),
+        quoteTotal: numeric("quote_total", { precision: 14, scale: 2 }),
+        quoteCurrency: currencyEnum("quote_currency"),
+        quoteFiscalRegime: fiscalRegimeEnum("quote_fiscal_regime"),
+        // What the transporter wrote back, with its price or its no
+        note: text("note"),
+        createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+        respondedAt: timestamp("responded_at"),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+        updatedAt: timestamp("updated_at")
+            .defaultNow()
+            .$onUpdate(() => /* @__PURE__ */ new Date())
+            .notNull(),
+    },
+    (table) => [
+        uniqueIndex("movement_request_movement_carrier_uidx").on(table.movementId, table.carrierOrgId),
+        // What has been asked of this company, and every round it is still in
+        index("movement_request_carrier_status_idx").on(table.carrierOrgId, table.status),
+        check("movement_request_quote_currency_ck", sql`${table.quoteTotal} is null or ${table.quoteCurrency} is not null`),
+    ],
+);
+
+export type MovementRequest = typeof movementRequest.$inferSelect;
+export type CreateMovementRequest = typeof movementRequest.$inferInsert;
+
 /**
  * The per-company reference counters: one row per (organization, kind, year)
  * holding the last number handed out. A reference is minted with a single

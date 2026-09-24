@@ -1,10 +1,12 @@
 "use client"
 
-import { IconArrowNarrowRight, IconFlag, IconGavel, IconMapPinOff, IconRouteOff } from "@tabler/icons-react"
+import { IconArrowNarrowRight, IconFlag, IconGavel, IconInvoice, IconMapPinOff, IconRouteOff } from "@tabler/icons-react"
 
 import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
+import { Link } from "@/i18n/navigation"
 
 import { Badge } from "@workspace/ui/components/badge"
+import { Popover, PopoverContent, PopoverTrigger } from "@workspace/ui/components/popover"
 import { StatusBadge } from "@workspace/ui/customs/badge/status-badge"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { cn } from "@workspace/ui/lib/utils"
@@ -16,6 +18,7 @@ import {
     type MovementExecution,
     type MovementFlag,
     type MovementPing,
+    type MovementQuoteSummary,
     type MovementRole,
     type MovementStatus,
 } from "@/frontend/pages/movements/types"
@@ -57,10 +60,74 @@ export function useMoveLabel() {
  * borrows the order status that means the same thing (`movementTone`) — the
  * same pairing the map pins use, so a chip and a pin of one colour agree.
  */
-export function MovementStatusChip({ status, className }: { status: MovementStatus; className?: string }) {
+export function MovementStatusChip({
+    status,
+    quoteRequested = false,
+    className,
+}: {
+    status: MovementStatus
+    /** The reader was asked for a price: the wait is its own, not the owner's */
+    quoteRequested?: boolean
+    className?: string
+}) {
+    const t = useTranslations("App.loads.status")
     const label = useStatusLabel()
 
-    return <StatusBadge status={movementTone(status)} label={label(status)} className={cn("text-xs", className)} />
+    return (
+        <StatusBadge
+            status={movementTone(status)}
+            label={quoteRequested ? t("quote-requested") : label(status)}
+            className={cn("text-xs", className)}
+        />
+    )
+}
+
+/**
+ * The open quote round, read off the list: how many of the transporters
+ * asked have named a price. Opens the prices themselves, and the load for
+ * awarding one — nothing to open just to see whether anybody answered.
+ */
+export function QuotesChip({ loadId, quotes }: { loadId: string; quotes: MovementQuoteSummary }) {
+    const t = useTranslations("App.loads.quotes")
+    const money = useMoney()
+
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Badge
+                    asChild
+                    variant="outline"
+                    className={cn(
+                        "cursor-pointer gap-1 rounded-full font-normal",
+                        quotes.received > 0 ? "border-primary/40 text-primary" : "text-muted-foreground",
+                    )}
+                >
+                    <button type="button" onClick={(event) => event.stopPropagation()}>
+                        <IconInvoice className="size-3" stroke={1.5} />
+                        {t("chip", { received: quotes.received, asked: quotes.asked })}
+                    </button>
+                </Badge>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-72 p-3" onClick={(event) => event.stopPropagation()}>
+                <ul className="flex flex-col gap-1.5">
+                    {quotes.items.map((item) => (
+                        <li key={item.carrierName} className="flex items-center justify-between gap-3 text-sm">
+                            <span className="truncate">{item.carrierName}</span>
+                            {item.quote
+                                ? <span className="shrink-0 font-medium tabular-nums">{money(item.quote.total, item.quote.currency)}</span>
+                                : <span className="text-muted-foreground shrink-0 text-xs">{t("status.requested")}</span>}
+                        </li>
+                    ))}
+                </ul>
+                <Link
+                    href={{ pathname: "/orders/load/[loadId]", params: { loadId } }}
+                    className="text-primary mt-3 block text-xs font-medium hover:underline"
+                >
+                    {t("open-load")}
+                </Link>
+            </PopoverContent>
+        </Popover>
+    )
 }
 
 /**

@@ -14,6 +14,7 @@ import {
     movementDocument,
     movementEvent,
     movementLocation,
+    movementRequest,
     movementTrackingAlert,
     movementTrackingRequest,
     type Movement,
@@ -22,12 +23,13 @@ import {
     type MovementStatus,
 } from "@workspace/db/movements";
 import { order } from "@workspace/db/orders";
+import { isApploadOrg } from "@workspace/db/types";
 import { organization, user } from "@workspace/db/users";
 
 import { isOrgAuthorized, type OrgRole } from "@workspace/auth/organization-permissions";
-import { terminalMovementId } from "@workspace/domain/movements/link";
+import { LIVE_REQUEST_STATUSES, terminalMovementId } from "@workspace/domain/movements/link";
 import { costTotals, exVat, legSettled, margin } from "@workspace/domain/movements/money";
-import { editableGroups, movementRole, type MovementRole } from "@workspace/domain/movements/policy";
+import { editableGroups, isExecutorOf, movementRole, type MovementRole } from "@workspace/domain/movements/policy";
 import { counterpartyRef, movementRef } from "@workspace/domain/movements/refs";
 import {
     entersInProgress,
@@ -56,6 +58,8 @@ import type {
     MovementParty,
     MovementPermissions,
     MovementPing,
+    MovementQuoteSummary,
+    MovementRequestView,
     MovementRow,
     MovementScope,
     MovementSection,
@@ -113,7 +117,23 @@ export const visibleMovements = (tenantId: string): SQL =>
             eq(movement.carrierOrgId, tenantId),
             or(inArray(movement.status, ["offered", "declined"]), isNotNull(movement.executionMovementId)),
         ),
+        asked(tenantId),
     ) as SQL;
+
+/**
+ * A load this company has been asked to quote on and has not been let go
+ * of: it reads the load the way a partner offered it does, until the owner
+ * awards it elsewhere, takes the round back or the company itself declines.
+ * The condition goes in as a drizzle expression for the reason `forMe`'s do.
+ */
+export const asked = (tenantId: string): SQL =>
+    sql`exists (
+        select 1 from ${movementRequest} where ${and(
+            eq(movementRequest.movementId, movement.id),
+            eq(movementRequest.carrierOrgId, tenantId),
+            inArray(movementRequest.status, [...LIVE_REQUEST_STATUSES]),
+        )}
+    )`;
 
 const ownOrder = alias(movement, "own_order");
 
@@ -268,6 +288,8 @@ export const received = (tenantId: string): SQL =>
             eq(movement.execution, "own-fleet"),
             inArray(movement.status, ["offered", "prospect"]),
         ),
+        // A quote asked of this company is the same planning work
+        asked(tenantId),
     ) as SQL;
 
 /** Loads this company's own fleet moves. */
@@ -348,12 +370,24 @@ export async function loadVisible(db: Db, id: string, tenantId: string): Promise
         .where(and(eq(movement.id, id), visibleMovements(tenantId)))
         .limit(1);
 
-    const role = row ? movementRole(row, tenantId) : null;
+    const role = row ? roleOf(row, tenantId) : null;
 
     if (!row || !role) throw notFound();
 
     return { row, role };
 }
+
+/**
+ * The caller's role on a row `visibleMovements` returned. A row it is no
+ * side of by its columns is one it was asked to quote on (`asked`): it reads
+ * that the way a partner offered the load does, cut the same way — the lane,
+ * the cargo, the dates, and nothing of the owner's own client or money.
+ */
+export const roleOf = (row: Movement, tenantId: string): MovementRole => movementRole(row, tenantId) ?? "executor";
+
+/** Reading as a transporter that was asked for a price, not one holding an offer. */
+export const isCandidate = (row: Movement, role: MovementRole, tenantId: string): boolean =>
+    role === "executor" && !isExecutorOf(row, tenantId);
 
 /** The same, for writes only the owner may make. */
 export async function loadOwn(db: Db, id: string, tenantId: string): Promise<Movement> {
@@ -599,7 +633,10 @@ export type CostRow = {
  * construction (a CHECK on the table), so the owner's `payable` is null there
  * and its margin is the sell leg less what the load cost to run.
  */
-export function projectMoney(row: Movement, role: MovementRole, costs: readonly CostRow[]): MovementMoney {
+export function projectMoney(row: Movement, role: MovementRole, costs: readonly CostRow[], candidate = false): MovementMoney {
+    // A transporter asked for a price names its own: what the owner would
+    // have paid, if it wrote a figure down, is the owner's alone
+    if (candidate) return { payable: null, receivable: null, margin: null };
     if (role === "executor") return { payable: null, receivable: leg(row, "buy"), margin: null };
     if (role === "client") return { payable: leg(row, "sell"), receivable: null, margin: null };
 
@@ -670,12 +707,17 @@ export function toMovementRow(
         unapprovedPhotos?: number;
         /** The Appload ids of the orders these rows follow (`loadApploadRefs`) */
         apploadRefs?: Map<string, string>;
+        /** The reader was asked for a price and has not named one the owner took (`isCandidate`) */
+        candidate?: boolean;
+        /** The open quote round on the row (`loadQuoteSummaries`); owner only */
+        quotes?: MovementQuoteSummary | null;
     },
 ): MovementRow {
     const owner = role === "owner";
+    const candidate = ctx.candidate ?? false;
     // The list shows headlines only; costs are not read for it, and the
     // margin is the detail page's
-    const money = projectMoney(row, role, []);
+    const money = projectMoney(row, role, [], candidate);
 
     return {
         id: row.id,
@@ -702,6 +744,8 @@ export function toMovementRow(
         payable: headline(money.payable),
         receivable: headline(money.receivable),
         isLinked: owner && row.executionMovementId !== null,
+        quoteRequested: candidate,
+        quotes: owner ? ctx.quotes ?? null : null,
         inDispute: ctx.inDispute ?? false,
         offRoute: owner && (ctx.offRoute ?? false),
         silent: owner && (ctx.silent ?? false),
@@ -764,6 +808,12 @@ type DetailExtras = {
     apploadRefs?: Map<string, string>;
     hasParent: boolean;
     executorOnPortal: boolean;
+    /** Transporters the owner is still waiting on for a price (`openRequestCount`) */
+    openRequests: number;
+    /** The round, as far as the reader is part of it (`loadRequests`) */
+    requests: readonly MovementRequestView[];
+    /** The reader was asked for a price (`isCandidate`) */
+    candidate: boolean;
     /** A recent off-route alert covers the row (`loadOffRoute`) */
     offRoute: boolean;
     costs: readonly CostRow[];
@@ -780,7 +830,7 @@ type DetailExtras = {
 
 export function toMovementDetail(row: Movement, role: MovementRole, extras: DetailExtras): MovementDetail {
     const owner = role === "owner";
-    const money = projectMoney(row, role, owner ? extras.costs : []);
+    const money = projectMoney(row, role, owner ? extras.costs : [], extras.candidate);
     const legs = documentLegsFor(role);
     const kinds = eventKindsFor(role);
 
@@ -790,10 +840,12 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
     // same row with the next one, and the earlier round's messages, answers
     // and papers are between the owner and that earlier carrier. Anchored on
     // the offer event rather than on `offeredAt`, since events and papers are
-    // stamped by the database clock and `offeredAt` by the server's.
+    // stamped by the database clock and `offeredAt` by the server's. A
+    // transporter asked for a price reads from the ask that reached it.
     const roundStart = role === "executor"
         ? extras.events.find((event) =>
-            event.kind === "offer" && event.actorOrgId === row.organizationId && readAction(event.metadata) === "offered",
+            event.kind === "offer" && event.actorOrgId === row.organizationId
+            && (extras.candidate ? readAction(event.metadata) === "requested" : readAction(event.metadata) === "offered"),
         )?.createdAt ?? null
         : null;
     const inRound = (createdAt: Date) => role !== "executor" || (roundStart !== null && createdAt >= roundStart);
@@ -819,6 +871,7 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
     return {
         ...toMovementRow(row, role, { ...extras, inDispute: disputeVisible }),
         appload: apploadOf(row, extras.apploadRefs),
+        requests: [...extras.requests],
         route: row.route,
         category: row.category,
         weight: num(row.weight),
@@ -991,7 +1044,13 @@ function permissionsFor(
         editable: [],
         canOffer: false,
         canWithdraw: false,
+        canSendRequests: false,
+        canAward: false,
         canRespond: role === "executor" && row.status === "offered" && can("offer", "update"),
+        // Asked for a price and still in the round: naming one is the same
+        // commitment as answering an offer
+        canQuote: extras.candidate && extras.requests.some((request) => (LIVE_REQUEST_STATUSES as readonly string[]).includes(request.status))
+            && can("offer", "update"),
         canConvert: false,
         // A client keeps its own cost book on a load moved for it; the
         // executor works its own child row, so nothing to manage here
@@ -1021,13 +1080,16 @@ function permissionsFor(
     const apploadLinked = row.orderId !== null;
     const writeResource = partner ? "order" : "trip";
     const mayWrite = can(writeResource, "update");
+    // A round still open is the load being asked about, the same as an offer
+    // in front of a partner (apply.ts reads it the same way)
+    const roundOpen = extras.openRequests > 0;
     const shape = {
         execution: row.execution,
         status: row.status,
         route: row.route,
         resumeStatus: row.resumeStatus,
         linked,
-        executorOnPortal: extras.executorOnPortal,
+        executorOnPortal: extras.executorOnPortal || roundOpen,
         apploadLinked,
     };
     const guards = guardsOf(row, extras.unapprovedPhotos, disputeOpen);
@@ -1065,7 +1127,13 @@ function permissionsFor(
         // A linked row sits at "offered" too (the order's own prospect stage):
         // it is cancelled with Appload, never withdrawn from here
         canWithdraw: !apploadLinked && row.status === "offered" && can("order", "update"),
+        // Asking transporters for a price is placing the load, the role an
+        // offer takes; Appload is asked through the offer door instead
+        canSendRequests: partner && !linked && !apploadLinked && !isApploadOrg(row.carrierOrgId)
+            && (row.status === "procurement" || row.status === "prospect" || row.status === "declined") && can("order", "create"),
+        canAward: partner && !linked && !apploadLinked && row.status === "prospect" && can("order", "create"),
         canRespond: false,
+        canQuote: false,
         // Taking a partner's load in-house is filing a trip of one's own,
         // which a transporter never does by hand: its trucks are put on its
         // clients' orders by accepting them (procedures.ts create, convert)
@@ -1097,6 +1165,44 @@ function permissionsFor(
 // ---------------------------------------------------------------------------
 // The detail page's satellites
 // ---------------------------------------------------------------------------
+
+/**
+ * The quote round as the caller may read it: the owner sees every
+ * transporter it asked and what each answered, a transporter only its own
+ * row — who else was asked, and for how much, is the owner's business.
+ */
+export async function loadRequests(db: Db, movementId: string, tenantId: string, role: MovementRole): Promise<MovementRequestView[]> {
+    if (role === "client") return [];
+
+    const rows = await db
+        .select({
+            id: movementRequest.id,
+            carrierId: movementRequest.carrierOrgId,
+            carrierName: organization.name,
+            status: movementRequest.status,
+            message: movementRequest.message,
+            quoteTotal: movementRequest.quoteTotal,
+            quoteCurrency: movementRequest.quoteCurrency,
+            quoteFiscalRegime: movementRequest.quoteFiscalRegime,
+            note: movementRequest.note,
+            respondedAt: movementRequest.respondedAt,
+            createdAt: movementRequest.createdAt,
+        })
+        .from(movementRequest)
+        .innerJoin(organization, eq(organization.id, movementRequest.carrierOrgId))
+        .where(and(
+            eq(movementRequest.movementId, movementId),
+            role === "owner" ? undefined : eq(movementRequest.carrierOrgId, tenantId),
+        ))
+        .orderBy(organization.name);
+
+    return rows.map(({ quoteTotal, quoteCurrency, quoteFiscalRegime, ...row }) => ({
+        ...row,
+        quote: quoteTotal !== null && quoteCurrency !== null
+            ? { total: Number(quoteTotal), currency: quoteCurrency, fiscalRegime: quoteFiscalRegime }
+            : null,
+    }));
+}
 
 /** One company's own cost lines on a load — never another party's book. */
 export async function loadCosts(db: Db, movementId: string, tenantId: string): Promise<CostRow[]> {
@@ -1246,6 +1352,46 @@ export async function loadSilent(db: Db, ids: readonly string[], tenantId: strin
 }
 
 /** Loading photos nobody validated, per row of a page — what the rows' flags read. */
+/**
+ * The quote round of each load on a page, for the list's chip: how many
+ * transporters are still in it, how many named a price, and the prices
+ * themselves. Owner rows only — the caller keeps it off everybody else's.
+ */
+export async function loadQuoteSummaries(db: Db, ids: readonly string[]): Promise<Map<string, MovementQuoteSummary>> {
+    if (ids.length === 0) return new Map();
+
+    const rows = await db
+        .select({
+            movementId: movementRequest.movementId,
+            carrierName: organization.name,
+            status: movementRequest.status,
+            total: movementRequest.quoteTotal,
+            currency: movementRequest.quoteCurrency,
+        })
+        .from(movementRequest)
+        .innerJoin(organization, eq(organization.id, movementRequest.carrierOrgId))
+        .where(and(
+            inArray(movementRequest.movementId, [...ids]),
+            inArray(movementRequest.status, [...LIVE_REQUEST_STATUSES]),
+        ))
+        .orderBy(organization.name);
+
+    const summaries = new Map<string, MovementQuoteSummary>();
+
+    for (const row of rows) {
+        const summary = summaries.get(row.movementId) ?? { asked: 0, received: 0, items: [] };
+        summary.asked += 1;
+        if (row.status === "quoted") summary.received += 1;
+        summary.items.push({
+            carrierName: row.carrierName,
+            quote: row.total !== null && row.currency !== null ? { total: Number(row.total), currency: row.currency } : null,
+        });
+        summaries.set(row.movementId, summary);
+    }
+
+    return summaries;
+}
+
 export async function loadUnapprovedPhotos(db: Db, ids: readonly string[]): Promise<Map<string, number>> {
     if (ids.length === 0) return new Map();
 

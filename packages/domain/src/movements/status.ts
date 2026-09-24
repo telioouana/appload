@@ -208,7 +208,7 @@ export type GuardInput = {
 };
 
 /** Where a partner has to be named and priced, and where a rig has to exist. */
-const NEEDS_CARRIER: readonly MovementStatus[] = ["prospect", "scheduled", "booked", ...IN_PROGRESS_STATUSES];
+const NEEDS_CARRIER: readonly MovementStatus[] = ["scheduled", "booked", ...IN_PROGRESS_STATUSES];
 const NEEDS_RIG: readonly MovementStatus[] = ["booked", ...IN_PROGRESS_STATUSES];
 
 /**
@@ -216,8 +216,9 @@ const NEEDS_RIG: readonly MovementStatus[] = ["booked", ...IN_PROGRESS_STATUSES]
  * about to be moved to, so the dialog can say what proceeding will record).
  *
  * A partner load is about who does it and for how much: from the moment the
- * load is quoted or placed, the point of having filed one is to know that. A
- * rig is asked for a booking onwards — a load with a date but no truck is a
+ * load is agreed, the point of having filed one is to know that. A prospect
+ * is still upcoming — the quotes are what it is waiting for — so nothing is
+ * missing on it yet. A rig is asked for a booking onwards — a load with a date but no truck is a
  * plan, one booked without a plate is a gap — and only on the row that
  * actually carries it: a linked order's truck is named on the row below, not
  * here.

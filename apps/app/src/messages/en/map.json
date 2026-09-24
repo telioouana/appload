@@ -49,7 +49,7 @@
     "selected": {
         "open": {
             "order": "Open order",
-            "trip": "Open trip"
+            "load": "Open load"
         },
         "close": "Close",
         "last-seen": "Last seen {ago}",

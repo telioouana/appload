@@ -8,9 +8,10 @@ import type {
     MovementDocumentType,
     MovementEventKind,
     MovementExecution,
+    MovementRequestStatus,
     MovementStatus,
 } from "@workspace/db/movements";
-import type { CATEGORIES, DisputeReason, FISCAL_REGIME, OrderStatus, PartnerOrgType, ROUTE_TYPE, WEIGHT_UNIT } from "@workspace/db/types";
+import type { CATEGORIES, DisputeReason, FISCAL_REGIME, KycStatus, OrderStatus, PartnerOrgType, ROUTE_TYPE, WEIGHT_UNIT } from "@workspace/db/types";
 import type { MovementRole } from "@workspace/domain/movements/policy";
 import type { EditableGroup } from "@workspace/domain/movements/policy";
 import type { CostTotal, Currency, PaymentStatus } from "@workspace/domain/movements/money";
@@ -30,6 +31,7 @@ export type {
     MovementEventKind,
     MovementExecution,
     MovementFlag,
+    MovementRequestStatus,
     MovementRole,
     MovementStatus,
     OrderStatusKey,
@@ -267,6 +269,10 @@ export type MovementRow = {
     receivable: { total: number; currency: Currency } | null;
     /** Owner only: an executor on the portal holds the truck */
     isLinked: boolean;
+    /** The reader was asked for a price on this load and is still in the round */
+    quoteRequested: boolean;
+    /** Owner only: the open quote round, for the list to show without opening the load */
+    quotes: MovementQuoteSummary | null;
     /** Covered by an open dispute, as far as the caller may know (see projection.ts) */
     inDispute: boolean;
     /** Owner only: the truck answered a recent slot from off the planned route */
@@ -340,13 +346,44 @@ export type TransitionOption = {
     startsTracking: boolean;
 };
 
+/** The open round in one glance: who is still in it, and what each one said so far. */
+export type MovementQuoteSummary = {
+    /** Transporters still in the round: asked, or quoted and waiting on the owner */
+    asked: number;
+    /** …of which named a price */
+    received: number;
+    items: Array<{ carrierName: string; quote: { total: number; currency: Currency } | null }>;
+};
+
+/** One transporter's place in a load's quote round, as the caller may read it. */
+export type MovementRequestView = {
+    id: string;
+    carrierId: string;
+    carrierName: string;
+    status: MovementRequestStatus;
+    /** What the owner wrote with the request */
+    message: string | null;
+    /** The transporter's price, once it named one */
+    quote: { total: number; currency: Currency; fiscalRegime: FiscalRegime | null } | null;
+    /** What the transporter wrote back */
+    note: string | null;
+    respondedAt: Date | null;
+    createdAt: Date;
+};
+
 /** What the caller may do with this load right now, decided server-side. */
 export type MovementPermissions = {
     transitions: TransitionOption[];
     editable: EditableGroup[];
     canOffer: boolean;
     canWithdraw: boolean;
+    /** Owner: ask connected transporters for a price */
+    canSendRequests: boolean;
+    /** Owner: pick one of the quotes it collected */
+    canAward: boolean;
     canRespond: boolean;
+    /** A transporter asked for a price: name one, or pass */
+    canQuote: boolean;
     canConvert: boolean;
     canManageCosts: boolean;
     canManageDocuments: boolean;
@@ -439,6 +476,8 @@ export type MovementDetail = MovementRow & {
     responseNote: string | null;
     /** This row is an executor's copy of an order another company placed */
     hasParent: boolean;
+    /** The quote round: every transporter asked, to the owner; its own row, to a transporter */
+    requests: MovementRequestView[];
     money: MovementMoney;
     costs: MovementCostView[];
     documents: MovementDocumentView[];
@@ -447,6 +486,20 @@ export type MovementDetail = MovementRow & {
     dispute: MovementDisputeView | null;
     permissions: MovementPermissions;
     updatedAt: Date;
+};
+
+/**
+ * A transporter a load can be sent to for a price. Name, province and
+ * verification status only, like `PartnerCandidate` on the Partners page:
+ * enough to recognise a company, nothing that belongs behind a connection.
+ */
+export type MovementCandidate = {
+    id: string;
+    name: string;
+    province: string | null;
+    kycStatus: KycStatus;
+    /** An accepted connection stands between the two companies */
+    connected: boolean;
 };
 
 /** What the load form picks from; every pick is checked again server-side. */
@@ -459,7 +512,18 @@ export type LoadFormOptions = {
 
 /** The money strip's figures: one line per currency, never summed across two. */
 export type MovementCashflow = {
-    lines: Array<{ currency: Currency; revenue: number; costs: number; margin: number }>;
+    lines: Array<{
+        currency: Currency;
+        /** The company's own rows before VAT (money.ts): what they earn, cost and leave */
+        revenue: number;
+        costs: number;
+        margin: number;
+        /** The invoices as written, VAT included: cash still to move, and cash that did */
+        receivable: number;
+        received: number;
+        payable: number;
+        paid: number;
+    }>;
 };
 
 export type MovementStats = {

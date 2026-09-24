@@ -72,7 +72,7 @@ export function LoadHeader({
 
                     <div className="flex flex-wrap items-center gap-2.5">
                         <h1 className="font-heading truncate text-2xl font-semibold tracking-tight">{reference}</h1>
-                        <MovementStatusChip status={load.status} />
+                        <MovementStatusChip status={load.status} quoteRequested={load.quoteRequested} />
                         {/* Which Appload order the load follows, so the two
                             references can be read against each other */}
                         {appload && (
