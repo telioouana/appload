@@ -301,6 +301,11 @@ then push `prod/admin` and the portal back to back.
   additive: `organization.type` is a text column, so admitting the new
   `appload` value is no DDL at all. Two data steps follow it, below. Dev gets
   it from `node packages/db/scripts/add-appload-partner-columns.mjs`.
+- `0024_movement_request` — the quote round on a portal load: one
+  `movement_request` row per (movement, transporter asked), carrying the
+  transporter's price. Purely additive (new table, FKs on `movement` and
+  `organization`); the two new notification kinds are text. Dev got it from
+  `db:push`.
 
 The shared **dev** database got all nine from the idempotent scripts
 instead — `node packages/db/scripts/create-portal-tables.mjs`,

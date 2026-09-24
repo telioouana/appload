@@ -176,10 +176,17 @@
         "send": {
             "title": "Enviar a transportadores",
             "description": "Escolha os transportadores de quem quer propostas. Só as ligações aceites podem ser contactadas.",
+            "description-all": "Escolha os transportadores a quem quer pedir preço: os seus, ou qualquer transportador no portal. Adjudicar a carga a um com quem não está ligado torna-os parceiros.",
             "search": "Procurar nos seus transportadores",
             "empty": "Nenhum transportador encontrado",
             "already": "Já contactado",
             "no-province": "Província não definida",
+            "not-connected": "Não ligado a si",
+            "scope": {
+                "label": "A quem pedir",
+                "connected": "Os meus transportadores",
+                "all": "Qualquer transportador no portal"
+            },
             "selected": "{count} de {max} seleccionados",
             "submit": "Enviar",
             "message": {

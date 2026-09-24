@@ -36,6 +36,7 @@
         "procurement": "Draft",
         "prospect": "Prospect",
         "offered": "Prospect",
+        "quote-requested": "Quote requested",
         "declined": "Declined",
         "scheduled": "Confirmed",
         "booked": "Booked",
@@ -467,6 +468,8 @@
         "flags": "Proceeded with flags: {list}",
         "from-below": "By the transporter",
         "actions": {
+            "requested": "Quotes asked of transporters",
+            "awarded": "Quote picked; offered to the partner at its price",
             "offered": "Offered to the partner",
             "withdrawn": "Offer withdrawn",
             "accepted": "Offer accepted",
@@ -586,6 +589,12 @@
             "partner-hint": "A transporter you are connected to, or somebody off the portal",
             "partner-on-portal": "This transporter is on the portal: the load stays in procurement and you offer it from its page. They name their own driver.",
             "partner-none": "Not decided yet",
+            "partner-ask-all": "Every transporter you are connected to on the portal is asked what it would move the load for.",
+            "partner-ask-one": "This transporter is asked what it would move the load for, and answers on the portal.",
+            "request-quotes-all": "Ask my transporters for quotes ({count})",
+            "request-quotes-one": "Ask {name} for a quote",
+            "request-quotes-hint": "The load goes out as a prospect; you pick a price from the quotes on its page. Untick to file it as a draft and offer it yourself.",
+            "request-quotes-managed": "Who is asked for a quote is managed from the Quotes card on the load's page: ask more transporters there, or withdraw one.",
             "partner-name": "Transporter's name",
             "buy": "What you pay the partner",
             "buy-hint": "VAT included",
@@ -647,6 +656,7 @@
     },
     "toasts": {
         "created": "{ref} filed",
+        "created-asked": "{ref} filed — {count, plural, one {# transporter} other {# transporters}} asked for a quote",
         "updated": "Changes saved",
         "offered": "Offer sent to the partner",
         "withdrawn": "Offer withdrawn",
@@ -716,6 +726,49 @@
             "submit": "Resolve"
         }
     },
+    "quotes": {
+        "title": "Quotes",
+        "empty": "Nobody has been asked for a quote yet.",
+        "your-request": "You were asked for a quote",
+        "chip": "{received}/{asked} quotes",
+        "open-load": "Open the load to award one",
+        "sent-on": "Asked on {date}",
+        "answered-on": "Answered on {date}",
+        "actions": {
+            "ask": "Ask transporters",
+            "award": "Award",
+            "withdraw": "Withdraw the request",
+            "quote": "Send a quote"
+        },
+        "status": {
+            "requested": "Waiting for a quote",
+            "quoted": "Quoted",
+            "declined": "Declined",
+            "withdrawn": "Withdrawn",
+            "closed": "Closed",
+            "awarded": "Awarded"
+        },
+        "toasts": {
+            "sent": "{count, plural, =0 {Nobody new was asked} one {Asked # transporter} other {Asked # transporters}}",
+            "withdrawn": "Request withdrawn",
+            "quoted": "Quote sent",
+            "declined": "Request declined",
+            "awarded": "Offer sent to the partner at its price"
+        },
+        "award": {
+            "title": "Award the load",
+            "description": "{partner} is offered the load at the price it quoted and confirms on the portal. Every other transporter asked is told the round is over.",
+            "submit": "Award and offer"
+        },
+        "quote": {
+            "title": "Send a quote",
+            "decline-title": "Decline the request",
+            "description": "{owner} asked what you would move {ref} for. VAT included; the amount is what you would be paid.",
+            "decline-description": "{owner} is told you will not quote on {ref}.",
+            "placeholder": "Anything the client should know about your price",
+            "submit": "Send quote"
+        }
+    },
     "appload": {
         "badge": "Appload · {orderId}",
         "partner": "Appload",
@@ -744,6 +797,9 @@
         "apploadNotAClient": "Appload moves loads; it is never the client of one.",
         "rigNotRegistered": "The driver or truck picked is not in your fleet.",
         "noDriver": "Name the driver and their phone first.",
+        "noCarriersToAsk": "None of your transporters is on the portal yet, so there is nobody to ask for a quote.",
+        "apploadNotACandidate": "Appload is offered a load from its page, not asked for a quote.",
+        "notQuoted": "This transporter has not named a price yet.",
         "noCarrier": "Name the partner that will move the load first.",
         "noPrice": "Record what you will pay the partner first.",
         "noteRequired": "A reason is required.",

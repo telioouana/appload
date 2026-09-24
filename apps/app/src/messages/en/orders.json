@@ -176,10 +176,17 @@
         "send": {
             "title": "Send to carriers",
             "description": "Pick the carriers you want offers from. Only your accepted connections can be asked.",
+            "description-all": "Pick the transporters you want a price from: your own, or any transporter on the portal. Awarding the load to one you are not connected to makes you partners.",
             "search": "Search your carriers",
             "empty": "No carriers found",
             "already": "Already asked",
             "no-province": "Province not set",
+            "not-connected": "Not connected to you",
+            "scope": {
+                "label": "Who to ask",
+                "connected": "My transporters",
+                "all": "Any transporter on the portal"
+            },
             "selected": "{count} of {max} selected",
             "submit": "Send",
             "message": {

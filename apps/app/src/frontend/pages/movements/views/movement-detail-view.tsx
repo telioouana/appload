@@ -12,6 +12,7 @@ import { DocumentsCard } from "@/frontend/pages/movements/sections/documents-car
 import { LoadHeader } from "@/frontend/pages/movements/sections/load-header"
 import { MoneyCard } from "@/frontend/pages/movements/sections/money-card"
 import { PartiesCard } from "@/frontend/pages/movements/sections/parties-card"
+import { QuotesCard } from "@/frontend/pages/movements/sections/quotes-card"
 import { RouteCard } from "@/frontend/pages/movements/sections/route-card"
 import { TimelineCard } from "@/frontend/pages/movements/sections/timeline-card"
 import { TrackingCard } from "@/frontend/pages/movements/sections/tracking-card"
@@ -46,9 +47,14 @@ export function MovementDetailView({ loadId }: { loadId: string }) {
         || (owner && session.organization.type === "carrier")
 
     const appload = load.appload
-    // Appload is still asking this company for a price: there is no load to
-    // run yet, and nothing on the page but the lane and the quote
-    const candidate = appload?.role === "candidate"
+    // Appload — or a partner on the portal — is still asking this company
+    // for a price: there is no load to run yet, and nothing on the page but
+    // the lane and the quote
+    const candidate = appload?.role === "candidate" || load.quoteRequested
+    // The quote round on the company's own order: shown from the moment it
+    // could ask, so the button is where the answers will be
+    const quotes = !appload && load.execution === "partner"
+        && (load.requests.length > 0 || load.permissions.canSendRequests)
 
     return (
         <>
@@ -57,7 +63,7 @@ export function MovementDetailView({ loadId }: { loadId: string }) {
                 orgType={session.organization.type}
                 allowance={session.allowance}
                 organizationName={session.organization.name}
-                actions={!candidate}
+                actions={!candidate || load.quoteRequested}
             />
 
             {load.dispute && <DisputeBanner dispute={load.dispute} />}
@@ -68,6 +74,14 @@ export function MovementDetailView({ loadId }: { loadId: string }) {
             <div className="grid gap-4 px-2 pb-2 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(320px,26rem)]">
                 <div className="container-snap flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pb-2">
                     <RouteCard load={load} />
+
+                    {(quotes || load.quoteRequested) && (
+                        <QuotesCard
+                            load={load}
+                            allowance={session.allowance}
+                            organizationName={session.organization.name}
+                        />
+                    )}
 
                     {!candidate && <PartiesCard load={load} orgType={session.organization.type} />}
 

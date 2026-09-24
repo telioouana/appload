@@ -36,6 +36,7 @@
         "procurement": "Rascunho",
         "prospect": "Prospectiva",
         "offered": "Prospectiva",
+        "quote-requested": "Cotação pedida",
         "declined": "Recusada",
         "scheduled": "Confirmado",
         "booked": "Agendado",
@@ -467,6 +468,8 @@
         "flags": "Avançou com alertas: {list}",
         "from-below": "Pelo transportador",
         "actions": {
+            "requested": "Cotação pedida a transportadores",
+            "awarded": "Cotação escolhida; oferecida ao parceiro ao preço dele",
             "offered": "Oferecida ao parceiro",
             "withdrawn": "Oferta retirada",
             "accepted": "Oferta aceite",
@@ -586,6 +589,12 @@
             "partner-hint": "Um transportador ligado a si, ou alguém fora do portal",
             "partner-on-portal": "Este transportador está no portal: a carga fica em procura e oferece-lha a partir da página dela. Ele indica o próprio motorista.",
             "partner-none": "Ainda por decidir",
+            "partner-ask-all": "Todos os transportadores ligados a si no portal são questionados sobre quanto cobrariam por esta carga.",
+            "partner-ask-one": "Este transportador é questionado sobre quanto cobraria por esta carga, e responde no portal.",
+            "request-quotes-all": "Pedir cotação aos meus transportadores ({count})",
+            "request-quotes-one": "Pedir cotação a {name}",
+            "request-quotes-hint": "A carga sai como prospectiva; escolhe um preço entre as cotações na página dela. Desmarque para a registar como rascunho e oferecê-la você mesmo.",
+            "request-quotes-managed": "A quem se pede cotação gere-se no cartão Cotações da página da carga: peça a mais transportadores aí, ou retire um.",
             "partner-name": "Nome do transportador",
             "buy": "O que paga ao parceiro",
             "buy-hint": "Valor com IVA incluído",
@@ -647,6 +656,7 @@
     },
     "toasts": {
         "created": "{ref} registada",
+        "created-asked": "{ref} registada — cotação pedida a {count, plural, one {# transportador} other {# transportadores}}",
         "updated": "Alterações guardadas",
         "offered": "Oferta enviada ao parceiro",
         "withdrawn": "Oferta retirada",
@@ -716,6 +726,49 @@
             "submit": "Resolver"
         }
     },
+    "quotes": {
+        "title": "Cotações",
+        "empty": "Ainda não foi pedida cotação a ninguém.",
+        "your-request": "Pediram-lhe uma cotação",
+        "chip": "{received}/{asked} cotações",
+        "open-load": "Abrir a carga para adjudicar",
+        "sent-on": "Pedida em {date}",
+        "answered-on": "Respondida em {date}",
+        "actions": {
+            "ask": "Pedir a transportadores",
+            "award": "Adjudicar",
+            "withdraw": "Retirar o pedido",
+            "quote": "Enviar cotação"
+        },
+        "status": {
+            "requested": "À espera de cotação",
+            "quoted": "Cotada",
+            "declined": "Recusada",
+            "withdrawn": "Retirada",
+            "closed": "Encerrada",
+            "awarded": "Adjudicada"
+        },
+        "toasts": {
+            "sent": "{count, plural, =0 {Ninguém de novo foi questionado} one {Cotação pedida a # transportador} other {Cotação pedida a # transportadores}}",
+            "withdrawn": "Pedido retirado",
+            "quoted": "Cotação enviada",
+            "declined": "Pedido recusado",
+            "awarded": "Oferta enviada ao parceiro ao preço dele"
+        },
+        "award": {
+            "title": "Adjudicar a carga",
+            "description": "{partner} recebe a oferta da carga ao preço que cotou e confirma no portal. Os outros transportadores questionados são avisados de que a ronda terminou.",
+            "submit": "Adjudicar e oferecer"
+        },
+        "quote": {
+            "title": "Enviar cotação",
+            "decline-title": "Recusar o pedido",
+            "description": "{owner} perguntou quanto cobraria por transportar {ref}. IVA incluído; o valor é o que iria receber.",
+            "decline-description": "{owner} é avisado de que não vai cotar {ref}.",
+            "placeholder": "Algo que o cliente deva saber sobre o seu preço",
+            "submit": "Enviar cotação"
+        }
+    },
     "appload": {
         "badge": "Appload · {orderId}",
         "partner": "Appload",
@@ -744,6 +797,9 @@
         "apploadNotAClient": "A Appload transporta cargas; nunca é o cliente de uma.",
         "rigNotRegistered": "O motorista ou o camião escolhido não é da sua frota.",
         "noDriver": "Indique o nome e o telefone do motorista primeiro.",
+        "noCarriersToAsk": "Nenhum dos seus transportadores está ainda no portal, por isso não há a quem pedir cotação.",
+        "apploadNotACandidate": "À Appload oferece-se a carga a partir da página dela; não se lhe pede cotação.",
+        "notQuoted": "Este transportador ainda não indicou um preço.",
         "noCarrier": "Indique o parceiro que vai transportar a carga primeiro.",
         "noPrice": "Indique quanto vai pagar ao parceiro primeiro.",
         "noteRequired": "É necessário indicar o motivo.",

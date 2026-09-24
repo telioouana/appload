@@ -11,6 +11,7 @@ import { initials } from "@workspace/ui/customs/list/table-cells"
 import { RequestStatusChip } from "@/frontend/pages/orders/components/badges"
 import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 import { useOrderMutations } from "@/frontend/pages/orders/hooks/use-order-mutations"
+import { orderErrorKey } from "@/frontend/pages/orders/lib/errors"
 import { SendRequestsDialog } from "@/frontend/pages/orders/sections/send-requests-dialog"
 import type { OrderDetail, OrgType } from "@/frontend/pages/orders/types"
 
@@ -24,11 +25,12 @@ const LIVE: string[] = ["requested", "quoted"]
  */
 export function RequestsPanel({ order, orgType }: { order: OrderDetail; orgType: OrgType }) {
     const t = useTranslations("App.orders.requests")
+    const tError = useTranslations("App.orders")
     const f = useFormatter()
 
     const [sendOpen, setSendOpen] = useState(false)
 
-    const { withdrawRequest } = useOrderMutations()
+    const { sendRequests, withdrawRequest } = useOrderMutations()
 
     const prospect = order.status === "prospect"
     const canSend = orgType === "shipper" && prospect && order.permissions.isMine
@@ -94,10 +96,12 @@ export function RequestsPanel({ order, orgType }: { order: OrderDetail; orgType:
 
             {canSend && (
                 <SendRequestsDialog
-                    orderId={order.orderId}
                     alreadyRequested={order.requests.filter((request) => LIVE.includes(request.status)).map((request) => request.carrierId)}
                     open={sendOpen}
-                    onOpenChange={setSendOpen}
+                    onOpenChange={(next) => { if (!next) sendRequests.reset(); setSendOpen(next) }}
+                    pending={sendRequests.isPending}
+                    error={sendRequests.error ? tError(`errors.${orderErrorKey(sendRequests.error)}`) : null}
+                    onSend={(carrierOrgIds, message) => sendRequests.mutateAsync({ orderId: order.orderId, carrierOrgIds, message })}
                 />
             )}
         </>

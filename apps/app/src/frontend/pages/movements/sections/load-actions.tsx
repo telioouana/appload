@@ -59,6 +59,7 @@ import { ConvertDialog } from "@/frontend/pages/movements/sections/convert-dialo
 import { LoadSheet } from "@/frontend/pages/movements/sections/load-sheet"
 import { OfferDialog } from "@/frontend/pages/movements/sections/offer-dialog"
 import { OpenDisputeDialog } from "@/frontend/pages/movements/sections/open-dispute-dialog"
+import { QuoteDialog } from "@/frontend/pages/movements/sections/quote-dialog"
 import { RespondDialog } from "@/frontend/pages/movements/sections/respond-dialog"
 import { SendConfirmationDialog } from "@/frontend/pages/movements/sections/send-confirmation-dialog"
 import { TransitionDialog } from "@/frontend/pages/movements/sections/transition-dialog"
@@ -89,6 +90,7 @@ type Open =
     | { kind: "transition"; option: TransitionOption }
     | { kind: "offer" }
     | { kind: "respond"; decision: "accept" | "decline" }
+    | { kind: "quote"; decision: "quote" | "decline" }
     | { kind: "convert" }
     | { kind: "confirmation" }
     | { kind: "dispute" }
@@ -195,6 +197,20 @@ export function LoadActions({
                             {t("actions.accept")}
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => setOpen({ kind: "respond", decision: "decline" })}>
+                            <IconX className="size-4" stroke={1.5} />
+                            {t("actions.decline")}
+                        </Button>
+                    </>
+                )}
+
+                {/* Asked for a price: naming one commits nothing yet, so no plan gate */}
+                {permissions.canQuote && (
+                    <>
+                        <Button size="sm" onClick={() => setOpen({ kind: "quote", decision: "quote" })}>
+                            <IconInvoice className="size-4" stroke={1.5} />
+                            {t("quotes.actions.quote")}
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setOpen({ kind: "quote", decision: "decline" })}>
                             <IconX className="size-4" stroke={1.5} />
                             {t("actions.decline")}
                         </Button>
@@ -411,6 +427,8 @@ export function LoadActions({
             {open?.kind === "respond" && (
                 <RespondDialog load={load} decision={open.decision} onClose={close} onPlanRefused={setPlanReason} />
             )}
+
+            {open?.kind === "quote" && <QuoteDialog load={load} decision={open.decision} onClose={close} />}
 
             {open?.kind === "convert" && <ConvertDialog load={load} onClose={close} />}
 

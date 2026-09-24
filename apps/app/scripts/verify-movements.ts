@@ -19,7 +19,7 @@
  */
 import fs from "node:fs";
 
-import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, or, sql } from "drizzle-orm";
 
 import { chatConversation, chatMessage, type TrackingStatus } from "@workspace/db/chats";
 import { partnerConnection } from "@workspace/db/connections";
@@ -40,6 +40,7 @@ import {
     type MovementStatus,
 } from "@workspace/db/movements";
 import { notification, type NotificationKind } from "@workspace/db/notifications";
+import { APPLOAD_ORG_ID } from "@workspace/db/types";
 import { subscriptionUsage } from "@workspace/db/subscriptions";
 import { activityLog } from "@workspace/db/activity-log";
 import { member, organization } from "@workspace/db/users";
@@ -1642,6 +1643,170 @@ async function receivedOffer() {
 }
 
 /**
+ * The quote round: a load filed with no transporter goes out to every
+ * connected one on the portal, one filed with a transporter to that one;
+ * the transporter asked reads the lane and nothing of the owner's money,
+ * names a price, and the owner awards it — which is the offer at that price.
+ */
+async function quoteRound() {
+    const a = as(A.user);
+    const b = as(B.user);
+    const seen = new Set<string>();
+
+    console.log("\n— quotes: A files an order with nobody picked and asks its transporters");
+    const broadcast = await a.create({
+        execution: "partner", origin, destination, cargoDescription: "HARNESS quotes broadcast", requestQuotes: true,
+        buy: { total: 999, currency: "MZN" },
+    });
+    created.push(broadcast.id);
+    check("at least B was asked", broadcast.asked >= 1, broadcast);
+
+    let view = await a.get({ id: broadcast.id });
+    check("the load lands as a prospect", view.status === "prospect", view.status);
+    check("…with B among the transporters asked, waiting", view.requests.some((request) => request.carrierId === B.org && request.status === "requested"), view.requests);
+    check("…every request row asked as many as the create said", view.requests.length === broadcast.asked, { rows: view.requests.length, asked: broadcast.asked });
+    check("…and the figure A wrote down stays its own to read", view.money.payable?.total === 999, view.money);
+    check("A may ask more, not offer, and not schedule past the round",
+        view.permissions.canSendRequests && !view.permissions.canOffer && !view.permissions.transitions.some((t) => t.to === "scheduled"), view.permissions);
+    check("the ask is on A's trail, with how many were asked", view.events.some((event) => event.kind === "offer" && event.action === "requested"), view.events);
+
+    const told = await noticesSince("movement.requested", [broadcast.id], seen);
+    const toldB = told.filter((n) => n.organizationId === B.org);
+    check("B's members were each told once, on the load", toldB.length === await membersOf(B.org) && toldB.every((n) => n.entityId === broadcast.id), told);
+
+    console.log("\n— quotes: B reads it as a transporter asked, and only that");
+    const planning = await b.list(movementsListInput("procurement", query({ tab: "own", size: "100" }), "carrier"));
+    const asked = planning.items.find((row) => row.id === broadcast.id);
+    check("it sits in B's My trucks ▸ Procurement, marked as a quote request", asked?.role === "executor" && asked.quoteRequested === true, asked);
+    check("…and carries no money of A's", asked?.payable === null && asked?.receivable === null, asked);
+
+    const bView = await b.get({ id: broadcast.id });
+    check("B is the executor of the page, asked for a quote", bView.role === "executor" && bView.quoteRequested && bView.permissions.canQuote, bView.permissions);
+    check("B sees only its own request", bView.requests.length === 1 && bView.requests[0]?.carrierId === B.org, bView.requests);
+    check("B's payload has no money, notes or client reference", bView.money.receivable === null && bView.notes === null && bView.clientReference === null && !/"sell[A-Z]/.test(JSON.stringify(bView)), bView.money);
+    await expectError("a stranger still gets a 404", () => as(C.user).get({ id: broadcast.id }), "NOT_FOUND");
+    await expectError("B's plain member cannot quote for the company", () =>
+        as(BM.user).quote({ id: broadcast.id, quote: { total: 1500, currency: "MZN" } }), "NOT_ALLOWED");
+    await expectError("A cannot award what nobody priced", () =>
+        a.award({ id: broadcast.id, expectedVersion: view.version, carrierOrgId: B.org }), "NOT_QUOTED");
+
+    console.log("\n— quotes: B names a price, A awards it");
+    await b.quote({ id: broadcast.id, quote: { total: 1500, currency: "MZN", fiscalRegime: "normal", vat: 206.9, subtotal: 1293.1 }, note: "HARNESS can load Monday" });
+    view = await a.get({ id: broadcast.id });
+    const quoted = view.requests.find((request) => request.carrierId === B.org);
+    check("A reads B's quote on the round", quoted?.status === "quoted" && quoted.quote?.total === 1500 && quoted.note === "HARNESS can load Monday", quoted);
+    check("A may award it", view.permissions.canAward, view.permissions);
+    const quotedNotice = await noticesSince("movement.quoted", [broadcast.id], seen);
+    check("A was told of the quote, with the figure", quotedNotice.some((n) => n.organizationId === A.org && (n.params as { total?: number }).total === 1500), quotedNotice);
+    check("…and nothing of it is on the trail B's competitors read", !(await b.get({ id: broadcast.id })).events.some((event) => event.action === "quoted"));
+
+    const awarded = await a.award({ id: broadcast.id, expectedVersion: view.version, carrierOrgId: B.org, message: "HARNESS yours" });
+    view = await a.get({ id: broadcast.id });
+    check("the load is offered to B at B's price", view.status === "offered" && view.carrier?.id === B.org && view.money.payable?.total === 1500, { status: view.status, carrier: view.carrier, payable: view.money.payable });
+    check("B's request row reads awarded, every other one closed",
+        view.requests.every((request) => request.carrierId === B.org ? request.status === "awarded" : request.status === "closed"), view.requests);
+    check("the award is on the trail", view.events.some((event) => event.action === "awarded"), view.events.map((event) => event.action));
+    const offeredNotice = await noticesSince("movement.offered", [broadcast.id], seen);
+    check("B holds the offer as it always did", offeredNotice.some((n) => n.organizationId === B.org && (n.params as { total?: number }).total === 1500), offeredNotice);
+
+    const accepted = await b.respond({ id: broadcast.id, expectedVersion: awarded.version, decision: "accept" });
+    created.push(accepted.id);
+    view = await a.get({ id: broadcast.id });
+    check("…and its yes confirms the load with B's own trip below it", view.status === "scheduled" && view.isLinked && accepted.id !== broadcast.id, { status: view.status, linked: view.isLinked });
+
+    console.log("\n— quotes: one transporter picked is asked alone; taking the load back closes the round");
+    const single = await a.create({
+        execution: "partner", carrierOrgId: B.org, origin, destination, cargoDescription: "HARNESS quotes single", requestQuotes: true,
+    });
+    created.push(single.id);
+    view = await a.get({ id: single.id });
+    check("exactly B was asked", single.asked === 1 && view.requests.length === 1 && view.requests[0]?.carrierId === B.org, { asked: single.asked, requests: view.requests });
+    check("…and the load is a prospect with B still named on it", view.status === "prospect" && view.carrier?.id === B.org, { status: view.status, carrier: view.carrier });
+
+    await expectError("scheduling it past the round is refused", () =>
+        a.transition({ id: single.id, to: "scheduled", expectedVersion: view.version }), "INVALID_STATUS");
+
+    await b.declineRequest({ id: single.id, note: "HARNESS no trucks" });
+    view = await a.get({ id: single.id });
+    check("B's no is on the round, with its reason", view.requests[0]?.status === "declined" && view.requests[0].note === "HARNESS no trucks", view.requests);
+    await expectError("…and B no longer reads the load", () => b.get({ id: single.id }), "NOT_FOUND");
+
+    const again = await a.sendRequests({ id: single.id, expectedVersion: view.version, carrierOrgIds: [B.org], message: "HARNESS please reconsider" });
+    check("asking B again reopens its row", again.sent === 1 && again.skipped === 0, again);
+    const reopened = await b.get({ id: single.id });
+    check("…and B reads A's message with it", reopened.requests[0]?.status === "requested" && reopened.requests[0].message === "HARNESS please reconsider", reopened.requests);
+    const twice = await a.sendRequests({ id: single.id, expectedVersion: again.version, carrierOrgIds: [B.org] });
+    check("asking a transporter already waiting changes nothing", twice.sent === 0 && twice.skipped === 1, twice);
+
+    view = await a.get({ id: single.id });
+    await a.transition({ id: single.id, to: "procurement", expectedVersion: view.version });
+    view = await a.get({ id: single.id });
+    check("back to the draft closes the round", view.status === "procurement" && view.requests[0]?.status === "closed", view.requests);
+    const closedNotice = await noticesSince("movement.withdrawn", [single.id], seen);
+    check("…and B is told", closedNotice.some((n) => n.organizationId === B.org), closedNotice);
+    await expectError("…so B no longer reads it", () => b.get({ id: single.id }), "NOT_FOUND");
+
+    console.log("\n— quotes: any transporter on the portal can be asked; the award makes the two partners");
+    // A and B are partners on the shared dev database: sever them for the
+    // length of this block and put the row back exactly as it was
+    const [pair] = await db
+        .select({ id: partnerConnection.id, status: partnerConnection.status, acceptedVia: partnerConnection.acceptedVia, relation: partnerConnection.relation })
+        .from(partnerConnection)
+        .where(or(
+            and(eq(partnerConnection.requesterOrgId, A.org), eq(partnerConnection.targetOrgId, B.org)),
+            and(eq(partnerConnection.targetOrgId, A.org), eq(partnerConnection.requesterOrgId, B.org)),
+        ))
+        .limit(1);
+    check("the fixture pair is connected", pair?.status === "accepted", pair);
+
+    if (pair) {
+        await db.update(partnerConnection).set({ status: "removed" }).where(eq(partnerConnection.id, pair.id));
+
+        try {
+            const [own, everyone] = await Promise.all([
+                a.candidates({ scope: "connected" }),
+                a.candidates({ scope: "all" }),
+            ]);
+            check("B is no longer among A's own transporters", !own.some((row) => row.id === B.org), own.map((row) => row.name));
+            check("…but is on the portal-wide list, marked as not connected", everyone.some((row) => row.id === B.org && !row.connected), everyone.map((row) => [row.name, row.connected]));
+            check("…and nobody's Appload row is", !everyone.some((row) => row.id === APPLOAD_ORG_ID));
+
+            const wide = await a.create({ execution: "partner", origin, destination, cargoDescription: "HARNESS quotes wide" });
+            created.push(wide.id);
+            let wideView = await a.get({ id: wide.id });
+            const sentWide = await a.sendRequests({ id: wide.id, expectedVersion: wideView.version, carrierOrgIds: [B.org] });
+            check("A asks B although they are not connected", sentWide.sent === 1, sentWide);
+            const bWide = await b.get({ id: wide.id });
+            check("B reads it as a quote request", bWide.quoteRequested && bWide.permissions.canQuote, bWide.permissions);
+            await b.quote({ id: wide.id, quote: { total: 2500, currency: "MZN" } });
+
+            wideView = await a.get({ id: wide.id });
+            const wideAward = await a.award({ id: wide.id, expectedVersion: wideView.version, carrierOrgId: B.org });
+            const [after] = await db.select({ status: partnerConnection.status, acceptedVia: partnerConnection.acceptedVia }).from(partnerConnection).where(eq(partnerConnection.id, pair.id));
+            check("the award made them partners again, by award", after?.status === "accepted" && after.acceptedVia === "award", after);
+            const connNotice = await noticesSince("connection.accepted", [pair.id], seen);
+            check("…and B was told of the new connection", connNotice.some((n) => n.organizationId === B.org), connNotice);
+
+            const wideAccepted = await b.respond({ id: wide.id, expectedVersion: wideAward.version, decision: "accept" });
+            created.push(wideAccepted.id);
+            wideView = await a.get({ id: wide.id });
+            check("…so B's yes goes through as on any partner load", wideView.status === "scheduled" && wideView.isLinked, wideView.status);
+        } finally {
+            await db
+                .update(partnerConnection)
+                .set({ status: pair.status, acceptedVia: pair.acceptedVia, relation: pair.relation })
+                .where(eq(partnerConnection.id, pair.id));
+        }
+    }
+
+    await expectError("Appload is not asked for a quote", () =>
+        a.sendRequests({ id: single.id, expectedVersion: view.version, carrierOrgIds: [APPLOAD_ORG_ID] }), "APPLOAD_NOT_A_CANDIDATE");
+    // C is a shipper, so it fails the first of the two checks a transporter must pass
+    await expectError("nor is a stranger", () =>
+        a.sendRequests({ id: single.id, expectedVersion: view.version, carrierOrgIds: [C.org] }), "NOT_A_CARRIER");
+}
+
+/**
  * §3 of the tabs contract — unless the company is a client, its own trucks
  * come only from its clients' orders: a transporter files no trip of its own
  * and takes none in-house, while a client with trucks still does both.
@@ -1902,7 +2067,9 @@ async function partnerLists() {
     await expectError("a shipper has no clients list", () => partnersFor(A.user).list({ kind: "clients" }), "NOT_FOUND");
 }
 
-migratedData()
+// `--only=quoteRound` runs that suite alone: the whole walk takes twenty
+// minutes over Neon, and a single transient "fetch failed" on the way voids it
+(process.argv.includes("--only=quoteRound") ? quoteRound() : migratedData()
     .then(main)
     .then(hardening)
     .then(palette)
@@ -1914,11 +2081,12 @@ migratedData()
     .then(disputes)
     .then(tracking)
     .then(receivedOffer)
+    .then(quoteRound)
     .then(ownTrucksFromClients)
     .then(sectionsAndTabs)
     .then(photosAtLoading)
     .then(references)
-    .then(partnerLists)
+    .then(partnerLists))
     .catch((error) => {
         console.error("\nharness crashed:", error);
         results.push({ name: "harness ran to the end", ok: false, detail: String(error) });

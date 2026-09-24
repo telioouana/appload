@@ -11,7 +11,7 @@ import type { MovementDetail, MovementEventView } from "@/frontend/pages/movemen
 
 /** What a line on the trail can say, by what its writer recorded. */
 const ACTION_KEYS = [
-    "offered", "withdrawn", "accepted", "declined", "converted", "updated",
+    "requested", "awarded", "offered", "withdrawn", "accepted", "declined", "converted", "updated",
     "received", "paid", "corrected",
     "cost-added", "cost-removed", "document-added", "document-removed",
 ] as const
