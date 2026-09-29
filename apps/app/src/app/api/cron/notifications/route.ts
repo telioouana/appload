@@ -26,8 +26,8 @@ const MAX_ATTEMPTS = 5;
 export const maxDuration = 60;
 
 /**
- * The notification centre's background half, fired by QStash every five
- * minutes (see apps/app/scripts/qstash-schedules.mjs).
+ * The notification centre's background half, fired by QStash every thirty
+ * minutes in working hours (see apps/app/scripts/qstash-schedules.mjs).
  *
  * Two steps. Reading the order trail turns what staff did in the admin into
  * notifications — `notifications.unreadCount` does the same for whoever is

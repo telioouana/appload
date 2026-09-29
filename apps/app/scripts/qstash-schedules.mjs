@@ -57,8 +57,8 @@ const SCHEDULES = [
     {
         id: "appload-app-notifications",
         path: "/api/cron/notifications",
-        cron: "*/5 * * * *",
-        note: "materializes admin order events and sends the notification email outbox",
+        cron: "CRON_TZ=Africa/Maputo */30 7-18 * * 1-6",
+        note: "materializes admin order events and sends the notification email outbox, every 30 min 07:00-18:30 Maputo, Mon-Sat",
     },
 ];
 

@@ -1,7 +1,7 @@
 # Production release checklist (Vercel)
 
 The apps deploy to Vercel (Hobby plan); the admin app and the partner portal
-share one Neon production database. Sections 1–8 are one-time setup for the
+share one Supabase production database. Sections 1–8 are one-time setup for the
 first release of each app; later releases follow the "Branching & deploys"
 flow below and only need the smoke test (step 7 for the admin, step 8 for the
 portal).
@@ -107,10 +107,13 @@ matching ref clause before the first push, or Vercel will refuse to save
   @workspace/db db:migrate` *before* pushing the release merge to
   `prod/admin` or `prod/app` (see §1).
 
-## 1. Neon — production database
+## 1. Supabase — production database
 
-1. Create the production database/project in Neon and copy its
-   `DATABASE_URL`.
+1. Dev and production are two databases, `appload-dev` and `appload-prod`,
+   inside the one Supabase project ("Appload"). `DATABASE_URL` is the
+   project's **transaction pooler** URI (port 6543) with the database name
+   at the end; the password is percent-encoded. The Supabase dashboard only
+   shows the project's default `postgres` database, not these two.
 2. Apply the schema from the committed migrations (never `db:push`
    against production):
 

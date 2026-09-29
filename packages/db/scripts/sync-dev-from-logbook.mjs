@@ -26,7 +26,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
-import { neon } from "@neondatabase/serverless";
+import { connect } from "./sql.mjs";
 
 import { loadEnv, googleAccessToken, getValues, sheetsGet } from "./google-sheets.mjs";
 import * as map from "./logbook-mapping.mjs";
@@ -39,7 +39,7 @@ const DRY = process.argv.includes("--dry");
 const ASSUME_YES = process.argv.includes("--yes");
 
 const env = loadEnv();
-const sql = neon(env.DATABASE_URL);
+const sql = connect(env.DATABASE_URL);
 const q = (statement, params = []) => sql.query(statement, params);
 
 const norm = (value) => String(value ?? "").trim().replace(/\s+/g, " ");
@@ -788,12 +788,14 @@ await q(`
         thread_message, thread_read, thread_participant, thread,
         order_loading_check, order_dispatch_document, order_dispatch,
         movement_event, movement_cost, movement_document,
+        movement_tracking_alert, movement_dispute_row, movement_dispute, movement_request,
         movement_location, movement_tracking_request, movement_route, movement,
         organization_counter,
         order_request, quote, partner_connection, organization_claim, subscription_usage,
+        order_dispute, order_location, order_route,
         order_document, order_history, order_offer, sheet_sync, tracking_request,
         chat_message, chat_conversation, "order",
-        network, ops_order, kyc, member, invitation,
+        network, kyc, member, invitation,
         driver, link, trailer, truck, organization
     RESTART IDENTITY
 `);

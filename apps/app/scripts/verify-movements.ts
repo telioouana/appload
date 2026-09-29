@@ -1212,7 +1212,7 @@ async function reviewedSlots() {
 /** §11.13 — what the dev script had to leave behind: not one row of the removed status. */
 async function migratedData() {
     console.log("\n— §11.13 nothing is left in-transit once the dev script ran");
-    const { rows: [left] } = await db.execute<{ status: number; from_status: number; to_status: number }>(sql`
+    const [left] = await db.execute<{ status: number; from_status: number; to_status: number }>(sql`
         select
             (select count(*)::int from ${movement} where status = 'in-transit') as status,
             (select count(*)::int from ${movementEvent} where from_status = 'in-transit') as from_status,

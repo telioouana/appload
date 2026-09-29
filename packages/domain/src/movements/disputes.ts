@@ -109,7 +109,7 @@ export async function openDispute(
     const party = sql.identifier("party");
     const held = sql.identifier("held");
 
-    let pinned: { rows: { movement_id: string }[] };
+    let pinned: { movement_id: string }[];
 
     // `parties` spells the three movement roles the way policy.ts spells
     // them, a carrier counting only while it is actually involved in the row
@@ -167,7 +167,7 @@ export async function openDispute(
 
     if (!dispute) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
 
-    return { dispute, rowIds: pinned.rows.map((pin) => pin.movement_id) };
+    return { dispute, rowIds: pinned.map((pin) => pin.movement_id) };
 }
 
 /**
@@ -205,13 +205,13 @@ export async function resolveDispute(
     `);
 
     // Every dispute covers at least the row it was opened on
-    if (released.rows.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+    if (released.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
 
     const [dispute] = await db.select().from(movementDispute).where(eq(movementDispute.id, input.id)).limit(1);
 
     if (!dispute) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
 
-    return { dispute, rowIds: released.rows.map((pin) => pin.movement_id) };
+    return { dispute, rowIds: released.map((pin) => pin.movement_id) };
 }
 
 /** The open dispute a row is covered by, if any — what keeps it from being closed. */

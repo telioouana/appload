@@ -495,7 +495,7 @@ async function cancelWithExecutor(db: Db, row: Movement, expectedVersion: number
         select (select id from parent) as parent_id
     `);
 
-    if (!result.rows[0]?.parent_id) {
+    if (!result[0]?.parent_id) {
         const [child] = await db.select({ status: movement.status }).from(movement).where(eq(movement.id, childId)).limit(1);
 
         if (child && (isInProgress(child.status) || child.status === "delivered")) {

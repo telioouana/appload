@@ -357,7 +357,7 @@ export async function respondToOffer(
         returning id
     `);
 
-    const created = claimed.rows[0];
+    const created = claimed[0];
 
     if (!created) throw new TRPCError({ code: "CONFLICT", message: "OFFER_CHANGED" });
 

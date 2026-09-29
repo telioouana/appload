@@ -1,9 +1,10 @@
-import { drizzle } from "drizzle-orm/neon-http";
-import type { NeonHttpDatabase } from "drizzle-orm/neon-http";
+import { drizzle } from "drizzle-orm/postgres-js";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 
 import * as schema from "@workspace/db/schema";
 
-let _db: NeonHttpDatabase<typeof schema> | null = null;
+let _db: PostgresJsDatabase<typeof schema> | null = null;
 
 export function getDb() {
     if (_db) return _db;
@@ -13,10 +14,13 @@ export function getDb() {
         throw new Error("DATABASE_URL is not set");
     }
 
-    _db = drizzle(connectionString, { schema });
+    // prepare: false — Supabase's transaction pooler (port 6543) hands every
+    // transaction a different backend, so a prepared statement is not there
+    // the next time it is used
+    _db = drizzle(postgres(connectionString, { prepare: false, idle_timeout: 20 }), { schema });
     return _db;
 }
 
-export const db = new Proxy({} as NeonHttpDatabase<typeof schema>, {
-    get: (_, prop) => getDb()[prop as keyof NeonHttpDatabase<typeof schema>],
+export const db = new Proxy({} as PostgresJsDatabase<typeof schema>, {
+    get: (_, prop) => getDb()[prop as keyof PostgresJsDatabase<typeof schema>],
 });
