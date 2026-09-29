@@ -59,8 +59,8 @@ const SCHEDULES = [
     {
         id: "appload-sheet-sync",
         path: "/api/cron/sheet-sync",
-        cron: "*/30 * * * *",
-        note: "outbox healer for failed Google Sheets pushes",
+        cron: "CRON_TZ=Africa/Maputo */30 7-18 * * 1-6",
+        note: "outbox healer for failed Google Sheets pushes, every 30 min 07:00-18:30 Maputo, Mon-Sat",
     },
     {
         id: "appload-kyc-expiry",

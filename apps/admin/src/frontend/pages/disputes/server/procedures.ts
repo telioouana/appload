@@ -280,8 +280,8 @@ export const disputesRouter = createTRPCRouter({
             const id = crypto.randomUUID();
 
             try {
-                await ctx.db.batch([
-                    ctx.db.insert(orderDispute).values({
+                await ctx.db.transaction(async (tx) => {
+                    await tx.insert(orderDispute).values({
                         id,
                         orderId: current.id,
                         reason: input.reason,
@@ -293,9 +293,9 @@ export const disputesRouter = createTRPCRouter({
                         holdShipperPayments: input.holdShipperPayments,
                         holdCarrierPayments: input.holdCarrierPayments,
                         openedBy: ctx.session.user.id,
-                    }),
-                    ctx.db.update(order).set({ disputeStatus: "open" }).where(eq(order.id, current.id)),
-                    ctx.db.insert(orderHistory).values({
+                    });
+                    await tx.update(order).set({ disputeStatus: "open" }).where(eq(order.id, current.id));
+                    await tx.insert(orderHistory).values({
                         orderId: current.id,
                         actorUserId: ctx.session.user.id,
                         kind: "dispute",
@@ -307,8 +307,8 @@ export const disputesRouter = createTRPCRouter({
                             holdShipperPayments: input.holdShipperPayments,
                             holdCarrierPayments: input.holdCarrierPayments,
                         },
-                    }),
-                ]);
+                    });
+                });
             } catch (error) {
                 // The partial unique index catches a concurrent open
                 if (uniqueViolationConstraint(error) !== null) {
@@ -358,9 +358,9 @@ export const disputesRouter = createTRPCRouter({
                 throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
             }
 
-            await ctx.db.batch([
-                ctx.db.update(order).set({ disputeStatus: updated.status }).where(eq(order.id, current.orderId)),
-                ctx.db.insert(orderHistory).values({
+            await ctx.db.transaction(async (tx) => {
+                await tx.update(order).set({ disputeStatus: updated.status }).where(eq(order.id, current.orderId));
+                await tx.insert(orderHistory).values({
                     orderId: current.orderId,
                     actorUserId: ctx.session.user.id,
                     kind: "dispute",
@@ -373,8 +373,8 @@ export const disputesRouter = createTRPCRouter({
                         holdCarrierPayments: updated.holdCarrierPayments,
                         changedFields,
                     },
-                }),
-            ]);
+                });
+            });
 
             return { id: updated.id, orderId: current.humanId, dispute: updated };
         }),
@@ -412,10 +412,10 @@ export const disputesRouter = createTRPCRouter({
                 throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
             }
 
-            await ctx.db.batch([
+            await ctx.db.transaction(async (tx) => {
                 // Settled or closed, the order is free again
-                ctx.db.update(order).set({ disputeStatus: null }).where(eq(order.id, current.orderId)),
-                ctx.db.insert(orderHistory).values({
+                await tx.update(order).set({ disputeStatus: null }).where(eq(order.id, current.orderId));
+                await tx.insert(orderHistory).values({
                     orderId: current.orderId,
                     actorUserId: ctx.session.user.id,
                     kind: "dispute",
@@ -426,8 +426,8 @@ export const disputesRouter = createTRPCRouter({
                         status: updated.status,
                         resolution: input.resolution,
                     },
-                }),
-            ]);
+                });
+            });
 
             return { id: updated.id, orderId: current.humanId, dispute: updated };
         }),

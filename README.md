@@ -15,7 +15,7 @@ pnpm + Turborepo monorepo.
 | `apps/admin` | Next.js 16 admin app (App Router, next-intl `en`/`pt`, tRPC, Better Auth) — port 3000 |
 | `apps/app` | Next.js 16 partner portal: one organization per tenant — the company's own orders and trips (loads it hands to partners, loads its own fleet moves), fleet, partners, analytics, and Appload's brokerage beside them — port 3001 |
 | `apps/website` | Next.js 16 public website (App Router, next-intl `en`/`pt`, ISR) — port 3100 |
-| `packages/db` | Drizzle ORM schemas, migrations (`drizzle/`) and dev-DB scripts (`scripts/`) for Neon Postgres |
+| `packages/db` | Drizzle ORM schemas, migrations (`drizzle/`) and dev-DB scripts (`scripts/`) for Supabase Postgres |
 | `packages/auth` | Better Auth server/client, email templates, RBAC permission statements |
 | `packages/trpc` | tRPC router/procedure factories, staff gate, tenant gate, permissions, activity-log catalog |
 | `packages/domain` | Business rules both apps run: the order create/transition doors, the portal's movement doors (`movements/`), KYC gates, KPIs, tracking slots, subscriptions, notifications |
@@ -62,8 +62,8 @@ Database: apply migrations with `pnpm --filter @workspace/db db:migrate`
 
 ## Deployment
 
-Vercel (a dev and a production project for each app, six in all) + Neon.
-The branch → project mapping and the full first-release checklist — Neon,
+Vercel (a dev and a production project for each app, six in all) + Supabase.
+The branch → project mapping and the full first-release checklist — Supabase,
 Vercel env vars, Google OAuth/Sheets, Resend, Infobip, QStash cron
 schedules, first admin, first partner — live in [RELEASE.md](RELEASE.md).
 The portal's own design notes are in

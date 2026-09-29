@@ -17,7 +17,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { neon } from "@neondatabase/serverless";
+import { connect } from "./sql.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -43,7 +43,7 @@ if (!email || !email.includes("@")) {
     process.exit(1);
 }
 
-const sql = neon(databaseUrl());
+const sql = connect(databaseUrl());
 
 const rows = await sql`
     update "user"
