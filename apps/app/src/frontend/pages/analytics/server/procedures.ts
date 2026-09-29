@@ -427,7 +427,13 @@ export const analyticsRouter = createTRPCRouter({
                             createdAt: movementCost.createdAt,
                         })
                         .from(movementCost)
-                        .where(and(inArray(movementCost.movementId, ids), isNull(movementCost.deletedAt)))
+                        // The company's own book only: a client's lines on
+                        // one of these rows are its own, not this margin's
+                        .where(and(
+                            inArray(movementCost.movementId, ids),
+                            eq(movementCost.organizationId, tenantId),
+                            isNull(movementCost.deletedAt),
+                        ))
                     : Promise.resolve([]),
                 loadNames(ctx.db, rows.flatMap((row) => [row.clientOrgId, row.carrierOrgId])),
             ]);

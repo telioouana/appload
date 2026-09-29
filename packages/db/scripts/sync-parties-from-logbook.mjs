@@ -40,7 +40,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
-import { neon } from "@neondatabase/serverless";
+import { connect } from "./sql.mjs";
 
 import { loadEnv, googleAccessToken, getValues, sheetsGet } from "./google-sheets.mjs";
 import { createGeocoder, countryCandidates } from "./google-geocode.mjs";
@@ -75,7 +75,7 @@ for (const target of [DB_TARGET, SHEET_TARGET]) {
 const dbEnv = loadEnv(ENV_FILES[DB_TARGET]);
 const sheetEnv = loadEnv(ENV_FILES[SHEET_TARGET]);
 
-const sql = neon(dbEnv.DATABASE_URL);
+const sql = connect(dbEnv.DATABASE_URL);
 const q = (statement, params = []) => sql.query(statement, params);
 
 /**

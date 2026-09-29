@@ -193,8 +193,8 @@ export const offersRouter = createTRPCRouter({
                     route: row.route,
                 }));
 
-                await ctx.db.batch([
-                    ctx.db.insert(orderOffer).values({
+                await ctx.db.transaction(async (tx) => {
+                    await tx.insert(orderOffer).values({
                         id,
                         orderId: row.id,
                         carrierId: tenant.organizationId,
@@ -212,14 +212,14 @@ export const offersRouter = createTRPCRouter({
                         carrierSince: snapshot.since,
                         carrierTrips: snapshot.trips,
                         createdBy: tenant.userId,
-                    }),
-                    ctx.db.insert(orderHistory).values({
+                    });
+                    await tx.insert(orderHistory).values({
                         orderId: row.id,
                         actorUserId: tenant.userId,
                         kind: "offer",
                         metadata: { action: "created", offerId: id, carrierName, total, currency: values.currency },
-                    }),
-                ]);
+                    });
+                });
 
                 // The request has been answered. Written after the offer so a
                 // failure here leaves a quoted order still marked "requested",
@@ -363,16 +363,16 @@ export const offersRouter = createTRPCRouter({
                     throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
                 }
 
-                await ctx.db.batch([
-                    ctx.db
+                await ctx.db.transaction(async (tx) => {
+                    await tx
                         .update(orderRequest)
                         .set({ status: "requested", respondedAt: null })
                         .where(and(
                             eq(orderRequest.orderId, current.orderPk),
                             eq(orderRequest.carrierOrgId, tenant.organizationId),
                             eq(orderRequest.status, "quoted"),
-                        )),
-                    ctx.db.insert(orderHistory).values({
+                        ));
+                    await tx.insert(orderHistory).values({
                         orderId: current.orderPk,
                         actorUserId: tenant.userId,
                         kind: "offer",
@@ -383,8 +383,8 @@ export const offersRouter = createTRPCRouter({
                             total: current.total,
                             currency: current.currency,
                         },
-                    }),
-                ]);
+                    });
+                });
 
                 return { offerId: current.id };
             } catch (error) {

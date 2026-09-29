@@ -19,6 +19,7 @@ import { SelectItem } from "@workspace/ui/components/select"
 import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 import { FieldGroup, FieldLegend, FieldSet, FieldTitle } from "@workspace/ui/components/field"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@workspace/ui/components/sheet"
+import { CheckboxInput } from "@workspace/ui/inputs/checkbox"
 import { DateInput } from "@workspace/ui/inputs/date"
 import { DecimalInput } from "@workspace/ui/inputs/decimal"
 import { LocationInput } from "@workspace/ui/inputs/location"
@@ -112,6 +113,7 @@ function defaultsFor(mode: LoadSheetMode): LoadForm {
             buyFiscalRegime: undefined,
             buyInvoiceNumber: "",
             notes: "",
+            requestQuotes: true,
         }
     }
 
@@ -154,6 +156,8 @@ function defaultsFor(mode: LoadSheetMode): LoadForm {
         buyFiscalRegime: buy.fiscalRegime,
         buyInvoiceNumber: buy.invoiceNumber,
         notes: load.notes ?? "",
+        // Asking is done from the load's page once it exists
+        requestQuotes: false,
     }
 }
 
@@ -248,9 +252,9 @@ export function LoadSheet({
         onOpenChange(false)
     }
 
-    const [execution, status, clientOrgId, carrierOrgId, driverId, truckId, country, weightUnit] = useWatch({
+    const [execution, status, clientOrgId, carrierOrgId, driverId, truckId, country, weightUnit, requestQuotes] = useWatch({
         control,
-        name: ["execution", "status", "clientOrgId", "carrierOrgId", "driverId", "truckId", "country", "weightUnit"],
+        name: ["execution", "status", "clientOrgId", "carrierOrgId", "driverId", "truckId", "country", "weightUnit", "requestQuotes"],
     })
 
     // Read during render so the form tracks it; the edit submit sends only these
@@ -275,6 +279,13 @@ export function LoadSheet({
     // A partner on the portal answers for itself: its own driver, its own yes
     const partnerOnPortal = partner && Boolean(pickedCarrier?.onPortal)
     const asksRig = !partner || !partnerOnPortal
+    // Who a new order can go out to for a price: the transporter picked, if
+    // it is on the portal, or every connected one that is when none is
+    // picked. Appload is offered a load from its page, never asked to quote
+    const askable = carriers.filter((row) => row.onPortal && !isApploadOrg(row.id))
+    const canAsk = !editing && partner && !pickedAppload && carrierOrgId !== TYPED
+        && (carrierOrgId === NONE ? askable.length > 0 : partnerOnPortal)
+    const asking = canAsk && Boolean(requestQuotes)
 
     // Picking a partner on the portal takes the load back to procurement:
     // it is offered from its page once it is filed
@@ -311,11 +322,15 @@ export function LoadSheet({
         }
 
         const sell = carrier ? legInput(values.sellTotal, values.sellCurrency, values.sellFiscalRegime) : null
-        const buy = values.execution === "partner" ? legInput(values.buyTotal, values.buyCurrency, values.buyFiscalRegime) : null
+        // A load out for quotes has no price of the owner's yet: the
+        // transporters name theirs, and the award writes the one picked
+        const buy = values.execution === "partner" && !asking ? legInput(values.buyTotal, values.buyCurrency, values.buyFiscalRegime) : null
 
         const input: CreateMovementInput = {
             execution: values.execution,
-            status: values.status,
+            // The round opens the load as a prospect; the server moves it there
+            status: asking ? "procurement" : values.status,
+            ...(asking && { requestQuotes: true }),
             origin: values.origin,
             destination: values.destination,
             route: routeOf(values),
@@ -616,7 +631,8 @@ export function LoadSheet({
                                                 placeholder={t("fields.partner-placeholder")}
                                                 description={pickedAppload
                                                     ? tl("appload.pickerHint")
-                                                    : partnerOnPortal ? t("fields.partner-on-portal") : t("fields.partner-hint")}
+                                                    : asking ? t(carrierOrgId === NONE ? "fields.partner-ask-all" : "fields.partner-ask-one")
+                                                        : partnerOnPortal ? t("fields.partner-on-portal") : t("fields.partner-hint")}
                                             >
                                                 <SelectItem value={NONE}>{t("fields.partner-none")}</SelectItem>
                                                 {carriers.map((row) => (
@@ -641,13 +657,31 @@ export function LoadSheet({
                                                     label={t("fields.partner-name")}
                                                 />
                                             )}
-                                            <LegFields
-                                                prefix="buy"
-                                                control={control}
-                                                locked={isPending || locked("buy")}
-                                                title={t("fields.buy")}
-                                                hint={t("fields.buy-hint")}
-                                            />
+                                            {/* Who is asked is the load page's business once the load exists */}
+                                            {editing && mode.load.requests.length > 0 && (
+                                                <p className="text-muted-foreground text-xs">{t("fields.request-quotes-managed")}</p>
+                                            )}
+                                            {canAsk && (
+                                                <CheckboxInput
+                                                    name="requestQuotes"
+                                                    control={control}
+                                                    isPending={isPending}
+                                                    label={carrierOrgId === NONE
+                                                        ? t("fields.request-quotes-all", { count: askable.length })
+                                                        : t("fields.request-quotes-one", { name: pickedCarrier?.name ?? "" })}
+                                                    description={t("fields.request-quotes-hint")}
+                                                />
+                                            )}
+                                            {/* The transporters name the price on a load out for quotes */}
+                                            {!asking && (
+                                                <LegFields
+                                                    prefix="buy"
+                                                    control={control}
+                                                    locked={isPending || locked("buy")}
+                                                    title={t("fields.buy")}
+                                                    hint={t("fields.buy-hint")}
+                                                />
+                                            )}
                                         </FieldGroup>
                                     </FieldSet>
                                 )}
@@ -665,7 +699,7 @@ export function LoadSheet({
                                     />
                                 )}
 
-                                {!editing && !partnerOnPortal && (
+                                {!editing && !partnerOnPortal && !asking && (
                                     <FieldSet>
                                         <FieldLegend variant="label"><FieldTitle>{t("sections.status")}</FieldTitle></FieldLegend>
                                         <SelectInput

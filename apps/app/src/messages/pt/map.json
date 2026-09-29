@@ -49,7 +49,7 @@
     "selected": {
         "open": {
             "order": "Abrir pedido",
-            "trip": "Abrir viagem"
+            "load": "Abrir carga"
         },
         "close": "Fechar",
         "last-seen": "Última localização {ago}",

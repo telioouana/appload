@@ -17,7 +17,7 @@ const BATCH_SIZE = 10;
 export const maxDuration = 60;
 
 /**
- * Sweeps the sheet_sync outbox every 30 minutes (see
+ * Sweeps the sheet_sync outbox every 30 minutes in working hours (see
  * apps/admin/scripts/qstash-schedules.mjs) and retries failed/pending
  * pushes with the shared service-account token — no user session needed.
  * This is only a healer: every mutation already pushes inline. Rows that

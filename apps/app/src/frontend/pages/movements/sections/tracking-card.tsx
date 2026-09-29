@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { IconMapPinShare } from "@tabler/icons-react"
+import { IconMapPinShare, IconRouteOff } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
@@ -51,6 +51,13 @@ export function TrackingCard({ load }: { load: MovementDetail }) {
                 </Button>
             ) : undefined}
         >
+            {load.offRoute && (
+                <div className="flex items-center gap-2 rounded-xl bg-amber-500/10 px-4 py-3 text-[13px] text-amber-700 dark:text-amber-400">
+                    <IconRouteOff className="size-4 shrink-0" stroke={1.5} />
+                    {t("off-route")}
+                </div>
+            )}
+
             <div className="bg-muted/40 flex items-center justify-between gap-4 rounded-xl px-4 py-3">
                 <span className="text-muted-foreground text-[13px]">{t("last")}</span>
                 <LastPingCell ping={load.lastPing} />

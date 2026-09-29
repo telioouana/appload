@@ -172,8 +172,8 @@ export const offersRouter = createTRPCRouter({
                     route: row.route,
                 }));
 
-                await ctx.db.batch([
-                    ctx.db.insert(orderOffer).values({
+                await ctx.db.transaction(async (tx) => {
+                    await tx.insert(orderOffer).values({
                         id,
                         orderId: row.id,
                         carrierId: values.carrierId,
@@ -191,14 +191,14 @@ export const offersRouter = createTRPCRouter({
                         carrierSince: snapshot.since,
                         carrierTrips: snapshot.trips,
                         createdBy: ctx.session.user.id,
-                    }),
-                    ctx.db.insert(orderHistory).values({
+                    });
+                    await tx.insert(orderHistory).values({
                         orderId: row.id,
                         actorUserId: ctx.session.user.id,
                         kind: "offer",
                         metadata: { action: "created", offerId: id, carrierName, total, currency: values.currency },
-                    }),
-                ]);
+                    });
+                });
 
                 // A quote registered on behalf of a carrier that is on the
                 // portal moves its own row from "asked" to "waiting on the
@@ -347,15 +347,15 @@ export const offersRouter = createTRPCRouter({
 
                 assertEditable(current);
 
-                await ctx.db.batch([
-                    ctx.db.delete(orderOffer).where(eq(orderOffer.id, input.offerId)),
-                    ctx.db.insert(orderHistory).values({
+                await ctx.db.transaction(async (tx) => {
+                    await tx.delete(orderOffer).where(eq(orderOffer.id, input.offerId));
+                    await tx.insert(orderHistory).values({
                         orderId: current.orderId,
                         actorUserId: ctx.session.user.id,
                         kind: "offer",
                         metadata: { action: "removed", ...historyFacts(current) },
-                    }),
-                ]);
+                    });
+                });
 
                 return { offerId: input.offerId };
             } catch (error) {

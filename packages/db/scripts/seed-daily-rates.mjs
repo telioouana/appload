@@ -41,7 +41,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { neon } from "@neondatabase/serverless";
+import { connect } from "./sql.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -220,7 +220,7 @@ function databaseUrl() {
     return match[1].trim();
 }
 
-const sql = neon(databaseUrl());
+const sql = connect(databaseUrl());
 
 const [{ exists }] = await sql`select to_regclass('fx_daily_rate') is not null as exists`;
 if (!exists) {

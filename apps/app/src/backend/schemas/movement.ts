@@ -181,6 +181,12 @@ export const CreateMovementBaseSchema = z.object({
     sell: MoneyLegSchema.optional(),
     buy: MoneyLegSchema.optional(),
     notes: text(NOTES_MAX).optional(),
+    /**
+     * Ask for quotes as the load is filed: the transporter named, or every
+     * connected transporter on the portal when none is. The load lands as a
+     * prospect with the round open (requests.ts)
+     */
+    requestQuotes: z.boolean().optional(),
 });
 
 export type CreateMovementInput = z.infer<typeof CreateMovementBaseSchema>;
@@ -246,6 +252,39 @@ export const RespondOfferBaseSchema = z.object({
     ...versioned,
     decision: z.enum(["accept", "decline"]),
     note: text(TEXT_MAX).optional(),
+});
+
+/** How many transporters one round may go out to at once, and how long the note with it may be. */
+export const MAX_REQUEST_CARRIERS = 25;
+export const REQUEST_MESSAGE_MAX = TEXT_MAX;
+
+export const SendRequestsBaseSchema = z.object({
+    ...versioned,
+    carrierOrgIds: z.array(z.string().nonempty()).min(1).max(MAX_REQUEST_CARRIERS),
+    message: text(REQUEST_MESSAGE_MAX).optional(),
+});
+
+export const WithdrawRequestBaseSchema = z.object({
+    id: z.string().nonempty(),
+    carrierOrgId: z.string().nonempty(),
+});
+
+/** The transporter's price on a load it was asked about. */
+export const QuoteRequestBaseSchema = z.object({
+    id: z.string().nonempty(),
+    quote: MoneyLegSchema,
+    note: text(TEXT_MAX).optional(),
+});
+
+export const DeclineRequestBaseSchema = z.object({
+    id: z.string().nonempty(),
+    note: text(TEXT_MAX).optional(),
+});
+
+export const AwardRequestBaseSchema = z.object({
+    ...versioned,
+    carrierOrgId: z.string().nonempty(),
+    message: text(TEXT_MAX).optional(),
 });
 
 export const ConvertMovementBaseSchema = z.object({
@@ -392,6 +431,7 @@ export function LoadFormSchema(msg: Message) {
             buyFiscalRegime: z.enum(FISCAL_REGIME).optional(),
             buyInvoiceNumber: text(REFERENCE_MAX),
             notes: text(NOTES_MAX),
+            requestQuotes: z.boolean(),
         })
         // A typed client or partner needs its name
         .refine((data) => data.clientOrgId !== TYPED || data.clientName.trim().length > 0, {

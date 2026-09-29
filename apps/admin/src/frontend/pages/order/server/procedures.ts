@@ -975,8 +975,8 @@ export const orderRouter = createTRPCRouter({
                     throw new TRPCError({ code: "BAD_GATEWAY", message: "EMAIL_FAILED", cause: new Error(result.error) });
                 }
 
-                await ctx.db.batch([
-                    ctx.db.insert(orderDocument).values({
+                await ctx.db.transaction(async (tx) => {
+                    await tx.insert(orderDocument).values({
                         orderId: current.id,
                         type: "transport-order",
                         party: input.party,
@@ -984,8 +984,8 @@ export const orderRouter = createTRPCRouter({
                         url: input.url,
                         mimeType: "application/pdf",
                         uploadedBy: ctx.session.user.id,
-                    }),
-                    ctx.db.insert(orderHistory).values({
+                    });
+                    await tx.insert(orderHistory).values({
                         orderId: current.id,
                         actorUserId: ctx.session.user.id,
                         kind: "document",
@@ -995,8 +995,8 @@ export const orderRouter = createTRPCRouter({
                             sentTo: input.to,
                             ...(input.cc.length > 0 && { cc: input.cc.join(", ") }),
                         },
-                    }),
-                ]);
+                    });
+                });
 
                 return { ok: true as const, simulated: result.simulated };
             } catch (error) {

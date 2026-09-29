@@ -5,13 +5,19 @@ import type { db as Database } from "@workspace/db/db";
 import {
     movement,
     movementLocation,
+    movementRoute,
     movementTrackingAlert,
     movementTrackingRequest,
     type Movement,
     type TrackingAlertIssue,
 } from "@workspace/db/movements";
 import { member } from "@workspace/db/users";
-import { haversineMeters } from "@workspace/maps/lib/geometry";
+import {
+    cumulativeDistances,
+    decodePolyline,
+    haversineMeters,
+    projectOntoPath,
+} from "@workspace/maps/lib/geometry";
 
 import { movementRef } from "@workspace/domain/movements/refs";
 import { TRACKED_STATUSES } from "@workspace/domain/movements/status";
@@ -48,6 +54,9 @@ export const REVIEW_AFTER_MINUTES = 90;
 
 /** Under this much ground covered since the last position, a truck on route did not move. */
 export const SHORT_DISTANCE_METERS = 20_000;
+
+/** Beyond this far from the planned route's line, a truck on route has left it. */
+export const OFF_ROUTE_METERS = 10_000;
 
 /**
  * The request statuses that prove the driver was actually reached. A request
@@ -273,6 +282,29 @@ async function issueFor(db: typeof Database, row: Movement, start: Date): Promis
     // definition, and telling its client it barely moved would be noise
     if (row.status !== "on-route") {
         return null;
+    }
+
+    // A truck that answered from beyond the route's corridor is a louder
+    // problem than one that barely moved, so it is judged first.
+    // ponytail: movement_route is a cache filled when somebody opens the
+    // detail page — loads nobody looked at go unjudged; compute the route
+    // when tracking starts if coverage matters
+    const [route] = await db
+        .select({ encodedPolyline: movementRoute.encodedPolyline })
+        .from(movementRoute)
+        .where(and(eq(movementRoute.movementId, row.id), eq(movementRoute.source, "routes")))
+        .limit(1);
+
+    if (route?.encodedPolyline) {
+        const path = decodePolyline(route.encodedPolyline);
+        const projected = projectOntoPath(path, cumulativeDistances(path), {
+            lat: latest.latitude,
+            lng: latest.longitude,
+        });
+
+        if (projected && projected.distance > OFF_ROUTE_METERS) {
+            return "off-route";
+        }
     }
 
     const [previous] = await db

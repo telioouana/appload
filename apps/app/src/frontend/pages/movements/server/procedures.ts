@@ -2,7 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, lt, lte, ne, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 
 import { chatConversation, chatMessage } from "@workspace/db/chats";
 import { partnerConnection } from "@workspace/db/connections";
@@ -35,12 +35,20 @@ import { announce, recordEvent, statusStamps, transitionMovement, type MovementA
 import { nextReference } from "@workspace/domain/movements/counters";
 import { activeDisputeFor, openDispute, resolveDispute } from "@workspace/domain/movements/disputes";
 import { unapprovedPhotos } from "@workspace/domain/movements/documents";
-import { isConnected, isOnPortal, organizationName, terminalMovementId } from "@workspace/domain/movements/link";
-import { settlementStatus } from "@workspace/domain/movements/money";
+import { isConnected, isOnPortal, openRequestCount, organizationName, terminalMovementId } from "@workspace/domain/movements/link";
+import { costTotals, exVat, legSettled, margin, settlementStatus, type Currency } from "@workspace/domain/movements/money";
 import { assertExecutor, convertMovement, offerMovement, respondToOffer, withdrawOffer } from "@workspace/domain/movements/offer";
-import { editableGroups, isExecutorOf, movementRole, type EditableGroup } from "@workspace/domain/movements/policy";
+import { editableGroups, isExecutorOf, type EditableGroup } from "@workspace/domain/movements/policy";
+import {
+    awardMovementRequest,
+    closeMovementRequests,
+    declineMovementRequest,
+    quoteMovementRequest,
+    sendMovementRequests,
+    withdrawMovementRequest,
+} from "@workspace/domain/movements/requests";
 import { movementRef, needsOrderReference } from "@workspace/domain/movements/refs";
-import { entersInProgress, isInProgress, isTerminal, movementFlags } from "@workspace/domain/movements/status";
+import { entersInProgress, isAskable, isInProgress, isTerminal, movementFlags } from "@workspace/domain/movements/status";
 import { notify } from "@workspace/domain/notifications";
 import { assertTrackingAllowance, recordTrackingUsage } from "@workspace/domain/subscription";
 import { startConversation } from "@workspace/domain/tracking/conversations";
@@ -70,24 +78,32 @@ import {
     AddCostBaseSchema,
     AddMovementDocumentBaseSchema,
     ApproveMovementDocumentBaseSchema,
+    AwardRequestBaseSchema,
     ConvertMovementBaseSchema,
     CreateMovementBaseSchema,
+    DeclineRequestBaseSchema,
     MOVEMENT_STATUS,
     OfferMovementBaseSchema,
     OpenDisputeBaseSchema,
+    QuoteRequestBaseSchema,
     RecordPaymentBaseSchema,
     ResolveDisputeBaseSchema,
     RespondOfferBaseSchema,
     SendConfirmationBaseSchema,
+    SendRequestsBaseSchema,
     TransitionMovementBaseSchema,
     UpdateMovementBaseSchema,
     WithdrawOfferBaseSchema,
+    WithdrawRequestBaseSchema,
     type MoneyLegInput,
     type UpdateMovementInput,
 } from "@/backend/schemas/movement";
 import { assertEdgeStoreUrl } from "@/frontend/pages/orders/server/projection";
 import {
+    hasCosts,
     hasParentRow,
+    inDispute,
+    isCandidate,
     loadApploadRefs,
     loadCosts,
     loadDisputed,
@@ -95,15 +111,23 @@ import {
     loadDocuments,
     loadEvents,
     loadNames,
+    loadOffRoute,
     loadOrgEmail,
     loadOwn,
     loadPings,
+    loadQuoteSummaries,
+    loadRequests,
+    loadSilent,
     loadTerminalProofs,
     loadTerminalRigs,
     loadTrailerPlate,
+    loadUnapprovedPhotos,
     loadVisible,
+    offRouteRecently,
     partnerMoveNeeds,
+    projectMoney,
     received,
+    roleOf,
     sectionPredicate,
     silentToday,
     statusFilter,
@@ -111,6 +135,7 @@ import {
     toMovementRow,
     trailIds,
     visibleMovements,
+    withPartner,
 } from "@/frontend/pages/movements/server/projection";
 import {
     MOVEMENT_SCOPES,
@@ -118,6 +143,9 @@ import {
     PAGE_SIZES,
     SECTIONS,
     type LoadFormOptions,
+    type MoneyLeg,
+    type MovementCandidate,
+    type MovementCashflow,
     type MovementDetail,
     type MovementRow,
     type MovementStats,
@@ -136,6 +164,12 @@ type Db = typeof Database;
  * ask, and hands every response to projection.ts to be cut down to what the
  * caller may see.
  */
+
+// Rows an export may carry, the same ceiling admin's orders export keeps
+const EXPORT_LIMIT = 2000;
+
+/** A numeric column as the number it is, or the null it is. */
+const numOrNull = (value: string | null) => (value === null ? null : Number(value));
 
 const actorOf = (tenant: { organizationId: string; userId: string }): MovementActor => ({
     organizationId: tenant.organizationId,
@@ -183,6 +217,30 @@ function legColumns(side: "sell" | "buy", value: MoneyLegInput | null): Partial<
         buyFiscalRegime: value?.fiscalRegime ?? null,
         ...(value && { buySettlement: "pending" as const }),
     };
+}
+
+/**
+ * Every transporter this company can ask for a price: its accepted
+ * connections, either way round and of either relation (a transporter's
+ * subcontractors count), that are transporters and have somebody on the
+ * portal to answer. Appload is not among them — it is offered a load through
+ * its own door, never asked beside other transporters.
+ */
+async function connectedCarriersOnPortal(db: Db, tenantId: string): Promise<string[]> {
+    const other = sql<string>`case when ${partnerConnection.requesterOrgId} = ${tenantId} then ${partnerConnection.targetOrgId} else ${partnerConnection.requesterOrgId} end`;
+
+    const rows = await db
+        .select({ id: organization.id })
+        .from(partnerConnection)
+        .innerJoin(organization, eq(organization.id, other))
+        .where(and(
+            eq(partnerConnection.status, "accepted"),
+            or(eq(partnerConnection.requesterOrgId, tenantId), eq(partnerConnection.targetOrgId, tenantId)),
+            eq(organization.type, "carrier"),
+            isNotNull(organization.portalActivatedAt),
+        ));
+
+    return rows.map((row) => row.id).filter((id) => !isApploadOrg(id));
 }
 
 /**
@@ -294,6 +352,15 @@ const ListInput = z.object({
     search: z.string().trim().max(120).optional(),
     /** The tile: asked for a position today and still silent */
     silent: z.literal(true).optional(),
+    disputed: z.literal(true).optional(),
+    offRoute: z.literal(true).optional(),
+    hasCosts: z.literal(true).optional(),
+    /** A partner company on the load; only the owner's own rows match */
+    partner: z.string().max(64).optional(),
+    /** The loading period: a month of the current year, or an explicit range that wins over it */
+    month: z.number().int().min(1).max(12).optional(),
+    from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     sort: z.enum(MOVEMENT_SORTS).default("newest"),
     dir: z.enum(["asc", "desc"]).default("desc"),
     page: z.number().int().positive().default(1),
@@ -324,6 +391,30 @@ function searchWhere(term: string, tenantId: string): SQL | undefined {
     );
 }
 
+/**
+ * The loading period, the way admin's orders list cuts it: an explicit range
+ * wins over a month, and a month means that month of the current year.
+ */
+function loadingPeriod(input: Pick<ListInput, "month" | "from" | "to">): SQL | undefined {
+    if (input.from || input.to) {
+        return and(
+            input.from ? gte(movement.expectedLoadingDate, new Date(`${input.from}T00:00:00`)) : undefined,
+            input.to ? lte(movement.expectedLoadingDate, new Date(`${input.to}T23:59:59.999`)) : undefined,
+        );
+    }
+
+    if (input.month) {
+        const year = new Date().getFullYear();
+
+        return and(
+            gte(movement.expectedLoadingDate, new Date(year, input.month - 1, 1)),
+            lt(movement.expectedLoadingDate, new Date(year, input.month, 1)),
+        );
+    }
+
+    return undefined;
+}
+
 function ordering(sort: ListInput["sort"], dir: "asc" | "desc"): SQL[] {
     const by = (column: AnyColumn) =>
         dir === "desc" ? sql`${column} desc nulls last` : sql`${column} asc nulls last`;
@@ -335,17 +426,162 @@ function ordering(sort: ListInput["sort"], dir: "asc" | "desc"): SQL[] {
     }
 }
 
+/**
+ * The rows on screen folded into strip lines, one per currency, each leg
+ * read the way this caller reads it (projectMoney). Revenue is the sell
+ * legs before VAT, costs the owner's buy legs before VAT plus the absorbed
+ * cost lines (a rechargeable line passes to the client — money.ts), margin
+ * their difference. Beside them the cash, VAT included as invoiced: what is
+ * still to receive and to pay, and what already was. A client's payable is
+ * cash out, never a cost of its books; an offer or a quote in front of the
+ * company is not money yet. Never converted, never summed across two
+ * currencies.
+ *
+ * ponytail: folded in memory over the section's rows; move the arithmetic
+ * into SQL if row counts ever make this slow
+ */
+function foldCashflow(
+    rows: Movement[],
+    costGroups: Array<{ currency: Currency; total: number; rechargeable: number }>,
+    tenantId: string,
+): MovementCashflow["lines"] {
+    const lines = new Map<Currency, { revenue: number; costs: number; receivable: number; received: number; payable: number; paid: number }>();
+    const at = (currency: Currency) => {
+        const line = lines.get(currency) ?? { revenue: 0, costs: 0, receivable: 0, received: 0, payable: 0, paid: 0 };
+        lines.set(currency, line);
+        return line;
+    };
+    // A price nobody has agreed to yet is owed by nobody, and a cancelled
+    // load owes nothing more; what already moved still moved
+    const owed = (leg: MoneyLeg, open: boolean) =>
+        !open || legSettled(leg.total, leg.settlement) ? 0 : Math.max(leg.total - leg.settled, 0);
+
+    for (const row of rows) {
+        const role = roleOf(row, tenantId);
+        if (role === "executor") continue;
+
+        const { receivable, payable } = projectMoney(row, role, []);
+        const open = !isAskable(row.status) && row.status !== "cancelled";
+
+        if (receivable) {
+            const line = at(receivable.currency);
+            line.revenue += exVat(receivable);
+            line.receivable += owed(receivable, open);
+            line.received += receivable.settled;
+        }
+        if (payable) {
+            const line = at(payable.currency);
+            if (role === "owner") line.costs += exVat(payable);
+            line.payable += owed(payable, open);
+            line.paid += payable.settled;
+        }
+    }
+
+    for (const group of costGroups) {
+        at(group.currency).costs += group.total - group.rechargeable;
+    }
+
+    const round = (value: number) => Math.round(value * 100) / 100;
+
+    return [...lines.entries()]
+        .map(([currency, line]) => ({
+            currency,
+            revenue: round(line.revenue),
+            costs: round(line.costs),
+            margin: round(line.revenue - line.costs),
+            receivable: round(line.receivable),
+            received: round(line.received),
+            payable: round(line.payable),
+            paid: round(line.paid),
+        }))
+        .sort((a, b) => a.currency.localeCompare(b.currency));
+}
+
+/**
+ * Each row's cost lines from the company's OWN book, summed per kind, and
+ * the owned rows' margin (money.ts — net of what the client repays, null
+ * when the legs disagree on currency), stapled onto the projected rows.
+ * Another party's lines never leave its book, and only an owner's legs
+ * make a margin.
+ */
+async function withCostColumns(db: Db, rows: Movement[], items: MovementRow[], tenantId: string) {
+    const costRows = rows.length === 0 ? [] : await db
+        .select({
+            movementId: movementCost.movementId,
+            kind: movementCost.kind,
+            currency: movementCost.currency,
+            rechargeable: movementCost.rechargeable,
+            amount: sql<number>`sum(${movementCost.amount})`.mapWith(Number),
+        })
+        .from(movementCost)
+        .where(and(
+            inArray(movementCost.movementId, rows.map((row) => row.id)),
+            eq(movementCost.organizationId, tenantId),
+            isNull(movementCost.deletedAt),
+        ))
+        .groupBy(movementCost.movementId, movementCost.kind, movementCost.currency, movementCost.rechargeable);
+
+    const costsOf = new Map<string, typeof costRows>();
+    for (const line of costRows) {
+        const list = costsOf.get(line.movementId);
+        if (list) list.push(line); else costsOf.set(line.movementId, [line]);
+    }
+
+    const legAmount = (row: Movement, side: "sell" | "buy") => {
+        const total = side === "sell" ? row.sellTotal : row.buyTotal;
+        const currency = side === "sell" ? row.sellCurrency : row.buyCurrency;
+
+        if (total === null || currency === null) return null;
+
+        return {
+            amount: exVat({
+                subtotal: numOrNull(side === "sell" ? row.sellSubtotal : row.buySubtotal),
+                vat: numOrNull(side === "sell" ? row.sellVat : row.buyVat),
+                total: Number(total),
+            }),
+            currency,
+        };
+    };
+
+    return items.map((item, index) => {
+        const row = rows[index]!;
+        const owner = row.organizationId === tenantId;
+        const costs = costsOf.get(item.id) ?? [];
+        const totals = costTotals(costs);
+        const net = owner
+            ? margin({
+                sell: legAmount(row, "sell"),
+                buy: legAmount(row, "buy"),
+                ownFleet: row.execution === "own-fleet",
+                costs: totals,
+            }).net
+            : null;
+
+        return {
+            ...item,
+            costs: costs.map(({ kind, currency, amount }) => ({ kind, currency, amount })),
+            costTotals: totals,
+            margin: net,
+        };
+    });
+}
+
 /** A page of rows cut down for this caller, with the names and trails it needs. */
 async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<MovementRow[]> {
-    const roles = rows.map((row) => ({ row, role: roleOrThrow(row, tenantId) }));
+    const roles = rows.map((row) => ({ row, role: roleOf(row, tenantId) }));
     const trails = await trailIds(db, rows);
     const linkedTerminals = rows.filter((row) => row.executionMovementId).map((row) => trails.get(row.id) ?? row.id);
-    const [names, pings, rigs, disputed, apploadRefs] = await Promise.all([
+    const [names, pings, rigs, disputed, offRoute, silent, photos, apploadRefs, quotes] = await Promise.all([
         loadNames(db, rows.flatMap((row) => [row.organizationId, row.clientOrgId, row.carrierOrgId])),
         loadPings(db, [...trails.values()]),
         loadTerminalRigs(db, linkedTerminals),
         loadDisputed(db, rows.map((row) => row.id)),
+        loadOffRoute(db, rows.map((row) => row.id), tenantId),
+        loadSilent(db, rows.map((row) => row.id), tenantId),
+        loadUnapprovedPhotos(db, rows.map((row) => row.id)),
         loadApploadRefs(db, rows.map((row) => row.orderId)),
+        // Only the owner's own partner loads can be out for quotes
+        loadQuoteSummaries(db, rows.filter((row) => row.organizationId === tenantId && row.execution === "partner").map((row) => row.id)),
     ]);
 
     return roles.map(({ row, role }) => {
@@ -356,6 +592,8 @@ async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<
             trailId,
             apploadRefs,
             terminalRig: rigs.get(trailId) ?? null,
+            candidate: isCandidate(row, role, tenantId),
+            quotes: quotes.get(row.id) ?? null,
             // An executor reads a dispute only from its own offer round, which
             // takes the trail to tell. It never needs to here: the only rows a
             // list shows an executor are offers waiting on its answer, and any
@@ -363,16 +601,11 @@ async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<
             // opened on a load still being asked about. The detail page,
             // which reads the trail, is exact
             inDispute: role !== "executor" && disputed.has(row.id),
+            offRoute: offRoute.has(row.id),
+            silent: silent.has(row.id),
+            unapprovedPhotos: photos.get(row.id) ?? 0,
         });
     });
-}
-
-function roleOrThrow(row: Movement, tenantId: string) {
-    const role = movementRole(row, tenantId);
-    // The list predicates only ever return rows the caller is a side of; a
-    // row with no role here would be a bug in them, and it must not render
-    if (!role) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
-    return role;
 }
 
 /**
@@ -399,16 +632,17 @@ function assertConfirmationUrl(url: string, movementId: string) {
 }
 
 async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRole, orgType: OrgType): Promise<MovementDetail> {
-    const role = roleOrThrow(row, tenantId);
+    const role = roleOf(row, tenantId);
     const owner = role === "owner";
+    const candidate = isCandidate(row, role, tenantId);
     const trailId = row.executionMovementId ? await terminalMovementId(db, row.id) : row.id;
 
     const linked = row.executionMovementId !== null;
 
-    const [names, pings, costs, documents, events, disputes, hasParent, executorOnPortal, rigs, terminalProofs, carrierEmail, trailerPlate, photosWaiting, apploadRefs] = await Promise.all([
+    const [names, pings, costs, documents, events, disputes, hasParent, executorOnPortal, rigs, terminalProofs, carrierEmail, trailerPlate, photosWaiting, apploadRefs, offRoute, openRequests, requests] = await Promise.all([
         loadNames(db, [row.organizationId, row.clientOrgId, row.carrierOrgId]),
         loadPings(db, [trailId]),
-        owner ? loadCosts(db, row.id) : Promise.resolve([]),
+        owner || role === "client" ? loadCosts(db, row.id, tenantId) : Promise.resolve([]),
         loadDocuments(db, row.id),
         loadEvents(db, row.id),
         loadDisputes(db, row),
@@ -423,6 +657,9 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
         // for them: what a load still lacks is the owner's own reading
         owner ? unapprovedPhotos(db, row.id) : Promise.resolve(0),
         loadApploadRefs(db, [row.orderId]),
+        owner ? loadOffRoute(db, [row.id], tenantId) : Promise.resolve(new Set<string>()),
+        owner && row.execution === "partner" ? openRequestCount(db, row.id) : Promise.resolve(0),
+        row.execution === "partner" ? loadRequests(db, row.id, tenantId, role) : Promise.resolve([]),
     ]);
 
     return toMovementDetail(row, role, {
@@ -437,6 +674,10 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
         apploadRefs,
         hasParent,
         executorOnPortal,
+        openRequests,
+        requests,
+        candidate,
+        offRoute: offRoute.has(row.id),
         costs,
         documents,
         events,
@@ -526,6 +767,11 @@ export const movementsRouter = createTRPCRouter({
                 input.status ? statusFilter(input.status) : undefined,
                 input.search ? searchWhere(input.search, tenantId) : undefined,
                 input.silent ? silentToday(tenantId, new Date()) : undefined,
+                input.disputed ? inDispute() : undefined,
+                input.offRoute ? offRouteRecently(tenantId) : undefined,
+                input.hasCosts ? hasCosts(tenantId) : undefined,
+                input.partner ? withPartner(input.partner, tenantId) : undefined,
+                loadingPeriod(input),
             );
 
             const [rows, [counted]] = await Promise.all([
@@ -570,11 +816,16 @@ export const movementsRouter = createTRPCRouter({
                 silentToday(tenantId, new Date()),
             )})::int`.mapWith(Number);
 
+            select.offRoute = sql<number>`count(*) filter (where ${and(
+                sectionPredicate(input.scope, "all", tenantId),
+                offRouteRecently(tenantId),
+            )})::int`.mapWith(Number);
+
             if (input.scope === "trips") {
                 select.received = sql<number>`count(*) filter (where ${received(tenantId)})::int`.mapWith(Number);
             }
 
-            const [[row], statuses] = await Promise.all([
+            const [[row], statuses, disputedStatuses] = await Promise.all([
                 ctx.db
                     .select(select as Record<string, SQL<number>>)
                     .from(movement)
@@ -583,6 +834,14 @@ export const movementsRouter = createTRPCRouter({
                     .select({ status: movement.status, value: count() })
                     .from(movement)
                     .where(and(visibleMovements(tenantId), sectionPredicate(input.scope, "all", tenantId)))
+                    .groupBy(movement.status),
+                // The Disputes section's own numbers: its menu spans every
+                // status, and the scope-wide counts above would not agree
+                // with the disputed list it opens
+                ctx.db
+                    .select({ status: movement.status, value: count() })
+                    .from(movement)
+                    .where(and(visibleMovements(tenantId), sectionPredicate(input.scope, "disputes", tenantId)))
                     .groupBy(movement.status),
             ]);
 
@@ -594,9 +853,78 @@ export const movementsRouter = createTRPCRouter({
                 total: bySection.all ?? 0,
                 bySection,
                 byStatus: Object.fromEntries(statuses.map((entry) => [entry.status, entry.value])),
+                disputedByStatus: Object.fromEntries(disputedStatuses.map((entry) => [entry.status, entry.value])),
                 received: Number(row?.received ?? 0),
                 silent: Number(row?.silent ?? 0),
+                offRoute: Number(row?.offRoute ?? 0),
             };
+        }),
+
+    /**
+     * The money strip above the list, for the section on screen, per
+     * currency (foldCashflow): what the company's own rows earn, cost and
+     * leave, and the cash still to receive and to pay on every row it is
+     * owner or client of. Its own procedure rather than more of `stats`,
+     * which the header calls for both scopes and has to stay cheap.
+     */
+    cashflow: tenantProcedure
+        .input(z.object({ scope: z.enum(MOVEMENT_SCOPES), section: z.enum(SECTIONS).default("all") }))
+        .query(async ({ ctx, input }): Promise<MovementCashflow> => {
+            const tenantId = ctx.tenant.organizationId;
+            const shown = and(visibleMovements(tenantId), sectionPredicate(input.scope, input.section, tenantId));
+            // Cost lines only touch the margin, and only an owner has one
+            const owned = and(shown, eq(movement.organizationId, tenantId));
+
+            const [rows, costGroups] = await Promise.all([
+                ctx.db.select().from(movement).where(shown),
+                ctx.db
+                    .select({
+                        currency: movementCost.currency,
+                        total: sql<number>`coalesce(sum(${movementCost.amount}), 0)`.mapWith(Number),
+                        rechargeable: sql<number>`coalesce(sum(${movementCost.amount}) filter (where ${movementCost.rechargeable}), 0)`.mapWith(Number),
+                    })
+                    .from(movementCost)
+                    .innerJoin(movement, eq(movement.id, movementCost.movementId))
+                    .where(and(owned, eq(movementCost.organizationId, tenantId), isNull(movementCost.deletedAt)))
+                    .groupBy(movementCost.currency),
+            ]);
+
+            return { lines: foldCashflow(rows, costGroups, tenantId) };
+        }),
+
+    /**
+     * The list as a file: the same predicate and order the page shows,
+     * uncut by paging, each owned row carrying its cost lines summed per
+     * kind and its margin (money.ts — net of what the client repays, blank
+     * when the legs disagree on currency). Capped like admin's export.
+     */
+    export: tenantProcedure
+        .input(ListInput.omit({ page: true, pageSize: true }))
+        .query(async ({ ctx, input }) => {
+            const tenantId = ctx.tenant.organizationId;
+            const where = and(
+                visibleMovements(tenantId),
+                sectionPredicate(input.scope, input.section, tenantId),
+                input.status ? statusFilter(input.status) : undefined,
+                input.search ? searchWhere(input.search, tenantId) : undefined,
+                input.silent ? silentToday(tenantId, new Date()) : undefined,
+                input.disputed ? inDispute() : undefined,
+                input.offRoute ? offRouteRecently(tenantId) : undefined,
+                input.hasCosts ? hasCosts(tenantId) : undefined,
+                input.partner ? withPartner(input.partner, tenantId) : undefined,
+                loadingPeriod(input),
+            );
+
+            const rows = await ctx.db
+                .select()
+                .from(movement)
+                .where(where)
+                .orderBy(...ordering(input.sort, input.dir))
+                .limit(EXPORT_LIMIT);
+
+            const items = await projectRows(ctx.db, rows, tenantId);
+
+            return withCostColumns(ctx.db, rows, items, tenantId);
         }),
 
     /**
@@ -679,7 +1007,7 @@ export const movementsRouter = createTRPCRouter({
      */
     create: tenantProcedure
         .input(CreateMovementBaseSchema)
-        .mutation(async ({ ctx, input }): Promise<{ id: string; ref: string }> => {
+        .mutation(async ({ ctx, input }): Promise<{ id: string; ref: string; asked: number }> => {
             const tenantId = ctx.tenant.organizationId;
             const partner = input.execution === "partner";
 
@@ -716,6 +1044,22 @@ export const movementsRouter = createTRPCRouter({
             // ...and is asked, never scheduled on its behalf
             if (executorOnPortal && input.status !== "procurement") {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATUS" });
+            }
+
+            // Who the load goes out to for a price, resolved before anything is
+            // written: the transporter named, or every connected transporter on
+            // the portal when none is. Appload is offered a load, never asked
+            // to quote on one beside other transporters (appload/link.ts)
+            let askCarriers: string[] = [];
+
+            if (input.requestQuotes) {
+                if (!partner || input.status !== "procurement" || input.carrierName || isApploadOrg(input.carrierOrgId)) {
+                    throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID_STATUS" });
+                }
+
+                askCarriers = input.carrierOrgId ? [input.carrierOrgId] : await connectedCarriersOnPortal(ctx.db, tenantId);
+
+                if (askCarriers.length === 0) throw new TRPCError({ code: "BAD_REQUEST", message: "NO_CARRIERS_TO_ASK" });
             }
 
             const rig = await resolveRig(ctx.db, tenantId, input);
@@ -819,7 +1163,134 @@ export const movementsRouter = createTRPCRouter({
                 await announce(ctx.db, created, { from: null, actorOrgId: tenantId, notifyOwner: false, notifyExecutor: false });
             }
 
-            return { id: created.id, ref: movementRef(created) };
+            // The round opens on the load the moment it exists: it lands as a
+            // prospect, and the transporters asked hear about it at once
+            if (askCarriers.length > 0) {
+                await sendMovementRequests(ctx.db, actorOf(ctx.tenant), {
+                    id: created.id,
+                    expectedVersion: created.version,
+                    carrierOrgIds: askCarriers,
+                });
+            }
+
+            return { id: created.id, ref: movementRef(created), asked: askCarriers.length };
+        }),
+
+    /**
+     * Who a load can go out to for a price: the company's own transporters,
+     * or every transporter on the portal when its own have not answered and
+     * the load cannot wait. Name, province and verification status only —
+     * what a requester needs to recognise a company; the rest stays behind a
+     * connection, the way the partner lookups keep it. Appload is not among
+     * them: it is offered a load from its page, never asked beside others.
+     */
+    candidates: tenantProcedure
+        .input(z.object({ query: z.string().trim().max(120).optional(), scope: z.enum(["connected", "all"]) }))
+        .query(async ({ ctx, input }): Promise<MovementCandidate[]> => {
+            const tenantId = ctx.tenant.organizationId;
+            const connected = sql<boolean>`exists (
+                select 1 from ${partnerConnection} where ${and(
+                    eq(partnerConnection.status, "accepted"),
+                    or(
+                        and(eq(partnerConnection.requesterOrgId, tenantId), eq(partnerConnection.targetOrgId, organization.id)),
+                        and(eq(partnerConnection.targetOrgId, tenantId), eq(partnerConnection.requesterOrgId, organization.id)),
+                    ),
+                )}
+            )`;
+
+            const rows = await ctx.db
+                .select({
+                    id: organization.id,
+                    name: organization.name,
+                    physicalAddress: organization.physicalAddress,
+                    kycStatus: organization.kycStatus,
+                    connected,
+                })
+                .from(organization)
+                .where(and(
+                    eq(organization.type, "carrier"),
+                    isNotNull(organization.portalActivatedAt),
+                    ne(organization.status, "closed"),
+                    ne(organization.id, tenantId),
+                    ne(organization.id, APPLOAD_ORG_ID),
+                    input.query ? ilike(organization.name, `%${escapeLike(input.query)}%`) : undefined,
+                    input.scope === "connected" ? connected : undefined,
+                ))
+                .orderBy(asc(organization.name))
+                .limit(100);
+
+            return rows.map((row) => ({
+                id: row.id,
+                name: row.name,
+                province: row.physicalAddress?.state ?? null,
+                kycStatus: row.kycStatus,
+                connected: Boolean(row.connected),
+            }));
+        }),
+
+    /**
+     * Asks transporters what they would move the load for — its own, or any
+     * on the portal. The round opens on the load (it becomes a prospect) and
+     * every transporter asked reads it from its own list; the transporters
+     * already waiting on it are left alone. Asking is placing the load — the
+     * role an offer takes.
+     */
+    sendRequests: tenantProcedure
+        .input(SendRequestsBaseSchema)
+        .mutation(async ({ ctx, input }): Promise<{ id: string; version: number; sent: number; skipped: number }> => {
+            assertCan(ctx.tenant.role, "order", "create");
+
+            const result = await sendMovementRequests(ctx.db, actorOf(ctx.tenant), input);
+
+            return { id: result.movement.id, version: result.movement.version, sent: result.sent.length, skipped: result.skipped.length };
+        }),
+
+    /** Stops waiting on one transporter; the rest of the round stands. */
+    withdrawRequest: tenantProcedure
+        .input(WithdrawRequestBaseSchema)
+        .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
+            assertCan(ctx.tenant.role, "order", "update");
+
+            await withdrawMovementRequest(ctx.db, actorOf(ctx.tenant), input);
+
+            return { id: input.id };
+        }),
+
+    /** A transporter's price on a load it was asked about — the same commitment as answering an offer. */
+    quote: tenantProcedure
+        .input(QuoteRequestBaseSchema)
+        .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
+            assertCan(ctx.tenant.role, "offer", "update");
+
+            const request = await quoteMovementRequest(ctx.db, actorOf(ctx.tenant), input);
+
+            return { id: request.movementId };
+        }),
+
+    /** A transporter passes on a load it was asked about. */
+    declineRequest: tenantProcedure
+        .input(DeclineRequestBaseSchema)
+        .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
+            assertCan(ctx.tenant.role, "offer", "update");
+
+            const request = await declineMovementRequest(ctx.db, actorOf(ctx.tenant), input);
+
+            return { id: request.movementId };
+        }),
+
+    /**
+     * Picks one of the quotes: the transporter and its price go on the load,
+     * everybody else in the round is told, and the load is placed with the
+     * winner through the offer door at the price it named.
+     */
+    award: tenantProcedure
+        .input(AwardRequestBaseSchema)
+        .mutation(async ({ ctx, input }): Promise<{ id: string; version: number }> => {
+            assertCan(ctx.tenant.role, "order", "create");
+
+            const updated = await awardMovementRequest(ctx.db, actorOf(ctx.tenant), input);
+
+            return { id: updated.id, version: updated.version };
         }),
 
     /**
@@ -1059,6 +1530,13 @@ export const movementsRouter = createTRPCRouter({
             if (needs) assertCan(ctx.tenant.role, "order", needs);
 
             const updated = await transitionMovement(ctx.db, actorOf(ctx.tenant), input);
+
+            // A load taken back to the draft or called off is no longer out
+            // for quotes: whoever was still asked is told the round is over
+            if (row.status === "prospect" && updated.status !== "prospect") {
+                await closeMovementRequests(ctx.db, updated);
+            }
+
             return { id: updated.id, status: updated.status, version: updated.version };
         }),
 
@@ -1119,6 +1597,11 @@ export const movementsRouter = createTRPCRouter({
             }
 
             const updated = await convertMovement(ctx.db, actorOf(ctx.tenant), input);
+
+            // A load taken in-house, or handed to somebody named outright, is
+            // no longer out for quotes
+            await closeMovementRequests(ctx.db, updated);
+
             return { id: updated.id, ref: movementRef(updated), version: updated.version };
         }),
 
@@ -1191,12 +1674,20 @@ export const movementsRouter = createTRPCRouter({
         }),
 
     costs: createTRPCRouter({
-        /** What the load cost to run, one line at a time. Owner only, always. */
+        /**
+         * What the load cost to run, one line at a time, into the caller's
+         * own book: the owner's, or the client's on a load moved for it.
+         * The executor works its own child row.
+         */
         add: tenantProcedure
             .input(AddCostBaseSchema)
             .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
-                const row = await loadOwn(ctx.db, input.movementId, ctx.tenant.organizationId);
+                const { row, role } = await loadVisible(ctx.db, input.movementId, ctx.tenant.organizationId);
                 assertCan(ctx.tenant.role, "trip", "update");
+
+                if (role !== "owner" && role !== "client") {
+                    throw new TRPCError({ code: "FORBIDDEN", message: "FORBIDDEN" });
+                }
 
                 if (row.status === "closed" || row.status === "cancelled") {
                     throw new TRPCError({ code: "BAD_REQUEST", message: "MOVEMENT_CLOSED" });
@@ -1206,6 +1697,7 @@ export const movementsRouter = createTRPCRouter({
                     .insert(movementCost)
                     .values({
                         movementId: row.id,
+                        organizationId: ctx.tenant.organizationId,
                         kind: input.kind,
                         description: input.description || null,
                         amount: String(Math.round(input.amount * 100) / 100),
@@ -1218,12 +1710,16 @@ export const movementsRouter = createTRPCRouter({
 
                 if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
 
-                await recordEvent(ctx.db, {
-                    movementId: row.id,
-                    kind: "cost",
-                    actor: actorOf(ctx.tenant),
-                    metadata: { action: "added", kind: input.kind, amount: input.amount, currency: input.currency },
-                });
+                // The trail's cost line is owner-readable, and a client's
+                // spend is its own business — no event on another's row
+                if (role === "owner") {
+                    await recordEvent(ctx.db, {
+                        movementId: row.id,
+                        kind: "cost",
+                        actor: actorOf(ctx.tenant),
+                        metadata: { action: "added", kind: input.kind, amount: input.amount, currency: input.currency },
+                    });
+                }
 
                 return created;
             }),
@@ -1236,12 +1732,19 @@ export const movementsRouter = createTRPCRouter({
             .input(z.object({ id: z.string().nonempty() }))
             .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
                 const [cost] = await ctx.db
-                    .select({ id: movementCost.id, movementId: movementCost.movementId, status: movement.status })
+                    .select({
+                        id: movementCost.id,
+                        movementId: movementCost.movementId,
+                        status: movement.status,
+                        ownerOrgId: movement.organizationId,
+                    })
                     .from(movementCost)
                     .innerJoin(movement, eq(movement.id, movementCost.movementId))
                     .where(and(
                         eq(movementCost.id, input.id),
-                        eq(movement.organizationId, ctx.tenant.organizationId),
+                        // The line's own book, not the row's owner: each
+                        // company withdraws only its own lines
+                        eq(movementCost.organizationId, ctx.tenant.organizationId),
                         sql`${movementCost.deletedAt} is null`,
                     ))
                     .limit(1);
@@ -1259,12 +1762,14 @@ export const movementsRouter = createTRPCRouter({
                     .set({ deletedAt: new Date(), deletedBy: ctx.tenant.userId })
                     .where(eq(movementCost.id, cost.id));
 
-                await recordEvent(ctx.db, {
-                    movementId: cost.movementId,
-                    kind: "cost",
-                    actor: actorOf(ctx.tenant),
-                    metadata: { action: "removed" },
-                });
+                if (cost.ownerOrgId === ctx.tenant.organizationId) {
+                    await recordEvent(ctx.db, {
+                        movementId: cost.movementId,
+                        kind: "cost",
+                        actor: actorOf(ctx.tenant),
+                        metadata: { action: "removed" },
+                    });
+                }
 
                 return { id: cost.id };
             }),

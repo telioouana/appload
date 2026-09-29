@@ -1,0 +1,3 @@
+ALTER TABLE "movement_cost" ADD COLUMN "organization_id" text;--> statement-breakpoint
+ALTER TABLE "movement_cost" ADD CONSTRAINT "movement_cost_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+UPDATE "movement_cost" SET "organization_id" = (SELECT "organization_id" FROM "movement" WHERE "movement"."id" = "movement_cost"."movement_id");

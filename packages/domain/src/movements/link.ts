@@ -10,11 +10,12 @@ import "server-only";
  * be impossible is still no reason to spin a request forever.
  */
 
-import { and, eq, isNotNull, or } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { and, count, eq, inArray, isNotNull, or } from "drizzle-orm";
 
 import { partnerConnection } from "@workspace/db/connections";
 import type { db as Database } from "@workspace/db/db";
-import { movement, type Movement } from "@workspace/db/movements";
+import { movement, movementRequest, type Movement, type MovementRequestStatus } from "@workspace/db/movements";
 import { isApploadOrg } from "@workspace/db/types";
 import { organization } from "@workspace/db/users";
 
@@ -104,6 +105,100 @@ export async function isOnPortal(db: Db, organizationId: string | null): Promise
         .limit(1);
 
     return Boolean(row);
+}
+
+/** A transporter still in a load's quote round: asked, or answered with a price and waiting. */
+export const LIVE_REQUEST_STATUSES = ["requested", "quoted"] as const satisfies readonly MovementRequestStatus[];
+
+/**
+ * How many transporters a load is still waiting on. While the round is open
+ * the load is being asked about, the same way an offer in front of one
+ * partner is: the owner can take it back or call it off, never schedule it
+ * past the transporters it asked (status.ts reads this as `executorOnPortal`).
+ */
+export async function openRequestCount(db: Db, movementId: string): Promise<number> {
+    const [row] = await db
+        .select({ count: count() })
+        .from(movementRequest)
+        .where(and(eq(movementRequest.movementId, movementId), inArray(movementRequest.status, [...LIVE_REQUEST_STATUSES])));
+
+    return row?.count ?? 0;
+}
+
+/**
+ * Whether a company can be asked for a price: a transporter, still open,
+ * with somebody on the portal to read the request. A connection is not
+ * required — asking is an invitation, and the two become partners the day
+ * the load is awarded (`ensureConnection`).
+ */
+export async function assertAskable(db: Db, carrierOrgId: string): Promise<void> {
+    const [row] = await db
+        .select({ type: organization.type, status: organization.status, portalActivatedAt: organization.portalActivatedAt })
+        .from(organization)
+        .where(eq(organization.id, carrierOrgId))
+        .limit(1);
+
+    if (!row || row.type !== "carrier" || row.status === "closed") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "NOT_A_CARRIER" });
+    }
+
+    if (row.portalActivatedAt === null) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "PARTNER_NOT_ON_PORTAL" });
+    }
+}
+
+/**
+ * Makes two companies partners because a load was awarded between them: an
+ * accepted connection, written by the owner's side, unless one already
+ * stands. A pair that was declined, removed or still pending is taken over
+ * the same way — the award is the answer. The pair index is on the sorted
+ * pair, so there is one row to find whichever side asked first.
+ */
+export async function ensureConnection(
+    db: Db,
+    ownerOrgId: string,
+    carrierOrgId: string,
+    ownerType: "shipper" | "carrier",
+): Promise<{ id: string; created: boolean }> {
+    const [existing] = await db
+        .select({ id: partnerConnection.id, status: partnerConnection.status })
+        .from(partnerConnection)
+        .where(or(
+            and(eq(partnerConnection.requesterOrgId, ownerOrgId), eq(partnerConnection.targetOrgId, carrierOrgId)),
+            and(eq(partnerConnection.targetOrgId, ownerOrgId), eq(partnerConnection.requesterOrgId, carrierOrgId)),
+        ))
+        .limit(1);
+
+    if (existing?.status === "accepted") return { id: existing.id, created: false };
+
+    // A transporter's transporters are its subcontractors; a shipper's are its carriers
+    const relation = ownerType === "carrier" ? "subcontract" : "client-carrier";
+    const now = new Date();
+
+    if (existing) {
+        await db
+            .update(partnerConnection)
+            .set({ relation, status: "accepted", acceptedVia: "award", respondedAt: now, respondedByUserId: null })
+            .where(eq(partnerConnection.id, existing.id));
+
+        return { id: existing.id, created: true };
+    }
+
+    const [inserted] = await db
+        .insert(partnerConnection)
+        .values({
+            requesterOrgId: ownerOrgId,
+            targetOrgId: carrierOrgId,
+            relation,
+            status: "accepted",
+            acceptedVia: "award",
+            respondedAt: now,
+        })
+        .returning({ id: partnerConnection.id });
+
+    if (!inserted) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
+
+    return { id: inserted.id, created: true };
 }
 
 /** The company names a notification is written in. */

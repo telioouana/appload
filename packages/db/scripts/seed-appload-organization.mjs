@@ -33,7 +33,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { neon } from "@neondatabase/serverless";
+import { connect } from "./sql.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -108,7 +108,7 @@ if (isMain) {
     }
 
     const url = databaseUrl();
-    const sql = neon(url);
+    const sql = connect(url);
     const databaseName = decodeURIComponent(new URL(url).pathname.slice(1)).split("?")[0];
 
     console.log(`database: ${databaseName}`);

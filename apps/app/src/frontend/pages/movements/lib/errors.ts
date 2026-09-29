@@ -49,6 +49,12 @@ export const MOVEMENT_ERROR_KEYS = {
     NO_CARRIER: "noCarrier",
     NO_PRICE: "noPrice",
     NO_DRIVER: "noDriver",
+    // The quote round (requests.ts): nobody on the portal to ask, Appload
+    // asked the way a transporter is, or an award on a transporter that
+    // never named a price
+    NO_CARRIERS_TO_ASK: "noCarriersToAsk",
+    APPLOAD_NOT_A_CANDIDATE: "apploadNotACandidate",
+    NOT_QUOTED: "notQuoted",
     // Money
     NO_SUCH_LEG: "noSuchLeg",
     LEG_HAS_PAYMENTS: "legHasPayments",

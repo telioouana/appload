@@ -329,11 +329,11 @@ export async function acceptOffer(
     const settle = async () => {
         const now = new Date();
 
-        // One batch, so the winner and the losers are decided together.
+        // One transaction, so the winner and the losers are decided together.
         // The second statement sees the first's write, which is why it
         // does not have to exclude the accepted row by id.
-        await db.batch([
-            db
+        await db.transaction(async (tx) => {
+            await tx
                 .update(orderOffer)
                 .set({
                     status: "accepted",
@@ -341,12 +341,12 @@ export async function acceptOffer(
                     decidedBy: actor.userId,
                     decisionNote: opts?.note ?? null,
                 })
-                .where(eq(orderOffer.id, offer.id)),
-            db
+                .where(eq(orderOffer.id, offer.id));
+            await tx
                 .update(orderOffer)
                 .set({ status: "lost", decidedAt: now })
-                .where(and(eq(orderOffer.orderId, current.id), eq(orderOffer.status, "pending"))),
-        ]);
+                .where(and(eq(orderOffer.orderId, current.id), eq(orderOffer.status, "pending")));
+        });
     };
 
     return { patch, historyOffer: offerMetadata(offer), settle };

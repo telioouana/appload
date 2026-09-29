@@ -1,6 +1,6 @@
-import { neon } from "@neondatabase/serverless";
+import { connect } from "./sql.mjs";
 
-const sql = neon(process.env.DATABASE_URL);
+const sql = connect(process.env.DATABASE_URL);
 
 const [orders] = await sql`SELECT count(*)::int AS n FROM "order"`;
 const [orgs] = await sql`SELECT count(*)::int AS n FROM organization`;

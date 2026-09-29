@@ -24,6 +24,8 @@ export const NOTIFICATION_KIND = [
     "quote.accepted",
     "quote.declined",
     "quote.withdrawn",
+    "movement.requested",
+    "movement.quoted",
     "movement.offered",
     "movement.accepted",
     "movement.declined",

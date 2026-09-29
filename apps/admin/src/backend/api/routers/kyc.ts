@@ -503,29 +503,27 @@ async function resolveOwnership(db: Db, params: OwnershipParams): Promise<Owners
 async function writeOwnership(db: Db, params: OwnershipParams, plan: OwnershipPlan) {
     const table = VEHICLE_TABLE[params.subjectType];
 
-    const vehicleWrite = db
-        .update(table)
-        .set({
-            ownershipStatus: plan.status,
-            ownerName: params.ownerName,
-            ownerNuit: params.ownerNuit,
-        })
-        .where(eq(table.id, params.subjectId));
+    await db.transaction(async (tx) => {
+        await tx
+            .update(table)
+            .set({
+                ownershipStatus: plan.status,
+                ownerName: params.ownerName,
+                ownerNuit: params.ownerNuit,
+            })
+            .where(eq(table.id, params.subjectId));
 
-    if (plan.matches) {
-        await vehicleWrite;
-        return;
-    }
+        if (plan.matches) {
+            return;
+        }
 
-    await db.batch([
-        vehicleWrite,
-        db.update(organization)
+        await tx.update(organization)
             .set({
                 riskLevel: "high",
                 riskReason: `HIGH_RISK_SUBCONTRACTOR: ${params.subjectType} ${plan.regPlate ?? params.subjectId} is owned by third party (NUIT ${params.ownerNuit})`,
                 riskFlaggedAt: new Date(),
                 riskFlaggedBy: params.actorId,
             })
-            .where(eq(organization.id, plan.carrierId)),
-    ]);
+            .where(eq(organization.id, plan.carrierId));
+    });
 }

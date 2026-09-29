@@ -1,7 +1,7 @@
 "use client"
 
-import { useCallback } from "react"
-import { useIsFetching, useSuspenseQuery } from "@tanstack/react-query"
+import { useCallback, useState } from "react"
+import { useIsFetching, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
 
 import { useTranslations } from "@workspace/i18n"
 
@@ -11,14 +11,16 @@ import { DataTable, useDataTable } from "@workspace/ui/customs/list/data-table"
 import { ListCard } from "@workspace/ui/customs/list/list-card"
 import { ListFooter } from "@workspace/ui/customs/list/list-footer"
 import { ListToolbar } from "@workspace/ui/customs/list/list-toolbar"
-import { FilterToggle } from "@workspace/ui/customs/list/filter-controls"
 
 import { useRouter } from "@/i18n/navigation"
+import { downloadLoadsCsv } from "@/frontend/pages/movements/lib/export-csv"
 import { useTRPC } from "@/backend/api/client"
+import { useQuery } from "@tanstack/react-query"
 import { useStatusLabel } from "@/frontend/pages/movements/components/badges"
 import { useMovementColumns } from "@/frontend/pages/movements/columns/movement-columns"
 import { useMovementsList } from "@/frontend/pages/movements/hooks/use-movements-list"
 import { useNewLoad } from "@/frontend/pages/movements/hooks/use-new-load"
+import { MovementFilters } from "@/frontend/pages/movements/sections/movement-filters"
 import {
     DEFAULT_DIR,
     DEFAULT_SORT,
@@ -52,7 +54,7 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
     const trpc = useTRPC()
     const router = useRouter()
 
-    const { get, sort, onSort } = useMovementsList()
+    const { get, sort, onSort, activeFilters } = useMovementsList()
     const { open: openNewLoad } = useNewLoad()
 
     const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
@@ -80,20 +82,38 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
     })
 
     // The sections are the rail's and the two sides are the page header's
-    // pills; the toolbar's tabs are the statuses inside the section on
-    // screen. A prospect waits on an answer whether it was asked by hand or
-    // offered on the portal, so its tab counts both
+    // pills; the toolbar's menu is the statuses inside the section on
+    // screen — every section carries one, so the toolbar reads the same on
+    // all of them. A prospect waits on an answer whether it was asked by
+    // hand or offered on the portal, so its entry counts both. Disputes
+    // spans every status and counts its own rows, not the scope's
     const statuses = STATUS_TABS[scope][section] ?? []
+    const counts = section === "disputes" ? stats.disputedByStatus : stats.byStatus
     const statusCount = (status: (typeof statuses)[number]) =>
-        (stats.byStatus[status] ?? 0) + (status === "prospect" ? stats.byStatus.offered ?? 0 : 0)
-    const tabs = statuses.length === 0 ? [] : [
+        (counts[status] ?? 0) + (status === "prospect" ? counts.offered ?? 0 : 0)
+    const tabs = [
         { value: "all", label: t("tabs.all"), count: stats.bySection[section] ?? 0 },
         ...statuses.map((status) => ({ value: status, label: statusLabel(status), count: statusCount(status) })),
     ]
 
-    const chips = get("silent") === "1"
-        ? [{ key: "silent", label: t("filters.tracking"), value: t("filters.silent") }]
-        : []
+    // The chips name the chosen partner, when the options have arrived; the
+    // popover fetches the same query, so this only reads the cache
+    const { data: filterOptions } = useQuery(trpc.movements.formOptions.queryOptions())
+    const chips = activeFilters(filterOptions)
+
+    const queryClient = useQueryClient()
+    const [isExporting, setExporting] = useState(false)
+
+    const exportRows = async () => {
+        setExporting(true)
+        try {
+            const { page: _page, pageSize: _pageSize, ...rest } = input
+            const items = await queryClient.fetchQuery(trpc.movements.export.queryOptions(rest))
+            downloadLoadsCsv(`loads-${scope}-${section}`, items)
+        } finally {
+            setExporting(false)
+        }
+    }
 
     // A transporter's own trucks come from its clients; nobody files one
     const ownTripsFromClients = scope === "trips" && orgType === "carrier"
@@ -102,20 +122,12 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
         <ListCard>
             <ListToolbar
                 table={table}
-                tabs={{ param: "status", items: tabs, as: section === "in-progress" ? "menu" : "tabs" }}
+                tabs={{ param: "status", items: tabs, as: "menu" }}
                 filterCount={chips.length}
                 activeFilters={chips}
-                filters={
-                    <div className="flex flex-col gap-1">
-                        <FilterToggle
-                            label={t("filters.silent")}
-                            hint={t("filters.silent-hint")}
-                            param="silent"
-                            value="1"
-                            count={stats.silent}
-                        />
-                    </div>
-                }
+                filters={<MovementFilters stats={stats} />}
+                onExport={exportRows}
+                isExporting={isExporting}
                 sort={{
                     defaultValue: DEFAULT_SORT,
                     defaultDir: DEFAULT_DIR,

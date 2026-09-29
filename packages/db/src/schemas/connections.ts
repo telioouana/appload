@@ -14,7 +14,7 @@ export const CONNECTION_STATUS = ["pending", "accepted", "declined", "removed"] 
 export type ConnectionStatus = (typeof CONNECTION_STATUS)[number];
 
 /** How an accepted connection came about — see `partnerConnection.acceptedVia`. */
-export const CONNECTION_VIA = ["response", "registration", "staff"] as const;
+export const CONNECTION_VIA = ["response", "registration", "staff", "award"] as const;
 export type ConnectionVia = (typeof CONNECTION_VIA)[number];
 
 /**

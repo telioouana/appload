@@ -8,7 +8,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
 
-import { InDisputeChip, LaneCell, LastPingCell, LoadDate, Money, MovementStatusChip, RoleChip } from "@/frontend/pages/movements/components/badges"
+import { AttentionMarks, InDisputeChip, LaneCell, LastPingCell, LoadDate, Money, MovementStatusChip, OffRouteChip, QuotesChip, RoleChip } from "@/frontend/pages/movements/components/badges"
 import { isInProgress, type MovementRow, type MovementScope, type OrgType } from "@/frontend/pages/movements/types"
 
 /**
@@ -42,17 +42,15 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                 accessorKey: "ref",
                 header: t("columns.ref"),
                 enableHiding: false,
-                size: 110,
+                size: 130,
                 meta: { label: t("columns.ref") },
-                // A load that follows an Appload order carries two numbers:
-                // the company's own, and Appload's under it — until it has one
-                // of its own, when the order's is already what names the row
+                // One number per row — a load that follows an Appload order
+                // shows that order's id only where it has no name of its own
+                // (movementRef); the detail page still carries both
                 cell: ({ row }) => (
-                    <span className="flex min-w-0 flex-col">
+                    <span className="flex min-w-0 items-center gap-1.5">
                         <Mono className="font-medium">{row.original.ref}</Mono>
-                        {row.original.apploadOrderId && row.original.apploadOrderId !== row.original.ref && (
-                            <Mono className="text-muted-foreground text-xs">{row.original.apploadOrderId}</Mono>
-                        )}
+                        <AttentionMarks flags={row.original.flags} silent={row.original.silent} />
                     </span>
                 ),
             },
@@ -65,8 +63,13 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                 meta: { label: t("columns.status") },
                 cell: ({ row }) => (
                     <span className="flex min-w-0 items-center gap-1.5">
-                        <MovementStatusChip status={row.original.status} />
+                        <MovementStatusChip status={row.original.status} quoteRequested={row.original.quoteRequested} />
+                        {/* A round out for quotes says how many came back, right here */}
+                        {row.original.quotes && row.original.quotes.asked > 0 && (
+                            <QuotesChip loadId={row.original.id} quotes={row.original.quotes} />
+                        )}
                         {row.original.inDispute && <InDisputeChip />}
+                        {row.original.offRoute && <OffRouteChip />}
                         <RoleChip role={row.original.role} />
                     </span>
                 ),

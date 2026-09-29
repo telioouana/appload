@@ -62,12 +62,12 @@ const slugify = (name: string) =>
  */
 function uniqueViolationConstraint(error: unknown): string | null {
     const candidates = [error, (error as { cause?: unknown })?.cause] as Array<
-        { code?: string; constraint?: string; detail?: string } | undefined
+        { code?: string; constraint_name?: string; detail?: string } | undefined
     >;
 
     for (const candidate of candidates) {
         if (candidate?.code === "23505") {
-            return candidate.constraint ?? candidate.detail ?? "";
+            return candidate.constraint_name ?? candidate.detail ?? "";
         }
     }
 

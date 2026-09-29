@@ -288,6 +288,67 @@ export const movement = pgTable(
 export type Movement = typeof movement.$inferSelect;
 export type CreateMovement = typeof movement.$inferInsert;
 
+/** Lifecycle of one transporter's place in a load's quote round — see `movementRequest.status`. */
+export const MOVEMENT_REQUEST_STATUS = ["requested", "quoted", "declined", "withdrawn", "closed", "awarded"] as const;
+export type MovementRequestStatus = (typeof MOVEMENT_REQUEST_STATUS)[number];
+
+/**
+ * A load's quote round: the owner asking its connected transporters what
+ * they would move it for. The `order_request` idea (quotes.ts) on a tenant's
+ * own load, with one difference — a transporter answers one round with one
+ * price, so the quote lives on the request row instead of in a table of its
+ * own. The round sits on the owner's row at "prospect"; awarding one quote
+ * copies it into the row's buy leg and places the load through the offer
+ * door (offer.ts), which is where the transporter's yes is written.
+ *
+ * One row per (movement, carrier): asking the same transporter again reopens
+ * its row rather than stacking requests. The FK cascades — a request carries
+ * nothing of its own once the load is gone.
+ */
+export const movementRequest = pgTable(
+    "movement_request",
+    {
+        id: text("id")
+            .primaryKey()
+            .$defaultFn(() => crypto.randomUUID()),
+        movementId: text("movement_id")
+            .notNull()
+            .references(() => movement.id, { onDelete: "cascade" }),
+        carrierOrgId: text("carrier_org_id")
+            .notNull()
+            .references(() => organization.id),
+        status: text("status", { enum: MOVEMENT_REQUEST_STATUS }).default("requested").notNull(),
+        // What the owner wrote to the transporter with the request
+        message: text("message"),
+        // The transporter's answer: the same shape as the row's buy leg, so an
+        // award copies it across as it is. VAT-inclusive total, like every
+        // money block in the repo
+        quoteSubtotal: numeric("quote_subtotal", { precision: 14, scale: 2 }),
+        quoteVat: numeric("quote_vat", { precision: 14, scale: 2 }),
+        quoteTotal: numeric("quote_total", { precision: 14, scale: 2 }),
+        quoteCurrency: currencyEnum("quote_currency"),
+        quoteFiscalRegime: fiscalRegimeEnum("quote_fiscal_regime"),
+        // What the transporter wrote back, with its price or its no
+        note: text("note"),
+        createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+        respondedAt: timestamp("responded_at"),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+        updatedAt: timestamp("updated_at")
+            .defaultNow()
+            .$onUpdate(() => /* @__PURE__ */ new Date())
+            .notNull(),
+    },
+    (table) => [
+        uniqueIndex("movement_request_movement_carrier_uidx").on(table.movementId, table.carrierOrgId),
+        // What has been asked of this company, and every round it is still in
+        index("movement_request_carrier_status_idx").on(table.carrierOrgId, table.status),
+        check("movement_request_quote_currency_ck", sql`${table.quoteTotal} is null or ${table.quoteCurrency} is not null`),
+    ],
+);
+
+export type MovementRequest = typeof movementRequest.$inferSelect;
+export type CreateMovementRequest = typeof movementRequest.$inferInsert;
+
 /**
  * The per-company reference counters: one row per (organization, kind, year)
  * holding the last number handed out. A reference is minted with a single
@@ -443,10 +504,12 @@ export type CreateMovementTrackingRequest = typeof movementTrackingRequest.$infe
  * What was wrong with a slot's tracking. "no-location" is the driver who
  * never answered; "short-distance" the one who answered from where he already
  * was; "picked-address" the one who chose a place off his phone's list
- * instead of sharing where the truck actually is — the only one of the three
- * that looks like compliance from a distance, which is why it is named.
+ * instead of sharing where the truck actually is — the only one of them
+ * that looks like compliance from a distance, which is why it is named;
+ * "off-route" the truck that answered from beyond the planned route's
+ * corridor.
  */
-export const TRACKING_ALERT_ISSUE = ["no-location", "short-distance", "picked-address"] as const;
+export const TRACKING_ALERT_ISSUE = ["no-location", "short-distance", "picked-address", "off-route"] as const;
 export type TrackingAlertIssue = (typeof TRACKING_ALERT_ISSUE)[number];
 
 /**
@@ -504,9 +567,11 @@ export const MOVEMENT_COST_KIND = [
 export type MovementCostKind = (typeof MOVEMENT_COST_KIND)[number];
 
 /**
- * What one load actually cost to run, line by line. Only the movement's OWNER
- * ever reads these: a cost line is that company's own margin working, and the
- * partner on the other side has no business seeing it.
+ * What one load actually cost to run, line by line. A cost line is one
+ * company's own margin working, and the partner on the other side has no
+ * business seeing it — so every line names its company, each party on a
+ * load keeps its own book, and nobody reads another's (projection.ts
+ * `loadCosts`).
  *
  * Financial records, so the same rules as `order_document`: `restrict` on the
  * movement, and a soft delete rather than a row that disappears from a total
@@ -522,6 +587,9 @@ export const movementCost = pgTable(
         movementId: text("movement_id")
             .notNull()
             .references(() => movement.id, { onDelete: "restrict" }),
+        // The company whose book the line is in; backfilled to the row's
+        // owner, so nullable only in the schema
+        organizationId: text("organization_id").references(() => organization.id),
         kind: text("kind", { enum: MOVEMENT_COST_KIND }).notNull(),
         description: text("description"),
         amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
