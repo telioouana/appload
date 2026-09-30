@@ -3,10 +3,10 @@
  * store — uppercase, hyphens and runs of spaces as a single space
  * ("abc-123-mc" → "ABC 123 MC").
  *
- * Orders reference a vehicle by its plate, so the three order → fleet FKs are
- * first made ON UPDATE CASCADE (what the schema now declares); the orders
- * then follow their vehicle. order_dispatch and the portal's movement rows
- * keep plain copies, rewritten with the same rule.
+ * Orders reference a vehicle by its plate and follow it through the
+ * ON UPDATE CASCADE that migration 0025 gives the three order → fleet FKs,
+ * so that migration goes first (the script checks). order_dispatch and the
+ * portal's movement rows keep plain copies, rewritten with the same rule.
  *
  * A plate whose new spelling is already held by another vehicle of its kind
  * is listed and left alone: two rows for one vehicle is a merge for a person
@@ -49,15 +49,13 @@ const sql = connect(databaseUrl());
 
 const KINDS = ["truck", "trailer", "link"];
 
-if (apply) {
-    for (const kind of KINDS) {
-        const name = `order_${kind}_plate_${kind}_reg_plate_fk`;
+const fks = await sql`
+    select conname from pg_constraint
+    where conrelid = '"order"'::regclass and conname like '%plate%' and confupdtype = 'c'`;
 
-        await sql.query(`alter table "order" drop constraint if exists ${name}`);
-        await sql.query(
-            `alter table "order" add constraint ${name} foreign key (${kind}_plate) references ${kind}(reg_plate) on update cascade`,
-        );
-    }
+if (fks.length !== KINDS.length) {
+    console.error("the order → fleet plate FKs do not cascade yet: run migration 0025 first");
+    process.exit(1);
 }
 
 let changed = 0;
