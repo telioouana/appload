@@ -41,6 +41,7 @@
         "./quotes": "./src/schemas/quotes.ts",
         "./rls": "./src/schemas/rls.ts",
         "./subscriptions": "./src/schemas/subscriptions.ts",
+        "./support": "./src/schemas/support.ts",
         "./threads": "./src/schemas/threads.ts",
         "./tracking": "./src/schemas/tracking.ts",
         "./movements": "./src/schemas/movements.ts",

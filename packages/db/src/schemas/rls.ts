@@ -42,6 +42,14 @@ export const servicePolicy = (table: string) =>
 export const throughMovement = (movementId: AnyPgColumn) =>
     sql`exists (select 1 from "movement" m where m."id" = ${movementId})`;
 
+/**
+ * The company opened its own books to Appload support (support.ts): a live
+ * grant on that company. Only its own rows — a grant by one company never
+ * opens another's rows that merely name it as the other party.
+ */
+export const supportGranted = (organizationId: AnyPgColumn) =>
+    sql`exists (select 1 from "support_access_grant" g where g."organization_id" = ${organizationId} and g."revoked_at" is null and g."expires_at" > now())`;
+
 /** Same rule for the rows of a conversation. */
 export const throughThread = (threadId: AnyPgColumn) =>
     sql`exists (select 1 from "thread" t where t."id" = ${threadId})`;

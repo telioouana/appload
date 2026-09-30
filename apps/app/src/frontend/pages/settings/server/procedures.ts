@@ -1,4 +1,5 @@
-import { and, eq, isNull, or, sql } from "drizzle-orm";
+import { z } from "zod";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { APIError } from "better-auth/api";
 
@@ -23,7 +24,8 @@ import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 import type { OrgStatus, OrgType, TenantPlan, TenantRole } from "@workspace/trpc/tenant-gate";
 
-import { ChangePasswordBaseSchema } from "@/backend/schemas/settings";
+import { activeGrant, grantHistory, grantSupport, revokeSupport } from "@workspace/domain/support/grants";
+import { ChangePasswordBaseSchema, SupportGrantBaseSchema } from "@/backend/schemas/settings";
 import { UpdateCompanyBaseSchema } from "@/backend/schemas/company";
 import { received, sectionPredicate, visibleMovements } from "@/frontend/pages/movements/server/projection";
 import { visibleOrders } from "@/frontend/pages/orders/server/projection";
@@ -352,4 +354,50 @@ export const meRouter = createTRPCRouter({
 
             return { ok: true as const };
         }),
+
+    /**
+     * The company's door to Appload support (the trust wall, rls.ts): closed
+     * unless an owner or admin opens it for a while, with a reason on
+     * record. While it is open, staff read this company's own loads,
+     * contracts and client list — the database lets them, nothing in app
+     * code. Everyone on the company may read the record; opening and
+     * closing take the organization's own permission.
+     */
+    supportGrants: createTRPCRouter({
+        list: tenantProcedure.query(async ({ ctx }) => {
+            const tenantId = ctx.tenant.organizationId;
+            const now = new Date();
+            const [active, history] = await Promise.all([activeGrant(ctx.db, tenantId, now), grantHistory(ctx.db, tenantId)]);
+            const names = new Map((await ctx.db
+                .select({ id: user.id, name: user.name })
+                .from(user)
+                .where(inArray(user.id, [...new Set(history.map((row) => row.grantedBy).filter((id): id is string => id !== null))])))
+                .map((row) => [row.id, row.name]));
+            const view = (row: NonNullable<typeof active>) => ({
+                id: row.id,
+                reason: row.reason,
+                grantedByName: row.grantedBy ? names.get(row.grantedBy) ?? null : null,
+                createdAt: row.createdAt,
+                expiresAt: row.expiresAt,
+                revokedAt: row.revokedAt,
+                state: row.revokedAt ? "revoked" as const : row.expiresAt > now ? "active" as const : "expired" as const,
+            });
+
+            return { active: active ? view(active) : null, history: history.map(view) };
+        }),
+
+        grant: authorizedTenantProcedure("organization", ["update"])
+            .input(SupportGrantBaseSchema)
+            .mutation(async ({ ctx, input }) => {
+                const row = await grantSupport(ctx.db, { organizationId: ctx.tenant.organizationId, userId: ctx.tenant.userId }, input);
+                return { id: row.id, organizationId: row.organizationId, expiresAt: row.expiresAt };
+            }),
+
+        revoke: authorizedTenantProcedure("organization", ["update"])
+            .input(z.object({ id: z.string().nonempty() }))
+            .mutation(async ({ ctx, input }) => {
+                const row = await revokeSupport(ctx.db, { organizationId: ctx.tenant.organizationId, userId: ctx.tenant.userId }, input.id);
+                return { id: row.id, organizationId: row.organizationId };
+            }),
+    }),
 });

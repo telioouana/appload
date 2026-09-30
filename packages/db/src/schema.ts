@@ -10,6 +10,7 @@ export * from "@workspace/db/orders";
 export * from "@workspace/db/quotes";
 export * from "@workspace/db/rls";
 export * from "@workspace/db/subscriptions";
+export * from "@workspace/db/support";
 export * from "@workspace/db/threads";
 export * from "@workspace/db/tracking";
 export * from "@workspace/db/movements";

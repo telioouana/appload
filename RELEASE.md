@@ -367,6 +367,13 @@ then push `prod/admin` and the portal back to back.
 
   Idempotent (a quote with a contract is skipped). Dev had no quote rows
   left after its rebuild, so it ran there as a dry run only.
+- `0030_support_access` — `support_access_grant`: a company's own decision
+  to open its books to Appload support for a day, a week or a month, with a
+  reason (Settings › Security on the portal). The staff policies on
+  `movement`, `contract` and `partner_connection` are recreated with one
+  more clause: a live grant on the row's own company admits it. Purely
+  additive; nothing changes for the portal's owner connection. Dev got it
+  from `node packages/db/scripts/migrate.mjs`.
 
 The shared **dev** database got all nine from the idempotent scripts
 instead — `node packages/db/scripts/create-portal-tables.mjs`,

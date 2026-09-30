@@ -53,6 +53,17 @@ export const activityCatalog: ActivityCatalog = {
             changedPhysicalAddress: Boolean(input?.physicalAddress?.placeId),
         }),
     },
+    // Opening and closing the door to Appload support is exactly what the
+    // company's own activity log is for: the reason goes on the row
+    "me.supportGrants.grant": {
+        entity: (_input, output?: { organizationId?: string }) =>
+            output?.organizationId ? { type: "organization", id: output.organizationId } : null,
+        params: (input, output?: { expiresAt?: Date }) => ({ days: input?.days, reason: input?.reason, expiresAt: output?.expiresAt?.toISOString() ?? null }),
+    },
+    "me.supportGrants.revoke": {
+        entity: (_input, output?: { organizationId?: string }) =>
+            output?.organizationId ? { type: "organization", id: output.organizationId } : null,
+    },
     "me.changePassword": {
         // Nothing from the input is loggable here beyond the one choice that
         // has a consequence outside this request

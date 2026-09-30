@@ -396,7 +396,8 @@
                 "profile": "Profile",
                 "company": "Company",
                 "members": "Team",
-                "subscription": "Subscription"
+                "subscription": "Subscription",
+                "security": "Security"
             },
             "profile": {
                 "title": "Your profile",
@@ -629,6 +630,40 @@
                     "description": "Talk to the Appload team — we handle the change with you",
                     "button": "Talk to Appload",
                     "subject": "Appload Enterprise — {organization} plan"
+                }
+            },
+            "support": {
+                "title": "Appload support access",
+                "description": "Whether Appload's team may read this company's loads to help with them",
+                "loading": "Checking…",
+                "closed": "Closed: Appload support cannot read your loads",
+                "open-until": "Open until {date}",
+                "granted-by": "Opened by {name}",
+                "grant": "Open for support",
+                "revoke": "Close now",
+                "granted": "Support access opened",
+                "revoked": "Support access closed",
+                "failed": "That did not go through — try again",
+                "what-they-see": "While open, Appload support reads your own loads, contracts and partner list, without prices. Every read is written to your activity log. Loads Appload itself carries or orders are always visible to it.",
+                "history": "History",
+                "states": {
+                    "active": "Open",
+                    "expired": "Expired",
+                    "revoked": "Closed early"
+                },
+                "dialog": {
+                    "title": "Open your loads to Appload support",
+                    "description": "For a limited time, with the reason on record. You can close it again at any moment.",
+                    "duration": "For how long",
+                    "days": {
+                        "1": "One day",
+                        "7": "One week",
+                        "30": "One month"
+                    },
+                    "reason": "Reason",
+                    "reason-placeholder": "e.g. Ticket about load ORD-0012-26 stuck on route",
+                    "cancel": "Cancel",
+                    "confirm": "Open"
                 }
             }
         },

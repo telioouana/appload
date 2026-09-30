@@ -396,7 +396,8 @@
                 "profile": "Perfil",
                 "company": "Empresa",
                 "members": "Equipa",
-                "subscription": "Subscrição"
+                "subscription": "Subscrição",
+                "security": "Segurança"
             },
             "profile": {
                 "title": "O seu perfil",
@@ -629,6 +630,40 @@
                     "description": "Fale com a equipa da Appload — tratamos da mudança consigo",
                     "button": "Falar com a Appload",
                     "subject": "Appload Enterprise — plano da {organization}"
+                }
+            },
+            "support": {
+                "title": "Acesso do suporte Appload",
+                "description": "Se a equipa da Appload pode ler as cargas desta empresa para ajudar com elas",
+                "loading": "A verificar…",
+                "closed": "Fechado: o suporte da Appload não lê as suas cargas",
+                "open-until": "Aberto até {date}",
+                "granted-by": "Aberto por {name}",
+                "grant": "Abrir ao suporte",
+                "revoke": "Fechar agora",
+                "granted": "Acesso do suporte aberto",
+                "revoked": "Acesso do suporte fechado",
+                "failed": "Não foi possível — tente de novo",
+                "what-they-see": "Enquanto aberto, o suporte da Appload lê as suas cargas, contratos e lista de parceiros, sem preços. Cada leitura fica no seu registo de actividade. As cargas que a própria Appload transporta ou encomenda são sempre visíveis para ela.",
+                "history": "Histórico",
+                "states": {
+                    "active": "Aberto",
+                    "expired": "Expirado",
+                    "revoked": "Fechado antes do fim"
+                },
+                "dialog": {
+                    "title": "Abrir as suas cargas ao suporte Appload",
+                    "description": "Por tempo limitado, com o motivo registado. Pode fechar de novo a qualquer momento.",
+                    "duration": "Por quanto tempo",
+                    "days": {
+                        "1": "Um dia",
+                        "7": "Uma semana",
+                        "30": "Um mês"
+                    },
+                    "reason": "Motivo",
+                    "reason-placeholder": "ex. Pedido de ajuda com a carga ORD-0012-26 parada na rota",
+                    "cancel": "Cancelar",
+                    "confirm": "Abrir"
                 }
             }
         },

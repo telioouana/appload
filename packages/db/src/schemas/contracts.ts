@@ -6,7 +6,7 @@ import { check, date, index, integer, jsonb, numeric, pgTable, serial, text, tim
 // is imported by movements.ts (the FK below) and must never import it back.
 import { driver, truck } from "@workspace/db/fleet";
 import { currencyEnum, fiscalRegimeEnum, weightUnitEnum, type Location } from "@workspace/db/orders";
-import { staffPolicy } from "@workspace/db/rls";
+import { staffPolicy, supportGranted } from "@workspace/db/rls";
 import type { PriceModel } from "@workspace/db/types";
 import { organization, user } from "@workspace/db/users";
 
@@ -112,7 +112,7 @@ export const contract = pgTable(
         // The trust wall (rls.ts): a company's contracts are its most private
         // paper. Staff read one only when Appload owns it or is its client;
         // an allocation naming Appload is readable on its own, below
-        staffPolicy("contract", sql`${table.organizationId} = 'appload' or ${table.clientOrgId} = 'appload'`),
+        staffPolicy("contract", sql`${table.organizationId} = 'appload' or ${table.clientOrgId} = 'appload' or ${supportGranted(table.organizationId)}`),
     ],
 );
 

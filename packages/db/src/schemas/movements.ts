@@ -10,7 +10,7 @@ import { Location, categoriesEnum, currencyEnum, fiscalRegimeEnum, order, paymen
 import { LOCATION_SOURCE, ROUTE_SOURCE } from "@workspace/db/tracking";
 import { DISPUTE_REASON, REFERENCE_KIND } from "@workspace/db/types";
 import { organization, user } from "@workspace/db/users";
-import { servicePolicy, staffPolicy, throughMovement } from "@workspace/db/rls";
+import { servicePolicy, staffPolicy, supportGranted, throughMovement } from "@workspace/db/rls";
 
 /**
  * Who actually moves the load — the whole difference between what the portal
@@ -294,7 +294,7 @@ export const movement = pgTable(
         // The trust wall (rls.ts): Appload staff see a load only when Appload
         // is a party on it. Every child table below reaches the tenant
         // through this row, so the rule is written once, here
-        staffPolicy("movement", sql`${table.clientOrgId} = 'appload' or ${table.carrierOrgId} = 'appload'`),
+        staffPolicy("movement", sql`${table.clientOrgId} = 'appload' or ${table.carrierOrgId} = 'appload' or ${supportGranted(table.organizationId)}`),
         servicePolicy("movement"),
     ],
 );

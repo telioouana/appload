@@ -3325,7 +3325,8 @@
                     "drivers": "Motoristas",
                     "orders": "Ordens",
                     "portal": "Portal",
-                    "activity": "Actividade"
+                    "activity": "Actividade",
+                    "support": "Suporte"
                 },
                 "type": {
                     "shipper": "Cliente",
@@ -3370,7 +3371,37 @@
                 "make": "Marca e modelo",
                 "bay-on-trailer": "No reboque",
                 "operation": "Operação",
-                "vehicle-type": "Tipo"
+                "vehicle-type": "Tipo",
+                "support": {
+                    "open": "aberto",
+                    "closed": "A empresa não abriu as suas cargas ao suporte",
+                    "closed-hint": "Um responsável abre a porta no portal, em Definições › Segurança, por um dia, uma semana ou um mês. Até lá a base de dados não devolve nada aqui.",
+                    "open-until": "Aberto até {date}",
+                    "granted-by": "Aberto por {name}",
+                    "no-loads": "Sem cargas nos livros desta empresa",
+                    "load-failed": "Não foi possível ler as cargas",
+                    "logged": "Cada leitura aqui fica no registo de actividade da própria empresa, com o seu nome.",
+                    "status": {
+                        "procurement": "Em cotação",
+                        "prospect": "Prospectiva",
+                        "offered": "Proposta",
+                        "declined": "Recusada",
+                        "scheduled": "Agendada",
+                        "booked": "Confirmada",
+                        "at-loading": "No local de carregamento",
+                        "loading": "Em carregamento",
+                        "waiting-documents": "À espera de documentos",
+                        "on-route": "Em trânsito",
+                        "stopped": "Parada",
+                        "issue": "Com problema",
+                        "at-border": "Na fronteira",
+                        "at-offloading": "No local de descarregamento",
+                        "offloading": "Em descarregamento",
+                        "delivered": "Entregue",
+                        "closed": "Fechada",
+                        "cancelled": "Cancelada"
+                    }
+                }
             },
             "edit": {
                 "title": {

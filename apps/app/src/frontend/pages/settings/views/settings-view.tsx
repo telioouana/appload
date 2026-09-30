@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { IconBuilding, IconRosetteDiscountCheck, IconUser, IconUsers } from "@tabler/icons-react";
+import { IconBuilding, IconRosetteDiscountCheck, IconShieldLock, IconUser, IconUsers } from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
 
@@ -15,6 +15,7 @@ import { ProfileCard } from "@/frontend/pages/settings/components/profile-card";
 import { PasswordCard } from "@/frontend/pages/settings/components/password-card";
 import { MembersTable } from "@/frontend/pages/settings/components/members-table";
 import { SubscriptionCard } from "@/frontend/pages/settings/components/subscription-card";
+import { SupportAccessCard } from "@/frontend/pages/settings/components/support-access-card";
 import { PendingInvitations } from "@/frontend/pages/settings/components/pending-invitations";
 
 /**
@@ -43,7 +44,7 @@ export function SettingsView() {
     const { data } = useSuspenseQuery(trpc.me.session.queryOptions())
 
     const tab = searchParams.get("tab")
-    const initialTab = tab === "company" || tab === "members" || tab === "subscription" ? tab : "profile"
+    const initialTab = tab === "company" || tab === "members" || tab === "subscription" || tab === "security" ? tab : "profile"
 
     const canManage = data.role === "owner" || data.role === "admin"
 
@@ -71,6 +72,10 @@ export function SettingsView() {
                     <TabsTrigger value="subscription">
                         <IconRosetteDiscountCheck />
                         {t("tabs.subscription")}
+                    </TabsTrigger>
+                    <TabsTrigger value="security">
+                        <IconShieldLock />
+                        {t("tabs.security")}
                     </TabsTrigger>
                 </TabsList>
 
@@ -113,6 +118,10 @@ export function SettingsView() {
                         tiers={data.tiers}
                         organization={data.organization}
                     />
+                </TabsContent>
+
+                <TabsContent value="security" className="flex flex-col gap-4">
+                    <SupportAccessCard canManage={canManage} />
                 </TabsContent>
             </Tabs>
         </div>
