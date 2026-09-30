@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt, notInArray, or, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { APIError } from "better-auth/api";
 
+import { activityLog } from "@workspace/db/activity-log";
 import { partnerConnection } from "@workspace/db/connections";
 import { movement } from "@workspace/db/movements";
 import { order } from "@workspace/db/orders";
@@ -363,6 +364,47 @@ export const meRouter = createTRPCRouter({
      * code. Everyone on the company may read the record; opening and
      * closing take the organization's own permission.
      */
+    /**
+     * The company's own record: every action a member took in its name, and
+     * every read Appload support made under a grant. Rows before the portal
+     * stamped its tenant on them (2026-10) carry no company and do not show.
+     */
+    activity: createTRPCRouter({
+        list: tenantProcedure
+            .input(z.object({ cursor: z.date().nullish(), limit: z.number().int().min(1).max(100).default(30) }))
+            .query(async ({ ctx, input }) => {
+                const rows = await ctx.db
+                    .select({
+                        id: activityLog.id,
+                        action: activityLog.action,
+                        app: activityLog.app,
+                        // The sign-in hook has no name to snapshot; the user row fills it in
+                        actorName: sql<string | null>`coalesce(${activityLog.actorName}, ${user.name})`,
+                        entityType: activityLog.entityType,
+                        entityId: activityLog.entityId,
+                        status: activityLog.status,
+                        createdAt: activityLog.createdAt,
+                    })
+                    .from(activityLog)
+                    .leftJoin(user, eq(user.id, activityLog.actorId))
+                    .where(and(
+                        eq(activityLog.organizationId, ctx.tenant.organizationId),
+                        // Heartbeats and read-marks are not what anybody opens this for
+                        notInArray(activityLog.action, ["session.resumed", "notifications.markRead", "notifications.markAllRead", "threads.markRead"]),
+                        input.cursor ? lt(activityLog.createdAt, input.cursor) : undefined,
+                    ))
+                    .orderBy(desc(activityLog.createdAt))
+                    .limit(input.limit + 1);
+
+                const page = rows.slice(0, input.limit);
+
+                return {
+                    items: page.map((row) => ({ ...row, support: row.app === "admin" })),
+                    nextCursor: rows.length > input.limit ? page[page.length - 1]?.createdAt ?? null : null,
+                };
+            }),
+    }),
+
     supportGrants: createTRPCRouter({
         list: tenantProcedure.query(async ({ ctx }) => {
             const tenantId = ctx.tenant.organizationId;

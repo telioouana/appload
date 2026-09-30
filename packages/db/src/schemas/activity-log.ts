@@ -47,6 +47,8 @@ export const activityLog = pgTable(
         index("activity_log_actor_created_idx").on(table.actorId, table.createdAt),
         index("activity_log_session_created_idx").on(table.sessionId, table.createdAt),
         index("activity_log_action_idx").on(table.action),
+        // The company's own record (portal Settings › Activity), newest first
+        index("activity_log_org_created_idx").on(table.organizationId, table.createdAt.desc()),
     ],
 );
 

@@ -374,6 +374,12 @@ then push `prod/admin` and the portal back to back.
   more clause: a live grant on the row's own company admits it. Purely
   additive; nothing changes for the portal's owner connection. Dev got it
   from `node packages/db/scripts/migrate.mjs`.
+- `0031_activity_log_org_idx` — index on `activity_log (organization_id,
+  created_at desc)` for the company's own record (portal Settings ›
+  Activity). With it, the portal stamps every request-log row with the
+  tenant the gate resolved instead of the session cookie's organization:
+  rows written before this release carry no company and do not show on
+  the page (it says so). Dev got it from `node packages/db/scripts/migrate.mjs`.
 
 The shared **dev** database got all nine from the idempotent scripts
 instead — `node packages/db/scripts/create-portal-tables.mjs`,

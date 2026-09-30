@@ -367,6 +367,8 @@ Prod: `db:migrate` (0028).
 
 Prod: `db:migrate` (0029). Rows before this phase have null `organization_id` and will not show; say so on the card ("from <date>").
 
+> **AS BUILT (2026-10-01):** migration is **0031_activity_log_org_idx**. The stamping fix lives in the `protectedProcedure` middleware (`packages/trpc/src/init.ts`): on the portal it awaits the memoized tenant gate and passes `organizationId` into `recordRequestActivity`, which prefers it over the cookie's `activeOrganizationId` (the admin's fallback). `me.activity.list({ cursor?: Date, limit })` is keyset-paged on `created_at`, excludes `session.resumed`, `notifications.markRead/markAllRead`, `threads.markRead`, and flags `app = admin` rows as `support`. Settings tab **Actividade** → `ActivityCard` (infinite query, actor or an "Suporte Appload" chip, action in words from `App.settings.activity.actions.<path with - for .>` with the raw key as fallback, links to the load or the contract, a footer that says the record starts 1 October 2026). Harness: `verify-trust-wall.ts` 35/35 — note it drives the **app router** (`createCallerFactory(appRouter).me`) so the paths and the catalog match; a caller on `meRouter` alone logs `supportGrants.grant` and no entity. Prod: `db:migrate` 0031.
+
 ---
 
 ## Phase T4 — Data page (≈½ d, only after 0, T2, T3 are live)

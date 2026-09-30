@@ -148,11 +148,18 @@ export const protectedProcedure = t.procedure
 
         const result = await next();
 
+        // Whose books the row goes on: the portal's tenant gate is memoized
+        // per request, so this is the lookup the procedure already paid for
+        const organizationId = ctx.app === "portal"
+            ? await ctx.tenantGates(ctx.session.user.id).then((gate) => gate.organizationId).catch(() => null)
+            : null;
+
         // Fire-and-forget: never blocks the response, and a logging failure
         // never turns into a request failure
         const pending = recordRequestActivity({
             session: ctx.session,
             app: ctx.app,
+            organizationId,
             path,
             type,
             rawInput,

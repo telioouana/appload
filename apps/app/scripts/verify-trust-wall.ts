@@ -25,6 +25,7 @@ import fs from "node:fs";
 
 import { eq, inArray, sql } from "drizzle-orm";
 
+import { activityLog } from "@workspace/db/activity-log";
 import { createDb, db } from "@workspace/db/db";
 import { movement, movementCost, movementDocument, movementRequest } from "@workspace/db/movements";
 import { order } from "@workspace/db/orders";
@@ -34,7 +35,7 @@ import { createCallerFactory } from "@workspace/trpc/init";
 import { getStaffGates } from "@workspace/trpc/staff-gate";
 import { getTenantGates } from "@workspace/trpc/tenant-gate";
 
-import { meRouter } from "@/frontend/pages/settings/server/procedures";
+import { appRouter } from "@/backend/api/routers/_app";
 
 const appEnv = fs.readFileSync(".env", "utf8");
 const adminEnv = fs.readFileSync("../admin/.env", "utf8");
@@ -52,22 +53,25 @@ const staff = createDb(STAFF_URL);
 const service = createDb(SERVICE_URL);
 
 // The portal test tenants (memory: portal-test-accounts): B is the carrier whose books are fenced
-const A = { org: "42655a3f-0bd5-4e46-af29-9c5ee342a8aa" }; // shipper
+const A = { user: "FT7QysKKfs5NKuut5i2S8Nhg6ItrwyuR", org: "42655a3f-0bd5-4e46-af29-9c5ee342a8aa" }; // shipper, owner
 const B = { user: "a2R9UNA2NTiEo3FS7DxlwgBFUn8EDNU6", org: "9b7674e5-ea7b-416b-a199-6ca6842da718" }; // carrier, owner
 const BM = { user: "AM6u6fxppa9LEkRiMnMDHyrMpThmNrQy" }; // carrier, member
 
 const SESSION_ID = "verify-trust-wall";
-const createMeCaller = createCallerFactory(meRouter);
-const me = (userId: string) => createMeCaller({
+// The whole app router, so the request log sees the same paths as the portal ("me.supportGrants.grant") and its catalog
+const createAppCaller = createCallerFactory(appRouter);
+/** The request log is fire-and-forget; this is where its promises are caught so the checks can wait for them. */
+const logged: Promise<unknown>[] = [];
+const me = (userId: string) => createAppCaller({
     authApi: undefined as never,
     session: { user: { id: userId, name: "harness" }, session: { id: SESSION_ID, userId } } as never,
     db,
     app: "portal" as const,
     headers: new Headers(),
-    waitUntil: undefined,
+    waitUntil: (promise: Promise<unknown>) => { logged.push(promise); },
     staffGates: (id: string) => getStaffGates(db, { userId: id }),
     tenantGates: (id: string) => getTenantGates(db, { userId: id }),
-});
+}).me;
 // No third tenant: the rebuilt dev has no Qaqz row, so a "stranger" on a row is simply A again
 
 const origin = { state: "Nampula Province", address: "Nampula, Mozambique", country: "Mozambique", placeId: "ChIJOaE2a7M1xhgRdN3KTEt2F8I" };
@@ -219,6 +223,19 @@ async function main() {
     // An expired grant is no grant
     await db.insert(supportAccessGrant).values({ organizationId: B.org, grantedBy: B.user, reason: "verify-trust-wall", expiresAt: new Date(Date.now() - 60_000) });
     check("an expired grant opens nothing", await countAs(staff, "movement", "id", x) === 0);
+
+    // 8. The company's own record: what its members did, stamped with the company, and what support read
+    await Promise.all(logged);
+    await db.insert(activityLog).values({
+        app: "admin", actorId: "harness-staff", actorName: "Harness Staff", sessionId: SESSION_ID, organizationId: B.org,
+        action: "support.loads.view", entityType: "organization", entityId: B.org, params: { loads: 1 }, status: "success",
+    });
+    const bRecord = await me(B.user).activity.list({ limit: 30 });
+    const granted = bRecord.items.find((row) => row.action === "me.supportGrants.grant" && row.createdAt.getTime() > Date.now() - 5 * 60_000);
+    check("B reads the grant it made, under its own company", granted !== undefined && !granted.support && granted.entityId === B.org, granted);
+    check("…and the support read, marked as such", bRecord.items.some((row) => row.action === "support.loads.view" && row.support), bRecord.items.slice(0, 3));
+    const aRecord = await me(A.user).activity.list({ limit: 30 });
+    check("A's record carries none of it", !aRecord.items.some((row) => row.action === "me.supportGrants.grant" && row.createdAt.getTime() > Date.now() - 5 * 60_000 && row.entityId === B.org));
 }
 
 async function cleanup() {
@@ -235,6 +252,7 @@ async function cleanup() {
     // Leaves nothing of ours behind even when a fixture insert died half-way
     await db.delete(movement).where(eq(movement.notes, "verify-trust-wall"));
     await db.delete(supportAccessGrant).where(eq(supportAccessGrant.reason, "verify-trust-wall"));
+    await db.delete(activityLog).where(eq(activityLog.sessionId, SESSION_ID));
     void order;
 }
 

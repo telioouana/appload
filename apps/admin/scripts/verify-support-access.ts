@@ -72,8 +72,8 @@ async function main() {
     const shut = await partners.organizationProfile({ id: A.org });
     check("the profile reads no grant while the door is shut", shut.supportAccess === null, shut.supportAccess);
     const always = (await partners.supportLoads({ organizationId: A.org })).length;
-    const [{ n: total }] = await owner.execute<{ n: number }>(sql`select count(*)::int as n from movement where organization_id = ${A.org}`);
-    const [{ n: withAppload }] = await owner.execute<{ n: number }>(sql`select count(*)::int as n from movement where organization_id = ${A.org} and (client_org_id = 'appload' or carrier_org_id = 'appload')`);
+    const total = (await owner.execute<{ n: number }>(sql`select count(*)::int as n from movement where organization_id = ${A.org}`))[0]?.n ?? 0;
+    const withAppload = (await owner.execute<{ n: number }>(sql`select count(*)::int as n from movement where organization_id = ${A.org} and (client_org_id = 'appload' or carrier_org_id = 'appload')`))[0]?.n ?? 0;
     check("shut, only the loads Appload is a party to come back", always === withAppload && always < total, { always, withAppload, total });
     const before = await viewsLogged();
 
