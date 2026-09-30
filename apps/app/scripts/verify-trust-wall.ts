@@ -25,7 +25,6 @@ import fs from "node:fs";
 
 import { eq, inArray, sql } from "drizzle-orm";
 
-import { partnerConnection } from "@workspace/db/connections";
 import { createDb, db } from "@workspace/db/db";
 import { movement, movementCost, movementDocument, movementRequest } from "@workspace/db/movements";
 import { order } from "@workspace/db/orders";

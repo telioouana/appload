@@ -37,6 +37,7 @@ export function PriceModelFields<T extends FieldValues>({
 
     // The block's field names are built from `name`, which no host form's
     // path type can express; the host's own schema types the values
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- react-hook-form's Control is contravariant in its form type; every caller passes its own typed control
     const control = typed as unknown as Control<any>
 
     const model = useWatch({ control, name: `${name}.model` }) as string | undefined
