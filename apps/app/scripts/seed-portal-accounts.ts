@@ -25,7 +25,7 @@ import { db } from "@workspace/db/db";
 import { order } from "@workspace/db/orders";
 import { account, member, organization, user } from "@workspace/db/users";
 
-process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
+process.env.DATABASE_URL ??= fs.readFileSync(".env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
 
 const database = decodeURIComponent(new URL(process.env.DATABASE_URL).pathname.slice(1));
 

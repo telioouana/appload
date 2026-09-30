@@ -34,7 +34,7 @@
  *   --from   first day to cover. Default: the earliest expected_loading_date
  *            in "order" (2022-01-01 when there are no orders yet). The range
  *            always ends on today in Maputo — no source quotes the future.
- * (reads DATABASE_URL from apps/admin/.env or the environment)
+ * (reads DATABASE_URL from packages/db/.env or the environment)
  */
 
 import fs from "node:fs";
@@ -210,11 +210,11 @@ function databaseUrl() {
         return process.env.DATABASE_URL;
     }
 
-    const env = fs.readFileSync(path.join(root, "apps/admin/.env"), "utf8");
+    const env = fs.readFileSync(path.join(root, "packages/db/.env"), "utf8");
     const match = env.match(/^DATABASE_URL=(.+)$/m);
 
     if (!match) {
-        throw new Error("DATABASE_URL not found in apps/admin/.env or the environment");
+        throw new Error("DATABASE_URL not found in packages/db/.env or the environment");
     }
 
     return match[1].trim();

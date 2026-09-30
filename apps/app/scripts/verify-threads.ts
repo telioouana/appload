@@ -51,7 +51,7 @@ import { threadsRouter } from "@/frontend/pages/threads/server/procedures";
 // staff gate rather than through a tenant one.
 import { threadsRouter as adminThreadsRouter } from "../../admin/src/backend/api/routers/threads";
 
-process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
+process.env.DATABASE_URL ??= fs.readFileSync(".env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
 
 const SESSION_ID = "verify-threads";
 

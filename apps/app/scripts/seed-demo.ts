@@ -92,7 +92,7 @@ import { appRouter } from "@/backend/api/routers/_app";
 
 import { computeOrderRoute } from "@workspace/maps/server/routes";
 
-process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
+process.env.DATABASE_URL ??= fs.readFileSync(".env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
 process.env.GOOGLE_MAPS_API_KEY ??= fs.readFileSync("../admin/.env", "utf8").match(/^GOOGLE_MAPS_API_KEY=(.+)$/m)?.[1]?.trim();
 
 const WRITE = process.argv.includes("--yes");
