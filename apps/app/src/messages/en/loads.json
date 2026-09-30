@@ -619,7 +619,7 @@
             "truck-none": "Not decided yet",
             "truck-typed": "Another truck",
             "plate": "Plate",
-            "plate-placeholder": "AAA-000-MC",
+            "plate-placeholder": "AAA 000 MC",
             "status": "Where it stands",
             "status-hint": "You can move it on later from the load's page",
             "status-at-loading-hint": "Tracking starts: the driver gets location requests and the load counts towards this month's plan",

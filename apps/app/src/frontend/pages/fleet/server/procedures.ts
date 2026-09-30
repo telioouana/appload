@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, asc, count, desc, eq, ilike, inArray, isNull, notInArray, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, isNull, ne, notInArray, or, sql, type AnyColumn, type SQL } from "drizzle-orm";
 
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import { order } from "@workspace/db/orders";
@@ -70,11 +70,12 @@ const fleetProcedure = (actions: OrgAction<"fleet">[]) => authorizedTenantProced
 // Escape LIKE wildcards so user input matches literally
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
 
-// Plates are stored masked ("AAA 000 MC"); match ignoring case and spacing
-// so "aaa000" finds them
+// Match ignoring case, spacing and hyphens so "aaa000" finds "AAA 000 MC"
 const normalizePlateQuery = (value: string) => value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 
-const normalizePlate = (value: string) => value.trim().toUpperCase().replace(/\s+/g, " ");
+// One spelling for every plate, whatever its country: uppercase, hyphens
+// and runs of spaces become a single space
+const normalizePlate = (value: string) => value.toUpperCase().replace(/[\s-]+/g, " ").trim();
 
 const PageInput = {
     search: z.string().trim().max(120).optional(),
@@ -96,7 +97,7 @@ const VehiclesInput = z.object({
 type VehiclesInput = z.infer<typeof VehiclesInput>;
 
 const VehiclePatch = z.object({
-    regPlate: z.string().trim().nonempty().optional(),
+    regPlate: z.string().trim().nonempty().max(20).optional(),
     internalId: z.string().trim().max(60).nullable().optional(),
     brand: z.string().trim().nonempty().optional(),
     model: z.string().trim().nonempty().optional(),
@@ -244,7 +245,7 @@ export const fleetRouter = createTRPCRouter({
 
                 if (normalized) {
                     filters.push(
-                        sql`replace(lower(${table.regPlate}), ' ', '') LIKE ${`%${escapeLike(normalized)}%`}`,
+                        sql`regexp_replace(lower(${table.regPlate}), '[^a-z0-9]', '', 'g') LIKE ${`%${escapeLike(normalized)}%`}`,
                     );
                 }
 
@@ -284,6 +285,8 @@ export const fleetRouter = createTRPCRouter({
                     year: input.year,
                     vin: input.vin.toUpperCase(),
                 };
+
+                await assertPlateFree(ctx.db, input.kind, shared.regPlate, carrierId);
 
                 try {
                     if (input.kind === "truck") {
@@ -349,6 +352,7 @@ export const fleetRouter = createTRPCRouter({
                         if (await plateInUse(ctx.db, input.kind, current.regPlate)) {
                             throw new TRPCError({ code: "CONFLICT", message: "PLATE_LOCKED" });
                         }
+                        await assertPlateFree(ctx.db, input.kind, next, carrierId, input.id);
                         values.regPlate = next;
                     }
                 }
@@ -669,6 +673,40 @@ async function plateInUse(db: Db, kind: VehicleKind, plate: string): Promise<boo
     const [row] = await db.select({ value: count() }).from(order).where(eq(column, plate));
 
     return (row?.value ?? 0) > 0;
+}
+
+/**
+ * The unique constraint compares spellings, so the same plate written
+ * without its spaces would pass it as a second vehicle. This compares letters
+ * and digits only, and answers with the codes a constraint collision gives.
+ */
+async function assertPlateFree(
+    db: Db,
+    kind: VehicleKind,
+    plate: string,
+    carrierId: string,
+    exceptId?: string,
+): Promise<void> {
+    const table = VEHICLE_TABLE[kind];
+    const identity = plate.replace(/[^A-Z0-9]/g, "");
+
+    if (!identity) throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID" });
+
+    const [held] = await db
+        .select({ carrierId: table.carrierId })
+        .from(table)
+        .where(and(
+            sql`regexp_replace(upper(${table.regPlate}), '[^A-Z0-9]', '', 'g') = ${identity}`,
+            exceptId ? ne(table.id, exceptId) : undefined,
+        ))
+        .limit(1);
+
+    if (held) {
+        throw new TRPCError({
+            code: "CONFLICT",
+            message: held.carrierId === carrierId ? "DUPLICATE_PLATE" : "PLATE_UNAVAILABLE",
+        });
+    }
 }
 
 /** Whether the row a plate or VIN collided with is one of the tenant's own. */

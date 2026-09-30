@@ -121,10 +121,11 @@ export const order = pgTable(
         driverPassport: text("driver_passport"),
         driverPhoneNumber: text("driver_phone_number"),
         // Plates come from the carrier's registered fleet (picked or
-        // registered inline in the order form), enforced by these FKs
-        truckPlate: text("truck_plate").references(() => truck.regPlate),
-        trailerPlate: text("trailer_plate").references(() => trailer.regPlate),
-        linkPlate: text("link_plate").references(() => link.regPlate),
+        // registered inline in the order form), enforced by these FKs. A
+        // corrected plate carries its orders with it
+        truckPlate: text("truck_plate").references(() => truck.regPlate, { onUpdate: "cascade" }),
+        trailerPlate: text("trailer_plate").references(() => trailer.regPlate, { onUpdate: "cascade" }),
+        linkPlate: text("link_plate").references(() => link.regPlate, { onUpdate: "cascade" }),
         truckAge: truckAgeEnum("truck_age"),
         
         dealDate: timestamp("deal_date"),

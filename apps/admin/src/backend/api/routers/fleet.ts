@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { APIError } from "better-auth/api";
 import { TRPCError } from "@trpc/server";
-import { and, asc, eq, ilike, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, ne, sql } from "drizzle-orm";
 
 import { user } from "@workspace/db/schema";
 import { LoadingBaySchema, TRUCK_TYPE, type KycStatus, type LoadingBay, type OwnershipStatus } from "@workspace/db/types";
@@ -39,11 +39,12 @@ const vehicleTable = { truck, trailer, link } as const;
 // Escape LIKE wildcards so user input matches literally
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
 
-// Plates are stored masked ("AAA 000 MC"); match ignoring case and spacing
-// so "aaa000" finds them
+// Match ignoring case, spacing and hyphens so "aaa000" finds "AAA 000 MC"
 const normalizePlateQuery = (value: string) => value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 
-const normalizePlate = (value: string) => value.trim().toUpperCase().replace(/\s+/g, " ");
+// One spelling for every plate, whatever its country: uppercase, hyphens
+// and runs of spaces become a single space
+const normalizePlate = (value: string) => value.toUpperCase().replace(/[\s-]+/g, " ").trim();
 
 function mapVehicleUniqueViolation(error: unknown): never {
     const constraint = uniqueViolationConstraint(error);
@@ -86,7 +87,7 @@ const DriverPatch = z.object({
 const VIN_PATTERN = /^[A-HJ-NPR-Z0-9]{17}$/;
 
 const VehiclePatch = z.object({
-    regPlate: z.string().trim().nonempty().optional(),
+    regPlate: z.string().trim().nonempty().max(20).optional(),
     internalId: z.string().trim().max(60).nullable().optional(),
     brand: z.string().trim().nonempty().optional(),
     model: z.string().trim().nonempty().optional(),
@@ -117,7 +118,7 @@ export const fleetRouter = createTRPCRouter({
 
             if (normalized) {
                 filters.push(
-                    sql`replace(lower(${table.regPlate}), ' ', '') LIKE ${`%${escapeLike(normalized)}%`}`,
+                    sql`regexp_replace(lower(${table.regPlate}), '[^a-z0-9]', '', 'g') LIKE ${`%${escapeLike(normalized)}%`}`,
                 );
             }
 
@@ -141,6 +142,8 @@ export const fleetRouter = createTRPCRouter({
     registerTruck: authorizedProcedure("organizations", ["create"])
         .input(RegisterTruckBaseSchema.extend({ carrierId: z.string().nonempty() }))
         .mutation(async ({ ctx, input }): Promise<VehicleOption> => {
+            await assertPlateFree(ctx.db, "truck", normalizePlate(input.regPlate));
+
             try {
                 const [created] = await ctx.db
                     .insert(truck)
@@ -354,7 +357,10 @@ export const fleetRouter = createTRPCRouter({
             }
 
             const values: Record<string, unknown> = {};
-            if (patch.regPlate !== undefined) values.regPlate = normalizePlate(patch.regPlate);
+            if (patch.regPlate !== undefined) {
+                values.regPlate = normalizePlate(patch.regPlate);
+                await assertPlateFree(ctx.db, input.kind, values.regPlate as string, input.id);
+            }
             if (patch.internalId !== undefined) values.internalId = patch.internalId || null;
             if (patch.brand !== undefined) values.brand = patch.brand;
             if (patch.model !== undefined) values.model = patch.model;
@@ -417,10 +423,35 @@ async function assertSameCarrier(db: Db, truckId: string, carrierId: string) {
     if (home.carrierId !== carrierId) throw new TRPCError({ code: "CONFLICT", message: "TRUCK_OTHER_CARRIER" });
 }
 
-type TowedInput = z.infer<typeof RegisterTrailerBaseSchema> & { carrierId: string };
+/**
+ * The unique constraint compares spellings, so the same plate written
+ * without its spaces would pass it as a second vehicle. This compares letters
+ * and digits only.
+ */
+async function assertPlateFree(db: Db, kind: VehicleKind, plate: string, exceptId?: string) {
+    const table = vehicleTable[kind];
+    const identity = plate.replace(/[^A-Z0-9]/g, "");
+
+    if (!identity) throw new TRPCError({ code: "BAD_REQUEST", message: "INVALID" });
+
+    const [held] = await db
+        .select({ id: table.id })
+        .from(table)
+        .where(and(
+            sql`regexp_replace(upper(${table.regPlate}), '[^A-Z0-9]', '', 'g') = ${identity}`,
+            exceptId ? ne(table.id, exceptId) : undefined,
+        ))
+        .limit(1);
+
+    if (held) throw new TRPCError({ code: "CONFLICT", message: "DUPLICATE_PLATE" });
+}
+
+type TowedInput =z.infer<typeof RegisterTrailerBaseSchema> & { carrierId: string };
 
 async function registerTowed(db: Db, kind: Exclude<VehicleKind, "truck">, input: TowedInput): Promise<VehicleOption> {
     const table = vehicleTable[kind];
+
+    await assertPlateFree(db, kind, normalizePlate(input.regPlate));
 
     try {
         const [created] = await db
