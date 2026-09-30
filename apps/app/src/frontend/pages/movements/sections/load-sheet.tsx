@@ -294,8 +294,10 @@ export function LoadSheet({
         enabled: open && shareLocked,
     })
 
+    // Applied only once the pickers have their options: a select handed a
+    // value it has no item for yet drops it the moment its items arrive
     useEffect(() => {
-        if (!share) return
+        if (!share || !options || !open) return
         const previous = applied.current
         const fresh = previous?.id !== share.allocationId
         const price = (leg: { total: number } | null) => leg ? String(leg.total) : ""
@@ -316,11 +318,11 @@ export function LoadSheet({
             if (share.destination && !getValues("destination").placeId) setValue("destination", share.destination)
             if (share.sell) {
                 setValue("sellCurrency", share.sell.currency)
-                setValue("sellFiscalRegime", share.sell.fiscalRegime)
+                if (share.sell.fiscalRegime) setValue("sellFiscalRegime", share.sell.fiscalRegime)
             }
             if (share.buy) {
                 setValue("buyCurrency", share.buy.currency)
-                setValue("buyFiscalRegime", share.buy.fiscalRegime)
+                if (share.buy.fiscalRegime) setValue("buyFiscalRegime", share.buy.fiscalRegime)
             }
             // The price is the contract's; nobody is asked to quote it
             setValue("requestQuotes", false)
@@ -329,7 +331,7 @@ export function LoadSheet({
         if (fresh || getValues("sellTotal") === previous.sellTotal) setValue("sellTotal", sellTotal)
         if (fresh || getValues("buyTotal") === previous.buyTotal) setValue("buyTotal", buyTotal)
         applied.current = { id: share.allocationId, sellTotal, buyTotal }
-    }, [share, setValue, getValues])
+    }, [share, options, open, setValue, getValues])
     // Appload is pinned in front of the connections by the server, and is a
     // transporter as far as this picker is concerned: anything that is not a
     // client can be handed the load
