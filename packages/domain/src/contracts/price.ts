@@ -91,6 +91,18 @@ export function commitmentValue(model: PriceModel | null, basis: ContractBasis, 
     }
 }
 
+/**
+ * What the drawn-down part of a commitment comes to: the rate times the
+ * quantity taken, or the lump sum's share of it. Zero on an open lump sum,
+ * which has nothing to take a share of.
+ */
+export function consumedValue(model: PriceModel | null, basis: ContractBasis, committed: number | null, consumed: number): number | null {
+    if (!model) return null;
+    if (model.model === "lump-sum") return committed ? round(model.total * Math.min(consumed / committed, 1)) : 0;
+
+    return commitmentValue(model, basis, consumed);
+}
+
 // node --import tsx packages/domain/src/contracts/price.ts — the arithmetic
 // the trips and the strip are priced with, checked on its own
 if (process.argv[1]?.endsWith("price.ts")) {
@@ -110,5 +122,8 @@ if (process.argv[1]?.endsWith("price.ts")) {
     eq("reversed", billableDays("2026-10-04", "2026-09-28", "calendar"), 0);
     eq("value", commitmentValue({ model: "per-ton", rate: 1_500 }, "weight", 2_000), 3_000_000);
     eq("value mismatch", commitmentValue({ model: "per-trip", rate: 45_000 }, "weight", 2_000), null);
+    eq("drawn", consumedValue({ model: "per-ton", rate: 1_500 }, "weight", 2_000, 300), 450_000);
+    eq("drawn lump sum", consumedValue({ model: "lump-sum", total: 1_000 }, "trips", 4, 1), 250);
+    eq("drawn open lump sum", consumedValue({ model: "lump-sum", total: 1_000 }, "trips", null, 1), 0);
     console.log("ok");
 }

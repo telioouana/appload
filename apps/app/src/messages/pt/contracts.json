@@ -41,6 +41,15 @@
         "draft": "Rascunhos",
         "draft-hint": "Ainda não activados; não recebem viagens"
     },
+    "money": {
+        "spend": "Despesa com fretes",
+        "revenue": "Receita",
+        "committed": "Comprometido",
+        "drawn": "Consumido",
+        "remaining": "Por consumir",
+        "approx": "≈ MZN",
+        "empty": "Ainda não há contratos com preço aqui"
+    },
     "states": {
         "draft": "Rascunho",
         "proposed": "Proposta",
@@ -222,7 +231,8 @@
         "no-trips": "Ainda não há viagens registadas sob este contrato.",
         "open-all": "Ver todas",
         "no-file": "Ainda não foi carregada a cópia assinada.",
-        "footer": "Criado {created} · actualizado {updated}"
+        "footer": "Criado {created} · actualizado {updated}",
+        "export": "Exportar CSV"
     },
     "errors": {
         "NOT_FOUND": "Este contrato não existe, ou a sua empresa não faz parte dele.",

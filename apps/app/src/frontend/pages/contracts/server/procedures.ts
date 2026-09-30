@@ -18,7 +18,9 @@ import {
     updateAllocation,
     updateContract,
 } from "@workspace/domain/contracts/apply";
+import { latestRate, toMzn } from "@workspace/domain/contracts/fx";
 import { tripDefaultsFor, type TripDefaults } from "@workspace/domain/contracts/prefill";
+import { commitmentValue, consumedValue } from "@workspace/domain/contracts/price";
 import { allocationUsage, summarizeProgress, type AllocationUsage, type ContractProgress } from "@workspace/domain/contracts/progress";
 import { acceptsTrips, derivedState } from "@workspace/domain/contracts/state";
 import { isOnPortal } from "@workspace/domain/movements/link";
@@ -44,6 +46,7 @@ import {
     PAGE_SIZES,
     type AllocationView,
     type ContractDetail,
+    type ContractMoneyLine,
     type ContractRow,
     type ContractStats,
     type ContractTripRow,
@@ -172,6 +175,32 @@ function toRow(
         progress,
         mine,
     };
+}
+
+/**
+ * What a contract is worth to whoever is reading, committed and drawn down:
+ * a client pays the sell price, a carrier is paid its share's buy price, the
+ * owner earns the sell price when there is one and pays its shares otherwise.
+ * Null where the price cannot value the quantity, or there is no price.
+ */
+// ponytail: an owner that sells and subcontracts reads its revenue only; add a cost column when a transporter asks for its margin here
+function moneyOf(row: Contract, mine: ContractAllocation[], role: ContractRole, progress: ContractProgress) {
+    const committedQty = row.committedQty === null ? null : Number(row.committedQty);
+    const whole = (model: Contract["sellPrice"]) => [{
+        committed: commitmentValue(model, row.basis, committedQty),
+        drawn: consumedValue(model, row.basis, committedQty, progress.consumed),
+    }];
+    const shares = () => mine.map((share) => {
+        const qty = share.shareQty === null ? null : Number(share.shareQty);
+        return {
+            committed: commitmentValue(share.buyPrice, row.basis, qty),
+            drawn: consumedValue(share.buyPrice, row.basis, qty, progress.byAllocation.get(share.id)?.consumed ?? 0),
+        };
+    });
+
+    if (role === "client") return whole(row.sellPrice);
+    if (role === "carrier") return shares();
+    return row.sellPrice ? whole(row.sellPrice) : shares();
 }
 
 const orderings: Record<"newest" | "period" | "reference", (a: ContractRow, b: ContractRow) => number> = {
@@ -309,14 +338,38 @@ export const contractsRouter = createTRPCRouter({
             const tenantId = ctx.tenant.organizationId;
             const { rows, byContract, usage, names } = await visibleSet(ctx.db, tenantId, input.tab);
             const byState: ContractStats["byState"] = { draft: 0, proposed: 0, active: 0, exhausted: 0, expired: 0, closed: 0 };
+            const lines = new Map<ContractMoneyLine["currency"], ContractMoneyLine>();
 
             for (const row of rows) {
                 const all = byContract.get(row.id) ?? [];
                 const role = roleOn(row, all, tenantId);
-                if (role) byState[toRow(row, all, role, tenantId, usage, names).view.state] += 1;
+                if (!role) continue;
+
+                const { view, progress, mine } = toRow(row, all, role, tenantId, usage, names);
+                byState[view.state] += 1;
+                // A closed contract's money is history; the strip is what stands
+                if (row.status === "closed") continue;
+
+                const line = lines.get(row.currency) ?? { currency: row.currency, committed: 0, drawn: 0, remaining: 0 };
+                for (const { committed, drawn } of moneyOf(row, mine, role, progress)) {
+                    line.committed += committed ?? 0;
+                    line.drawn += drawn ?? 0;
+                    // An open commitment has nothing left to count down from
+                    line.remaining += committed === null ? 0 : committed - (drawn ?? 0);
+                }
+                lines.set(row.currency, line);
             }
 
-            return { total: rows.length, byState };
+            const rate = lines.size > 0 ? await latestRate(ctx.db) : null;
+            const total: ContractStats["money"]["total"] = rate ? { currency: "MZN", committed: 0, drawn: 0, remaining: 0, rateDay: rate.day } : null;
+            for (const line of lines.values()) {
+                if (!total || !rate) break;
+                total.committed += toMzn(line.currency, line.committed, rate);
+                total.drawn += toMzn(line.currency, line.drawn, rate);
+                total.remaining += toMzn(line.currency, line.remaining, rate);
+            }
+
+            return { total: rows.length, byState, money: { lines: [...lines.values()], total } };
         }),
 
     get: tenantProcedure

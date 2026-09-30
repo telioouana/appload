@@ -41,6 +41,15 @@
         "draft": "Drafts",
         "draft-hint": "Not activated yet; no trips can be filed"
     },
+    "money": {
+        "spend": "Freight spend",
+        "revenue": "Revenue",
+        "committed": "Committed",
+        "drawn": "Drawn down",
+        "remaining": "Remaining",
+        "approx": "≈ MZN",
+        "empty": "No priced contracts here yet"
+    },
     "states": {
         "draft": "Draft",
         "proposed": "Proposal",
@@ -222,7 +231,8 @@
         "no-trips": "No trips filed under this contract yet.",
         "open-all": "Open all",
         "no-file": "No signed copy filed yet.",
-        "footer": "Created {created} · updated {updated}"
+        "footer": "Created {created} · updated {updated}",
+        "export": "Export CSV"
     },
     "errors": {
         "NOT_FOUND": "This contract does not exist, or your company is not on it.",

@@ -1,27 +1,54 @@
 "use client"
 
-import { IconArrowUpRight } from "@tabler/icons-react"
+import { useState } from "react"
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
+import { IconArrowUpRight, IconDownload } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
+import { Spinner } from "@workspace/ui/components/spinner"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@workspace/ui/components/table"
 import { SectionCard } from "@workspace/ui/customs/detail/section-card"
 import { Dash, Mono } from "@workspace/ui/customs/list/table-cells"
 
 import { Link } from "@/i18n/navigation"
+import { useTRPC } from "@/backend/api/client"
 import type { ContractDetail } from "@/frontend/pages/contracts/types"
 import { MovementStatusChip, useMoney } from "@/frontend/pages/movements/components/badges"
+import { downloadLoadsCsv } from "@/frontend/pages/movements/lib/export-csv"
+import { movementsListInput } from "@/frontend/pages/movements/types"
 
 /**
  * The trips filed under the contract so far — under the shares the reader
  * may see. Each opens its own load page; the loads list, filtered on the
- * contract, has the rest of the kit.
+ * contract, has the rest of the kit, and the same slice downloads from here
+ * as the file that list would give.
  */
 export function TripsCard({ contract }: { contract: ContractDetail }) {
     const t = useTranslations("App.contracts.detail")
     const tv = useTranslations("App.orders")
     const f = useFormatter()
     const money = useMoney()
+    const trpc = useTRPC()
+    const queryClient = useQueryClient()
+    const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
+    const [isExporting, setExporting] = useState(false)
+
+    const exportRows = async () => {
+        setExporting(true)
+        try {
+            // The list's own builder, read as if the page were opened on this contract
+            const { page: _page, pageSize: _pageSize, ...input } = movementsListInput(
+                "all",
+                (key) => (key === "contract" ? contract.id : null),
+                session.organization.type,
+            )
+            const items = await queryClient.fetchQuery(trpc.movements.export.queryOptions(input))
+            downloadLoadsCsv(`loads-${contract.ref}`, items)
+        } finally {
+            setExporting(false)
+        }
+    }
 
     const head = "h-8 px-2 text-xs font-normal"
     const cell = "px-2 py-2.5 text-[13px]"
@@ -31,13 +58,24 @@ export function TripsCard({ contract }: { contract: ContractDetail }) {
             title={t("trips")}
             count={contract.trips.length}
             aside={contract.trips.length > 0 ? (
-                <Link
-                    href={{ pathname: "/orders/[section]", params: { section: "all" }, query: { contract: contract.id } }}
-                    className="hover:text-foreground inline-flex items-center gap-0.5"
-                >
-                    {t("open-all")}
-                    <IconArrowUpRight className="size-3.5" stroke={1.5} />
-                </Link>
+                <span className="inline-flex items-center gap-3">
+                    <button
+                        type="button"
+                        disabled={isExporting}
+                        onClick={exportRows}
+                        className="hover:text-foreground inline-flex cursor-pointer items-center gap-0.5 disabled:cursor-default"
+                    >
+                        {t("export")}
+                        {isExporting ? <Spinner className="size-3.5" /> : <IconDownload className="size-3.5" stroke={1.5} />}
+                    </button>
+                    <Link
+                        href={{ pathname: "/orders/[section]", params: { section: "all" }, query: { contract: contract.id } }}
+                        className="hover:text-foreground inline-flex items-center gap-0.5"
+                    >
+                        {t("open-all")}
+                        <IconArrowUpRight className="size-3.5" stroke={1.5} />
+                    </Link>
+                </span>
             ) : undefined}
         >
             {contract.trips.length === 0 ? (

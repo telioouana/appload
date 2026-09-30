@@ -115,6 +115,7 @@ async function main() {
     check("working days skip Sundays", billableDays("2026-09-28", "2026-10-04", "working") === 6);
 
     // 1. A files a tonnage contract and splits it
+    const moneyBefore = (await contracts(A.user).stats({ tab: "own" })).money;
     const created = await contracts(A.user).create({
         basis: "weight",
         startsOn: iso(-30),
@@ -167,6 +168,13 @@ async function main() {
     const shareBAfterOne = afterOne.allocations.find((row) => row.id === shareB.id);
     check("the share is drawn down the moment the trip exists", shareBAfterOne?.progress.consumed === 300 && shareBAfterOne?.progress.remaining === 300, shareBAfterOne?.progress);
     check("the contract's progress follows", afterOne.progress.consumed === 300 && afterOne.progress.remaining === 700, afterOne.progress);
+
+    // The strip: B's share is 600 t at 1 500, drawn by the 300 t trip; the typed share's per-trip price cannot value a tonnage
+    const moneyAfter = (await contracts(A.user).stats({ tab: "own" })).money;
+    const mzn = (money: typeof moneyAfter) => money.lines.find((line) => line.currency === "MZN") ?? { committed: 0, drawn: 0, remaining: 0 };
+    const grew = { committed: mzn(moneyAfter).committed - mzn(moneyBefore).committed, drawn: mzn(moneyAfter).drawn - mzn(moneyBefore).drawn, remaining: mzn(moneyAfter).remaining - mzn(moneyBefore).remaining };
+    check("the strip counts the priced share, committed and drawn", grew.committed === 900_000 && grew.drawn === 450_000 && grew.remaining === 450_000, grew);
+    check("the strip totals in meticais at a rate", moneyAfter.total !== null && moneyAfter.total.committed >= mzn(moneyAfter).committed, moneyAfter.total);
 
     // 4. The default is editable, and a cancelled trip stops counting
     const overridden = await loads(A.user).create(tripInput(shareB.id, { buy: { total: 1, currency: "MZN" } }));
@@ -289,6 +297,8 @@ async function main() {
     // The carrier's own trip under the share names A as its client, so A's list carries it too
     const linked = new Set([first.id, overridden.id, third.id, fourth.id, carrierTrip.id]);
     check("the loads list slices by contract", sliced.items.every((row) => linked.has(row.id)) && sliced.items.length >= 4, sliced.items.map((row) => row.id));
+    const exported = await loads(A.user).export({ scope: "orders", section: "all", contractId: created.id, sort: "newest", dir: "desc" });
+    check("the loads export slices by contract", exported.every((row) => linked.has(row.id)) && exported.length === sliced.total, exported.map((row) => row.id));
 }
 
 async function cleanup() {

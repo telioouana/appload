@@ -120,9 +120,22 @@ export type ContractDetail = ContractRow & {
     permissions: ContractPermissions;
 };
 
+/** One currency's worth of the contracts on the tab, from the reader's side: what it pays, or what it is paid */
+export type ContractMoneyLine = {
+    currency: Currency;
+    committed: number;
+    drawn: number;
+    remaining: number;
+};
+
 export type ContractStats = {
     total: number;
     byState: Record<ContractState, number>;
+    money: {
+        lines: ContractMoneyLine[];
+        /** Every line in meticais at the newest rate on file; null without one */
+        total: (ContractMoneyLine & { rateDay: string }) | null;
+    };
 };
 
 // ---------------------------------------------------------------------------

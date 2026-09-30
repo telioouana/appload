@@ -923,6 +923,7 @@ export const movementsRouter = createTRPCRouter({
                 input.offRoute ? offRouteRecently(tenantId) : undefined,
                 input.hasCosts ? hasCosts(tenantId) : undefined,
                 input.partner ? withPartner(input.partner, tenantId) : undefined,
+                input.contractId ? underContract(input.contractId) : undefined,
                 loadingPeriod(input),
             );
 
