@@ -531,7 +531,7 @@ export type CreateMovementTrackingRequest = typeof movementTrackingRequest.$infe
  * "off-route" the truck that answered from beyond the planned route's
  * corridor.
  */
-export const TRACKING_ALERT_ISSUE = ["no-location", "short-distance", "picked-address", "off-route"] as const;
+export const TRACKING_ALERT_ISSUE = ["no-location", "short-distance", "picked-address", "off-route", "falling-behind"] as const;
 export type TrackingAlertIssue = (typeof TRACKING_ALERT_ISSUE)[number];
 
 /**

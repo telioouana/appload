@@ -28,6 +28,7 @@ export function MapSelectedCard({
     className?: string
 }) {
     const t = useTranslations("App.map.selected")
+    const tp = useTranslations("App.map.progress")
     const f = useFormatter()
     const now = useNow({ updateInterval: 60_000 })
 
@@ -62,6 +63,14 @@ export function MapSelectedCard({
                         ? t("last-seen", { ago: f.relativeTime(entity.lastPosition.recordedAt, now) })
                         : t("no-pings")}
                 </p>
+
+                {entity.progress && (
+                    <p className={cn("tabular-nums", entity.progress.behind ? "text-red-600 dark:text-red-400" : "text-muted-foreground")}>
+                        {tp("remaining", { km: f.number(entity.progress.remainingKm) })}
+                        {entity.progress.etaAt && ` · ${tp("eta", { time: f.dateTime(entity.progress.etaAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) })}`}
+                        {entity.progress.behind && ` · ${tp("behind")}`}
+                    </p>
+                )}
             </div>
 
             <Button size="sm" variant="outline" className="w-fit" asChild>

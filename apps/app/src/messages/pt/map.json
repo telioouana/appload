@@ -16,6 +16,11 @@
         "last-seen": "Visto {ago}",
         "toggle": "Transportes"
     },
+    "progress": {
+        "remaining": "Faltam {km} km",
+        "eta": "Chegada {time}",
+        "behind": "Atrasado"
+    },
     "views": {
         "map": "Mapa",
         "table": "Tabela"

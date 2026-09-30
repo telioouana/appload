@@ -449,7 +449,15 @@
         "unnamed": "Unnamed place",
         "picked": "picked address",
         "off-route-chip": "Off route",
-        "off-route": "The truck last reported from more than 10 km off the planned route."
+        "off-route": "The truck last reported from more than 10 km off the planned route.",
+        "progress": {
+            "covered": "{covered} of {total} km",
+            "remaining": "{km} km to go",
+            "eta": "ETA {time} · {speed} km/h on average",
+            "eta-pending": "ETA after the first hour on the road",
+            "behind": "Behind schedule",
+            "approximate": "As the crow flies: the truck is off the planned route, or no route is known."
+        }
     },
     "thread": {
         "title": "Driver messages",

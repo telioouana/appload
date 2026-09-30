@@ -449,7 +449,15 @@
         "unnamed": "Local sem nome",
         "picked": "endereço escolhido",
         "off-route-chip": "Fora da rota",
-        "off-route": "O camião reportou a última posição a mais de 10 km da rota planeada."
+        "off-route": "O camião reportou a última posição a mais de 10 km da rota planeada.",
+        "progress": {
+            "covered": "{covered} de {total} km",
+            "remaining": "Faltam {km} km",
+            "eta": "Chegada prevista {time} · {speed} km/h em média",
+            "eta-pending": "Previsão de chegada após a primeira hora em estrada",
+            "behind": "Atrasado",
+            "approximate": "Em linha recta: o camião está fora da rota planeada, ou não há rota conhecida."
+        }
     },
     "thread": {
         "title": "Mensagens com o motorista",

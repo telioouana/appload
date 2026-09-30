@@ -35,7 +35,7 @@ export function MovementRouteMap({
     return (
         <RouteMap
             route={route.data}
-            trail={trail.data ?? []}
+            trail={trail.data?.points ?? []}
             routeFailed={route.isError}
             status={movementTone(status)}
             className={className}

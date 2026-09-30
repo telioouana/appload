@@ -1248,12 +1248,16 @@ async function moreOnRoute() {
         console.log(`  ${o.orderId}  ${cargo.description}, on the road ${lane.from.state} → ${lane.to.state}`);
     }
 
-    const own: [Lane, string, number, number][] = [
-        [L.beiMap, "Entrega Maputo, 16 t", 0.4, 2],
-        [L.chiXai, "Entrega Xai-Xai, 20 t", 0.65, 1],
+    // Lane, cargo, how far along, days on the road, days until the delivery
+    // date — the last one left three days ago with a fifth of the road behind
+    // it and is due today, so it reads "behind schedule" and the round alerts
+    const own: [Lane, string, number, number, number][] = [
+        [L.beiMap, "Entrega Maputo, 16 t", 0.4, 2, 2],
+        [L.chiXai, "Entrega Xai-Xai, 20 t", 0.65, 1, 2],
+        [L.nacBei, "Entrega Beira, 24 t", 0.2, 3, 0],
     ];
 
-    for (const [lane, description, progress, days] of own) {
+    for (const [lane, description, progress, days, due] of own) {
         const trip = await as(CTP.user).movements.create({
             execution: "own-fleet",
             status: "booked",
@@ -1265,7 +1269,7 @@ async function moreOnRoute() {
             weight: Number(description.match(/(\d+) t/)![1]),
             weightUnit: "ton",
             expectedLoadingDate: daysFromNow(-days),
-            expectedDeliveryAt: daysFromNow(2),
+            expectedDeliveryAt: daysFromNow(due),
             driverName: "Motorista Teste",
             driverPhone: DRIVER_PHONE,
             truckPlate: "AAA 123 MC",

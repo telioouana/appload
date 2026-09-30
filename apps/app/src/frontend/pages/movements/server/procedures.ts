@@ -50,6 +50,9 @@ import {
 } from "@workspace/domain/movements/requests";
 import { movementRef, needsOrderReference } from "@workspace/domain/movements/refs";
 import { entersInProgress, isAskable, isInProgress, isTerminal, movementFlags } from "@workspace/domain/movements/status";
+import { dueBy, EN_ROUTE_STATUSES, type MovementProgress } from "@workspace/domain/tracking/progress";
+import { readMovementProgress } from "@workspace/domain/tracking/progress-read";
+import { ensureMovementRoute } from "@workspace/domain/tracking/route-cache";
 import { notify } from "@workspace/domain/notifications";
 import { assertTrackingAllowance, recordTrackingUsage } from "@workspace/domain/subscription";
 import { startConversation } from "@workspace/domain/tracking/conversations";
@@ -57,18 +60,7 @@ import { hasOpenSession, place } from "@workspace/domain/tracking/slot";
 
 import { movementDocumentPath } from "@workspace/edgestore/path";
 
-import { computeRoute } from "@workspace/maps/server/routes";
-import {
-    cacheKey,
-    failedRecently,
-    failureKey,
-    GEOCODE_TTL_MS,
-    num,
-    rememberFailure,
-    routeFailures,
-    toRouteDto,
-    trailSource,
-} from "@workspace/maps/server/route-cache";
+import { num, toRouteDto, trailSource } from "@workspace/maps/server/route-cache";
 import type { OrderRouteDto, TrailPoint } from "@workspace/maps/types";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
@@ -2186,7 +2178,7 @@ export const movementsRouter = createTRPCRouter({
      */
     trail: tenantProcedure
         .input(z.object({ id: z.string().nonempty() }))
-        .query(async ({ ctx, input }): Promise<TrailPoint[]> => {
+        .query(async ({ ctx, input }): Promise<{ points: TrailPoint[]; progress: MovementProgress | null }> => {
             const { row } = await loadVisible(ctx.db, input.id, ctx.tenant.organizationId);
             const trailId = row.executionMovementId ? await terminalMovementId(ctx.db, row.id) : row.id;
 
@@ -2204,7 +2196,7 @@ export const movementsRouter = createTRPCRouter({
                 .where(eq(movementLocation.movementId, trailId))
                 .orderBy(asc(movementLocation.recordedAt));
 
-            return points.map((point) => ({
+            const trail: TrailPoint[] = points.map((point) => ({
                 id: point.id,
                 lat: num(point.latitude),
                 lng: num(point.longitude),
@@ -2214,6 +2206,16 @@ export const movementsRouter = createTRPCRouter({
                 source: trailSource(point.source),
                 picked: point.placeName !== null,
             }));
+
+            // How far along the road, from the newest position and the
+            // cached route — only while the truck is out on it. Recomputed
+            // with every poll; the alert is judged at the two daily rounds
+            const last = trail[trail.length - 1];
+            const progress = last && EN_ROUTE_STATUSES.includes(row.status)
+                ? await readMovementProgress(ctx.db, trailId, last, dueBy(row.expectedDeliveryAt))
+                : null;
+
+            return { points: trail, progress };
         }),
 
     /**
@@ -2323,60 +2325,12 @@ export const movementsRouter = createTRPCRouter({
             // reference is what goes in it, and nothing reads it but a label
             const ref = movementRef(row);
 
-            const [cached] = await ctx.db
-                .select()
-                .from(movementRoute)
-                .where(eq(movementRoute.movementId, row.id))
-                .limit(1);
+            // The same cache the dispatch fills (route-cache.ts): a load that
+            // left the loading site already has its road, and a page opened
+            // earlier buys it once for both
+            const saved = await ensureMovementRoute(ctx.db, row);
 
-            const fresh = cached
-                && cached.originPlaceId === cacheKey(row.origin)
-                && cached.destinationPlaceId === cacheKey(row.destination)
-                && (cached.source === "routes" || Date.now() - cached.computedAt.getTime() < GEOCODE_TTL_MS);
-
-            if (cached && fresh) return toRouteDto(ref, cached);
-
-            const failure = failureKey(row.id, row.origin, row.destination);
-
-            if (failedRecently(failure)) {
-                if (cached) return toRouteDto(ref, cached);
-                throw new TRPCError({ code: "PRECONDITION_FAILED", message: "ROUTE_UNAVAILABLE" });
-            }
-
-            const computed = await computeRoute(row.origin, row.destination);
-
-            if (!computed) {
-                rememberFailure(failure);
-                if (cached) return toRouteDto(ref, cached);
-                throw new TRPCError({ code: "PRECONDITION_FAILED", message: "ROUTE_UNAVAILABLE" });
-            }
-
-            routeFailures.delete(failure);
-
-            const values = {
-                movementId: row.id,
-                originPlaceId: cacheKey(row.origin),
-                destinationPlaceId: cacheKey(row.destination),
-                originLat: computed.origin.lat,
-                originLng: computed.origin.lng,
-                destinationLat: computed.destination.lat,
-                destinationLng: computed.destination.lng,
-                encodedPolyline: computed.encodedPolyline,
-                distanceMeters: computed.distanceMeters,
-                durationSeconds: computed.durationSeconds,
-                source: computed.source,
-                computedAt: new Date(),
-            };
-
-            const { movementId: _key, ...refresh } = values;
-
-            const [saved] = await ctx.db
-                .insert(movementRoute)
-                .values(values)
-                .onConflictDoUpdate({ target: movementRoute.movementId, set: refresh })
-                .returning();
-
-            if (!saved) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
+            if (!saved) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "ROUTE_UNAVAILABLE" });
 
             return toRouteDto(ref, saved);
         }),
