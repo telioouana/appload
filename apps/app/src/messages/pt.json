@@ -291,6 +291,7 @@
                     "dashboard": "Painel",
                     "orders": "Pedidos",
                     "map": "Mapa",
+                    "contracts": "Contratos",
                     "chats": "Conversas",
                     "notifications": "Notificações"
                 },
@@ -301,8 +302,6 @@
                     "team": "Equipa",
                     "partners": "Parceiros",
                     "my-transporters": "As minhas transportadoras",
-                    "quotes": "Cotações",
-                    "contracts": "Contratos",
                     "analytics": "Análises"
                 },
                 "new-load": "Nova carga"

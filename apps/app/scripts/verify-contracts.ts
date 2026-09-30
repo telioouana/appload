@@ -36,7 +36,6 @@ import {
     movementRoute,
     movementTrackingAlert,
     movementTrackingRequest,
-    organizationCounter,
 } from "@workspace/db/movements";
 import { notification } from "@workspace/db/notifications";
 import { subscriptionUsage } from "@workspace/db/subscriptions";
@@ -215,7 +214,8 @@ async function main() {
     const ownFleet = await contracts(B.user).allocations.add({ contractId: own.id, shareQty: 10 });
     check("own fleet takes no buy price",
         (await refusal(() => contracts(B.user).allocations.update({ id: ownFleet.id, shareQty: 10, buyPrice: { model: "per-trip", rate: 1 } }))) === "OWN_FLEET_HAS_NO_BUY_PRICE");
-    await contracts(B.user).transition({ id: own.id, to: "active", expectedVersion: 1 });
+    // Naming a client on the portal makes it a proposal: the client makes it active
+    await contracts(A.user).transition({ id: own.id, to: "active", expectedVersion: 1 });
     const ownTrip = await loads(B.user).create({ ...tripInput(ownFleet.id, { weight: 10 }), execution: "own-fleet" });
     movementsHere.push(ownTrip.id);
     const ownTripDetail = await loads(B.user).get({ id: ownTrip.id });
@@ -247,6 +247,32 @@ async function main() {
     check("a trip under an open share is never flagged over-committed", !lastOpen.events.flatMap((event) => event.flags ?? []).includes("CONTRACT_OVER_COMMITTED"));
     check("a trip under an open share is still priced", lastOpen.money.payable?.total === 600_000, lastOpen.money.payable);
     check("an open share reads as open on the load page", lastOpen.contract?.remaining === null, lastOpen.contract);
+
+    // 7c. A proposal: the transporter files a contract naming a client on the portal; the client answers
+    const proposal = await contracts(B.user).create({
+        basis: "trips",
+        clientOrgId: A.org,
+        startsOn: iso(0),
+        endsOn: iso(60),
+        committedQty: null,
+        currency: "MZN",
+        sellPrice: { model: "per-trip", rate: 40_000 },
+        notes: "verify-contracts",
+    });
+    contractsHere.push(proposal.id);
+    const asProposedTo = await contracts(A.user).get({ id: proposal.id });
+    check("the client reads the proposal as one", asProposedTo.state === "proposed" && asProposedTo.permissions.canAccept, { state: asProposedTo.state, permissions: asProposedTo.permissions });
+    check("the transporter cannot accept for the client",
+        (await refusal(() => contracts(B.user).transition({ id: proposal.id, to: "active", expectedVersion: 1 }))) === "CLIENT_MUST_ACCEPT");
+    check("the client was told", (await db.select({ id: notification.id }).from(notification).where(and(eq(notification.entityId, proposal.id), eq(notification.kind, "contract.proposed")))).length > 0);
+    const accepted = await contracts(A.user).transition({ id: proposal.id, to: "active", expectedVersion: 1 });
+    check("the client accepts and the contract is active", accepted.status === "active");
+    check("the transporter was told", (await db.select({ id: notification.id }).from(notification).where(and(eq(notification.entityId, proposal.id), eq(notification.kind, "contract.accepted")))).length > 0);
+    check("the client does nothing else to it",
+        (await refusal(() => contracts(A.user).transition({ id: proposal.id, to: "closed", expectedVersion: accepted.version }))) === "NOT_ALLOWED");
+    const declined = await contracts(B.user).create({ basis: "trips", clientOrgId: A.org, startsOn: iso(0), endsOn: iso(10), committedQty: 5, currency: "MZN", notes: "verify-contracts" });
+    contractsHere.push(declined.id);
+    check("the client declines a proposal", (await contracts(A.user).transition({ id: declined.id, to: "closed", expectedVersion: 1 })).status === "closed");
 
     // 8. Shares with trips stay; a closed contract takes nothing more
     check("a share with trips cannot go", (await refusal(() => contracts(A.user).allocations.remove({ id: shareB.id }))) === "ALLOCATION_HAS_TRIPS");
@@ -280,9 +306,10 @@ async function cleanup() {
         await db.delete(contractAllocation).where(inArray(contractAllocation.contractId, contractsHere));
         await db.delete(contract).where(inArray(contract.id, contractsHere));
     }
+    await db.delete(notification).where(and(eq(notification.entityType, "contract"), inArray(notification.entityId, contractsHere)));
     await db.delete(contract).where(eq(contract.notes, "verify-contracts"));
-    // The CON counters minted here are the only CON numbers these two companies have
-    await db.delete(organizationCounter).where(and(inArray(organizationCounter.organizationId, [A.org, B.org]), eq(organizationCounter.kind, "CON")));
+    // The CON counters stay where the run left them: a number, once handed out, is
+    // never handed out again — a contract filed by hand between two runs keeps its
     await db.delete(activityLog).where(eq(activityLog.sessionId, SESSION_ID));
 }
 

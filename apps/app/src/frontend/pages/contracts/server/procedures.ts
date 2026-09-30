@@ -21,6 +21,7 @@ import {
 import { tripDefaultsFor, type TripDefaults } from "@workspace/domain/contracts/prefill";
 import { allocationUsage, summarizeProgress, type AllocationUsage, type ContractProgress } from "@workspace/domain/contracts/progress";
 import { acceptsTrips, derivedState } from "@workspace/domain/contracts/state";
+import { isOnPortal } from "@workspace/domain/movements/link";
 import { movementRef } from "@workspace/domain/movements/refs";
 import { contractFilePath } from "@workspace/edgestore/path";
 import { createTRPCRouter } from "@workspace/trpc/init";
@@ -135,7 +136,9 @@ function toRow(
     const mine = shares(all, role, tenantId);
     // The client's progress is the whole contract's, read over every share
     const progress = summarizeProgress(row, role === "client" ? all : mine, usage);
-    const state = derivedState(row, role === "carrier" ? progress : summarizeProgress(row, all, usage));
+    const derived = derivedState(row, role === "carrier" ? progress : summarizeProgress(row, all, usage));
+    // A draft naming this company is a proposal waiting on its answer
+    const state = derived === "draft" && role === "client" ? "proposed" : derived;
 
     return {
         view: {
@@ -221,6 +224,9 @@ async function detailOf(db: Db, id: string, tenantId: string, orgRole: OrgRole):
 
     const canManage = role === "owner" && isOrgAuthorized(orgRole, "contract", ["update"]);
     const open = row.status !== "closed";
+    // A draft naming a client on the portal is a proposal: the client accepts it
+    const proposal = row.status === "draft" && row.clientOrgId !== null && await isOnPortal(db, row.clientOrgId);
+    const canAnswer = role === "client" && proposal && isOrgAuthorized(orgRole, "contract", ["update"]);
 
     return {
         ...view,
@@ -259,7 +265,9 @@ async function detailOf(db: Db, id: string, tenantId: string, orgRole: OrgRole):
         permissions: {
             canEdit: canManage && open,
             canAllocate: canManage && open,
-            canActivate: canManage && row.status === "draft",
+            canActivate: canManage && row.status === "draft" && !proposal,
+            canAccept: canAnswer,
+            canDecline: canAnswer,
             canClose: canManage && open,
             canFileTrip: role !== "client" && acceptsTrips(view.state) && visible.length > 0
                 && isOrgAuthorized(orgRole, "trip", ["create"]),
@@ -300,7 +308,7 @@ export const contractsRouter = createTRPCRouter({
         .query(async ({ ctx, input }): Promise<ContractStats> => {
             const tenantId = ctx.tenant.organizationId;
             const { rows, byContract, usage, names } = await visibleSet(ctx.db, tenantId, input.tab);
-            const byState: ContractStats["byState"] = { draft: 0, active: 0, exhausted: 0, expired: 0, closed: 0 };
+            const byState: ContractStats["byState"] = { draft: 0, proposed: 0, active: 0, exhausted: 0, expired: 0, closed: 0 };
 
             for (const row of rows) {
                 const all = byContract.get(row.id) ?? [];

@@ -125,6 +125,25 @@ export function ContractHeader({ contract }: { contract: ContractDetail }) {
                         </Button>
                     )}
 
+                    {permissions.canAccept && (
+                        <Button
+                            size="sm"
+                            disabled={transition.isPending}
+                            onClick={() => transition.mutate({ id: contract.id, to: "active", expectedVersion: contract.version })}
+                        >
+                            {t("detail.actions.accept")}
+                        </Button>
+                    )}
+                    {permissions.canDecline && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={transition.isPending}
+                            onClick={() => transition.mutate({ id: contract.id, to: "closed", expectedVersion: contract.version })}
+                        >
+                            {t("detail.actions.decline")}
+                        </Button>
+                    )}
                     {permissions.canActivate && (
                         <Button
                             size="sm"

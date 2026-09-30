@@ -43,6 +43,7 @@
     },
     "states": {
         "draft": "Rascunho",
+        "proposed": "Proposta",
         "active": "Activo",
         "exhausted": "Esgotado",
         "expired": "Expirado",
@@ -200,6 +201,8 @@
         "actions": {
             "edit": "Editar",
             "activate": "Activar",
+            "accept": "Aceitar",
+            "decline": "Recusar",
             "close": "Fechar contrato",
             "close-confirm": "Fechar este contrato? Não poderão ser registadas mais viagens sob ele.",
             "allocate": "Atribuir uma parte",
@@ -226,6 +229,7 @@
         "NOT_ALLOWED": "O seu perfil não pode fazer isso.",
         "VERSION_CONFLICT": "Alguém alterou este contrato entretanto. Recarregue e tente de novo.",
         "CONTRACT_CLOSED": "Este contrato está fechado.",
+        "CLIENT_MUST_ACCEPT": "É o cliente que aceita este contrato; fica activo quando o fizer.",
         "CONTRACT_NOT_OPEN": "Só se registam viagens sob um contrato activo.",
         "CONTRACT_SHAPE_MISMATCH": "Esta parte é transportada por outra empresa; registe-a como pedido.",
         "BASIS_IS_FIXED": "O que um contrato conta não muda depois de criado.",

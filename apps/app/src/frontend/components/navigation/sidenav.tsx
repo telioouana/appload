@@ -12,7 +12,6 @@ import {
     IconCalendarCheck,
     IconChartHistogram,
     IconChecks,
-    IconFileInvoice,
     IconFileText,
     IconGavel,
     IconHistory,
@@ -207,6 +206,10 @@ export function Sidenav({
                         : section === "disputes" ? sum(counts?.disputes.trips, counts?.disputes.orders) : undefined,
             })),
         },
+        // The standing agreements the loads are filed under: many orders at
+        // once, so they sit beside the orders. A standing price on a lane is one
+        // of these too (open-ended), which is what the quotes page used to hold
+        { Icon: IconFileText, name: t("work.contracts"), match: "/contracts", path: "/contracts" },
         { Icon: IconMap2, name: t("work.map"), match: "/map", path: "/map" },
         {
             Icon: IconMessages,
@@ -238,11 +241,6 @@ export function Sidenav({
             path: { pathname: "/partners/[kind]", params: { kind: carrier ? "clients" : "transporters" } },
             badge: counts?.partners,
         },
-        // The standing prices the company keeps with Appload; the loads they
-        // turn into live on the Orders page like any other
-        { Icon: IconFileInvoice, name: t("company.quotes"), match: "/quotes", path: "/quotes" },
-        // The standing agreements the company's loads are filed under
-        { Icon: IconFileText, name: t("company.contracts"), match: "/contracts", path: "/contracts" },
         {
             // Every company may keep a fleet: a carrier's is what it sells, a
             // shipper's moves its own goods between its own sites. One row;

@@ -291,6 +291,7 @@
                     "dashboard": "Dashboard",
                     "orders": "Orders",
                     "map": "Map",
+                    "contracts": "Contracts",
                     "chats": "Chats",
                     "notifications": "Notifications"
                 },
@@ -301,8 +302,6 @@
                     "team": "Team",
                     "partners": "Partners",
                     "my-transporters": "My transporters",
-                    "quotes": "Quotes",
-                    "contracts": "Contracts",
                     "analytics": "Analytics"
                 },
                 "new-load": "New load"

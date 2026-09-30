@@ -33,7 +33,7 @@ export const KINDS_BY_FAMILY: Record<KindFamily, NotificationKind[]> = {
     ],
     // Appload's brokerage
     orders: ["order.requested", "order.quoted", "order.booked", "order.status", "order.cancelled", "order.document"],
-    quotes: ["quote.received", "quote.accepted", "quote.declined", "quote.withdrawn"],
+    quotes: ["quote.received", "quote.accepted", "quote.declined", "quote.withdrawn", "contract.proposed", "contract.accepted", "contract.declined"],
     // What the parties of a shipment say to each other, on an order or a load
     messages: ["thread.message"],
     account: ["claim.approved", "member.joined", "subscription.changed"],
@@ -112,6 +112,7 @@ export type NotificationLink =
     | { pathname: "/orders/load/[loadId]"; params: { loadId: string } }
     | { pathname: "/partners"; query: { id: string } }
     | { pathname: "/quotes"; query: { id: string } }
+    | { pathname: "/contracts/[contractId]"; params: { contractId: string } }
     | { pathname: "/settings" };
 
 /**
@@ -143,6 +144,10 @@ export function notificationTarget(
         case "quote":
             return entityId
                 ? { link: { pathname: "/quotes", query: { id: entityId } }, path: `/quotes?id=${encodeURIComponent(entityId)}` }
+                : null;
+        case "contract":
+            return entityId
+                ? { link: { pathname: "/contracts/[contractId]", params: { contractId: entityId } }, path: `/contracts/${encodeURIComponent(entityId)}` }
                 : null;
         case "subscription":
             return { link: { pathname: "/settings" }, path: "/settings" };

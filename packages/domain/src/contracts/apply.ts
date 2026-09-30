@@ -17,7 +17,8 @@ import { isApploadOrg, type CURRENCY, type FISCAL_REGIME, type PriceModel, type 
 
 import { loadOwnContract } from "@workspace/domain/contracts/access";
 import { nextReference } from "@workspace/domain/movements/counters";
-import { isConnected } from "@workspace/domain/movements/link";
+import { isConnected, isOnPortal, organizationName } from "@workspace/domain/movements/link";
+import { notify } from "@workspace/domain/notifications";
 
 type Db = typeof Database;
 
@@ -53,7 +54,7 @@ export type AllocationInput = {
     notes?: string | null;
 };
 
-const refuse = (message: string, code: "BAD_REQUEST" | "CONFLICT" | "NOT_FOUND" = "BAD_REQUEST") =>
+const refuse = (message: string, code: "BAD_REQUEST" | "CONFLICT" | "NOT_FOUND" | "FORBIDDEN" = "BAD_REQUEST") =>
     new TRPCError({ code, message });
 
 const decimal = (value: number | null): string | null => (value === null ? null : String(Math.round(value * 1000) / 1000));
@@ -123,6 +124,20 @@ export async function createContract(db: Db, actor: ContractActor, input: Contra
         .returning();
 
     if (!row) throw refuse("UNKNOWN", "CONFLICT");
+
+    // Named a client on the portal: the draft is a proposal, and the client is
+    // told it has one to answer (it activates or declines, see transitionContract)
+    if (row.clientOrgId && await isOnPortal(db, row.clientOrgId)) {
+        await notify(db, {
+            organizationId: row.clientOrgId,
+            kind: "contract.proposed",
+            entityType: "contract",
+            entityId: row.id,
+            params: { ref: row.reference ?? "", organizationName: await organizationName(db, actor.organizationId) },
+            email: true,
+        });
+    }
+
     return row;
 }
 
@@ -159,14 +174,32 @@ const NEXT: Record<ContractStatus, ContractStatus[]> = {
     closed: [],
 };
 
+/**
+ * A contract naming a client that is on the portal is a proposal: the owner
+ * files it, the client makes it active (accepts) or closes it (declines).
+ * The owner keeps the right to close its own draft. With no portal client
+ * on it — the owner's own account, or a client typed in — the owner
+ * activates it itself.
+ */
 export async function transitionContract(
     db: Db,
     actor: ContractActor,
     input: { id: string; to: ContractStatus; expectedVersion: number },
 ): Promise<Contract> {
-    const current = await loadOwnContract(db, input.id, actor.organizationId);
+    const [current] = await db.select().from(contract).where(eq(contract.id, input.id)).limit(1);
+    if (!current) throw refuse("NOT_FOUND", "NOT_FOUND");
+
+    const owner = current.organizationId === actor.organizationId;
+    const client = current.clientOrgId === actor.organizationId;
+    if (!owner && !client) throw refuse("NOT_FOUND", "NOT_FOUND");
     if (current.version !== input.expectedVersion) throw refuse("VERSION_CONFLICT", "CONFLICT");
     if (!NEXT[current.status].includes(input.to)) throw refuse("INVALID_STATUS");
+
+    const proposal = current.status === "draft" && current.clientOrgId !== null && await isOnPortal(db, current.clientOrgId);
+    // The client answers a proposal and does nothing else to the contract
+    if (client && !(proposal && !owner)) throw refuse("NOT_ALLOWED", "FORBIDDEN");
+    // The owner cannot accept on the client's behalf
+    if (owner && proposal && input.to === "active") throw refuse("CLIENT_MUST_ACCEPT");
 
     const [row] = await db
         .update(contract)
@@ -175,6 +208,18 @@ export async function transitionContract(
         .returning();
 
     if (!row) throw refuse("VERSION_CONFLICT", "CONFLICT");
+
+    if (client) {
+        await notify(db, {
+            organizationId: row.organizationId,
+            kind: input.to === "active" ? "contract.accepted" : "contract.declined",
+            entityType: "contract",
+            entityId: row.id,
+            params: { ref: row.reference ?? "", organizationName: await organizationName(db, actor.organizationId) },
+            email: true,
+        });
+    }
+
     return row;
 }
 

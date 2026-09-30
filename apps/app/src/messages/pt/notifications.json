@@ -10,7 +10,7 @@
     "families": {
         "connections": "Parceiros",
         "orders": "Pedidos Appload",
-        "quotes": "Cotações",
+        "quotes": "Contratos e cotações",
         "loads": "As suas cargas",
         "messages": "Mensagens",
         "account": "Conta"
@@ -53,6 +53,9 @@
         "quote-accepted": "Cotação aceite",
         "quote-declined": "Cotação recusada",
         "quote-withdrawn": "Cotação retirada",
+        "contract-proposed": "Contrato proposto",
+        "contract-accepted": "Contrato aceite",
+        "contract-declined": "Contrato recusado",
         "movement-requested": "Cotação pedida",
         "movement-quoted": "Cotação recebida",
         "movement-offered": "Carga oferecida",
@@ -86,6 +89,9 @@
         "quote-accepted": "{clientName} aceitou a sua cotação e o pedido {orderId} foi criado.",
         "quote-declined": "Uma cotação sua foi recusada.",
         "quote-withdrawn": "{carrierName} retirou a cotação que lhe tinha enviado.",
+        "contract-proposed": "{organizationName} propôs-lhe o contrato {ref}. Abra-o para aceitar ou recusar.",
+        "contract-accepted": "{organizationName} aceitou o contrato {ref}; está activo.",
+        "contract-declined": "{organizationName} recusou o contrato {ref}.",
         "movement-requested": "{organizationName} pede-lhe uma cotação para a carga {ref}: {origin} → {destination}.",
         "movement-quoted": "{organizationName} cotou {total} {currency} na carga {ref}.",
         "movement-offered": "{organizationName} ofereceu-lhe a carga {ref}: {origin} → {destination}, por {total} {currency}.",

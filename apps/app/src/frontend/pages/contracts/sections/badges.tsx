@@ -35,6 +35,7 @@ export function useUnitLabel() {
  */
 const STATE_CLASS: Record<ContractState, string> = {
     draft: "text-muted-foreground",
+    proposed: "border-sky-500/40 text-sky-600 dark:text-sky-400",
     active: "border-emerald-500/40 text-emerald-600 dark:text-emerald-400",
     exhausted: "border-amber-500/40 text-amber-600 dark:text-amber-400",
     expired: "border-orange-500/40 text-orange-600 dark:text-orange-400",

@@ -353,6 +353,20 @@ then push `prod/admin` and the portal back to back.
   `committed_qty` and `share_qty` become nullable (null = no ceiling, drawn
   down while there is cargo and never used up); the two CHECKs allow null.
   Dev got it from `node packages/db/scripts/migrate.mjs`.
+- `0029_contract_quote_link` — `contract.legacy_quote_id` (unique, nullable):
+  the standing quote a contract was carried over from. **Data step after
+  it:** the quotes page is retired and each `quote` row becomes an
+  open-ended contract (its lane, its validity, its total as a per-trip
+  price; accepted → active, standing → a proposal the client accepts,
+  the rest closed). Dry-run first, then write:
+
+  ```bash
+  DATABASE_URL=<prod owner url> node packages/db/scripts/migrate-quotes-to-contracts.mjs
+  DATABASE_URL=<prod owner url> node packages/db/scripts/migrate-quotes-to-contracts.mjs --yes
+  ```
+
+  Idempotent (a quote with a contract is skipped). Dev had no quote rows
+  left after its rebuild, so it ran there as a dry run only.
 
 The shared **dev** database got all nine from the idempotent scripts
 instead — `node packages/db/scripts/create-portal-tables.mjs`,

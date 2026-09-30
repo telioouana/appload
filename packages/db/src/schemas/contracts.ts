@@ -82,6 +82,11 @@ export const contract = pgTable(
         // PriceModelSchema on the way in, so a new model is no migration
         sellPrice: jsonb("sell_price").$type<PriceModel>(),
 
+        // The standing quote this contract was carried over from, when it was
+        // one (scripts/migrate-quotes-to-contracts.mjs); the old /quotes?id=
+        // addresses redirect through it
+        legacyQuoteId: text("legacy_quote_id").unique(),
+
         // The signed paper, one file
         fileUrl: text("file_url"),
         fileName: text("file_name"),

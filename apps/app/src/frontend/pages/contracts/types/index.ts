@@ -12,7 +12,7 @@ export type FiscalRegime = (typeof FISCAL_REGIME)[number];
 export type WeightUnit = (typeof WEIGHT_UNIT)[number];
 export type OrgType = "shipper" | "carrier";
 
-export const CONTRACT_STATES = ["draft", "active", "exhausted", "expired", "closed"] as const satisfies readonly ContractState[];
+export const CONTRACT_STATES = ["draft", "proposed", "active", "exhausted", "expired", "closed"] as const satisfies readonly ContractState[];
 
 /** The two tabs: the contracts in the company's books, and the ones naming it. */
 export const CONTRACT_TABS = ["own", "partners"] as const;
@@ -96,7 +96,11 @@ export type ContractTripRow = {
 export type ContractPermissions = {
     canEdit: boolean;
     canAllocate: boolean;
+    /** The owner makes it active — unless a client on the portal has to accept it first */
     canActivate: boolean;
+    /** The client answers a proposal */
+    canAccept: boolean;
+    canDecline: boolean;
     canClose: boolean;
     /** The reader may file a trip under at least one share */
     canFileTrip: boolean;

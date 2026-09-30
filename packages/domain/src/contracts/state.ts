@@ -5,9 +5,11 @@ import type { ContractProgress } from "@workspace/domain/contracts/progress";
 
 /**
  * What a contract is, as the page says it: the three states somebody put it
- * in, and the two the trips and the calendar put it in. Read, never stored.
+ * in, the two the trips and the calendar put it in, and "proposed" — a
+ * draft as the client it names reads it, waiting on its answer. Read, never
+ * stored.
  */
-export const CONTRACT_STATE = ["draft", "active", "exhausted", "expired", "closed"] as const;
+export const CONTRACT_STATE = ["draft", "proposed", "active", "exhausted", "expired", "closed"] as const;
 export type ContractState = (typeof CONTRACT_STATE)[number];
 
 export function derivedState(

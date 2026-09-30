@@ -43,6 +43,7 @@
     },
     "states": {
         "draft": "Draft",
+        "proposed": "Proposal",
         "active": "Active",
         "exhausted": "Used up",
         "expired": "Expired",
@@ -200,6 +201,8 @@
         "actions": {
             "edit": "Edit",
             "activate": "Activate",
+            "accept": "Accept",
+            "decline": "Decline",
             "close": "Close contract",
             "close-confirm": "Close this contract? No more trips can be filed under it.",
             "allocate": "Allocate a share",
@@ -226,6 +229,7 @@
         "NOT_ALLOWED": "Your role cannot do that.",
         "VERSION_CONFLICT": "Somebody changed this contract meanwhile. Reload and try again.",
         "CONTRACT_CLOSED": "This contract is closed.",
+        "CLIENT_MUST_ACCEPT": "The client accepts this contract; it becomes active when they do.",
         "CONTRACT_NOT_OPEN": "Trips can only be filed under an active contract.",
         "CONTRACT_SHAPE_MISMATCH": "This share is moved by somebody else; file it as an order.",
         "BASIS_IS_FIXED": "What a contract counts cannot change once it exists.",
