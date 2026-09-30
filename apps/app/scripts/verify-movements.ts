@@ -73,7 +73,7 @@ import { countForKind, kindsFor, relationForKind } from "@/frontend/pages/partne
 import { searchRouter } from "@/frontend/pages/search/server/procedures";
 import { meRouter } from "@/frontend/pages/settings/server/procedures";
 
-process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
+process.env.DATABASE_URL ??= fs.readFileSync(".env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
 
 const SESSION_ID = "verify-movements";
 const createCaller = createCallerFactory(movementsRouter);

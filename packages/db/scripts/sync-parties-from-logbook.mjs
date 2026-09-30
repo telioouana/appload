@@ -65,7 +65,7 @@ const SHEET_TARGET = argValue("sheet", DB_TARGET);
 const OUT_DIR = argValue("out", path.join(os.tmpdir(), "appload-logbook-sync"));
 
 const ENV_FILES = {
-    dev: path.resolve(__dirname, "../../../apps/admin/.env"),
+    dev: path.resolve(__dirname, "../../../packages/db/.env"),
     prod: path.resolve(__dirname, "../../../apps/admin/.env.production"),
 };
 for (const target of [DB_TARGET, SHEET_TARGET]) {

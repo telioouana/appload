@@ -183,6 +183,13 @@
       "when": 1790766875847,
       "tag": "0025_plate_fks_cascade",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790773659689,
+      "tag": "0026_trust_wall",
+      "breakpoints": true
     }
   ]
 }

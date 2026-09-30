@@ -7,6 +7,7 @@ export * from "@workspace/db/kyc-documents";
 export * from "@workspace/db/notifications";
 export * from "@workspace/db/orders";
 export * from "@workspace/db/quotes";
+export * from "@workspace/db/rls";
 export * from "@workspace/db/subscriptions";
 export * from "@workspace/db/threads";
 export * from "@workspace/db/tracking";
