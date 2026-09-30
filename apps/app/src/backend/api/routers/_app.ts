@@ -4,6 +4,8 @@ import { registerActivityCatalog } from "@workspace/trpc/activity-log"
 import { activityCatalog } from "../activity-catalog"
 import { analyticsCatalog } from "@/frontend/pages/analytics/server/activity"
 import { analyticsRouter } from "@/frontend/pages/analytics/server/procedures"
+import { contractsCatalog } from "@/frontend/pages/contracts/server/activity"
+import { contractsRouter } from "@/frontend/pages/contracts/server/procedures"
 import { driversCatalog } from "@/frontend/pages/drivers/server/activity"
 import { driversRouter } from "@/frontend/pages/drivers/server/procedures"
 import { fleetCatalog } from "@/frontend/pages/fleet/server/activity"
@@ -34,6 +36,7 @@ import { meRouter } from "@/frontend/pages/settings/server/procedures"
 registerActivityCatalog({
     ...activityCatalog,
     ...analyticsCatalog,
+    ...contractsCatalog,
     ...driversCatalog,
     ...fleetCatalog,
     ...mapCatalog,
@@ -47,6 +50,7 @@ registerActivityCatalog({
 
 export const appRouter = createTRPCRouter({
     analytics: analyticsRouter,
+    contracts: contractsRouter,
     drivers: driversRouter,
     fleet: fleetRouter,
     kyc: kycRouter,

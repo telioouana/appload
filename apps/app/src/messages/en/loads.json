@@ -64,7 +64,9 @@
         "NO_TRUCK": "No truck",
         "NO_CARRIER": "No transporter",
         "NO_PRICE": "No agreed price",
-        "PHOTOS_UNAPPROVED": "Loading photos not yet approved"
+        "PHOTOS_UNAPPROVED": "Loading photos not yet approved",
+        "CONTRACT_OVER_COMMITTED": "Beyond the contract's committed quantity",
+        "CONTRACT_LANE_MISMATCH": "Not on the contract's lane"
     },
     "header": {
         "flags": "{count, plural, one {# flag} other {# flags}}"
@@ -510,6 +512,15 @@
     },
     "detail": {
         "meta": "Load",
+        "contract": {
+            "title": "Contract",
+            "contract": "Contract",
+            "with": "With",
+            "own-fleet": "Own fleet",
+            "state": "State",
+            "remaining": "Left on the share",
+            "used-up": "Used up"
+        },
         "error": "This load could not be opened. It may have been removed, or not be shared with you.",
         "back": "Back to the list",
         "footer": "Filed {created} · updated {updated}",
@@ -557,6 +568,14 @@
             "own-fleet-hint": "A trip on your own trucks",
             "partner": "A partner",
             "partner-hint": "An order another transporter moves"
+        },
+        "contract": {
+            "label": "Contract",
+            "hint": "File this load under a contract share: its parties, lane and price fill in as defaults you can change.",
+            "none": "No contract",
+            "own-fleet": "Own fleet",
+            "option": "{ref} · {counterparty} · {remaining, number} {unit, select, trip {trips} ton {t} day {days} other {}} left",
+            "prefilled": "Filled in from {ref}. Everything can still be changed."
         },
         "sections": {
             "lane": "Lane",

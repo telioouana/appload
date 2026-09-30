@@ -178,6 +178,8 @@ const carrier = {
 export const CreateMovementBaseSchema = z.object({
     execution: z.enum(MOVEMENT_EXECUTION),
     status: z.enum(CREATE_STATUS).default("procurement"),
+    /** The contract share this load draws down; the server fills what the input leaves empty from it */
+    contractAllocationId: z.string().nonempty().nullable().optional(),
     ...details,
     ...client,
     ...carrier,
@@ -436,6 +438,8 @@ export function LoadFormSchema(msg: Message) {
             buyInvoiceNumber: text(REFERENCE_MAX),
             notes: text(NOTES_MAX),
             requestQuotes: z.boolean(),
+            /** The contract share the load is filed under, or the NONE sentinel */
+            contractAllocationId: z.string(),
         })
         // A typed client or partner needs its name
         .refine((data) => data.clientOrgId !== TYPED || data.clientName.trim().length > 0, {

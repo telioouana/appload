@@ -3,6 +3,8 @@ import basePt from "./pt.json";
 
 import analyticsEn from "./en/analytics.json";
 import analyticsPt from "./pt/analytics.json";
+import contractsEn from "./en/contracts.json";
+import contractsPt from "./pt/contracts.json";
 import driversEn from "./en/drivers.json";
 import driversPt from "./pt/drivers.json";
 import fleetEn from "./en/fleet.json";
@@ -36,6 +38,7 @@ export const en = {
     App: {
         ...baseEn.App,
         analytics: analyticsEn,
+        contracts: contractsEn,
         drivers: driversEn,
         fleet: fleetEn,
         loads: loadsEn,
@@ -54,6 +57,7 @@ export const pt = {
     App: {
         ...basePt.App,
         analytics: analyticsPt,
+        contracts: contractsPt,
         drivers: driversPt,
         fleet: fleetPt,
         loads: loadsPt,

@@ -1,0 +1,246 @@
+{
+    "metadata": "Contratos",
+    "title": "Contratos",
+    "description": {
+        "shipper": "Os acordos em vigor sob os quais as suas cargas são registadas: o que se comprometeu, quem transporta e quanto já foi consumido.",
+        "carrier": "Os seus acordos com clientes e as partes dos contratos deles atribuídas a si, e quanto já foi consumido de cada um."
+    },
+    "search": {
+        "placeholder": "Pesquisar por referência, cliente ou empresa",
+        "clear": "Limpar a pesquisa"
+    },
+    "add": {
+        "trigger": "Novo contrato"
+    },
+    "tabs": {
+        "own": "Meus",
+        "partners": "De parceiros"
+    },
+    "columns": {
+        "reference": "Contrato",
+        "counterparty": "Com",
+        "lane": "Rota",
+        "period": "Período",
+        "commitment": "Compromisso",
+        "progress": "Consumido",
+        "state": "Estado"
+    },
+    "sort": {
+        "newest": "Mais recentes primeiro",
+        "period": "Data de início",
+        "reference": "Referência"
+    },
+    "filters": {
+        "all": "Todos"
+    },
+    "tiles": {
+        "active": "Activos",
+        "active-hint": "A receber viagens agora",
+        "attention": "Precisam de atenção",
+        "attention-hint": "Esgotados, ou com o prazo terminado",
+        "draft": "Rascunhos",
+        "draft-hint": "Ainda não activados; não recebem viagens"
+    },
+    "states": {
+        "draft": "Rascunho",
+        "active": "Activo",
+        "exhausted": "Esgotado",
+        "expired": "Expirado",
+        "closed": "Fechado"
+    },
+    "basis": {
+        "trips": "Por viagem",
+        "weight": "Por peso",
+        "days": "Aluguer (dias)"
+    },
+    "basis-hint": {
+        "trips": "Um número de cargas",
+        "weight": "Uma tonelagem, consumida pelo peso de cada carga",
+        "days": "Um camião por um período, cobrado ao dia"
+    },
+    "unit": {
+        "trip": "{count, plural, one {# viagem} other {# viagens}}",
+        "ton": "{count, number} t",
+        "day": "{count, plural, one {# dia} other {# dias}}"
+    },
+    "price-models": {
+        "per-trip": "Por viagem",
+        "per-ton": "Por tonelada",
+        "per-day": "Por dia",
+        "lump-sum": "Valor global",
+        "rate": "Tarifa",
+        "min-billable-tons": "Mínimo facturável (t)",
+        "billable-days": "Dias facturáveis",
+        "calendar": "Dias de calendário",
+        "working": "Dias úteis (seg–sáb)",
+        "total": "Total",
+        "none": "Sem preço",
+        "model": "Modelo de preço"
+    },
+    "role": {
+        "owner": "Seu",
+        "client": "É o cliente",
+        "carrier": "Atribuído a si"
+    },
+    "values": {
+        "any-lane": "Qualquer rota",
+        "own-fleet": "Frota própria",
+        "own-account": "Conta própria",
+        "no-client": "Sem cliente",
+        "typed": "Fora do portal",
+        "remaining": "{qty} por consumir",
+        "of": "de {total}",
+        "trips-filed": "{count, plural, =0 {Ainda sem viagens} one {# viagem} other {# viagens}}"
+    },
+    "data": {
+        "empty": "Ainda não há contratos",
+        "empty-description": {
+            "shipper": "Registe os acordos que tem com os seus transportadores, divida-os pelas empresas que transportam para si, e cada carga registada sob um deles consome-o.",
+            "carrier": "Registe aqui os seus acordos com clientes. As partes dos contratos dos seus clientes atribuídas a si aparecem em De parceiros."
+        },
+        "no-results": "Nenhum contrato corresponde a estes filtros",
+        "error": "Não foi possível carregar os contratos"
+    },
+    "form": {
+        "new-title": "Novo contrato",
+        "edit-title": "Editar {ref}",
+        "description": "Os termos sob os quais as cargas serão registadas. Tudo aqui é um valor por defeito que cada carga pode alterar.",
+        "sections": {
+            "basis": "O que está comprometido",
+            "client": "Cliente",
+            "lane": "Rota",
+            "period": "Período",
+            "price": "Preço",
+            "notes": "Notas"
+        },
+        "fields": {
+            "committed-qty": "Quantidade comprometida",
+            "weight-unit": "Unidade",
+            "starts-on": "De",
+            "ends-on": "Até",
+            "client": "Cliente",
+            "client-name": "Nome do cliente",
+            "client-reference": "Referência do cliente",
+            "origin": "Carregamento",
+            "destination": "Descarga",
+            "any-lane": "Qualquer rota — sem locais fixos",
+            "currency": "Moeda",
+            "fiscal-regime": "Regime fiscal",
+            "sell-price": "O que o cliente paga",
+            "notes": "Notas"
+        },
+        "picker": {
+            "none": "Ninguém",
+            "typed": "Escrever um nome"
+        },
+        "units": {
+            "trip": "viagens",
+            "ton": "t",
+            "day": "dias"
+        },
+        "errors": {
+            "date": "Escolha uma data."
+        },
+        "submit": "Guardar contrato",
+        "cancel": "Cancelar",
+        "saving": "A guardar…"
+    },
+    "allocation-form": {
+        "new-title": "Atribuir uma parte",
+        "edit-title": "Editar parte",
+        "description": "Quem transporta esta parte do contrato, quanto dela, e a que preço.",
+        "fields": {
+            "carrier": "Transportador",
+            "carrier-name": "Nome do transportador",
+            "own-fleet": "Frota própria",
+            "share-qty": "Parte",
+            "buy-price": "O que paga",
+            "truck": "Camião",
+            "driver": "Motorista",
+            "truck-plate": "Matrícula",
+            "notes": "Notas"
+        },
+        "submit": "Guardar parte",
+        "remove": "Remover parte",
+        "remove-confirm": "Remover esta parte? Só uma parte sem viagens registadas pode ser removida.",
+        "errors": {
+            "name": "Escreva o nome do transportador"
+        }
+    },
+    "detail": {
+        "meta": "Contrato",
+        "error": "Não foi possível carregar este contrato",
+        "terms": "Termos",
+        "allocations": "Partes",
+        "trips": "Viagens",
+        "file": "Contrato assinado",
+        "notes": "Notas",
+        "fields": {
+            "basis": "Base",
+            "commitment": "Comprometido",
+            "drawn-down": "Consumido",
+            "delivered": "Entregue",
+            "remaining": "Por consumir",
+            "period": "Período",
+            "lane": "Rota",
+            "client": "Cliente",
+            "owner": "Titular",
+            "client-reference": "Referência do cliente",
+            "currency": "Moeda",
+            "fiscal-regime": "Regime fiscal",
+            "sell-price": "O que o cliente paga",
+            "buy-price": "O que paga",
+            "earn-price": "O que recebe",
+            "truck": "Camião",
+            "driver": "Motorista"
+        },
+        "actions": {
+            "edit": "Editar",
+            "activate": "Activar",
+            "close": "Fechar contrato",
+            "close-confirm": "Fechar este contrato? Não poderão ser registadas mais viagens sob ele.",
+            "allocate": "Atribuir uma parte",
+            "file-trip": "Registar viagem",
+            "upload": "Carregar o contrato assinado",
+            "replace": "Substituir",
+            "remove-file": "Remover"
+        },
+        "over-allocated": "As partes somam mais do que o contrato compromete.",
+        "trip-columns": {
+            "reference": "Carga",
+            "status": "Estado",
+            "loading": "Carregamento",
+            "weight": "Peso",
+            "total": "Valor"
+        },
+        "no-trips": "Ainda não há viagens registadas sob este contrato.",
+        "open-all": "Ver todas",
+        "no-file": "Ainda não foi carregada a cópia assinada.",
+        "footer": "Criado {created} · actualizado {updated}"
+    },
+    "errors": {
+        "NOT_FOUND": "Este contrato não existe, ou a sua empresa não faz parte dele.",
+        "NOT_ALLOWED": "O seu perfil não pode fazer isso.",
+        "VERSION_CONFLICT": "Alguém alterou este contrato entretanto. Recarregue e tente de novo.",
+        "CONTRACT_CLOSED": "Este contrato está fechado.",
+        "CONTRACT_NOT_OPEN": "Só se registam viagens sob um contrato activo.",
+        "CONTRACT_SHAPE_MISMATCH": "Esta parte é transportada por outra empresa; registe-a como pedido.",
+        "BASIS_IS_FIXED": "O que um contrato conta não muda depois de criado.",
+        "PERIOD_INVERTED": "A data de fim é anterior à de início.",
+        "QUANTITY_REQUIRED": "A quantidade tem de ser maior que zero.",
+        "PRICE_MODEL_BASIS_MISMATCH": "Esse modelo de preço não consegue calcular o que este contrato conta.",
+        "CLIENT_IS_SELF": "Uma empresa não pode ser cliente de si própria.",
+        "CARRIER_IS_SELF": "Uma parte para a sua frota regista-se como frota própria, não como transportador.",
+        "APPLOAD_NOT_A_CLIENT": "A Appload transporta cargas; não as encomenda.",
+        "NOT_CONNECTED": "Essa empresa não está ligada à sua.",
+        "OWN_FLEET_HAS_NO_BUY_PRICE": "A sua frota não tem preço de compra; o preço do contrato é o que o cliente paga.",
+        "RIG_NOT_ON_ALLOCATION": "Só se fixa um camião ou motorista a uma empresa que está no portal.",
+        "TRUCK_NOT_REGISTERED": "Esse camião não está registado nessa empresa.",
+        "DRIVER_NOT_REGISTERED": "Esse motorista não está registado nessa empresa.",
+        "ALLOCATION_EXISTS": "Essa empresa já tem uma parte deste contrato.",
+        "ALLOCATION_HAS_TRIPS": "Há viagens registadas sob esta parte; não pode ser removida nem reatribuída.",
+        "ALLOCATION_NOT_VISIBLE": "Essa parte não é uma sob a qual a sua empresa possa registar.",
+        "INVALID_STATUS": "Essa mudança não é possível a partir do estado actual do contrato.",
+        "UNKNOWN": "Algo correu mal. Tente de novo."
+    }
+}

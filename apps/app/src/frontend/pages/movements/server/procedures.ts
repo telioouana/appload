@@ -31,6 +31,7 @@ import {
     trackingTemplateText,
 } from "@workspace/comms/infobip";
 import { offerToAppload } from "@workspace/domain/appload/link";
+import { tripDefaultsFor } from "@workspace/domain/contracts/prefill";
 import { announce, recordEvent, statusStamps, transitionMovement, type MovementActor } from "@workspace/domain/movements/apply";
 import { nextReference } from "@workspace/domain/movements/counters";
 import { activeDisputeFor, openDispute, resolveDispute } from "@workspace/domain/movements/disputes";
@@ -72,6 +73,8 @@ import type { OrderRouteDto, TrailPoint } from "@workspace/maps/types";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { tenantProcedure } from "@workspace/trpc/tenant";
+
+import { contractSummaryFor, openShares } from "@/frontend/pages/contracts/server/projection";
 
 import { withinRateLimit } from "@/lib/rate-limit";
 import {
@@ -357,6 +360,8 @@ const ListInput = z.object({
     hasCosts: z.literal(true).optional(),
     /** A partner company on the load; only the owner's own rows match */
     partner: z.string().max(64).optional(),
+    /** The trips filed under one contract, whichever of its shares */
+    contractId: z.string().max(64).optional(),
     /** The loading period: a month of the current year, or an explicit range that wins over it */
     month: z.number().int().min(1).max(12).optional(),
     from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -368,6 +373,10 @@ const ListInput = z.object({
 });
 
 type ListInput = z.infer<typeof ListInput>;
+
+/** Filed under any share of one contract. */
+const underContract = (contractId: string): SQL =>
+    sql`exists (select 1 from contract_allocation a where a.id = ${movement.contractAllocationId} and a.contract_id = ${contractId})`;
 
 /** The reference, the driver, the plate and the cargo are what a load is looked up by. */
 function searchWhere(term: string, tenantId: string): SQL | undefined {
@@ -664,6 +673,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
 
     return toMovementDetail(row, role, {
         tenantId,
+        contract: row.contractAllocationId ? await contractSummaryFor(db, row.contractAllocationId, tenantId) : null,
         terminalRig: rigs.get(trailId) ?? null,
         terminalProofs,
         carrierEmail,
@@ -771,6 +781,7 @@ export const movementsRouter = createTRPCRouter({
                 input.offRoute ? offRouteRecently(tenantId) : undefined,
                 input.hasCosts ? hasCosts(tenantId) : undefined,
                 input.partner ? withPartner(input.partner, tenantId) : undefined,
+                input.contractId ? underContract(input.contractId) : undefined,
                 loadingPeriod(input),
             );
 
@@ -979,6 +990,7 @@ export const movementsRouter = createTRPCRouter({
             ],
             drivers: drivers.map((row) => ({ id: row.id, name: row.name, phone: row.phone ?? null })),
             trucks: trucks.map((row) => ({ id: row.id, plate: row.plate })),
+            allocations: await openShares(ctx.db, tenantId),
         };
     }),
 
@@ -1007,13 +1019,44 @@ export const movementsRouter = createTRPCRouter({
      */
     create: tenantProcedure
         .input(CreateMovementBaseSchema)
-        .mutation(async ({ ctx, input }): Promise<{ id: string; ref: string; asked: number }> => {
+        .mutation(async ({ ctx, input: raw }): Promise<{ id: string; ref: string; asked: number }> => {
             const tenantId = ctx.tenant.organizationId;
+
+            // Filed under a contract share: the share's parties, rig, lane and
+            // prices are the defaults, and what was typed wins over every one
+            // of them — a contract price is never a ceiling. The shape is the
+            // share's: a partner's share is an order, own fleet a trip
+            const share = raw.contractAllocationId
+                ? await tripDefaultsFor(ctx.db, tenantId, raw.contractAllocationId, { weight: raw.weight ?? null, weightUnit: raw.weightUnit ?? null })
+                : null;
+
+            if (share && share.execution !== raw.execution) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "CONTRACT_SHAPE_MISMATCH" });
+            }
+
+            const input = share
+                ? {
+                    ...raw,
+                    clientOrgId: raw.clientOrgId ?? share.clientOrgId ?? undefined,
+                    clientName: raw.clientName ?? share.clientName ?? undefined,
+                    clientReference: raw.clientReference ?? share.clientReference ?? undefined,
+                    carrierOrgId: raw.carrierOrgId ?? share.carrierOrgId ?? undefined,
+                    carrierName: raw.carrierName ?? share.carrierName ?? undefined,
+                    truckId: raw.truckId ?? share.truckId ?? undefined,
+                    driverId: raw.driverId ?? share.driverId ?? undefined,
+                    truckPlate: raw.truckPlate ?? share.truckPlate ?? undefined,
+                    sell: raw.sell ?? share.sell ?? undefined,
+                    buy: raw.buy ?? share.buy ?? undefined,
+                }
+                : raw;
+
             const partner = input.execution === "partner";
 
             assertCan(ctx.tenant.role, partner ? "order" : "trip", "create");
 
-            if (!partner && ctx.tenant.orgType === "carrier") {
+            // A transporter's own trucks are put on its clients' orders — and a
+            // client's contract naming it is that order, standing
+            if (!partner && ctx.tenant.orgType === "carrier" && !share) {
                 throw new TRPCError({ code: "FORBIDDEN", message: "OWN_TRIPS_COME_FROM_CLIENTS" });
             }
 
@@ -1090,6 +1133,7 @@ export const movementsRouter = createTRPCRouter({
                 ...legColumns("sell", input.sell ?? null),
                 ...(partner ? legColumns("buy", input.buy ?? null) : {}),
                 notes: input.notes || null,
+                contractAllocationId: share?.allocationId ?? null,
                 createdBy: ctx.tenant.userId,
             };
 
@@ -1117,6 +1161,13 @@ export const movementsRouter = createTRPCRouter({
                 },
                 input.status,
             );
+
+            // A contract is drawn down, never enforced: past its quantity or off
+            // its lane the trip is filed and says so on its trail
+            if (share && share.remaining <= 0) flags.push("CONTRACT_OVER_COMMITTED");
+            if (share && ((share.origin && share.origin.placeId !== input.origin.placeId) || (share.destination && share.destination.placeId !== input.destination.placeId))) {
+                flags.push("CONTRACT_LANE_MISMATCH");
+            }
 
             const starts = entersInProgress(null, input.status);
 

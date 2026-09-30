@@ -176,7 +176,9 @@ order:    + contract_allocation_id text FK contract_allocation on delete set nul
 
 `REFERENCE_KIND` gains `"CON"` (`packages/db/src/types/index.ts:134`); `nextReference` in `packages/domain/src/movements/reference.ts` (or wherever it lives) is reused as is.
 
-**RLS for the new tables** (same migration): staff policy on `contract` = `organization_id = 'appload' or client_org_id = 'appload' or (select private.appload_on_contract(id))`; on `contract_allocation` = `carrier_org_id = 'appload' or exists (select 1 from contract c where c.id = contract_id)`. The one security-definer helper (hand-written SQL appended to 0027, schema `private`, `set search_path = ''`, `revoke execute from public`) exists only to break the contract↔allocation policy recursion: `appload_on_contract(cid) := exists (select 1 from public.contract_allocation a where a.contract_id = cid and a.carrier_org_id = 'appload')`. Grant clause added in T2.
+**RLS for the new tables** (same migration, AS BUILT): staff policy on `contract` = `organization_id = 'appload' or client_org_id = 'appload'`; on `contract_allocation` = `carrier_org_id = 'appload' or exists (select 1 from contract c where c.id = contract_id)`. No security-definer helper: the contract policy never looks at allocations, so there is no recursion and plain Drizzle policies suffice. Consequence: staff do not see a tenant's contract merely because one share names Appload; they see that share, and the Appload orders under it. Grant clause added in T2.
+
+**Built with two deviations from the sketch above:** a typed off-portal carrier is a share like a portal one (it carries a buy price; the own-fleet share is the one with neither carrier nor name), and a carrier tenant may file an own-fleet trip by hand when it is under a client's share naming it (the contract is the standing order; `OWN_TRIPS_COME_FROM_CLIENTS` is waived only then).
 
 **Price model** — zod union in `packages/db/src/types/index.ts` beside `AddressSchema`, `PriceModel = z.infer<>`:
 

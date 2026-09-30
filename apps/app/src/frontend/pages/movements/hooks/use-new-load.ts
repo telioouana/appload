@@ -16,7 +16,9 @@ type NewLoadState = {
     armed: boolean
     /** Which shape the sheet opens on; kept while it slides shut, so its title does not flip mid-close */
     execution: MovementExecution
-    open: (execution: MovementExecution) => void
+    /** The contract share the sheet opens prefilled from, when a contract page asked for the load */
+    contractAllocationId: string | null
+    open: (execution: MovementExecution, options?: { contractAllocationId?: string }) => void
     close: () => void
 }
 
@@ -30,6 +32,7 @@ export const useNewLoad = create<NewLoadState>((set) => ({
     isOpen: false,
     armed: false,
     execution: "partner",
-    open: (execution) => set({ isOpen: true, armed: true, execution }),
+    contractAllocationId: null,
+    open: (execution, options) => set({ isOpen: true, armed: true, execution, contractAllocationId: options?.contractAllocationId ?? null }),
     close: () => set({ isOpen: false }),
 }))

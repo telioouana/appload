@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useForm, useWatch, type Control } from "react-hook-form"
 import { useQuery } from "@tanstack/react-query"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -56,7 +56,7 @@ import type {
 } from "@/frontend/pages/movements/types"
 
 export type LoadSheetMode =
-    | { kind: "create"; execution: MovementExecution }
+    | { kind: "create"; execution: MovementExecution; contractAllocationId?: string | null }
     | { kind: "edit"; load: MovementDetail }
 
 // The calendar opens at the start of last year: loads are often filed after
@@ -114,6 +114,7 @@ function defaultsFor(mode: LoadSheetMode): LoadForm {
             buyInvoiceNumber: "",
             notes: "",
             requestQuotes: true,
+            contractAllocationId: mode.contractAllocationId ?? NONE,
         }
     }
 
@@ -158,6 +159,8 @@ function defaultsFor(mode: LoadSheetMode): LoadForm {
         notes: load.notes ?? "",
         // Asking is done from the load's page once it exists
         requestQuotes: false,
+        // The share a load was filed under is set at filing, not edited
+        contractAllocationId: NONE,
     }
 }
 
@@ -224,6 +227,9 @@ export function LoadSheet({
 
     const [error, setError] = useState<MovementErrorMessage | null>(null)
     const [planReason, setPlanReason] = useState<PlanReason | null>(null)
+    // The contract defaults last written into the form, so a price typed over
+    // one is told apart from one that should follow the weight
+    const applied = useRef<{ id: string; sellTotal: string; buyTotal: string } | null>(null)
 
     const { data: options } = useQuery({ ...trpc.movements.formOptions.queryOptions(), enabled: open })
 
@@ -242,7 +248,10 @@ export function LoadSheet({
     // A reopened sheet starts from the load as it is now, not where it was left
     const modeKey = mode.kind === "create" ? `create:${mode.execution}` : `edit:${mode.load.id}:${mode.load.version}`
     useEffect(() => {
-        if (open) reset(defaultsFor(mode))
+        if (open) {
+            applied.current = null
+            reset(defaultsFor(mode))
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, modeKey, reset])
 
@@ -267,6 +276,60 @@ export function LoadSheet({
     const locked = (group: EditableGroup) => editable !== null && !editable.includes(group)
 
     const partners = options?.partners ?? []
+
+    // Filed under a contract share: the share's parties, rig, lane and prices
+    // land in the form as defaults the moment it is picked, and the trip's
+    // price follows the weight typed. What was typed by hand stays typed —
+    // a contract price is never a ceiling (contracts/prefill.ts)
+    const [contractAllocationId, weight] = useWatch({ control, name: ["contractAllocationId", "weight"] })
+    const shares = options?.allocations ?? []
+    const shareLocked = !editing && contractAllocationId !== NONE
+    const weightNumber = weight.trim() === "" ? undefined : Number(weight)
+    const { data: share } = useQuery({
+        ...trpc.contracts.tripDefaults.queryOptions({
+            allocationId: contractAllocationId,
+            weight: weightNumber !== undefined && Number.isFinite(weightNumber) ? weightNumber : undefined,
+            weightUnit,
+        }),
+        enabled: open && shareLocked,
+    })
+
+    useEffect(() => {
+        if (!share) return
+        const previous = applied.current
+        const fresh = previous?.id !== share.allocationId
+        const price = (leg: { total: number } | null) => leg ? String(leg.total) : ""
+        const sellTotal = price(share.sell)
+        const buyTotal = price(share.buy)
+
+        if (fresh) {
+            setValue("execution", share.execution)
+            setValue("clientOrgId", share.clientOrgId ?? (share.clientName ? TYPED : NONE))
+            setValue("clientName", share.clientOrgId ? "" : share.clientName ?? "")
+            setValue("clientReference", share.clientReference ?? "")
+            setValue("carrierOrgId", share.carrierOrgId ?? (share.carrierName ? TYPED : NONE))
+            setValue("carrierName", share.carrierOrgId ? "" : share.carrierName ?? "")
+            setValue("driverId", share.driverId ?? NONE)
+            setValue("truckId", share.truckId ?? (share.truckPlate ? TYPED : NONE))
+            setValue("truckPlate", share.truckId ? "" : share.truckPlate ?? "")
+            if (share.origin && !getValues("origin").placeId) setValue("origin", share.origin)
+            if (share.destination && !getValues("destination").placeId) setValue("destination", share.destination)
+            if (share.sell) {
+                setValue("sellCurrency", share.sell.currency)
+                setValue("sellFiscalRegime", share.sell.fiscalRegime)
+            }
+            if (share.buy) {
+                setValue("buyCurrency", share.buy.currency)
+                setValue("buyFiscalRegime", share.buy.fiscalRegime)
+            }
+            // The price is the contract's; nobody is asked to quote it
+            setValue("requestQuotes", false)
+        }
+
+        if (fresh || getValues("sellTotal") === previous.sellTotal) setValue("sellTotal", sellTotal)
+        if (fresh || getValues("buyTotal") === previous.buyTotal) setValue("buyTotal", buyTotal)
+        applied.current = { id: share.allocationId, sellTotal, buyTotal }
+    }, [share, setValue, getValues])
     // Appload is pinned in front of the connections by the server, and is a
     // transporter as far as this picker is concerned: anything that is not a
     // client can be handed the load
@@ -349,6 +412,7 @@ export function LoadSheet({
             ...(sell && { sell }),
             ...(buy && { buy }),
             notes: values.notes.trim() || undefined,
+            ...(values.contractAllocationId !== NONE && { contractAllocationId: values.contractAllocationId }),
         }
 
         create.mutate(input, {
@@ -477,7 +541,7 @@ export function LoadSheet({
                                                     type="button"
                                                     role="radio"
                                                     aria-checked={active}
-                                                    disabled={isPending}
+                                                    disabled={isPending || shareLocked}
                                                     onClick={() => setValue("execution", value, { shouldDirty: true })}
                                                     className={cn(
                                                         "flex cursor-pointer items-start gap-2.5 rounded-2xl border px-3.5 py-3 text-left text-sm transition-colors disabled:cursor-default disabled:opacity-50",
@@ -493,6 +557,29 @@ export function LoadSheet({
                                             )
                                         })}
                                     </div>
+                                )}
+
+                                {/* A load under a contract: the share picked fills the rest in */}
+                                {!editing && shares.length > 0 && (
+                                    <SelectInput
+                                        name="contractAllocationId"
+                                        control={control}
+                                        isPending={isPending}
+                                        label={t("contract.label")}
+                                        description={share ? t("contract.prefilled", { ref: share.contractReference ?? "—" }) : t("contract.hint")}
+                                    >
+                                        <SelectItem value={NONE}>{t("contract.none")}</SelectItem>
+                                        {shares.map((row) => (
+                                            <SelectItem key={row.id} value={row.id}>
+                                                {t("contract.option", {
+                                                    ref: row.contractReference,
+                                                    counterparty: row.counterparty ?? t("contract.own-fleet"),
+                                                    remaining: row.remaining,
+                                                    unit: row.unit,
+                                                })}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectInput>
                                 )}
 
                                 <FieldSet>

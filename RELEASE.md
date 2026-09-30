@@ -340,6 +340,15 @@ then push `prod/admin` and the portal back to back.
   portal runs on. **The roles must exist first**: §1 step 3 below. Dev got
   it from `node packages/db/scripts/migrate.mjs` (run from packages/db)
   once the roles existed.
+- `0027_contracts` — the contracts module: `contract` (a company's standing
+  agreement: basis, period, committed quantity, currency, the client half and
+  its price model as jsonb) and `contract_allocation` (one share per carrier
+  or own fleet, with its own price model and a pinned rig); `movement` and
+  `order` gain a nullable `contract_allocation_id` (the order's is a plain
+  id, copied by the Appload link). Purely additive; fulfilment is never
+  stored. Both tables carry the trust-wall policies (staff read a contract
+  only when Appload owns it or is its client). Dev got it from
+  `node packages/db/scripts/migrate.mjs`.
 
 The shared **dev** database got all nine from the idempotent scripts
 instead — `node packages/db/scripts/create-portal-tables.mjs`,

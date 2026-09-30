@@ -64,7 +64,9 @@
         "NO_TRUCK": "Sem camião",
         "NO_CARRIER": "Sem transportador",
         "NO_PRICE": "Sem preço acordado",
-        "PHOTOS_UNAPPROVED": "Fotos de carregamento por aprovar"
+        "PHOTOS_UNAPPROVED": "Fotos de carregamento por aprovar",
+        "CONTRACT_OVER_COMMITTED": "Acima da quantidade contratada",
+        "CONTRACT_LANE_MISMATCH": "Fora da rota do contrato"
     },
     "header": {
         "flags": "{count, plural, one {# alerta} other {# alertas}}"
@@ -510,6 +512,15 @@
     },
     "detail": {
         "meta": "Carga",
+        "contract": {
+            "title": "Contrato",
+            "contract": "Contrato",
+            "with": "Com",
+            "own-fleet": "Frota própria",
+            "state": "Estado",
+            "remaining": "Por consumir na parte",
+            "used-up": "Esgotada"
+        },
         "error": "Não foi possível abrir esta carga. Pode ter sido removida, ou não estar partilhada consigo.",
         "back": "Voltar à lista",
         "footer": "Registada a {created} · atualizada a {updated}",
@@ -557,6 +568,14 @@
             "own-fleet-hint": "Uma viagem dos seus camiões",
             "partner": "Um parceiro",
             "partner-hint": "Um pedido que outro transportador faz"
+        },
+        "contract": {
+            "label": "Contrato",
+            "hint": "Registe esta carga sob uma parte de um contrato: as partes, a rota e o preço preenchem-se como valores por defeito que pode alterar.",
+            "none": "Sem contrato",
+            "own-fleet": "Frota própria",
+            "option": "{ref} · {counterparty} · {remaining, number} {unit, select, trip {viagens} ton {t} day {dias} other {}} por consumir",
+            "prefilled": "Preenchido a partir de {ref}. Tudo pode ainda ser alterado."
         },
         "sections": {
             "lane": "Rota",

@@ -14,6 +14,7 @@ export const oac = createAccessControl({
     dispute: ["open", "resolve"],
     report: ["read"],
     subscription: ["read"],
+    contract: ["create", "read", "update", "list"],
 })
 
 export const owner = oac.newRole({
@@ -29,6 +30,7 @@ export const owner = oac.newRole({
     dispute: ["open", "resolve"],
     report: ["read"],
     subscription: ["read"],
+    contract: ["create", "read", "update", "list"],
 })
 
 export const admin = oac.newRole({
@@ -44,6 +46,7 @@ export const admin = oac.newRole({
     dispute: ["open", "resolve"],
     report: ["read"],
     subscription: ["read"],
+    contract: ["create", "read", "update", "list"],
 })
 
 export const member = oac.newRole({
@@ -69,6 +72,8 @@ export const member = oac.newRole({
     dispute: ["open"],
     report: ["read"],
     subscription: ["read"],
+    // A contract commits the company: reading is everyone's, signing is the manager's
+    contract: ["read", "list"],
 })
 
 export const driver = oac.newRole({

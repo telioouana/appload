@@ -30,6 +30,7 @@ import { isOrgAuthorized, type OrgRole } from "@workspace/auth/organization-perm
 import { LIVE_REQUEST_STATUSES, terminalMovementId } from "@workspace/domain/movements/link";
 import { costTotals, exVat, legSettled, margin } from "@workspace/domain/movements/money";
 import { editableGroups, isExecutorOf, movementRole, type MovementRole } from "@workspace/domain/movements/policy";
+import type { ContractSummary } from "@/frontend/pages/contracts/server/projection";
 import { counterpartyRef, movementRef } from "@workspace/domain/movements/refs";
 import {
     entersInProgress,
@@ -794,6 +795,8 @@ export type DisputeRow = Pick<
 type DetailExtras = {
     /** The company reading — an executor's view is cut to its own offer round */
     tenantId: string;
+    /** The contract share the load was filed under, when the reader may see the contract */
+    contract: ContractSummary | null;
     terminalRig: TerminalRig | null;
     /** A linked row's proof of delivery, from the row with the truck */
     terminalProofs: readonly MovementDocumentView[];
@@ -891,6 +894,7 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
         respondedAt: role === "client" ? null : row.respondedAt,
         responseNote: role === "client" ? null : row.responseNote,
         hasParent: owner && extras.hasParent,
+        contract: extras.contract,
         // What the load is missing as it stands. The owner's own reading of
         // its own books: nobody else is told what its paperwork lacks
         flags: owner ? movementFlags(guardsOf(row, extras.unapprovedPhotos, disputeOpen), row.status) : [],
