@@ -1434,8 +1434,11 @@ async function deleteThreads(ids: string[]) {
 // ---------------------------------------------------------------------------
 
 async function main() {
-    const databaseName = decodeURIComponent(new URL(process.env.DATABASE_URL!).pathname.slice(1)).split("?")[0];
+    const databaseName = decodeURIComponent(new URL(process.env.DATABASE_URL!).pathname.slice(1));
     console.log(`database: ${databaseName}`);
+
+    // Seeds and resets write and delete by hand: never anywhere but dev
+    if (!/dev/i.test(databaseName)) throw new Error(`refusing to seed the demo into "${databaseName}"`);
 
     if (RESET) {
         await reset();
@@ -1493,6 +1496,8 @@ main()
     .then(() => process.exit(process.exitCode ?? 0))
     .catch(async (error) => {
         console.error("\nseed failed:", error);
+        // A half-written seed must not ring the test driver either
+        await hushTracking().catch((hushError: unknown) => console.error("hush failed:", hushError));
         // Whatever landed before the failure is in the manifest; --reset takes it away
         await Promise.allSettled(logged.splice(0));
         saveManifest();
