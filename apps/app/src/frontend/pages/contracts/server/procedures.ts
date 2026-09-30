@@ -153,13 +153,13 @@ function toRow(
             destination: row.destination,
             startsOn: row.startsOn,
             endsOn: row.endsOn,
-            committedQty: Number(row.committedQty),
+            committedQty: row.committedQty === null ? null : Number(row.committedQty),
             weightUnit: row.weightUnit,
             currency: row.currency,
             progress: {
                 consumed: progress.consumed,
                 delivered: progress.delivered,
-                remaining: role === "carrier" ? progress.remaining : progress.committed - progress.consumed,
+                remaining: progress.remaining,
                 trips: progress.trips,
             },
             allocationCount: role === "client" ? all.length : mine.length,
@@ -236,13 +236,13 @@ async function detailOf(db: Db, id: string, tenantId: string, orgRole: OrgRole):
             carrier: share.carrierOrgId || share.carrierName
                 ? { id: share.carrierOrgId, name: share.carrierOrgId ? names.get(share.carrierOrgId) ?? null : share.carrierName }
                 : null,
-            shareQty: Number(share.shareQty),
+            shareQty: share.shareQty === null ? null : Number(share.shareQty),
             buyPrice: share.buyPrice,
             truck: share.truckId ? rigs.trucks.get(share.truckId) ?? null : null,
             driver: share.driverId ? rigs.drivers.get(share.driverId) ?? null : null,
             truckPlate: share.truckPlate,
             notes: role === "owner" ? share.notes : null,
-            progress: progress.byAllocation.get(share.id) ?? { share: Number(share.shareQty), consumed: 0, delivered: 0, remaining: Number(share.shareQty), trips: 0 },
+            progress: progress.byAllocation.get(share.id) ?? { share: null, consumed: 0, delivered: 0, remaining: null, trips: 0 },
         })),
         trips: trips.map((trip): ContractTripRow => ({
             id: trip.id,

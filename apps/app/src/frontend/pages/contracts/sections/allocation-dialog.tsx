@@ -15,6 +15,7 @@ import { FieldGroup } from "@workspace/ui/components/field"
 import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
 import { SelectInput } from "@workspace/ui/inputs/select"
+import { CheckboxInput } from "@workspace/ui/inputs/checkbox"
 import { DecimalInput } from "@workspace/ui/inputs/decimal"
 import { TextInput } from "@workspace/ui/inputs/text"
 import { TextAreaInput } from "@workspace/ui/inputs/textarea"
@@ -35,6 +36,8 @@ type AllocationForm = {
     /** OWN, a partner's organization id, or TYPED */
     who: string
     carrierName: string
+    /** No fixed share: trucks are sent while there is cargo */
+    openShare: boolean
     shareQty: string
     buyPrice: PriceForm
     truckId: string
@@ -51,7 +54,7 @@ const positive = (value: string) => Number.isFinite(Number(value)) && Number(val
 
 function defaultsFor(mode: AllocationDialogMode): AllocationForm {
     if (mode.kind === "create") {
-        return { who: OWN, carrierName: "", shareQty: "", buyPrice: EMPTY_PRICE, truckId: NONE, driverId: NONE, truckPlate: "", notes: "" }
+        return { who: OWN, carrierName: "", openShare: false, shareQty: "", buyPrice: EMPTY_PRICE, truckId: NONE, driverId: NONE, truckPlate: "", notes: "" }
     }
 
     const { allocation } = mode
@@ -59,7 +62,8 @@ function defaultsFor(mode: AllocationDialogMode): AllocationForm {
     return {
         who: allocation.carrier ? allocation.carrier.id ?? TYPED : OWN,
         carrierName: allocation.carrier?.id ? "" : allocation.carrier?.name ?? "",
-        shareQty: String(allocation.shareQty),
+        openShare: allocation.shareQty === null,
+        shareQty: allocation.shareQty === null ? "" : String(allocation.shareQty),
         buyPrice: fromPriceModel(allocation.buyPrice),
         truckId: allocation.truck?.id ?? NONE,
         driverId: allocation.driver?.id ?? NONE,
@@ -100,13 +104,16 @@ export function AllocationDialog({ mode, onClose }: { mode: AllocationDialogMode
             .object({
                 who: z.string(),
                 carrierName: z.string().trim().max(120),
-                shareQty: z.string().refine(positive, quantity),
+                openShare: z.boolean(),
+                shareQty: z.string(),
                 buyPrice: PriceFormSchema(quantity),
                 truckId: z.string(),
                 driverId: z.string(),
                 truckPlate: z.string().trim().max(60),
                 notes: z.string().trim().max(2000),
             })
+            // An open share has no quantity to check
+            .refine((data) => data.openShare || positive(data.shareQty), { message: quantity, path: ["shareQty"] })
             .refine((data) => data.who !== TYPED || data.carrierName.length > 0, {
                 message: t("allocation-form.errors.name"),
                 path: ["carrierName"],
@@ -118,7 +125,7 @@ export function AllocationDialog({ mode, onClose }: { mode: AllocationDialogMode
         defaultValues: defaultsFor(mode),
     })
 
-    const [who] = useWatch({ control: form.control, name: ["who"] })
+    const [who, openShare] = useWatch({ control: form.control, name: ["who", "openShare"] })
     const own = who === OWN
     const typed = who === TYPED
 
@@ -128,7 +135,7 @@ export function AllocationDialog({ mode, onClose }: { mode: AllocationDialogMode
         const input = {
             carrierOrgId: own || typed ? null : values.who,
             carrierName: typed ? values.carrierName.trim() : null,
-            shareQty: Number(values.shareQty),
+            shareQty: values.openShare ? null : Number(values.shareQty),
             buyPrice: own ? null : toPriceModel(values.buyPrice),
             truckId: own && values.truckId !== NONE ? values.truckId : null,
             driverId: own && values.driverId !== NONE ? values.driverId : null,
@@ -163,13 +170,25 @@ export function AllocationDialog({ mode, onClose }: { mode: AllocationDialogMode
                             <TextInput control={form.control} name="carrierName" isPending={isPending} label={t("allocation-form.fields.carrier-name")} />
                         )}
 
-                        <DecimalInput
+                        <CheckboxInput
                             control={form.control}
-                            name="shareQty"
+                            name="openShare"
                             isPending={isPending}
-                            label={t("allocation-form.fields.share-qty")}
-                            description={t("values.of", { total: unitLabel(unitOf(contract.basis), contract.committedQty) })}
+                            label={t("values.open")}
+                            description={t("allocation-form.fields.open-hint")}
                         />
+
+                        {!openShare && (
+                            <DecimalInput
+                                control={form.control}
+                                name="shareQty"
+                                isPending={isPending}
+                                label={t("allocation-form.fields.share-qty")}
+                                description={contract.committedQty === null
+                                    ? t("values.open")
+                                    : t("values.of", { total: unitLabel(unitOf(contract.basis), contract.committedQty) })}
+                            />
+                        )}
 
                         {!own && (
                             <PriceModelFields

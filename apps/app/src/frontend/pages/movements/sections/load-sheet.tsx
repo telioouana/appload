@@ -218,6 +218,7 @@ export function LoadSheet({
 }) {
     const t = useTranslations("App.loads.form")
     const tl = useTranslations("App.loads")
+    const tc = useTranslations("App.contracts")
     const tv = useTranslations("App.orders")
     const trpc = useTRPC()
     const router = useRouter()
@@ -576,8 +577,7 @@ export function LoadSheet({
                                                 {t("contract.option", {
                                                     ref: row.contractReference,
                                                     counterparty: row.counterparty ?? t("contract.own-fleet"),
-                                                    remaining: row.remaining,
-                                                    unit: row.unit,
+                                                    remaining: row.remaining === null ? t("contract.open-share") : tc(`unit.${row.unit}`, { count: row.remaining }),
                                                 })}
                                             </SelectItem>
                                         ))}

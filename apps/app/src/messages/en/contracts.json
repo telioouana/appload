@@ -84,6 +84,8 @@
     },
     "values": {
         "any-lane": "Any lane",
+        "open": "Open-ended",
+        "open-hint": "No fixed quantity: trips are filed while there is cargo, and it is never used up.",
         "own-fleet": "Own fleet",
         "own-account": "Own account",
         "no-client": "No client",
@@ -154,6 +156,7 @@
             "carrier-name": "Transporter name",
             "own-fleet": "Own fleet",
             "share-qty": "Share",
+            "open-hint": "No fixed share; the transporter sends trucks while there is cargo.",
             "buy-price": "What you pay",
             "truck": "Truck",
             "driver": "Driver",

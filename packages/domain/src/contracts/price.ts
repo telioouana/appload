@@ -76,8 +76,8 @@ export const unitOf = (basis: ContractBasis): "trip" | "ton" | "day" =>
  * model does not say (a per-ton price × a tonnage does; a per-trip price ×
  * a tonnage does not).
  */
-export function commitmentValue(model: PriceModel | null, basis: ContractBasis, qty: number): number | null {
-    if (!model) return null;
+export function commitmentValue(model: PriceModel | null, basis: ContractBasis, qty: number | null): number | null {
+    if (!model || qty === null) return null;
 
     switch (model.model) {
         case "lump-sum":

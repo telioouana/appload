@@ -69,8 +69,10 @@ export const contract = pgTable(
         startsOn: date("starts_on", { mode: "string" }).notNull(),
         endsOn: date("ends_on", { mode: "string" }).notNull(),
 
-        // Trips, tons or days, by `basis`
-        committedQty: numeric("committed_qty", { precision: 12, scale: 3 }).notNull(),
+        // Trips, tons or days, by `basis`. Null is an open contract: nobody
+        // knows beforehand how much cargo there will be, and trips keep being
+        // filed under it while there is some — it is never "used up"
+        committedQty: numeric("committed_qty", { precision: 12, scale: 3 }),
         weightUnit: weightUnitEnum("weight_unit"),
 
         currency: currencyEnum("currency").notNull(),
@@ -99,7 +101,7 @@ export const contract = pgTable(
         uniqueIndex("contract_reference_uidx")
             .on(table.organizationId, table.reference)
             .where(sql`${table.reference} is not null`),
-        check("contract_committed_qty_ck", sql`${table.committedQty} > 0`),
+        check("contract_committed_qty_ck", sql`${table.committedQty} is null or ${table.committedQty} > 0`),
         check("contract_period_ck", sql`${table.endsOn} >= ${table.startsOn}`),
         check("contract_client_ck", sql`${table.clientOrgId} is null or ${table.clientOrgId} <> ${table.organizationId}`),
         // The trust wall (rls.ts): a company's contracts are its most private
@@ -129,8 +131,8 @@ export const contractAllocation = pgTable(
             .references(() => contract.id, { onDelete: "cascade" }),
         carrierOrgId: text("carrier_org_id").references(() => organization.id),
         carrierName: text("carrier_name"),
-        // Same unit as the contract's basis
-        shareQty: numeric("share_qty", { precision: 12, scale: 3 }).notNull(),
+        // Same unit as the contract's basis; null is an open share
+        shareQty: numeric("share_qty", { precision: 12, scale: 3 }),
         // What the owner pays this carrier; null on its own fleet
         buyPrice: jsonb("buy_price").$type<PriceModel>(),
         truckId: text("truck_id").references(() => truck.id, { onDelete: "set null" }),
@@ -152,7 +154,7 @@ export const contractAllocation = pgTable(
             .where(sql`${table.carrierOrgId} is null and ${table.carrierName} is null`),
         index("contract_allocation_carrier_idx").on(table.carrierOrgId),
         index("contract_allocation_truck_idx").on(table.truckId).where(sql`${table.truckId} is not null`),
-        check("contract_allocation_share_ck", sql`${table.shareQty} > 0`),
+        check("contract_allocation_share_ck", sql`${table.shareQty} is null or ${table.shareQty} > 0`),
         // Own fleet (no carrier, no name) has no buy price; a typed carrier does
         check("contract_allocation_own_fleet_ck", sql`${table.carrierOrgId} is not null or ${table.carrierName} is not null or ${table.buyPrice} is null`),
         // Appload's own share, or a share of a contract staff may already read

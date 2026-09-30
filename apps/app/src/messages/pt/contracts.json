@@ -84,6 +84,8 @@
     },
     "values": {
         "any-lane": "Qualquer rota",
+        "open": "Em aberto",
+        "open-hint": "Sem quantidade fixa: registam-se viagens enquanto houver carga, e nunca se esgota.",
         "own-fleet": "Frota própria",
         "own-account": "Conta própria",
         "no-client": "Sem cliente",
@@ -154,6 +156,7 @@
             "carrier-name": "Nome do transportador",
             "own-fleet": "Frota própria",
             "share-qty": "Parte",
+            "open-hint": "Sem parte fixa; o transportador envia camiões enquanto houver carga.",
             "buy-price": "O que paga",
             "truck": "Camião",
             "driver": "Motorista",

@@ -37,7 +37,8 @@ export const ContractInputSchema = z.object({
     destination: location.nullable().optional(),
     startsOn: isoDate,
     endsOn: isoDate,
-    committedQty: quantity,
+    /** Null is an open contract — no ceiling, drawn down while the cargo lasts */
+    committedQty: quantity.nullable(),
     weightUnit: z.enum(WEIGHT_UNIT).nullable().optional(),
     currency: z.enum(CURRENCY),
     fiscalRegime: z.enum(FISCAL_REGIME).nullable().optional(),
@@ -63,7 +64,8 @@ export const AllocationInputSchema = z.object({
     /** A connected transporter or Appload; null with no name is the owner's own fleet */
     carrierOrgId: z.string().nonempty().nullable().optional(),
     carrierName: text(NAME_MAX).nullable().optional(),
-    shareQty: quantity,
+    /** Null is an open share */
+    shareQty: quantity.nullable(),
     buyPrice: PriceModelSchema.nullable().optional(),
     truckId: z.string().nonempty().nullable().optional(),
     driverId: z.string().nonempty().nullable().optional(),

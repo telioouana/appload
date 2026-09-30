@@ -224,6 +224,30 @@ async function main() {
     check("the client reads the contract, its price, and no shares", asClient.role === "client" && asClient.sellPrice?.model === "per-trip" && asClient.allocations.length === 0);
     check("the client counts the trips", asClient.progress.consumed === 1, asClient.progress);
 
+    // 7b. An open contract: nobody knows the tonnage beforehand, trips keep coming, nothing runs out
+    const open = await contracts(A.user).create({
+        basis: "weight",
+        startsOn: iso(-5),
+        endsOn: iso(90),
+        committedQty: null,
+        currency: "MZN",
+        notes: "verify-contracts",
+    });
+    contractsHere.push(open.id);
+    const openShare = await contracts(A.user).allocations.add({ contractId: open.id, carrierOrgId: B.org, shareQty: null, buyPrice: { model: "per-ton", rate: 1_200 } });
+    await contracts(A.user).transition({ id: open.id, to: "active", expectedVersion: 1 });
+    for (let i = 0; i < 3; i++) {
+        const trip = await loads(A.user).create(tripInput(openShare.id, { weight: 500 }));
+        movementsHere.push(trip.id);
+    }
+    const openDetail = await contracts(A.user).get({ id: open.id });
+    check("an open contract has no ceiling", openDetail.committedQty === null && openDetail.progress.remaining === null, openDetail.progress);
+    check("an open contract is drawn down and never used up", openDetail.progress.consumed === 1_500 && openDetail.state === "active", openDetail.progress);
+    const lastOpen = await loads(A.user).get({ id: movementsHere[movementsHere.length - 1]! });
+    check("a trip under an open share is never flagged over-committed", !lastOpen.events.flatMap((event) => event.flags ?? []).includes("CONTRACT_OVER_COMMITTED"));
+    check("a trip under an open share is still priced", lastOpen.money.payable?.total === 600_000, lastOpen.money.payable);
+    check("an open share reads as open on the load page", lastOpen.contract?.remaining === null, lastOpen.contract);
+
     // 8. Shares with trips stay; a closed contract takes nothing more
     check("a share with trips cannot go", (await refusal(() => contracts(A.user).allocations.remove({ id: shareB.id }))) === "ALLOCATION_HAS_TRIPS");
     check("a share without trips goes", (await refusal(() => contracts(A.user).allocations.remove({ id: shareTyped.id }))) === null);

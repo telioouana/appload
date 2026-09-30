@@ -26,12 +26,15 @@ export function TermsCard({ contract }: { contract: ContractDetail }) {
 
     const owner = contract.role === "owner"
     const unit = unitOf(contract.basis)
-    const qty = (value: number) => unitLabel(unit, value)
+    // An open-ended figure has no number to print
+    const qty = (value: number | null) => value === null ? <span className="text-muted-foreground">{t("values.open")}</span> : unitLabel(unit, value)
     const date = (value: string) => f.dateTime(new Date(value), { dateStyle: "medium" })
 
     // The owner promised more to its transporters than the client asked for
-    const allocated = contract.allocations.reduce((sum, share) => sum + share.shareQty, 0)
-    const overAllocated = owner && allocated > contract.committedQty
+    // — only readable when the contract and every share have a figure
+    const shares = contract.allocations.map((share) => share.shareQty)
+    const allocated = shares.reduce<number>((sum, share) => sum + (share ?? 0), 0)
+    const overAllocated = owner && contract.committedQty !== null && shares.every((share) => share !== null) && allocated > contract.committedQty
 
     return (
         <SectionCard title={t("detail.terms")}>

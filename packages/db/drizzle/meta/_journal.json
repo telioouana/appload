@@ -197,6 +197,13 @@
       "when": 1790779557873,
       "tag": "0027_contracts",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790783536551,
+      "tag": "0028_open_contracts",
+      "breakpoints": true
     }
   ]
 }

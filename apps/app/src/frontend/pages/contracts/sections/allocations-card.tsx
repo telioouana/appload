@@ -125,9 +125,16 @@ export function AllocationsCard({ contract }: { contract: ContractDetail }) {
                             <div className="flex flex-col gap-1">
                                 <ProgressBar consumed={allocation.progress.consumed} total={allocation.shareQty} unit={unit} />
                                 <span className="text-muted-foreground text-xs tabular-nums">
-                                    {unitLabel(unit, allocation.progress.consumed)} {t("values.of", { total: unitLabel(unit, allocation.shareQty) })}
-                                    {" · "}
-                                    {t("values.remaining", { qty: unitLabel(unit, allocation.progress.remaining) })}
+                                    {allocation.shareQty === null || allocation.progress.remaining === null ? (
+                                        // An open share: nothing to be short of
+                                        <>{unitLabel(unit, allocation.progress.consumed)} · {t("values.open")}</>
+                                    ) : (
+                                        <>
+                                            {unitLabel(unit, allocation.progress.consumed)} {t("values.of", { total: unitLabel(unit, allocation.shareQty) })}
+                                            {" · "}
+                                            {t("values.remaining", { qty: unitLabel(unit, allocation.progress.remaining) })}
+                                        </>
+                                    )}
                                 </span>
                             </div>
 

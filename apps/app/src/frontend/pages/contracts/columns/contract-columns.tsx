@@ -91,11 +91,13 @@ export function useContractColumns() {
             header: t("columns.commitment"),
             size: 130,
             meta: { label: t("columns.commitment") },
-            cell: ({ row }) => (
-                <span className="text-[13px] tabular-nums">
-                    {unitLabel(unitOf(row.original.basis), row.original.committedQty)}
-                </span>
-            ),
+            cell: ({ row }) => row.original.committedQty === null
+                ? <EmptyValue label={t("values.open")} />
+                : (
+                    <span className="text-[13px] tabular-nums">
+                        {unitLabel(unitOf(row.original.basis), row.original.committedQty)}
+                    </span>
+                ),
         },
         {
             id: "progress",
@@ -109,9 +111,11 @@ export function useContractColumns() {
                 return (
                     <div className="flex min-w-0 flex-col gap-1">
                         <ProgressBar consumed={consumed} total={row.original.committedQty} unit={unit} />
-                        <span className="text-muted-foreground truncate text-xs">
-                            {t("values.remaining", { qty: unitLabel(unit, Math.max(0, remaining)) })}
-                        </span>
+                        {remaining !== null && (
+                            <span className="text-muted-foreground truncate text-xs">
+                                {t("values.remaining", { qty: unitLabel(unit, Math.max(0, remaining)) })}
+                            </span>
+                        )}
                     </div>
                 )
             },

@@ -1164,7 +1164,7 @@ export const movementsRouter = createTRPCRouter({
 
             // A contract is drawn down, never enforced: past its quantity or off
             // its lane the trip is filed and says so on its trail
-            if (share && share.remaining <= 0) flags.push("CONTRACT_OVER_COMMITTED");
+            if (share && share.remaining !== null && share.remaining <= 0) flags.push("CONTRACT_OVER_COMMITTED");
             if (share && ((share.origin && share.origin.placeId !== input.origin.placeId) || (share.destination && share.destination.placeId !== input.destination.placeId))) {
                 flags.push("CONTRACT_LANE_MISMATCH");
             }

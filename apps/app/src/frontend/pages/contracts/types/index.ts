@@ -31,10 +31,11 @@ export type PagedResult<T> = { items: T[]; total: number; page: number; pageSize
 export type ContractParty = { id: string | null; name: string | null };
 
 export type ProgressView = {
-    share: number;
+    /** Null on an open share or contract: no ceiling */
+    share: number | null;
     consumed: number;
     delivered: number;
-    remaining: number;
+    remaining: number | null;
     trips: number;
 };
 
@@ -42,7 +43,8 @@ export type AllocationView = {
     id: string;
     /** Null is the owner's own fleet */
     carrier: ContractParty | null;
-    shareQty: number;
+    /** Null is an open share */
+    shareQty: number | null;
     /** Owner only on another company's share; a carrier reads its own */
     buyPrice: PriceModel | null;
     truck: { id: string; plate: string } | null;
@@ -65,7 +67,8 @@ export type ContractRow = {
     destination: Location | null;
     startsOn: string;
     endsOn: string;
-    committedQty: number;
+    /** Null is an open contract */
+    committedQty: number | null;
     weightUnit: WeightUnit | null;
     currency: Currency;
     /** The whole contract for the owner and the client; the caller's own share for a carrier */

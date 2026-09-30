@@ -26,7 +26,8 @@ export type OpenShare = {
     /** The other company on the share: the carrier to the owner, the owner to the carrier; null is the owner's own fleet */
     counterparty: string | null;
     role: ContractRole;
-    remaining: number;
+    /** Null on an open share */
+    remaining: number | null;
     currency: (typeof CURRENCY)[number];
 };
 
@@ -87,7 +88,7 @@ export async function openShares(db: Db, tenantId: string): Promise<OpenShare[]>
                     ? names.get(row.organizationId) ?? null
                     : share.carrierOrgId ? names.get(share.carrierOrgId) ?? null : share.carrierName,
                 role,
-                remaining: progress.byAllocation.get(share.id)?.remaining ?? 0,
+                remaining: progress.byAllocation.get(share.id)?.remaining ?? null,
                 currency: row.currency,
             });
         }
@@ -105,8 +106,8 @@ export type ContractSummary = {
     unit: "trip" | "ton" | "day";
     state: ContractState;
     role: ContractRole;
-    /** What is left on the share the load was filed under */
-    remaining: number;
+    /** What is left on the share the load was filed under; null on an open one */
+    remaining: number | null;
     counterparty: string | null;
 };
 

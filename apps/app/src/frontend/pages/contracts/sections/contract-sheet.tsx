@@ -63,12 +63,15 @@ function ContractFormSchema(msg: Message) {
             destination: location,
             startsOn: z.date(msg("date")),
             endsOn: z.date(msg("date")),
-            committedQty: z.string().refine((value) => Number(value) > 0 && Number(value) <= 1e9, msg("quantity")),
+            openEnded: z.boolean(),
+            committedQty: z.string(),
             currency: z.enum(CURRENCY),
             fiscalRegime: z.enum(FISCAL_REGIME).optional(),
             sellPrice: PriceFormSchema(msg("amount").error),
             notes: z.string().trim().max(2000),
         })
+        // An open-ended contract has no quantity to check
+        .refine((data) => data.openEnded || (Number(data.committedQty) > 0 && Number(data.committedQty) <= 1e9), { ...msg("quantity"), path: ["committedQty"] })
         .refine((data) => data.clientOrgId !== TYPED || data.clientName.length > 0, { ...msg("name"), path: ["clientName"] })
         .refine((data) => data.anyLane || data.origin.placeId.length > 0, { ...msg("address"), path: ["origin.address"] })
         .refine((data) => data.anyLane || data.destination.placeId.length > 0, { ...msg("address"), path: ["destination.address"] })
@@ -99,6 +102,7 @@ function defaultsFor(mode: ContractSheetMode): DefaultValues<ContractForm> {
             destination: EMPTY_LOCATION,
             startsOn: undefined,
             endsOn: undefined,
+            openEnded: false,
             committedQty: "",
             currency: "MZN",
             fiscalRegime: undefined,
@@ -119,7 +123,8 @@ function defaultsFor(mode: ContractSheetMode): DefaultValues<ContractForm> {
         destination: contract.destination ?? EMPTY_LOCATION,
         startsOn: fromIsoDay(contract.startsOn),
         endsOn: fromIsoDay(contract.endsOn),
-        committedQty: String(contract.committedQty),
+        openEnded: contract.committedQty === null,
+        committedQty: contract.committedQty === null ? "" : String(contract.committedQty),
         currency: contract.currency,
         fiscalRegime: contract.fiscalRegime ?? undefined,
         sellPrice: fromPriceModel(contract.sellPrice),
@@ -187,7 +192,7 @@ export function ContractSheet({
         onOpenChange(false)
     }
 
-    const [basis, clientOrgId, anyLane, currency] = useWatch({ control, name: ["basis", "clientOrgId", "anyLane", "currency"] })
+    const [basis, clientOrgId, anyLane, currency, openEnded] = useWatch({ control, name: ["basis", "clientOrgId", "anyLane", "currency", "openEnded"] })
 
     const editing = mode.kind === "edit"
     const carrier = session?.organization.type === "carrier"
@@ -214,7 +219,7 @@ export function ContractSheet({
             destination: values.anyLane ? null : values.destination,
             startsOn: isoDay(values.startsOn),
             endsOn: isoDay(values.endsOn),
-            committedQty: Number(values.committedQty),
+            committedQty: values.openEnded ? null : Number(values.committedQty),
             weightUnit: values.basis === "weight" ? "ton" : null,
             currency: values.currency,
             fiscalRegime: values.fiscalRegime ?? null,
@@ -303,13 +308,22 @@ export function ContractSheet({
                                             })}
                                         </div>
                                     )}
-                                    <DecimalInput
-                                        name="committedQty"
+                                    <CheckboxInput
+                                        name="openEnded"
                                         control={control}
                                         isPending={isPending}
-                                        label={`${t("form.fields.committed-qty")} (${t(`form.units.${UNIT_KEY[basis as ContractBasis]}`)})`}
-                                        placeholder="0"
+                                        label={t("values.open")}
+                                        description={t("values.open-hint")}
                                     />
+                                    {!openEnded && (
+                                        <DecimalInput
+                                            name="committedQty"
+                                            control={control}
+                                            isPending={isPending}
+                                            label={`${t("form.fields.committed-qty")} (${t(`form.units.${UNIT_KEY[basis as ContractBasis]}`)})`}
+                                            placeholder="0"
+                                        />
+                                    )}
                                 </FieldGroup>
                             </FieldSet>
 

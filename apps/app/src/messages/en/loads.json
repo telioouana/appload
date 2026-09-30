@@ -519,7 +519,8 @@
             "own-fleet": "Own fleet",
             "state": "State",
             "remaining": "Left on the share",
-            "used-up": "Used up"
+            "used-up": "Used up",
+            "open": "Open-ended"
         },
         "error": "This load could not be opened. It may have been removed, or not be shared with you.",
         "back": "Back to the list",
@@ -574,7 +575,8 @@
             "hint": "File this load under a contract share: its parties, lane and price fill in as defaults you can change.",
             "none": "No contract",
             "own-fleet": "Own fleet",
-            "option": "{ref} · {counterparty} · {remaining, number} {unit, select, trip {trips} ton {t} day {days} other {}} left",
+            "option": "{ref} · {counterparty} · {remaining}",
+            "open-share": "no limit",
             "prefilled": "Filled in from {ref}. Everything can still be changed."
         },
         "sections": {

@@ -65,7 +65,9 @@ export function ContractRoleChip({ role }: { role: ContractRole }) {
 /**
  * How far along the commitment is: the consumed quantity over the whole,
  * and a thin bar. Filed beyond the commitment the bar stays full and turns
- * amber — a contract can be over-drawn, and that is worth seeing.
+ * amber — a contract can be over-drawn, and that is worth seeing. An
+ * open-ended one (no total) has nothing to be far along: the consumed
+ * figure alone, over an empty track.
  */
 export function ProgressBar({
     consumed,
@@ -74,27 +76,31 @@ export function ProgressBar({
     className,
 }: {
     consumed: number
-    total: number
+    total: number | null
     unit: ContractUnit
     className?: string
 }) {
     const t = useTranslations("App.contracts.values")
     const label = useUnitLabel()
 
-    const share = total > 0 ? (consumed / total) * 100 : 0
+    const share = total !== null && total > 0 ? (consumed / total) * 100 : 0
     const over = share > 100
 
     return (
         <div className={cn("flex min-w-0 flex-col gap-1", className)}>
             <span className="truncate text-[13px] tabular-nums">
                 {label(unit, consumed)}{" "}
-                <span className="text-muted-foreground">{t("of", { total: label(unit, total) })}</span>
+                <span className="text-muted-foreground">
+                    {total === null ? `· ${t("open")}` : t("of", { total: label(unit, total) })}
+                </span>
             </span>
             <span className="bg-muted h-1.5 w-full max-w-28 overflow-hidden rounded-full">
-                <span
-                    className={cn("block h-full rounded-full", over ? "bg-amber-500" : "bg-primary")}
-                    style={{ width: `${Math.min(100, Math.max(0, share))}%` }}
-                />
+                {total !== null && (
+                    <span
+                        className={cn("block h-full rounded-full", over ? "bg-amber-500" : "bg-primary")}
+                        style={{ width: `${Math.min(100, Math.max(0, share))}%` }}
+                    />
+                )}
             </span>
         </div>
     )

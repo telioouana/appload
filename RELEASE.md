@@ -349,6 +349,10 @@ then push `prod/admin` and the portal back to back.
   stored. Both tables carry the trust-wall policies (staff read a contract
   only when Appload owns it or is its client). Dev got it from
   `node packages/db/scripts/migrate.mjs`.
+- `0028_open_contracts` — a contract or a share may be open-ended:
+  `committed_qty` and `share_qty` become nullable (null = no ceiling, drawn
+  down while there is cargo and never used up); the two CHECKs allow null.
+  Dev got it from `node packages/db/scripts/migrate.mjs`.
 
 The shared **dev** database got all nine from the idempotent scripts
 instead — `node packages/db/scripts/create-portal-tables.mjs`,

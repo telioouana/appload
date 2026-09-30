@@ -32,7 +32,8 @@ export type ContractInput = {
     destination?: Location | null;
     startsOn: string;
     endsOn: string;
-    committedQty: number;
+    /** Null is an open contract: no ceiling, never used up */
+    committedQty: number | null;
     weightUnit?: (typeof WEIGHT_UNIT)[number] | null;
     currency: (typeof CURRENCY)[number];
     fiscalRegime?: (typeof FISCAL_REGIME)[number] | null;
@@ -43,7 +44,8 @@ export type ContractInput = {
 export type AllocationInput = {
     carrierOrgId?: string | null;
     carrierName?: string | null;
-    shareQty: number;
+    /** Null is an open share */
+    shareQty: number | null;
     buyPrice?: PriceModel | null;
     truckId?: string | null;
     driverId?: string | null;
@@ -54,7 +56,7 @@ export type AllocationInput = {
 const refuse = (message: string, code: "BAD_REQUEST" | "CONFLICT" | "NOT_FOUND" = "BAD_REQUEST") =>
     new TRPCError({ code, message });
 
-const decimal = (value: number): string => String(Math.round(value * 1000) / 1000);
+const decimal = (value: number | null): string | null => (value === null ? null : String(Math.round(value * 1000) / 1000));
 
 /**
  * A price model has to be able to price what the contract counts: days are
@@ -90,7 +92,7 @@ async function assertRig(db: Db, fleetOrgId: string, input: Pick<AllocationInput
 
 function contractColumns(input: ContractInput) {
     if (input.endsOn < input.startsOn) throw refuse("PERIOD_INVERTED");
-    if (!(input.committedQty > 0)) throw refuse("QUANTITY_REQUIRED");
+    if (input.committedQty !== null && !(input.committedQty > 0)) throw refuse("QUANTITY_REQUIRED");
     assertModelFits(input.sellPrice, input.basis);
 
     return {
@@ -177,7 +179,7 @@ export async function transitionContract(
 }
 
 async function allocationColumns(db: Db, owner: Contract, input: AllocationInput) {
-    if (!(input.shareQty > 0)) throw refuse("QUANTITY_REQUIRED");
+    if (input.shareQty !== null && !(input.shareQty > 0)) throw refuse("QUANTITY_REQUIRED");
     const carrierOrgId = input.carrierOrgId ?? null;
 
     if (carrierOrgId === owner.organizationId) throw refuse("CARRIER_IS_SELF");

@@ -10,22 +10,24 @@ type Db = typeof Database;
 
 export type AllocationProgress = {
     allocationId: string;
-    /** The share, in the contract's unit */
-    share: number;
+    /** The share, in the contract's unit; null on an open share */
+    share: number | null;
     /** What the share has been drawn down by: every live trip, or the days elapsed on a rental */
     consumed: number;
     /** Of that, what has arrived (delivered or closed); on a rental, the same as consumed */
     delivered: number;
-    remaining: number;
+    /** Null when there is no ceiling to draw down */
+    remaining: number | null;
     /** Live trips under the share, whatever the basis */
     trips: number;
 };
 
 export type ContractProgress = {
-    committed: number;
+    /** Null on an open contract */
+    committed: number | null;
     consumed: number;
     delivered: number;
-    remaining: number;
+    remaining: number | null;
     trips: number;
     byAllocation: Map<string, AllocationProgress>;
 };
@@ -60,7 +62,8 @@ type Share = Pick<ContractAllocation, "id" | "shareQty" | "buyPrice">;
  * moment it is filed and stops counting when it is cancelled; "delivered"
  * is the part that has arrived. On a rental the commitment is time, so
  * consumption is the days elapsed since the start, capped at the period,
- * and the trips are only information.
+ * and the trips are only information. An open contract or share has no
+ * ceiling: it is drawn down and never runs out.
  */
 export function summarizeProgress(
     contract: ContractTerms,
@@ -78,13 +81,14 @@ export function summarizeProgress(
 
     for (const allocation of allocations) {
         const row = usage.get(allocation.id);
-        const share = Number(allocation.shareQty);
+        const share = allocation.shareQty === null ? null : Number(allocation.shareQty);
         let used: number;
         let arrived: number;
 
         if (contract.basis === "days") {
             const mode = allocation.buyPrice?.model === "per-day" ? allocation.buyPrice.billableDays : "calendar";
-            used = Math.min(share, billableDays(contract.startsOn, elapsedUntil, mode));
+            const elapsed = billableDays(contract.startsOn, elapsedUntil, mode);
+            used = share === null ? elapsed : Math.min(share, elapsed);
             arrived = used;
         } else if (contract.basis === "weight") {
             used = row?.tons ?? 0;
@@ -99,7 +103,7 @@ export function summarizeProgress(
             share,
             consumed: used,
             delivered: arrived,
-            remaining: share - used,
+            remaining: share === null ? null : share - used,
             trips: row?.trips ?? 0,
         };
         byAllocation.set(allocation.id, progress);
@@ -108,9 +112,9 @@ export function summarizeProgress(
         trips += progress.trips;
     }
 
-    const committed = Number(contract.committedQty);
+    const committed = contract.committedQty === null ? null : Number(contract.committedQty);
 
-    return { committed, consumed, delivered, remaining: committed - consumed, trips, byAllocation };
+    return { committed, consumed, delivered, remaining: committed === null ? null : committed - consumed, trips, byAllocation };
 }
 
 /** One contract's progress, the two steps above in one call. */

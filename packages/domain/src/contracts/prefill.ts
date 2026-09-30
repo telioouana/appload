@@ -31,8 +31,8 @@ export type TripDefaults = {
     allocationId: string;
     basis: ContractBasis;
     state: ContractState;
-    /** What is left on the share, in the contract's unit */
-    remaining: number;
+    /** What is left on the share, in the contract's unit; null on an open share */
+    remaining: number | null;
     execution: "own-fleet" | "partner";
     clientOrgId: string | null;
     clientName: string | null;
@@ -74,7 +74,7 @@ export async function tripDefaultsFor(db: Db, tenantId: string, allocationId: st
     const state = derivedState(row, progress);
     if (!acceptsTrips(state)) throw new TRPCError({ code: "BAD_REQUEST", message: "CONTRACT_NOT_OPEN" });
 
-    return shapeDefaults(row, mine, role, state, progress.byAllocation.get(mine.id)?.remaining ?? 0, load);
+    return shapeDefaults(row, mine, role, state, progress.byAllocation.get(mine.id)?.remaining ?? null, load);
 }
 
 export function shapeDefaults(
@@ -82,7 +82,7 @@ export function shapeDefaults(
     share: ContractAllocation,
     role: ContractRole,
     state: ContractState,
-    remaining: number,
+    remaining: number | null,
     load: Load,
 ): TripDefaults {
     const leg = (model: PriceModel | null): PrefilledLeg | null => {

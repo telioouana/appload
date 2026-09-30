@@ -519,7 +519,8 @@
             "own-fleet": "Frota própria",
             "state": "Estado",
             "remaining": "Por consumir na parte",
-            "used-up": "Esgotada"
+            "used-up": "Esgotada",
+            "open": "Em aberto"
         },
         "error": "Não foi possível abrir esta carga. Pode ter sido removida, ou não estar partilhada consigo.",
         "back": "Voltar à lista",
@@ -574,7 +575,8 @@
             "hint": "Registe esta carga sob uma parte de um contrato: as partes, a rota e o preço preenchem-se como valores por defeito que pode alterar.",
             "none": "Sem contrato",
             "own-fleet": "Frota própria",
-            "option": "{ref} · {counterparty} · {remaining, number} {unit, select, trip {viagens} ton {t} day {dias} other {}} por consumir",
+            "option": "{ref} · {counterparty} · {remaining}",
+            "open-share": "sem limite",
             "prefilled": "Preenchido a partir de {ref}. Tudo pode ainda ser alterado."
         },
         "sections": {

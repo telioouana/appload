@@ -38,9 +38,11 @@ export function ContractCard({ contract }: { contract: ContractSummary }) {
                     <ContractStateChip state={contract.state} />
                 </DetailRow>
                 <DetailRow label={t("remaining")}>
-                    {contract.remaining > 0
-                        ? unit(contract.unit, contract.remaining)
-                        : <span className="text-amber-700">{t("used-up")}</span>}
+                    {contract.remaining === null
+                        ? <span className="text-muted-foreground">{t("open")}</span>
+                        : contract.remaining > 0
+                            ? unit(contract.unit, contract.remaining)
+                            : <span className="text-amber-700">{t("used-up")}</span>}
                 </DetailRow>
             </dl>
         </SectionCard>
