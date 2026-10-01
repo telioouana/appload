@@ -252,7 +252,7 @@ async function main() {
     const open = await contracts(A.user).create({
         basis: "weight",
         startsOn: iso(-5),
-        endsOn: iso(90),
+        endsOn: null,
         committedQty: null,
         currency: "MZN",
         notes: "verify-contracts",
@@ -278,7 +278,7 @@ async function main() {
         basis: "trips",
         clientOrgId: A.org,
         startsOn: iso(0),
-        endsOn: null,
+        endsOn: iso(60),
         committedQty: null,
         currency: "MZN",
         sellPrice: { model: "per-trip", rate: 40_000 },
