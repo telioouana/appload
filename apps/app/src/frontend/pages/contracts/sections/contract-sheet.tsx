@@ -241,7 +241,7 @@ export function ContractSheet({
         create.mutate(input, {
             onSuccess: ({ id }) => {
                 onOpenChange(false)
-                router.push({ pathname: "/contracts/[contractId]", params: { contractId: id } })
+                router.push({ pathname: "/orders/multi/[orderId]", params: { orderId: id } })
             },
             onError: (failure) => setError(contractErrorKey(failure)),
         })

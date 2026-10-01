@@ -7,7 +7,8 @@
         "in-progress": "Em curso",
         "delivered": "Entregues",
         "disputes": "Disputas",
-        "history": "Histórico"
+        "history": "Histórico",
+        "multi": "Várias viagens"
     },
     "titles": {
         "all": "Todos os pedidos",
@@ -16,7 +17,8 @@
         "in-progress": "Em curso",
         "delivered": "Entregues",
         "disputes": "Cargas em disputa",
-        "history": "Histórico"
+        "history": "Histórico",
+        "multi": "Pedidos com várias viagens"
     },
     "description": {
         "orders": {
@@ -100,7 +102,9 @@
         "due": "Prevista {date}",
         "no-due-date": "Sem data prevista",
         "no-price": "Sem preço",
-        "no-pings": "Sem posições"
+        "no-pings": "Sem posições",
+        "parent-trip": "viagem {position} · {ref}",
+        "parent-trip-of": "viagem {position} de {of} · {ref}"
     },
     "tiles": {
         "received": "Oferecidas a si",

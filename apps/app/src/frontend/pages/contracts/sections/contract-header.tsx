@@ -58,7 +58,7 @@ export function ContractHeader({ contract }: { contract: ContractDetail }) {
             <header className="flex flex-col gap-4 px-2 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex min-w-0 items-start gap-3">
                     <Button asChild size="icon" variant="outline" aria-label={t("title")} className="mt-4 shrink-0">
-                        <Link href={{ pathname: "/contracts", query: { tab: owner ? "own" : "partners" } }}>
+                        <Link href={{ pathname: "/orders/[section]", params: { section: "multi" }, query: { tab: owner ? "own" : "partners" } }}>
                             <IconArrowLeft className="size-4" stroke={1.5} />
                         </Link>
                     </Button>

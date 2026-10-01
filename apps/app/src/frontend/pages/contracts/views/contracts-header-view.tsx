@@ -78,7 +78,7 @@ export function ContractsHeaderView() {
                                     key={value}
                                     role="tab"
                                     aria-selected={active}
-                                    href={{ pathname: "/contracts", query: { tab: value } }}
+                                    href={{ pathname: "/orders/[section]", params: { section: "multi" }, query: { tab: value } }}
                                     className={cn(
                                         "text-muted-foreground flex h-7 items-center gap-1.5 rounded-full px-3 text-[13px] transition-colors",
                                         active && "bg-background text-foreground font-medium shadow-sm",

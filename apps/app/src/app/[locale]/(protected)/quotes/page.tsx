@@ -30,8 +30,8 @@ export default async function QuotesPage({
             .where(eq(contract.legacyQuoteId, id))
             .limit(1)
 
-        if (row) redirect(getPathname({ href: { pathname: "/contracts/[contractId]", params: { contractId: row.id } }, locale }))
+        if (row) redirect(getPathname({ href: { pathname: "/orders/multi/[orderId]", params: { orderId: row.id } }, locale }))
     }
 
-    redirect(getPathname({ href: { pathname: "/contracts", query: { tab: "partners" } }, locale }))
+    redirect(getPathname({ href: { pathname: "/orders/[section]", params: { section: "multi" }, query: { tab: "partners" } }, locale }))
 }

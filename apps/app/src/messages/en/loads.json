@@ -7,7 +7,8 @@
         "in-progress": "In progress",
         "delivered": "Delivered",
         "disputes": "Disputes",
-        "history": "History"
+        "history": "History",
+        "multi": "Multi-trip"
     },
     "titles": {
         "all": "All orders",
@@ -16,7 +17,8 @@
         "in-progress": "In progress",
         "delivered": "Delivered",
         "disputes": "Loads in dispute",
-        "history": "History"
+        "history": "History",
+        "multi": "Multi-trip orders"
     },
     "description": {
         "orders": {
@@ -100,7 +102,9 @@
         "due": "Due {date}",
         "no-due-date": "No due date",
         "no-price": "No price",
-        "no-pings": "No positions"
+        "no-pings": "No positions",
+        "parent-trip": "trip {position} · {ref}",
+        "parent-trip-of": "trip {position} of {of} · {ref}"
     },
     "tiles": {
         "received": "Offered to you",

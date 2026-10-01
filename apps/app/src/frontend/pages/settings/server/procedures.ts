@@ -5,6 +5,7 @@ import { APIError } from "better-auth/api";
 
 import { activityLog } from "@workspace/db/activity-log";
 import { partnerConnection } from "@workspace/db/connections";
+import { contract } from "@workspace/db/contracts";
 import { movement } from "@workspace/db/movements";
 import { order } from "@workspace/db/orders";
 import { organization, user } from "@workspace/db/users";
@@ -48,6 +49,8 @@ export type RailCounts = {
     toDispatch: number;
     disputes: { orders: number; trips: number };
     partners: number;
+    /** Multi-trip orders a transporter proposed, still waiting on this company's answer */
+    proposals: number;
 };
 
 export type MeSession = {
@@ -198,7 +201,7 @@ export const meRouter = createTRPCRouter({
         const shipper = ctx.tenant.orgType === "shipper";
         const zero = sql<number>`0`.mapWith(Number);
 
-        const [loads, disputes, connections, brokerage] = await Promise.all([
+        const [loads, disputes, connections, brokerage, proposals] = await Promise.all([
             ctx.db
                 .select({
                     // The Procurement list's own predicate, so the badge is
@@ -238,6 +241,12 @@ export const meRouter = createTRPCRouter({
                 .from(order)
                 .where(visibleOrders(tenantId, ctx.tenant.orgType))
                 .then((rows) => rows[0]),
+            // A multi-trip order a transporter drafted naming this company is a proposal until it answers
+            ctx.db
+                .select({ n: sql<number>`count(*)::int` })
+                .from(contract)
+                .where(and(eq(contract.clientOrgId, tenantId), eq(contract.status, "draft")))
+                .then((rows) => rows[0]),
         ]);
 
         return {
@@ -247,6 +256,7 @@ export const meRouter = createTRPCRouter({
             toDispatch: Number(brokerage?.toDispatch ?? 0),
             disputes: { orders: Number(disputes?.orders ?? 0), trips: Number(disputes?.trips ?? 0) },
             partners: Number(connections?.incoming ?? 0),
+            proposals: Number(proposals?.n ?? 0),
         };
     }),
 

@@ -112,7 +112,7 @@ export type NotificationLink =
     | { pathname: "/orders/load/[loadId]"; params: { loadId: string } }
     | { pathname: "/partners"; query: { id: string } }
     | { pathname: "/quotes"; query: { id: string } }
-    | { pathname: "/contracts/[contractId]"; params: { contractId: string } }
+    | { pathname: "/orders/multi/[orderId]"; params: { orderId: string } }
     | { pathname: "/settings" };
 
 /**
@@ -147,7 +147,7 @@ export function notificationTarget(
                 : null;
         case "contract":
             return entityId
-                ? { link: { pathname: "/contracts/[contractId]", params: { contractId: entityId } }, path: `/contracts/${encodeURIComponent(entityId)}` }
+                ? { link: { pathname: "/orders/multi/[orderId]", params: { orderId: entityId } }, path: `/orders/multi/${encodeURIComponent(entityId)}` }
                 : null;
         case "subscription":
             return { link: { pathname: "/settings" }, path: "/settings" };

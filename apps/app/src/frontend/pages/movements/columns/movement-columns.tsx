@@ -8,6 +8,8 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
 
+import { Link } from "@/i18n/navigation"
+
 import { AttentionMarks, InDisputeChip, LaneCell, LastPingCell, LoadDate, Money, MovementStatusChip, OffRouteChip, QuotesChip, RoleChip } from "@/frontend/pages/movements/components/badges"
 import { isInProgress, type MovementRow, type MovementScope, type OrgType } from "@/frontend/pages/movements/types"
 
@@ -48,9 +50,25 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                 // shows that order's id only where it has no name of its own
                 // (movementRef); the detail page still carries both
                 cell: ({ row }) => (
-                    <span className="flex min-w-0 items-center gap-1.5">
-                        <Mono className="font-medium">{row.original.ref}</Mono>
-                        <AttentionMarks flags={row.original.flags} silent={row.original.silent} />
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                        <span className="flex min-w-0 items-center gap-1.5">
+                            <Mono className="font-medium">{row.original.ref}</Mono>
+                            <AttentionMarks flags={row.original.flags} silent={row.original.silent} />
+                        </span>
+                        {/* A trip of a multi-trip order says which, and opens the order */}
+                        {row.original.parent && (
+                            <Link
+                                href={{ pathname: "/orders/multi/[orderId]", params: { orderId: row.original.parent.id } }}
+                                onClick={(event) => event.stopPropagation()}
+                                className="text-muted-foreground hover:text-foreground w-fit truncate text-[11px] underline-offset-4 hover:underline"
+                            >
+                                {row.original.parent.position === null
+                                    ? row.original.parent.ref
+                                    : row.original.parent.of !== null
+                                        ? t("values.parent-trip-of", { position: row.original.parent.position, of: row.original.parent.of, ref: row.original.parent.ref })
+                                        : t("values.parent-trip", { position: row.original.parent.position, ref: row.original.parent.ref })}
+                            </Link>
+                        )}
                     </span>
                 ),
             },
