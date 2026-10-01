@@ -63,8 +63,8 @@ const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
 const perDay = (model: Contract["sellPrice"]): PerDay | null => (model?.model === "per-day" ? model : null);
 const round = (value: number) => Math.round(value * 100) / 100;
 
-const tabPredicate = (tab: "own" | "partners", tenantId: string): SQL =>
-    tab === "own" ? eq(contract.organizationId, tenantId) : sql`${contract.organizationId} <> ${tenantId}`;
+const tabPredicate = (tab: "own" | "partners" | "all", tenantId: string): SQL | undefined =>
+    tab === "all" ? undefined : tab === "own" ? eq(contract.organizationId, tenantId) : sql`${contract.organizationId} <> ${tenantId}`;
 
 function searchWhere(term: string): SQL {
     const pattern = `%${escapeLike(term)}%`;
@@ -262,7 +262,7 @@ function toRow(order: Contract, all: ContractAllocation[], role: ContractRole, t
     };
 }
 
-async function visibleSet(db: Db, tenantId: string, tab: "own" | "partners", search?: string) {
+async function visibleSet(db: Db, tenantId: string, tab: "own" | "partners" | "all", search?: string) {
     const rows = await db
         .select()
         .from(contract)
@@ -275,6 +275,30 @@ async function visibleSet(db: Db, tenantId: string, tab: "own" | "partners", sea
         const role = roleOn(order, all, tenantId);
         return role ? [{ order, all, role, ...toRow(order, all, role, tenantId, h), h }] : [];
     });
+}
+
+/**
+ * Every rental the company can read, the way the orders list carries it
+ * among the trips: the row, who provides the trucks (the reader's own
+ * lines), and what the reader's side comes to so far.
+ */
+export type RentalOrderRow = {
+    view: RentalRow;
+    providers: Array<{ id: string | null; name: string | null }>;
+    money: { leg: "sell" | "buy"; amount: number } | null;
+};
+
+export async function rentalOrderRows(db: Db, tenantId: string): Promise<RentalOrderRow[]> {
+    const set = await visibleSet(db, tenantId, "all");
+
+    return set.map(({ view, lines, role, order }) => ({
+        view,
+        providers: lines.flatMap((line) => (line.provider ? [line.provider] : [])),
+        // A client pays, a carrier is paid, the owner earns its price when it has one and pays its providers otherwise
+        money: view.billable === 0 && lines.length === 0
+            ? null
+            : { leg: role === "client" ? "buy" : role === "carrier" ? "sell" : order.sellPrice ? "sell" : "buy", amount: view.billable },
+    }));
 }
 
 const orderings: Record<"newest" | "period" | "reference", (a: RentalRow, b: RentalRow) => number> = {

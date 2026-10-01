@@ -68,6 +68,8 @@ import { createTRPCRouter } from "@workspace/trpc/init";
 import { tenantProcedure } from "@workspace/trpc/tenant";
 
 import { contractSummaryFor, openShares } from "@/frontend/pages/contracts/server/projection";
+import { mergePage, standingCounts, standingOrders, windowFor } from "@/frontend/pages/movements/server/standing-orders";
+import type { MovementStatus } from "@/frontend/pages/movements/types";
 
 import { withinRateLimit } from "@/lib/rate-limit";
 import {
@@ -781,23 +783,33 @@ export const movementsRouter = createTRPCRouter({
                 loadingPeriod(input),
             );
 
+            // The multi-trip orders and rentals sit among the trips: all of them
+            // are in hand, so the trips' window is widened by their number and
+            // the page is merged by sort key (standing-orders.ts)
+            const standing = await standingOrders(ctx.db, tenantId, input);
+            const { offset, limit } = windowFor(input, standing.length);
+
             const [rows, [counted]] = await Promise.all([
                 ctx.db
                     .select()
                     .from(movement)
                     .where(where)
                     .orderBy(...ordering(input.sort, input.dir))
-                    .limit(input.pageSize)
-                    .offset((input.page - 1) * input.pageSize),
+                    .limit(limit)
+                    .offset(offset),
                 ctx.db.select({ value: count() }).from(movement).where(where),
             ]);
 
-            return {
-                items: await projectRows(ctx.db, rows, tenantId),
-                total: counted?.value ?? 0,
+            return mergePage({
+                window: await projectRows(ctx.db, rows, tenantId),
+                windowOffset: offset,
+                movementTotal: counted?.value ?? 0,
+                standing,
+                sort: input.sort,
+                dir: input.dir,
                 page: input.page,
                 pageSize: input.pageSize,
-            };
+            });
         }),
 
     /**
@@ -852,14 +864,21 @@ export const movementsRouter = createTRPCRouter({
                     .groupBy(movement.status),
             ]);
 
+            // The standing orders among the rows count towards the sections and
+            // the three status tabs they can stand in, so a number agrees with its list
+            const standing = await standingCounts(ctx.db, tenantId, input.scope);
             const bySection: MovementStats["bySection"] = Object.fromEntries(
-                SECTIONS.map((section) => [section, Number(row?.[section] ?? 0)]),
+                SECTIONS.map((section) => [section, Number(row?.[section] ?? 0) + (standing.bySection[section] ?? 0)]),
             );
+            const byStatus: MovementStats["byStatus"] = Object.fromEntries(statuses.map((entry) => [entry.status, entry.value]));
+            for (const [status, value] of Object.entries(standing.byStatus) as Array<[MovementStatus, number]>) {
+                byStatus[status] = (byStatus[status] ?? 0) + value;
+            }
 
             return {
                 total: bySection.all ?? 0,
                 bySection,
-                byStatus: Object.fromEntries(statuses.map((entry) => [entry.status, entry.value])),
+                byStatus,
                 disputedByStatus: Object.fromEntries(disputedStatuses.map((entry) => [entry.status, entry.value])),
                 received: Number(row?.received ?? 0),
                 silent: Number(row?.silent ?? 0),

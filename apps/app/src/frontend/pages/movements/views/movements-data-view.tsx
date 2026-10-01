@@ -68,8 +68,13 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
     const { data: stats } = useSuspenseQuery(trpc.movements.stats.queryOptions({ scope }))
     const isRefreshing = useIsFetching({ queryKey: trpc.movements.list.pathKey() }) > 0
 
+    // A row opens its own page: the load's, or the standing order's
     const onOpen = useCallback(
-        (row: MovementRow) => router.push({ pathname: "/orders/load/[loadId]", params: { loadId: row.id } }),
+        (row: MovementRow) => router.push(
+            row.kind === "multi" ? { pathname: "/orders/multi/[orderId]", params: { orderId: row.id } }
+                : row.kind === "rental" ? { pathname: "/orders/rental/[orderId]", params: { orderId: row.id } }
+                    : { pathname: "/orders/load/[loadId]", params: { loadId: row.id } },
+        ),
         [router],
     )
 

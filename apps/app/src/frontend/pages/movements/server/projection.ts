@@ -790,6 +790,8 @@ export function toMovementRow(
         // The partner carrying the load is not told the reference the owner's
         // own client gave it — the same line `clientReference` is cut on below
         ref: role === "executor" ? counterpartyRef(row) : movementRef(row),
+        kind: "trip",
+        order: null,
         apploadOrderId: apploadOf(row, ctx.apploadRefs)?.orderId ?? null,
         execution: row.execution,
         status: row.status,

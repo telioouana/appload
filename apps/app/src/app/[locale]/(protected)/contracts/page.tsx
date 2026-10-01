@@ -18,5 +18,5 @@ export default async function ContractsPage({
     const tab = search.tab === "partners" ? "partners" : search.tab === "own" ? "own" : undefined
     const locale = await getLocale()
 
-    redirect(getPathname({ href: { pathname: "/orders/[section]", params: { section: "multi" }, query: tab ? { tab } : undefined }, locale }))
+    redirect(getPathname({ href: { pathname: "/orders/[section]", params: { section: "all" }, query: tab ? { tab } : undefined }, locale }))
 }

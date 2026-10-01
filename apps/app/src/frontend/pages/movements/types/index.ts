@@ -17,6 +17,7 @@ import type { EditableGroup } from "@workspace/domain/movements/policy";
 import type { CostTotal, Currency, PaymentStatus } from "@workspace/domain/movements/money";
 import type { MovementFlag, TransitionBlocker } from "@workspace/domain/movements/status";
 import type { ContractSummary, OpenShare } from "@/frontend/pages/contracts/server/projection";
+import type { ContractState } from "@workspace/domain/contracts/state";
 import type { OrderStatusKey } from "@workspace/ui/customs/badge/status-badge";
 
 export type {
@@ -74,10 +75,7 @@ export const scopeOfTab = (tab: MovementTab): MovementScope => (tab === "partner
 export const tabOfScope = (scope: MovementScope): MovementTab => (scope === "orders" ? "partners" : "own");
 
 /** The sections, the same seven on either tab. */
-// "multi" is the multi-trip orders — the `contract` rows — listed by the
-// contracts views behind the same tabs; it has no status menu of its own
-// …and "rental" the trucks at a client's service by the day, listed by the rentals views
-export const SECTIONS = ["all", "procurement", "booked", "in-progress", "delivered", "disputes", "history", "multi", "rental"] as const;
+export const SECTIONS = ["all", "procurement", "booked", "in-progress", "delivered", "disputes", "history"] as const;
 export type MovementSection = (typeof SECTIONS)[number];
 
 /**
@@ -135,8 +133,6 @@ export const STATUS_TABS: Record<MovementScope, Record<MovementSection, readonly
         delivered: ["delivered"],
         disputes: EVERY_STATUS,
         history: ["closed", "cancelled"],
-        multi: [],
-        rental: [],
     },
     trips: {
         all: EVERY_TRIP_STATUS,
@@ -146,8 +142,6 @@ export const STATUS_TABS: Record<MovementScope, Record<MovementSection, readonly
         delivered: ["delivered"],
         disputes: EVERY_TRIP_STATUS,
         history: ["closed", "cancelled"],
-        multi: [],
-        rental: [],
     },
 };
 
@@ -249,6 +243,26 @@ export type MovementPing = {
     placeLabel: string | null;
 };
 
+/**
+ * What a row of the list is: a trip, a multi-trip order the trips draw down,
+ * or a rental. The two standing orders sit among the trips, told apart by a
+ * column, and open their own page.
+ */
+export const MOVEMENT_KINDS = ["trip", "multi", "rental"] as const;
+export type MovementKind = (typeof MOVEMENT_KINDS)[number];
+
+/** A standing order's own reading, on its row: where it stands and how far along it is. */
+export type MovementOrderInfo = {
+    state: ContractState;
+    /** Drawn down so far, and of how much: trips or tons on a multi-trip order, billable days on a rental */
+    done: number;
+    of: number | null;
+    unit: "trip" | "ton" | "day";
+    /** The trucks on a rental, and the transporters providing them */
+    trucks: number;
+    providers: number;
+};
+
 /** The multi-trip order a trip was filed under: which trip of it this is, and of how many when the order has a number */
 export type MovementParent = {
     id: string;
@@ -262,6 +276,9 @@ export type MovementParent = {
 export type MovementRow = {
     id: string;
     ref: string;
+    kind: MovementKind;
+    /** A standing order's own reading; null on a trip */
+    order: MovementOrderInfo | null;
     /** The Appload order this row is the tenant's side of, "APPL021.26"; null on its own loads */
     apploadOrderId: string | null;
     execution: MovementExecution;

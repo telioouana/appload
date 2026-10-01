@@ -7,9 +7,7 @@
         "in-progress": "In progress",
         "delivered": "Delivered",
         "disputes": "Disputes",
-        "history": "History",
-        "multi": "Multi-trip",
-        "rental": "Rentals"
+        "history": "History"
     },
     "titles": {
         "all": "All orders",
@@ -18,9 +16,7 @@
         "in-progress": "In progress",
         "delivered": "Delivered",
         "disputes": "Loads in dispute",
-        "history": "History",
-        "multi": "Multi-trip orders",
-        "rental": "Rentals"
+        "history": "History"
     },
     "description": {
         "orders": {
@@ -95,7 +91,8 @@
         "dates": "Dates",
         "receivable": "To receive",
         "payable": "To pay",
-        "last-ping": "Last position"
+        "last-ping": "Last position",
+        "kind": "Type"
     },
     "values": {
         "own-account": "Own account",
@@ -107,7 +104,14 @@
         "no-price": "No price",
         "no-pings": "No positions",
         "parent-trip": "trip {position} · {ref}",
-        "parent-trip-of": "trip {position} of {of} · {ref}"
+        "parent-trip-of": "trip {position} of {of} · {ref}",
+        "progress-of": "{done} of {of}",
+        "any-route": "Any route",
+        "no-site": "Site to be set",
+        "until": "Until {date}",
+        "open-period": "Open-ended",
+        "trucks": "{count, plural, one {# truck} other {# trucks}}",
+        "several-partners": "{count, plural, one {# transporter} other {# transporters}}"
     },
     "tiles": {
         "received": "Offered to you",
@@ -872,5 +876,10 @@
         "quotaExceeded": "This month's plan is used up.",
         "sendFailed": "The request was saved, but the message did not reach the driver.",
         "unknown": "Something went wrong. Try again."
+    },
+    "kinds": {
+        "trip": "Trip",
+        "multi": "Multi-trip",
+        "rental": "Rental"
     }
 }

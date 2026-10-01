@@ -33,6 +33,7 @@ import { place } from "@/frontend/pages/movements/components/badges"
  */
 export function RentalHeader({ rental }: { rental: RentalDetail }) {
     const t = useTranslations("App.rentals")
+    const tl = useTranslations("App.loads")
     const f = useFormatter()
     const { transition } = useRentalMutations()
 
@@ -62,16 +63,16 @@ export function RentalHeader({ rental }: { rental: RentalDetail }) {
             <header className="flex flex-col gap-4 px-2 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex min-w-0 items-start gap-3">
                     <Button asChild size="icon" variant="outline" aria-label={t("title")} className="mt-4 shrink-0">
-                        <Link href={{ pathname: "/orders/[section]", params: { section: "rental" }, query: { tab: owner ? "own" : "partners" } }}>
+                        <Link href={{ pathname: "/orders/[section]", params: { section: "all" }, query: { tab: owner ? "own" : "partners" } }}>
                             <IconArrowLeft className="size-4" stroke={1.5} />
                         </Link>
                     </Button>
 
                     <div className="flex min-w-0 flex-col gap-1">
                         <nav className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                            <span>{t("title")}</span>
+                            <span>{tl("eyebrow")}</span>
                             <span aria-hidden>/</span>
-                            <span className="text-foreground/70">{t(`tabs.${owner ? "own" : "partners"}`)}</span>
+                            <span className="text-foreground/70">{tl("kinds.rental")}</span>
                         </nav>
 
                         <div className="flex flex-wrap items-center gap-2.5">

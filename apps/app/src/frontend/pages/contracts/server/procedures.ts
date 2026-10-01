@@ -68,9 +68,9 @@ const ListInput = z.object({
 
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
 
-/** "own" is the company's books; "partners" every contract another company named it on. */
-const tabPredicate = (tab: "own" | "partners", tenantId: string): SQL =>
-    tab === "own" ? eq(contract.organizationId, tenantId) : sql`${contract.organizationId} <> ${tenantId}`;
+/** "own" is the company's books; "partners" every contract another company named it on; "all" both. */
+const tabPredicate = (tab: "own" | "partners" | "all", tenantId: string): SQL | undefined =>
+    tab === "all" ? undefined : tab === "own" ? eq(contract.organizationId, tenantId) : sql`${contract.organizationId} <> ${tenantId}`;
 
 function searchWhere(term: string): SQL {
     const pattern = `%${escapeLike(term)}%`;
@@ -88,7 +88,7 @@ function searchWhere(term: string): SQL {
  * them read in two queries. Contracts are few per company, and their state
  * is derived, so the list filters, sorts and pages in memory.
  */
-async function visibleSet(db: Db, tenantId: string, tab: "own" | "partners", search?: string) {
+async function visibleSet(db: Db, tenantId: string, tab: "own" | "partners" | "all", search?: string) {
     const rows = await db
         .select()
         .from(contract)
@@ -203,6 +203,41 @@ function moneyOf(row: Contract, mine: ContractAllocation[], role: ContractRole, 
     if (role === "client") return whole(row.sellPrice);
     if (role === "carrier") return shares();
     return row.sellPrice ? whole(row.sellPrice) : shares();
+}
+
+/**
+ * Every multi-trip order the company can read, the way the orders list
+ * carries it among the trips: the row, who provides the trucks on it (the
+ * reader's own shares — a client is not told the carriers), and the one
+ * figure the reader follows, drawn down so far on its side of the deal.
+ */
+export type StandingOrderRow = {
+    view: ContractRow;
+    providers: Array<{ id: string | null; name: string | null }>;
+    money: { leg: "sell" | "buy"; amount: number } | null;
+};
+
+export async function standingOrderRows(db: Db, tenantId: string): Promise<StandingOrderRow[]> {
+    const { rows, byContract, usage, names } = await visibleSet(db, tenantId, "all");
+
+    return rows.flatMap((row) => {
+        const all = byContract.get(row.id) ?? [];
+        const role = roleOn(row, all, tenantId);
+        if (!role) return [];
+
+        const { view, progress, mine } = toRow(row, all, role, tenantId, usage, names);
+        const drawn = moneyOf(row, mine, role, progress).map((leg) => leg.drawn).filter((value): value is number => value !== null);
+        // A client pays, a carrier is paid, the owner earns its price when it has one and pays its shares otherwise
+        const leg = role === "client" ? "buy" : role === "carrier" ? "sell" : row.sellPrice ? "sell" : "buy";
+
+        return [{
+            view,
+            providers: mine
+                .filter((share) => share.carrierOrgId || share.carrierName)
+                .map((share) => ({ id: share.carrierOrgId, name: share.carrierOrgId ? names.get(share.carrierOrgId) ?? null : share.carrierName })),
+            money: drawn.length === 0 ? null : { leg, amount: drawn.reduce((sum, value) => sum + value, 0) },
+        }];
+    });
 }
 
 const orderings: Record<"newest" | "period" | "reference", (a: ContractRow, b: ContractRow) => number> = {

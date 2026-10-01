@@ -7,9 +7,7 @@
         "in-progress": "Em curso",
         "delivered": "Entregues",
         "disputes": "Disputas",
-        "history": "Histórico",
-        "multi": "Várias viagens",
-        "rental": "Alugueres"
+        "history": "Histórico"
     },
     "titles": {
         "all": "Todos os pedidos",
@@ -18,9 +16,7 @@
         "in-progress": "Em curso",
         "delivered": "Entregues",
         "disputes": "Cargas em disputa",
-        "history": "Histórico",
-        "multi": "Pedidos com várias viagens",
-        "rental": "Alugueres"
+        "history": "Histórico"
     },
     "description": {
         "orders": {
@@ -95,7 +91,8 @@
         "dates": "Datas",
         "receivable": "A receber",
         "payable": "A pagar",
-        "last-ping": "Última posição"
+        "last-ping": "Última posição",
+        "kind": "Tipo"
     },
     "values": {
         "own-account": "Conta própria",
@@ -107,7 +104,14 @@
         "no-price": "Sem preço",
         "no-pings": "Sem posições",
         "parent-trip": "viagem {position} · {ref}",
-        "parent-trip-of": "viagem {position} de {of} · {ref}"
+        "parent-trip-of": "viagem {position} de {of} · {ref}",
+        "progress-of": "{done} de {of}",
+        "any-route": "Qualquer rota",
+        "no-site": "Local a definir",
+        "until": "Até {date}",
+        "open-period": "Em aberto",
+        "trucks": "{count, plural, one {# camião} other {# camiões}}",
+        "several-partners": "{count, plural, one {# transportador} other {# transportadores}}"
     },
     "tiles": {
         "received": "Oferecidas a si",
@@ -872,5 +876,10 @@
         "quotaExceeded": "O plano deste mês já foi usado.",
         "sendFailed": "O pedido foi guardado, mas a mensagem não chegou ao motorista.",
         "unknown": "Algo correu mal. Tente novamente."
+    },
+    "kinds": {
+        "trip": "Viagem",
+        "multi": "Várias viagens",
+        "rental": "Aluguer"
     }
 }
