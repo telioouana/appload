@@ -130,8 +130,8 @@ export const isApploadOrg = (organizationId: string | null | undefined): boolean
 
 // What a per-company reference counts. "REQ" is a load still collecting
 // offers, "ORD" the one it becomes once somebody is committed to moving it,
-// "CON" a contract; all numbered per organization, per kind, per year.
-export const REFERENCE_KIND = ["REQ", "ORD", "CON"] as const
+// a multi-trip order (the `contract` row) takes the next ORD number too; all numbered per organization, per kind, per year.
+export const REFERENCE_KIND = ["REQ", "ORD"] as const
 
 export type ReferenceKind = (typeof REFERENCE_KIND)[number]
 

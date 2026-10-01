@@ -116,7 +116,9 @@ function contractColumns(input: ContractInput) {
 
 export async function createContract(db: Db, actor: ContractActor, input: ContractInput): Promise<Contract> {
     await assertClient(db, actor.organizationId, input.clientOrgId);
-    const reference = await nextReference(db, actor.organizationId, "CON");
+    // An order like any other: the next number in the company's ORD series, so
+    // the order and the trips filed under it read as one family
+    const reference = await nextReference(db, actor.organizationId, "ORD");
 
     const [row] = await db
         .insert(contract)

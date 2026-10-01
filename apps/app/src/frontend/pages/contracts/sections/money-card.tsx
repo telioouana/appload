@@ -43,7 +43,10 @@ export function MoneyCard({ contract }: { contract: ContractDetail }) {
                         <dl key={line.currency} className="flex flex-col gap-2">
                             {lines.length > 1 && <dt className="text-muted-foreground text-xs font-medium">{line.currency}</dt>}
                             <DetailRow label={t("committed")}>
-                                {line.committed === null ? <span className="text-muted-foreground">{t("open")}</span> : money(line.committed, line.currency)}
+                                {line.committed !== null
+                                    ? money(line.committed, line.currency)
+                                    // No figure either because the quantity is open, or because nothing prices it
+                                    : <span className="text-muted-foreground">{t(contract.committedQty === null ? "open" : "no-price")}</span>}
                             </DetailRow>
                             {earns && (
                                 <>

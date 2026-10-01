@@ -374,6 +374,10 @@ then push `prod/admin` and the portal back to back.
   more clause: a live grant on the row's own company admits it. Purely
   additive; nothing changes for the portal's owner connection. Dev got it
   from `node packages/db/scripts/migrate.mjs`.
+- **No migration — reference series (stage/34):** a multi-trip order (the
+  `contract` row) is numbered from the company's **ORD** counter from now
+  on, like any order; the `CON` kind is no longer minted (rows that carry a
+  CON reference keep it). `migrate-quotes-to-contracts.mjs` mints ORD too.
 - `0031_activity_log_org_idx` — index on `activity_log (organization_id,
   created_at desc)` for the company's own record (portal Settings ›
   Activity). With it, the portal stamps every request-log row with the

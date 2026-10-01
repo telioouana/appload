@@ -127,7 +127,7 @@ async function main() {
         notes: "verify-contracts",
     });
     contractsHere.push(created.id);
-    check("a contract gets a CON number", /^CON-\d{4}-\d{2}$/.test(created.ref), created.ref);
+    check("a multi-trip order gets an ORD number", /^ORD-\d{4}-\d{2}$/.test(created.ref), created.ref);
 
     const shareB = await contracts(A.user).allocations.add({
         contractId: created.id, carrierOrgId: B.org, shareQty: 600, buyPrice: { model: "per-ton", rate: 1_500 },
@@ -334,7 +334,7 @@ async function cleanup() {
     }
     await db.delete(notification).where(and(eq(notification.entityType, "contract"), inArray(notification.entityId, contractsHere)));
     await db.delete(contract).where(eq(contract.notes, "verify-contracts"));
-    // The CON counters stay where the run left them: a number, once handed out, is
+    // The ORD counters stay where the run left them: a number, once handed out, is
     // never handed out again — a contract filed by hand between two runs keeps its
     await db.delete(activityLog).where(eq(activityLog.sessionId, SESSION_ID));
 }
