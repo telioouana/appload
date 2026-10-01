@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
-import { IconArrowUpRight, IconDownload } from "@tabler/icons-react"
+import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
+import { IconArrowUpRight, IconCash, IconDownload } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
+import { Badge } from "@workspace/ui/components/badge"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@workspace/ui/components/table"
 import { SectionCard } from "@workspace/ui/customs/detail/section-card"
@@ -16,21 +17,26 @@ import { useTRPC } from "@/backend/api/client"
 import type { ContractDetail } from "@/frontend/pages/contracts/types"
 import { MovementStatusChip, useMoney } from "@/frontend/pages/movements/components/badges"
 import { downloadLoadsCsv } from "@/frontend/pages/movements/lib/export-csv"
+import { PaymentDialog } from "@/frontend/pages/movements/sections/payment-dialog"
 import { movementsListInput } from "@/frontend/pages/movements/types"
 
 /**
  * The trips filed under the contract so far — under the shares the reader
  * may see. Each opens its own load page; the loads list, filtered on the
  * contract, has the rest of the kit, and the same slice downloads from here
- * as the file that list would give.
+ * as the file that list would give. Where a trip's settlement stands is on
+ * the row, and the owner records a payment on it from here — the same
+ * dialog the load page opens, on the trip's own legs.
  */
 export function TripsCard({ contract }: { contract: ContractDetail }) {
     const t = useTranslations("App.contracts.detail")
     const tv = useTranslations("App.orders")
+    const ts = useTranslations("App.loads.money.settlement")
     const f = useFormatter()
     const money = useMoney()
     const trpc = useTRPC()
     const queryClient = useQueryClient()
+    const [payingId, setPayingId] = useState<string | null>(null)
     const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
     const [isExporting, setExporting] = useState(false)
 
@@ -92,6 +98,7 @@ export function TripsCard({ contract }: { contract: ContractDetail }) {
                                 <TableHead className={head}>{t("trip-columns.loading")}</TableHead>
                                 <TableHead className={`${head} text-right`}>{t("trip-columns.weight")}</TableHead>
                                 <TableHead className={`${head} text-right`}>{t("trip-columns.total")}</TableHead>
+                                <TableHead className={head}>{t("trip-columns.payment")}</TableHead>
                             </TableRow>
                         </TableHeader>
 
@@ -117,12 +124,52 @@ export function TripsCard({ contract }: { contract: ContractDetail }) {
                                     <TableCell className={`${cell} text-right tabular-nums`}>
                                         {trip.total !== null && trip.currency ? money(trip.total, trip.currency) : <Dash />}
                                     </TableCell>
+                                    <TableCell className={cell}>
+                                        {trip.settlement ? (
+                                            <span className="flex items-center gap-1.5">
+                                                <Badge variant={trip.settlement === "completed" ? "default" : "outline"} className="rounded-full font-normal">
+                                                    {ts(trip.settlement)}
+                                                </Badge>
+                                                {trip.canRecordPayment && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPayingId(trip.id)}
+                                                        title={t("actions.record-payment")}
+                                                        aria-label={t("actions.record-payment")}
+                                                        className="text-muted-foreground hover:text-foreground cursor-pointer"
+                                                    >
+                                                        <IconCash className="size-4" stroke={1.5} />
+                                                    </button>
+                                                )}
+                                            </span>
+                                        ) : <Dash />}
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
                 </div>
             )}
+
+            {payingId && (
+                <TripPayment
+                    loadId={payingId}
+                    onClose={() => {
+                        setPayingId(null)
+                        void queryClient.invalidateQueries({ queryKey: trpc.contracts.get.queryKey({ id: contract.id }) })
+                    }}
+                />
+            )}
         </SectionCard>
     )
+}
+
+/** The load page's payment dialog, on a trip picked from the order: the trip is read when asked for. */
+function TripPayment({ loadId, onClose }: { loadId: string; onClose: () => void }) {
+    const trpc = useTRPC()
+    const { data: load } = useQuery(trpc.movements.get.queryOptions({ id: loadId }))
+
+    if (!load) return null
+
+    return <PaymentDialog load={load} onClose={onClose} />
 }

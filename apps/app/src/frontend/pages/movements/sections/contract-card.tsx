@@ -25,7 +25,7 @@ export function ContractCard({ contract }: { contract: ContractSummary }) {
             <dl className="flex flex-col gap-2">
                 <DetailRow label={t("contract")}>
                     <Link
-                        href={{ pathname: "/contracts/[contractId]", params: { contractId: contract.id } }}
+                        href={{ pathname: "/orders/multi/[orderId]", params: { orderId: contract.id } }}
                         className="hover:underline"
                     >
                         <Mono>{contract.ref}</Mono>

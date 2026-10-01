@@ -12,7 +12,6 @@ import {
     IconCalendarCheck,
     IconChartHistogram,
     IconChecks,
-    IconFileText,
     IconGavel,
     IconHistory,
     IconLayoutDashboard,
@@ -20,6 +19,7 @@ import {
     IconMap2,
     IconMapPinOff,
     IconMessages,
+    IconPackages,
     IconPlus,
     IconSearch,
     IconShieldCheck,
@@ -113,6 +113,7 @@ const ORDER_ICONS: Record<MovementSection, Icon> = {
     "delivered": IconChecks,
     "disputes": IconGavel,
     "history": IconHistory,
+    "multi": IconPackages,
 };
 
 /**
@@ -201,16 +202,14 @@ export function Sidenav({
                 // (My trucks), turned down by one and waiting to be placed
                 // again (partners), or an Appload offer still to decide —
                 // all of it procurement work; held by a dispute on either side
+                // and a multi-trip order a transporter proposed, waiting on this company's yes
                 badge: section === "procurement"
                     ? sum(counts?.received, counts?.declined, counts?.offersToReview)
                     : section === "booked" ? counts?.toDispatch
-                        : section === "disputes" ? sum(counts?.disputes.trips, counts?.disputes.orders) : undefined,
+                        : section === "disputes" ? sum(counts?.disputes.trips, counts?.disputes.orders)
+                            : section === "multi" ? counts?.proposals : undefined,
             })),
         },
-        // The standing agreements the loads are filed under: many orders at
-        // once, so they sit beside the orders. A standing price on a lane is one
-        // of these too (open-ended), which is what the quotes page used to hold
-        { Icon: IconFileText, name: t("work.contracts"), match: "/contracts", path: "/contracts" },
         { Icon: IconMap2, name: t("work.map"), match: "/map", path: "/map" },
         {
             Icon: IconMessages,

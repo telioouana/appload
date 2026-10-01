@@ -80,9 +80,9 @@ export function useContractColumns() {
             meta: { label: t("columns.period"), sortKey: "period" },
             cell: ({ row }) => (
                 <span className="text-[13px] whitespace-nowrap">
-                    {f.dateTime(localDate(row.original.startsOn), { dateStyle: "medium" })}
-                    {" – "}
-                    {f.dateTime(localDate(row.original.endsOn), { dateStyle: "medium" })}
+                    {row.original.endsOn === null
+                        ? t("values.since", { date: f.dateTime(localDate(row.original.startsOn), { dateStyle: "medium" }) })
+                        : `${f.dateTime(localDate(row.original.startsOn), { dateStyle: "medium" })} – ${f.dateTime(localDate(row.original.endsOn), { dateStyle: "medium" })}`}
                 </span>
             ),
         },

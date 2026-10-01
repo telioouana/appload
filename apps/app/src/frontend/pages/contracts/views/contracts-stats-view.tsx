@@ -57,16 +57,20 @@ export function ContractsStatsView() {
         },
     ]
 
+    const shipper = session.organization.type === "shipper"
+    // A client reads what it has paid and still owes; a transporter what it was paid and is still owed
     const metrics: MoneyMetric[] = [
         { key: "committed", label: tm("committed"), kind: "amount" },
         { key: "drawn", label: tm("drawn"), kind: "amount" },
-        { key: "remaining", label: tm("remaining"), kind: "amount", emphasis: true },
+        { key: "remaining", label: tm("remaining"), kind: "amount" },
+        { key: shipper ? "paid" : "received", label: tm(shipper ? "paid" : "received"), kind: "amount", tone: "positive" },
+        { key: shipper ? "outstanding" : "receivable", label: tm(shipper ? "outstanding" : "receivable"), kind: "amount", tone: "negative", emphasis: true },
     ]
     const lines: MoneyLine[] = stats.money.lines.map(({ currency, ...values }) => ({ currency, values }))
     // The converted line only says something with two currencies, or one that is not the metical
     if (stats.money.total && !(lines.length === 1 && lines[0]?.currency === "MZN")) {
-        const { committed, drawn, remaining } = stats.money.total
-        lines.push({ currency: tm("approx"), values: { committed, drawn, remaining } })
+        const { rateDay: _rateDay, currency: _currency, ...values } = stats.money.total
+        lines.push({ currency: tm("approx"), values })
     }
 
     return (

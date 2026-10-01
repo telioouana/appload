@@ -11,6 +11,7 @@ import { useTRPC } from "@/backend/api/client"
 import { AllocationsCard } from "@/frontend/pages/contracts/sections/allocations-card"
 import { ContractHeader } from "@/frontend/pages/contracts/sections/contract-header"
 import { FileCard } from "@/frontend/pages/contracts/sections/file-card"
+import { MoneyCard } from "@/frontend/pages/contracts/sections/money-card"
 import { TermsCard } from "@/frontend/pages/contracts/sections/terms-card"
 import { TripsCard } from "@/frontend/pages/contracts/sections/trips-card"
 
@@ -45,6 +46,8 @@ export function ContractDetailView({ contractId }: { contractId: string }) {
             )}>
                 <div className="container-snap flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pb-2">
                     <TermsCard contract={contract} />
+
+                    <MoneyCard contract={contract} />
 
                     {contract.role !== "client" && <AllocationsCard contract={contract} />}
 

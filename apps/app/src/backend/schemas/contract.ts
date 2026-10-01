@@ -36,7 +36,8 @@ export const ContractInputSchema = z.object({
     origin: location.nullable().optional(),
     destination: location.nullable().optional(),
     startsOn: isoDate,
-    endsOn: isoDate,
+    /** Null is an open period: as long as the cargo lasts */
+    endsOn: isoDate.nullable(),
     /** Null is an open contract — no ceiling, drawn down while the cargo lasts */
     committedQty: quantity.nullable(),
     weightUnit: z.enum(WEIGHT_UNIT).nullable().optional(),

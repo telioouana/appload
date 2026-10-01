@@ -48,7 +48,7 @@ export function ContractsDataView() {
     const isRefreshing = useIsFetching({ queryKey: trpc.contracts.list.pathKey() }) > 0
 
     const onOpen = useCallback(
-        (row: ContractRow) => router.push({ pathname: "/contracts/[contractId]", params: { contractId: row.id } }),
+        (row: ContractRow) => router.push({ pathname: "/orders/multi/[orderId]", params: { orderId: row.id } }),
         [router],
     )
 

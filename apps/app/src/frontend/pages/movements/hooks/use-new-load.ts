@@ -4,6 +4,9 @@ import { create } from "zustand"
 
 import type { MovementExecution } from "@/frontend/pages/movements/types"
 
+/** One trip, or an order that takes several (a multi-trip order — the `contract` row) */
+export type NewLoadKind = "single" | "multi"
+
 type NewLoadState = {
     isOpen: boolean
     /**
@@ -18,7 +21,10 @@ type NewLoadState = {
     execution: MovementExecution
     /** The contract share the sheet opens prefilled from, when a contract page asked for the load */
     contractAllocationId: string | null
-    open: (execution: MovementExecution, options?: { contractAllocationId?: string }) => void
+    /** Null until the first question is answered: one trip, or several */
+    kind: NewLoadKind | null
+    open: (execution: MovementExecution, options?: { contractAllocationId?: string; kind?: NewLoadKind }) => void
+    choose: (kind: NewLoadKind) => void
     close: () => void
 }
 
@@ -33,6 +39,16 @@ export const useNewLoad = create<NewLoadState>((set) => ({
     armed: false,
     execution: "partner",
     contractAllocationId: null,
-    open: (execution, options) => set({ isOpen: true, armed: true, execution, contractAllocationId: options?.contractAllocationId ?? null }),
+    kind: null,
+    // A load filed from an order's share is one trip by definition; the rail's
+    // button knows nothing and asks
+    open: (execution, options) => set({
+        isOpen: true,
+        armed: true,
+        execution,
+        contractAllocationId: options?.contractAllocationId ?? null,
+        kind: options?.kind ?? (options?.contractAllocationId ? "single" : null),
+    }),
+    choose: (kind) => set({ kind }),
     close: () => set({ isOpen: false }),
 }))

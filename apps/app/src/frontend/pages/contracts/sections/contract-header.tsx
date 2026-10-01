@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Link } from "@/i18n/navigation"
 import { AllocationDialog } from "@/frontend/pages/contracts/sections/allocation-dialog"
 import { shareExecution, useShareLabel } from "@/frontend/pages/contracts/sections/allocations-card"
-import { ContractRoleChip, ContractStateChip } from "@/frontend/pages/contracts/sections/badges"
+import { ContractRoleChip, ContractStateChip, unitOf, useUnitLabel } from "@/frontend/pages/contracts/sections/badges"
 import { CloseContractDialog } from "@/frontend/pages/contracts/sections/close-contract-dialog"
 import { ContractSheet } from "@/frontend/pages/contracts/sections/contract-sheet"
 import { useContractMutations } from "@/frontend/pages/contracts/hooks/use-contract-mutations"
@@ -30,6 +30,7 @@ export function ContractHeader({ contract }: { contract: ContractDetail }) {
     const t = useTranslations("App.contracts")
     const f = useFormatter()
     const shareLabel = useShareLabel()
+    const unitLabel = useUnitLabel()
 
     const { transition } = useContractMutations()
     const { open: openNewLoad } = useNewLoad()
@@ -46,7 +47,17 @@ export function ContractHeader({ contract }: { contract: ContractDetail }) {
     const lane = contract.origin && contract.destination
         ? `${place(contract.origin)} → ${place(contract.destination)}`
         : t("values.any-lane")
-    const period = `${f.dateTime(new Date(contract.startsOn), { dateStyle: "medium" })} – ${f.dateTime(new Date(contract.endsOn), { dateStyle: "medium" })}`
+    const period = contract.endsOn === null
+        ? t("values.since", { date: f.dateTime(new Date(contract.startsOn), { dateStyle: "medium" }) })
+        : `${f.dateTime(new Date(contract.startsOn), { dateStyle: "medium" })} – ${f.dateTime(new Date(contract.endsOn), { dateStyle: "medium" })}`
+
+    // The countdown as trucks come to load: what is left, and roughly how
+    // many more trucks at the size of the ones filed so far — once there
+    // are enough of them to say
+    const { remaining, consumed, trips } = contract.progress
+    const trucksLeft = contract.basis === "weight" && remaining !== null && remaining > 0 && trips >= 3 && consumed > 0
+        ? Math.ceil(remaining / (consumed / trips))
+        : null
 
     // One share needs no asking which; several do
     const only = allocations.length === 1 ? allocations[0] : undefined
@@ -58,7 +69,7 @@ export function ContractHeader({ contract }: { contract: ContractDetail }) {
             <header className="flex flex-col gap-4 px-2 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex min-w-0 items-start gap-3">
                     <Button asChild size="icon" variant="outline" aria-label={t("title")} className="mt-4 shrink-0">
-                        <Link href={{ pathname: "/contracts", query: { tab: owner ? "own" : "partners" } }}>
+                        <Link href={{ pathname: "/orders/[section]", params: { section: "multi" }, query: { tab: owner ? "own" : "partners" } }}>
                             <IconArrowLeft className="size-4" stroke={1.5} />
                         </Link>
                     </Button>
@@ -87,6 +98,15 @@ export function ContractHeader({ contract }: { contract: ContractDetail }) {
                             <span aria-hidden>·</span>
                             <span className="truncate">{period}</span>
                         </p>
+
+                        {remaining !== null && contract.state !== "closed" && (
+                            <p className="text-sm tabular-nums">
+                                <span className={remaining > 0 ? "font-medium" : "text-muted-foreground"}>
+                                    {t("detail.remaining-line", { remaining: unitLabel(unitOf(contract.basis), Math.max(remaining, 0)) })}
+                                </span>
+                                {trucksLeft !== null && <span className="text-muted-foreground"> · {t("detail.trucks-left", { count: trucksLeft })}</span>}
+                            </p>
+                        )}
                     </div>
                 </div>
 

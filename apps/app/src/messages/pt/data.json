@@ -10,11 +10,11 @@
         },
         "own": {
             "title": "As suas próprias cargas",
-            "body": "As cargas que regista para os seus clientes, entrega aos seus parceiros ou move com a sua frota não são assunto da Appload. A própria base de dados recusa a ligação dos nossos colaboradores nessas linhas: nem as cargas, nem os seus custos, documentos ou posições, nem a sua lista de parceiros, nem os seus contratos, nem as suas conversas. Isto é imposto pela segurança por linha do Postgres, não por uma promessa na aplicação."
+            "body": "As cargas que regista para os seus clientes, entrega aos seus parceiros ou move com a sua frota não são assunto da Appload. A própria base de dados recusa a ligação dos nossos colaboradores nessas linhas: nem as cargas, nem os seus custos, documentos ou posições, nem a sua lista de parceiros, nem os seus pedidos com várias viagens, nem as suas conversas. Isto é imposto pela segurança por linha do Postgres, não por uma promessa na aplicação."
         },
         "support": {
             "title": "Acesso do suporte",
-            "body": "Se precisar de ajuda com uma carga, um responsável da sua empresa pode abrir as suas cargas ao suporte da Appload por um dia, uma semana ou um mês, com o motivo registado, em Definições › Segurança. Enquanto aberto, a nossa equipa lê as suas próprias cargas, contratos e lista de parceiros, sem preços, e apenas isso. Pode fechar a qualquer momento.",
+            "body": "Se precisar de ajuda com uma carga, um responsável da sua empresa pode abrir as suas cargas ao suporte da Appload por um dia, uma semana ou um mês, com o motivo registado, em Definições › Segurança. Enquanto aberto, a nossa equipa lê as suas próprias cargas, pedidos e lista de parceiros, sem preços, e apenas isso. Pode fechar a qualquer momento.",
             "link": "Abrir Definições › Segurança"
         },
         "log": {

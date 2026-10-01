@@ -70,7 +70,7 @@ export function ActivityCard() {
                                     </Link>
                                 )}
                                 {row.entityType === "contract" && row.entityId && (
-                                    <Link href={{ pathname: "/contracts/[contractId]", params: { contractId: row.entityId } }} className="text-muted-foreground hover:text-foreground inline-flex shrink-0 items-center gap-0.5 text-xs">
+                                    <Link href={{ pathname: "/orders/multi/[orderId]", params: { orderId: row.entityId } }} className="text-muted-foreground hover:text-foreground inline-flex shrink-0 items-center gap-0.5 text-xs">
                                         {t("open-contract")}<IconArrowUpRight className="size-3" stroke={1.5} />
                                     </Link>
                                 )}

@@ -19,6 +19,7 @@ import {
     updateContract,
 } from "@workspace/domain/contracts/apply";
 import { latestRate, toMzn } from "@workspace/domain/contracts/fx";
+import { foldOrderMoney } from "@workspace/domain/contracts/money";
 import { tripDefaultsFor, type TripDefaults } from "@workspace/domain/contracts/prefill";
 import { commitmentValue, consumedValue } from "@workspace/domain/contracts/price";
 import { allocationUsage, summarizeProgress, type AllocationUsage, type ContractProgress } from "@workspace/domain/contracts/progress";
@@ -228,12 +229,23 @@ async function rigsFor(db: Db, allocations: ContractAllocation[]) {
     };
 }
 
-/** What a trip is worth to whoever is reading: what it pays out on a partner's row, what it earns otherwise. */
-function tripTotal(row: Movement, tenantId: string): { total: number | null; currency: ContractTripRow["currency"] } {
-    const payable = row.organizationId === tenantId && row.execution === "partner";
-    const total = payable ? row.buyTotal : row.organizationId === tenantId ? row.sellTotal : row.buyTotal;
-    const currency = payable ? row.buyCurrency : row.organizationId === tenantId ? row.sellCurrency : row.buyCurrency;
-    return { total: total === null ? null : Number(total), currency };
+/**
+ * What a trip is worth to whoever is reading, and where its settlement
+ * stands: the buy leg on the owner's partner row (what it pays out) and on
+ * a row somebody else owns (what the reader is paid or pays), the sell leg
+ * on the reader's own row otherwise.
+ */
+function tripTotal(row: Movement, tenantId: string): Pick<ContractTripRow, "total" | "currency" | "settlement" | "settled" | "canRecordPayment"> {
+    const owned = row.organizationId === tenantId;
+    const buy = (owned && row.execution === "partner") || !owned;
+    const total = buy ? row.buyTotal : row.sellTotal;
+    return {
+        total: total === null ? null : Number(total),
+        currency: buy ? row.buyCurrency : row.sellCurrency,
+        settlement: total === null ? null : buy ? row.buySettlement : row.sellSettlement,
+        settled: total === null ? null : Number(buy ? row.buyPaidAmount : row.sellReceivedAmount),
+        canRecordPayment: owned && total !== null && row.status !== "cancelled",
+    };
 }
 
 async function detailOf(db: Db, id: string, tenantId: string, orgRole: OrgRole): Promise<ContractDetail> {
@@ -245,11 +257,22 @@ async function detailOf(db: Db, id: string, tenantId: string, orgRole: OrgRole):
     const { view, progress, mine: visible } = toRow(row, all, role, tenantId, usage, names);
     const rigs = await rigsFor(db, visible);
 
-    const trips = visible.length === 0 ? [] : await db
+    // A client reads no shares but every trip filed for it: the owner's rows
+    // naming it are its own to see (visibleMovements), and the order's money
+    // and payments live on them
+    const under = role === "client" ? all : visible;
+    const trips = under.length === 0 ? [] : await db
         .select()
         .from(movement)
-        .where(and(inArray(movement.contractAllocationId, visible.map((share) => share.id)), visibleMovements(tenantId)))
+        .where(and(inArray(movement.contractAllocationId, under.map((share) => share.id)), visibleMovements(tenantId)))
         .orderBy(desc(movement.createdAt));
+    const money = foldOrderMoney({
+        role,
+        tenantId,
+        contract: { basis: row.basis, committedQty: row.committedQty, currency: row.currency, sellPrice: row.sellPrice },
+        shares: visible,
+        trips,
+    });
 
     const canManage = role === "owner" && isOrgAuthorized(orgRole, "contract", ["update"]);
     const open = row.status !== "closed";
@@ -291,6 +314,7 @@ async function detailOf(db: Db, id: string, tenantId: string, orgRole: OrgRole):
             ...tripTotal(trip, tenantId),
             createdAt: trip.createdAt,
         })),
+        money,
         permissions: {
             canEdit: canManage && open,
             canAllocate: canManage && open,
@@ -339,6 +363,16 @@ export const contractsRouter = createTRPCRouter({
             const { rows, byContract, usage, names } = await visibleSet(ctx.db, tenantId, input.tab);
             const byState: ContractStats["byState"] = { draft: 0, proposed: 0, active: 0, exhausted: 0, expired: 0, closed: 0 };
             const lines = new Map<ContractMoneyLine["currency"], ContractMoneyLine>();
+            const emptyLine = (currency: ContractMoneyLine["currency"]): ContractMoneyLine =>
+                ({ currency, committed: 0, drawn: 0, remaining: 0, received: 0, receivable: 0, paid: 0, outstanding: 0 });
+
+            // Every trip under the tab's standing orders, once, for what has moved on them
+            const liveIds = rows.filter((row) => row.status !== "closed").flatMap((row) => (byContract.get(row.id) ?? []).map((share) => share.id));
+            const trips = liveIds.length === 0 ? [] : await ctx.db
+                .select()
+                .from(movement)
+                .where(and(inArray(movement.contractAllocationId, liveIds), visibleMovements(tenantId)));
+            const shareContract = new Map(rows.flatMap((row) => (byContract.get(row.id) ?? []).map((share) => [share.id, row.id] as const)));
 
             for (const row of rows) {
                 const all = byContract.get(row.id) ?? [];
@@ -350,7 +384,7 @@ export const contractsRouter = createTRPCRouter({
                 // A closed contract's money is history; the strip is what stands
                 if (row.status === "closed") continue;
 
-                const line = lines.get(row.currency) ?? { currency: row.currency, committed: 0, drawn: 0, remaining: 0 };
+                const line = lines.get(row.currency) ?? emptyLine(row.currency);
                 for (const { committed, drawn } of moneyOf(row, mine, role, progress)) {
                     line.committed += committed ?? 0;
                     line.drawn += drawn ?? 0;
@@ -358,15 +392,31 @@ export const contractsRouter = createTRPCRouter({
                     line.remaining += committed === null ? 0 : committed - (drawn ?? 0);
                 }
                 lines.set(row.currency, line);
+
+                const folded = foldOrderMoney({
+                    role,
+                    tenantId,
+                    contract: { basis: row.basis, committedQty: row.committedQty, currency: row.currency, sellPrice: row.sellPrice },
+                    shares: mine,
+                    trips: trips.filter((trip) => trip.contractAllocationId !== null && shareContract.get(trip.contractAllocationId) === row.id),
+                });
+                for (const moved of folded.lines) {
+                    const target = lines.get(moved.currency) ?? emptyLine(moved.currency);
+                    target.received += moved.received;
+                    target.receivable += moved.receivable;
+                    target.paid += moved.paid;
+                    target.outstanding += moved.outstanding;
+                    lines.set(moved.currency, target);
+                }
             }
 
             const rate = lines.size > 0 ? await latestRate(ctx.db) : null;
-            const total: ContractStats["money"]["total"] = rate ? { currency: "MZN", committed: 0, drawn: 0, remaining: 0, rateDay: rate.day } : null;
+            const total: ContractStats["money"]["total"] = rate ? { ...emptyLine("MZN"), rateDay: rate.day } : null;
             for (const line of lines.values()) {
                 if (!total || !rate) break;
-                total.committed += toMzn(line.currency, line.committed, rate);
-                total.drawn += toMzn(line.currency, line.drawn, rate);
-                total.remaining += toMzn(line.currency, line.remaining, rate);
+                for (const key of ["committed", "drawn", "remaining", "received", "receivable", "paid", "outstanding"] as const) {
+                    total[key] += toMzn(line.currency, line[key], rate);
+                }
             }
 
             return { total: rows.length, byState, money: { lines: [...lines.values()], total } };

@@ -5,6 +5,7 @@ import { and, count, desc, eq, gte, inArray, isNotNull, isNull, ne, or, sql, typ
 import { alias } from "drizzle-orm/pg-core";
 
 import type { db as Database } from "@workspace/db/db";
+import { contract, contractAllocation } from "@workspace/db/contracts";
 import { trailer } from "@workspace/db/fleet";
 import {
     movement,
@@ -57,6 +58,7 @@ import type {
     MovementFlag,
     MovementMoney,
     MovementParty,
+    MovementParent,
     MovementPermissions,
     MovementPing,
     MovementQuoteSummary,
@@ -690,6 +692,67 @@ const guardsOf = (row: Movement, unapprovedPhotos: number, disputeOpen: boolean)
 const party = (id: string | null, fallback: string | null, names: Map<string, string>): MovementParty | null =>
     id ? { id, name: names.get(id) ?? null } : fallback ? { id: null, name: fallback } : null;
 
+/**
+ * The multi-trip order each linked trip was filed under, with the trip's
+ * place in it: the n-th live trip by filing order. One query over the
+ * orders the page's rows touch; a cancelled trip keeps its parent and
+ * loses its place.
+ */
+export async function loadParents(db: Db, rows: Movement[]): Promise<Map<string, MovementParent>> {
+    const allocationIds = [...new Set(rows.map((row) => row.contractAllocationId).filter((id): id is string => id !== null))];
+    if (allocationIds.length === 0) return new Map();
+
+    const ranked = await db
+        .select({
+            id: movement.id,
+            status: movement.status,
+            contractId: contract.id,
+            reference: contract.reference,
+            basis: contract.basis,
+            committedQty: contract.committedQty,
+            position: sql<number>`row_number() over (partition by ${contract.id} order by ${movement.createdAt}, ${movement.id})::int`,
+        })
+        .from(movement)
+        .innerJoin(contractAllocation, eq(contractAllocation.id, movement.contractAllocationId))
+        .innerJoin(contract, eq(contract.id, contractAllocation.contractId))
+        .where(and(
+            sql`${contract.id} in (select a."contract_id" from "contract_allocation" a where ${inArray(sql`a."id"`, allocationIds)})`,
+            sql`${movement.status} <> 'cancelled'`,
+        ));
+
+    const byId = new Map(ranked.map((row) => [row.id, row]));
+    const parents = new Map<string, MovementParent>();
+
+    for (const row of rows) {
+        const live = byId.get(row.id);
+        if (live) {
+            parents.set(row.id, {
+                id: live.contractId,
+                ref: live.reference ?? "—",
+                position: live.position,
+                of: live.basis === "trips" && live.committedQty !== null ? Number(live.committedQty) : null,
+            });
+        }
+    }
+
+    // A cancelled trip is not ranked above; it still names its order
+    const unranked = rows.filter((row) => row.contractAllocationId !== null && !parents.has(row.id));
+    if (unranked.length > 0) {
+        const named = await db
+            .select({ allocationId: contractAllocation.id, contractId: contract.id, reference: contract.reference, basis: contract.basis, committedQty: contract.committedQty })
+            .from(contractAllocation)
+            .innerJoin(contract, eq(contract.id, contractAllocation.contractId))
+            .where(inArray(contractAllocation.id, [...new Set(unranked.map((row) => row.contractAllocationId as string))]));
+        const byAllocation = new Map(named.map((row) => [row.allocationId, row]));
+        for (const row of unranked) {
+            const parent = byAllocation.get(row.contractAllocationId as string);
+            if (parent) parents.set(row.id, { id: parent.contractId, ref: parent.reference ?? "—", position: null, of: parent.basis === "trips" && parent.committedQty !== null ? Number(parent.committedQty) : null });
+        }
+    }
+
+    return parents;
+}
+
 export function toMovementRow(
     row: Movement,
     role: MovementRole,
@@ -712,6 +775,8 @@ export function toMovementRow(
         candidate?: boolean;
         /** The open quote round on the row (`loadQuoteSummaries`); owner only */
         quotes?: MovementQuoteSummary | null;
+        /** The multi-trip order the row draws down (`loadParents`) */
+        parent?: MovementParent | null;
     },
 ): MovementRow {
     const owner = role === "owner";
@@ -755,6 +820,7 @@ export function toMovementRow(
         flags: owner ? movementFlags(guardsOf(row, ctx.unapprovedPhotos ?? 0, ctx.inDispute ?? false), row.status) : [],
         lastPing: ctx.pings.last.get(ctx.trailId) ?? null,
         pingCount: ctx.pings.counts.get(ctx.trailId) ?? 0,
+        parent: ctx.parent ?? null,
         version: row.version,
         createdAt: row.createdAt,
     };

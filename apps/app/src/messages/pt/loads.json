@@ -7,7 +7,8 @@
         "in-progress": "Em curso",
         "delivered": "Entregues",
         "disputes": "Disputas",
-        "history": "Histórico"
+        "history": "Histórico",
+        "multi": "Várias viagens"
     },
     "titles": {
         "all": "Todos os pedidos",
@@ -16,7 +17,8 @@
         "in-progress": "Em curso",
         "delivered": "Entregues",
         "disputes": "Cargas em disputa",
-        "history": "Histórico"
+        "history": "Histórico",
+        "multi": "Pedidos com várias viagens"
     },
     "description": {
         "orders": {
@@ -65,8 +67,8 @@
         "NO_CARRIER": "Sem transportador",
         "NO_PRICE": "Sem preço acordado",
         "PHOTOS_UNAPPROVED": "Fotos de carregamento por aprovar",
-        "CONTRACT_OVER_COMMITTED": "Acima da quantidade contratada",
-        "CONTRACT_LANE_MISMATCH": "Fora da rota do contrato"
+        "CONTRACT_OVER_COMMITTED": "Acima da quantidade pedida",
+        "CONTRACT_LANE_MISMATCH": "Fora da rota do pedido"
     },
     "header": {
         "flags": "{count, plural, one {# alerta} other {# alertas}}"
@@ -100,7 +102,9 @@
         "due": "Prevista {date}",
         "no-due-date": "Sem data prevista",
         "no-price": "Sem preço",
-        "no-pings": "Sem posições"
+        "no-pings": "Sem posições",
+        "parent-trip": "viagem {position} · {ref}",
+        "parent-trip-of": "viagem {position} de {of} · {ref}"
     },
     "tiles": {
         "received": "Oferecidas a si",
@@ -521,8 +525,8 @@
     "detail": {
         "meta": "Carga",
         "contract": {
-            "title": "Contrato",
-            "contract": "Contrato",
+            "title": "Pedido com várias viagens",
+            "contract": "Pedido",
             "with": "Com",
             "own-fleet": "Frota própria",
             "state": "Estado",
@@ -579,9 +583,9 @@
             "partner-hint": "Um pedido que outro transportador faz"
         },
         "contract": {
-            "label": "Contrato",
-            "hint": "Registe esta carga sob uma parte de um contrato: as partes, a rota e o preço preenchem-se como valores por defeito que pode alterar.",
-            "none": "Sem contrato",
+            "label": "Pedido com várias viagens",
+            "hint": "Registe esta viagem sob um pedido com várias viagens: as partes, a rota e o preço preenchem-se como valores por defeito que pode alterar.",
+            "none": "Nenhum",
             "own-fleet": "Frota própria",
             "option": "{ref} · {counterparty} · {remaining}",
             "open-share": "sem limite",
@@ -687,7 +691,15 @@
         "file": "Registar carga",
         "save": "Guardar alterações",
         "saving": "A guardar…",
-        "cancel": "Cancelar"
+        "cancel": "Cancelar",
+        "kind": {
+            "title": "Nova carga",
+            "description": "Uma viagem, ou um pedido que precisa de várias?",
+            "single": "Uma viagem",
+            "single-hint": "Um camião, uma carga, uma entrega.",
+            "multi": "Várias viagens",
+            "multi-hint": "Uma quantidade, ou um número de viagens, ao longo de um período. Os camiões vão sendo registados à medida que carregam e o pedido vai sendo consumido."
+        }
     },
     "toasts": {
         "created": "{ref} registada",

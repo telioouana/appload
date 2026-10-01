@@ -109,6 +109,7 @@ import {
     loadOffRoute,
     loadOrgEmail,
     loadOwn,
+    loadParents,
     loadPings,
     loadQuoteSummaries,
     loadRequests,
@@ -572,7 +573,7 @@ async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<
     const roles = rows.map((row) => ({ row, role: roleOf(row, tenantId) }));
     const trails = await trailIds(db, rows);
     const linkedTerminals = rows.filter((row) => row.executionMovementId).map((row) => trails.get(row.id) ?? row.id);
-    const [names, pings, rigs, disputed, offRoute, silent, photos, apploadRefs, quotes] = await Promise.all([
+    const [names, pings, rigs, disputed, offRoute, silent, photos, apploadRefs, quotes, parents] = await Promise.all([
         loadNames(db, rows.flatMap((row) => [row.organizationId, row.clientOrgId, row.carrierOrgId])),
         loadPings(db, [...trails.values()]),
         loadTerminalRigs(db, linkedTerminals),
@@ -583,6 +584,7 @@ async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<
         loadApploadRefs(db, rows.map((row) => row.orderId)),
         // Only the owner's own partner loads can be out for quotes
         loadQuoteSummaries(db, rows.filter((row) => row.organizationId === tenantId && row.execution === "partner").map((row) => row.id)),
+        loadParents(db, rows),
     ]);
 
     return roles.map(({ row, role }) => {
@@ -592,6 +594,7 @@ async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<
             pings,
             trailId,
             apploadRefs,
+            parent: parents.get(row.id) ?? null,
             terminalRig: rigs.get(trailId) ?? null,
             candidate: isCandidate(row, role, tenantId),
             quotes: quotes.get(row.id) ?? null,

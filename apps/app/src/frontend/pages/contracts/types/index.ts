@@ -1,11 +1,14 @@
 import type { ContractBasis, ContractStatus } from "@workspace/db/contracts";
 import type { Location } from "@workspace/db/orders";
-import type { CURRENCY, FISCAL_REGIME, PriceModel, WEIGHT_UNIT } from "@workspace/db/types";
+import type { CURRENCY, FISCAL_REGIME, PAYMENT_STATUS, PriceModel, WEIGHT_UNIT } from "@workspace/db/types";
 import type { MovementExecution, MovementStatus } from "@workspace/db/movements";
 import type { ContractRole } from "@workspace/domain/contracts/access";
+import type { OrderMoney } from "@workspace/domain/contracts/money";
 import type { ContractState } from "@workspace/domain/contracts/state";
 
-export type { ContractBasis, ContractRole, ContractState, ContractStatus, Location, PriceModel };
+export type { ContractBasis, ContractRole, ContractState, ContractStatus, Location, OrderMoney, PriceModel };
+
+export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
 
 export type Currency = (typeof CURRENCY)[number];
 export type FiscalRegime = (typeof FISCAL_REGIME)[number];
@@ -66,7 +69,8 @@ export type ContractRow = {
     origin: Location | null;
     destination: Location | null;
     startsOn: string;
-    endsOn: string;
+    /** Null is an open period: as long as the cargo lasts */
+    endsOn: string | null;
     /** Null is an open contract */
     committedQty: number | null;
     weightUnit: WeightUnit | null;
@@ -90,6 +94,11 @@ export type ContractTripRow = {
     /** What the trip is worth to the reader: what it pays out, or what it earns */
     total: number | null;
     currency: Currency | null;
+    /** Where that leg's settlement stands, and how much has moved against it */
+    settlement: PaymentStatus | null;
+    settled: number | null;
+    /** The reader owns the row and may record a payment on it */
+    canRecordPayment: boolean;
     createdAt: Date;
 };
 
@@ -117,6 +126,8 @@ export type ContractDetail = ContractRow & {
     version: number;
     allocations: AllocationView[];
     trips: ContractTripRow[];
+    /** The trips' money added up from where the reader stands (domain contracts/money.ts) */
+    money: OrderMoney;
     permissions: ContractPermissions;
 };
 
@@ -126,6 +137,11 @@ export type ContractMoneyLine = {
     committed: number;
     drawn: number;
     remaining: number;
+    /** What has moved on the trips so far, on the reader's side: in, or out */
+    received: number;
+    receivable: number;
+    paid: number;
+    outstanding: number;
 };
 
 export type ContractStats = {

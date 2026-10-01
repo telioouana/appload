@@ -58,7 +58,9 @@ export function TermsCard({ contract }: { contract: ContractDetail }) {
             </dl>
 
             <dl className="flex flex-col gap-2 border-t pt-3.5">
-                <DetailRow label={t("detail.fields.period")}>{date(contract.startsOn)} – {date(contract.endsOn)}</DetailRow>
+                <DetailRow label={t("detail.fields.period")}>
+                    {contract.endsOn === null ? t("values.since", { date: date(contract.startsOn) }) : `${date(contract.startsOn)} – ${date(contract.endsOn)}`}
+                </DetailRow>
                 <DetailRow label={t("detail.fields.lane")}>
                     {contract.origin && contract.destination
                         ? `${place(contract.origin)} → ${place(contract.destination)}`

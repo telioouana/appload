@@ -74,7 +74,9 @@ export const scopeOfTab = (tab: MovementTab): MovementScope => (tab === "partner
 export const tabOfScope = (scope: MovementScope): MovementTab => (scope === "orders" ? "partners" : "own");
 
 /** The sections, the same seven on either tab. */
-export const SECTIONS = ["all", "procurement", "booked", "in-progress", "delivered", "disputes", "history"] as const;
+// "multi" is the multi-trip orders — the `contract` rows — listed by the
+// contracts views behind the same tabs; it has no status menu of its own
+export const SECTIONS = ["all", "procurement", "booked", "in-progress", "delivered", "disputes", "history", "multi"] as const;
 export type MovementSection = (typeof SECTIONS)[number];
 
 /**
@@ -132,6 +134,7 @@ export const STATUS_TABS: Record<MovementScope, Record<MovementSection, readonly
         delivered: ["delivered"],
         disputes: EVERY_STATUS,
         history: ["closed", "cancelled"],
+        multi: [],
     },
     trips: {
         all: EVERY_TRIP_STATUS,
@@ -141,6 +144,7 @@ export const STATUS_TABS: Record<MovementScope, Record<MovementSection, readonly
         delivered: ["delivered"],
         disputes: EVERY_TRIP_STATUS,
         history: ["closed", "cancelled"],
+        multi: [],
     },
 };
 
@@ -242,6 +246,16 @@ export type MovementPing = {
     placeLabel: string | null;
 };
 
+/** The multi-trip order a trip was filed under: which trip of it this is, and of how many when the order has a number */
+export type MovementParent = {
+    id: string;
+    ref: string;
+    /** 1-based, by filing order among the order's live trips; null on a cancelled trip */
+    position: number | null;
+    /** The order's trip count; null on a tonnage or open-ended order */
+    of: number | null;
+};
+
 export type MovementRow = {
     id: string;
     ref: string;
@@ -284,6 +298,8 @@ export type MovementRow = {
     flags: MovementFlag[];
     lastPing: MovementPing | null;
     pingCount: number;
+    /** The multi-trip order this trip draws down, when it does */
+    parent: MovementParent | null;
     version: number;
     createdAt: Date;
 };

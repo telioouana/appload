@@ -10,11 +10,11 @@
         },
         "own": {
             "title": "Your own loads",
-            "body": "The loads you file for your own clients, hand to your own partners or move with your own fleet are not Appload's business. The database itself refuses our staff's connection on those rows: not the loads, not their costs, documents or positions, not your partner list, not your contracts, not your conversations. This is enforced by Postgres row security, not by a promise in the app."
+            "body": "The loads you file for your own clients, hand to your own partners or move with your own fleet are not Appload's business. The database itself refuses our staff's connection on those rows: not the loads, not their costs, documents or positions, not your partner list, not your multi-trip orders, not your conversations. This is enforced by Postgres row security, not by a promise in the app."
         },
         "support": {
             "title": "Support access",
-            "body": "If you need help with a load, an owner or admin of your company can open your loads to Appload support for a day, a week or a month, with the reason on record, under Settings › Security. While it is open our team reads your own loads, contracts and partner list, without prices, and only those. You can close it at any time.",
+            "body": "If you need help with a load, an owner or admin of your company can open your loads to Appload support for a day, a week or a month, with the reason on record, under Settings › Security. While it is open our team reads your own loads, orders and partner list, without prices, and only those. You can close it at any time.",
             "link": "Open Settings › Security"
         },
         "log": {

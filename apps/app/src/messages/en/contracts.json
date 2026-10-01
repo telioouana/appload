@@ -1,23 +1,23 @@
 {
-    "metadata": "Contracts",
-    "title": "Contracts",
+    "metadata": "Multi-trip orders",
+    "title": "Multi-trip orders",
     "description": {
-        "shipper": "The standing agreements your loads are filed under: what you committed to, who moves it, and how far along it is.",
-        "carrier": "Your agreements with clients and the shares of theirs allocated to you, and how far along each one is."
+        "shipper": "The orders that take several trips: what was ordered, who moves it, and how far along it is.",
+        "carrier": "Your clients' multi-trip orders, the ones allocated to you, and how far along each one is."
     },
     "search": {
         "placeholder": "Search by reference, client or company",
         "clear": "Clear the search"
     },
     "add": {
-        "trigger": "New contract"
+        "trigger": "New order"
     },
     "tabs": {
         "own": "Mine",
         "partners": "From partners"
     },
     "columns": {
-        "reference": "Contract",
+        "reference": "Order",
         "counterparty": "With",
         "lane": "Lane",
         "period": "Period",
@@ -48,7 +48,11 @@
         "drawn": "Drawn down",
         "remaining": "Remaining",
         "approx": "≈ MZN",
-        "empty": "No priced contracts here yet"
+        "empty": "No priced orders here yet",
+        "received": "Received",
+        "receivable": "To receive",
+        "paid": "Paid",
+        "outstanding": "Owed"
     },
     "states": {
         "draft": "Draft",
@@ -64,8 +68,8 @@
         "days": "Rental (days)"
     },
     "basis-hint": {
-        "trips": "A number of loads",
-        "weight": "A tonnage, drawn down by each load's weight",
+        "trips": "A number of trips",
+        "weight": "A tonnage, drawn down by each trip's weight",
         "days": "A truck for a period, priced by the day"
     },
     "unit": {
@@ -102,23 +106,24 @@
         "typed": "Not on the portal",
         "remaining": "{qty} left",
         "of": "of {total}",
-        "trips-filed": "{count, plural, =0 {No trips yet} one {# trip} other {# trips}}"
+        "trips-filed": "{count, plural, =0 {No trips yet} one {# trip} other {# trips}}",
+        "since": "From {date} · as long as the cargo lasts"
     },
     "data": {
-        "empty": "No contracts yet",
+        "empty": "No multi-trip orders yet",
         "empty-description": {
-            "shipper": "File the agreements you have with your transporters, split them across the companies that move for you, and every load filed under one draws it down.",
-            "carrier": "File your agreements with clients here. Shares of your clients' contracts allocated to you appear under From partners."
+            "shipper": "An order that takes several trucks: file what was ordered, allocate it to the transporters that move it, and every trip filed draws it down.",
+            "carrier": "File your clients' multi-trip orders here. The ones your clients allocate to you appear under From partners."
         },
-        "no-results": "No contract matches these filters",
-        "error": "The contracts could not be loaded"
+        "no-results": "No order matches these filters",
+        "error": "The orders could not be loaded"
     },
     "form": {
-        "new-title": "New contract",
+        "new-title": "New multi-trip order",
         "edit-title": "Edit {ref}",
-        "description": "The terms the loads will be filed under. Everything here is a default the loads can change.",
+        "description": "The terms the trips will be filed under. Everything here is a default each trip can change.",
         "sections": {
-            "basis": "What is committed",
+            "basis": "What was ordered",
             "client": "Client",
             "lane": "Lane",
             "period": "Period",
@@ -126,7 +131,7 @@
             "notes": "Notes"
         },
         "fields": {
-            "committed-qty": "Committed quantity",
+            "committed-qty": "Quantity ordered",
             "weight-unit": "Unit",
             "starts-on": "From",
             "ends-on": "Until",
@@ -139,7 +144,9 @@
             "currency": "Currency",
             "fiscal-regime": "Fiscal regime",
             "sell-price": "What the client pays",
-            "notes": "Notes"
+            "notes": "Notes",
+            "no-end": "No end date",
+            "no-end-hint": "The order runs as long as the cargo lasts; close it when it is done."
         },
         "picker": {
             "none": "Nobody",
@@ -153,14 +160,14 @@
         "errors": {
             "date": "Pick a date."
         },
-        "submit": "Save contract",
+        "submit": "Save order",
         "cancel": "Cancel",
         "saving": "Saving…"
     },
     "allocation-form": {
-        "new-title": "Allocate a share",
+        "new-title": "Allocate a transporter",
         "edit-title": "Edit share",
-        "description": "Who moves this part of the contract, how much of it, and at what price.",
+        "description": "Who moves this part of the order, how much of it, and at what price.",
         "fields": {
             "carrier": "Transporter",
             "carrier-name": "Transporter name",
@@ -175,22 +182,22 @@
         },
         "submit": "Save share",
         "remove": "Remove share",
-        "remove-confirm": "Remove this share? Only a share with no trips filed under it can go.",
+        "remove-confirm": "Remove this transporter? Only a share with no trips filed under it can go.",
         "errors": {
             "name": "Type the transporter's name"
         }
     },
     "detail": {
-        "meta": "Contract",
-        "error": "This contract could not be loaded",
+        "meta": "Order",
+        "error": "This order could not be loaded",
         "terms": "Terms",
-        "allocations": "Shares",
+        "allocations": "Who moves it",
         "trips": "Trips",
-        "file": "Signed contract",
+        "file": "Signed document",
         "notes": "Notes",
         "fields": {
             "basis": "Basis",
-            "commitment": "Committed",
+            "commitment": "Ordered",
             "drawn-down": "Drawn down",
             "delivered": "Delivered",
             "remaining": "Remaining",
@@ -212,52 +219,73 @@
             "activate": "Activate",
             "accept": "Accept",
             "decline": "Decline",
-            "close": "Close contract",
-            "close-confirm": "Close this contract? No more trips can be filed under it.",
-            "allocate": "Allocate a share",
+            "close": "Close order",
+            "close-confirm": "Close this order? No more trips can be filed under it.",
+            "allocate": "Allocate a transporter",
             "file-trip": "File a trip",
-            "upload": "Upload the signed contract",
+            "upload": "Upload the signed document",
             "replace": "Replace",
-            "remove-file": "Remove"
+            "remove-file": "Remove",
+            "record-payment": "Record a payment"
         },
-        "over-allocated": "The shares add up to more than the contract commits to.",
+        "over-allocated": "The shares add up to more than the order.",
         "trip-columns": {
             "reference": "Load",
             "status": "Status",
             "loading": "Loading",
             "weight": "Weight",
-            "total": "Amount"
+            "total": "Amount",
+            "payment": "Payment"
         },
-        "no-trips": "No trips filed under this contract yet.",
+        "no-trips": "No trips filed under this order yet.",
         "open-all": "Open all",
-        "no-file": "No signed copy filed yet.",
+        "no-file": "No signed copy of the agreement filed yet.",
         "footer": "Created {created} · updated {updated}",
-        "export": "Export CSV"
+        "export": "Export CSV",
+        "money": {
+            "title": "Money",
+            "empty": "Nothing priced on this order yet",
+            "committed": "Order value",
+            "open": "open-ended",
+            "filed-earn": "Filed in trips",
+            "filed": "Filed in trips",
+            "filed-short": "Filed",
+            "received": "Received",
+            "receivable": "Still to receive",
+            "payable-carriers": "Owed to transporters",
+            "paid": "Paid",
+            "outstanding": "Still to pay",
+            "by-share": "Per transporter",
+            "share": "Transporter",
+            "no-price": "No price"
+        },
+        "remaining-line": "{remaining} to go",
+        "trucks-left": "≈ {count, plural, =1 {# more truck} other {# more trucks}}"
     },
     "errors": {
-        "NOT_FOUND": "This contract does not exist, or your company is not on it.",
+        "NOT_FOUND": "This order does not exist, or your company is not on it.",
         "NOT_ALLOWED": "Your role cannot do that.",
-        "VERSION_CONFLICT": "Somebody changed this contract meanwhile. Reload and try again.",
-        "CONTRACT_CLOSED": "This contract is closed.",
-        "CLIENT_MUST_ACCEPT": "The client accepts this contract; it becomes active when they do.",
-        "CONTRACT_NOT_OPEN": "Trips can only be filed under an active contract.",
-        "CONTRACT_SHAPE_MISMATCH": "This share is moved by somebody else; file it as an order.",
-        "BASIS_IS_FIXED": "What a contract counts cannot change once it exists.",
+        "VERSION_CONFLICT": "Somebody changed this order meanwhile. Reload and try again.",
+        "CONTRACT_CLOSED": "This order is closed.",
+        "CLIENT_MUST_ACCEPT": "The client accepts this order; it becomes active when they do.",
+        "CONTRACT_NOT_OPEN": "Trips can only be filed under an active order.",
+        "CONTRACT_SHAPE_MISMATCH": "This share is moved by somebody else; file the trip as an order to a partner.",
+        "BASIS_IS_FIXED": "What an order counts cannot change once it exists.",
         "PERIOD_INVERTED": "The end date is before the start date.",
         "QUANTITY_REQUIRED": "The quantity has to be more than zero.",
-        "PRICE_MODEL_BASIS_MISMATCH": "That price model cannot price what this contract counts.",
+        "PRICE_MODEL_BASIS_MISMATCH": "That price model cannot price what this order counts.",
         "CLIENT_IS_SELF": "A company cannot be its own client.",
         "CARRIER_IS_SELF": "A share for your own fleet is filed as own fleet, not as a transporter.",
         "APPLOAD_NOT_A_CLIENT": "Appload moves loads; it does not order them.",
         "NOT_CONNECTED": "That company is not connected to yours.",
-        "OWN_FLEET_HAS_NO_BUY_PRICE": "Your own fleet has no buy price; the contract's price is what the client pays.",
+        "OWN_FLEET_HAS_NO_BUY_PRICE": "Your own fleet has no buy price; the order's price is what the client pays.",
         "RIG_NOT_ON_ALLOCATION": "A truck or driver can only be pinned to a company on the portal.",
         "TRUCK_NOT_REGISTERED": "That truck is not registered to that company.",
         "DRIVER_NOT_REGISTERED": "That driver is not registered to that company.",
-        "ALLOCATION_EXISTS": "That company already has a share of this contract.",
+        "ALLOCATION_EXISTS": "That company already has a share of this order.",
         "ALLOCATION_HAS_TRIPS": "Trips have been filed under this share; it cannot be removed or reassigned.",
         "ALLOCATION_NOT_VISIBLE": "That share is not one your company can file under.",
-        "INVALID_STATUS": "That change is not possible from where the contract is.",
+        "INVALID_STATUS": "That change is not possible from where the order is.",
         "UNKNOWN": "Something went wrong. Try again."
     }
 }

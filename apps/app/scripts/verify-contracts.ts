@@ -127,7 +127,7 @@ async function main() {
         notes: "verify-contracts",
     });
     contractsHere.push(created.id);
-    check("a contract gets a CON number", /^CON-\d{4}-\d{2}$/.test(created.ref), created.ref);
+    check("a multi-trip order gets an ORD number", /^ORD-\d{4}-\d{2}$/.test(created.ref), created.ref);
 
     const shareB = await contracts(A.user).allocations.add({
         contractId: created.id, carrierOrgId: B.org, shareQty: 600, buyPrice: { model: "per-ton", rate: 1_500 },
@@ -164,6 +164,11 @@ async function main() {
     check("the trip names the partner from the share", firstDetail.carrier?.id === B.org, firstDetail.carrier);
     check("the trip's page knows its contract", firstDetail.contract?.ref === created.ref && firstDetail.contract?.remaining === 300, firstDetail.contract);
 
+    // B answers the offer: only an agreed trip is owed to anybody (the cashflow rule)
+    const firstOffered = await loads(A.user).offer({ id: first.id, expectedVersion: firstDetail.version });
+    const firstAccepted = await loads(B.user).respond({ id: first.id, expectedVersion: firstOffered.version, decision: "accept" });
+    movementsHere.push(firstAccepted.id);
+
     const afterOne = await contracts(A.user).get({ id: created.id });
     const shareBAfterOne = afterOne.allocations.find((row) => row.id === shareB.id);
     check("the share is drawn down the moment the trip exists", shareBAfterOne?.progress.consumed === 300 && shareBAfterOne?.progress.remaining === 300, shareBAfterOne?.progress);
@@ -174,6 +179,17 @@ async function main() {
     const mzn = (money: typeof moneyAfter) => money.lines.find((line) => line.currency === "MZN") ?? { committed: 0, drawn: 0, remaining: 0 };
     const grew = { committed: mzn(moneyAfter).committed - mzn(moneyBefore).committed, drawn: mzn(moneyAfter).drawn - mzn(moneyBefore).drawn, remaining: mzn(moneyAfter).remaining - mzn(moneyBefore).remaining };
     check("the strip counts the priced share, committed and drawn", grew.committed === 900_000 && grew.drawn === 450_000 && grew.remaining === 450_000, grew);
+
+    // The order's money, read from its trips: the owner owes B the trip, pays half, and the order says so
+    const unpaid = afterOne.money.lines.find((line) => line.currency === "MZN");
+    check("the order owes its transporter the trip filed", unpaid?.payable === 450_000 && unpaid.paid === 0 && unpaid.outstanding === 450_000, afterOne.money);
+    check("…per share", afterOne.money.byShare.some((share) => share.allocationId === shareB.id && share.outstanding === 450_000), afterOne.money.byShare);
+    check("the trip row says it is pending and may be paid from here", afterOne.trips[0]?.settlement === "pending" && afterOne.trips[0]?.canRecordPayment === true, afterOne.trips[0]);
+    await loads(A.user).recordPayment({ id: first.id, expectedVersion: (await loads(A.user).get({ id: first.id })).version, leg: "buy", amount: 225_000 });
+    const halfPaid = (await contracts(A.user).get({ id: created.id })).money.lines.find((line) => line.currency === "MZN");
+    check("a payment on the trip moves the order's money", halfPaid?.paid === 225_000 && halfPaid.outstanding === 225_000, halfPaid);
+    const asCarrierPaid = (await contracts(B.user).get({ id: created.id })).money.lines.find((line) => line.currency === "MZN");
+    check("the transporter reads the same from its side", asCarrierPaid?.received === 225_000 && asCarrierPaid.receivable === 225_000 && asCarrierPaid.committed === 900_000, asCarrierPaid);
     check("the strip totals in meticais at a rate", moneyAfter.total !== null && moneyAfter.total.committed >= mzn(moneyAfter).committed, moneyAfter.total);
 
     // 4. The default is editable, and a cancelled trip stops counting
@@ -181,7 +197,7 @@ async function main() {
     movementsHere.push(overridden.id);
     check("a price typed over the default stays", (await loads(A.user).get({ id: overridden.id })).money.payable?.total === 1);
 
-    const cancelled = await loads(A.user).transition({ id: first.id, to: "cancelled", expectedVersion: firstDetail.version, note: "harness" });
+    const cancelled = await loads(A.user).transition({ id: first.id, to: "cancelled", expectedVersion: (await loads(A.user).get({ id: first.id })).version, note: "harness" });
     check("cancelled", cancelled.status === "cancelled");
     const afterCancel = await contracts(A.user).get({ id: created.id });
     check("a cancelled trip stops counting", afterCancel.progress.consumed === 300, afterCancel.progress);
@@ -236,7 +252,7 @@ async function main() {
     const open = await contracts(A.user).create({
         basis: "weight",
         startsOn: iso(-5),
-        endsOn: iso(90),
+        endsOn: null,
         committedQty: null,
         currency: "MZN",
         notes: "verify-contracts",
@@ -250,6 +266,7 @@ async function main() {
     }
     const openDetail = await contracts(A.user).get({ id: open.id });
     check("an open contract has no ceiling", openDetail.committedQty === null && openDetail.progress.remaining === null, openDetail.progress);
+    check("…nor an end date, and it never expires", openDetail.endsOn === null && openDetail.state === "active", { endsOn: openDetail.endsOn, state: openDetail.state });
     check("an open contract is drawn down and never used up", openDetail.progress.consumed === 1_500 && openDetail.state === "active", openDetail.progress);
     const lastOpen = await loads(A.user).get({ id: movementsHere[movementsHere.length - 1]! });
     check("a trip under an open share is never flagged over-committed", !lastOpen.events.flatMap((event) => event.flags ?? []).includes("CONTRACT_OVER_COMMITTED"));
@@ -318,7 +335,7 @@ async function cleanup() {
     }
     await db.delete(notification).where(and(eq(notification.entityType, "contract"), inArray(notification.entityId, contractsHere)));
     await db.delete(contract).where(eq(contract.notes, "verify-contracts"));
-    // The CON counters stay where the run left them: a number, once handed out, is
+    // The ORD counters stay where the run left them: a number, once handed out, is
     // never handed out again — a contract filed by hand between two runs keeps its
     await db.delete(activityLog).where(eq(activityLog.sessionId, SESSION_ID));
 }
