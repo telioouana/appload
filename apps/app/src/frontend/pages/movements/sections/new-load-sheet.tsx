@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { IconTruck, IconPackages } from "@tabler/icons-react"
+import { IconCalendarTime, IconTruck, IconPackages } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
 
@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 
 import { useTRPC } from "@/backend/api/client"
 import { ContractSheet } from "@/frontend/pages/contracts/sections/contract-sheet"
+import { RentalSheet } from "@/frontend/pages/rentals/sections/rental-sheet"
 import { useNewLoad, type NewLoadKind } from "@/frontend/pages/movements/hooks/use-new-load"
 import { LoadSheet } from "@/frontend/pages/movements/sections/load-sheet"
 
@@ -42,6 +43,10 @@ function ArmedSheet() {
         return <KindChooser open={isOpen} onChoose={choose} onClose={close} />
     }
 
+    if (kind === "rental") {
+        return <RentalSheet open={isOpen} onOpenChange={(next) => { if (!next) close() }} mode={{ kind: "create" }} />
+    }
+
     if (kind === "multi") {
         return <ContractSheet open={isOpen} onOpenChange={(next) => { if (!next) close() }} mode={{ kind: "create" }} />
     }
@@ -61,6 +66,7 @@ function ArmedSheet() {
 const KINDS: { value: NewLoadKind; Icon: typeof IconTruck }[] = [
     { value: "single", Icon: IconTruck },
     { value: "multi", Icon: IconPackages },
+    { value: "rental", Icon: IconCalendarTime },
 ]
 
 /** One trip, or several: the one question before either form. */

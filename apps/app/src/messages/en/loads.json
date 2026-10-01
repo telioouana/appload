@@ -8,7 +8,8 @@
         "delivered": "Delivered",
         "disputes": "Disputes",
         "history": "History",
-        "multi": "Multi-trip"
+        "multi": "Multi-trip",
+        "rental": "Rentals"
     },
     "titles": {
         "all": "All orders",
@@ -18,7 +19,8 @@
         "delivered": "Delivered",
         "disputes": "Loads in dispute",
         "history": "History",
-        "multi": "Multi-trip orders"
+        "multi": "Multi-trip orders",
+        "rental": "Rentals"
     },
     "description": {
         "orders": {
@@ -68,7 +70,8 @@
         "NO_PRICE": "No agreed price",
         "PHOTOS_UNAPPROVED": "Loading photos not yet approved",
         "CONTRACT_OVER_COMMITTED": "Over the quantity ordered",
-        "CONTRACT_LANE_MISMATCH": "Off the order's lane"
+        "CONTRACT_LANE_MISMATCH": "Off the order's lane",
+        "TRUCK_ON_RENTAL": "Truck on a rental"
     },
     "header": {
         "flags": "{count, plural, one {# flag} other {# flags}}"
@@ -698,7 +701,9 @@
             "single": "One trip",
             "single-hint": "One truck, one cargo, one delivery.",
             "multi": "Several trips",
-            "multi-hint": "A quantity, or a number of trips, over a period. Trucks are filed as they come to load and the order counts down."
+            "multi-hint": "A quantity, or a number of trips, over a period. Trucks are filed as they come to load and the order counts down.",
+            "rental": "Truck rental",
+            "rental-hint": "One or more trucks at a client's service for a period, paid by the day. No lane: the diary says which days counted."
         }
     },
     "toasts": {

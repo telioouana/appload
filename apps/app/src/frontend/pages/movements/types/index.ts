@@ -76,7 +76,8 @@ export const tabOfScope = (scope: MovementScope): MovementTab => (scope === "ord
 /** The sections, the same seven on either tab. */
 // "multi" is the multi-trip orders — the `contract` rows — listed by the
 // contracts views behind the same tabs; it has no status menu of its own
-export const SECTIONS = ["all", "procurement", "booked", "in-progress", "delivered", "disputes", "history", "multi"] as const;
+// …and "rental" the trucks at a client's service by the day, listed by the rentals views
+export const SECTIONS = ["all", "procurement", "booked", "in-progress", "delivered", "disputes", "history", "multi", "rental"] as const;
 export type MovementSection = (typeof SECTIONS)[number];
 
 /**
@@ -135,6 +136,7 @@ export const STATUS_TABS: Record<MovementScope, Record<MovementSection, readonly
         disputes: EVERY_STATUS,
         history: ["closed", "cancelled"],
         multi: [],
+        rental: [],
     },
     trips: {
         all: EVERY_TRIP_STATUS,
@@ -145,6 +147,7 @@ export const STATUS_TABS: Record<MovementScope, Record<MovementSection, readonly
         disputes: EVERY_TRIP_STATUS,
         history: ["closed", "cancelled"],
         multi: [],
+        rental: [],
     },
 };
 

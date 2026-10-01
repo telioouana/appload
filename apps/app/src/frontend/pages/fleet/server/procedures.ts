@@ -4,7 +4,7 @@ import { and, asc, count, desc, eq, ilike, inArray, isNull, ne, notInArray, or, 
 
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import { order } from "@workspace/db/orders";
-import { user } from "@workspace/db/users";
+import { organization, user } from "@workspace/db/users";
 import { kycDocument } from "@workspace/db/kyc-documents";
 import { FLEET_STATUS, KYC_STATUS, LoadingBaySchema, OWNERSHIP_STATUS, TRUCK_TYPE } from "@workspace/db/types";
 import type { KycStatus, KycSubjectType, LoadingBay, OwnershipStatus } from "@workspace/db/types";
@@ -15,6 +15,7 @@ import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tena
 import type { OrgAction } from "@workspace/auth/organization-permissions";
 
 import { docProgress, today, type CurrentDoc } from "@workspace/domain/kyc/derive";
+import { activeRentalOf } from "@workspace/domain/rentals/apply";
 
 import { uniqueViolationConstraint } from "@workspace/db/errors";
 import {
@@ -34,6 +35,7 @@ import {
     type StatusFilter,
     type VehicleKind,
     type VehicleProfile,
+    type VehicleRental,
     type VehicleRow,
     type VehicleStats,
 } from "@/frontend/pages/fleet/types";
@@ -217,10 +219,12 @@ export const fleetRouter = createTRPCRouter({
                 ]);
 
                 const bay = row.loadingBay as LoadingBay | null;
+                const rental = input.kind === "truck" ? (await rentalsByTruck(ctx.db, [row.id])).get(row.id) ?? null : null;
 
                 return {
                     ...row,
                     kind: input.kind,
+                    rental,
                     loadingBay: bay,
                     capacity: bay?.capacity ?? null,
                     bayType: bay?.type ?? null,
@@ -486,6 +490,25 @@ function vehicleOrder(input: VehiclesInput): SQL[] {
     }
 }
 
+/** The rental each truck is on today, with who it serves named (rentals/apply.ts). */
+async function rentalsByTruck(db: Db, truckIds: string[]): Promise<Map<string, VehicleRental>> {
+    const active = await activeRentalOf(db, truckIds);
+    if (active.size === 0) return new Map();
+
+    const clientIds = [...new Set([...active.values()].map((row) => row.clientOrgId).filter((id): id is string => id !== null))];
+    const names = clientIds.length === 0 ? new Map<string, string>() : new Map(
+        (await db.select({ id: organization.id, name: organization.name }).from(organization).where(inArray(organization.id, clientIds)))
+            .map((row) => [row.id, row.name]),
+    );
+
+    return new Map([...active.entries()].map(([truckId, row]) => [truckId, {
+        contractId: row.contractId,
+        ref: row.reference ?? "—",
+        with: row.clientOrgId ? names.get(row.clientOrgId) ?? null : row.clientName,
+        until: row.until,
+    }]));
+}
+
 async function listVehicles(db: Db, carrierId: string, input: VehiclesInput, limit: number, offset: number) {
     const table = VEHICLE_TABLE[input.kind];
     const where = vehicleConditions(db, carrierId, input);
@@ -517,7 +540,7 @@ async function listVehicles(db: Db, carrierId: string, input: VehiclesInput, lim
 
     const ids = rows.map((row) => row.id);
 
-    const [docs, standing, hitched] = await Promise.all([
+    const [docs, standing, hitched, rentals] = await Promise.all([
         documentsBySubject(db, input.kind, ids),
 
         // The standing assignment: the driver whose home truck this is
@@ -528,6 +551,8 @@ async function listVehicles(db: Db, carrierId: string, input: VehiclesInput, lim
             .where(and(eq(driver.carrierId, carrierId), inArray(driver.truckId, ids))),
 
         hitchedPlates(db, input.kind, carrierId, ids),
+
+        input.kind !== "truck" ? new Map<string, VehicleRental>() : rentalsByTruck(db, ids),
     ]);
 
     const byTruck = new Map(standing.map((row) => [row.truckId, row]));
@@ -556,6 +581,7 @@ async function listVehicles(db: Db, carrierId: string, input: VehiclesInput, lim
             driverId: home?.driverId ?? null,
             driverName: home?.driverName ?? null,
             hitchedTo: hitched.get(row.id) ?? null,
+            rental: rentals.get(row.id) ?? null,
         };
     });
 

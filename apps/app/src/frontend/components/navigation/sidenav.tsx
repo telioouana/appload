@@ -10,6 +10,7 @@ import {
     IconBox,
     IconBuildingWarehouse,
     IconCalendarCheck,
+    IconCalendarTime,
     IconChartHistogram,
     IconChecks,
     IconGavel,
@@ -114,6 +115,7 @@ const ORDER_ICONS: Record<MovementSection, Icon> = {
     "disputes": IconGavel,
     "history": IconHistory,
     "multi": IconPackages,
+    "rental": IconCalendarTime,
 };
 
 /**

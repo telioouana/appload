@@ -53,6 +53,7 @@ import { entersInProgress, isAskable, isInProgress, isTerminal, movementFlags } 
 import { dueBy, EN_ROUTE_STATUSES, type MovementProgress } from "@workspace/domain/tracking/progress";
 import { readMovementProgress } from "@workspace/domain/tracking/progress-read";
 import { ensureMovementRoute } from "@workspace/domain/tracking/route-cache";
+import { activeRentalOf } from "@workspace/domain/rentals/apply";
 import { notify } from "@workspace/domain/notifications";
 import { assertTrackingAllowance, recordTrackingUsage } from "@workspace/domain/subscription";
 import { startConversation } from "@workspace/domain/tracking/conversations";
@@ -1164,6 +1165,8 @@ export const movementsRouter = createTRPCRouter({
             if (share && ((share.origin && share.origin.placeId !== input.origin.placeId) || (share.destination && share.destination.placeId !== input.destination.placeId))) {
                 flags.push("CONTRACT_LANE_MISMATCH");
             }
+            // A truck at a client's service on a rental has no business on a load today; said, not stopped
+            if (values.truckId && (await activeRentalOf(ctx.db, [values.truckId])).has(values.truckId)) flags.push("TRUCK_ON_RENTAL");
 
             const starts = entersInProgress(null, input.status);
 

@@ -8,7 +8,8 @@
         "delivered": "Entregues",
         "disputes": "Disputas",
         "history": "Histórico",
-        "multi": "Várias viagens"
+        "multi": "Várias viagens",
+        "rental": "Alugueres"
     },
     "titles": {
         "all": "Todos os pedidos",
@@ -18,7 +19,8 @@
         "delivered": "Entregues",
         "disputes": "Cargas em disputa",
         "history": "Histórico",
-        "multi": "Pedidos com várias viagens"
+        "multi": "Pedidos com várias viagens",
+        "rental": "Alugueres"
     },
     "description": {
         "orders": {
@@ -68,7 +70,8 @@
         "NO_PRICE": "Sem preço acordado",
         "PHOTOS_UNAPPROVED": "Fotos de carregamento por aprovar",
         "CONTRACT_OVER_COMMITTED": "Acima da quantidade pedida",
-        "CONTRACT_LANE_MISMATCH": "Fora da rota do pedido"
+        "CONTRACT_LANE_MISMATCH": "Fora da rota do pedido",
+        "TRUCK_ON_RENTAL": "Camião em aluguer"
     },
     "header": {
         "flags": "{count, plural, one {# alerta} other {# alertas}}"
@@ -698,7 +701,9 @@
             "single": "Uma viagem",
             "single-hint": "Um camião, uma carga, uma entrega.",
             "multi": "Várias viagens",
-            "multi-hint": "Uma quantidade, ou um número de viagens, ao longo de um período. Os camiões vão sendo registados à medida que carregam e o pedido vai sendo consumido."
+            "multi-hint": "Uma quantidade, ou um número de viagens, ao longo de um período. Os camiões vão sendo registados à medida que carregam e o pedido vai sendo consumido.",
+            "rental": "Aluguer de camião",
+            "rental-hint": "Um ou mais camiões ao serviço de um cliente por um período, pagos ao dia. Sem rota: o diário diz que dias contaram."
         }
     },
     "toasts": {

@@ -92,7 +92,8 @@ async function visibleSet(db: Db, tenantId: string, tab: "own" | "partners", sea
     const rows = await db
         .select()
         .from(contract)
-        .where(and(visibleContracts(tenantId), tabPredicate(tab, tenantId), search ? searchWhere(search) : undefined))
+        // Rentals (days) have their own list and page
+        .where(and(sql`${contract.basis} <> 'days'`, visibleContracts(tenantId), tabPredicate(tab, tenantId), search ? searchWhere(search) : undefined))
         .orderBy(desc(contract.createdAt));
 
     const allocations = rows.length === 0 ? [] : await db

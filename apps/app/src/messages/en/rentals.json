@@ -1,0 +1,315 @@
+{
+    "metadata": "Rentals",
+    "title": "Rentals",
+    "description": {
+        "shipper": "Trucks at your company's service for a period, paid by the day: which, since when, and what is owed so far.",
+        "carrier": "Your trucks rented to clients, and the ones asked of you, with the days counted so far."
+    },
+    "search": {
+        "placeholder": "Search by reference, client, company or plate",
+        "clear": "Clear the search"
+    },
+    "add": {
+        "trigger": "New rental"
+    },
+    "tabs": {
+        "own": "Mine",
+        "partners": "From partners"
+    },
+    "columns": {
+        "reference": "Rental",
+        "counterparty": "With",
+        "trucks": "Trucks",
+        "period": "Period",
+        "days": "Days",
+        "billable": "Billable",
+        "state": "State"
+    },
+    "sort": {
+        "newest": "Newest first",
+        "period": "Start date",
+        "reference": "Reference"
+    },
+    "filters": {
+        "all": "All"
+    },
+    "tiles": {
+        "active": "Running",
+        "active-hint": "Trucks at service now",
+        "attention": "Needs attention",
+        "attention-hint": "Disputed days, or a driver who said no today",
+        "draft": "Drafts",
+        "draft-hint": "Not activated yet"
+    },
+    "money": {
+        "spend": "Rental spend",
+        "revenue": "Rental revenue",
+        "billable": "Billable to date",
+        "received": "Received",
+        "receivable": "To receive",
+        "paid": "Paid",
+        "outstanding": "Owed",
+        "empty": "No priced rentals here yet"
+    },
+    "states": {
+        "draft": "Draft",
+        "proposed": "Proposal",
+        "active": "Running",
+        "exhausted": "Used up",
+        "expired": "Ended",
+        "closed": "Closed"
+    },
+    "role": {
+        "owner": "Yours",
+        "client": "You are the client",
+        "carrier": "Your truck"
+    },
+    "day-states": {
+        "worked": "Worked",
+        "standby": "Standby",
+        "stopped": "Stopped (breakdown or no driver)",
+        "off": "No service"
+    },
+    "values": {
+        "since": "From {date} · as long as needed",
+        "own-fleet": "Own fleet",
+        "own-account": "Own account",
+        "no-client": "No client",
+        "typed": "Not on the portal",
+        "no-end": "No end date",
+        "no-site": "Site to be set",
+        "trucks": "{count, plural, one {# truck} other {# trucks}}",
+        "days": "{count, plural, one {# day} other {# days}}",
+        "days-of": "{billable} of {total} days",
+        "days-open": "{billable} days to date",
+        "per-day": "{amount} a day",
+        "standby-rate": "{amount} a standby day",
+        "calendar": "calendar days",
+        "working": "working days (Mon–Sat)",
+        "today-yes": "Today: at service",
+        "today-no": "Today: the driver said no",
+        "today-silent": "Today: no answer",
+        "disputed": "{count, plural, one {# disputed day} other {# disputed days}}",
+        "ended": "Left on {date}"
+    },
+    "data": {
+        "empty": "No rentals yet",
+        "empty-description": {
+            "shipper": "One or more trucks at your service for a period, paid by the day. File the rental and the order counts the days.",
+            "carrier": "File the trucks you rent to clients here. The rentals your clients ask of you appear under From partners."
+        },
+        "no-results": "No rental matches these filters",
+        "error": "The rentals could not be loaded"
+    },
+    "form": {
+        "new-title": "New rental",
+        "edit-title": "Edit {ref}",
+        "description": "Trucks at a client's service for a period, paid by the day. The whole period counts, except the days marked on the diary.",
+        "sections": {
+            "client": "Client",
+            "trucks": "Trucks",
+            "site": "Where they work",
+            "period": "Period",
+            "price": "Price per day",
+            "notes": "Notes"
+        },
+        "fields": {
+            "client": "Client",
+            "client-name": "Client name",
+            "client-reference": "Client's reference",
+            "site": "Site",
+            "starts-on": "From",
+            "ends-on": "Until",
+            "no-end": "No end date",
+            "no-end-hint": "The rental runs as long as the client needs it; close it when it is done.",
+            "rate": "Day rate",
+            "billable-days": "Days that count",
+            "calendar": "Every day",
+            "working": "Working days (Mon–Sat)",
+            "standby-rate": "Standby day rate (optional)",
+            "standby-hint": "A day the truck was available but not used. Without a rate of its own it counts at the full price.",
+            "currency": "Currency",
+            "fiscal-regime": "Fiscal regime",
+            "notes": "Notes"
+        },
+        "lines": {
+            "title": "Trucks",
+            "add": "Add a truck",
+            "remove": "Remove",
+            "provider": "Provided by",
+            "own-fleet": "My fleet",
+            "typed": "A transporter off the portal",
+            "carrier-name": "Transporter name",
+            "truck": "Truck",
+            "truck-none": "Pick a truck",
+            "driver": "Driver",
+            "driver-none": "No driver",
+            "truck-plate": "Plate",
+            "buy-rate": "What you pay the transporter, per day",
+            "empty": "Add at least one truck."
+        },
+        "picker": {
+            "none": "Nobody",
+            "typed": "Type a name"
+        },
+        "errors": {
+            "date": "Pick a date.",
+            "period": "The end date is before the start date.",
+            "rate": "Give the day rate.",
+            "truck": "Pick a truck or type the plate.",
+            "name": "Type the name.",
+            "lines": "Add at least one truck."
+        },
+        "submit": "Save rental",
+        "cancel": "Cancel",
+        "saving": "Saving…"
+    },
+    "detail": {
+        "meta": "Rental",
+        "error": "This rental could not be loaded",
+        "terms": "Terms",
+        "trucks": "Trucks",
+        "diary": "Diary",
+        "money": "Money",
+        "payments": "Payments",
+        "file": "Signed document",
+        "notes": "Notes",
+        "progress": "{billable} billable days to date",
+        "progress-of": "day {today} of {total} · {billable} billable",
+        "fields": {
+            "rate": "Day rate",
+            "billable-days": "Days that count",
+            "standby-rate": "Standby day",
+            "site": "Site",
+            "period": "Period",
+            "client": "Client",
+            "owner": "Owner",
+            "client-reference": "Client's reference",
+            "currency": "Currency",
+            "fiscal-regime": "Fiscal regime",
+            "trucks": "Trucks"
+        },
+        "actions": {
+            "edit": "Edit",
+            "activate": "Activate",
+            "accept": "Accept",
+            "decline": "Decline",
+            "close": "Close rental",
+            "close-confirm": "Close this rental? Days stop counting from today.",
+            "add-line": "Add a truck",
+            "end-line": "End",
+            "end-line-confirm": "Truck {plate} leaves the rental at the end of {date}. Days stop counting from there.",
+            "remove-line": "Remove truck",
+            "record-payment": "Record a payment",
+            "upload": "Upload the signed document",
+            "replace": "Replace",
+            "remove-file": "Remove",
+            "remove-line-confirm": "Remove {plate} from this rental? The line has no days marked yet."
+        },
+        "line-columns": {
+            "truck": "Truck",
+            "driver": "Driver",
+            "provider": "Provided by",
+            "days": "Days",
+            "today": "Today",
+            "amount": "Billable"
+        },
+        "diary-help": {
+            "provider": "Click a day to say how it counted. Unmarked, a day counts in full.",
+            "client": "Click a day to dispute it. The transporter sees the dispute and answers.",
+            "reader": "Unmarked, a day counts in full."
+        },
+        "legend": {
+            "worked": "Worked",
+            "standby": "Standby",
+            "stopped": "Stopped",
+            "off": "No service",
+            "disputed": "Disputed",
+            "silent": "No answer",
+            "future": "Not yet"
+        },
+        "day": {
+            "title": "{date}",
+            "state": "How it counted",
+            "note": "Note",
+            "answer-yes": "The driver said the truck was at service.",
+            "answer-no": "The driver said the truck was not at service.",
+            "disputed-by-client": "The client disputes this day{note, select, none {} other {: {note}}}",
+            "dispute": "Dispute this day",
+            "dispute-note": "Why",
+            "withdraw": "Withdraw the dispute",
+            "accept": "Accept: the day does not count",
+            "save": "Save",
+            "cancel": "Cancel"
+        },
+        "money-rows": {
+            "billable": "Billable to date",
+            "projected": "To the end of the period",
+            "received": "Received",
+            "receivable": "Still to receive",
+            "payable": "Owed to transporters",
+            "paid": "Paid",
+            "outstanding": "Still to pay",
+            "per-line": "Per truck",
+            "per-month": "Per month",
+            "month": "Month",
+            "days": "Days",
+            "amount": "Amount",
+            "open": "no end date"
+        },
+        "payment-form": {
+            "title": "Record a payment",
+            "description": "Money that came in or went out on this rental.",
+            "leg": "Direction",
+            "sell": "Received from the client",
+            "buy": "Paid to the transporter",
+            "line": "Truck",
+            "whole": "The whole rental",
+            "amount": "Amount",
+            "paid-at": "Date",
+            "reference": "Reference",
+            "correction-hint": "A negative amount corrects an earlier payment and needs a reference.",
+            "submit": "Record",
+            "cancel": "Cancel"
+        },
+        "no-lines": "No trucks on this rental yet.",
+        "no-payments": "No payments recorded yet.",
+        "no-file": "No signed copy of the agreement filed yet.",
+        "footer": "Created {created} · updated {updated}",
+        "diary-nav": {
+            "prev": "Previous month",
+            "next": "Next month"
+        }
+    },
+    "errors": {
+        "NOT_FOUND": "This rental does not exist, or your company is not on it.",
+        "NOT_ALLOWED": "Your role cannot do that.",
+        "VERSION_CONFLICT": "Somebody changed this rental meanwhile. Reload and try again.",
+        "CONTRACT_CLOSED": "This rental is closed.",
+        "CLIENT_MUST_ACCEPT": "The client accepts this rental; it runs when they do.",
+        "PERIOD_INVERTED": "The end date is before the start date.",
+        "PRICE_MODEL_BASIS_MISMATCH": "A rental is priced per day.",
+        "LINE_NEEDS_TRUCK": "Each line needs a truck or a plate.",
+        "TRUCK_ON_RENTAL": "That truck is already on another rental in that period.",
+        "LINE_HAS_LOG": "This truck already has days on the diary; end the line instead of removing it.",
+        "DAY_IN_FUTURE": "That day has not come yet.",
+        "DAY_OUT_OF_PERIOD": "That day is outside the rental's period.",
+        "NOT_THE_PROVIDER": "Only who provides the truck marks its days.",
+        "NOT_THE_CLIENT": "Only the client disputes a day.",
+        "AMOUNT_REQUIRED": "Give an amount other than zero.",
+        "CORRECTION_NEEDS_REFERENCE": "A correction needs a reference.",
+        "LINE_REQUIRED": "A payment to a transporter is said per truck.",
+        "CLIENT_IS_SELF": "A company cannot be its own client.",
+        "CARRIER_IS_SELF": "Your own truck is filed as own fleet.",
+        "APPLOAD_NOT_A_CLIENT": "Appload moves loads; it does not order them.",
+        "NOT_CONNECTED": "That company is not connected to yours.",
+        "OWN_FLEET_HAS_NO_BUY_PRICE": "Your own fleet has no buy price; the rental's price is what the client pays.",
+        "RIG_NOT_ON_ALLOCATION": "A truck or driver can only be pinned to a company on the portal.",
+        "TRUCK_NOT_REGISTERED": "That truck is not registered to that company.",
+        "DRIVER_NOT_REGISTERED": "That driver is not registered to that company.",
+        "ALLOCATION_EXISTS": "That truck is already on this rental.",
+        "ALLOCATION_HAS_TRIPS": "Trips have been filed under this line.",
+        "INVALID_STATUS": "That change is not possible from where the rental is.",
+        "UNKNOWN": "Something went wrong. Try again."
+    }
+}

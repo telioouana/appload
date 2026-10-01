@@ -60,7 +60,10 @@
         "truck-type": {
             "articulated": "Articulated",
             "non-articulated": "Rigid"
-        }
+        },
+        "on-rental": "On rental",
+        "on-rental-until": "On rental until {date}",
+        "with": "with {name}"
     },
     "sort": {
         "plate": "Plate",
@@ -151,7 +154,8 @@
         "driver": "Driver",
         "hitched": "Hitched to",
         "kyc": "Status",
-        "none": "None"
+        "none": "None",
+        "rental": "Rental"
     },
     "papers": {
         "missing": "Missing",

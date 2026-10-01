@@ -40,7 +40,7 @@ export type RentalInput = {
     currency: (typeof CURRENCY)[number];
     fiscalRegime?: (typeof FISCAL_REGIME)[number] | null;
     /** What the client pays, per day; null when the owner is the client of its own fleet */
-    sellPrice: PriceModel | null;
+    sellPrice?: PriceModel | null;
     notes?: string | null;
     lines: RentalLineInput[];
 };
@@ -114,7 +114,7 @@ export async function createRental(db: Db, actor: ContractActor, input: RentalIn
         weightUnit: null,
         currency: input.currency,
         fiscalRegime: input.fiscalRegime ?? null,
-        sellPrice: input.sellPrice,
+        sellPrice: input.sellPrice ?? null,
         notes: input.notes ?? null,
     });
 
@@ -148,7 +148,7 @@ export async function updateRental(
         weightUnit: null,
         currency: input.currency,
         fiscalRegime: input.fiscalRegime ?? null,
-        sellPrice: input.sellPrice,
+        sellPrice: input.sellPrice ?? null,
         notes: input.notes ?? null,
     });
 }

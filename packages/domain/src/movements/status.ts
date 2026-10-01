@@ -194,6 +194,8 @@ export const MOVEMENT_FLAGS = [
     // Filed under a contract share that is used up, or off the contract's lane (contracts/prefill.ts)
     "CONTRACT_OVER_COMMITTED",
     "CONTRACT_LANE_MISMATCH",
+    // The truck named is on an active rental today (rentals/apply.ts activeRentalOf)
+    "TRUCK_ON_RENTAL",
 ] as const;
 export type MovementFlag = (typeof MOVEMENT_FLAGS)[number];
 
