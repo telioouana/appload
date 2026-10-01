@@ -48,7 +48,11 @@
         "drawn": "Consumido",
         "remaining": "Por consumir",
         "approx": "≈ MZN",
-        "empty": "Ainda não há contratos com preço aqui"
+        "empty": "Ainda não há contratos com preço aqui",
+        "received": "Recebido",
+        "receivable": "Por receber",
+        "paid": "Pago",
+        "outstanding": "Em dívida"
     },
     "states": {
         "draft": "Rascunho",
@@ -218,7 +222,8 @@
             "file-trip": "Registar viagem",
             "upload": "Carregar o contrato assinado",
             "replace": "Substituir",
-            "remove-file": "Remover"
+            "remove-file": "Remover",
+            "record-payment": "Registar pagamento"
         },
         "over-allocated": "As partes somam mais do que o contrato compromete.",
         "trip-columns": {
@@ -226,13 +231,32 @@
             "status": "Estado",
             "loading": "Carregamento",
             "weight": "Peso",
-            "total": "Valor"
+            "total": "Valor",
+            "payment": "Pagamento"
         },
         "no-trips": "Ainda não há viagens registadas sob este contrato.",
         "open-all": "Ver todas",
         "no-file": "Ainda não foi carregada a cópia assinada.",
         "footer": "Criado {created} · actualizado {updated}",
-        "export": "Exportar CSV"
+        "export": "Exportar CSV",
+        "money": {
+            "title": "Valores",
+            "empty": "Ainda nada com preço neste pedido",
+            "committed": "Valor do pedido",
+            "open": "em aberto",
+            "filed-earn": "Registado em viagens",
+            "filed": "Registado em viagens",
+            "filed-short": "Registado",
+            "received": "Recebido",
+            "receivable": "Por receber",
+            "payable-carriers": "A pagar aos transportadores",
+            "paid": "Pago",
+            "outstanding": "Em dívida",
+            "by-share": "Por transportador",
+            "share": "Transportador"
+        },
+        "remaining-line": "Faltam {remaining}",
+        "trucks-left": "≈ {count, plural, =1 {mais # camião} other {mais # camiões}}"
     },
     "errors": {
         "NOT_FOUND": "Este contrato não existe, ou a sua empresa não faz parte dele.",

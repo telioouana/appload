@@ -48,7 +48,11 @@
         "drawn": "Drawn down",
         "remaining": "Remaining",
         "approx": "≈ MZN",
-        "empty": "No priced contracts here yet"
+        "empty": "No priced contracts here yet",
+        "received": "Received",
+        "receivable": "To receive",
+        "paid": "Paid",
+        "outstanding": "Owed"
     },
     "states": {
         "draft": "Draft",
@@ -218,7 +222,8 @@
             "file-trip": "File a trip",
             "upload": "Upload the signed contract",
             "replace": "Replace",
-            "remove-file": "Remove"
+            "remove-file": "Remove",
+            "record-payment": "Record a payment"
         },
         "over-allocated": "The shares add up to more than the contract commits to.",
         "trip-columns": {
@@ -226,13 +231,32 @@
             "status": "Status",
             "loading": "Loading",
             "weight": "Weight",
-            "total": "Amount"
+            "total": "Amount",
+            "payment": "Payment"
         },
         "no-trips": "No trips filed under this contract yet.",
         "open-all": "Open all",
         "no-file": "No signed copy filed yet.",
         "footer": "Created {created} · updated {updated}",
-        "export": "Export CSV"
+        "export": "Export CSV",
+        "money": {
+            "title": "Money",
+            "empty": "Nothing priced on this order yet",
+            "committed": "Order value",
+            "open": "open-ended",
+            "filed-earn": "Filed in trips",
+            "filed": "Filed in trips",
+            "filed-short": "Filed",
+            "received": "Received",
+            "receivable": "Still to receive",
+            "payable-carriers": "Owed to transporters",
+            "paid": "Paid",
+            "outstanding": "Still to pay",
+            "by-share": "Per transporter",
+            "share": "Transporter"
+        },
+        "remaining-line": "{remaining} to go",
+        "trucks-left": "≈ {count, plural, =1 {# more truck} other {# more trucks}}"
     },
     "errors": {
         "NOT_FOUND": "This contract does not exist, or your company is not on it.",
