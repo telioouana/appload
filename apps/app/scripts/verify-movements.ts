@@ -133,7 +133,7 @@ const as = (userId: string) =>
 const A = { user: "FT7QysKKfs5NKuut5i2S8Nhg6ItrwyuR", org: "42655a3f-0bd5-4e46-af29-9c5ee342a8aa" }; // shipper
 const B = { user: "a2R9UNA2NTiEo3FS7DxlwgBFUn8EDNU6", org: "9b7674e5-ea7b-416b-a199-6ca6842da718" }; // carrier, owner
 const BM = { user: "AM6u6fxppa9LEkRiMnMDHyrMpThmNrQy", org: B.org }; // carrier, member
-const C = { user: "kU9US5NBPjNtS5HsSQBW3ZfEZvj7GQSm", org: "49db92eb-c131-467e-8bfc-fe42a7dcc149" }; // stranger
+const C = { user: "seed-portal-stranger", org: "bdc445de-4e50-4b13-beb7-024fadbb22d1" }; // stranger: Terceiro Teste Portal, seeded 2026-09-30
 
 /** What a reference looks like once the counters name a load (refs.ts). */
 const ORDER_REF = /^ORD-\d{4}-\d{2}$/;

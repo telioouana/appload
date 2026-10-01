@@ -201,7 +201,7 @@ function DayDialog({ rental, line, day, onClose }: { rental: RentalDetail; line:
                 <div className="flex flex-col gap-4">
                     {day.answer && <p className="text-[13px]">{t(day.answer === "yes" ? "detail.day.answer-yes" : "detail.day.answer-no")}</p>}
                     {day.disputed && (
-                        <p className="text-[13px] font-medium text-red-600 dark:text-red-400">{t("detail.day.disputed-by-client", { note: "none" })}</p>
+                        <p className="text-[13px] font-medium text-red-600 dark:text-red-400">{t("detail.day.disputed-by-client", { note: day.disputeNote ?? "none" })}</p>
                     )}
 
                     {canMark && (

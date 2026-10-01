@@ -10,8 +10,8 @@ import { Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
 
 import { Link } from "@/i18n/navigation"
 
-import { ContractStateChip, useUnitLabel } from "@/frontend/pages/contracts/sections/badges"
-import { RentalStateChip } from "@/frontend/pages/rentals/sections/badges"
+import { ContractRoleChip, ContractStateChip, useUnitLabel } from "@/frontend/pages/contracts/sections/badges"
+import { RentalRoleChip, RentalStateChip } from "@/frontend/pages/rentals/sections/badges"
 import { AttentionMarks, InDisputeChip, LaneCell, LastPingCell, LoadDate, Money, MovementStatusChip, OffRouteChip, QuotesChip, RoleChip } from "@/frontend/pages/movements/components/badges"
 import { isInProgress, type MovementRow, type MovementScope, type OrgType } from "@/frontend/pages/movements/types"
 
@@ -119,7 +119,14 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                         )}
                         {row.original.inDispute && <InDisputeChip />}
                         {row.original.offRoute && <OffRouteChip />}
-                        <RoleChip role={row.original.role} />
+                        {/* A standing order's role is read in its own words: a trip's "offered to you" is not a transporter's share */}
+                        {row.original.order === null
+                            ? <RoleChip role={row.original.role} />
+                            : row.original.role === "owner"
+                                ? null
+                                : row.original.kind === "rental"
+                                    ? <RentalRoleChip role={row.original.role === "executor" ? "carrier" : "client"} />
+                                    : <ContractRoleChip role={row.original.role === "executor" ? "carrier" : "client"} />}
                     </span>
                 ),
             },

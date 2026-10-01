@@ -18,6 +18,8 @@ export type LogEntry = {
     state: RentalDayState;
     disputedAt: Date | null;
     driverAnswer: "yes" | "no" | null;
+    /** What the client said when disputing, when it said anything */
+    disputeNote?: string | null;
 };
 
 export type RentalDayView = {
@@ -26,6 +28,7 @@ export type RentalDayView = {
     /** Counts towards the amount: worked, or standby */
     billable: boolean;
     disputed: boolean;
+    disputeNote: string | null;
     answer: "yes" | "no" | null;
 };
 
@@ -90,6 +93,7 @@ export function lineDays(input: {
             state,
             billable: state === "worked" || state === "standby",
             disputed: entry?.disputedAt !== null && entry?.disputedAt !== undefined,
+            disputeNote: entry?.disputedAt ? entry.disputeNote ?? null : null,
             answer: entry?.driverAnswer ?? null,
         };
     });
@@ -156,7 +160,7 @@ if (process.argv[1]?.endsWith("billing.ts")) {
     eq("the period to today, under the mode", days.length, 12);
     const billing = lineBilling(days, model);
     eq("the whole period unless marked", billing, { worked: 10, standby: 1, stopped: 1, off: 0, billableDays: 11, amount: 10 * 25_000 + 12_000 });
-    eq("a disputed day is still billed, and says so", days.find((day) => day.day === "2026-10-05"), { day: "2026-10-05", state: "worked", billable: true, disputed: true, answer: null });
+    eq("a disputed day is still billed, and says so", days.find((day) => day.day === "2026-10-05"), { day: "2026-10-05", state: "worked", billable: true, disputed: true, disputeNote: null, answer: null });
     eq("standby without a standby rate is the full rate", lineBilling(days, { model: "per-day", rate: 25_000, billableDays: "working" }).amount, 11 * 25_000);
 
     eq("one statement row per month", monthlyStatement(days, model).map((row) => [row.month, row.amount]), [["2026-09", 2 * 25_000], ["2026-10", 8 * 25_000 + 12_000]]);
