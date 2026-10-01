@@ -65,6 +65,9 @@ import {
     type Location,
 } from "@workspace/db/orders";
 import { contract, contractAllocation } from "@workspace/db/contracts";
+import { rentalCheckinRequest } from "@workspace/db/rentals";
+import { periodDays } from "@workspace/domain/rentals/billing";
+import { recordRentalAnswer } from "@workspace/domain/rentals/checkin";
 import { subscriptionUsage } from "@workspace/db/subscriptions";
 import { thread, threadMessage, threadParticipant, threadRead } from "@workspace/db/threads";
 import { orderLocation, orderRoute } from "@workspace/db/tracking";
@@ -102,6 +105,8 @@ const RESET = process.argv.includes("--reset");
 const MORE = process.argv.includes("--more-on-route");
 /** Puts alerts on trucks the seed already has on the road: off its route, and silent */
 const ALERTS = process.argv.includes("--alerts");
+/** Adds a rental to a seed that is already there: two of A.S.M.'s trucks at the client's service */
+const RENTALS = process.argv.includes("--rentals");
 
 const MANIFEST = fileURLToPath(new URL("./seed-demo.manifest.json", import.meta.url));
 
@@ -212,6 +217,8 @@ type Manifest = {
     kycDocs: string[];
     /** Absent on manifests from before the contracts module */
     contracts?: string[];
+    /** Trucks the seed registered for the demo (the rental's second truck); absent before rentals */
+    trucks?: string[];
 };
 
 const made: Manifest = { sessionId: SESSION_ID, orders: [], orderIds: [], movements: [], kycDocs: [], contracts: [] };
@@ -1513,6 +1520,67 @@ async function hushTracking() {
 // --reset: everything the last run wrote, in FK order
 // ---------------------------------------------------------------------------
 
+/**
+ * A rental: A.S.M. puts two trucks at the client's service on a Matola site
+ * for thirty days, from a fortnight ago — working days at 25 000 MZN a day,
+ * standby at 12 000. The client accepted the proposal; A.S.M. marked one
+ * day stopped and one standby, the client disputes a day on the second
+ * truck, the driver answered Sim yesterday, and a first payment came in.
+ * The second truck is registered here, so the trips keep the first one.
+ */
+async function demoRentals() {
+    console.log("\n— rental (A.S.M. Transportes → Cliente Teste Portal)");
+
+    const c = as(ASM.user);
+    const s = as(CTP.user);
+
+    const [second] = await db
+        .insert(truck)
+        .values({ carrierId: ASM.org, regPlate: "AAB 456 MC", brand: "Scania", model: "R450", year: 2021, type: "articulated", vin: `DEMO-RENTAL-${SESSION_ID}` })
+        .returning({ id: truck.id });
+    made.trucks?.push(second!.id);
+
+    const startsOn = isoDay(daysFromNow(-14));
+    const rental = await c.rentals.create({
+        clientOrgId: CTP.org,
+        clientReference: "ALG-2026-10",
+        site: P.maputo,
+        startsOn,
+        endsOn: isoDay(daysFromNow(16)),
+        currency: "MZN",
+        fiscalRegime: "normal",
+        sellPrice: { model: "per-day", rate: 25_000, billableDays: "working", standbyRate: 12_000 },
+        notes: "Dois camiões na obra, trinta dias; dias úteis de segunda a sábado.",
+        lines: [
+            { truckId: RIG.truckId, driverId: RIG.driverId },
+            { truckId: second!.id },
+        ],
+    });
+    made.contracts?.push(rental.id);
+
+    const proposed = await s.rentals.get({ id: rental.id });
+    await s.rentals.transition({ id: rental.id, to: "active", expectedVersion: proposed.version });
+
+    const detail = await c.rentals.get({ id: rental.id });
+    const [first, other] = detail.lines;
+    const today = isoDay(daysFromNow(0));
+    const days = periodDays(startsOn, today, "working").filter((day) => day < today);
+
+    // The diary: a breakdown, a day on standby, a day the client says the truck never came
+    await c.rentals.days.mark({ allocationId: first!.id, day: days[2]!, state: "stopped", note: "Avaria na caixa de velocidades" });
+    await c.rentals.days.mark({ allocationId: other!.id, day: days[5]!, state: "standby" });
+    await s.rentals.days.dispute({ allocationId: other!.id, day: days[7]!, note: "O camião não apareceu na obra" });
+
+    // Yesterday's morning question, answered Sim — the request row is what makes the answer believed
+    const yesterday = days.at(-1)!;
+    await db.insert(rentalCheckinRequest).values({ allocationId: first!.id, day: yesterday, attempt: 1, channel: "whatsapp", status: "sent", scheduledFor: daysFromNow(-1) });
+    await recordRentalAnswer(db, { payload: `rental-yes:${first!.id}:${yesterday}`, conversationId: null });
+
+    await c.rentals.payments.record({ contractId: rental.id, allocationId: null, leg: "sell", amount: 150_000, currency: "MZN", paidAt: daysFromNow(-3), reference: "TRF 4471" });
+
+    console.log(`  ${rental.ref}  ${detail.lines.length} trucks from ${startsOn}, ${days.length} working days so far, one stopped, one standby, one disputed, 150 000 MZN received`);
+}
+
 async function reset() {
     if (!fs.existsSync(MANIFEST)) {
         console.log("nothing to reset: no manifest");
@@ -1542,10 +1610,15 @@ async function reset() {
         await db.delete(movement).where(inArray(movement.id, loads));
     }
 
-    // The loads are gone; the contracts they drew down go after them
+    // The loads are gone; the contracts they drew down go after them (a
+    // rental's diary, check-ins and payments cascade off its lines and itself)
     if (manifest.contracts && manifest.contracts.length > 0) {
         await db.delete(contractAllocation).where(inArray(contractAllocation.contractId, manifest.contracts));
         await db.delete(contract).where(inArray(contract.id, manifest.contracts));
+    }
+
+    if (manifest.trucks && manifest.trucks.length > 0) {
+        await db.delete(truck).where(inArray(truck.id, manifest.trucks));
     }
 
     if (manifest.orderIds.length > 0) {
@@ -1605,11 +1678,14 @@ async function main() {
         return;
     }
 
-    if (MORE || ALERTS) {
-        if (!fs.existsSync(MANIFEST)) throw new Error("--more-on-route and --alerts add to a seed: run --yes first");
+    if (MORE || ALERTS || RENTALS) {
+        if (!fs.existsSync(MANIFEST)) throw new Error("--more-on-route, --alerts and --rentals add to a seed: run --yes first");
         Object.assign(made, JSON.parse(fs.readFileSync(MANIFEST, "utf8")));
+        made.contracts ??= [];
+        made.trucks ??= [];
         if (MORE) await moreOnRoute();
         if (ALERTS) await alerts();
+        if (RENTALS) await demoRentals();
         await hushTracking();
         await Promise.allSettled(logged.splice(0));
         saveManifest();
@@ -1645,6 +1721,7 @@ async function main() {
     await apploadOrders();
     await portalLoads();
     await demoContracts();
+    await demoRentals();
     await hushTracking();
 
     await Promise.allSettled(logged.splice(0));
