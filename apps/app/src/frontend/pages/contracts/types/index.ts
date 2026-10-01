@@ -69,7 +69,8 @@ export type ContractRow = {
     origin: Location | null;
     destination: Location | null;
     startsOn: string;
-    endsOn: string;
+    /** Null is an open period: as long as the cargo lasts */
+    endsOn: string | null;
     /** Null is an open contract */
     committedQty: number | null;
     weightUnit: WeightUnit | null;

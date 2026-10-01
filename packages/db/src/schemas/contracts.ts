@@ -67,7 +67,8 @@ export const contract = pgTable(
         destination: jsonb("destination").$type<Location>(),
 
         startsOn: date("starts_on", { mode: "string" }).notNull(),
-        endsOn: date("ends_on", { mode: "string" }).notNull(),
+        // Null is an open period: the order runs as long as the cargo lasts
+        endsOn: date("ends_on", { mode: "string" }),
 
         // Trips, tons or days, by `basis`. Null is an open contract: nobody
         // knows beforehand how much cargo there will be, and trips keep being
@@ -107,7 +108,7 @@ export const contract = pgTable(
             .on(table.organizationId, table.reference)
             .where(sql`${table.reference} is not null`),
         check("contract_committed_qty_ck", sql`${table.committedQty} is null or ${table.committedQty} > 0`),
-        check("contract_period_ck", sql`${table.endsOn} >= ${table.startsOn}`),
+        check("contract_period_ck", sql`${table.endsOn} is null or ${table.endsOn} >= ${table.startsOn}`),
         check("contract_client_ck", sql`${table.clientOrgId} is null or ${table.clientOrgId} <> ${table.organizationId}`),
         // The trust wall (rls.ts): a company's contracts are its most private
         // paper. Staff read one only when Appload owns it or is its client;

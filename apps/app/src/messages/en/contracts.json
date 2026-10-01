@@ -106,7 +106,8 @@
         "typed": "Not on the portal",
         "remaining": "{qty} left",
         "of": "of {total}",
-        "trips-filed": "{count, plural, =0 {No trips yet} one {# trip} other {# trips}}"
+        "trips-filed": "{count, plural, =0 {No trips yet} one {# trip} other {# trips}}",
+        "since": "From {date} · as long as the cargo lasts"
     },
     "data": {
         "empty": "No multi-trip orders yet",
@@ -143,7 +144,9 @@
             "currency": "Currency",
             "fiscal-regime": "Fiscal regime",
             "sell-price": "What the client pays",
-            "notes": "Notes"
+            "notes": "Notes",
+            "no-end": "No end date",
+            "no-end-hint": "The order runs as long as the cargo lasts; close it when it is done."
         },
         "picker": {
             "none": "Nobody",

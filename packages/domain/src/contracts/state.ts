@@ -20,7 +20,8 @@ export function derivedState(
     if (contract.status !== "active") return contract.status;
     // An open contract has nothing to run out of
     if (progress.remaining !== null && progress.remaining <= 0) return "exhausted";
-    if (today > contract.endsOn) return "expired";
+    // No end date: it runs as long as the cargo lasts
+    if (contract.endsOn !== null && today > contract.endsOn) return "expired";
     return "active";
 }
 

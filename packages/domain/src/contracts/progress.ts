@@ -72,7 +72,7 @@ export function summarizeProgress(
     today: string = todayInMaputo(),
 ): ContractProgress {
     // Rental time runs from the first day to today, never past the end
-    const elapsedUntil = today < contract.endsOn ? today : contract.endsOn;
+    const elapsedUntil = contract.endsOn !== null && today > contract.endsOn ? contract.endsOn : today;
 
     const byAllocation = new Map<string, AllocationProgress>();
     let consumed = 0;

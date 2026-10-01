@@ -32,7 +32,8 @@ export type ContractInput = {
     origin?: Location | null;
     destination?: Location | null;
     startsOn: string;
-    endsOn: string;
+    /** Null is an open period: as long as the cargo lasts */
+    endsOn: string | null;
     /** Null is an open contract: no ceiling, never used up */
     committedQty: number | null;
     weightUnit?: (typeof WEIGHT_UNIT)[number] | null;
@@ -92,7 +93,7 @@ async function assertRig(db: Db, fleetOrgId: string, input: Pick<AllocationInput
 }
 
 function contractColumns(input: ContractInput) {
-    if (input.endsOn < input.startsOn) throw refuse("PERIOD_INVERTED");
+    if (input.endsOn !== null && input.endsOn < input.startsOn) throw refuse("PERIOD_INVERTED");
     if (input.committedQty !== null && !(input.committedQty > 0)) throw refuse("QUANTITY_REQUIRED");
     assertModelFits(input.sellPrice, input.basis);
 

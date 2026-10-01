@@ -106,7 +106,8 @@
         "typed": "Fora do portal",
         "remaining": "{qty} por consumir",
         "of": "de {total}",
-        "trips-filed": "{count, plural, =0 {Ainda sem viagens} one {# viagem} other {# viagens}}"
+        "trips-filed": "{count, plural, =0 {Ainda sem viagens} one {# viagem} other {# viagens}}",
+        "since": "Desde {date} · enquanto houver carga"
     },
     "data": {
         "empty": "Ainda não há pedidos com várias viagens",
@@ -143,7 +144,9 @@
             "currency": "Moeda",
             "fiscal-regime": "Regime fiscal",
             "sell-price": "O que o cliente paga",
-            "notes": "Notas"
+            "notes": "Notas",
+            "no-end": "Sem data de fim",
+            "no-end-hint": "O pedido dura enquanto houver carga; fecha-se quando acabar."
         },
         "picker": {
             "none": "Ninguém",

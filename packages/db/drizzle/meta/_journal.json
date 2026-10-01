@@ -225,6 +225,13 @@
       "when": 1790810096606,
       "tag": "0031_activity_log_org_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790846279639,
+      "tag": "0032_open_period",
+      "breakpoints": true
     }
   ]
 }

@@ -47,7 +47,9 @@ export function ContractHeader({ contract }: { contract: ContractDetail }) {
     const lane = contract.origin && contract.destination
         ? `${place(contract.origin)} → ${place(contract.destination)}`
         : t("values.any-lane")
-    const period = `${f.dateTime(new Date(contract.startsOn), { dateStyle: "medium" })} – ${f.dateTime(new Date(contract.endsOn), { dateStyle: "medium" })}`
+    const period = contract.endsOn === null
+        ? t("values.since", { date: f.dateTime(new Date(contract.startsOn), { dateStyle: "medium" }) })
+        : `${f.dateTime(new Date(contract.startsOn), { dateStyle: "medium" })} – ${f.dateTime(new Date(contract.endsOn), { dateStyle: "medium" })}`
 
     // The countdown as trucks come to load: what is left, and roughly how
     // many more trucks at the size of the ones filed so far — once there

@@ -266,6 +266,7 @@ async function main() {
     }
     const openDetail = await contracts(A.user).get({ id: open.id });
     check("an open contract has no ceiling", openDetail.committedQty === null && openDetail.progress.remaining === null, openDetail.progress);
+    check("…nor an end date, and it never expires", openDetail.endsOn === null && openDetail.state === "active", { endsOn: openDetail.endsOn, state: openDetail.state });
     check("an open contract is drawn down and never used up", openDetail.progress.consumed === 1_500 && openDetail.state === "active", openDetail.progress);
     const lastOpen = await loads(A.user).get({ id: movementsHere[movementsHere.length - 1]! });
     check("a trip under an open share is never flagged over-committed", !lastOpen.events.flatMap((event) => event.flags ?? []).includes("CONTRACT_OVER_COMMITTED"));
@@ -277,7 +278,7 @@ async function main() {
         basis: "trips",
         clientOrgId: A.org,
         startsOn: iso(0),
-        endsOn: iso(60),
+        endsOn: null,
         committedQty: null,
         currency: "MZN",
         sellPrice: { model: "per-trip", rate: 40_000 },

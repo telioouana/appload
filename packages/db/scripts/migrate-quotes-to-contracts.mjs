@@ -57,15 +57,15 @@ async function main() {
     for (const q of quotes) {
         const status = q.status === "accepted" ? "active" : q.status === "sent" ? "draft" : "closed";
         const startsOn = day(q.loading_date ?? q.created_at);
-        // A quote with no end date stands a year; one that ended before it began stands the day
-        const endsOn = q.valid_until ? day(q.valid_until) : day(new Date(new Date(q.created_at).getTime() + 365 * 86_400_000));
-        const period = endsOn < startsOn ? [endsOn, endsOn] : [startsOn, endsOn];
+        // A quote with no end date is an open period; one that ended before it began stands the day
+        const endsOn = q.valid_until ? day(q.valid_until) : null;
+        const period = endsOn !== null && endsOn < startsOn ? [endsOn, endsOn] : [startsOn, endsOn];
         const cover = [q.includes_git ? "GIT" : null, q.includes_gps ? "GPS" : null].filter(Boolean).join(" + ");
         const notes = [q.notes, cover ? `Inclui: ${cover}` : null, q.capacity_weight ? `Capacidade: ${Number(q.capacity_weight)} ${q.capacity_unit ?? ""}`.trim() : null]
             .filter(Boolean).join("\n") || null;
         const year = yearOf(q.created_at);
 
-        console.log(`  ${q.id.slice(0, 8)}  ${q.status} → ${status}  ${period[0]}..${period[1]}  ${q.total} ${q.currency}/trip`);
+        console.log(`  ${q.id.slice(0, 8)}  ${q.status} → ${status}  ${period[0]}..${period[1] ?? "open"}  ${q.total} ${q.currency}/trip`);
         if (!yes) continue;
 
         await sql.query("begin");

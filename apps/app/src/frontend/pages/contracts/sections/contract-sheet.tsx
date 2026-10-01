@@ -65,7 +65,8 @@ function ContractFormSchema(msg: Message) {
             origin: location,
             destination: location,
             startsOn: z.date(msg("date")),
-            endsOn: z.date(msg("date")),
+            noEnd: z.boolean(),
+            endsOn: z.date(msg("date")).optional(),
             openEnded: z.boolean(),
             committedQty: z.string(),
             currency: z.enum(CURRENCY),
@@ -78,7 +79,9 @@ function ContractFormSchema(msg: Message) {
         .refine((data) => data.clientOrgId !== TYPED || data.clientName.length > 0, { ...msg("name"), path: ["clientName"] })
         .refine((data) => data.anyLane || data.origin.placeId.length > 0, { ...msg("address"), path: ["origin.address"] })
         .refine((data) => data.anyLane || data.destination.placeId.length > 0, { ...msg("address"), path: ["destination.address"] })
-        .refine((data) => data.endsOn >= data.startsOn, { ...msg("period"), path: ["endsOn"] })
+        // No end date is a choice, not a blank
+        .refine((data) => data.noEnd || data.endsOn !== undefined, { ...msg("date"), path: ["endsOn"] })
+        .refine((data) => data.noEnd || data.endsOn === undefined || data.endsOn >= data.startsOn, { ...msg("period"), path: ["endsOn"] })
 }
 
 type ContractForm = z.infer<ReturnType<typeof ContractFormSchema>>
@@ -104,6 +107,7 @@ function defaultsFor(mode: ContractSheetMode): DefaultValues<ContractForm> {
             origin: EMPTY_LOCATION,
             destination: EMPTY_LOCATION,
             startsOn: undefined,
+            noEnd: false,
             endsOn: undefined,
             openEnded: false,
             committedQty: "",
@@ -125,7 +129,8 @@ function defaultsFor(mode: ContractSheetMode): DefaultValues<ContractForm> {
         origin: contract.origin ?? EMPTY_LOCATION,
         destination: contract.destination ?? EMPTY_LOCATION,
         startsOn: fromIsoDay(contract.startsOn),
-        endsOn: fromIsoDay(contract.endsOn),
+        noEnd: contract.endsOn === null,
+        endsOn: contract.endsOn === null ? undefined : fromIsoDay(contract.endsOn),
         openEnded: contract.committedQty === null,
         committedQty: contract.committedQty === null ? "" : String(contract.committedQty),
         currency: contract.currency,
@@ -195,7 +200,7 @@ export function ContractSheet({
         onOpenChange(false)
     }
 
-    const [basis, clientOrgId, anyLane, currency, openEnded] = useWatch({ control, name: ["basis", "clientOrgId", "anyLane", "currency", "openEnded"] })
+    const [basis, clientOrgId, anyLane, currency, openEnded, noEnd] = useWatch({ control, name: ["basis", "clientOrgId", "anyLane", "currency", "openEnded", "noEnd"] })
 
     const editing = mode.kind === "edit"
     const carrier = session?.organization.type === "carrier"
@@ -221,7 +226,7 @@ export function ContractSheet({
             origin: values.anyLane ? null : values.origin,
             destination: values.anyLane ? null : values.destination,
             startsOn: isoDay(values.startsOn),
-            endsOn: isoDay(values.endsOn),
+            endsOn: values.noEnd || !values.endsOn ? null : isoDay(values.endsOn),
             committedQty: values.openEnded ? null : Number(values.committedQty),
             weightUnit: values.basis === "weight" ? "ton" : null,
             currency: values.currency,
@@ -392,15 +397,24 @@ export function ContractSheet({
                                         label={t("form.fields.starts-on")}
                                         placeholder={tf("fields.date-placeholder")}
                                     />
-                                    <DateInput
-                                        name="endsOn"
-                                        control={control}
-                                        isPending={isPending}
-                                        value={EARLIEST_DATE}
-                                        label={t("form.fields.ends-on")}
-                                        placeholder={tf("fields.date-placeholder")}
-                                    />
+                                    {!noEnd && (
+                                        <DateInput
+                                            name="endsOn"
+                                            control={control}
+                                            isPending={isPending}
+                                            value={EARLIEST_DATE}
+                                            label={t("form.fields.ends-on")}
+                                            placeholder={tf("fields.date-placeholder")}
+                                        />
+                                    )}
                                 </FieldGroup>
+                                <CheckboxInput
+                                    name="noEnd"
+                                    control={control}
+                                    isPending={isPending}
+                                    label={t("form.fields.no-end")}
+                                    description={t("form.fields.no-end-hint")}
+                                />
                             </FieldSet>
 
                             <FieldSet>
