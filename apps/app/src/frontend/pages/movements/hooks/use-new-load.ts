@@ -5,7 +5,7 @@ import { create } from "zustand"
 import type { MovementExecution } from "@/frontend/pages/movements/types"
 
 /** One trip, or an order that takes several (a multi-trip order — the `contract` row) */
-export type NewLoadKind = "single" | "multi"
+export type NewLoadKind = "single" | "multi" | "rental"
 
 type NewLoadState = {
     isOpen: boolean

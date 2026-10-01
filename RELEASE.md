@@ -374,6 +374,19 @@ then push `prod/admin` and the portal back to back.
   more clause: a live grant on the row's own company admits it. Purely
   additive; nothing changes for the portal's owner connection. Dev got it
   from `node packages/db/scripts/migrate.mjs`.
+- `0033_rentals` — rentals: `contract_allocation` loses the one-share-per-carrier
+  rule for lines that pin a truck (one line per truck per order, `ends_on` for
+  a truck that leaves early); new `rental_day` (how a day counts, the
+  client's dispute, the driver's answer), `rental_checkin_request` (the
+  morning question's chain) and `contract_payment` (money against a rental).
+  Staff policies through the line/order; the two check-in tables are
+  **service-role** tables too (the webhook files the answer):
+  `grant select, insert, update on rental_day, rental_checkin_request to appload_service;`
+  — or re-run `create-db-roles.mjs --yes`. Then: create the `rental_checkin`
+  WhatsApp template in Infobip (docs/infobip-templates.md) and set
+  `INFOBIP_RENTAL_TEMPLATE` on the portal and admin projects; add the
+  `appload-app-rental-checkin` QStash schedule (`qstash-schedules.mjs`).
+  Dev got the migration from `node packages/db/scripts/migrate.mjs`.
 - `0032_open_period` — `contract.ends_on` becomes nullable (null = the
   order runs as long as the cargo lasts; it never expires on its own) and the
   period CHECK allows it. Dev got it from `node packages/db/scripts/migrate.mjs`.

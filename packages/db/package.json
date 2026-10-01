@@ -39,6 +39,7 @@
         "./notifications": "./src/schemas/notifications.ts",
         "./orders": "./src/schemas/orders.ts",
         "./quotes": "./src/schemas/quotes.ts",
+        "./rentals": "./src/schemas/rentals.ts",
         "./rls": "./src/schemas/rls.ts",
         "./subscriptions": "./src/schemas/subscriptions.ts",
         "./support": "./src/schemas/support.ts",

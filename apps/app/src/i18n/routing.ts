@@ -45,6 +45,10 @@ export const routing = defineRouting({
         "/orders/multi/[orderId]": {
             pt: "/pedidos/multi/[orderId]"
         },
+        // A rental's own page (a `contract` on the days basis)
+        "/orders/rental/[orderId]": {
+            pt: "/pedidos/aluguer/[orderId]"
+        },
         // The standing prices the company keeps with Appload, under My
         // company beside the rest of what it owns
         "/quotes": {

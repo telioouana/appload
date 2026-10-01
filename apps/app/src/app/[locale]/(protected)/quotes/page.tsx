@@ -33,5 +33,5 @@ export default async function QuotesPage({
         if (row) redirect(getPathname({ href: { pathname: "/orders/multi/[orderId]", params: { orderId: row.id } }, locale }))
     }
 
-    redirect(getPathname({ href: { pathname: "/orders/[section]", params: { section: "multi" }, query: { tab: "partners" } }, locale }))
+    redirect(getPathname({ href: { pathname: "/orders/[section]", params: { section: "all" }, query: { tab: "partners" } }, locale }))
 }

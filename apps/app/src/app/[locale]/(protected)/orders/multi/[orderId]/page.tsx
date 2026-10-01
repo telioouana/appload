@@ -1,7 +1,14 @@
 import { Suspense } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 
-import { getTranslations } from "@workspace/i18n/server"
+import { redirect } from "next/navigation"
+import { eq } from "drizzle-orm"
+
+import { contract } from "@workspace/db/contracts"
+import { db } from "@workspace/db/db"
+import { getLocale, getTranslations } from "@workspace/i18n/server"
+
+import { getPathname } from "@/i18n/navigation"
 
 import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 
@@ -24,6 +31,13 @@ export async function generateMetadata() {
 export default async function MultiTripOrderPage({ params }: { params: Promise<{ orderId: string }> }) {
     const { orderId } = await params
     const t = await getTranslations("App.contracts.detail")
+
+    // A rental is the same row counted in days, with a page of its own; the
+    // notifications and the old addresses only know the row
+    const [row] = await db.select({ basis: contract.basis }).from(contract).where(eq(contract.id, orderId)).limit(1)
+    if (row?.basis === "days") {
+        redirect(getPathname({ href: { pathname: "/orders/rental/[orderId]", params: { orderId } }, locale: await getLocale() }))
+    }
 
     prefetch(trpc.me.session.queryOptions())
     prefetch(trpc.contracts.get.queryOptions({ id: orderId }))

@@ -32,6 +32,7 @@
         "./appload/*": "./src/appload/*.ts",
         "./contracts/*": "./src/contracts/*.ts",
         "./support/*": "./src/support/*.ts",
+        "./rentals/*": "./src/rentals/*.ts",
         "./orders/*": "./src/orders/*.ts",
         "./threads/*": "./src/threads/*.ts",
         "./kyc/*": "./src/kyc/*.ts",

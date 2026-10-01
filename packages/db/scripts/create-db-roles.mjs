@@ -44,6 +44,8 @@ const SERVICE_TABLES = [
     "chat_conversation", "chat_message", "tracking_request",
     "order", "order_location",
     "movement", "movement_tracking_request", "movement_location", "movement_route",
+    // the rental check-in's answers
+    "rental_day", "rental_checkin_request",
     // sheet-sync cron
     "order_document", "order_history", "sheet_sync",
     // kyc-expiry cron

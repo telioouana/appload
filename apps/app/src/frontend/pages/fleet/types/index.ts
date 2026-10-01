@@ -81,6 +81,9 @@ export type VehicleStats = {
     };
 };
 
+/** The rental a truck is on today: the order, who it serves, until when (null = open) */
+export type VehicleRental = { contractId: string; ref: string; with: string | null; until: string | null };
+
 export type VehicleRow = {
     id: string;
     kind: VehicleKind;
@@ -102,6 +105,8 @@ export type VehicleRow = {
     driverName: string | null;
     /** Towed units: the plate of whatever they are hitched to */
     hitchedTo: string | null;
+    /** Trucks only: at a client's service on an active rental today */
+    rental: VehicleRental | null;
 };
 
 export type VehicleProfile =Omit<VehicleRow, "driverId" | "driverName"> & {

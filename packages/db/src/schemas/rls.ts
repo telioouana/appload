@@ -50,6 +50,14 @@ export const throughMovement = (movementId: AnyPgColumn) =>
 export const supportGranted = (organizationId: AnyPgColumn) =>
     sql`exists (select 1 from "support_access_grant" g where g."organization_id" = ${organizationId} and g."revoked_at" is null and g."expires_at" > now())`;
 
+/** A rental line's rows (its days, its questions) are as visible as the line, whose own policy reaches the order's. */
+export const throughAllocation = (allocationId: AnyPgColumn) =>
+    sql`exists (select 1 from "contract_allocation" a where a."id" = ${allocationId})`;
+
+/** An order's rows (its payments) are as visible as the order. */
+export const throughContract = (contractId: AnyPgColumn) =>
+    sql`exists (select 1 from "contract" c where c."id" = ${contractId})`;
+
 /** Same rule for the rows of a conversation. */
 export const throughThread = (threadId: AnyPgColumn) =>
     sql`exists (select 1 from "thread" t where t."id" = ${threadId})`;

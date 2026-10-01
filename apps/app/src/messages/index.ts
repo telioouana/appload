@@ -5,6 +5,8 @@ import analyticsEn from "./en/analytics.json";
 import analyticsPt from "./pt/analytics.json";
 import contractsEn from "./en/contracts.json";
 import contractsPt from "./pt/contracts.json";
+import rentalsEn from "./en/rentals.json";
+import rentalsPt from "./pt/rentals.json";
 import dataEn from "./en/data.json";
 import dataPt from "./pt/data.json";
 import driversEn from "./en/drivers.json";
@@ -47,6 +49,7 @@ export const en = {
         notifications: notificationsEn,
         orders: ordersEn,
         partners: partnersEn,
+        rentals: rentalsEn,
         search: searchEn,
         threads: threadsEn,
     },
@@ -66,6 +69,7 @@ export const pt = {
         notifications: notificationsPt,
         orders: ordersPt,
         partners: partnersPt,
+        rentals: rentalsPt,
         search: searchPt,
         threads: threadsPt,
     },

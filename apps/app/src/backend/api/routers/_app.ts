@@ -22,6 +22,8 @@ import { ordersCatalog } from "@/frontend/pages/orders/server/activity"
 import { ordersRouter } from "@/frontend/pages/orders/server/procedures"
 import { partnersCatalog } from "@/frontend/pages/partners/server/activity"
 import { partnersRouter } from "@/frontend/pages/partners/server/procedures"
+import { rentalsCatalog } from "@/frontend/pages/rentals/server/activity"
+import { rentalsRouter } from "@/frontend/pages/rentals/server/procedures"
 import { searchRouter } from "@/frontend/pages/search/server/procedures"
 import { threadsCatalog } from "@/frontend/pages/threads/server/activity"
 import { threadsRouter } from "@/frontend/pages/threads/server/procedures"
@@ -42,6 +44,7 @@ registerActivityCatalog({
     ...notificationsCatalog,
     ...ordersCatalog,
     ...partnersCatalog,
+    ...rentalsCatalog,
     ...threadsCatalog,
 });
 
@@ -58,6 +61,7 @@ export const appRouter = createTRPCRouter({
     onboarding: onboardingRouter,
     orders: ordersRouter,
     partners: partnersRouter,
+    rentals: rentalsRouter,
     search: searchRouter,
     threads: threadsRouter,
 });

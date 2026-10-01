@@ -43,6 +43,8 @@ export async function openShares(db: Db, tenantId: string): Promise<OpenShare[]>
         .from(contract)
         .where(and(
             eq(contract.status, "active"),
+            // A rental's trucks do short runs on site; nobody files them as trips
+            sql`${contract.basis} <> 'days'`,
             or(
                 eq(contract.organizationId, tenantId),
                 sql`exists (select 1 from ${contractAllocation} where ${and(

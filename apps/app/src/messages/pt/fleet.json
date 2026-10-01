@@ -60,7 +60,10 @@
         "truck-type": {
             "articulated": "Articulado",
             "non-articulated": "Rígido"
-        }
+        },
+        "on-rental": "Em aluguer",
+        "on-rental-until": "Em aluguer até {date}",
+        "with": "com {name}"
     },
     "sort": {
         "plate": "Matrícula",
@@ -151,7 +154,8 @@
         "driver": "Motorista",
         "hitched": "Engatado a",
         "kyc": "Estado",
-        "none": "Nenhum"
+        "none": "Nenhum",
+        "rental": "Aluguer"
     },
     "papers": {
         "missing": "Em falta",

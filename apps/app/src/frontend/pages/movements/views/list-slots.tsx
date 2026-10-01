@@ -15,7 +15,6 @@ import { HeaderSkeleton, ListError, ListSkeleton, TilesSkeleton } from "@workspa
 
 import { getPathname } from "@/i18n/navigation"
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
-import { ContractsDataSlot, ContractsHeaderSlot, ContractsStatsSlot } from "@/frontend/pages/contracts/views/list-slots"
 import { MovementsDataView } from "@/frontend/pages/movements/views/movements-data-view"
 import { MovementsHeaderView } from "@/frontend/pages/movements/views/movements-header-view"
 import { MovementsStatsView } from "@/frontend/pages/movements/views/movements-stats-view"
@@ -119,8 +118,6 @@ export async function MovementsHeaderSlot({ params, searchParams }: SectionParam
     const section = await sectionOrNotFound(params)
     const { scope } = await inputOrRedirect(section, searchParams)
 
-    // The multi-trip orders are the contracts views, behind the same tabs
-    if (section === "multi") return <ContractsHeaderSlot />
 
     prefetch(trpc.me.session.queryOptions())
     // Both tabs' counts: each pill carries the section's count on its side
@@ -140,7 +137,6 @@ export async function MovementsStatsSlot({ params, searchParams }: SectionParams
     const section = await sectionOrNotFound(params)
     const { scope } = await inputOrRedirect(section, searchParams)
 
-    if (section === "multi") return <ContractsStatsSlot searchParams={searchParams} />
 
     prefetch(trpc.me.session.queryOptions())
     prefetch(trpc.movements.cashflow.queryOptions({ scope, section }))
@@ -164,7 +160,6 @@ export async function MovementsDataSlot({ params, searchParams }: SectionParams 
     // first page hydrates straight into the client query
     const input = await inputOrRedirect(section, searchParams)
 
-    if (section === "multi") return <ContractsDataSlot searchParams={searchParams} />
 
     prefetch(trpc.me.session.queryOptions())
     prefetch(trpc.movements.list.queryOptions(input))

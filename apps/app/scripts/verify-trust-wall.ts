@@ -84,6 +84,7 @@ const FENCED_TABLES = [
     "movement_dispute", "movement_dispute_row",
     "partner_connection",
     "thread", "thread_participant", "thread_message", "thread_read",
+    "contract", "contract_allocation", "rental_day", "rental_checkin_request", "contract_payment",
 ];
 
 const results: { name: string; ok: boolean; detail?: string }[] = [];
