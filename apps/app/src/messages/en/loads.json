@@ -687,7 +687,15 @@
         "file": "File load",
         "save": "Save changes",
         "saving": "Saving…",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "kind": {
+            "title": "New load",
+            "description": "One trip, or an order that needs several?",
+            "single": "One trip",
+            "single-hint": "One truck, one cargo, one delivery.",
+            "multi": "Several trips",
+            "multi-hint": "A quantity, or a number of trips, over a period. Trucks are filed as they come to load and the order counts down."
+        }
     },
     "toasts": {
         "created": "{ref} filed",

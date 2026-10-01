@@ -43,6 +43,9 @@ const EARLIEST_DATE = new Date(new Date().getFullYear() - 1, 0, 1)
 const EMPTY_LOCATION = { address: "", placeId: "", country: "", state: "" }
 
 const BASIS_ICON = { trips: IconTruck, weight: IconWeight, days: IconCalendarTime } as const
+// Rental (days) is parked: it is not an order consumed by trucks and gets its
+// own door later. An existing rental still reads its basis when edited
+const CREATE_BASES: readonly ContractBasis[] = ["trips", "weight"]
 const UNIT_KEY = { trips: "trip", weight: "ton", days: "day" } as const
 
 type MessageField = "address" | "amount" | "name" | "date" | "period" | "quantity"
@@ -276,8 +279,8 @@ export function ContractSheet({
                                             <span className="text-muted-foreground"> — {t(`basis-hint.${basis}`)}</span>
                                         </p>
                                     ) : (
-                                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label={t("form.sections.basis")}>
-                                            {CONTRACT_BASIS.map((value) => {
+                                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label={t("form.sections.basis")}>
+                                            {CREATE_BASES.map((value) => {
                                                 const active = basis === value
                                                 const BasisIcon = BASIS_ICON[value]
 

@@ -687,7 +687,15 @@
         "file": "Registar carga",
         "save": "Guardar alterações",
         "saving": "A guardar…",
-        "cancel": "Cancelar"
+        "cancel": "Cancelar",
+        "kind": {
+            "title": "Nova carga",
+            "description": "Uma viagem, ou um pedido que precisa de várias?",
+            "single": "Uma viagem",
+            "single-hint": "Um camião, uma carga, uma entrega.",
+            "multi": "Várias viagens",
+            "multi-hint": "Uma quantidade, ou um número de viagens, ao longo de um período. Os camiões vão sendo registados à medida que carregam e o pedido vai sendo consumido."
+        }
     },
     "toasts": {
         "created": "{ref} registada",

@@ -151,7 +151,7 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
                         filtered: t("data.no-results"),
                         action: ownTripsFromClients
                             ? undefined
-                            : <Button onClick={() => openNewLoad(scope === "trips" ? "own-fleet" : "partner")}>{t(`actions.new.${scope}`)}</Button>,
+                            : <Button onClick={() => openNewLoad(scope === "trips" ? "own-fleet" : "partner", { kind: "single" })}>{t(`actions.new.${scope}`)}</Button>,
                     }}
                 />
             </div>
