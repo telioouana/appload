@@ -25,11 +25,17 @@ import fs from "node:fs";
 
 import { eq, inArray, sql } from "drizzle-orm";
 
-import { partnerConnection } from "@workspace/db/connections";
+import { activityLog } from "@workspace/db/activity-log";
 import { createDb, db } from "@workspace/db/db";
 import { movement, movementCost, movementDocument, movementRequest } from "@workspace/db/movements";
 import { order } from "@workspace/db/orders";
+import { supportAccessGrant } from "@workspace/db/support";
 import { thread, threadParticipant } from "@workspace/db/threads";
+import { createCallerFactory } from "@workspace/trpc/init";
+import { getStaffGates } from "@workspace/trpc/staff-gate";
+import { getTenantGates } from "@workspace/trpc/tenant-gate";
+
+import { appRouter } from "@/backend/api/routers/_app";
 
 const appEnv = fs.readFileSync(".env", "utf8");
 const adminEnv = fs.readFileSync("../admin/.env", "utf8");
@@ -47,8 +53,25 @@ const staff = createDb(STAFF_URL);
 const service = createDb(SERVICE_URL);
 
 // The portal test tenants (memory: portal-test-accounts): B is the carrier whose books are fenced
-const A = { org: "42655a3f-0bd5-4e46-af29-9c5ee342a8aa" }; // shipper
-const B = { org: "9b7674e5-ea7b-416b-a199-6ca6842da718" }; // carrier
+const A = { user: "FT7QysKKfs5NKuut5i2S8Nhg6ItrwyuR", org: "42655a3f-0bd5-4e46-af29-9c5ee342a8aa" }; // shipper, owner
+const B = { user: "a2R9UNA2NTiEo3FS7DxlwgBFUn8EDNU6", org: "9b7674e5-ea7b-416b-a199-6ca6842da718" }; // carrier, owner
+const BM = { user: "AM6u6fxppa9LEkRiMnMDHyrMpThmNrQy" }; // carrier, member
+
+const SESSION_ID = "verify-trust-wall";
+// The whole app router, so the request log sees the same paths as the portal ("me.supportGrants.grant") and its catalog
+const createAppCaller = createCallerFactory(appRouter);
+/** The request log is fire-and-forget; this is where its promises are caught so the checks can wait for them. */
+const logged: Promise<unknown>[] = [];
+const me = (userId: string) => createAppCaller({
+    authApi: undefined as never,
+    session: { user: { id: userId, name: "harness" }, session: { id: SESSION_ID, userId } } as never,
+    db,
+    app: "portal" as const,
+    headers: new Headers(),
+    waitUntil: (promise: Promise<unknown>) => { logged.push(promise); },
+    staffGates: (id: string) => getStaffGates(db, { userId: id }),
+    tenantGates: (id: string) => getTenantGates(db, { userId: id }),
+}).me;
 // No third tenant: the rebuilt dev has no Qaqz row, so a "stranger" on a row is simply A again
 
 const origin = { state: "Nampula Province", address: "Nampula, Mozambique", country: "Mozambique", placeId: "ChIJOaE2a7M1xhgRdN3KTEt2F8I" };
@@ -177,6 +200,42 @@ async function main() {
     check("service is refused the costs table", /permission denied/.test(costs ?? ""), costs);
     const pairsAsService = await refusal(() => service.execute(sql`select 1 from partner_connection limit 1`));
     check("service is refused the client list", /permission denied/.test(pairsAsService ?? ""), pairsAsService);
+
+    // 7. The door B may open: a support grant lets staff read B's own rows, nothing else, and only while it lasts
+    const asMember = await refusal(() => me(BM.user).supportGrants.grant({ days: 7, reason: "verify-trust-wall" }));
+    check("a member cannot open the door", /NOT_ALLOWED|FORBIDDEN/.test(asMember ?? ""), asMember);
+    const opened = await me(B.user).supportGrants.grant({ days: 7, reason: "verify-trust-wall" });
+    check("the owner opens it for a week", opened.expiresAt.getTime() - Date.now() > 6.9 * 86_400_000, opened);
+    check("staff now sees B's load", await countAs(staff, "movement", "id", x) === 1);
+    check("…and its costs", await countAs(staff, "movement_cost", "movement_id", x) === 1);
+    check("…and B's client list", (await staff.execute<{ n: number }>(sql`select count(*)::int as n from partner_connection where requester_org_id = ${B.org} or target_org_id = ${B.org}`))[0]?.n === (await db.execute<{ n: number }>(sql`select count(*)::int as n from partner_connection where requester_org_id = ${B.org} or target_org_id = ${B.org}`))[0]?.n);
+    // A's own load naming B as its carrier is A's row: B's grant does not open it
+    const [aRow] = await db.insert(movement).values({
+        organizationId: A.org, execution: "partner", carrierOrgId: B.org, origin, destination, notes: "verify-trust-wall",
+    }).returning({ id: movement.id });
+    if (aRow) movementsHere.push(aRow.id);
+    check("B's grant does not open A's row that names B", aRow !== undefined && await countAs(staff, "movement", "id", aRow.id) === 0);
+    const listed = await me(B.user).supportGrants.list();
+    check("the company reads the open grant and who opened it", listed.active?.id === opened.id && listed.active.state === "active" && listed.history.some((row) => row.id === opened.id), listed);
+    await me(B.user).supportGrants.revoke({ id: opened.id });
+    check("revoked, staff sees zero rows again", await countAs(staff, "movement", "id", x) === 0);
+    check("…and the record says closed early", (await me(B.user).supportGrants.list()).history.find((row) => row.id === opened.id)?.state === "revoked");
+    // An expired grant is no grant
+    await db.insert(supportAccessGrant).values({ organizationId: B.org, grantedBy: B.user, reason: "verify-trust-wall", expiresAt: new Date(Date.now() - 60_000) });
+    check("an expired grant opens nothing", await countAs(staff, "movement", "id", x) === 0);
+
+    // 8. The company's own record: what its members did, stamped with the company, and what support read
+    await Promise.all(logged);
+    await db.insert(activityLog).values({
+        app: "admin", actorId: "harness-staff", actorName: "Harness Staff", sessionId: SESSION_ID, organizationId: B.org,
+        action: "support.loads.view", entityType: "organization", entityId: B.org, params: { loads: 1 }, status: "success",
+    });
+    const bRecord = await me(B.user).activity.list({ limit: 30 });
+    const granted = bRecord.items.find((row) => row.action === "me.supportGrants.grant" && row.createdAt.getTime() > Date.now() - 5 * 60_000);
+    check("B reads the grant it made, under its own company", granted !== undefined && !granted.support && granted.entityId === B.org, granted);
+    check("…and the support read, marked as such", bRecord.items.some((row) => row.action === "support.loads.view" && row.support), bRecord.items.slice(0, 3));
+    const aRecord = await me(A.user).activity.list({ limit: 30 });
+    check("A's record carries none of it", !aRecord.items.some((row) => row.action === "me.supportGrants.grant" && row.createdAt.getTime() > Date.now() - 5 * 60_000 && row.entityId === B.org));
 }
 
 async function cleanup() {
@@ -192,6 +251,8 @@ async function cleanup() {
     }
     // Leaves nothing of ours behind even when a fixture insert died half-way
     await db.delete(movement).where(eq(movement.notes, "verify-trust-wall"));
+    await db.delete(supportAccessGrant).where(eq(supportAccessGrant.reason, "verify-trust-wall"));
+    await db.delete(activityLog).where(eq(activityLog.sessionId, SESSION_ID));
     void order;
 }
 

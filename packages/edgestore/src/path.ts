@@ -70,6 +70,14 @@ export function movementDocumentPath(movementId: string, type: string): string {
 }
 
 /**
+ * The prefix for a contract's signed paper, keyed on the contract's id. The
+ * setFile door checks the stored URL contains this segment.
+ */
+export function contractFilePath(contractId: string): string {
+    return toStoragePath(`contracts/${contractId}`)
+}
+
+/**
  * The prefix for a chat attachment, keyed on the thread's own id. The send
  * mutation checks the stored URL contains this segment, so a file uploaded
  * against one thread can never be posted into another.

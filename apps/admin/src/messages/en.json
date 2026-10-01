@@ -3325,7 +3325,8 @@
                     "drivers": "Drivers",
                     "orders": "Orders",
                     "portal": "Portal",
-                    "activity": "Activity"
+                    "activity": "Activity",
+                    "support": "Support"
                 },
                 "type": {
                     "shipper": "Shipper",
@@ -3370,7 +3371,37 @@
                 "make": "Make and model",
                 "bay-on-trailer": "On the trailer",
                 "operation": "Operation",
-                "vehicle-type": "Type"
+                "vehicle-type": "Type",
+                "support": {
+                    "open": "open",
+                    "closed": "The company has not opened its loads to support",
+                    "closed-hint": "An owner opens the door on the portal, under Settings › Security, for a day, a week or a month. Until then the database returns nothing here.",
+                    "open-until": "Open until {date}",
+                    "granted-by": "Opened by {name}",
+                    "no-loads": "No loads on this company's books",
+                    "load-failed": "The loads could not be read",
+                    "logged": "Every read here is written to the company's own activity log, with your name.",
+                    "status": {
+                        "procurement": "Out for quotes",
+                        "prospect": "Prospect",
+                        "offered": "Offered",
+                        "declined": "Declined",
+                        "scheduled": "Scheduled",
+                        "booked": "Booked",
+                        "at-loading": "At loading site",
+                        "loading": "Loading",
+                        "waiting-documents": "Waiting for documents",
+                        "on-route": "On route",
+                        "stopped": "Stopped",
+                        "issue": "Issue",
+                        "at-border": "At border",
+                        "at-offloading": "At offloading site",
+                        "offloading": "Offloading",
+                        "delivered": "Delivered",
+                        "closed": "Closed",
+                        "cancelled": "Cancelled"
+                    }
+                }
             },
             "edit": {
                 "title": {

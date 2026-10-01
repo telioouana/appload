@@ -128,10 +128,10 @@ export const APPLOAD_ORG_NAME = "Appload"
 export const isApploadOrg = (organizationId: string | null | undefined): boolean =>
     organizationId === APPLOAD_ORG_ID
 
-// What a per-company movement reference counts. "REQ" is a load still
-// collecting offers, "ORD" the one it becomes once somebody is committed to
-// moving it; both are numbered per organization, per kind, per year.
-export const REFERENCE_KIND = ["REQ", "ORD"] as const
+// What a per-company reference counts. "REQ" is a load still collecting
+// offers, "ORD" the one it becomes once somebody is committed to moving it,
+// "CON" a contract; all numbered per organization, per kind, per year.
+export const REFERENCE_KIND = ["REQ", "ORD", "CON"] as const
 
 export type ReferenceKind = (typeof REFERENCE_KIND)[number]
 
@@ -165,6 +165,32 @@ export const AddressSchema = z.object({
     country: z.string().nonempty(),
     state: z.string().nonempty(),
 });
+
+/**
+ * How a contract prices a trip (schemas/contracts.ts). A discriminated
+ * union in jsonb: a new way of pricing is a new member here, never a
+ * migration. Amounts are in the contract's currency, VAT included like every
+ * money block in the repo.
+ *
+ * - per-trip: a flat rate per load
+ * - per-ton: rate × the load's weight in tons, with an optional floor
+ * - per-day: a rental — rate × the days elapsed, calendar or working
+ *   (Mon–Sat); the money is on the contract, its trips carry none
+ * - lump-sum: one price for the whole commitment; trips are priced 0
+ * Per km waits for the route to be cached at dispatch.
+ */
+const money = z.number().finite().nonnegative().max(1e12)
+
+export const PriceModelSchema = z.discriminatedUnion("model", [
+    z.object({ model: z.literal("per-trip"), rate: money }),
+    z.object({ model: z.literal("per-ton"), rate: money, minBillableTons: money.optional() }),
+    z.object({ model: z.literal("per-day"), rate: money, billableDays: z.enum(["calendar", "working"]) }),
+    z.object({ model: z.literal("lump-sum"), total: money }),
+])
+
+export const PRICE_MODEL = ["per-trip", "per-ton", "per-day", "lump-sum"] as const
+export type PriceModelKind = (typeof PRICE_MODEL)[number]
+export type PriceModel = z.infer<typeof PriceModelSchema>
 
 export type Urls = z.infer<typeof URLSchema>
 export type Address = z.infer<typeof AddressSchema>

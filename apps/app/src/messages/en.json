@@ -282,7 +282,8 @@
                 "duplicatePhone": "That phone is already used by another company",
                 "notFound": "We could not find that company",
                 "unknown": "Something went wrong. Please try again"
-            }
+            },
+            "data-link": "What Appload sees of your data"
         },
         "shell": {
             "sidebar": {
@@ -291,6 +292,7 @@
                     "dashboard": "Dashboard",
                     "orders": "Orders",
                     "map": "Map",
+                    "contracts": "Contracts",
                     "chats": "Chats",
                     "notifications": "Notifications"
                 },
@@ -301,10 +303,10 @@
                     "team": "Team",
                     "partners": "Partners",
                     "my-transporters": "My transporters",
-                    "quotes": "Quotes",
                     "analytics": "Analytics"
                 },
-                "new-load": "New load"
+                "new-load": "New load",
+                "data": "Your data"
             },
             "user": {
                 "settings": "Settings",
@@ -396,7 +398,9 @@
                 "profile": "Profile",
                 "company": "Company",
                 "members": "Team",
-                "subscription": "Subscription"
+                "subscription": "Subscription",
+                "security": "Security",
+                "activity": "Activity"
             },
             "profile": {
                 "title": "Your profile",
@@ -629,6 +633,116 @@
                     "description": "Talk to the Appload team — we handle the change with you",
                     "button": "Talk to Appload",
                     "subject": "Appload Enterprise — {organization} plan"
+                }
+            },
+            "support": {
+                "title": "Appload support access",
+                "description": "Whether Appload's team may read this company's loads to help with them",
+                "loading": "Checking…",
+                "closed": "Closed: Appload support cannot read your loads",
+                "open-until": "Open until {date}",
+                "granted-by": "Opened by {name}",
+                "grant": "Open for support",
+                "revoke": "Close now",
+                "granted": "Support access opened",
+                "revoked": "Support access closed",
+                "failed": "That did not go through — try again",
+                "what-they-see": "While open, Appload support reads your own loads, contracts and partner list, without prices. Every read is written to your activity log. Loads Appload itself carries or orders are always visible to it.",
+                "history": "History",
+                "states": {
+                    "active": "Open",
+                    "expired": "Expired",
+                    "revoked": "Closed early"
+                },
+                "dialog": {
+                    "title": "Open your loads to Appload support",
+                    "description": "For a limited time, with the reason on record. You can close it again at any moment.",
+                    "duration": "For how long",
+                    "days": {
+                        "1": "One day",
+                        "7": "One week",
+                        "30": "One month"
+                    },
+                    "reason": "Reason",
+                    "reason-placeholder": "e.g. Ticket about load ORD-0012-26 stuck on route",
+                    "cancel": "Cancel",
+                    "confirm": "Open"
+                },
+                "learn-more": "What Appload sees, in full."
+            },
+            "activity": {
+                "title": "Activity",
+                "description": "What was done in your company's name on the portal, and every time Appload support read your loads",
+                "empty": "Nothing recorded yet",
+                "failed": "The record could not be loaded",
+                "failed-action": "failed",
+                "support": "Appload support",
+                "more": "Show earlier",
+                "since": "Older actions may be missing: before 1 October 2026 the portal did not always file them under the company.",
+                "open-load": "Open load",
+                "open-contract": "Open contract",
+                "actions": {
+                    "contracts-create": "Filed a contract",
+                    "contracts-update": "Edited a contract",
+                    "contracts-transition": "Changed a contract's status",
+                    "contracts-setFile": "Attached the signed contract",
+                    "contracts-allocations-add": "Added a share to a contract",
+                    "contracts-allocations-update": "Edited a share",
+                    "contracts-allocations-remove": "Removed a share",
+                    "drivers-register": "Registered a driver",
+                    "drivers-update": "Edited a driver",
+                    "fleet-vehicles-register": "Registered a vehicle",
+                    "fleet-vehicles-update": "Edited a vehicle",
+                    "fleet-assignDriver": "Assigned a driver to a truck",
+                    "kyc-upload": "Uploaded a document",
+                    "me-changePassword": "Changed their password",
+                    "me-updateCompany": "Edited the company's details",
+                    "me-supportGrants-grant": "Opened the company's loads to Appload support",
+                    "me-supportGrants-revoke": "Closed Appload support's access",
+                    "movements-create": "Filed a load",
+                    "movements-update": "Edited a load",
+                    "movements-transition": "Moved a load to a new stage",
+                    "movements-convert": "Converted a load",
+                    "movements-offer": "Offered a load to a partner",
+                    "movements-respond": "Answered an offer",
+                    "movements-withdraw": "Withdrew an offer",
+                    "movements-recordPayment": "Recorded a payment",
+                    "movements-requestLocation": "Asked the driver for a position",
+                    "movements-costs-add": "Added a cost",
+                    "movements-costs-remove": "Removed a cost",
+                    "movements-documents-add": "Attached a document to a load",
+                    "movements-documents-remove": "Removed a document from a load",
+                    "orders-create": "Placed an Appload order",
+                    "orders-cancel": "Cancelled an Appload order",
+                    "orders-transition": "Moved an Appload order",
+                    "orders-documents-add": "Attached a document to an order",
+                    "orders-offers-create": "Quoted on an order",
+                    "orders-offers-update": "Corrected a quote",
+                    "orders-offers-withdraw": "Withdrew a quote",
+                    "orders-offers-accept": "Accepted a quote",
+                    "orders-offers-decline": "Declined a quote",
+                    "orders-recordLoadingCheck": "Recorded the loading check",
+                    "orders-sendRequests": "Sent an order out for quotes",
+                    "orders-withdrawRequest": "Withdrew a request for quotes",
+                    "partners-request": "Asked a company to connect",
+                    "partners-respond": "Answered a connection request",
+                    "partners-withdraw": "Withdrew a connection request",
+                    "partners-remove": "Ended a connection",
+                    "partners-register": "Registered a partner",
+                    "quotes-create": "Filed a quote",
+                    "quotes-accept": "Accepted a quote",
+                    "quotes-decline": "Declined a quote",
+                    "quotes-withdraw": "Withdrew a quote",
+                    "threads-send": "Sent a message",
+                    "support-loads-view": "read the company's loads",
+                    "auth-sign_in": "Signed in",
+                    "auth-sign_out": "Signed out",
+                    "movements-sendRequests": "Sent a load out for quotes",
+                    "movements-withdrawRequest": "Withdrew a request for quotes",
+                    "movements-quote": "Quoted on a load",
+                    "movements-declineRequest": "Declined to quote on a load",
+                    "movements-award": "Awarded a load to a quote",
+                    "movements-sendConfirmation": "Sent the order confirmation"
                 }
             }
         },

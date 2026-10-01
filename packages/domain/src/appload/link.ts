@@ -262,7 +262,7 @@ export async function offerToAppload(
     // on it
     await db
         .update(order)
-        .set({ source: org.type === "shipper" ? "client" : "carrier" })
+        .set({ source: org.type === "shipper" ? "client" : "carrier", contractAllocationId: row.contractAllocationId })
         .where(eq(order.id, created.order.id))
         .catch((error: unknown) => console.error(`order source failed for ${created.orderId}`, error));
 

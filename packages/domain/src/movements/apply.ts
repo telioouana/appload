@@ -38,6 +38,7 @@ import { unapprovedPhotos } from "@workspace/domain/movements/documents";
 import { legSettled } from "@workspace/domain/movements/money";
 import { isOnPortal, MAX_HOPS, openRequestCount, organizationName, parentMovement } from "@workspace/domain/movements/link";
 import { FOLLOWS_APPLOAD_ORDER } from "@workspace/domain/movements/mirror";
+import { ensureMovementRoute } from "@workspace/domain/tracking/route-cache";
 import { counterpartyRef, movementRef, needsOrderReference } from "@workspace/domain/movements/refs";
 import {
     entersInProgress,
@@ -315,6 +316,14 @@ export async function transitionMovement(
     let updated = withExecutor
         ? await cancelWithExecutor(db, row, input.expectedVersion, now)
         : await moveOne(db, row, input.expectedVersion, input.to, now);
+
+    // The road is drawn the moment the truck is on it, so the slot review can
+    // judge every load and the page shows how far along it is — the same
+    // Routes call the page would have bought on its first open. A lane Google
+    // cannot draw never blocks the dispatch (ensureMovementRoute never throws)
+    if (input.to === "on-route") {
+        await ensureMovementRoute(db, updated);
+    }
 
     // Somebody has committed to this load, so it is an order and needs the
     // company's own ORD number before anything else is written about it

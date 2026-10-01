@@ -545,18 +545,18 @@ async function main() {
 
     console.log("\n— B names its driver and the truck reaches the loading site");
     const phone = "+258840000999";
-    const named = await b.update({ id: accepted.id, expectedVersion: bOwn.version, driverName: "HARNESS Driver", driverPhone: phone, truckPlate: "HAR-001-MP" });
+    const named = await b.update({ id: accepted.id, expectedVersion: bOwn.version, driverName: "HARNESS Driver", driverPhone: phone, truckPlate: "HAR 001 MP" });
     await b.transition({ id: accepted.id, to: "at-loading", expectedVersion: named.version });
 
     aDetail = await a.get({ id: filed.id });
     check("A's order followed B's truck to the loading site", aDetail.status === "at-loading", aDetail.status);
     check("…with a trail line that says it was carried up", aDetail.events.some((event) => event.kind === "system" && event.toStatus === "at-loading"), aDetail.events);
     check("…and still no phone of B's driver", aDetail.driverPhone === null);
-    check("…but it knows which truck is coming", aDetail.driverName === "HARNESS Driver" && aDetail.truckPlate === "HAR-001-MP", { driver: aDetail.driverName, plate: aDetail.truckPlate });
+    check("…but it knows which truck is coming", aDetail.driverName === "HARNESS Driver" && aDetail.truckPlate === "HAR 001 MP", { driver: aDetail.driverName, plate: aDetail.truckPlate });
 
     const aOrderRows = await a.list({ scope: "orders", section: "in-progress" });
     const aOrderRow = aOrderRows.items.find((row) => row.id === filed.id);
-    check("…in its list too", aOrderRow?.truckPlate === "HAR-001-MP", aOrderRow);
+    check("…in its list too", aOrderRow?.truckPlate === "HAR 001 MP", aOrderRow);
 
     const usage = await db
         .select({ org: subscriptionUsage.organizationId, entity: subscriptionUsage.entityId })

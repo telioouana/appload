@@ -49,4 +49,6 @@ export type MapEntity = {
     driverName: string | null;
     truckPlate: string | null;
     lastPosition: TrailPoint | null;
+    /** How far the truck still has to go and when it gets there at its pace; null off the road or without a route */
+    progress: { remainingKm: number; etaAt: Date | null; behind: boolean } | null;
 };

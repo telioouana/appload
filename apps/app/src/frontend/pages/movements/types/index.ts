@@ -16,6 +16,7 @@ import type { MovementRole } from "@workspace/domain/movements/policy";
 import type { EditableGroup } from "@workspace/domain/movements/policy";
 import type { CostTotal, Currency, PaymentStatus } from "@workspace/domain/movements/money";
 import type { MovementFlag, TransitionBlocker } from "@workspace/domain/movements/status";
+import type { ContractSummary, OpenShare } from "@/frontend/pages/contracts/server/projection";
 import type { OrderStatusKey } from "@workspace/ui/customs/badge/status-badge";
 
 export type {
@@ -476,6 +477,8 @@ export type MovementDetail = MovementRow & {
     responseNote: string | null;
     /** This row is an executor's copy of an order another company placed */
     hasParent: boolean;
+    /** The contract share the load was filed under, when the reader may see the contract */
+    contract: ContractSummary | null;
     /** The quote round: every transporter asked, to the owner; its own row, to a transporter */
     requests: MovementRequestView[];
     money: MovementMoney;
@@ -508,6 +511,8 @@ export type LoadFormOptions = {
     partners: Array<{ id: string; name: string; type: PartnerOrgType | "appload"; onPortal: boolean }>;
     drivers: Array<{ id: string; name: string; phone: string | null }>;
     trucks: Array<{ id: string; plate: string }>;
+    /** The contract shares a trip can be filed under right now */
+    allocations: OpenShare[];
 };
 
 /** The money strip's figures: one line per currency, never summed across two. */
@@ -611,6 +616,8 @@ export const movementsListInput = (section: MovementSection, get: Get, orgType: 
         hasCosts: flag(get("hasCosts")),
         /** A partner company on the load, the owner's own rows only */
         partner: get("partner")?.trim() || undefined,
+        /** The trips under one contract, from its page */
+        contractId: get("contract")?.trim() || undefined,
         /** The loading period: a month of the current year, or an explicit range */
         month: parseMonth(get("month")),
         from: isoDate(get("from")),
@@ -625,7 +632,7 @@ export const movementsListInput = (section: MovementSection, get: Get, orgType: 
 export type MovementsListInput = ReturnType<typeof movementsListInput>;
 
 /** Every URL key a filter control owns, so "nothing yet" is told from "nothing matched". */
-export const FILTER_KEYS = ["search", "status", "silent", "disputed", "offRoute", "hasCosts", "partner", "month", "from", "to"] as const;
+export const FILTER_KEYS = ["search", "status", "silent", "disputed", "offRoute", "hasCosts", "partner", "contract", "month", "from", "to"] as const;
 
 export const isFilteredMovements = (get: Get) => FILTER_KEYS.some((key) => Boolean(get(key)));
 

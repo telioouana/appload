@@ -31,6 +31,7 @@ import {
     trackingTemplateText,
 } from "@workspace/comms/infobip";
 import { offerToAppload } from "@workspace/domain/appload/link";
+import { tripDefaultsFor } from "@workspace/domain/contracts/prefill";
 import { announce, recordEvent, statusStamps, transitionMovement, type MovementActor } from "@workspace/domain/movements/apply";
 import { nextReference } from "@workspace/domain/movements/counters";
 import { activeDisputeFor, openDispute, resolveDispute } from "@workspace/domain/movements/disputes";
@@ -49,6 +50,9 @@ import {
 } from "@workspace/domain/movements/requests";
 import { movementRef, needsOrderReference } from "@workspace/domain/movements/refs";
 import { entersInProgress, isAskable, isInProgress, isTerminal, movementFlags } from "@workspace/domain/movements/status";
+import { dueBy, EN_ROUTE_STATUSES, type MovementProgress } from "@workspace/domain/tracking/progress";
+import { readMovementProgress } from "@workspace/domain/tracking/progress-read";
+import { ensureMovementRoute } from "@workspace/domain/tracking/route-cache";
 import { notify } from "@workspace/domain/notifications";
 import { assertTrackingAllowance, recordTrackingUsage } from "@workspace/domain/subscription";
 import { startConversation } from "@workspace/domain/tracking/conversations";
@@ -56,22 +60,13 @@ import { hasOpenSession, place } from "@workspace/domain/tracking/slot";
 
 import { movementDocumentPath } from "@workspace/edgestore/path";
 
-import { computeRoute } from "@workspace/maps/server/routes";
-import {
-    cacheKey,
-    failedRecently,
-    failureKey,
-    GEOCODE_TTL_MS,
-    num,
-    rememberFailure,
-    routeFailures,
-    toRouteDto,
-    trailSource,
-} from "@workspace/maps/server/route-cache";
+import { num, toRouteDto, trailSource } from "@workspace/maps/server/route-cache";
 import type { OrderRouteDto, TrailPoint } from "@workspace/maps/types";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { tenantProcedure } from "@workspace/trpc/tenant";
+
+import { contractSummaryFor, openShares } from "@/frontend/pages/contracts/server/projection";
 
 import { withinRateLimit } from "@/lib/rate-limit";
 import {
@@ -357,6 +352,8 @@ const ListInput = z.object({
     hasCosts: z.literal(true).optional(),
     /** A partner company on the load; only the owner's own rows match */
     partner: z.string().max(64).optional(),
+    /** The trips filed under one contract, whichever of its shares */
+    contractId: z.string().max(64).optional(),
     /** The loading period: a month of the current year, or an explicit range that wins over it */
     month: z.number().int().min(1).max(12).optional(),
     from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -368,6 +365,10 @@ const ListInput = z.object({
 });
 
 type ListInput = z.infer<typeof ListInput>;
+
+/** Filed under any share of one contract. */
+const underContract = (contractId: string): SQL =>
+    sql`exists (select 1 from contract_allocation a where a.id = ${movement.contractAllocationId} and a.contract_id = ${contractId})`;
 
 /** The reference, the driver, the plate and the cargo are what a load is looked up by. */
 function searchWhere(term: string, tenantId: string): SQL | undefined {
@@ -664,6 +665,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
 
     return toMovementDetail(row, role, {
         tenantId,
+        contract: row.contractAllocationId ? await contractSummaryFor(db, row.contractAllocationId, tenantId) : null,
         terminalRig: rigs.get(trailId) ?? null,
         terminalProofs,
         carrierEmail,
@@ -771,6 +773,7 @@ export const movementsRouter = createTRPCRouter({
                 input.offRoute ? offRouteRecently(tenantId) : undefined,
                 input.hasCosts ? hasCosts(tenantId) : undefined,
                 input.partner ? withPartner(input.partner, tenantId) : undefined,
+                input.contractId ? underContract(input.contractId) : undefined,
                 loadingPeriod(input),
             );
 
@@ -912,6 +915,7 @@ export const movementsRouter = createTRPCRouter({
                 input.offRoute ? offRouteRecently(tenantId) : undefined,
                 input.hasCosts ? hasCosts(tenantId) : undefined,
                 input.partner ? withPartner(input.partner, tenantId) : undefined,
+                input.contractId ? underContract(input.contractId) : undefined,
                 loadingPeriod(input),
             );
 
@@ -979,6 +983,7 @@ export const movementsRouter = createTRPCRouter({
             ],
             drivers: drivers.map((row) => ({ id: row.id, name: row.name, phone: row.phone ?? null })),
             trucks: trucks.map((row) => ({ id: row.id, plate: row.plate })),
+            allocations: await openShares(ctx.db, tenantId),
         };
     }),
 
@@ -1007,13 +1012,44 @@ export const movementsRouter = createTRPCRouter({
      */
     create: tenantProcedure
         .input(CreateMovementBaseSchema)
-        .mutation(async ({ ctx, input }): Promise<{ id: string; ref: string; asked: number }> => {
+        .mutation(async ({ ctx, input: raw }): Promise<{ id: string; ref: string; asked: number }> => {
             const tenantId = ctx.tenant.organizationId;
+
+            // Filed under a contract share: the share's parties, rig, lane and
+            // prices are the defaults, and what was typed wins over every one
+            // of them — a contract price is never a ceiling. The shape is the
+            // share's: a partner's share is an order, own fleet a trip
+            const share = raw.contractAllocationId
+                ? await tripDefaultsFor(ctx.db, tenantId, raw.contractAllocationId, { weight: raw.weight ?? null, weightUnit: raw.weightUnit ?? null })
+                : null;
+
+            if (share && share.execution !== raw.execution) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "CONTRACT_SHAPE_MISMATCH" });
+            }
+
+            const input = share
+                ? {
+                    ...raw,
+                    clientOrgId: raw.clientOrgId ?? share.clientOrgId ?? undefined,
+                    clientName: raw.clientName ?? share.clientName ?? undefined,
+                    clientReference: raw.clientReference ?? share.clientReference ?? undefined,
+                    carrierOrgId: raw.carrierOrgId ?? share.carrierOrgId ?? undefined,
+                    carrierName: raw.carrierName ?? share.carrierName ?? undefined,
+                    truckId: raw.truckId ?? share.truckId ?? undefined,
+                    driverId: raw.driverId ?? share.driverId ?? undefined,
+                    truckPlate: raw.truckPlate ?? share.truckPlate ?? undefined,
+                    sell: raw.sell ?? share.sell ?? undefined,
+                    buy: raw.buy ?? share.buy ?? undefined,
+                }
+                : raw;
+
             const partner = input.execution === "partner";
 
             assertCan(ctx.tenant.role, partner ? "order" : "trip", "create");
 
-            if (!partner && ctx.tenant.orgType === "carrier") {
+            // A transporter's own trucks are put on its clients' orders — and a
+            // client's contract naming it is that order, standing
+            if (!partner && ctx.tenant.orgType === "carrier" && !share) {
                 throw new TRPCError({ code: "FORBIDDEN", message: "OWN_TRIPS_COME_FROM_CLIENTS" });
             }
 
@@ -1090,6 +1126,7 @@ export const movementsRouter = createTRPCRouter({
                 ...legColumns("sell", input.sell ?? null),
                 ...(partner ? legColumns("buy", input.buy ?? null) : {}),
                 notes: input.notes || null,
+                contractAllocationId: share?.allocationId ?? null,
                 createdBy: ctx.tenant.userId,
             };
 
@@ -1117,6 +1154,13 @@ export const movementsRouter = createTRPCRouter({
                 },
                 input.status,
             );
+
+            // A contract is drawn down, never enforced: past its quantity or off
+            // its lane the trip is filed and says so on its trail
+            if (share && share.remaining !== null && share.remaining <= 0) flags.push("CONTRACT_OVER_COMMITTED");
+            if (share && ((share.origin && share.origin.placeId !== input.origin.placeId) || (share.destination && share.destination.placeId !== input.destination.placeId))) {
+                flags.push("CONTRACT_LANE_MISMATCH");
+            }
 
             const starts = entersInProgress(null, input.status);
 
@@ -2134,7 +2178,7 @@ export const movementsRouter = createTRPCRouter({
      */
     trail: tenantProcedure
         .input(z.object({ id: z.string().nonempty() }))
-        .query(async ({ ctx, input }): Promise<TrailPoint[]> => {
+        .query(async ({ ctx, input }): Promise<{ points: TrailPoint[]; progress: MovementProgress | null }> => {
             const { row } = await loadVisible(ctx.db, input.id, ctx.tenant.organizationId);
             const trailId = row.executionMovementId ? await terminalMovementId(ctx.db, row.id) : row.id;
 
@@ -2152,7 +2196,7 @@ export const movementsRouter = createTRPCRouter({
                 .where(eq(movementLocation.movementId, trailId))
                 .orderBy(asc(movementLocation.recordedAt));
 
-            return points.map((point) => ({
+            const trail: TrailPoint[] = points.map((point) => ({
                 id: point.id,
                 lat: num(point.latitude),
                 lng: num(point.longitude),
@@ -2162,6 +2206,16 @@ export const movementsRouter = createTRPCRouter({
                 source: trailSource(point.source),
                 picked: point.placeName !== null,
             }));
+
+            // How far along the road, from the newest position and the
+            // cached route — only while the truck is out on it. Recomputed
+            // with every poll; the alert is judged at the two daily rounds
+            const last = trail[trail.length - 1];
+            const progress = last && EN_ROUTE_STATUSES.includes(row.status)
+                ? await readMovementProgress(ctx.db, trailId, last, dueBy(row.expectedDeliveryAt))
+                : null;
+
+            return { points: trail, progress };
         }),
 
     /**
@@ -2271,60 +2325,12 @@ export const movementsRouter = createTRPCRouter({
             // reference is what goes in it, and nothing reads it but a label
             const ref = movementRef(row);
 
-            const [cached] = await ctx.db
-                .select()
-                .from(movementRoute)
-                .where(eq(movementRoute.movementId, row.id))
-                .limit(1);
+            // The same cache the dispatch fills (route-cache.ts): a load that
+            // left the loading site already has its road, and a page opened
+            // earlier buys it once for both
+            const saved = await ensureMovementRoute(ctx.db, row);
 
-            const fresh = cached
-                && cached.originPlaceId === cacheKey(row.origin)
-                && cached.destinationPlaceId === cacheKey(row.destination)
-                && (cached.source === "routes" || Date.now() - cached.computedAt.getTime() < GEOCODE_TTL_MS);
-
-            if (cached && fresh) return toRouteDto(ref, cached);
-
-            const failure = failureKey(row.id, row.origin, row.destination);
-
-            if (failedRecently(failure)) {
-                if (cached) return toRouteDto(ref, cached);
-                throw new TRPCError({ code: "PRECONDITION_FAILED", message: "ROUTE_UNAVAILABLE" });
-            }
-
-            const computed = await computeRoute(row.origin, row.destination);
-
-            if (!computed) {
-                rememberFailure(failure);
-                if (cached) return toRouteDto(ref, cached);
-                throw new TRPCError({ code: "PRECONDITION_FAILED", message: "ROUTE_UNAVAILABLE" });
-            }
-
-            routeFailures.delete(failure);
-
-            const values = {
-                movementId: row.id,
-                originPlaceId: cacheKey(row.origin),
-                destinationPlaceId: cacheKey(row.destination),
-                originLat: computed.origin.lat,
-                originLng: computed.origin.lng,
-                destinationLat: computed.destination.lat,
-                destinationLng: computed.destination.lng,
-                encodedPolyline: computed.encodedPolyline,
-                distanceMeters: computed.distanceMeters,
-                durationSeconds: computed.durationSeconds,
-                source: computed.source,
-                computedAt: new Date(),
-            };
-
-            const { movementId: _key, ...refresh } = values;
-
-            const [saved] = await ctx.db
-                .insert(movementRoute)
-                .values(values)
-                .onConflictDoUpdate({ target: movementRoute.movementId, set: refresh })
-                .returning();
-
-            if (!saved) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "UNKNOWN" });
+            if (!saved) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "ROUTE_UNAVAILABLE" });
 
             return toRouteDto(ref, saved);
         }),

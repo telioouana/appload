@@ -1,0 +1,263 @@
+{
+    "metadata": "Contracts",
+    "title": "Contracts",
+    "description": {
+        "shipper": "The standing agreements your loads are filed under: what you committed to, who moves it, and how far along it is.",
+        "carrier": "Your agreements with clients and the shares of theirs allocated to you, and how far along each one is."
+    },
+    "search": {
+        "placeholder": "Search by reference, client or company",
+        "clear": "Clear the search"
+    },
+    "add": {
+        "trigger": "New contract"
+    },
+    "tabs": {
+        "own": "Mine",
+        "partners": "From partners"
+    },
+    "columns": {
+        "reference": "Contract",
+        "counterparty": "With",
+        "lane": "Lane",
+        "period": "Period",
+        "commitment": "Commitment",
+        "progress": "Drawn down",
+        "state": "State"
+    },
+    "sort": {
+        "newest": "Newest first",
+        "period": "Start date",
+        "reference": "Reference"
+    },
+    "filters": {
+        "all": "All"
+    },
+    "tiles": {
+        "active": "Active",
+        "active-hint": "Taking trips now",
+        "attention": "Needs attention",
+        "attention-hint": "Used up, or past their end date",
+        "draft": "Drafts",
+        "draft-hint": "Not activated yet; no trips can be filed"
+    },
+    "money": {
+        "spend": "Freight spend",
+        "revenue": "Revenue",
+        "committed": "Committed",
+        "drawn": "Drawn down",
+        "remaining": "Remaining",
+        "approx": "≈ MZN",
+        "empty": "No priced contracts here yet"
+    },
+    "states": {
+        "draft": "Draft",
+        "proposed": "Proposal",
+        "active": "Active",
+        "exhausted": "Used up",
+        "expired": "Expired",
+        "closed": "Closed"
+    },
+    "basis": {
+        "trips": "Per trip",
+        "weight": "By weight",
+        "days": "Rental (days)"
+    },
+    "basis-hint": {
+        "trips": "A number of loads",
+        "weight": "A tonnage, drawn down by each load's weight",
+        "days": "A truck for a period, priced by the day"
+    },
+    "unit": {
+        "trip": "{count, plural, one {# trip} other {# trips}}",
+        "ton": "{count, number} t",
+        "day": "{count, plural, one {# day} other {# days}}"
+    },
+    "price-models": {
+        "per-trip": "Per trip",
+        "per-ton": "Per ton",
+        "per-day": "Per day",
+        "lump-sum": "Lump sum",
+        "rate": "Rate",
+        "min-billable-tons": "Minimum billable tons",
+        "billable-days": "Billable days",
+        "calendar": "Calendar days",
+        "working": "Working days (Mon–Sat)",
+        "total": "Total",
+        "none": "No price",
+        "model": "Price model"
+    },
+    "role": {
+        "owner": "Yours",
+        "client": "You are the client",
+        "carrier": "Allocated to you"
+    },
+    "values": {
+        "any-lane": "Any lane",
+        "open": "Open-ended",
+        "open-hint": "No fixed quantity: trips are filed while there is cargo, and it is never used up.",
+        "own-fleet": "Own fleet",
+        "own-account": "Own account",
+        "no-client": "No client",
+        "typed": "Not on the portal",
+        "remaining": "{qty} left",
+        "of": "of {total}",
+        "trips-filed": "{count, plural, =0 {No trips yet} one {# trip} other {# trips}}"
+    },
+    "data": {
+        "empty": "No contracts yet",
+        "empty-description": {
+            "shipper": "File the agreements you have with your transporters, split them across the companies that move for you, and every load filed under one draws it down.",
+            "carrier": "File your agreements with clients here. Shares of your clients' contracts allocated to you appear under From partners."
+        },
+        "no-results": "No contract matches these filters",
+        "error": "The contracts could not be loaded"
+    },
+    "form": {
+        "new-title": "New contract",
+        "edit-title": "Edit {ref}",
+        "description": "The terms the loads will be filed under. Everything here is a default the loads can change.",
+        "sections": {
+            "basis": "What is committed",
+            "client": "Client",
+            "lane": "Lane",
+            "period": "Period",
+            "price": "Price",
+            "notes": "Notes"
+        },
+        "fields": {
+            "committed-qty": "Committed quantity",
+            "weight-unit": "Unit",
+            "starts-on": "From",
+            "ends-on": "Until",
+            "client": "Client",
+            "client-name": "Client name",
+            "client-reference": "Client's reference",
+            "origin": "Loading",
+            "destination": "Offloading",
+            "any-lane": "Any lane — no fixed places",
+            "currency": "Currency",
+            "fiscal-regime": "Fiscal regime",
+            "sell-price": "What the client pays",
+            "notes": "Notes"
+        },
+        "picker": {
+            "none": "Nobody",
+            "typed": "Type a name"
+        },
+        "units": {
+            "trip": "trips",
+            "ton": "t",
+            "day": "days"
+        },
+        "errors": {
+            "date": "Pick a date."
+        },
+        "submit": "Save contract",
+        "cancel": "Cancel",
+        "saving": "Saving…"
+    },
+    "allocation-form": {
+        "new-title": "Allocate a share",
+        "edit-title": "Edit share",
+        "description": "Who moves this part of the contract, how much of it, and at what price.",
+        "fields": {
+            "carrier": "Transporter",
+            "carrier-name": "Transporter name",
+            "own-fleet": "Own fleet",
+            "share-qty": "Share",
+            "open-hint": "No fixed share; the transporter sends trucks while there is cargo.",
+            "buy-price": "What you pay",
+            "truck": "Truck",
+            "driver": "Driver",
+            "truck-plate": "Plate",
+            "notes": "Notes"
+        },
+        "submit": "Save share",
+        "remove": "Remove share",
+        "remove-confirm": "Remove this share? Only a share with no trips filed under it can go.",
+        "errors": {
+            "name": "Type the transporter's name"
+        }
+    },
+    "detail": {
+        "meta": "Contract",
+        "error": "This contract could not be loaded",
+        "terms": "Terms",
+        "allocations": "Shares",
+        "trips": "Trips",
+        "file": "Signed contract",
+        "notes": "Notes",
+        "fields": {
+            "basis": "Basis",
+            "commitment": "Committed",
+            "drawn-down": "Drawn down",
+            "delivered": "Delivered",
+            "remaining": "Remaining",
+            "period": "Period",
+            "lane": "Lane",
+            "client": "Client",
+            "owner": "Owner",
+            "client-reference": "Client's reference",
+            "currency": "Currency",
+            "fiscal-regime": "Fiscal regime",
+            "sell-price": "What the client pays",
+            "buy-price": "What you pay",
+            "earn-price": "What you are paid",
+            "truck": "Truck",
+            "driver": "Driver"
+        },
+        "actions": {
+            "edit": "Edit",
+            "activate": "Activate",
+            "accept": "Accept",
+            "decline": "Decline",
+            "close": "Close contract",
+            "close-confirm": "Close this contract? No more trips can be filed under it.",
+            "allocate": "Allocate a share",
+            "file-trip": "File a trip",
+            "upload": "Upload the signed contract",
+            "replace": "Replace",
+            "remove-file": "Remove"
+        },
+        "over-allocated": "The shares add up to more than the contract commits to.",
+        "trip-columns": {
+            "reference": "Load",
+            "status": "Status",
+            "loading": "Loading",
+            "weight": "Weight",
+            "total": "Amount"
+        },
+        "no-trips": "No trips filed under this contract yet.",
+        "open-all": "Open all",
+        "no-file": "No signed copy filed yet.",
+        "footer": "Created {created} · updated {updated}",
+        "export": "Export CSV"
+    },
+    "errors": {
+        "NOT_FOUND": "This contract does not exist, or your company is not on it.",
+        "NOT_ALLOWED": "Your role cannot do that.",
+        "VERSION_CONFLICT": "Somebody changed this contract meanwhile. Reload and try again.",
+        "CONTRACT_CLOSED": "This contract is closed.",
+        "CLIENT_MUST_ACCEPT": "The client accepts this contract; it becomes active when they do.",
+        "CONTRACT_NOT_OPEN": "Trips can only be filed under an active contract.",
+        "CONTRACT_SHAPE_MISMATCH": "This share is moved by somebody else; file it as an order.",
+        "BASIS_IS_FIXED": "What a contract counts cannot change once it exists.",
+        "PERIOD_INVERTED": "The end date is before the start date.",
+        "QUANTITY_REQUIRED": "The quantity has to be more than zero.",
+        "PRICE_MODEL_BASIS_MISMATCH": "That price model cannot price what this contract counts.",
+        "CLIENT_IS_SELF": "A company cannot be its own client.",
+        "CARRIER_IS_SELF": "A share for your own fleet is filed as own fleet, not as a transporter.",
+        "APPLOAD_NOT_A_CLIENT": "Appload moves loads; it does not order them.",
+        "NOT_CONNECTED": "That company is not connected to yours.",
+        "OWN_FLEET_HAS_NO_BUY_PRICE": "Your own fleet has no buy price; the contract's price is what the client pays.",
+        "RIG_NOT_ON_ALLOCATION": "A truck or driver can only be pinned to a company on the portal.",
+        "TRUCK_NOT_REGISTERED": "That truck is not registered to that company.",
+        "DRIVER_NOT_REGISTERED": "That driver is not registered to that company.",
+        "ALLOCATION_EXISTS": "That company already has a share of this contract.",
+        "ALLOCATION_HAS_TRIPS": "Trips have been filed under this share; it cannot be removed or reassigned.",
+        "ALLOCATION_NOT_VISIBLE": "That share is not one your company can file under.",
+        "INVALID_STATUS": "That change is not possible from where the contract is.",
+        "UNKNOWN": "Something went wrong. Try again."
+    }
+}

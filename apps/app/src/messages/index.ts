@@ -3,6 +3,10 @@ import basePt from "./pt.json";
 
 import analyticsEn from "./en/analytics.json";
 import analyticsPt from "./pt/analytics.json";
+import contractsEn from "./en/contracts.json";
+import contractsPt from "./pt/contracts.json";
+import dataEn from "./en/data.json";
+import dataPt from "./pt/data.json";
 import driversEn from "./en/drivers.json";
 import driversPt from "./pt/drivers.json";
 import fleetEn from "./en/fleet.json";
@@ -17,8 +21,6 @@ import ordersEn from "./en/orders.json";
 import ordersPt from "./pt/orders.json";
 import partnersEn from "./en/partners.json";
 import partnersPt from "./pt/partners.json";
-import quotesEn from "./en/quotes.json";
-import quotesPt from "./pt/quotes.json";
 import searchEn from "./en/search.json";
 import searchPt from "./pt/search.json";
 import threadsEn from "./en/threads.json";
@@ -36,6 +38,8 @@ export const en = {
     App: {
         ...baseEn.App,
         analytics: analyticsEn,
+        contracts: contractsEn,
+        data: dataEn,
         drivers: driversEn,
         fleet: fleetEn,
         loads: loadsEn,
@@ -43,7 +47,6 @@ export const en = {
         notifications: notificationsEn,
         orders: ordersEn,
         partners: partnersEn,
-        quotes: quotesEn,
         search: searchEn,
         threads: threadsEn,
     },
@@ -54,6 +57,8 @@ export const pt = {
     App: {
         ...basePt.App,
         analytics: analyticsPt,
+        contracts: contractsPt,
+        data: dataPt,
         drivers: driversPt,
         fleet: fleetPt,
         loads: loadsPt,
@@ -61,7 +66,6 @@ export const pt = {
         notifications: notificationsPt,
         orders: ordersPt,
         partners: partnersPt,
-        quotes: quotesPt,
         search: searchPt,
         threads: threadsPt,
     },

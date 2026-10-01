@@ -1,0 +1,31 @@
+{
+    "metadata": "Os seus dados",
+    "title": "O que a Appload vê dos seus dados",
+    "intro": "O Appload Enterprise é gerido pela Appload, que também intermedeia cargas. Esta página diz, em linguagem simples, o que a nossa equipa pode e não pode ver do trabalho da sua empresa no portal, e como controla isso.",
+    "back": "Voltar ao portal",
+    "sections": {
+        "marketplace": {
+            "title": "Cargas com a Appload",
+            "body": "Quando a sua empresa pede uma carga à Appload, ou transporta uma carga para ela, a Appload é parte dessa carga: a nossa equipa vê-a por inteiro — a rota, as datas, o motorista e o camião, os documentos e o preço combinado com a Appload — porque esse é o trabalho."
+        },
+        "own": {
+            "title": "As suas próprias cargas",
+            "body": "As cargas que regista para os seus clientes, entrega aos seus parceiros ou move com a sua frota não são assunto da Appload. A própria base de dados recusa a ligação dos nossos colaboradores nessas linhas: nem as cargas, nem os seus custos, documentos ou posições, nem a sua lista de parceiros, nem os seus contratos, nem as suas conversas. Isto é imposto pela segurança por linha do Postgres, não por uma promessa na aplicação."
+        },
+        "support": {
+            "title": "Acesso do suporte",
+            "body": "Se precisar de ajuda com uma carga, um responsável da sua empresa pode abrir as suas cargas ao suporte da Appload por um dia, uma semana ou um mês, com o motivo registado, em Definições › Segurança. Enquanto aberto, a nossa equipa lê as suas próprias cargas, contratos e lista de parceiros, sem preços, e apenas isso. Pode fechar a qualquer momento.",
+            "link": "Abrir Definições › Segurança"
+        },
+        "log": {
+            "title": "O que fica registado",
+            "body": "Cada acção que um membro faz em nome da sua empresa, e cada leitura que o nosso suporte faz com acesso aberto, fica no seu registo em Definições › Actividade, com quem e quando.",
+            "link": "Abrir Definições › Actividade"
+        },
+        "papers": {
+            "title": "Documentos de verificação",
+            "body": "Os documentos da empresa, dos motoristas e dos veículos são revistos pela equipa da Appload por natureza: é nisso que consiste a verificação. Só eles — não as cargas em que esses motoristas e veículos andam."
+        }
+    },
+    "contact": "Dúvidas sobre esta página: {email}"
+}

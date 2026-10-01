@@ -20,6 +20,8 @@ import {
 } from "@workspace/maps/lib/geometry";
 
 import { movementRef } from "@workspace/domain/movements/refs";
+import { dueBy, OFF_ROUTE_METERS, progressFromRoute, SHORT_DISTANCE_METERS } from "@workspace/domain/tracking/progress";
+import { departures } from "@workspace/domain/tracking/progress-read";
 import { TRACKED_STATUSES } from "@workspace/domain/movements/status";
 import { notify } from "@workspace/domain/notifications";
 import {
@@ -52,11 +54,7 @@ import {
  */
 export const REVIEW_AFTER_MINUTES = 90;
 
-/** Under this much ground covered since the last position, a truck on route did not move. */
-export const SHORT_DISTANCE_METERS = 20_000;
-
-/** Beyond this far from the planned route's line, a truck on route has left it. */
-export const OFF_ROUTE_METERS = 10_000;
+export { OFF_ROUTE_METERS, SHORT_DISTANCE_METERS };
 
 /**
  * The request statuses that prove the driver was actually reached. A request
@@ -258,6 +256,7 @@ async function issueFor(db: typeof Database, row: Movement, start: Date): Promis
             latitude: movementLocation.latitude,
             longitude: movementLocation.longitude,
             placeName: movementLocation.placeName,
+            recordedAt: movementLocation.recordedAt,
         })
         .from(movementLocation)
         .where(and(
@@ -285,17 +284,16 @@ async function issueFor(db: typeof Database, row: Movement, start: Date): Promis
     }
 
     // A truck that answered from beyond the route's corridor is a louder
-    // problem than one that barely moved, so it is judged first.
-    // ponytail: movement_route is a cache filled when somebody opens the
-    // detail page — loads nobody looked at go unjudged; compute the route
-    // when tracking starts if coverage matters
+    // problem than one that barely moved, so it is judged first. The road
+    // is cached when the truck leaves the loading site (transitionMovement),
+    // so every load on the road has one to be judged against
     const [route] = await db
-        .select({ encodedPolyline: movementRoute.encodedPolyline })
+        .select()
         .from(movementRoute)
-        .where(and(eq(movementRoute.movementId, row.id), eq(movementRoute.source, "routes")))
+        .where(eq(movementRoute.movementId, row.id))
         .limit(1);
 
-    if (route?.encodedPolyline) {
+    if (route?.encodedPolyline && route.source === "routes") {
         const path = decodePolyline(route.encodedPolyline);
         const projected = projectOntoPath(path, cumulativeDistances(path), {
             lat: latest.latitude,
@@ -304,6 +302,23 @@ async function issueFor(db: typeof Database, row: Movement, start: Date): Promis
 
         if (projected && projected.distance > OFF_ROUTE_METERS) {
             return "off-route";
+        }
+    }
+
+    // On the road and on it, but not fast enough: at its pace so far the
+    // truck arrives after the agreed day. Judged before standing still,
+    // because a truck that barely moved is behind for that very reason
+    if (route) {
+        const departed = (await departures(db, [row.id])).get(row.id) ?? null;
+        const progress = progressFromRoute(
+            route,
+            { lat: latest.latitude, lng: latest.longitude, recordedAt: latest.recordedAt },
+            departed,
+            dueBy(row.expectedDeliveryAt),
+        );
+
+        if (progress.behind) {
+            return "falling-behind";
         }
     }
 
@@ -390,8 +405,10 @@ async function raise(
     // Twice running is no longer an off day, and the client is going to ask
     // where its cargo is before we tell it — so we tell it first. Its own
     // audience, because the closing sentence of the copy addresses the reader
-    // and the transporter's reads "the client was told too".
-    if (streak >= 2 && row.clientOrgId) {
+    // and the transporter's reads "the client was told too". A truck falling
+    // behind its delivery date is the client's news from the first round:
+    // that is the promise — warned before they have to call
+    if ((streak >= 2 || issue === "falling-behind") && row.clientOrgId) {
         await notify(db, {
             organizationId: row.clientOrgId,
             kind: "movement.location-alert",

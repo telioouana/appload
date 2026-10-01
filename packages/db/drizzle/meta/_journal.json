@@ -190,6 +190,41 @@
       "when": 1790773659689,
       "tag": "0026_trust_wall",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1790779557873,
+      "tag": "0027_contracts",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790783536551,
+      "tag": "0028_open_contracts",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790784712976,
+      "tag": "0029_contract_quote_link",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1790797438391,
+      "tag": "0030_support_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790810096606,
+      "tag": "0031_activity_log_org_idx",
+      "breakpoints": true
     }
   ]
 }

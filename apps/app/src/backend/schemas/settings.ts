@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+/** What `me.supportGrants.grant` takes: how long the door stays open, and why. */
+export const SupportGrantBaseSchema = z.object({
+    days: z.union([z.literal(1), z.literal(7), z.literal(30)]),
+    reason: z.string().trim().min(3).max(300),
+});
+
 import { useTranslations } from "@workspace/i18n";
 
 type SettingsTranslator = ReturnType<typeof useTranslations<"App.settings">>;

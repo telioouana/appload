@@ -46,6 +46,13 @@ export const routing = defineRouting({
         "/quotes": {
             pt: "/cotacoes"
         },
+        // The standing agreements loads are filed under, and one of them
+        "/contracts": {
+            pt: "/contratos"
+        },
+        "/contracts/[contractId]": {
+            pt: "/contratos/[contractId]"
+        },
         // Where Appload's brokerage used to be. Appload is a partner like any
         // other now and its loads are on the Orders page, so every one of
         // these addresses is a redirect — kept because the notifications and
@@ -74,6 +81,9 @@ export const routing = defineRouting({
         },
         "/settings": {
             pt: "/definicoes"
+        },
+        "/data": {
+            pt: "/dados"
         },
         "/onboarding": {
             pt: "/registo-empresa"

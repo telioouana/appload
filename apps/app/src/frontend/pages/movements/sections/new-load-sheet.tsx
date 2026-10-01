@@ -20,7 +20,7 @@ export function NewLoadSheet() {
 
 function ArmedSheet() {
     const trpc = useTRPC()
-    const { isOpen, execution, close } = useNewLoad()
+    const { isOpen, execution, contractAllocationId, close } = useNewLoad()
 
     const { data: session } = useQuery(trpc.me.session.queryOptions())
 
@@ -28,7 +28,7 @@ function ArmedSheet() {
 
     return (
         <LoadSheet
-            mode={{ kind: "create", execution }}
+            mode={{ kind: "create", execution, contractAllocationId }}
             orgType={session.organization.type}
             allowance={session.allowance}
             organizationName={session.organization.name}

@@ -42,12 +42,15 @@ export function useMovementsList() {
         ]), [set])
 
     /** Chips for the filters that are on — everything but the status tab. */
-    const activeFilters = (options?: Pick<LoadFormOptions, "partners">): ActiveFilter[] => {
+    const activeFilters = (options?: Pick<LoadFormOptions, "partners" | "allocations">): ActiveFilter[] => {
         const chips: ActiveFilter[] = []
         const push = (key: string, label: string, value: string) => chips.push({ key, label, value })
 
         const partner = get("partner")
         if (partner) push("partner", t("partner"), options?.partners.find((entry) => entry.id === partner)?.name ?? t("selected"))
+        // From a contract's page: its reference when the form options know the share, else "selected"
+        const contractId = get("contract")
+        if (contractId) push("contract", t("contract"), options?.allocations?.find((entry) => entry.contractId === contractId)?.contractReference ?? t("selected"))
 
         const month = Number(get("month"))
         if (Number.isInteger(month) && month >= 1 && month <= 12) {

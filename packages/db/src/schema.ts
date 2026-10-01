@@ -1,6 +1,7 @@
 export * from "@workspace/db/activity-log";
 export * from "@workspace/db/chats";
 export * from "@workspace/db/connections";
+export * from "@workspace/db/contracts";
 export * from "@workspace/db/fleet";
 export * from "@workspace/db/fx";
 export * from "@workspace/db/kyc-documents";
@@ -9,6 +10,7 @@ export * from "@workspace/db/orders";
 export * from "@workspace/db/quotes";
 export * from "@workspace/db/rls";
 export * from "@workspace/db/subscriptions";
+export * from "@workspace/db/support";
 export * from "@workspace/db/threads";
 export * from "@workspace/db/tracking";
 export * from "@workspace/db/movements";
