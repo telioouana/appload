@@ -115,7 +115,8 @@ export async function sendWhatsAppText(to: string, text: string): Promise<Outbou
 export async function sendWhatsAppTemplate(
     to: string,
     placeholders: string[],
-    buttonPayload?: string,
+    buttonPayload?: string | string[],
+    template: string | undefined = process.env.INFOBIP_TRACKING_TEMPLATE,
 ): Promise<OutboundResult> {
     const infobip = config();
 
@@ -123,11 +124,13 @@ export async function sendWhatsAppTemplate(
         return unconfiguredResult();
     }
 
-    const templateName = process.env.INFOBIP_TRACKING_TEMPLATE;
+    const templateName = template;
 
     if (!templateName) {
-        return { ok: false, error: "INFOBIP_TRACKING_TEMPLATE is not set" };
+        return { ok: false, error: "the WhatsApp template name is not set (INFOBIP_TRACKING_TEMPLATE / INFOBIP_RENTAL_TEMPLATE)" };
     }
+
+    const buttons = buttonPayload === undefined ? [] : Array.isArray(buttonPayload) ? buttonPayload : [buttonPayload];
 
     try {
         const response = await fetch(`${infobip.baseUrl}/whatsapp/1/message/template`, {
@@ -144,8 +147,8 @@ export async function sendWhatsAppTemplate(
                         templateName,
                         templateData: {
                             body: { placeholders },
-                            ...(buttonPayload
-                                ? { buttons: [{ type: "QUICK_REPLY", parameter: buttonPayload }] }
+                            ...(buttons.length > 0
+                                ? { buttons: buttons.map((parameter) => ({ type: "QUICK_REPLY", parameter })) }
                                 : {}),
                         },
                         language: process.env.INFOBIP_TRACKING_TEMPLATE_LANGUAGE ?? "pt",
@@ -235,6 +238,24 @@ export function locationRequestText(orderId: string | null, route?: RouteDetails
         : "";
 
     return `Tap "Send location" below to share your current location${load}${detail}.`;
+}
+
+/** The rental check-in's quick replies: `rental-yes:<line>:<day>` / `rental-no:<line>:<day>`. */
+export const RENTAL_CHECKIN_PAYLOAD = "rental-";
+
+export const rentalCheckinPayload = (answer: "yes" | "no", allocationId: string, day: string) =>
+    `${RENTAL_CHECKIN_PAYLOAD}${answer}:${allocationId}:${day}`;
+
+/**
+ * Rendered body of the rental check-in template (INFOBIP_RENTAL_TEMPLATE,
+ * source of truth scripts/infobip-templates.mjs), for the chat mirror.
+ */
+export function rentalCheckinTemplateText(driverName: string, truckPlate: string, client: string, site: string): string {
+    const pt = (process.env.INFOBIP_TRACKING_TEMPLATE_LANGUAGE ?? "pt").startsWith("pt");
+
+    return pt
+        ? `Bom dia ${driverName}. O camião ${truckPlate} está hoje ao serviço de ${client} em ${site}? Responda Sim ou Não.`
+        : `Good morning ${driverName}. Is truck ${truckPlate} at ${client}'s service in ${site} today? Answer Yes or No.`;
 }
 
 /**

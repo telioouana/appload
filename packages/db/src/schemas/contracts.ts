@@ -144,6 +144,8 @@ export const contractAllocation = pgTable(
         truckId: text("truck_id").references(() => truck.id, { onDelete: "set null" }),
         driverId: text("driver_id").references(() => driver.id, { onDelete: "set null" }),
         truckPlate: text("truck_plate"),
+        // A rental line's own end, when the truck leaves before the order ends; null = the order's
+        endsOn: date("ends_on", { mode: "string" }),
         notes: text("notes"),
         createdAt: timestamp("created_at").defaultNow().notNull(),
         updatedAt: timestamp("updated_at")
@@ -152,12 +154,18 @@ export const contractAllocation = pgTable(
             .notNull(),
     },
     (table) => [
+        // One share per carrier (and one for the owner's fleet) on an order
+        // split by quantity; a rental has one line per truck instead, so a
+        // line that pins a truck is outside both rules and keyed on the truck
         uniqueIndex("contract_allocation_carrier_uidx")
             .on(table.contractId, table.carrierOrgId)
-            .where(sql`${table.carrierOrgId} is not null`),
+            .where(sql`${table.carrierOrgId} is not null and ${table.truckId} is null and ${table.truckPlate} is null`),
         uniqueIndex("contract_allocation_own_fleet_uidx")
             .on(table.contractId)
-            .where(sql`${table.carrierOrgId} is null and ${table.carrierName} is null`),
+            .where(sql`${table.carrierOrgId} is null and ${table.carrierName} is null and ${table.truckId} is null and ${table.truckPlate} is null`),
+        uniqueIndex("contract_allocation_truck_uidx")
+            .on(table.contractId, table.truckId)
+            .where(sql`${table.truckId} is not null`),
         index("contract_allocation_carrier_idx").on(table.carrierOrgId),
         index("contract_allocation_truck_idx").on(table.truckId).where(sql`${table.truckId} is not null`),
         check("contract_allocation_share_ck", sql`${table.shareQty} is null or ${table.shareQty} > 0`),

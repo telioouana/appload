@@ -232,6 +232,13 @@
       "when": 1790846279639,
       "tag": "0032_open_period",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790852350266,
+      "tag": "0033_rentals",
+      "breakpoints": true
     }
   ]
 }

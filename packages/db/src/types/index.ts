@@ -184,7 +184,8 @@ const money = z.number().finite().nonnegative().max(1e12)
 export const PriceModelSchema = z.discriminatedUnion("model", [
     z.object({ model: z.literal("per-trip"), rate: money }),
     z.object({ model: z.literal("per-ton"), rate: money, minBillableTons: money.optional() }),
-    z.object({ model: z.literal("per-day"), rate: money, billableDays: z.enum(["calendar", "working"]) }),
+    // standbyRate: a day the truck was available but not used, when the rental prices it lower
+    z.object({ model: z.literal("per-day"), rate: money, billableDays: z.enum(["calendar", "working"]), standbyRate: money.optional() }),
     z.object({ model: z.literal("lump-sum"), total: money }),
 ])
 
