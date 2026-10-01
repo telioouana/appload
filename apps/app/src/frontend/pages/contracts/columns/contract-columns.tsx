@@ -7,7 +7,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 
 import { IdentityCell, initials, Mono } from "@workspace/ui/customs/list/table-cells"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
-import { LaneCell } from "@/frontend/pages/quotes/sections/badges"
+import { LaneCell } from "@/frontend/pages/contracts/sections/badges"
 import { ContractRoleChip, ContractStateChip, ProgressBar, unitOf, useUnitLabel } from "@/frontend/pages/contracts/sections/badges"
 import type { ContractRow } from "@/frontend/pages/contracts/types"
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback } from "react"
+import { IconArrowNarrowRight } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
@@ -8,7 +9,7 @@ import { Badge } from "@workspace/ui/components/badge"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { cn } from "@workspace/ui/lib/utils"
 
-import type { ContractBasis, ContractRole, ContractState, Currency, PriceModel } from "@/frontend/pages/contracts/types"
+import type { ContractBasis, ContractRole, ContractState, Currency, Location, PriceModel } from "@/frontend/pages/contracts/types"
 
 export type ContractUnit = "trip" | "ton" | "day"
 
@@ -128,4 +129,17 @@ export function PriceModelText({ model, currency }: { model: PriceModel | null; 
         : `${money(model.total)} ${how}`
 
     return <span className="tabular-nums">{text}</span>
+}
+
+/** The lane, on two lines: where it loads, where it offloads. */
+export function LaneCell({ origin, destination }: { origin: Location; destination: Location }) {
+    return (
+        <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="truncate text-[13px]">{origin.address}</span>
+            <span className="text-muted-foreground flex min-w-0 items-center gap-1 truncate text-xs">
+                <IconArrowNarrowRight className="size-3.5 shrink-0" stroke={1.5} />
+                <span className="truncate">{destination.address}</span>
+            </span>
+        </div>
+    )
 }

@@ -21,8 +21,6 @@ import ordersEn from "./en/orders.json";
 import ordersPt from "./pt/orders.json";
 import partnersEn from "./en/partners.json";
 import partnersPt from "./pt/partners.json";
-import quotesEn from "./en/quotes.json";
-import quotesPt from "./pt/quotes.json";
 import searchEn from "./en/search.json";
 import searchPt from "./pt/search.json";
 import threadsEn from "./en/threads.json";
@@ -49,7 +47,6 @@ export const en = {
         notifications: notificationsEn,
         orders: ordersEn,
         partners: partnersEn,
-        quotes: quotesEn,
         search: searchEn,
         threads: threadsEn,
     },
@@ -69,7 +66,6 @@ export const pt = {
         notifications: notificationsPt,
         orders: ordersPt,
         partners: partnersPt,
-        quotes: quotesPt,
         search: searchPt,
         threads: threadsPt,
     },
