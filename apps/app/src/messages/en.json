@@ -282,7 +282,8 @@
                 "duplicatePhone": "That phone is already used by another company",
                 "notFound": "We could not find that company",
                 "unknown": "Something went wrong. Please try again"
-            }
+            },
+            "data-link": "What Appload sees of your data"
         },
         "shell": {
             "sidebar": {
@@ -304,7 +305,8 @@
                     "my-transporters": "My transporters",
                     "analytics": "Analytics"
                 },
-                "new-load": "New load"
+                "new-load": "New load",
+                "data": "Your data"
             },
             "user": {
                 "settings": "Settings",
@@ -665,7 +667,8 @@
                     "reason-placeholder": "e.g. Ticket about load ORD-0012-26 stuck on route",
                     "cancel": "Cancel",
                     "confirm": "Open"
-                }
+                },
+                "learn-more": "What Appload sees, in full."
             },
             "activity": {
                 "title": "Activity",

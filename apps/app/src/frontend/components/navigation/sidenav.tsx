@@ -22,6 +22,7 @@ import {
     IconMessages,
     IconPlus,
     IconSearch,
+    IconShieldCheck,
     IconTruck,
     IconTruckDelivery,
     IconUsers,
@@ -407,6 +408,16 @@ export function Sidenav({
             </SidebarContent>
 
             <SidebarFooter>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild size="sm" className="text-muted-foreground">
+                            <Link href="/data">
+                                <IconShieldCheck stroke={1.5} />
+                                <span>{t("data")}</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

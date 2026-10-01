@@ -282,7 +282,8 @@
                 "duplicatePhone": "Esse telefone já é usado por outra empresa",
                 "notFound": "Não encontrámos essa empresa",
                 "unknown": "Algo correu mal. Tente novamente"
-            }
+            },
+            "data-link": "O que a Appload vê dos seus dados"
         },
         "shell": {
             "sidebar": {
@@ -304,7 +305,8 @@
                     "my-transporters": "As minhas transportadoras",
                     "analytics": "Análises"
                 },
-                "new-load": "Nova carga"
+                "new-load": "Nova carga",
+                "data": "Os seus dados"
             },
             "user": {
                 "settings": "Definições",
@@ -665,7 +667,8 @@
                     "reason-placeholder": "ex. Pedido de ajuda com a carga ORD-0012-26 parada na rota",
                     "cancel": "Cancelar",
                     "confirm": "Abrir"
-                }
+                },
+                "learn-more": "O que a Appload vê, por extenso."
             },
             "activity": {
                 "title": "Actividade",

@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Spinner } from "@workspace/ui/components/spinner";
 import { Textarea } from "@workspace/ui/components/textarea";
 
+import { Link } from "@/i18n/navigation";
 import { useTRPC } from "@/backend/api/client";
 
 const DAYS = ["1", "7", "30"] as const;
@@ -94,7 +95,10 @@ export function SupportAccessCard({ canManage }: { canManage: boolean }) {
                     )}
                 </div>
 
-                <p className="text-muted-foreground text-xs">{t("what-they-see")}</p>
+                <p className="text-muted-foreground text-xs">
+                    {t("what-they-see")}{" "}
+                    <Link href="/data" className="text-foreground underline-offset-4 hover:underline">{t("learn-more")}</Link>
+                </p>
 
                 {data && data.history.length > 0 && (
                     <div className="grid gap-2">

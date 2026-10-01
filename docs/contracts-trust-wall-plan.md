@@ -375,6 +375,8 @@ Prod: `db:migrate` (0029). Rows before this phase have null `organization_id` an
 
 Static page `/settings?tab=data` (or `/data` → pt `/dados`, linked from onboarding's last step and the sidenav footer). Plain language, EN/PT, four short sections that must each be true when published: what Appload sees on marketplace loads (Appload is a party), what it cannot open on Enterprise loads (RLS, phase 0), how support access works (T2, link to the tab), what is logged and where to read it (T3). Papers/KYC are seen by staff by design: say it. Link to the Enterprise terms (Frederico's document) once it exists; until then the section is omitted, not promised. No new backend.
 
+> **AS BUILT (2026-10-01):** a public page at `/data` → pt `/dados` (`apps/app/src/app/[locale]/data/page.tsx`, outside both route groups so a company still registering reads it before it has a tenant; no gate, no backend), copy in `apps/app/src/messages/{en,pt}/data.json` mounted as `App.data`: intro + five sections (loads with Appload, your own loads, support access → Settings › Segurança, what is logged → Settings › Actividade, verification papers) + contact line. Linked from the rail's footer ("Os seus dados"), the onboarding screen's foot, and the Segurança card. No terms link yet (document does not exist). Verified in Chrome on dev.
+
 ---
 
 ## Phase C3 — Contract RFQ (outline only, ≈1–2 d, later)

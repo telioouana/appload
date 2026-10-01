@@ -82,6 +82,9 @@ export const routing = defineRouting({
         "/settings": {
             pt: "/definicoes"
         },
+        "/data": {
+            pt: "/dados"
+        },
         "/onboarding": {
             pt: "/registo-empresa"
         },

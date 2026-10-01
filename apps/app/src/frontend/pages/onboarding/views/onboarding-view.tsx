@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { useTranslations } from "@workspace/i18n";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { authClient } from "@workspace/auth/client";
 
 import { Badge } from "@workspace/ui/components/badge";
@@ -116,6 +116,12 @@ export function OnboardingView() {
                 >
                     {t("sign-out")}
                 </button>
+            </p>
+
+            <p className="text-center text-sm">
+                <Link href="/data" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+                    {t("data-link")}
+                </Link>
             </p>
         </div>
     )
