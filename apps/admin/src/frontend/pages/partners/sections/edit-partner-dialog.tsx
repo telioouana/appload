@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { IconCancel, IconCheck, IconLoader2 } from "@tabler/icons-react"
@@ -10,6 +10,8 @@ import { useTranslations } from "@workspace/i18n"
 import type { Address } from "@workspace/db/types"
 
 import { TextInput } from "@workspace/ui/inputs/text"
+import { PhoneInput } from "@workspace/ui/inputs/phone"
+import { fromE164, toE164 } from "@workspace/ui/lib/phone"
 import { Button } from "@workspace/ui/components/button"
 import { LocationInput } from "@workspace/ui/inputs/location"
 import { FieldGroup } from "@workspace/ui/components/field"
@@ -45,11 +47,17 @@ const organizationSchema = (t: Translate) => z.object({
     physicalAddress: optionalLocation,
 })
 
+// `PhoneInput` keeps the dial code out of the value, so the country is a
+// sibling field and `toE164` composes the two for the check and the patch
 const driverSchema = (t: Translate) => z.object({
     name: z.string().trim().nonempty({ error: t("errors.name") }),
     email: z.email({ error: t("errors.email") }),
-    phoneNumber: z.string().trim().regex(/^\+[1-9]\d{7,14}$/, { error: t("errors.phone") }),
+    country: z.string(),
+    phoneNumber: z.string().trim(),
     passport: z.string().trim().max(40),
+}).refine((data) => z.e164().safeParse(toE164(data.country, data.phoneNumber)).success, {
+    error: t("errors.phone"),
+    path: ["phoneNumber"],
 })
 
 const vehicleSchema = (t: Translate) => z.object({
@@ -62,7 +70,9 @@ const vehicleSchema = (t: Translate) => z.object({
 })
 
 export type OrganizationEditValues = z.infer<ReturnType<typeof organizationSchema>>
-export type DriverEditValues = z.infer<ReturnType<typeof driverSchema>>
+type DriverFormValues = z.infer<ReturnType<typeof driverSchema>>
+// What callers hand in: the phone as stored (E.164), split on the way in
+export type DriverEditValues = Omit<DriverFormValues, "country">
 export type VehicleEditValues = z.infer<ReturnType<typeof vehicleSchema>>
 
 type Target =
@@ -265,22 +275,29 @@ function EditDriver({
     const { updateDriver } = usePartnerMutations()
     const { error, clear, capture } = useEditError()
 
-    const form = useForm<DriverEditValues>({ resolver: zodResolver(schema), defaultValues: values })
+    const initial = useMemo((): DriverFormValues => {
+        const { country, national } = fromE164(values.phoneNumber)
+        return { ...values, country, phoneNumber: national }
+    }, [values])
+
+    const form = useForm<DriverFormValues>({ resolver: zodResolver(schema), defaultValues: initial })
+
+    const country = useWatch({ control: form.control, name: "country" })
 
     useEffect(() => {
-        if (open) form.reset(values)
-    }, [open, values, form])
+        if (open) form.reset(initial)
+    }, [open, initial, form])
 
     const isPending = updateDriver.isPending
 
-    const submit = async (next: DriverEditValues) => {
+    const submit = async (next: DriverFormValues) => {
         clear()
         const dirty = form.formState.dirtyFields
         const patch: Record<string, unknown> = {}
 
         if (dirty.name) patch.name = next.name
         if (dirty.email) patch.email = next.email
-        if (dirty.phoneNumber) patch.phoneNumber = next.phoneNumber
+        if (dirty.phoneNumber || dirty.country) patch.phoneNumber = toE164(next.country, next.phoneNumber)
         if (dirty.passport) patch.passport = next.passport || null
 
         try {
@@ -303,7 +320,14 @@ function EditDriver({
             >
                 <FieldGroup className="gap-4">
                     <TextInput name="name" control={form.control} isPending={isPending} label={t("fields.name")} placeholder={t("placeholders.driver-name")} />
-                    <TextInput name="phoneNumber" control={form.control} isPending={isPending} label={t("fields.phone")} placeholder={t("placeholders.phone")} />
+                    <PhoneInput
+                        name="phoneNumber"
+                        control={form.control}
+                        isPending={isPending}
+                        country={country}
+                        setCountry={(value) => form.setValue("country", value, { shouldDirty: true, shouldValidate: true })}
+                        label={t("fields.phone")}
+                    />
                     <TextInput name="email" control={form.control} isPending={isPending} label={t("fields.email")} placeholder={t("placeholders.email")} />
                     <TextInput name="passport" control={form.control} isPending={isPending} label={t("fields.passport")} placeholder={t("placeholders.passport")} />
                 </FieldGroup>

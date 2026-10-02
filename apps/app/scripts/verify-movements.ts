@@ -19,7 +19,7 @@
  */
 import fs from "node:fs";
 
-import { and, count, desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, notExists, or, sql } from "drizzle-orm";
 
 import { chatConversation, chatMessage, type TrackingStatus } from "@workspace/db/chats";
 import { partnerConnection } from "@workspace/db/connections";
@@ -1924,15 +1924,19 @@ async function sectionsAndTabs() {
     for (const { caller, scope } of lists) {
         const stats = await caller.stats({ scope });
         const tabbed = SECTIONS.filter((section) => STATUS_TABS[scope][section]);
-        const counted = await Promise.all(tabbed.flatMap((section) => [
-            caller.list({ scope, section }).then((list) => ({ section, tab: "all", list: list.total, count: stats.bySection[section] ?? 0 })),
-            ...STATUS_TABS[scope][section]!.map((status) => caller.list({ scope, section, status }).then((list) => ({
-                section,
-                tab: status,
-                list: list.total,
-                count: status === "prospect" ? (stats.byStatus.prospect ?? 0) + (stats.byStatus.offered ?? 0) : stats.byStatus[status] ?? 0,
-            }))),
-        ]));
+        const counted = await Promise.all(tabbed.flatMap((section) => {
+            // Disputes counts its own rows, as its menu does (movements-data-view.tsx)
+            const counts = section === "disputes" ? stats.disputedByStatus : stats.byStatus;
+            return [
+                caller.list({ scope, section }).then((list) => ({ section, tab: "all", list: list.total, count: stats.bySection[section] ?? 0 })),
+                ...STATUS_TABS[scope][section]!.map((status) => caller.list({ scope, section, status }).then((list) => ({
+                    section,
+                    tab: status,
+                    list: list.total,
+                    count: status === "prospect" ? (counts.prospect ?? 0) + (counts.offered ?? 0) : counts[status] ?? 0,
+                }))),
+            ];
+        }));
         const wrong = counted.filter((entry) => entry.list !== entry.count);
 
         check(`${scope}: ${counted.length} tabs, each list's total equal to its count`, wrong.length === 0, wrong);
@@ -1943,7 +1947,8 @@ async function sectionsAndTabs() {
         && movementsListInput("procurement", query({ tab: "own", status: "declined" }), "carrier").status === undefined
         && movementsListInput("procurement", query({ tab: "partners", status: "all" }), "carrier").status === undefined
         && movementsListInput("procurement", query({ tab: "partners", status: "loading" }), "carrier").status === undefined
-        && movementsListInput("history", query({ tab: "own", status: "closed" }), "carrier").status === undefined);
+        && movementsListInput("history", query({ tab: "own", status: "closed" }), "carrier").status === "closed"
+        && movementsListInput("history", query({ tab: "own", status: "delivered" }), "carrier").status === undefined);
     check("the tab param picks the list, whatever the company",
         movementsListInput("all", query({ tab: "partners" }), "carrier").scope === "orders"
         && movementsListInput("all", query({ tab: "own" }), "shipper").scope === "trips");
@@ -2051,15 +2056,27 @@ async function references() {
 
 /**
  * §11.12 — one list per kind, holding what its pill counts; a shipper has no
- * clients. The test tenants' only connection is A and B's, accepted, so C's
- * request to B is staged straight on the table to give Requests a row.
+ * clients. A request to B from a shipper it has no connection with, either
+ * way, is staged straight on the table to give Requests a row: a pair holds
+ * one row only, and the test tenants' own pairs are real dev connections.
  */
 async function partnerLists() {
     console.log("\n— §11.12 the partner lists, one route per kind");
 
+    const [requester] = await db
+        .select({ id: organization.id })
+        .from(organization)
+        .where(and(
+            eq(organization.type, "shipper"),
+            notExists(db.select({ id: partnerConnection.id }).from(partnerConnection).where(or(
+                and(eq(partnerConnection.requesterOrgId, organization.id), eq(partnerConnection.targetOrgId, B.org)),
+                and(eq(partnerConnection.targetOrgId, organization.id), eq(partnerConnection.requesterOrgId, B.org)),
+            ))),
+        ))
+        .limit(1);
     const [request] = await db
         .insert(partnerConnection)
-        .values({ requesterOrgId: C.org, targetOrgId: B.org, relation: "client-carrier", message: "HARNESS connect" })
+        .values({ requesterOrgId: requester!.id, targetOrgId: B.org, relation: "client-carrier", message: "HARNESS connect" })
         .returning({ id: partnerConnection.id });
     connectionsHere.push(request!.id);
 

@@ -55,3 +55,9 @@ apps/*/CLAUDE.md
 
 # symlinks into .agents/skills created by the intent-skills installer (machine-local)
 .claude/skills/
+
+# demo seed bookkeeping (apps/app/scripts/seed-demo.ts)
+apps/app/scripts/seed-demo.manifest.json
+
+# test passwords drawn by apps/app/scripts/seed-portal-accounts.ts
+apps/app/scripts/seed-portal-accounts.local.json

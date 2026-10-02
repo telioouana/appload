@@ -2,13 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconCancel, IconCheck, IconLoader2 } from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
 
 import { TextInput } from "@workspace/ui/inputs/text";
+import { PhoneInput } from "@workspace/ui/inputs/phone";
+import { DEFAULT_PHONE_COUNTRY, toE164 } from "@workspace/ui/lib/phone";
 import { Button } from "@workspace/ui/components/button";
 import { FieldGroup } from "@workspace/ui/components/field";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
@@ -56,13 +58,16 @@ export function RegisterDriverDialog({
 
     const form = useForm<RegisterDriverForm>({
         resolver: zodResolver(FormSchema),
-        defaultValues: { name: "", email: "", phoneNumber: "", passport: "" },
+        defaultValues: { name: "", email: "", country: DEFAULT_PHONE_COUNTRY, phoneNumber: "", passport: "" },
     });
+
+    // `useWatch` rather than `watch` so React Compiler can still memoize
+    const country = useWatch({ control: form.control, name: "country" });
 
     // Re-seed the form with the searched name each time the dialog opens
     useEffect(() => {
         if (open) {
-            form.reset({ name: initialName, email: "", phoneNumber: "", passport: "" });
+            form.reset({ name: initialName, email: "", country: DEFAULT_PHONE_COUNTRY, phoneNumber: "", passport: "" });
         }
     }, [open, initialName, form]);
 
@@ -72,11 +77,11 @@ export function RegisterDriverDialog({
         onOpenChange(next);
     }
 
-    function onSubmit(values: RegisterDriverForm) {
+    function onSubmit({ country, ...values }: RegisterDriverForm) {
         setError(null);
 
         register.mutate(
-            { ...values, carrierId },
+            { ...values, phoneNumber: toE164(country, values.phoneNumber), carrierId },
             {
                 onSuccess: (driver) => onRegistered(driver),
                 onError: (err) => setError(domainErrorCode(err, DRIVER_ERROR_CODES, "UNKNOWN")),
@@ -117,12 +122,14 @@ export function RegisterDriverDialog({
                             label={t("register.fields.email.label")}
                             placeholder={t("register.fields.email.placeholder")}
                         />
-                        <TextInput
+                        {/* No `placeholder`: PhoneInput supplies its own from the country */}
+                        <PhoneInput
                             name="phoneNumber"
                             control={form.control}
                             isPending={isPending}
+                            country={country}
+                            setCountry={(value) => form.setValue("country", value, { shouldDirty: true, shouldValidate: true })}
                             label={t("register.fields.phone.label")}
-                            placeholder={t("register.fields.phone.placeholder")}
                         />
                         <TextInput
                             name="passport"

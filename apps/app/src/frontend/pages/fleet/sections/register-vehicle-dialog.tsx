@@ -42,13 +42,6 @@ type VehicleErrorCode = keyof typeof ERROR_MESSAGE_KEYS;
 
 const VEHICLE_ERROR_CODES = Object.keys(ERROR_MESSAGE_KEYS) as VehicleErrorCode[];
 
-// Mozambican plates: trucks carry a 3-letter prefix, towed units 2 letters
-const PLATE_MASK: Record<VehicleKind, string> = {
-    truck: "AAA 999 AA",
-    trailer: "AA 999 AA",
-    link: "AA 999 AA",
-};
-
 // Latest years first in the dropdown
 const YEAR_OPTIONS = [...YEARS].reverse();
 
@@ -163,8 +156,6 @@ export function RegisterVehicleDialog({
                             name="regPlate"
                             control={form.control}
                             isPending={isPending}
-                            hasInputMask
-                            inputMask={PLATE_MASK[kind]}
                             label={t("register.fields.plate.label")}
                             placeholder={t("register.fields.plate.placeholder")}
                         />

@@ -619,7 +619,7 @@
             "truck-none": "Ainda por decidir",
             "truck-typed": "Outro camião",
             "plate": "Matrícula",
-            "plate-placeholder": "AAA-000-MC",
+            "plate-placeholder": "AAA 000 MC",
             "status": "Em que ponto está",
             "status-hint": "Pode avançar mais tarde a partir da página da carga",
             "status-at-loading-hint": "O acompanhamento começa: o motorista passa a receber pedidos de localização e a carga conta para o plano deste mês",

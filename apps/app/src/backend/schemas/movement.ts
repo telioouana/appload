@@ -113,6 +113,10 @@ const location = z.object({
 
 const text = (max: number) => z.string().trim().max(max);
 
+// A free-typed plate reads like a registered one: uppercase, hyphens and
+// runs of spaces as a single space (the fleet routers' normalizePlate)
+const plate = text(PLATE_MAX).transform((value) => value.toUpperCase().replace(/[\s-]+/g, " ").trim());
+
 /**
  * One leg of the deal. VAT-inclusive total, like every money block in the
  * repo; the subtotal and VAT are the form's derivation and only validated.
@@ -138,7 +142,7 @@ const rig = {
     driverName: text(NAME_MAX).optional(),
     driverPhone: z.e164().optional(),
     driverId: z.string().nonempty().optional(),
-    truckPlate: text(PLATE_MAX).optional(),
+    truckPlate: plate.optional(),
     truckId: z.string().nonempty().optional(),
     trailerId: z.string().nonempty().optional(),
     linkId: z.string().nonempty().optional(),
@@ -217,7 +221,7 @@ export const UpdateMovementBaseSchema = z.object({
     driverName: text(NAME_MAX).nullable().optional(),
     driverPhone: z.e164().nullable().optional(),
     driverId: z.string().nonempty().nullable().optional(),
-    truckPlate: text(PLATE_MAX).nullable().optional(),
+    truckPlate: plate.nullable().optional(),
     truckId: z.string().nonempty().nullable().optional(),
     trailerId: z.string().nonempty().nullable().optional(),
     linkId: z.string().nonempty().nullable().optional(),
@@ -421,7 +425,7 @@ export function LoadFormSchema(msg: Message) {
             country: z.string(),
             phoneNumber: z.string(),
             truckId: z.string(),
-            truckPlate: text(PLATE_MAX),
+            truckPlate: plate,
             sellTotal: typedAmount(msg("amount")),
             sellCurrency: z.enum(CURRENCY),
             sellFiscalRegime: z.enum(FISCAL_REGIME).optional(),
