@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { useTranslations } from "@workspace/i18n";
+import { toE164 } from "@workspace/ui/lib/phone";
 
 type DriverTranslator = ReturnType<typeof useTranslations<"Admin.driver">>;
 
@@ -26,9 +27,21 @@ function buildSchema(msg: (field: MessageField) => ErrorParam) {
 // Message-free variant used by the tRPC procedure to validate input
 export const RegisterDriverBaseSchema = buildSchema(() => undefined);
 
-export type RegisterDriverForm = z.infer<typeof RegisterDriverBaseSchema>;
-
-// Client-side variant with translated error messages
+/**
+ * The client-side shape. `PhoneInput` renders the dial code beside the field
+ * and never folds it into the value, so the country travels as a sibling
+ * field and `toE164` composes the two at submit — which is also what the
+ * refinement validates and what the mutation is handed.
+ */
 export function RegisterDriverSchema(t: DriverTranslator) {
-    return buildSchema((field) => ({ error: t(`register.errors.validation.${field}`) }));
+    const msg = (field: MessageField) => ({ error: t(`register.errors.validation.${field}`) });
+
+    return buildSchema(msg)
+        .extend({ country: z.string().nonempty(), phoneNumber: z.string().nonempty(msg("phone")) })
+        .refine((data) => z.e164().safeParse(toE164(data.country, data.phoneNumber)).success, {
+            ...msg("phone"),
+            path: ["phoneNumber"],
+        });
 }
+
+export type RegisterDriverForm = z.infer<ReturnType<typeof RegisterDriverSchema>>;

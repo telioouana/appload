@@ -1,4 +1,4 @@
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useFormState } from "react-hook-form";
 
 import { useFormatter, useTranslations } from "@workspace/i18n";
 import { CATEGORIES, LOAD_TYPE, ORDER_STATUS, PACKING, POD_STATUS, ROUTE_TYPE, TRIP_TYPE, TRUCK_AGE, WEIGHT_UNIT } from "@workspace/db/types";
@@ -17,6 +17,7 @@ import { FieldGroup, FieldLegend, FieldSeparator, FieldSet, FieldTitle } from "@
 
 import { FleetInput } from "@/components/inputs/fleet";
 import { DriverInput } from "@/components/inputs/driver";
+import { DriverPhoneInput } from "@/components/inputs/driver-phone";
 import { DetailRow } from "@workspace/ui/customs/detail/section-card";
 import { KycGateBanner } from "@/frontend/pages/order/components/kyc-gate-banner";
 import { truckAgeFromYear } from "@/lib/fleet";
@@ -33,6 +34,7 @@ export function OrderUpdateForm({ isPending }: FormProps) {
     const t = useTranslations("Admin.order.update.form")
     const f = useFormatter()
     const { control, setValue, watch } = useFormContext<UpdateOrderFormInput, unknown, UpdateOrderForm>()
+    const { errors } = useFormState({ control, name: "driverPhoneNumber" })
 
     const carrierName = watch("carrierName")
     const carrierTotal = watch("carrierTotal")
@@ -325,11 +327,11 @@ export function OrderUpdateForm({ isPending }: FormProps) {
                             />
 
                             <FieldGroup className="grid grid-cols-1 gap-4 md:grid-cols-2 items-start">
-                                <TextInput
-                                    control={control}
-                                    name="driverPhoneNumber"
+                                <DriverPhoneInput
+                                    value={watch("driverPhoneNumber")}
+                                    onChange={(value) => setValue("driverPhoneNumber", value, { shouldDirty: true, shouldValidate: true })}
+                                    error={errors.driverPhoneNumber}
                                     label={t("carrier.fields.driver.contact.label")}
-                                    placeholder={t("carrier.fields.driver.contact.placeholder")}
                                     isPending={isPending}
                                 />
 

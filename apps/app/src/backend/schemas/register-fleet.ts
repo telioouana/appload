@@ -61,7 +61,7 @@ function buildLoadingBay(msg: (field: MessageField) => ErrorParam) {
  */
 function buildBaseFields(msg: (field: MessageField) => ErrorParam) {
     return z.object({
-        regPlate: z.string().nonempty(msg("plate")),
+        regPlate: z.string().trim().nonempty(msg("plate")).max(20, msg("plate")),
         internalId: z.string().optional(),
         brand: z.string().nonempty(msg("brand")),
         model: z.string().nonempty(msg("model")),
@@ -122,7 +122,7 @@ export function EditVehicleSchema(t: FleetTranslator) {
     const msg = (field: MessageField): ErrorParam => ({ error: t(`register.errors.validation.${field}`) });
 
     return z.object({
-        regPlate: z.string().trim().nonempty(msg("plate")),
+        regPlate: z.string().trim().nonempty(msg("plate")).max(20, msg("plate")),
         internalId: z.string().trim().max(60),
         brand: z.string().trim().nonempty(msg("brand")),
         model: z.string().trim().nonempty(msg("model")),

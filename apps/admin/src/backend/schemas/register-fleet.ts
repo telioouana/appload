@@ -57,7 +57,7 @@ function buildLoadingBay(msg: (field: MessageField) => ErrorParam) {
  */
 function buildBaseFields(msg: (field: MessageField) => ErrorParam) {
     return z.object({
-        regPlate: z.string().nonempty(msg("plate")),
+        regPlate: z.string().trim().nonempty(msg("plate")).max(20, msg("plate")),
         internalId: z.string().optional(),
         brand: z.string().nonempty(msg("brand")),
         model: z.string().nonempty(msg("model")),

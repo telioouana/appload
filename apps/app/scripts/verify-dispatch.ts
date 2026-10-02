@@ -349,16 +349,40 @@ async function main() {
     const [driverRow] = await db.select({ userId: driver.userId }).from(driver).where(eq(driver.id, registered.id));
     madeUsers.push(driverRow!.userId);
 
+    // Typed the way a foreign or old plate arrives: lowercase, hyphenated,
+    // in no Mozambican pattern
+    const plateCode = RUN.slice(-4).toUpperCase();
+    const vin = `HARNESS${RUN.toUpperCase()}`.padEnd(17, "X").slice(0, 17).replace(/[IOQ]/g, "X");
+
     const rig = await ca.fleet.vehicles.register({
         kind: "truck",
-        regPlate: `HD${RUN.slice(-4).toUpperCase()}MP`,
+        regPlate: `hd-${plateCode.toLowerCase()}-gp`,
         brand: "Scania",
         model: "R450",
         year: 2020,
-        vin: `HARNESS${RUN.toUpperCase()}`.padEnd(17, "X").slice(0, 17).replace(/[IOQ]/g, "X"),
+        vin,
         type: "articulated",
     });
     madeTrucks.push(rig.id);
+
+    check("a plate is stored uppercase with its hyphens as spaces", rig.regPlate === `HD ${plateCode} GP`, rig.regPlate);
+    await expectError(
+        "the same plate in another spelling is a duplicate",
+        () => ca.fleet.vehicles.register({
+            kind: "truck",
+            regPlate: `HD${plateCode}GP`,
+            brand: "Scania",
+            model: "R450",
+            year: 2020,
+            vin: `${vin.slice(0, 16)}${vin.endsWith("Z") ? "Y" : "Z"}`,
+            type: "articulated",
+        }),
+        "DUPLICATE_PLATE",
+    );
+    for (const query of [`hd${plateCode}`, `HD-${plateCode}`]) {
+        const found = await ca.fleet.vehicles.search({ kind: "truck", query });
+        check(`the picker finds it by "${query}"`, found.some((vehicle) => vehicle.id === rig.id), found);
+    }
 
     check("the carrier registered a driver and a truck of its own",
         Boolean(registered.id && rig.id), { driver: registered.id, truck: rig.id });

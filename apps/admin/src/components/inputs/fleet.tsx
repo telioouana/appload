@@ -79,8 +79,6 @@ export const FleetInput: ControlFunc<{
             }}
                 isLoading={isLoading}
                 disabled={!carrierId}
-                // Mozambican plates: trucks carry a 3-letter prefix, towed units 2
-                inputMask={kind === "truck" ? "AAA 999 AA" : "AA 999 AA"}
                 loadingText={t("combobox.loading")}
                 emptyText={t("combobox.empty")}
                 registerText={(plate) => t("combobox.register", { plate })}
