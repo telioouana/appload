@@ -63,6 +63,8 @@ export function LinesCard({ rental }: { rental: RentalDetail }) {
     const [removing, setRemoving] = useState<RentalLineView | null>(null)
 
     const { canAddLine, canEndLine } = rental.permissions
+    // A member who reads no price counts the days; what they come to is withheld
+    const priced = rental.billable !== null
     // A line is removable while nothing was ever said about its days
     const untouched = (line: RentalLineView) =>
         line.billing.standby + line.billing.stopped + line.billing.off === 0 && line.days.every((day) => !day.disputed)
@@ -99,7 +101,7 @@ export function LinesCard({ rental }: { rental: RentalDetail }) {
                                     <TableHead className={head}>{t("detail.line-columns.provider")}</TableHead>
                                     <TableHead className={`${head} text-right`}>{t("detail.line-columns.days")}</TableHead>
                                     <TableHead className={head}>{t("detail.line-columns.today")}</TableHead>
-                                    <TableHead className={`${head} text-right`}>{t("detail.line-columns.amount")}</TableHead>
+                                    {priced && <TableHead className={`${head} text-right`}>{t("detail.line-columns.amount")}</TableHead>}
                                     {(canEndLine || canAddLine) && <TableHead className={head} />}
                                 </TableRow>
                             </TableHeader>
@@ -131,7 +133,11 @@ export function LinesCard({ rental }: { rental: RentalDetail }) {
                                             <TableCell className={`${cell} ${line.today.answer === "no" || line.today.silent ? "text-amber-600 dark:text-amber-400" : ""}`}>
                                                 {today ?? <Dash />}
                                             </TableCell>
-                                            <TableCell className={`${cell} text-right tabular-nums`}>{money(line.billing.amount, rental.currency)}</TableCell>
+                                            {priced && (
+                                                <TableCell className={`${cell} text-right tabular-nums`}>
+                                                    {line.billing.amount === null ? <Dash /> : money(line.billing.amount, rental.currency)}
+                                                </TableCell>
+                                            )}
                                             {(canEndLine || canAddLine) && (
                                                 <TableCell className={`${cell} text-right`}>
                                                     <div className="flex items-center justify-end gap-1">

@@ -162,8 +162,12 @@ export function Sidenav({
     // would be two numbers, cleared by two different actions
     const { data: unread } = useQuery(trpc.notifications.unreadCount.queryOptions(undefined, { refetchInterval: UNREAD_POLL_MS }))
     const { data: chats } = useQuery(trpc.threads.unread.queryOptions(undefined, { refetchInterval: UNREAD_POLL_MS }))
+    const { data: session } = useQuery(trpc.me.session.queryOptions())
 
     const carrier = orgType === "carrier"
+    // Somebody who can file nothing new is not offered the button (new-load-sheet.tsx asks the same)
+    const may = (permission: string) => session?.permissions.includes(permission as never) ?? false
+    const mayFile = may("order:create") || may("contract:manage") || (!carrier && may("trip:create"))
 
     const report: NavEntry[] = [
         {
@@ -173,7 +177,10 @@ export function Sidenav({
             match: "/dashboard",
             path: "/dashboard",
         },
-        { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", path: "/analytics" },
+        // The reports are report:read's; the entry waits for the session rather than flashing
+        ...(session?.permissions.includes("report:read")
+            ? [{ Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", path: "/analytics" } satisfies NavEntry]
+            : []),
     ]
 
     // A badge is the two tabs' counts added: a section's number is what waits
@@ -378,14 +385,14 @@ export function Sidenav({
                             {/* Always opens on a partner's load: a transporter's own
                                 trucks come from its clients' orders, and a client picks
                                 the shape inside the sheet */}
-                            <SidebarMenuItem>
+                            {mayFile && <SidebarMenuItem>
                                 <SidebarMenuButton asChild tooltip={t("new-load")}>
                                     <Button onClick={() => openNewLoad("partner")}>
                                         <IconPlus />
                                         {t("new-load")}
                                     </Button>
                                 </SidebarMenuButton>
-                            </SidebarMenuItem>
+                            </SidebarMenuItem>}
                             {renderEntries(ops)}
                         </SidebarMenu>
                     </SidebarGroupContent>

@@ -24,6 +24,9 @@ export function MoneyCard({ contract }: { contract: ContractDetail }) {
     const money = useMoney()
     const shareLabel = useShareLabel()
 
+    // The reader's permissions keep the books from it: no card at all
+    if (!contract.money) return null
+
     const { role } = contract
     const { lines, byShare } = contract.money
     const earns = role !== "client"

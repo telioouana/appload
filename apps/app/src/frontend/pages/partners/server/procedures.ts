@@ -197,7 +197,7 @@ export const partnersRouter = createTRPCRouter({
      * declined or removed one reopens the same row rather than adding a
      * second.
      */
-    request: authorizedTenantProcedure("partner", ["request"])
+    request: authorizedTenantProcedure("partner", ["manage"])
         .input(ConnectionRequestBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
             const tenantId = ctx.tenant.organizationId;
@@ -318,7 +318,7 @@ export const partnersRouter = createTRPCRouter({
      * while it is still pending — a second click on a stale list finds
      * nothing to update rather than overwriting an answer.
      */
-    respond: authorizedTenantProcedure("partner", ["respond"])
+    respond: authorizedTenantProcedure("partner", ["manage"])
         .input(z.object({ id: z.string().nonempty(), decision: z.enum(["accept", "decline"]) }))
         .mutation(async ({ ctx, input }): Promise<{ id: string; status: "accepted" | "declined" }> => {
             const tenantId = ctx.tenant.organizationId;
@@ -366,7 +366,7 @@ export const partnersRouter = createTRPCRouter({
      * "removed" rather than deleted: the orders the two ran together hang off
      * both companies, and a later re-request reopens this same row.
      */
-    remove: authorizedTenantProcedure("partner", ["remove"])
+    remove: authorizedTenantProcedure("partner", ["manage"])
         .input(z.object({ id: z.string().nonempty() }))
         .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
             const tenantId = ctx.tenant.organizationId;
@@ -411,7 +411,7 @@ export const partnersRouter = createTRPCRouter({
      * lets either side ask again without the pair carrying a decision it
      * never made.
      */
-    withdraw: authorizedTenantProcedure("partner", ["request"])
+    withdraw: authorizedTenantProcedure("partner", ["manage"])
         .input(z.object({ id: z.string().nonempty() }))
         .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
             const [deleted] = await ctx.db
@@ -434,7 +434,7 @@ export const partnersRouter = createTRPCRouter({
      * account, so the connection is accepted on registration (`accepted_via
      * = registration`) and staff see who registered whom in the metadata.
      */
-    register: authorizedTenantProcedure("partner", ["request"])
+    register: authorizedTenantProcedure("partner", ["manage"])
         .input(RegisterPartnerBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ organizationId: string; connectionId: string; name: string }> => {
             const tenantId = ctx.tenant.organizationId;

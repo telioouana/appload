@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
 import { IconArrowUpRight, IconCash, IconDownload } from "@tabler/icons-react"
 
+import { isOrgAuthorized, moneyView } from "@workspace/auth/organization-permissions"
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
 import { Badge } from "@workspace/ui/components/badge"
@@ -39,6 +40,11 @@ export function TripsCard({ contract }: { contract: ContractDetail }) {
     const [payingId, setPayingId] = useState<string | null>(null)
     const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
     const [isExporting, setExporting] = useState(false)
+    // The member's own permissions: the file, the totals, and the books around them
+    const canExport = isOrgAuthorized(session.permissions, "export", ["csv"])
+    const sees = moneyView(session.permissions)
+    const priced = sees !== "none"
+    const books = sees === "full"
 
     const exportRows = async () => {
         setExporting(true)
@@ -65,15 +71,17 @@ export function TripsCard({ contract }: { contract: ContractDetail }) {
             count={contract.trips.length}
             aside={contract.trips.length > 0 ? (
                 <span className="inline-flex items-center gap-3">
-                    <button
-                        type="button"
-                        disabled={isExporting}
-                        onClick={exportRows}
-                        className="hover:text-foreground inline-flex cursor-pointer items-center gap-0.5 disabled:cursor-default"
-                    >
-                        {t("export")}
-                        {isExporting ? <Spinner className="size-3.5" /> : <IconDownload className="size-3.5" stroke={1.5} />}
-                    </button>
+                    {canExport && (
+                        <button
+                            type="button"
+                            disabled={isExporting}
+                            onClick={exportRows}
+                            className="hover:text-foreground inline-flex cursor-pointer items-center gap-0.5 disabled:cursor-default"
+                        >
+                            {t("export")}
+                            {isExporting ? <Spinner className="size-3.5" /> : <IconDownload className="size-3.5" stroke={1.5} />}
+                        </button>
+                    )}
                     <Link
                         href={{ pathname: "/orders/[section]", params: { section: "all" }, query: { contract: contract.id } }}
                         className="hover:text-foreground inline-flex items-center gap-0.5"
@@ -97,8 +105,8 @@ export function TripsCard({ contract }: { contract: ContractDetail }) {
                                 <TableHead className={head}>{t("trip-columns.status")}</TableHead>
                                 <TableHead className={head}>{t("trip-columns.loading")}</TableHead>
                                 <TableHead className={`${head} text-right`}>{t("trip-columns.weight")}</TableHead>
-                                <TableHead className={`${head} text-right`}>{t("trip-columns.total")}</TableHead>
-                                <TableHead className={head}>{t("trip-columns.payment")}</TableHead>
+                                {priced && <TableHead className={`${head} text-right`}>{t("trip-columns.total")}</TableHead>}
+                                {books && <TableHead className={head}>{t("trip-columns.payment")}</TableHead>}
                             </TableRow>
                         </TableHeader>
 
@@ -121,29 +129,33 @@ export function TripsCard({ contract }: { contract: ContractDetail }) {
                                             ? `${f.number(trip.weight, { maximumFractionDigits: 3 })} ${trip.weightUnit ? tv(`weightUnit.${trip.weightUnit}`) : ""}`
                                             : <Dash />}
                                     </TableCell>
-                                    <TableCell className={`${cell} text-right tabular-nums`}>
-                                        {trip.total !== null && trip.currency ? money(trip.total, trip.currency) : <Dash />}
-                                    </TableCell>
-                                    <TableCell className={cell}>
-                                        {trip.settlement ? (
-                                            <span className="flex items-center gap-1.5">
-                                                <Badge variant={trip.settlement === "completed" ? "default" : "outline"} className="rounded-full font-normal">
-                                                    {ts(trip.settlement)}
-                                                </Badge>
-                                                {trip.canRecordPayment && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setPayingId(trip.id)}
-                                                        title={t("actions.record-payment")}
-                                                        aria-label={t("actions.record-payment")}
-                                                        className="text-muted-foreground hover:text-foreground cursor-pointer"
-                                                    >
-                                                        <IconCash className="size-4" stroke={1.5} />
-                                                    </button>
-                                                )}
-                                            </span>
-                                        ) : <Dash />}
-                                    </TableCell>
+                                    {priced && (
+                                        <TableCell className={`${cell} text-right tabular-nums`}>
+                                            {trip.total !== null && trip.currency ? money(trip.total, trip.currency) : <Dash />}
+                                        </TableCell>
+                                    )}
+                                    {books && (
+                                        <TableCell className={cell}>
+                                            {trip.settlement ? (
+                                                <span className="flex items-center gap-1.5">
+                                                    <Badge variant={trip.settlement === "completed" ? "default" : "outline"} className="rounded-full font-normal">
+                                                        {ts(trip.settlement)}
+                                                    </Badge>
+                                                    {trip.canRecordPayment && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setPayingId(trip.id)}
+                                                            title={t("actions.record-payment")}
+                                                            aria-label={t("actions.record-payment")}
+                                                            className="text-muted-foreground hover:text-foreground cursor-pointer"
+                                                        >
+                                                            <IconCash className="size-4" stroke={1.5} />
+                                                        </button>
+                                                    )}
+                                                </span>
+                                            ) : <Dash />}
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             ))}
                         </TableBody>

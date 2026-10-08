@@ -78,7 +78,7 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
         [router],
     )
 
-    const columns = useMovementColumns({ scope, orgType })
+    const columns = useMovementColumns({ scope, orgType, seesPrices: session.permissions.includes("price:read") })
     const table = useDataTable({
         columns,
         data: data.items,
@@ -131,7 +131,8 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
                 filterCount={chips.length}
                 activeFilters={chips}
                 filters={<MovementFilters stats={stats} />}
-                onExport={exportRows}
+                // The file is a copy of the books leaving the portal: export:csv only
+                onExport={session.permissions.includes("export:csv") ? exportRows : undefined}
                 isExporting={isExporting}
                 sort={{
                     defaultValue: DEFAULT_SORT,
@@ -154,7 +155,7 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
                             ? t("data.empty-disputes")
                             : t(`data.empty-description.${ownTripsFromClients ? "trips-carrier" : scope}`),
                         filtered: t("data.no-results"),
-                        action: ownTripsFromClients
+                        action: ownTripsFromClients || !session.permissions.includes(scope === "trips" ? "trip:create" : "order:create")
                             ? undefined
                             : <Button onClick={() => openNewLoad(scope === "trips" ? "own-fleet" : "partner", { kind: "single" })}>{t(`actions.new.${scope}`)}</Button>,
                     }}

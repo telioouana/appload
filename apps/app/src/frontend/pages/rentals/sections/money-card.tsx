@@ -47,6 +47,10 @@ export function MoneyCard({ rental }: { rental: RentalDetail }) {
 
     const [paying, setPaying] = useState(false)
 
+    // A member who reads no price has nothing here; one without the books reads the statement alone
+    if (rental.billable === null) return null
+    const books = rental.money
+
     const { role, currency } = rental
     const owner = role === "owner"
     // An owner with no priced client has no receivable half: its money is what it pays the providers
@@ -60,6 +64,8 @@ export function MoneyCard({ rental }: { rental: RentalDetail }) {
         months.set(row.month, { month: row.month, worked: sum.worked + row.worked, standby: sum.standby + row.standby, amount: Math.round((sum.amount + row.amount) * 100) / 100 })
     }
     const statement = [...months.values()].sort((a, b) => a.month.localeCompare(b.month))
+    // Without the books the statement is all there is; nothing on it yet, no card
+    if (!books && statement.length === 0) return null
 
     const head = "h-8 px-2 text-xs font-normal"
     const cell = "px-2 py-2 text-[13px] tabular-nums"
@@ -77,7 +83,7 @@ export function MoneyCard({ rental }: { rental: RentalDetail }) {
                 ) : undefined}
             >
                 <div className="flex flex-col gap-4">
-                    {rental.money.lines.map((line) => (
+                    {books && books.lines.map((line) => (
                         <dl key={line.currency} className="flex flex-col gap-2">
                             {sells && (
                                 <>
@@ -94,7 +100,7 @@ export function MoneyCard({ rental }: { rental: RentalDetail }) {
                                     </DetailRow>
                                 </>
                             )}
-                            {owner && (line.payable > 0 || rental.money.perLine.length > 0) && (
+                            {owner && (line.payable > 0 || books.perLine.length > 0) && (
                                 <>
                                     <DetailRow label={t("money-rows.payable")}>{money(line.payable, line.currency)}</DetailRow>
                                     <DetailRow label={t("money-rows.paid")}>{money(line.paid, line.currency)}</DetailRow>
@@ -106,7 +112,7 @@ export function MoneyCard({ rental }: { rental: RentalDetail }) {
                         </dl>
                     ))}
 
-                    {owner && rental.money.perLine.length > 0 && (
+                    {owner && books && books.perLine.length > 0 && (
                         <div className="flex flex-col gap-2 border-t pt-3.5">
                             <span className="text-muted-foreground text-xs font-medium">{t("money-rows.per-line")}</span>
                             <div className={table}>
@@ -120,7 +126,7 @@ export function MoneyCard({ rental }: { rental: RentalDetail }) {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {rental.money.perLine.map((row) => {
+                                        {books.perLine.map((row) => {
                                             const line = lineOf(row.allocationId)
 
                                             return (
@@ -139,7 +145,7 @@ export function MoneyCard({ rental }: { rental: RentalDetail }) {
                     )}
 
                     {statement.length > 0 && (
-                        <div className="flex flex-col gap-2 border-t pt-3.5">
+                        <div className="flex flex-col gap-2 border-t pt-3.5 first:border-t-0 first:pt-0">
                             <span className="text-muted-foreground text-xs font-medium">{t("money-rows.per-month")}</span>
                             <div className={table}>
                                 <Table>
@@ -164,41 +170,44 @@ export function MoneyCard({ rental }: { rental: RentalDetail }) {
                         </div>
                     )}
 
-                    <div className="flex flex-col gap-2 border-t pt-3.5">
-                        <span className="text-muted-foreground text-xs font-medium">{t("payments")}</span>
-                        {rental.payments.length === 0 ? (
-                            <p className="text-muted-foreground text-sm">{t("no-payments")}</p>
-                        ) : (
-                            <div className={table}>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow className="hover:bg-transparent">
-                                            <TableHead className={head}>{t("payment-form.paid-at")}</TableHead>
-                                            <TableHead className={head}>{t("payment-form.leg")}</TableHead>
-                                            <TableHead className={head}>{t("payment-form.line")}</TableHead>
-                                            <TableHead className={`${head} text-right`}>{t("payment-form.amount")}</TableHead>
-                                            <TableHead className={head}>{t("payment-form.reference")}</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {rental.payments.map((payment) => {
-                                            const line = payment.allocationId ? lineOf(payment.allocationId) : undefined
-
-                                            return (
-                                                <TableRow key={payment.id}>
-                                                    <TableCell className={cell}>{f.dateTime(payment.paidAt, { dateStyle: "medium" })}</TableCell>
-                                                    <TableCell className={cell}>{t(`payment-form.${payment.leg}`)}</TableCell>
-                                                    <TableCell className={cell}>{line ? plateOf(line) : <Dash />}</TableCell>
-                                                    <TableCell className={`${cell} text-right ${payment.amount < 0 ? "text-red-600 dark:text-red-400" : ""}`}>{money(payment.amount, payment.currency)}</TableCell>
-                                                    <TableCell className={`${cell} text-muted-foreground`}>{payment.reference ?? <Dash />}</TableCell>
-                                                </TableRow>
-                                            )
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        )}
-                    </div>
+                    {/* Payments are the books: a member without them reads none */}
+                    {books && (
+                        <div className="flex flex-col gap-2 border-t pt-3.5">
+                            <span className="text-muted-foreground text-xs font-medium">{t("payments")}</span>
+                            {rental.payments.length === 0 ? (
+                                <p className="text-muted-foreground text-sm">{t("no-payments")}</p>
+                            ) : (
+                                <div className={table}>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="hover:bg-transparent">
+                                                <TableHead className={head}>{t("payment-form.paid-at")}</TableHead>
+                                                <TableHead className={head}>{t("payment-form.leg")}</TableHead>
+                                                <TableHead className={head}>{t("payment-form.line")}</TableHead>
+                                                <TableHead className={`${head} text-right`}>{t("payment-form.amount")}</TableHead>
+                                                <TableHead className={head}>{t("payment-form.reference")}</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {rental.payments.map((payment) => {
+                                                const line = payment.allocationId ? lineOf(payment.allocationId) : undefined
+    
+                                                return (
+                                                    <TableRow key={payment.id}>
+                                                        <TableCell className={cell}>{f.dateTime(payment.paidAt, { dateStyle: "medium" })}</TableCell>
+                                                        <TableCell className={cell}>{t(`payment-form.${payment.leg}`)}</TableCell>
+                                                        <TableCell className={cell}>{line ? plateOf(line) : <Dash />}</TableCell>
+                                                        <TableCell className={`${cell} text-right ${payment.amount < 0 ? "text-red-600 dark:text-red-400" : ""}`}>{money(payment.amount, payment.currency)}</TableCell>
+                                                        <TableCell className={`${cell} text-muted-foreground`}>{payment.reference ?? <Dash />}</TableCell>
+                                                    </TableRow>
+                                                )
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </SectionCard>
 

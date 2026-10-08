@@ -28,6 +28,7 @@ import { searchRouter } from "@/frontend/pages/search/server/procedures"
 import { threadsCatalog } from "@/frontend/pages/threads/server/activity"
 import { threadsRouter } from "@/frontend/pages/threads/server/procedures"
 import { meRouter } from "@/frontend/pages/settings/server/procedures"
+import { teamCatalog, teamRouter } from "@/frontend/pages/settings/server/team"
 
 // Module scope: runs on every cold start before any request is handled, so
 // mutation log rows get their enriched params from the first request on.
@@ -45,6 +46,7 @@ registerActivityCatalog({
     ...ordersCatalog,
     ...partnersCatalog,
     ...rentalsCatalog,
+    ...teamCatalog,
     ...threadsCatalog,
 });
 
@@ -63,6 +65,7 @@ export const appRouter = createTRPCRouter({
     partners: partnersRouter,
     rentals: rentalsRouter,
     search: searchRouter,
+    team: teamRouter,
     threads: threadsRouter,
 });
 

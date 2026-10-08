@@ -39,8 +39,14 @@ function ArmedSheet() {
 
     if (!session) return null
 
+    const has = (permission: string) => session.permissions.includes(permission as never)
+    // A trip on its own trucks is a client's to file by hand; placing one with
+    // a partner is order:create, a standing order or rental contract:manage
+    const ownTrips = session.organization.type === "shipper" && has("trip:create")
+    const kinds = KINDS.filter(({ value }) => value === "single" ? has("order:create") || ownTrips : has("contract:manage"))
+
     if (kind === null) {
-        return <KindChooser open={isOpen} onChoose={choose} onClose={close} />
+        return <KindChooser open={isOpen} kinds={kinds} onChoose={choose} onClose={close} />
     }
 
     if (kind === "rental") {
@@ -53,7 +59,7 @@ function ArmedSheet() {
 
     return (
         <LoadSheet
-            mode={{ kind: "create", execution, contractAllocationId }}
+            mode={{ kind: "create", execution: execution === "partner" && !has("order:create") && !contractAllocationId ? "own-fleet" : execution, contractAllocationId }}
             orgType={session.organization.type}
             allowance={session.allowance}
             organizationName={session.organization.name}
@@ -70,7 +76,7 @@ const KINDS: { value: NewLoadKind; Icon: typeof IconTruck }[] = [
 ]
 
 /** One trip, or several: the one question before either form. */
-function KindChooser({ open, onChoose, onClose }: { open: boolean; onChoose: (kind: NewLoadKind) => void; onClose: () => void }) {
+function KindChooser({ open, kinds, onChoose, onClose }: { open: boolean; kinds: typeof KINDS; onChoose: (kind: NewLoadKind) => void; onClose: () => void }) {
     const t = useTranslations("App.loads.form.kind")
 
     return (
@@ -82,7 +88,7 @@ function KindChooser({ open, onChoose, onClose }: { open: boolean; onChoose: (ki
                 </SheetHeader>
 
                 <div className="grid gap-3 px-6 py-5" role="radiogroup" aria-label={t("title")}>
-                    {KINDS.map(({ value, Icon }) => (
+                    {kinds.map(({ value, Icon }) => (
                         <button
                             key={value}
                             type="button"

@@ -37,7 +37,9 @@ export type RentalLineView = {
     /** The line's own end, when the truck left early */
     endsOn: string | null;
     days: RentalDayView[];
-    billing: LineBilling;
+    /** The days counted; the amount is null to a reader who sees no price */
+    billing: Omit<LineBilling, "amount"> & { amount: number | null };
+    /** By month at the line's price; empty to a reader who sees no price */
     statement: MonthRow[];
     /** How many days the whole period holds for this line; null while open */
     projectedDays: number | null;
@@ -65,8 +67,8 @@ export type RentalRow = {
     /** Billable days so far across the reader's lines, and the period's days when it has an end */
     billableDays: number;
     periodDays: number | null;
-    /** What the reader's side comes to so far, in the order's currency */
-    billable: number;
+    /** What the reader's side comes to so far, in the order's currency; null to a reader who sees no price */
+    billable: number | null;
     attention: { disputed: number; saidNo: number; silent: number };
     createdAt: Date;
     updatedAt: Date;
@@ -117,7 +119,8 @@ export type RentalDetail = RentalRow & {
     notes: string | null;
     version: number;
     lines: RentalLineView[];
-    money: { lines: RentalMoneyLine[]; perLine: Array<{ allocationId: string; currency: Currency; billable: number; paid: number; outstanding: number }> };
+    /** The books on the rental; null, and no payments, to a reader without them */
+    money: { lines: RentalMoneyLine[]; perLine: Array<{ allocationId: string; currency: Currency; billable: number; paid: number; outstanding: number }> } | null;
     payments: RentalPaymentView[];
     permissions: RentalPermissions;
 };

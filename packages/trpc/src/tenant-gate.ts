@@ -1,5 +1,7 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
 
+import { effectiveAccess, profileOf, type Permission, type Profile } from "@workspace/auth/organization-permissions";
+import { memberPermission } from "@workspace/db/permissions";
 import { member, organization, user } from "@workspace/db/users";
 import { isPartnerOrgType, type PartnerOrgType } from "@workspace/db/types";
 import type { db as Database } from "@workspace/db/db";
@@ -16,7 +18,8 @@ export type TenantReason =
 // own row: the gate below denies a membership of any other type
 export type OrgType = PartnerOrgType;
 export type OrgStatus = "pending" | "active" | "closed";
-export type TenantRole = "owner" | "admin" | "member";
+/** The member's profile (`member.role`); what they may do is `permissions` */
+export type TenantRole = Profile;
 
 export type TenantPlan = {
     // Null until staff record the tier that was agreed commercially
@@ -43,6 +46,12 @@ export type TenantGates =
         orgType: OrgType;
         orgStatus: OrgStatus;
         role: TenantRole;
+        memberId: string;
+        /** 3 while an acting-CEO lift is live, whatever the profile */
+        level: 1 | 2 | 3;
+        actingOwner: boolean;
+        /** The profile's defaults with this member's live changes applied */
+        permissions: ReadonlySet<Permission>;
         emailVerified: boolean;
         plan: TenantPlan;
     }
@@ -54,11 +63,17 @@ export type TenantGates =
         orgType: OrgType | null;
         orgStatus: OrgStatus | null;
         role: TenantRole | null;
+        memberId?: undefined;
+        level?: undefined;
+        actingOwner?: undefined;
+        permissions: ReadonlySet<Permission>;
         emailVerified: boolean;
         plan: TenantPlan;
     };
 
 const NO_PLAN: TenantPlan = { plan: null, expiresAt: null, active: false, quota: 0 };
+
+const NO_PERMISSIONS: ReadonlySet<Permission> = new Set();
 
 /**
  * Reads the actor's account and its single membership live from the database.
@@ -72,7 +87,8 @@ export async function getTenantGates(
     db: typeof Database,
     params: { userId: string },
 ): Promise<TenantGates> {
-    const [account, membership] = await Promise.all([
+    const now = new Date();
+    const [account, membership, changes] = await Promise.all([
         db
             .select({
                 type: user.type,
@@ -88,6 +104,7 @@ export async function getTenantGates(
         // if a stale membership was ever left behind
         db
             .select({
+                memberId: member.id,
                 organizationId: member.organizationId,
                 role: member.role,
                 orgType: organization.type,
@@ -101,6 +118,26 @@ export async function getTenantGates(
             .orderBy(desc(member.createdAt))
             .limit(1)
             .then((rows) => rows[0]),
+        // The member's own permission changes still open, read alongside the
+        // membership rather than after it — one round-trip, not two — and
+        // matched to the membership below (`organizationLimit` is 1)
+        db
+            .select({
+                memberId: memberPermission.memberId,
+                kind: memberPermission.kind,
+                permission: memberPermission.permission,
+                startsAt: memberPermission.startsAt,
+                endsAt: memberPermission.endsAt,
+                revokedAt: memberPermission.revokedAt,
+                createdAt: memberPermission.createdAt,
+            })
+            .from(memberPermission)
+            .innerJoin(member, eq(member.id, memberPermission.memberId))
+            .where(and(
+                eq(member.userId, params.userId),
+                isNull(memberPermission.revokedAt),
+                or(isNull(memberPermission.endsAt), gt(memberPermission.endsAt, now)),
+            )),
     ]);
 
     const emailVerified = account?.emailVerified === true;
@@ -116,10 +153,13 @@ export async function getTenantGates(
         }
         : NO_PLAN;
 
-    const role: TenantRole =
-        membership?.role === "owner" ? "owner" :
-            membership?.role === "admin" ? "admin" :
-                "member";
+    const role: TenantRole = profileOf(membership?.role);
+
+    // Resolved live on every request, so a change or a lapsed window counts
+    // on the very next click
+    const access = membership
+        ? effectiveAccess(role, changes.filter((change) => change.memberId === membership.memberId), now)
+        : null;
 
     const resolved = {
         userId: params.userId,
@@ -128,11 +168,12 @@ export async function getTenantGates(
         orgType: membership && isPartnerOrgType(membership.orgType) ? membership.orgType : null,
         orgStatus: membership?.orgStatus ?? null,
         role: membership ? role : null,
+        permissions: access?.permissions ?? NO_PERMISSIONS,
         emailVerified,
         plan,
     };
 
-    const deny = (reason: TenantReason): TenantGates => ({ ok: false, reason, ...resolved });
+    const deny = (reason: TenantReason): TenantGates => ({ ok: false, reason, ...resolved, permissions: NO_PERMISSIONS });
 
     // The portal is partner-only: staff and driver accounts are rejected
     // before anything else is looked at
@@ -157,6 +198,10 @@ export async function getTenantGates(
         orgType: membership.orgType,
         orgStatus: membership.orgStatus,
         role,
+        memberId: membership.memberId,
+        level: access!.level,
+        actingOwner: access!.actingOwner,
+        permissions: access!.permissions,
         emailVerified,
         plan,
     };

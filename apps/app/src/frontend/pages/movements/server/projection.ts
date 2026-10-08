@@ -27,10 +27,10 @@ import { order } from "@workspace/db/orders";
 import { isApploadOrg } from "@workspace/db/types";
 import { organization, user } from "@workspace/db/users";
 
-import { isOrgAuthorized, type OrgRole } from "@workspace/auth/organization-permissions";
+import { can as hasPermission, moneyView as moneyViewOf, type MoneyView, type Permission } from "@workspace/auth/organization-permissions";
 import { LIVE_REQUEST_STATUSES, terminalMovementId } from "@workspace/domain/movements/link";
 import { costTotals, exVat, legSettled, margin } from "@workspace/domain/movements/money";
-import { editableGroups, isExecutorOf, movementRole, type MovementRole } from "@workspace/domain/movements/policy";
+import { editableGroups, isExecutorOf, movementRole, type EditableGroup, type MovementRole } from "@workspace/domain/movements/policy";
 import type { ContractSummary } from "@/frontend/pages/contracts/server/projection";
 import { counterpartyRef, movementRef } from "@workspace/domain/movements/refs";
 import {
@@ -636,7 +636,32 @@ export type CostRow = {
  * construction (a CHECK on the table), so the owner's `payable` is null there
  * and its margin is the sell leg less what the load cost to run.
  */
-export function projectMoney(row: Movement, role: MovementRole, costs: readonly CostRow[], candidate = false): MovementMoney {
+export function projectMoney(row: Movement, role: MovementRole, costs: readonly CostRow[], candidate = false, view: MoneyView = "full"): MovementMoney {
+    return narrowMoney(companyMoney(row, role, costs, candidate), view);
+}
+
+/**
+ * What the reader's own permissions leave of the company's money: nothing
+ * without `price:read`, and only the prices without `finance:read` — the
+ * invoices, what has been paid and the margin are the books.
+ */
+export function narrowMoney(money: MovementMoney, view: MoneyView): MovementMoney {
+    if (view === "full") return money;
+    if (view === "none") return { payable: null, receivable: null, margin: null };
+
+    const priceOnly = (value: MoneyLeg | null): MoneyLeg | null => value && {
+        ...value,
+        invoiceNumber: null,
+        invoiceDate: null,
+        settlement: null,
+        settled: null,
+        settledAt: null,
+    };
+
+    return { payable: priceOnly(money.payable), receivable: priceOnly(money.receivable), margin: null };
+}
+
+function companyMoney(row: Movement, role: MovementRole, costs: readonly CostRow[], candidate: boolean): MovementMoney {
     // A transporter asked for a price names its own: what the owner would
     // have paid, if it wrote a figure down, is the owner's alone
     if (candidate) return { payable: null, receivable: null, margin: null };
@@ -777,13 +802,16 @@ export function toMovementRow(
         quotes?: MovementQuoteSummary | null;
         /** The multi-trip order the row draws down (`loadParents`) */
         parent?: MovementParent | null;
+        /** What the reader's own permissions let it see of the money (`moneyView`) */
+        view?: MoneyView;
     },
 ): MovementRow {
     const owner = role === "owner";
     const candidate = ctx.candidate ?? false;
+    const view = ctx.view ?? "full";
     // The list shows headlines only; costs are not read for it, and the
     // margin is the detail page's
-    const money = projectMoney(row, role, [], candidate);
+    const money = projectMoney(row, role, [], candidate, view);
 
     return {
         id: row.id,
@@ -813,13 +841,13 @@ export function toMovementRow(
         receivable: headline(money.receivable),
         isLinked: owner && row.executionMovementId !== null,
         quoteRequested: candidate,
-        quotes: owner ? ctx.quotes ?? null : null,
+        quotes: owner && view !== "none" ? ctx.quotes ?? null : null,
         inDispute: ctx.inDispute ?? false,
         offRoute: owner && (ctx.offRoute ?? false),
         silent: owner && (ctx.silent ?? false),
         // What the load is missing as it stands — the row's attention mark,
         // and the owner's own reading of its own books, like the detail's
-        flags: owner ? movementFlags(guardsOf(row, ctx.unapprovedPhotos ?? 0, ctx.inDispute ?? false), row.status) : [],
+        flags: owner ? priceBlind(movementFlags(guardsOf(row, ctx.unapprovedPhotos ?? 0, ctx.inDispute ?? false), row.status), view) : [],
         lastPing: ctx.pings.last.get(ctx.trailId) ?? null,
         pingCount: ctx.pings.counts.get(ctx.trailId) ?? 0,
         parent: ctx.parent ?? null,
@@ -894,14 +922,20 @@ type DetailExtras = {
     events: readonly (Omit<MovementEventView, "action" | "sentTo" | "flags"> & { metadata: unknown; actorOrgId: string | null })[];
     /** Every dispute covering the row, newest first */
     disputes: readonly DisputeRow[];
-    orgRole: OrgRole;
+    /** The reader's own live permissions in its company */
+    permissions: ReadonlySet<Permission>;
     /** What kind of company is reading: a transporter's own trucks come from its clients' orders */
     orgType: OrgType;
 };
 
+/** A reader who may not see prices is not told whether one is missing either. */
+const priceBlind = (flags: MovementFlag[], view: MoneyView): MovementFlag[] =>
+    view === "none" ? flags.filter((flag) => flag !== "NO_PRICE") : flags;
+
 export function toMovementDetail(row: Movement, role: MovementRole, extras: DetailExtras): MovementDetail {
     const owner = role === "owner";
-    const money = projectMoney(row, role, owner ? extras.costs : [], extras.candidate);
+    const view = moneyViewOf(extras.permissions);
+    const money = projectMoney(row, role, owner ? extras.costs : [], extras.candidate, view);
     const legs = documentLegsFor(role);
     const kinds = eventKindsFor(role);
 
@@ -940,9 +974,9 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
     const disputeVisible = dispute?.status === "open";
 
     return {
-        ...toMovementRow(row, role, { ...extras, inDispute: disputeVisible }),
+        ...toMovementRow(row, role, { ...extras, inDispute: disputeVisible, view }),
         appload: apploadOf(row, extras.apploadRefs),
-        requests: [...extras.requests],
+        requests: view === "none" ? extras.requests.map((request) => ({ ...request, quote: null })) : [...extras.requests],
         route: row.route,
         category: row.category,
         weight: num(row.weight),
@@ -965,11 +999,12 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
         contract: extras.contract,
         // What the load is missing as it stands. The owner's own reading of
         // its own books: nobody else is told what its paperwork lacks
-        flags: owner ? movementFlags(guardsOf(row, extras.unapprovedPhotos, disputeOpen), row.status) : [],
+        flags: owner ? priceBlind(movementFlags(guardsOf(row, extras.unapprovedPhotos, disputeOpen), row.status), view) : [],
         money,
         // Each company's own book (loadCosts is tenant-cut): the owner's
-        // margin working, or the client's own spend on a load moved for it
-        costs: owner || role === "client"
+        // margin working, or the client's own spend on a load moved for it —
+        // and only for a reader allowed the books
+        costs: (owner || role === "client") && view === "full"
             ? extras.costs.map((cost) => ({
                 id: cost.id,
                 kind: cost.kind,
@@ -998,8 +1033,9 @@ export function toMovementDetail(row: Movement, role: MovementRole, extras: Deta
                 fromStatus: event.fromStatus,
                 toStatus: event.toStatus,
                 // A note is its writer's: an offer's message is meant for the
-                // executor, everything else stays with the owner
-                note: owner || (role === "executor" && event.kind === "offer") ? event.note : null,
+                // executor, everything else stays with the owner — and a
+                // payment's reference is the books'
+                note: (owner || (role === "executor" && event.kind === "offer")) && (view === "full" || event.kind !== "money") ? event.note : null,
                 action: readAction(event.metadata),
                 sentTo: readText(event.metadata, "sentTo"),
                 actorName: event.actorName,
@@ -1048,7 +1084,7 @@ function disputeView(dispute: DisputeRow, row: Movement, role: MovementRole, ext
         // Settling it speaks for the company that raised it, at a manager's role
         canResolve: dispute.status === "open"
             && opener === extras.tenantId
-            && isOrgAuthorized(extras.orgRole, "dispute", ["resolve"]),
+            && hasPermission(extras.permissions, "dispute:resolve"),
     };
 }
 
@@ -1077,22 +1113,44 @@ function readFlags(metadata: unknown): MovementFlag[] {
 }
 
 /**
- * What a move on a partner load takes beyond `order:update`, or null. Taking
- * a draft or a quote forward — to a quote, an agreement, a booking or a truck
- * on it — is placing the load, committing the company to paying somebody,
- * and calling one off unwinds that; both are above the plain member's role,
- * the same way offering is. Taking a quote or a refusal back to the draft is
- * only updating it. The door (procedures.ts) and the buttons both ask here.
+ * What a move takes. Taking a partner load's draft or quote forward — to a
+ * quote, an agreement, a booking or a truck on it — is placing it, which
+ * commits the company to paying somebody (`order:create`, the way offering
+ * is), and calling any load off is cancelling it. Every other move is a
+ * status change. The door (procedures.ts) and the buttons both ask here.
  */
-export function partnerMoveNeeds(from: MovementStatus, to: MovementStatus): "create" | "cancel" | null {
-    if (to === "cancelled") return "cancel";
+export function movePermission(execution: Movement["execution"], from: MovementStatus, to: MovementStatus): Permission {
+    if (to === "cancelled") return "order:cancel";
 
-    if ((from === "procurement" || from === "prospect")
+    if (execution === "partner" && (from === "procurement" || from === "prospect")
         && (to === "prospect" || to === "scheduled" || to === "booked" || isInProgress(to))) {
-        return "create";
+        return "order:create";
     }
 
-    return null;
+    return "status:change";
+}
+
+/**
+ * What writing one editable block takes: the rig is the dispatcher's, a
+ * price or a partner is commercial and needs the price in sight, the
+ * invoices and notes are the books' or the order's, and the rest of an
+ * own-fleet trip is whoever files trips. The door checks each patch field's
+ * block here, and the page draws only the blocks this returns true for.
+ */
+export function mayWriteGroup(permissions: ReadonlySet<Permission>, group: EditableGroup, execution: Movement["execution"]): boolean {
+    const has = (permission: Permission) => hasPermission(permissions, permission);
+
+    switch (group) {
+        case "rig":
+            return has("dispatch:assign");
+        case "sellAmounts":
+        case "buy":
+            return has("order:update") && has("price:read");
+        case "paperwork":
+            return has("payment:record") || has("order:update");
+        default:
+            return has("order:update") || (execution !== "partner" && has("trip:create"));
+    }
 }
 
 /**
@@ -1108,8 +1166,7 @@ function permissionsFor(
     /** A dispute holds the row, whoever opened it: what the doors decide on */
     disputeOpen: boolean,
 ): MovementPermissions {
-    const can = (resource: "trip" | "order" | "offer" | "document" | "dispute", action: string) =>
-        isOrgAuthorized(extras.orgRole, resource, [action] as never);
+    const can = (permission: Permission) => hasPermission(extras.permissions, permission);
 
     const none: MovementPermissions = {
         transitions: [],
@@ -1118,16 +1175,17 @@ function permissionsFor(
         canWithdraw: false,
         canSendRequests: false,
         canAward: false,
-        canRespond: role === "executor" && row.status === "offered" && can("offer", "update"),
+        canRespond: role === "executor" && row.status === "offered" && can("offer:create"),
         // Asked for a price and still in the round: naming one is the same
         // commitment as answering an offer
         canQuote: extras.candidate && extras.requests.some((request) => (LIVE_REQUEST_STATUSES as readonly string[]).includes(request.status))
-            && can("offer", "update"),
+            && can("offer:create"),
         canConvert: false,
         // A client keeps its own cost book on a load moved for it; the
         // executor works its own child row, so nothing to manage here
-        canManageCosts: role === "client" && !isTerminal(row.status) && can("trip", "update"),
+        canManageCosts: role === "client" && !isTerminal(row.status) && can("payment:record"),
         canManageDocuments: false,
+        canSendConfirmation: false,
         canApproveDocuments: false,
         canRecordPayment: false,
         canRequestLocation: false,
@@ -1140,7 +1198,7 @@ function permissionsFor(
         // the very dispute the page keeps from it. A caller handed the load
         // after one was raised still raises its own on the row it runs: that
         // row is its own, and carries no pin
-        canOpenDispute: !isAskable(row.status) && !isTerminal(row.status) && !disputeOpen && can("dispute", "open"),
+        canOpenDispute: !isAskable(row.status) && !isTerminal(row.status) && !disputeOpen && can("dispute:open"),
     };
 
     if (role !== "owner") return none;
@@ -1150,8 +1208,6 @@ function permissionsFor(
     // The load is on an Appload order: it is moved, tracked and talked about
     // from that order, and what is left here is the company's own books
     const apploadLinked = row.orderId !== null;
-    const writeResource = partner ? "order" : "trip";
-    const mayWrite = can(writeResource, "update");
     // A round still open is the load being asked about, the same as an offer
     // in front of a partner (apply.ts reads it the same way)
     const roundOpen = extras.openRequests > 0;
@@ -1167,11 +1223,9 @@ function permissionsFor(
     const guards = guardsOf(row, extras.unapprovedPhotos, disputeOpen);
 
     return {
-        transitions: mayWrite
-            ? ownerTargets(shape).filter((to) => {
-                const needs = partner ? partnerMoveNeeds(row.status, to) : null;
-                return needs === null || can("order", needs);
-            }).map((to) => {
+        transitions: ownerTargets(shape)
+            .filter((to) => can(movePermission(row.execution, row.status, to)))
+            .map((to) => {
                 // A reason is typed in the dialog that takes the move, so it
                 // is reported as a field to ask for, never as a blocker
                 const blocker = transitionBlocker(guards, to, null);
@@ -1187,49 +1241,48 @@ function permissionsFor(
                     flags: movementFlags(guards, to),
                     startsTracking: entersInProgress(row.status, to),
                 };
-            })
-            : [],
-        editable: mayWrite
-            ? editableGroups({ ...shape, hasParent: extras.hasParent, disputeOpen })
-            : [],
+            }),
+        editable: editableGroups({ ...shape, hasParent: extras.hasParent, disputeOpen })
+            .filter((group) => mayWriteGroup(extras.permissions, group, row.execution)),
         // Appload is offered a load the same way any partner on the portal is;
         // the router sends that one through the link door instead
         canOffer: partner && !linked && extras.executorOnPortal
-            && (row.status === "procurement" || row.status === "declined") && can("order", "create"),
+            && (row.status === "procurement" || row.status === "declined") && can("order:create"),
         // A linked row sits at "offered" too (the order's own prospect stage):
         // it is cancelled with Appload, never withdrawn from here
-        canWithdraw: !apploadLinked && row.status === "offered" && can("order", "update"),
+        canWithdraw: !apploadLinked && row.status === "offered" && can("order:create"),
         // Asking transporters for a price is placing the load, the role an
         // offer takes; Appload is asked through the offer door instead
         canSendRequests: partner && !linked && !apploadLinked && !isApploadOrg(row.carrierOrgId)
-            && (row.status === "procurement" || row.status === "prospect" || row.status === "declined") && can("order", "create"),
-        canAward: partner && !linked && !apploadLinked && row.status === "prospect" && can("order", "create"),
+            && (row.status === "procurement" || row.status === "prospect" || row.status === "declined") && can("order:create"),
+        canAward: partner && !linked && !apploadLinked && row.status === "prospect" && can("offer:update"),
         canRespond: false,
         canQuote: false,
         // Taking a partner's load in-house is filing a trip of one's own,
         // which a transporter never does by hand: its trucks are put on its
         // clients' orders by accepting them (procedures.ts create, convert)
-        canConvert: can("order", "create") && !apploadLinked && (
+        canConvert: can("order:create") && !apploadLinked && (
             partner
                 ? extras.orgType !== "carrier" && !linked
                     && (row.status === "procurement" || row.status === "prospect" || row.status === "declined")
                 : row.status === "procurement" || row.status === "prospect" || row.status === "scheduled" || row.status === "booked"
         ),
-        canManageCosts: !isTerminal(row.status) && can("trip", "update"),
-        canManageDocuments: can("document", "upload"),
+        canManageCosts: !isTerminal(row.status) && can("payment:record"),
+        canManageDocuments: can("document:upload"),
+        canSendConfirmation: can("order:pdf"),
         // Anybody on the load files a photo; validating one is answering for
         // what left the warehouse, and only this company can do it — the
         // approval is on the row whose truck is being loaded
-        canApproveDocuments: can("document", "approve"),
+        canApproveDocuments: can("document:approve"),
         canRecordPayment: row.status !== "cancelled" && (row.sellTotal !== null || (partner && row.buyTotal !== null))
-            && can("order", "update"),
+            && can("payment:record"),
         canRequestLocation: isInProgress(row.status) && !linked && !apploadLinked
-            && Boolean(row.driverPhone) && can("trip", "update"),
+            && Boolean(row.driverPhone) && can("dispatch:assign"),
         // Reading follows the phone: whoever may see the number may see what
         // was said to it, and a linked order's driver belongs to the executor
         // Only a conversation this row's own asking stamped is readable, so
         // the card is offered on that, not on a typed number
-        canReadThread: !linked && !apploadLinked && Boolean(row.conversationId),
+        canReadThread: !linked && !apploadLinked && Boolean(row.conversationId) && can("thread:read"),
         canOpenDispute: none.canOpenDispute,
     };
 }

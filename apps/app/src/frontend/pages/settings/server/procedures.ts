@@ -24,6 +24,7 @@ import { pendingOfferCount } from "@workspace/domain/orders/transition";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
+import type { Permission } from "@workspace/auth/organization-permissions";
 import type { OrgStatus, OrgType, TenantPlan, TenantRole } from "@workspace/trpc/tenant-gate";
 
 import { activeGrant, grantHistory, grantSupport, revokeSupport } from "@workspace/domain/support/grants";
@@ -71,7 +72,13 @@ export type MeSession = {
         subscriptionExpiresAt: Date | null;
         portalActivatedAt: Date | null;
     };
+    /** The member's profile; what they may do is `permissions` */
     role: TenantRole;
+    /** 3 while an acting-CEO window is open */
+    level: 1 | 2 | 3;
+    actingOwner: boolean;
+    /** Live permissions, profile defaults with this member's changes applied */
+    permissions: Permission[];
     plan: TenantPlan;
     /** This month's tracked movements against what the plan allows */
     allowance: TrackingAllowance;
@@ -176,6 +183,9 @@ export const meRouter = createTRPCRouter({
             // also admits Appload's own row, which is never a tenant
             organization: { ...company, type: ctx.tenant.orgType },
             role: ctx.tenant.role,
+            level: ctx.tenant.level,
+            actingOwner: ctx.tenant.actingOwner,
+            permissions: [...ctx.tenant.permissions],
             plan: ctx.tenant.plan,
             allowance,
             tiers: TIERS,
@@ -380,7 +390,7 @@ export const meRouter = createTRPCRouter({
      * stamped its tenant on them (2026-10) carry no company and do not show.
      */
     activity: createTRPCRouter({
-        list: tenantProcedure
+        list: authorizedTenantProcedure("security", ["manage"])
             .input(z.object({ cursor: z.date().nullish(), limit: z.number().int().min(1).max(100).default(30) }))
             .query(async ({ ctx, input }) => {
                 const rows = await ctx.db
@@ -438,14 +448,14 @@ export const meRouter = createTRPCRouter({
             return { active: active ? view(active) : null, history: history.map(view) };
         }),
 
-        grant: authorizedTenantProcedure("organization", ["update"])
+        grant: authorizedTenantProcedure("security", ["manage"])
             .input(SupportGrantBaseSchema)
             .mutation(async ({ ctx, input }) => {
                 const row = await grantSupport(ctx.db, { organizationId: ctx.tenant.organizationId, userId: ctx.tenant.userId }, input);
                 return { id: row.id, organizationId: row.organizationId, expiresAt: row.expiresAt };
             }),
 
-        revoke: authorizedTenantProcedure("organization", ["update"])
+        revoke: authorizedTenantProcedure("security", ["manage"])
             .input(z.object({ id: z.string().nonempty() }))
             .mutation(async ({ ctx, input }) => {
                 const row = await revokeSupport(ctx.db, { organizationId: ctx.tenant.organizationId, userId: ctx.tenant.userId }, input.id);

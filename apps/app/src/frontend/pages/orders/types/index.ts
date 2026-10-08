@@ -135,11 +135,11 @@ export type OrderRequestState = {
     mine: OrderRequestStatus | null;
 };
 
-/** The carrier's own offer on the row, in its own money. */
+/** The carrier's own offer on the row, in its own money; null for a reader without `price:read`. */
 export type OrderRowOffer = {
     id: string;
     status: OfferStatus;
-    total: number;
+    total: number | null;
     currency: Currency;
 };
 

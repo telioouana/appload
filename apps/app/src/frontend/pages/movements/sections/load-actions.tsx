@@ -171,7 +171,7 @@ export function LoadActions({
     const canEdit = permissions.editable.length > 0
     // The confirmation is what the partner works from, so it is worth sending
     // from the moment the load is placed with it until the truck arrives
-    const canConfirm = permissions.canManageDocuments
+    const canConfirm = permissions.canSendConfirmation
         && load.execution === "partner"
         && (load.status === "scheduled" || load.status === "booked" || isInProgress(load.status))
 

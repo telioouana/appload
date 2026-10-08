@@ -80,6 +80,18 @@ export function icuValues(params: NotificationParams): Record<string, string | n
     );
 }
 
+/** The kinds whose message carries a price. */
+const PRICED_KINDS: readonly NotificationKind[] = ["movement.quoted", "movement.offered"];
+
+/**
+ * A row's params as a reader without `price:read` may see them. The writer
+ * fans one event out to every member, price included; the price is taken out
+ * on the way to the reader, and the slots stay filled so the message still
+ * formats — "quoted — on load …".
+ */
+export const withoutPrice = (kind: NotificationKind, params: NotificationParams): NotificationParams =>
+    PRICED_KINDS.includes(kind) ? { ...params, total: "—", currency: "" } : params;
+
 // ---------------------------------------------------------------------------
 // Paging. One list of allowed sizes governs the URL parser, the server input
 // and the footer's menu; the popover asks for the smallest of them.

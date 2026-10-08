@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { MoneyView } from "@workspace/auth/organization-permissions";
 import type { db as Database } from "@workspace/db/db";
 import type { ContractRole } from "@workspace/domain/contracts/access";
 import type { ContractState } from "@workspace/domain/contracts/state";
@@ -139,8 +140,9 @@ async function readStanding(db: Db, tenantId: string): Promise<Standing[]> {
     ];
 }
 
-function toRow(row: Standing): MovementRow {
-    const amount = row.money ? { total: row.money.amount, currency: row.currency } : null;
+function toRow(row: Standing, view: MoneyView): MovementRow {
+    // What the order has drawn is its price at work: hidden from a reader without `price:read`
+    const amount = row.money && view !== "none" ? { total: row.money.amount, currency: row.currency } : null;
     // One provider is the partner on the row; several read as a count in the cell
     const provider = row.providers.length === 1 ? row.providers[0]! : null;
 
@@ -231,9 +233,9 @@ function matches(row: Standing, input: StandingFilter): boolean {
 }
 
 /** The standing orders a list input lets through, as rows. */
-export async function standingOrders(db: Db, tenantId: string, input: StandingFilter): Promise<MovementRow[]> {
+export async function standingOrders(db: Db, tenantId: string, input: StandingFilter, view: MoneyView): Promise<MovementRow[]> {
     const rows = await readStanding(db, tenantId);
-    return rows.filter((row) => matches(row, input)).map(toRow);
+    return rows.filter((row) => matches(row, input)).map((row) => toRow(row, view));
 }
 
 /** How many standing orders each section and status tab of a scope holds, to add to the trips' counts. */

@@ -2,11 +2,12 @@
 
 import { toast } from "sonner";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { IconAlertCircle, IconDotsVertical, IconUserOff } from "@tabler/icons-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { IconAlertCircle, IconDotsVertical, IconKey, IconUserOff } from "@tabler/icons-react";
 
-import { authClient } from "@workspace/auth/client";
 import { useFormatter, useTranslations } from "@workspace/i18n";
+import { PROFILES, PROFILE_LEVEL, type Profile } from "@workspace/auth/organization-permissions";
+import type { OrgType } from "@workspace/trpc/tenant-gate";
 
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
@@ -18,95 +19,65 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@workspace/ui/components/alert-dialog";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 
+import { useTRPC } from "@/backend/api/client";
 import { InviteMemberDialog } from "@/frontend/pages/settings/components/invite-member-dialog";
-import { membersKey, useMembers, type OrgMember } from "@/frontend/pages/settings/hooks/use-organization";
-import type { MeSession } from "@/frontend/pages/settings/server/procedures";
+import { PermissionsSheet } from "@/frontend/pages/settings/components/permissions-sheet";
+import { profileKey } from "@/frontend/pages/settings/lib/profiles";
 
-type Role = "owner" | "admin" | "member"
-
-const ROLES: Role[] = ["owner", "admin", "member"]
-
-// `member.role` is free-form text (the plugin allows comma-separated roles);
-// anything outside the portal's three falls back to the least privileged
-function roleKey(role: string): Role {
-    const first = role.split(",")[0]?.trim()
-
-    return first === "owner" || first === "admin" ? first : "member"
-}
+type Member = { id: string; name: string; email: string }
 
 /**
- * Who from this company can sign in to the portal. Members see the list;
- * only owners and admins act on it — and the plugin re-checks every one of
- * these rules server-side (an owner may only be touched by another owner,
- * and the last owner may not be demoted or removed at all).
+ * Who from this company can sign in to the portal. Everybody sees the list
+ * and their own permissions; somebody with `team:manage` changes the profile
+ * of, removes, or edits the permissions of the people below their own level.
+ * The team router holds every one of those rules again server-side — the
+ * `editable` flag it sends is its own verdict, never worked out here.
  */
 export function MembersTable({
     organizationId,
     organizationName,
-    viewerId,
-    viewerRole,
+    orgType,
+    viewer,
 }: {
     organizationId: string
     organizationName: string
-    viewerId: string
-    viewerRole: MeSession["role"]
+    orgType: OrgType
+    viewer: { level: number; canManage: boolean }
 }) {
     const t = useTranslations("App.settings")
     const f = useFormatter()
+    const trpc = useTRPC()
     const queryClient = useQueryClient()
 
-    const { data, isPending, isError } = useMembers(organizationId)
+    const { data, isPending, isError } = useQuery(trpc.team.members.queryOptions())
 
-    const [pendingRemoval, setPendingRemoval] = useState<OrgMember | null>(null)
-    const [isWorking, setWorking] = useState(false)
+    const [pendingRemoval, setPendingRemoval] = useState<Member | null>(null)
+    const [sheetFor, setSheetFor] = useState<string | null>(null)
 
-    const canManage = viewerRole === "owner" || viewerRole === "admin"
-    const members = data?.members ?? []
-    const ownerCount = members.filter((row) => roleKey(row.role) === "owner").length
+    const refresh = () => queryClient.invalidateQueries({ queryKey: trpc.team.pathKey() })
 
-    async function refresh() {
-        await queryClient.invalidateQueries({ queryKey: membersKey(organizationId) })
-    }
-
-    async function changeRole(member: OrgMember, role: Role) {
-        setWorking(true)
-
-        const { error } = await authClient.organization.updateMemberRole({
-            memberId: member.id,
-            role,
-            organizationId,
-        })
-
-        setWorking(false)
-
-        if (error) {
+    const changeProfile = useMutation(trpc.team.changeProfile.mutationOptions({
+        onSuccess: async () => {
+            await refresh()
+            toast.success(t("members.role-changed"))
+        },
+        onError: () => toast.error(t("members.error")),
+    }))
+    const remove = useMutation(trpc.team.remove.mutationOptions({
+        onSuccess: async () => {
+            setPendingRemoval(null)
+            await refresh()
+            toast.success(t("members.removed"))
+        },
+        onError: () => {
+            setPendingRemoval(null)
             toast.error(t("members.error"))
-            return
-        }
+        },
+    }))
 
-        await refresh()
-        toast.success(t("members.role-changed"))
-    }
-
-    async function remove(member: OrgMember) {
-        setWorking(true)
-
-        const { error } = await authClient.organization.removeMember({
-            memberIdOrEmail: member.id,
-            organizationId,
-        })
-
-        setWorking(false)
-        setPendingRemoval(null)
-
-        if (error) {
-            toast.error(t("members.error"))
-            return
-        }
-
-        await refresh()
-        toast.success(t("members.removed"))
-    }
+    const isWorking = changeProfile.isPending || remove.isPending
+    const members = data ?? []
+    const label = (profile: Profile) => t(`members.roles.${profileKey(profile, orgType)}`)
 
     return (
         <Card>
@@ -114,11 +85,13 @@ export function MembersTable({
                 <CardTitle>{t("members.title")}</CardTitle>
                 <CardDescription>{t("members.description")}</CardDescription>
 
-                {canManage && (
+                {viewer.canManage && (
                     <CardAction>
                         <InviteMemberDialog
                             organizationId={organizationId}
                             organizationName={organizationName}
+                            orgType={orgType}
+                            viewerLevel={viewer.level}
                         />
                     </CardAction>
                 )}
@@ -148,100 +121,108 @@ export function MembersTable({
                                     <TableHead className="h-8 px-2 text-xs font-normal">{t("members.columns.member")}</TableHead>
                                     <TableHead className="h-8 px-2 text-xs font-normal">{t("members.columns.role")}</TableHead>
                                     <TableHead className="hidden h-8 px-2 text-xs font-normal sm:table-cell">{t("members.columns.joined")}</TableHead>
-                                    <TableHead className="h-8 w-10 px-2" />
+                                    <TableHead className="h-8 px-2" />
                                 </TableRow>
                             </TableHeader>
 
                             <TableBody>
                                 {members.map((member) => {
-                                    const role = roleKey(member.role)
-                                    const isSelf = member.userId === viewerId
-                                    const isLastOwner = role === "owner" && ownerCount <= 1
-                                    // Only an owner may touch another owner or
-                                    // hand the owner role out
-                                    const mayTouch = canManage && !isSelf && (role !== "owner" || viewerRole === "owner")
-                                    const roleChanges = mayTouch && !isLastOwner
-                                        ? ROLES.filter((next) => next !== role && (next !== "owner" || viewerRole === "owner"))
+                                    const name = member.name?.trim() || member.email
+                                    // The profiles below the viewer's own level, which the
+                                    // server would accept too
+                                    const profileChanges = member.editable
+                                        ? PROFILES.filter((next) => next !== member.profile && PROFILE_LEVEL[next] < viewer.level)
                                         : []
-                                    const mayRemove = mayTouch && !isLastOwner
-                                    const label = member.user.name?.trim() || member.user.email
+                                    const lift = member.actingOwner
 
                                     return (
                                         <TableRow key={member.id}>
                                             <TableCell className="px-2">
                                                 <div className="flex items-center gap-3">
                                                     <Avatar>
-                                                        <AvatarImage src={member.user.image ?? undefined} alt={label} />
-                                                        <AvatarFallback>{initials(label)}</AvatarFallback>
+                                                        <AvatarImage src={member.image ?? undefined} alt={name} />
+                                                        <AvatarFallback>{initials(name)}</AvatarFallback>
                                                     </Avatar>
 
                                                     <div className="grid min-w-0">
                                                         <span className="flex items-center gap-2 truncate text-sm font-medium">
-                                                            {label}
-                                                            {isSelf && (
+                                                            {name}
+                                                            {member.isSelf && (
                                                                 <Badge variant="outline" className="text-[10px]">
                                                                     {t("members.you")}
                                                                 </Badge>
                                                             )}
                                                         </span>
                                                         <span className="text-muted-foreground truncate text-xs">
-                                                            {member.user.email}
+                                                            {member.email}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </TableCell>
 
                                             <TableCell className="px-2">
-                                                <Badge variant={role === "member" ? "secondary" : "default"}>
-                                                    {t(`members.roles.${role}`)}
-                                                </Badge>
+                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                    <Badge variant={member.profile === "owner" ? "default" : member.profile === "admin" ? "secondary" : "outline"}>
+                                                        {label(member.profile)}
+                                                    </Badge>
+                                                    {lift?.live && (
+                                                        <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-400">
+                                                            {t("members.acting", { date: lift.endsAt ? f.dateTime(lift.endsAt, { day: "numeric", month: "short" }) : "—" })}
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </TableCell>
 
                                             <TableCell className="text-muted-foreground hidden px-2 text-sm sm:table-cell">
                                                 {f.dateTime(member.createdAt, { day: "2-digit", month: "short", year: "numeric" })}
                                             </TableCell>
 
-                                            <TableCell className="px-2 text-right">
-                                                {roleChanges.length > 0 || mayRemove ? (
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="size-8"
-                                                                disabled={isWorking}
-                                                                aria-label={t("members.actions")}
-                                                            >
-                                                                <IconDotsVertical className="size-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
+                                            <TableCell className="px-2">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    {(viewer.canManage || member.isSelf) && (
+                                                        <Button size="sm" variant="ghost" onClick={() => setSheetFor(member.id)}>
+                                                            <IconKey />
+                                                            {t("members.permissions")}
+                                                        </Button>
+                                                    )}
 
-                                                        <DropdownMenuContent align="end" className="w-56">
-                                                            {roleChanges.map((next) => (
-                                                                <DropdownMenuItem
-                                                                    key={next}
-                                                                    onClick={() => changeRole(member, next)}
+                                                    {member.editable && (
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="size-8"
+                                                                    disabled={isWorking}
+                                                                    aria-label={t("members.actions")}
                                                                 >
-                                                                    {t(`members.promote.${next}`)}
-                                                                </DropdownMenuItem>
-                                                            ))}
+                                                                    <IconDotsVertical className="size-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
 
-                                                            {roleChanges.length > 0 && mayRemove && <DropdownMenuSeparator />}
+                                                            <DropdownMenuContent align="end" className="w-56">
+                                                                {profileChanges.map((next) => (
+                                                                    <DropdownMenuItem
+                                                                        key={next}
+                                                                        onClick={() => changeProfile.mutate({ memberId: member.id, profile: next })}
+                                                                    >
+                                                                        {t("members.change-to", { profile: label(next) })}
+                                                                    </DropdownMenuItem>
+                                                                ))}
 
-                                                            {mayRemove && (
+                                                                {profileChanges.length > 0 && <DropdownMenuSeparator />}
+
                                                                 <DropdownMenuItem
                                                                     variant="destructive"
-                                                                    onClick={() => setPendingRemoval(member)}
+                                                                    onClick={() => setPendingRemoval({ id: member.id, name, email: member.email })}
                                                                 >
                                                                     <IconUserOff />
                                                                     {t("members.remove")}
                                                                 </DropdownMenuItem>
-                                                            )}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                ) : isLastOwner ? (
-                                                    <span className="text-muted-foreground text-xs">{t("members.last-owner")}</span>
-                                                ) : null}
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     )
@@ -255,10 +236,12 @@ export function MembersTable({
                     </div>
                 )}
 
-                {!canManage && (
+                {!viewer.canManage && (
                     <p className="text-muted-foreground text-xs">{t("members.read-only")}</p>
                 )}
             </CardContent>
+
+            <PermissionsSheet memberId={sheetFor} orgType={orgType} onClose={() => setSheetFor(null)} />
 
             <AlertDialog
                 open={pendingRemoval !== null}
@@ -267,9 +250,7 @@ export function MembersTable({
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>
-                            {t("members.remove-dialog.title", {
-                                name: pendingRemoval?.user.name?.trim() || pendingRemoval?.user.email || "",
-                            })}
+                            {t("members.remove-dialog.title", { name: pendingRemoval?.name ?? "" })}
                         </AlertDialogTitle>
                         <AlertDialogDescription>{t("members.remove-dialog.description")}</AlertDialogDescription>
                     </AlertDialogHeader>
@@ -282,7 +263,7 @@ export function MembersTable({
                                 // The dialog closes on click by default; the
                                 // request decides when this one goes away
                                 event.preventDefault()
-                                if (pendingRemoval) void remove(pendingRemoval)
+                                if (pendingRemoval) remove.mutate({ memberId: pendingRemoval.id })
                             }}
                         >
                             {t("members.remove-dialog.confirm")}

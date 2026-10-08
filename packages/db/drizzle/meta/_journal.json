@@ -239,6 +239,13 @@
       "when": 1790852350266,
       "tag": "0033_rentals",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1791397547964,
+      "tag": "0034_member_permissions",
+      "breakpoints": true
     }
   ]
 }

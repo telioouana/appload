@@ -455,7 +455,7 @@ async function seedGuard() {
         id: membershipId,
         organizationId: APPLOAD_ORG_ID,
         userId: intruder,
-        role: "member",
+        role: "operations",
         createdAt: new Date(),
     });
     madeMembers.push(membershipId);

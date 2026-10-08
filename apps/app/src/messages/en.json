@@ -420,12 +420,7 @@
                     "description": "The account email is not changed here. Contact Appload if you need it moved"
                 },
                 "role": {
-                    "label": "Role in the company",
-                    "options": {
-                        "owner": "Owner",
-                        "admin": "Admin",
-                        "member": "Member"
-                    }
+                    "label": "Profile in the company"
                 },
                 "save": "Save",
                 "success": "Profile updated",
@@ -532,22 +527,19 @@
                 "description": "Who signs in to the portal for your company",
                 "columns": {
                     "member": "Person",
-                    "role": "Role",
+                    "role": "Profile",
                     "joined": "Since",
                     "actions": "Actions"
                 },
                 "roles": {
-                    "owner": "Owner",
-                    "admin": "Admin",
-                    "member": "Member"
+                    "owner": "CEO",
+                    "admin": "Manager",
+                    "procurement": "Procurement",
+                    "commercial": "Sales",
+                    "operations": "Operations"
                 },
                 "you": "You",
                 "actions": "Actions for this person",
-                "promote": {
-                    "owner": "Make owner",
-                    "admin": "Make admin",
-                    "member": "Make member"
-                },
                 "remove": "Remove from the portal",
                 "remove-dialog": {
                     "title": "Remove {name}?",
@@ -555,12 +547,14 @@
                     "cancel": "Cancel",
                     "confirm": "Remove"
                 },
-                "last-owner": "The company must always have one owner",
-                "role-changed": "Role updated",
+                "role-changed": "Profile updated",
                 "removed": "Member removed",
                 "error": "That could not be completed",
                 "empty": "You are still the only person from your company on the portal",
-                "read-only": "Only the owner and admins can invite or change members"
+                "read-only": "Only the CEO and managers can invite or change people on the team",
+                "change-to": "Make {profile}",
+                "permissions": "Permissions",
+                "acting": "Acting CEO until {date}"
             },
             "invite": {
                 "button": "Invite a colleague",
@@ -578,14 +572,16 @@
                         "error": "Enter a valid email"
                     },
                     "role": {
-                        "label": "Role",
-                        "placeholder": "Choose a role",
-                        "error": "Choose a role"
+                        "label": "Profile",
+                        "placeholder": "Choose a profile",
+                        "error": "Choose a profile"
                     }
                 },
                 "roles": {
-                    "admin": "Admin — runs the company and the team",
-                    "member": "Member — works on the orders"
+                    "admin": "Manager — direction and finance, runs the team below",
+                    "procurement": "Procurement — requests quotes, orders and awards",
+                    "commercial": "Sales — answers quotes and subcontracts",
+                    "operations": "Operations — trucks, drivers, papers and status"
                 },
                 "submit": "Send invitation",
                 "submitting": "Sending…",
@@ -603,7 +599,7 @@
                 "description": "Invitations sent that have not been accepted yet",
                 "columns": {
                     "email": "Email",
-                    "role": "Role",
+                    "role": "Profile",
                     "expires": "Expires",
                     "actions": "Actions"
                 },
@@ -741,7 +737,91 @@
                     "movements-quote": "Quoted on a load",
                     "movements-declineRequest": "Declined to quote on a load",
                     "movements-award": "Awarded a load to a quote",
-                    "movements-sendConfirmation": "Sent the order confirmation"
+                    "movements-sendConfirmation": "Sent the order confirmation",
+                    "team-permissions-set": "Changed the permissions of a colleague",
+                    "team-permissions-revoke": "Undid a permission change",
+                    "team-actingOwner-grant": "Made somebody acting CEO",
+                    "team-actingOwner-revoke": "Ended an acting-CEO period",
+                    "team-changeProfile": "Changed the profile of a colleague",
+                    "team-remove": "Removed a colleague from the portal"
+                }
+            },
+            "permissions": {
+                "title": "Permissions",
+                "description": "What this person can do on the portal",
+                "heading": "Permissions of {name}",
+                "self": "Your permissions. Only the people above you can change them.",
+                "editable": "Switch each permission on or off, for good or for a period. You can only switch on permissions you hold.",
+                "read-only": "Read only: only the people above this person can change their permissions.",
+                "saved": "Permissions updated",
+                "failed": "The permissions could not be changed",
+                "error": "The permissions could not be loaded",
+                "reset": "Back to the profile",
+                "temporary": "Temporary",
+                "on-for-window": "Switch on for this period",
+                "off-for-window": "Switch off for this period",
+                "until": "until {date}",
+                "upcoming-on": "on from {date}",
+                "upcoming-off": "off from {date}",
+                "hint": {
+                    "default": "from the profile",
+                    "extra": "extra",
+                    "removed": "removed"
+                },
+                "groups": {
+                    "money": "Money",
+                    "orders": "Orders",
+                    "contracts": "Multi-trip orders and rentals",
+                    "partners": "Partners",
+                    "fleet": "Fleet and drivers",
+                    "tools": "Tools",
+                    "company": "Company"
+                },
+                "labels": {
+                    "price:read": "See prices on orders, offers and quotes",
+                    "finance:read": "See financial indicators: costs, margin, P&L, payments",
+                    "payment:record": "Record payments and costs",
+                    "order:create": "Create orders, request quotes, send to transporters",
+                    "offer:create": "Answer client quotes",
+                    "offer:update": "Accept an offer, award, book",
+                    "order:update": "Edit orders and withdraw one before booking",
+                    "order:cancel": "Cancel a booked order",
+                    "dispatch:assign": "Assign truck and driver, dispatch check",
+                    "status:change": "Change status",
+                    "document:upload": "Upload loading papers, cargo photos and POD",
+                    "document:approve": "Approve papers",
+                    "trip:create": "Trips on the own fleet (no price)",
+                    "dispute:open": "Open a dispute",
+                    "dispute:resolve": "Resolve a dispute",
+                    "contract:manage": "Create, propose, accept and close multi-trip orders and rentals",
+                    "contract:file": "File the daily trips of a share",
+                    "rental:checkin": "Rental check-ins, mark a day",
+                    "partner:manage": "Request, accept and remove transporters and clients",
+                    "report:read": "Analytics page and partner KPIs",
+                    "fleet:manage": "Register trucks, trailers and drivers",
+                    "kyc:upload": "Upload their papers (KYC)",
+                    "thread:read": "Read chats",
+                    "thread:send": "Send messages",
+                    "export:csv": "Export CSV",
+                    "order:pdf": "Send and download the order PDF (shows the price)",
+                    "organization:update": "Edit the company profile and papers",
+                    "team:manage": "Team: invite, remove, change profile, edit permissions",
+                    "security:manage": "Security: support access and activity log",
+                    "subscription:read": "See the plan"
+                },
+                "acting": {
+                    "title": "Acting CEO",
+                    "description": "For a period, this person holds every CEO permission and runs the team below the CEO. They never edit their own permissions or transfer the company. It ends on its own.",
+                    "live": "Acting CEO from {from} until {until}",
+                    "upcoming": "Will be acting CEO from {from} until {until}",
+                    "grant": "Make acting CEO",
+                    "revoke": "End now"
+                },
+                "window": {
+                    "from": "From",
+                    "until": "Until",
+                    "zone": "Maputo time. Ends on its own when the period is over.",
+                    "invalid": "The end has to be after the start and still in the future."
                 }
             }
         },

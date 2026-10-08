@@ -208,9 +208,10 @@ export type MoneyLeg = {
     fiscalRegime: FiscalRegime | null;
     invoiceNumber: string | null;
     invoiceDate: Date | null;
-    settlement: PaymentStatus;
-    /** Received on a leg the caller is paid, paid on one it pays */
-    settled: number;
+    /** Null to a reader who may see the price but not the books */
+    settlement: PaymentStatus | null;
+    /** Received on a leg the caller is paid, paid on one it pays; null like `settlement` */
+    settled: number | null;
     settledAt: Date | null;
 };
 
@@ -424,6 +425,8 @@ export type MovementPermissions = {
     canConvert: boolean;
     canManageCosts: boolean;
     canManageDocuments: boolean;
+    /** The confirmation PDF carries the price: order:pdf */
+    canSendConfirmation: boolean;
     /** Validating a loading photo: the owner of the load, at owner or admin level */
     canApproveDocuments: boolean;
     canRecordPayment: boolean;

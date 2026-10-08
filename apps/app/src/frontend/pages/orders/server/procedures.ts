@@ -71,8 +71,10 @@ import {
     toMoney,
     toMoneyDetail,
     toNumber,
+    offerAmount,
     toOfferView,
     toTRPCError,
+    viewOf,
     visibleOffers,
     visibleOrders,
     type Db,
@@ -359,6 +361,8 @@ export const ordersRouter = createTRPCRouter({
         .input(OrdersInput)
         .query(async ({ ctx, input }): Promise<PagedResult<OrderRow>> => {
             const tenant = scopeOf(ctx.tenant);
+            // What this person may read of the money — narrower than the side
+            const view = viewOf(ctx.tenant);
             const section = assertSection(tenant, input.section ?? defaultSection(tenant.orgType));
             const where = listWhere({ ...input, section }, tenant);
 
@@ -403,8 +407,8 @@ export const ordersRouter = createTRPCRouter({
                         deliveries: row.deliveries,
                         expectedTrucks: row.expectedTrucks,
                         counterparty: { name: row.counterpartyName },
-                        money: toMoney(row),
-                        myOffer: offer,
+                        money: toMoney(row, view),
+                        myOffer: offer && { ...offer, total: view === "none" ? null : offer.total },
                         requestState: {
                             requested: tenant.orgType === "shipper" ? row.requestedCount : null,
                             quoted: tenant.orgType === "shipper" ? row.quotedCount : null,
@@ -521,6 +525,7 @@ export const ordersRouter = createTRPCRouter({
         .input(z.object({ orderId: z.string().nonempty() }))
         .query(async ({ ctx, input }): Promise<OrderDetail> => {
             const tenant = scopeOf(ctx.tenant);
+            const view = viewOf(ctx.tenant);
             const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
             // Which side of THIS order the caller is on: a transporter reads
             // the load it handed to Appload as that order's client
@@ -549,7 +554,7 @@ export const ordersRouter = createTRPCRouter({
                     }),
             ]);
 
-            const offers = offerRows.map((offer) => toOfferView(offer, tenant.organizationId));
+            const offers = offerRows.map((offer) => toOfferView(offer, tenant.organizationId, view));
 
             return {
                 id: row.id,
@@ -601,6 +606,7 @@ export const ordersRouter = createTRPCRouter({
                             moneyCurrency: row.shipperCurrency,
                             isMine,
                         },
+                    view,
                 ),
                 // Who is driving, and in what, is the trip's own business:
                 // the client that filed it and the carrier running it, and
@@ -654,6 +660,7 @@ export const ordersRouter = createTRPCRouter({
         .input(z.object({ orderId: z.string().nonempty() }))
         .query(async ({ ctx, input }): Promise<OrderHistoryEntry[]> => {
             const tenant = scopeOf(ctx.tenant);
+            const view = viewOf(ctx.tenant);
             const row = await loadVisibleOrder(ctx.db, input.orderId, tenant);
             const reader = sideScope(tenant, row);
             const isMine = ownsOrder(row, tenant);
@@ -688,7 +695,7 @@ export const ordersRouter = createTRPCRouter({
                 {
                     id: offer.id,
                     carrierName: offer.carrierName,
-                    total: toNumber(offer.offerTotal),
+                    total: offerAmount(offer.offerTotal, view),
                     currency: offer.currency,
                 },
             ]));
@@ -913,7 +920,7 @@ export const ordersRouter = createTRPCRouter({
      * driver at the gate are the ones the pack names. A mismatch flags the
      * order; from there only Appload can let the load proceed.
      */
-    recordLoadingCheck: authorizedTenantProcedure("order", ["update"])
+    recordLoadingCheck: authorizedTenantProcedure("dispatch", ["assign"])
         .input(LoadingCheckInputSchema)
         .mutation(async ({ ctx, input }) => {
             try {
@@ -1022,7 +1029,7 @@ export const ordersRouter = createTRPCRouter({
      * already sitting on the order is left alone; a withdrawn or declined one
      * is asked again.
      */
-    sendRequests: authorizedTenantProcedure("order", ["update"])
+    sendRequests: authorizedTenantProcedure("order", ["create"])
         .input(SendRequestsBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; sent: number; skipped: number }> => {
             try {
@@ -1071,7 +1078,7 @@ export const ordersRouter = createTRPCRouter({
      * request only says it stopped waiting for an answer. Declining the quote
      * is its own action (`offers.decline`).
      */
-    withdrawRequest: authorizedTenantProcedure("order", ["update"])
+    withdrawRequest: authorizedTenantProcedure("order", ["create"])
         .input(z.object({ orderId: z.string().nonempty(), carrierOrgId: z.string().nonempty() }))
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; carrierOrgId: string }> => {
             try {
@@ -1176,7 +1183,7 @@ export const ordersRouter = createTRPCRouter({
      * win: the second finds the version moved and gets a conflict instead of
      * silently replacing the first one's driver.
      */
-    transition: authorizedTenantProcedure("order", ["update"])
+    transition: authorizedTenantProcedure("status", ["change"])
         .input(TransitionBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; status: string; version: number; loadingCheck?: string }> => {
             try {

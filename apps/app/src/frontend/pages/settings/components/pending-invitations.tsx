@@ -6,6 +6,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { IconAlertCircle, IconX } from "@tabler/icons-react";
 
 import { authClient } from "@workspace/auth/client";
+import { PROFILE_LEVEL, profileOf } from "@workspace/auth/organization-permissions";
+import type { OrgType } from "@workspace/trpc/tenant-gate";
 import { useFormatter, useNow, useTranslations } from "@workspace/i18n";
 
 import { Badge } from "@workspace/ui/components/badge";
@@ -16,22 +18,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 
 import { invitationsKey, useInvitations } from "@/frontend/pages/settings/hooks/use-organization";
+import { profileKey } from "@/frontend/pages/settings/lib/profiles";
 
-// Invitations are created with these two roles only (see the invite dialog);
-// anything else came from Admin and is shown as it is stored
-function roleKey(role: string): "owner" | "admin" | "member" {
-    const first = role.split(",")[0]?.trim()
-
-    return first === "owner" || first === "admin" ? first : "member"
-}
-
-/** Invitations sent and not yet accepted, with the way to take one back. */
+/**
+ * Invitations sent and not yet accepted, with the way to take one back — for
+ * somebody above the invited profile, the rule Better Auth's cancel hook
+ * holds too (packages/auth server.ts).
+ */
 export function PendingInvitations({
     organizationId,
+    orgType,
     canManage,
+    viewerLevel,
 }: {
     organizationId: string
+    orgType: OrgType
     canManage: boolean
+    viewerLevel: number
 }) {
     const t = useTranslations("App.settings")
     const f = useFormatter()
@@ -92,45 +95,49 @@ export function PendingInvitations({
                             </TableHeader>
 
                             <TableBody>
-                                {data?.map((invitation) => (
-                                    <TableRow key={invitation.id}>
-                                        <TableCell className="px-2 text-sm">{invitation.email}</TableCell>
+                                {data?.map((invitation) => {
+                                    const profile = profileOf(invitation.role)
 
-                                        <TableCell className="px-2">
-                                            <Badge variant="secondary">
-                                                {t(`members.roles.${roleKey(invitation.role)}`)}
-                                            </Badge>
-                                        </TableCell>
+                                    return (
+                                        <TableRow key={invitation.id}>
+                                            <TableCell className="px-2 text-sm">{invitation.email}</TableCell>
 
-                                        {/* Better Auth leaves an unaccepted
-                                            invitation `pending` past its
-                                            expiry, so the date alone would
-                                            read as a row somebody can still
-                                            act on */}
-                                        <TableCell className="text-muted-foreground hidden px-2 text-sm sm:table-cell">
-                                            {invitation.expiresAt.getTime() < now.getTime() ? (
-                                                <Badge variant="destructive">{t("invitations.expired")}</Badge>
-                                            ) : (
-                                                f.dateTime(invitation.expiresAt, { day: "2-digit", month: "short", year: "numeric" })
-                                            )}
-                                        </TableCell>
+                                            <TableCell className="px-2">
+                                                <Badge variant="secondary">
+                                                    {t(`members.roles.${profileKey(profile, orgType)}`)}
+                                                </Badge>
+                                            </TableCell>
 
-                                        <TableCell className="px-2 text-right">
-                                            {canManage && (
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    className="size-8"
-                                                    disabled={cancelling !== null}
-                                                    aria-label={t("invitations.cancel")}
-                                                    onClick={() => cancel(invitation.id)}
-                                                >
-                                                    <IconX className="size-4" />
-                                                </Button>
-                                            )}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                            {/* Better Auth leaves an unaccepted
+                                                invitation `pending` past its
+                                                expiry, so the date alone would
+                                                read as a row somebody can still
+                                                act on */}
+                                            <TableCell className="text-muted-foreground hidden px-2 text-sm sm:table-cell">
+                                                {invitation.expiresAt.getTime() < now.getTime() ? (
+                                                    <Badge variant="destructive">{t("invitations.expired")}</Badge>
+                                                ) : (
+                                                    f.dateTime(invitation.expiresAt, { day: "2-digit", month: "short", year: "numeric" })
+                                                )}
+                                            </TableCell>
+
+                                            <TableCell className="px-2 text-right">
+                                                {canManage && PROFILE_LEVEL[profile] < viewerLevel && (
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="size-8"
+                                                        disabled={cancelling !== null}
+                                                        aria-label={t("invitations.cancel")}
+                                                        onClick={() => cancel(invitation.id)}
+                                                    >
+                                                        <IconX className="size-4" />
+                                                    </Button>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })}
                             </TableBody>
                         </Table>
                     </div>

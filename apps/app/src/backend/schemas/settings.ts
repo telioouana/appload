@@ -61,12 +61,19 @@ export function PasswordSchema(t: SettingsTranslator) {
 
 export type PasswordForm = z.infer<ReturnType<typeof PasswordSchema>>;
 
+/**
+ * The profiles a colleague can be invited as — never CEO. Which of them the
+ * inviter may hand out is the level rule, which the dialog filters by and
+ * Better Auth's invitation hook enforces (packages/auth server.ts).
+ */
+export const INVITE_PROFILES = ["admin", "procurement", "operations"] as const;
+
 /** Inviting a colleague: Better Auth requires the extra `name` field. */
 export function InviteMemberSchema(t: SettingsTranslator) {
     return z.object({
         name: z.string().nonempty({ error: t("invite.fields.name.error") }),
         email: z.email({ error: t("invite.fields.email.error") }),
-        role: z.enum(["admin", "member"], { error: t("invite.fields.role.error") }),
+        role: z.enum(INVITE_PROFILES, { error: t("invite.fields.role.error") }),
     });
 }
 

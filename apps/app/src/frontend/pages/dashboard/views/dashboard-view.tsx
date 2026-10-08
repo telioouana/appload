@@ -3,6 +3,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 
 import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
+import { moneyView } from "@workspace/auth/organization-permissions"
 
 import { Badge } from "@workspace/ui/components/badge"
 
@@ -47,6 +48,9 @@ export function DashboardView() {
     const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
 
     const { plan } = session
+    // The year's books are the company's finances: a reader without
+    // `finance:read` is not shown two empty money cards
+    const full = moneyView(session.permissions) === "full"
 
     return (
         <>
@@ -109,15 +113,17 @@ export function DashboardView() {
                     </div>
                 </div>
 
-                <div className="shrink-0 px-2">
-                    <CardBoundary
-                        className="mx-0"
-                        fallback={<CardSkeleton className="mx-0 h-[220px]" />}
-                        message={t("error")}
-                    >
-                        <YearLoads />
-                    </CardBoundary>
-                </div>
+                {full && (
+                    <div className="shrink-0 px-2">
+                        <CardBoundary
+                            className="mx-0"
+                            fallback={<CardSkeleton className="mx-0 h-[220px]" />}
+                            message={t("error")}
+                        >
+                            <YearLoads />
+                        </CardBoundary>
+                    </div>
+                )}
 
                 {/* The loads Appload brokers are the company's own now, so
                     their counts sit with the rest rather than under a name */}
@@ -127,10 +133,10 @@ export function DashboardView() {
                     </CardBoundary>
                 </div>
 
-                <div className="grid shrink-0 gap-4 px-2 xl:grid-cols-3 xl:items-stretch">
+                <div className={`grid shrink-0 gap-4 px-2 xl:items-stretch ${full ? "xl:grid-cols-3" : ""}`}>
                     {/* A grid of one so the chart card fills the taller of the
                         pair; the boundary itself renders no element to span */}
-                    <div className="grid min-w-0 xl:col-span-2">
+                    <div className={`grid min-w-0 ${full ? "xl:col-span-2" : ""}`}>
                         <CardBoundary
                             className="mx-0"
                             fallback={<CardSkeleton className="mx-0 h-[300px] xl:h-[340px]" />}
@@ -140,13 +146,15 @@ export function DashboardView() {
                         </CardBoundary>
                     </div>
 
-                    <CardBoundary
-                        className="mx-0"
-                        fallback={<CardSkeleton className="mx-0 h-[300px] xl:h-[340px]" />}
-                        message={t("error")}
-                    >
-                        <YearMoney />
-                    </CardBoundary>
+                    {full && (
+                        <CardBoundary
+                            className="mx-0"
+                            fallback={<CardSkeleton className="mx-0 h-[300px] xl:h-[340px]" />}
+                            message={t("error")}
+                        >
+                            <YearMoney />
+                        </CardBoundary>
+                    )}
                 </div>
 
                 <div className="shrink-0 px-2">

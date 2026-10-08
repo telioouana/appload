@@ -43,7 +43,8 @@ export const shipperProcedure = tenantProcedure.use(({ ctx, next }) => {
 
 /**
  * Tenant procedure with an access-control check of the given resource actions
- * against the member's organization role. UI gating alone can be bypassed via
+ * against the member's live permissions (profile defaults plus their own
+ * changes, resolved by the gate). UI gating alone can be bypassed via
  * the API, so the statements are enforced here.
  */
 export const authorizedTenantProcedure = <R extends OrgResource>(
@@ -51,7 +52,7 @@ export const authorizedTenantProcedure = <R extends OrgResource>(
     actions: OrgAction<R>[],
 ) =>
     tenantProcedure.use(({ ctx, next }) => {
-        if (!isOrgAuthorized(ctx.tenant.role, resource, actions)) {
+        if (!isOrgAuthorized(ctx.tenant.permissions, resource, actions)) {
             throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
         }
         return next();

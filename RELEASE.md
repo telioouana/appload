@@ -387,6 +387,17 @@ then push `prod/admin` and the portal back to back.
   `INFOBIP_RENTAL_TEMPLATE` on the portal and admin projects; add the
   `appload-app-rental-checkin` QStash schedule (`qstash-schedules.mjs`).
   Dev got the migration from `node packages/db/scripts/migrate.mjs`.
+- `0034_member_permissions` — portal access by permission: new
+  `member_permission` (one member's permission switched on or off against
+  their profile, for good or for a window, and the CEO's temporary
+  acting-CEO lift; never deleted, a lapsed row simply stops counting).
+  `member.role` defaults to `operations`, and the migration renames every
+  `member` / pending invitation role `member` → `operations`: those people
+  stop seeing prices on release day — tell the companies, or their CEO
+  re-roles them in Settings › Team. Profiles are `owner` (CEO), `admin`
+  (Gestor), `procurement` (Comercial to a transporter), `operations`.
+  The admin app's staff role needs nothing new (default privileges cover the
+  table). Dev got it from `node packages/db/scripts/migrate.mjs`.
 - `0032_open_period` — `contract.ends_on` becomes nullable (null = the
   order runs as long as the cargo lasts; it never expires on its own) and the
   period CHECK allows it. Dev got it from `node packages/db/scripts/migrate.mjs`.

@@ -22,7 +22,7 @@ import { organization, user } from "@workspace/db/users";
 import { APPLOAD_ORG_ID, APPLOAD_ORG_NAME, isApploadOrg } from "@workspace/db/types";
 
 import { brandedEmail, sendEmail } from "@workspace/auth/email";
-import { isOrgAuthorized, type OrgRole } from "@workspace/auth/organization-permissions";
+import { can, moneyView, type MoneyView, type Permission } from "@workspace/auth/organization-permissions";
 import {
     locationRequestText,
     sendWhatsAppLocationRequest,
@@ -65,7 +65,7 @@ import { num, toRouteDto, trailSource } from "@workspace/maps/server/route-cache
 import type { OrderRouteDto, TrailPoint } from "@workspace/maps/types";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { tenantProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
 import { contractSummaryFor, openShares } from "@/frontend/pages/contracts/server/projection";
 import { mergePage, standingCounts, standingOrders, windowFor } from "@/frontend/pages/movements/server/standing-orders";
@@ -123,7 +123,8 @@ import {
     loadUnapprovedPhotos,
     loadVisible,
     offRouteRecently,
-    partnerMoveNeeds,
+    movePermission,
+    mayWriteGroup,
     projectMoney,
     received,
     roleOf,
@@ -176,18 +177,16 @@ const actorOf = (tenant: { organizationId: string; userId: string }): MovementAc
 });
 
 /**
- * The member's own role, checked after the row is loaded — which statement
- * applies depends on the row: a load the company's own fleet moves is a
+ * The member's own permission, checked after the row is loaded when which
+ * one applies depends on the row: a load the company's own fleet moves is a
  * trip, one it hands to a partner is an order, and placing a load with
  * somebody commits the company to paying them.
  */
-function assertCan(role: OrgRole, resource: "trip" | "order" | "offer" | "document" | "dispute", action: string): void {
-    if (!isOrgAuthorized(role, resource, [action] as never)) {
+function assertCan(permissions: ReadonlySet<Permission>, permission: Permission): void {
+    if (!can(permissions, permission)) {
         throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
     }
 }
-
-const writeResource = (row: Pick<Movement, "execution">) => (row.execution === "partner" ? "order" : "trip");
 
 // Escape LIKE wildcards so what the user typed matches literally
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
@@ -459,7 +458,7 @@ function foldCashflow(
     // A price nobody has agreed to yet is owed by nobody, and a cancelled
     // load owes nothing more; what already moved still moved
     const owed = (leg: MoneyLeg, open: boolean) =>
-        !open || legSettled(leg.total, leg.settlement) ? 0 : Math.max(leg.total - leg.settled, 0);
+        !open || legSettled(leg.total, leg.settlement) ? 0 : Math.max(leg.total - (leg.settled ?? 0), 0);
 
     for (const row of rows) {
         const role = roleOf(row, tenantId);
@@ -472,13 +471,13 @@ function foldCashflow(
             const line = at(receivable.currency);
             line.revenue += exVat(receivable);
             line.receivable += owed(receivable, open);
-            line.received += receivable.settled;
+            line.received += receivable.settled ?? 0;
         }
         if (payable) {
             const line = at(payable.currency);
             if (role === "owner") line.costs += exVat(payable);
             line.payable += owed(payable, open);
-            line.paid += payable.settled;
+            line.paid += payable.settled ?? 0;
         }
     }
 
@@ -509,8 +508,9 @@ function foldCashflow(
  * Another party's lines never leave its book, and only an owner's legs
  * make a margin.
  */
-async function withCostColumns(db: Db, rows: Movement[], items: MovementRow[], tenantId: string) {
-    const costRows = rows.length === 0 ? [] : await db
+async function withCostColumns(db: Db, rows: Movement[], items: MovementRow[], tenantId: string, view: MoneyView) {
+    // The books are `finance:read`'s: without it the file carries no cost line and no margin
+    const costRows = rows.length === 0 || view !== "full" ? [] : await db
         .select({
             movementId: movementCost.movementId,
             kind: movementCost.kind,
@@ -553,7 +553,7 @@ async function withCostColumns(db: Db, rows: Movement[], items: MovementRow[], t
         const owner = row.organizationId === tenantId;
         const costs = costsOf.get(item.id) ?? [];
         const totals = costTotals(costs);
-        const net = owner
+        const net = owner && view === "full"
             ? margin({
                 sell: legAmount(row, "sell"),
                 buy: legAmount(row, "buy"),
@@ -572,7 +572,7 @@ async function withCostColumns(db: Db, rows: Movement[], items: MovementRow[], t
 }
 
 /** A page of rows cut down for this caller, with the names and trails it needs. */
-async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<MovementRow[]> {
+async function projectRows(db: Db, rows: Movement[], tenantId: string, view: MoneyView): Promise<MovementRow[]> {
     const roles = rows.map((row) => ({ row, role: roleOf(row, tenantId) }));
     const trails = await trailIds(db, rows);
     const linkedTerminals = rows.filter((row) => row.executionMovementId).map((row) => trails.get(row.id) ?? row.id);
@@ -611,6 +611,7 @@ async function projectRows(db: Db, rows: Movement[], tenantId: string): Promise<
             offRoute: offRoute.has(row.id),
             silent: silent.has(row.id),
             unapprovedPhotos: photos.get(row.id) ?? 0,
+            view,
         });
     });
 }
@@ -638,7 +639,7 @@ function assertConfirmationUrl(url: string, movementId: string) {
     }
 }
 
-async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRole, orgType: OrgType): Promise<MovementDetail> {
+async function detailOf(db: Db, row: Movement, tenantId: string, permissions: ReadonlySet<Permission>, orgType: OrgType): Promise<MovementDetail> {
     const role = roleOf(row, tenantId);
     const owner = role === "owner";
     const candidate = isCandidate(row, role, tenantId);
@@ -691,7 +692,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, orgRole: OrgRol
         events,
         disputes,
         unapprovedPhotos: photosWaiting,
-        orgRole,
+        permissions,
         orgType,
     });
 }
@@ -786,7 +787,8 @@ export const movementsRouter = createTRPCRouter({
             // The multi-trip orders and rentals sit among the trips: all of them
             // are in hand, so the trips' window is widened by their number and
             // the page is merged by sort key (standing-orders.ts)
-            const standing = await standingOrders(ctx.db, tenantId, input);
+            const view = moneyView(ctx.tenant.permissions);
+            const standing = await standingOrders(ctx.db, tenantId, input, view);
             const { offset, limit } = windowFor(input, standing.length);
 
             const [rows, [counted]] = await Promise.all([
@@ -801,7 +803,7 @@ export const movementsRouter = createTRPCRouter({
             ]);
 
             return mergePage({
-                window: await projectRows(ctx.db, rows, tenantId),
+                window: await projectRows(ctx.db, rows, tenantId, view),
                 windowOffset: offset,
                 movementTotal: counted?.value ?? 0,
                 standing,
@@ -896,6 +898,9 @@ export const movementsRouter = createTRPCRouter({
     cashflow: tenantProcedure
         .input(z.object({ scope: z.enum(MOVEMENT_SCOPES), section: z.enum(SECTIONS).default("all") }))
         .query(async ({ ctx, input }): Promise<MovementCashflow> => {
+            // What came in, went out and was made is the books
+            if (moneyView(ctx.tenant.permissions) !== "full") return { lines: [] };
+
             const tenantId = ctx.tenant.organizationId;
             const shown = and(visibleMovements(tenantId), sectionPredicate(input.scope, input.section, tenantId));
             // Cost lines only touch the margin, and only an owner has one
@@ -924,7 +929,7 @@ export const movementsRouter = createTRPCRouter({
      * kind and its margin (money.ts — net of what the client repays, blank
      * when the legs disagree on currency). Capped like admin's export.
      */
-    export: tenantProcedure
+    export: authorizedTenantProcedure("export", ["csv"])
         .input(ListInput.omit({ page: true, pageSize: true }))
         .query(async ({ ctx, input }) => {
             const tenantId = ctx.tenant.organizationId;
@@ -949,9 +954,10 @@ export const movementsRouter = createTRPCRouter({
                 .orderBy(...ordering(input.sort, input.dir))
                 .limit(EXPORT_LIMIT);
 
-            const items = await projectRows(ctx.db, rows, tenantId);
+            const view = moneyView(ctx.tenant.permissions);
+            const items = await projectRows(ctx.db, rows, tenantId, view);
 
-            return withCostColumns(ctx.db, rows, items, tenantId);
+            return withCostColumns(ctx.db, rows, items, tenantId, view);
         }),
 
     /**
@@ -1018,7 +1024,7 @@ export const movementsRouter = createTRPCRouter({
         .input(z.object({ id: z.string().nonempty() }))
         .query(async ({ ctx, input }): Promise<MovementDetail> => {
             const { row } = await loadVisible(ctx.db, input.id, ctx.tenant.organizationId);
-            return detailOf(ctx.db, row, ctx.tenant.organizationId, ctx.tenant.role, ctx.tenant.orgType);
+            return detailOf(ctx.db, row, ctx.tenant.organizationId, ctx.tenant.permissions, ctx.tenant.orgType);
         }),
 
     /**
@@ -1068,7 +1074,13 @@ export const movementsRouter = createTRPCRouter({
 
             const partner = input.execution === "partner";
 
-            assertCan(ctx.tenant.role, partner ? "order" : "trip", "create");
+            // Filing the day's trip under a standing order is its own
+            // permission: the share already carries the price, which the
+            // filer may never see, so a typed price takes seeing it
+            assertCan(ctx.tenant.permissions, share ? "contract:file" : partner ? "order:create" : "trip:create");
+            if ((raw.sell || raw.buy) && !can(ctx.tenant.permissions, "price:read")) {
+                throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
+            }
 
             // A transporter's own trucks are put on its clients' orders — and a
             // client's contract naming it is that order, standing
@@ -1307,7 +1319,7 @@ export const movementsRouter = createTRPCRouter({
     sendRequests: tenantProcedure
         .input(SendRequestsBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string; version: number; sent: number; skipped: number }> => {
-            assertCan(ctx.tenant.role, "order", "create");
+            assertCan(ctx.tenant.permissions, "order:create");
 
             const result = await sendMovementRequests(ctx.db, actorOf(ctx.tenant), input);
 
@@ -1318,7 +1330,7 @@ export const movementsRouter = createTRPCRouter({
     withdrawRequest: tenantProcedure
         .input(WithdrawRequestBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
-            assertCan(ctx.tenant.role, "order", "update");
+            assertCan(ctx.tenant.permissions, "order:create");
 
             await withdrawMovementRequest(ctx.db, actorOf(ctx.tenant), input);
 
@@ -1329,7 +1341,7 @@ export const movementsRouter = createTRPCRouter({
     quote: tenantProcedure
         .input(QuoteRequestBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
-            assertCan(ctx.tenant.role, "offer", "update");
+            assertCan(ctx.tenant.permissions, "offer:create");
 
             const request = await quoteMovementRequest(ctx.db, actorOf(ctx.tenant), input);
 
@@ -1340,7 +1352,7 @@ export const movementsRouter = createTRPCRouter({
     declineRequest: tenantProcedure
         .input(DeclineRequestBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
-            assertCan(ctx.tenant.role, "offer", "update");
+            assertCan(ctx.tenant.permissions, "offer:create");
 
             const request = await declineMovementRequest(ctx.db, actorOf(ctx.tenant), input);
 
@@ -1355,7 +1367,7 @@ export const movementsRouter = createTRPCRouter({
     award: tenantProcedure
         .input(AwardRequestBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string; version: number }> => {
-            assertCan(ctx.tenant.role, "order", "create");
+            assertCan(ctx.tenant.permissions, "offer:update");
 
             const updated = await awardMovementRequest(ctx.db, actorOf(ctx.tenant), input);
 
@@ -1373,8 +1385,6 @@ export const movementsRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<{ id: string; version: number }> => {
             const tenantId = ctx.tenant.organizationId;
             const row = await loadOwn(ctx.db, input.id, tenantId);
-
-            assertCan(ctx.tenant.role, writeResource(row), "update");
 
             if (row.version !== input.expectedVersion) {
                 throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
@@ -1409,6 +1419,13 @@ export const movementsRouter = createTRPCRouter({
 
             const touched = (Object.keys(input) as (keyof UpdateMovementInput)[])
                 .filter((key) => input[key] !== undefined && FIELD_GROUP[key]);
+
+            // Each field asks for its own permission (projection.ts mayWriteGroup)
+            for (const key of touched) {
+                if (!mayWriteGroup(ctx.tenant.permissions, FIELD_GROUP[key]!, row.execution)) {
+                    throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
+                }
+            }
 
             for (const key of touched) {
                 if (!groups.includes(FIELD_GROUP[key]!)) {
@@ -1591,12 +1608,11 @@ export const movementsRouter = createTRPCRouter({
         .input(TransitionMovementBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string; status: Movement["status"]; version: number }> => {
             const row = await loadOwn(ctx.db, input.id, ctx.tenant.organizationId);
-            assertCan(ctx.tenant.role, writeResource(row), "update");
 
-            // Placing a partner load takes the role an offer takes, and calling
-            // one off the role that cancels orders (the buttons ask the same)
-            const needs = row.execution === "partner" ? partnerMoveNeeds(row.status, input.to) : null;
-            if (needs) assertCan(ctx.tenant.role, "order", needs);
+            // Placing a partner load is booking it, and calling one off is
+            // cancelling an order; every other move is a status change (the
+            // buttons ask the same, projection.ts movePermission)
+            assertCan(ctx.tenant.permissions, movePermission(row.execution, row.status, input.to));
 
             const updated = await transitionMovement(ctx.db, actorOf(ctx.tenant), input);
 
@@ -1617,7 +1633,7 @@ export const movementsRouter = createTRPCRouter({
     offer: tenantProcedure
         .input(OfferMovementBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string; version: number }> => {
-            assertCan(ctx.tenant.role, "order", "create");
+            assertCan(ctx.tenant.permissions, "order:create");
 
             const row = await loadOwn(ctx.db, input.id, ctx.tenant.organizationId);
 
@@ -1632,7 +1648,7 @@ export const movementsRouter = createTRPCRouter({
     withdraw: tenantProcedure
         .input(WithdrawOfferBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string; version: number }> => {
-            assertCan(ctx.tenant.role, "order", "update");
+            assertCan(ctx.tenant.permissions, "order:create");
             const updated = await withdrawOffer(ctx.db, actorOf(ctx.tenant), input);
             return { id: updated.id, version: updated.version };
         }),
@@ -1645,7 +1661,7 @@ export const movementsRouter = createTRPCRouter({
     respond: tenantProcedure
         .input(RespondOfferBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string; ref: string | null }> => {
-            assertCan(ctx.tenant.role, "offer", "update");
+            assertCan(ctx.tenant.permissions, "offer:create");
             const result = await respondToOffer(ctx.db, actorOf(ctx.tenant), input);
             return { id: result.executorMovementId ?? result.movement.id, ref: result.executorRef };
         }),
@@ -1659,7 +1675,7 @@ export const movementsRouter = createTRPCRouter({
     convert: tenantProcedure
         .input(ConvertMovementBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string; ref: string; version: number }> => {
-            assertCan(ctx.tenant.role, "order", "create");
+            assertCan(ctx.tenant.permissions, "order:create");
 
             if (input.to === "own-fleet" && ctx.tenant.orgType === "carrier") {
                 throw new TRPCError({ code: "FORBIDDEN", message: "OWN_TRIPS_COME_FROM_CLIENTS" });
@@ -1684,7 +1700,7 @@ export const movementsRouter = createTRPCRouter({
         .input(RecordPaymentBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string; version: number }> => {
             const row = await loadOwn(ctx.db, input.id, ctx.tenant.organizationId);
-            assertCan(ctx.tenant.role, "order", "update");
+            assertCan(ctx.tenant.permissions, "payment:record");
 
             if (row.version !== input.expectedVersion) {
                 throw new TRPCError({ code: "CONFLICT", message: "VERSION_CONFLICT" });
@@ -1752,7 +1768,7 @@ export const movementsRouter = createTRPCRouter({
             .input(AddCostBaseSchema)
             .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
                 const { row, role } = await loadVisible(ctx.db, input.movementId, ctx.tenant.organizationId);
-                assertCan(ctx.tenant.role, "trip", "update");
+                assertCan(ctx.tenant.permissions, "payment:record");
 
                 if (role !== "owner" && role !== "client") {
                     throw new TRPCError({ code: "FORBIDDEN", message: "FORBIDDEN" });
@@ -1819,7 +1835,7 @@ export const movementsRouter = createTRPCRouter({
                     .limit(1);
 
                 if (!cost) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
-                assertCan(ctx.tenant.role, "trip", "update");
+                assertCan(ctx.tenant.permissions, "payment:record");
 
                 // Closed books stay closed — the same guard adding a line has
                 if (cost.status === "closed" || cost.status === "cancelled") {
@@ -1860,7 +1876,7 @@ export const movementsRouter = createTRPCRouter({
             .input(AddMovementDocumentBaseSchema)
             .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
                 const row = await loadOwn(ctx.db, input.movementId, ctx.tenant.organizationId);
-                assertCan(ctx.tenant.role, "document", "upload");
+                assertCan(ctx.tenant.permissions, "document:upload");
                 assertEdgeStoreUrl(input.url);
 
                 if (input.leg === "buy" && row.execution !== "partner") {
@@ -1960,7 +1976,7 @@ export const movementsRouter = createTRPCRouter({
                 // The row that holds the truck, and this company's own: a
                 // stranger asking gets the same 404 the load itself gives
                 await loadOwn(ctx.db, document.movementId, ctx.tenant.organizationId);
-                assertCan(ctx.tenant.role, "document", "approve");
+                assertCan(ctx.tenant.permissions, "document:approve");
 
                 if (document.type !== "loading-photo") {
                     throw new TRPCError({ code: "BAD_REQUEST", message: "NOT_APPROVABLE" });
@@ -2001,7 +2017,7 @@ export const movementsRouter = createTRPCRouter({
                     .limit(1);
 
                 if (!document) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
-                assertCan(ctx.tenant.role, "document", "upload");
+                assertCan(ctx.tenant.permissions, "document:upload");
 
                 await ctx.db
                     .update(movementDocument)
@@ -2034,7 +2050,7 @@ export const movementsRouter = createTRPCRouter({
             .input(OpenDisputeBaseSchema)
             .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
                 const { row } = await loadVisible(ctx.db, input.movementId, ctx.tenant.organizationId);
-                assertCan(ctx.tenant.role, "dispute", "open");
+                assertCan(ctx.tenant.permissions, "dispute:open");
 
                 // The door refuses a load still being asked about; a load that
                 // is over has no books left for a dispute to hold open
@@ -2064,7 +2080,7 @@ export const movementsRouter = createTRPCRouter({
         resolve: tenantProcedure
             .input(ResolveDisputeBaseSchema)
             .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
-                assertCan(ctx.tenant.role, "dispute", "resolve");
+                assertCan(ctx.tenant.permissions, "dispute:resolve");
 
                 const { dispute, rowIds } = await resolveDispute(ctx.db, actorOf(ctx.tenant), input);
 
@@ -2096,7 +2112,7 @@ export const movementsRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<{ id: string; simulated: boolean }> => {
             const tenantId = ctx.tenant.organizationId;
             const row = await loadOwn(ctx.db, input.id, tenantId);
-            assertCan(ctx.tenant.role, "document", "upload");
+            assertCan(ctx.tenant.permissions, "order:pdf");
             assertConfirmationUrl(input.url, row.id);
 
             // Only an order has a partner to confirm anything to
@@ -2267,7 +2283,7 @@ export const movementsRouter = createTRPCRouter({
         .input(z.object({ id: z.string().nonempty() }))
         .query(async ({ ctx, input }): Promise<MovementThreadItem[]> => {
             const row = await loadOwn(ctx.db, input.id, ctx.tenant.organizationId);
-            assertCan(ctx.tenant.role, "trip", "read");
+            assertCan(ctx.tenant.permissions, "thread:read");
 
             if (row.executionMovementId || !row.conversationId || !row.startedAt) return [];
 
@@ -2303,7 +2319,7 @@ export const movementsRouter = createTRPCRouter({
      */
     threadList: tenantProcedure
         .query(async ({ ctx }): Promise<MovementThreadLoad[]> => {
-            assertCan(ctx.tenant.role, "trip", "read");
+            assertCan(ctx.tenant.permissions, "thread:read");
 
             const rows = await ctx.db
                 .select({
@@ -2374,7 +2390,7 @@ export const movementsRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }): Promise<{ sent: boolean; mode: "native" | "template" }> => {
             const tenantId = ctx.tenant.organizationId;
             const row = await loadOwn(ctx.db, input.id, tenantId);
-            assertCan(ctx.tenant.role, "trip", "update");
+            assertCan(ctx.tenant.permissions, "dispatch:assign");
 
             // A driver is only somewhere worth asking about while the load is in
             // progress — booked, nobody has gone to it yet; delivered, the

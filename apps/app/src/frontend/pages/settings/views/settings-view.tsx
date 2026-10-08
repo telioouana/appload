@@ -18,6 +18,7 @@ import { SubscriptionCard } from "@/frontend/pages/settings/components/subscript
 import { SupportAccessCard } from "@/frontend/pages/settings/components/support-access-card";
 import { ActivityCard } from "@/frontend/pages/settings/components/activity-card";
 import { PendingInvitations } from "@/frontend/pages/settings/components/pending-invitations";
+import { profileKey } from "@/frontend/pages/settings/lib/profiles";
 
 /**
  * The partner's own account and their company, in four tabs (plan §9.4).
@@ -47,7 +48,15 @@ export function SettingsView() {
     const tab = searchParams.get("tab")
     const initialTab = tab === "company" || tab === "members" || tab === "subscription" || tab === "security" || tab === "activity" ? tab : "profile"
 
-    const canManage = data.role === "owner" || data.role === "admin"
+    // What the reader may do here is their live permissions, the same set
+    // the server checks — never their profile's name
+    const permissions = new Set(data.permissions)
+    const canManage = permissions.has("team:manage")
+    const canSecurity = permissions.has("security:manage")
+    const canSubscription = permissions.has("subscription:read")
+    const shownTab = (initialTab === "security" || initialTab === "activity") && !canSecurity
+        ? "profile"
+        : initialTab === "subscription" && !canSubscription ? "profile" : initialTab
 
     return (
         <div className="flex flex-col gap-4">
@@ -56,7 +65,7 @@ export function SettingsView() {
                 <p className="text-muted-foreground text-sm">{t("description")}</p>
             </div>
 
-            <Tabs key={initialTab} defaultValue={initialTab} className="gap-4">
+            <Tabs key={shownTab} defaultValue={shownTab} className="gap-4">
                 <TabsList>
                     <TabsTrigger value="profile">
                         <IconUser />
@@ -70,27 +79,33 @@ export function SettingsView() {
                         <IconUsers />
                         {t("tabs.members")}
                     </TabsTrigger>
-                    <TabsTrigger value="subscription">
-                        <IconRosetteDiscountCheck />
-                        {t("tabs.subscription")}
-                    </TabsTrigger>
-                    <TabsTrigger value="security">
-                        <IconShieldLock />
-                        {t("tabs.security")}
-                    </TabsTrigger>
-                    <TabsTrigger value="activity">
-                        <IconHistory />
-                        {t("tabs.activity")}
-                    </TabsTrigger>
+                    {canSubscription && (
+                        <TabsTrigger value="subscription">
+                            <IconRosetteDiscountCheck />
+                            {t("tabs.subscription")}
+                        </TabsTrigger>
+                    )}
+                    {canSecurity && (
+                        <>
+                            <TabsTrigger value="security">
+                                <IconShieldLock />
+                                {t("tabs.security")}
+                            </TabsTrigger>
+                            <TabsTrigger value="activity">
+                                <IconHistory />
+                                {t("tabs.activity")}
+                            </TabsTrigger>
+                        </>
+                    )}
                 </TabsList>
 
                 <TabsContent value="profile" className="flex flex-col gap-4">
-                    <ProfileCard user={data.user} role={data.role} />
+                    <ProfileCard user={data.user} role={profileKey(data.role, data.organization.type)} />
                     <PasswordCard />
                 </TabsContent>
 
                 <TabsContent value="company" className="flex flex-col gap-4">
-                    <CompanyCard organization={data.organization} canEdit={canManage} />
+                    <CompanyCard organization={data.organization} canEdit={permissions.has("organization:update")} />
 
                     {/* The same card the fleet profiles use, on the company
                         itself: one row per slot of its checklist, filed here
@@ -107,31 +122,42 @@ export function SettingsView() {
                     <MembersTable
                         organizationId={data.organization.id}
                         organizationName={data.organization.name}
-                        viewerId={data.user.id}
-                        viewerRole={data.role}
+                        orgType={data.organization.type}
+                        viewer={{ level: data.level, canManage }}
                     />
 
-                    {/* Members see the pending invitations too — knowing who
-                        is on the way in is not an owner's secret — but only
-                        owners and admins can take one back */}
-                    <PendingInvitations organizationId={data.organization.id} canManage={canManage} />
-                </TabsContent>
-
-                <TabsContent value="subscription" className="flex flex-col gap-4">
-                    <SubscriptionCard
-                        allowance={data.allowance}
-                        tiers={data.tiers}
-                        organization={data.organization}
+                    {/* Everybody sees the pending invitations — knowing who
+                        is on the way in is not a manager's secret — but only
+                        somebody above the invited profile takes one back */}
+                    <PendingInvitations
+                        organizationId={data.organization.id}
+                        orgType={data.organization.type}
+                        canManage={canManage}
+                        viewerLevel={data.level}
                     />
                 </TabsContent>
 
-                <TabsContent value="security" className="flex flex-col gap-4">
-                    <SupportAccessCard canManage={canManage} />
-                </TabsContent>
+                {canSubscription && (
+                    <TabsContent value="subscription" className="flex flex-col gap-4">
+                        <SubscriptionCard
+                            allowance={data.allowance}
+                            tiers={data.tiers}
+                            organization={data.organization}
+                        />
+                    </TabsContent>
+                )}
 
-                <TabsContent value="activity" className="flex flex-col gap-4">
-                    <ActivityCard />
-                </TabsContent>
+                {canSecurity && (
+                    <>
+                        <TabsContent value="security" className="flex flex-col gap-4">
+                            <SupportAccessCard canManage={canSecurity} />
+                        </TabsContent>
+
+                        <TabsContent value="activity" className="flex flex-col gap-4">
+                            <ActivityCard />
+                        </TabsContent>
+                    </>
+                )}
             </Tabs>
         </div>
     )

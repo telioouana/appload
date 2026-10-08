@@ -1,13 +1,16 @@
 "use client"
 
+import { useSuspenseQuery } from "@tanstack/react-query"
 import { IconAlertTriangle } from "@tabler/icons-react"
 
+import { moneyView } from "@workspace/auth/organization-permissions"
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
 import { Badge } from "@workspace/ui/components/badge"
 import { DetailRow, SectionCard } from "@workspace/ui/customs/detail/section-card"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 
+import { useTRPC } from "@/backend/api/client"
 import { PriceModelText, ProgressBar, unitOf, useUnitLabel } from "@/frontend/pages/contracts/sections/badges"
 import type { ContractDetail } from "@/frontend/pages/contracts/types"
 import { place } from "@/frontend/pages/movements/components/badges"
@@ -23,6 +26,10 @@ export function TermsCard({ contract }: { contract: ContractDetail }) {
     const tv = useTranslations("App.orders")
     const f = useFormatter()
     const unitLabel = useUnitLabel()
+    const trpc = useTRPC()
+    const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
+    // A member who reads no price is not told there is none either
+    const priced = moneyView(session.permissions) !== "none"
 
     const owner = contract.role === "owner"
     const unit = unitOf(contract.basis)
@@ -93,7 +100,7 @@ export function TermsCard({ contract }: { contract: ContractDetail }) {
                 {contract.fiscalRegime && (
                     <DetailRow label={t("detail.fields.fiscal-regime")}>{tv(`fiscalRegime.${contract.fiscalRegime}`)}</DetailRow>
                 )}
-                {contract.role !== "carrier" && (
+                {contract.role !== "carrier" && priced && (
                     <DetailRow label={t("detail.fields.sell-price")}>
                         {contract.sellPrice
                             ? <PriceModelText model={contract.sellPrice} currency={contract.currency} />

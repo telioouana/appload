@@ -15,9 +15,9 @@ import { ON_GOING_STATUSES, OUTSTANDING_STATUSES, PENDING_POD_STATUSES } from "@
 import { pendingOfferCount } from "@workspace/domain/orders/transition";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
-import { anyRequest, myRequest, orderScope, scopeOf, visibleOrders, type TenantScope } from "@/frontend/pages/orders/server/projection";
+import { anyRequest, myRequest, orderScope, scopeOf, viewOf, visibleOrders, type TenantScope } from "@/frontend/pages/orders/server/projection";
 import { loadNames, projectMoney, type CostRow } from "@/frontend/pages/movements/server/projection";
 import type { Currency } from "@/frontend/pages/orders/types";
 import {
@@ -27,6 +27,7 @@ import {
     analyticsPeriod,
     currentYear,
     type AnalyticsKpiBucket,
+    type AnalyticsKpiFigures,
     type AnalyticsKpis,
     type AnalyticsLoads,
     type AnalyticsLoadsLine,
@@ -38,6 +39,7 @@ import {
     type AnalyticsPartnerSort,
     type AnalyticsPartners,
     type AnalyticsPipeline,
+    type KpiFigures,
 } from "@/frontend/pages/analytics/types";
 
 /**
@@ -150,6 +152,24 @@ const LOAD_PARTNER_LIMIT = 8;
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
 
+/**
+ * The KPI report as a reader without the company's finances reads it: every
+ * figure that is money — what the period was worth, per transport, per km,
+ * per ton, and what the backloads saved or kept — goes, the rest stays.
+ */
+const kpiFigures = (figures: KpiFigures, full: boolean): AnalyticsKpiFigures =>
+    full
+        ? figures
+        : {
+            ...figures,
+            total: null,
+            pricePerTransport: null,
+            costPerKm: null,
+            costPerTon: null,
+            costPerTonKm: null,
+            backload: { kind: figures.backload.kind, value: null },
+        };
+
 const emptyLoadsLine = (currency: Currency): AnalyticsLoadsLine => ({
     currency,
     receivable: { outstanding: 0, settled: 0 },
@@ -159,8 +179,8 @@ const emptyLoadsLine = (currency: Currency): AnalyticsLoadsLine => ({
 });
 
 /** What a leg still owes: nothing once settled, or once it was marked as not applying. */
-const stillOwed = (leg: { total: number; settled: number; settlement: string }) =>
-    leg.settlement === "completed" || leg.settlement === "not-applicable" ? 0 : Math.max(leg.total - leg.settled, 0);
+const stillOwed = (leg: { total: number; settled: number | null; settlement: string | null }) =>
+    leg.settlement === "completed" || leg.settlement === "not-applicable" ? 0 : Math.max(leg.total - (leg.settled ?? 0), 0);
 
 // ---------------------------------------------------------------------------
 // Router
@@ -177,7 +197,9 @@ export const analyticsRouter = createTRPCRouter({
      * starts and the only place in this router an order it does not own is
      * counted.
      */
-    pipeline: authorizedTenantProcedure("report", ["read"]).query(async ({ ctx }): Promise<AnalyticsPipeline> => {
+    // Counts only, like orders.stats: the dashboard's tiles are everybody's,
+    // the reports below are report:read's
+    pipeline: tenantProcedure.query(async ({ ctx }): Promise<AnalyticsPipeline> => {
         const tenant = scopeOf(ctx.tenant);
         const { organizationId: tenantId, orgType } = tenant;
         const shipper = orgType === "shipper";
@@ -251,7 +273,7 @@ export const analyticsRouter = createTRPCRouter({
      * scoped by `order.year`, the same period every orders page uses, so the
      * bars agree with the lists behind them.
      */
-    monthly: authorizedTenantProcedure("report", ["read"])
+    monthly: tenantProcedure
         .input(YearInput)
         .query(async ({ ctx, input }): Promise<AnalyticsMonthly> => {
             const tenant = kpiTenant(scopeOf(ctx.tenant));
@@ -300,6 +322,13 @@ export const analyticsRouter = createTRPCRouter({
             const tenant = scopeOf(ctx.tenant);
             const shipper = tenant.orgType === "shipper";
             const chosen = input.year ?? currentYear();
+
+            // What is owed and what was settled is the company's books: a
+            // reader without `finance:read` gets the card's empty shape, and
+            // the database is not asked for figures nobody will see
+            if (viewOf(ctx.tenant) !== "full") {
+                return { leg: shipper ? "shipper" : "carrier", byCurrency: [] };
+            }
             // Quotes and lost orders were never owed, so no money view counts them
             const base = and(tenantScope(kpiTenant(tenant)), eq(order.year, chosen), billable())!;
 
@@ -402,6 +431,9 @@ export const analyticsRouter = createTRPCRouter({
         .input(YearInput)
         .query(async ({ ctx, input }): Promise<AnalyticsLoads> => {
             const tenantId = ctx.tenant.organizationId;
+            // The counts and the partners are everybody's; receivables,
+            // payables, costs and margins are the company's books
+            const full = viewOf(ctx.tenant) === "full";
             const chosen = input.year ?? currentYear();
             const loadingYear = sql<number>`extract(year from coalesce(${movement.expectedLoadingDate}, ${movement.createdAt}))::int`;
 
@@ -473,7 +505,8 @@ export const analyticsRouter = createTRPCRouter({
                 for (const [leg, bucket] of [[money.receivable, "receivable"], [money.payable, "payable"]] as const) {
                     if (!leg) continue;
                     const entry = line(leg.currency)[bucket];
-                    entry.settled = round2(entry.settled + leg.settled);
+                    // Read in full (the projection's default view), so never null here
+                    entry.settled = round2(entry.settled + (leg.settled ?? 0));
                     if (row.status !== "cancelled") entry.outstanding = round2(entry.outstanding + stillOwed(leg));
                 }
 
@@ -505,10 +538,12 @@ export const analyticsRouter = createTRPCRouter({
             return {
                 year: chosen,
                 total: rows.length,
-                byCurrency: CURRENCY.flatMap((currency) => {
-                    const entry = lines.get(currency);
-                    return entry ? [entry] : [];
-                }),
+                byCurrency: full
+                    ? CURRENCY.flatMap((currency) => {
+                        const entry = lines.get(currency);
+                        return entry ? [entry] : [];
+                    })
+                    : [],
                 finished,
                 comparable,
                 partners: [...partners.values()]
@@ -530,6 +565,9 @@ export const analyticsRouter = createTRPCRouter({
         .input(PeriodInput)
         .query(async ({ ctx, input }): Promise<AnalyticsKpis> => {
             const tenant = kpiTenant(scopeOf(ctx.tenant));
+            // Punctuality and days are everybody's; the money figures and the
+            // dollar column of the charts are the company's finances
+            const full = viewOf(ctx.tenant) === "full";
             const { from, to } = analyticsPeriod(input.period, input.year ?? currentYear());
             const type = tenant.orgType;
             const where = and(scope(type, from, to), tenantScope(tenant))!;
@@ -578,7 +616,7 @@ export const analyticsRouter = createTRPCRouter({
             return {
                 period: { preset: input.period, from, to },
                 // An aggregate without a group by always returns exactly one row
-                figures: deriveKpis(type, totals[0]!),
+                figures: kpiFigures(deriveKpis(type, totals[0]!), full),
                 buckets: bucketStarts(from, to, grain).map((bucket): AnalyticsKpiBucket => {
                     const row = counted.get(bucket);
 
@@ -597,7 +635,7 @@ export const analyticsRouter = createTRPCRouter({
                         averageDays: row.travelDaysTrips > 0 ? row.travelDays / row.travelDaysTrips : null,
                         // A bucket whose every transport went without a rate has
                         // no dollar figure; zero would read as a free trip
-                        usd: row.unrated < row.transports ? row.total : null,
+                        usd: full && row.unrated < row.transports ? row.total : null,
                     };
                 }),
             };
@@ -616,6 +654,10 @@ export const analyticsRouter = createTRPCRouter({
         .input(PartnersInput)
         .query(async ({ ctx, input }): Promise<AnalyticsPartners> => {
             const tenant = kpiTenant(scopeOf(ctx.tenant));
+            // The dollar column is the company's finances, and so is an order
+            // that ranks by it: without `finance:read` the ranking goes by loads
+            const full = viewOf(ctx.tenant) === "full";
+            const sort = full || input.sort !== "usd" ? input.sort : "orders";
             const { from, to } = analyticsPeriod(input.period, input.year ?? currentYear());
             const type = tenant.orgType;
             const other = leg(type === "shipper" ? "carrier" : "shipper");
@@ -645,7 +687,7 @@ export const analyticsRouter = createTRPCRouter({
                     .leftJoinLateral(FX, sql`true`)
                     .where(where)
                     .groupBy(other.id)
-                    .orderBy(...partnerOrder(input.sort, toUsd(mine.currency, mine.total), name, other.id))
+                    .orderBy(...partnerOrder(sort, toUsd(mine.currency, mine.total), name, other.id))
                     .limit(PARTNER_LIMIT),
 
                 ctx.db.select({ value: count() }).from(order).where(where),
@@ -654,7 +696,7 @@ export const analyticsRouter = createTRPCRouter({
             const total = counted?.value ?? 0;
 
             return {
-                sort: input.sort,
+                sort,
                 rows: rows.flatMap((row): AnalyticsPartnerRow[] =>
                     row.id
                         ? [{
@@ -663,7 +705,7 @@ export const analyticsRouter = createTRPCRouter({
                             orders: row.orders,
                             tons: row.tons,
                             onTimeRate: row.orders > 0 ? row.onTime / row.orders : null,
-                            usd: row.unrated < row.orders ? row.usd : null,
+                            usd: full && row.unrated < row.orders ? row.usd : null,
                             share: total > 0 ? row.orders / total : 0,
                         }]
                         : [],

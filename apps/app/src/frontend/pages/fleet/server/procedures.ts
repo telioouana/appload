@@ -12,7 +12,6 @@ import type { db as Database } from "@workspace/db/db";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
-import type { OrgAction } from "@workspace/auth/organization-permissions";
 
 import { docProgress, today, type CurrentDoc } from "@workspace/domain/kyc/derive";
 import { activeRentalOf } from "@workspace/domain/rentals/apply";
@@ -67,7 +66,7 @@ const vehicleKind = z.enum(VEHICLE_KIND);
  * between its own sites. The rows are scoped to the tenant either way, which
  * is what actually protects them.
  */
-const fleetProcedure = (actions: OrgAction<"fleet">[]) => authorizedTenantProcedure("fleet", actions);
+const fleetProcedure = authorizedTenantProcedure("fleet", ["manage"]);
 
 // Escape LIKE wildcards so user input matches literally
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
@@ -271,7 +270,7 @@ export const fleetRouter = createTRPCRouter({
             }),
 
         /** Registers a truck, trailer or link into the tenant's own fleet. */
-        register: fleetProcedure(["create"])
+        register: fleetProcedure
             .input(z.discriminatedUnion("kind", [
                 RegisterTruckBaseSchema.extend({ kind: z.literal("truck") }),
                 RegisterTrailerBaseSchema.extend({ kind: z.literal("trailer") }),
@@ -314,7 +313,7 @@ export const fleetRouter = createTRPCRouter({
             }),
 
         /** Partial edit of one of the tenant's vehicles. */
-        update: fleetProcedure(["update"])
+        update: fleetProcedure
             .input(z.object({ kind: vehicleKind, id: z.string().nonempty(), patch: VehiclePatch }))
             .mutation(async ({ ctx, input }): Promise<{ id: string; regPlate: string }> => {
                 const table = VEHICLE_TABLE[input.kind];
@@ -388,7 +387,7 @@ export const fleetRouter = createTRPCRouter({
     }),
 
     /** Sets, moves or clears a driver's home truck. Both rows must be ours. */
-    assignDriver: fleetProcedure(["update"])
+    assignDriver: fleetProcedure
         .input(z.object({ driverId: z.string().nonempty(), truckId: z.string().nonempty().nullable() }))
         .mutation(async ({ ctx, input }): Promise<{ id: string; truckId: string | null }> => {
             const carrierId = ctx.tenant.organizationId;

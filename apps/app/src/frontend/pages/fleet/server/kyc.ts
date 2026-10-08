@@ -17,7 +17,8 @@ import {
 import type { db as Database } from "@workspace/db/db";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure } from "@workspace/trpc/tenant";
+import { can } from "@workspace/auth/organization-permissions";
+import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
 import { isValid, today } from "@workspace/domain/kyc/derive";
 import { withProxiedPages } from "@workspace/domain/kyc/file-access";
@@ -162,7 +163,7 @@ async function tenantSubject(
 
 export const kycRouter = createTRPCRouter({
     /** The live document set for one of the tenant's subjects. */
-    documents: authorizedTenantProcedure("kyc", ["read"])
+    documents: tenantProcedure
         .input(z.object({ subjectType, subjectId: z.string().nonempty() }))
         .query(async ({ ctx, input }) => {
             const subject = await tenantSubject(
@@ -224,6 +225,11 @@ export const kycRouter = createTRPCRouter({
                 throw new TRPCError({ code: "FORBIDDEN", message: "CONTRACT_APPLOAD_ONLY" });
             }
 
+            // The company's own papers are its profile, the CEO's to file
+            if (input.subjectType === "organization" && !can(ctx.tenant.permissions, "organization:update")) {
+                throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
+            }
+
             const subject = await tenantSubject(
                 ctx.db,
                 ctx.tenant.organizationId,
@@ -262,7 +268,7 @@ export const kycRouter = createTRPCRouter({
      * vehicles were picked. One read for the whole pick, so the dispatch
      * dialog can name the gaps before the move is attempted.
      */
-    rigPapers: authorizedTenantProcedure("kyc", ["read"])
+    rigPapers: tenantProcedure
         .input(z.object({
             driverId: z.string().nullish(),
             truckId: z.string().nullish(),

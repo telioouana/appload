@@ -8,7 +8,7 @@ import type { db as Database } from "@workspace/db/db";
 import { driver, truck } from "@workspace/db/fleet";
 import { contractPayment, type RentalDay } from "@workspace/db/rentals";
 import { organization, user } from "@workspace/db/users";
-import { isOrgAuthorized, type OrgRole } from "@workspace/auth/organization-permissions";
+import { isOrgAuthorized, moneyView, type MoneyView, type Permission } from "@workspace/auth/organization-permissions";
 import { loadContract, roleOn, visibleContracts, type ContractRole } from "@workspace/domain/contracts/access";
 import { transitionContract } from "@workspace/domain/contracts/apply";
 import { todayInMaputo } from "@workspace/domain/contracts/price";
@@ -129,7 +129,7 @@ async function people(db: Db, driverIds: (string | null)[]) {
     return new Map(rows.map((row) => [row.id, row.name]));
 }
 
-function lineView(order: Contract, line: ContractAllocation, role: ContractRole, tenantId: string, h: Hydrated): RentalLineView {
+function lineView(order: Contract, line: ContractAllocation, role: ContractRole, tenantId: string, h: Hydrated, view: MoneyView): RentalLineView {
     const sell = perDay(order.sellPrice);
     const buy = perDay(line.buyPrice);
     // A provider's line is billed at its price; the owner's own fleet at the order's
@@ -143,6 +143,11 @@ function lineView(order: Contract, line: ContractAllocation, role: ContractRole,
         ? { id: line.carrierOrgId, name: line.carrierOrgId ? h.names.get(line.carrierOrgId) ?? null : line.carrierName }
         : null;
     const readsBuy = role === "owner" || (role === "carrier" && line.carrierOrgId === tenantId);
+    // The client reads its own price; a provider its own; the owner the client's on its own fleet
+    const priceOf = role === "client" ? sell : readsBuy && buy ? buy : sell;
+    // A member who reads no price still counts the days; what they come to is withheld
+    const priced = view !== "none";
+    const billing = lineBilling(days, priceOf);
 
     return {
         id: line.id,
@@ -150,12 +155,11 @@ function lineView(order: Contract, line: ContractAllocation, role: ContractRole,
         truckPlate: line.truckPlate,
         driver: line.driverId ? { id: line.driverId, name: h.drivers.get(line.driverId) ?? "—" } : null,
         provider,
-        buyPrice: readsBuy ? buy : null,
+        buyPrice: readsBuy && priced ? buy : null,
         endsOn: line.endsOn,
         days,
-        // The client reads its own price; a provider its own; the owner the client's on its own fleet
-        billing: lineBilling(days, role === "client" ? sell : readsBuy && buy ? buy : sell),
-        statement: monthlyStatement(days, role === "client" ? sell : readsBuy && buy ? buy : sell),
+        billing: priced ? billing : { ...billing, amount: null },
+        statement: priced ? monthlyStatement(days, priceOf) : [],
         projectedDays: projectedDays(order.startsOn, line.endsOn ?? order.endsOn, mode),
         today: { answer: todayEntry?.driverAnswer ?? null, silent: h.silent.has(line.id) },
         disputedDays: days.filter((day) => day.disputed).length,
@@ -167,7 +171,7 @@ function lineView(order: Contract, line: ContractAllocation, role: ContractRole,
 function moneyOf(order: Contract, lines: RentalLineView[], all: ContractAllocation[], role: ContractRole, tenantId: string, h: Hydrated) {
     const sell = perDay(order.sellPrice);
     const line: RentalMoneyLine = { currency: order.currency, billable: 0, projected: sell ? 0 : null, received: 0, receivable: 0, payable: 0, paid: 0, outstanding: 0 };
-    const perLine: RentalDetail["money"]["perLine"] = [];
+    const perLine: NonNullable<RentalDetail["money"]>["perLine"] = [];
     const payments = h.payments.filter((payment) => payment.contractId === order.id);
 
     for (const view of lines) {
@@ -222,9 +226,9 @@ function moneyOf(order: Contract, lines: RentalLineView[], all: ContractAllocati
     return { lines: [rounded], perLine };
 }
 
-function toRow(order: Contract, all: ContractAllocation[], role: ContractRole, tenantId: string, h: Hydrated): { view: RentalRow; lines: RentalLineView[] } {
+function toRow(order: Contract, all: ContractAllocation[], role: ContractRole, tenantId: string, h: Hydrated, view: MoneyView): { view: RentalRow; lines: RentalLineView[] } {
     const mine = linesFor(all, role, tenantId);
-    const lines = mine.map((line) => lineView(order, line, role, tenantId, h));
+    const lines = mine.map((line) => lineView(order, line, role, tenantId, h, view));
     const derived = derivedState(order, { remaining: null });
     const state = derived === "draft" && role === "client" ? "proposed" : derived;
     const money = moneyOf(order, lines, all, role, tenantId, h).lines[0];
@@ -245,11 +249,11 @@ function toRow(order: Contract, all: ContractAllocation[], role: ContractRole, t
             startsOn: order.startsOn,
             endsOn: order.endsOn,
             currency: order.currency,
-            sellPrice: role === "carrier" ? null : sell,
+            sellPrice: role === "carrier" || view === "none" ? null : sell,
             trucks: lines.map((line) => line.truck?.plate ?? line.truckPlate ?? "—"),
             billableDays: lines.reduce((sum, line) => sum + line.billing.billableDays, 0),
             periodDays: lines.length === 0 ? null : lines.reduce<number | null>((sum, line) => (sum === null || line.projectedDays === null ? null : sum + line.projectedDays), 0),
-            billable: money ? (role === "owner" && !sell ? money.payable : money.billable) : 0,
+            billable: view === "none" ? null : money ? (role === "owner" && !sell ? money.payable : money.billable) : 0,
             attention: {
                 disputed: lines.reduce((sum, line) => sum + line.disputedDays, 0),
                 saidNo: lines.filter((line) => line.today.answer === "no").length,
@@ -262,7 +266,7 @@ function toRow(order: Contract, all: ContractAllocation[], role: ContractRole, t
     };
 }
 
-async function visibleSet(db: Db, tenantId: string, tab: "own" | "partners" | "all", search?: string) {
+async function visibleSet(db: Db, tenantId: string, tab: "own" | "partners" | "all", view: MoneyView, search?: string) {
     const rows = await db
         .select()
         .from(contract)
@@ -273,7 +277,7 @@ async function visibleSet(db: Db, tenantId: string, tab: "own" | "partners" | "a
     return rows.flatMap((order) => {
         const all = h.byContract.get(order.id) ?? [];
         const role = roleOn(order, all, tenantId);
-        return role ? [{ order, all, role, ...toRow(order, all, role, tenantId, h), h }] : [];
+        return role ? [{ order, all, role, ...toRow(order, all, role, tenantId, h, view), h }] : [];
     });
 }
 
@@ -289,13 +293,14 @@ export type RentalOrderRow = {
 };
 
 export async function rentalOrderRows(db: Db, tenantId: string): Promise<RentalOrderRow[]> {
-    const set = await visibleSet(db, tenantId, "all");
+    // Read whole: the orders list cuts the amounts by the reader's permissions (movements/server/standing-orders.ts)
+    const set = await visibleSet(db, tenantId, "all", "full");
 
     return set.map(({ view, lines, role, order }) => ({
         view,
         providers: lines.flatMap((line) => (line.provider ? [line.provider] : [])),
         // A client pays, a carrier is paid, the owner earns its price when it has one and pays its providers otherwise
-        money: view.billable === 0 && lines.length === 0
+        money: view.billable === null || (view.billable === 0 && lines.length === 0)
             ? null
             : { leg: role === "client" ? "buy" : role === "carrier" ? "sell" : order.sellPrice ? "sell" : "buy", amount: view.billable },
     }));
@@ -307,24 +312,29 @@ const orderings: Record<"newest" | "period" | "reference", (a: RentalRow, b: Ren
     reference: (a, b) => a.ref.localeCompare(b.ref),
 };
 
-async function detailOf(db: Db, id: string, tenantId: string, orgRole: OrgRole): Promise<RentalDetail> {
+async function detailOf(db: Db, id: string, tenantId: string, permissions: ReadonlySet<Permission>): Promise<RentalDetail> {
     const { row, role } = await loadContract(db, id, tenantId);
     if (row.basis !== "days") throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
 
     const all = await db.select().from(contractAllocation).where(eq(contractAllocation.contractId, row.id)).orderBy(asc(contractAllocation.createdAt));
     const h = await hydrate(db, [row]);
-    const { view, lines } = toRow(row, all, role, tenantId, h);
-    const money = moneyOf(row, lines, all, role, tenantId, h);
+    // What the reader's own permissions let it see: no price at all, the
+    // prices and what the days come to, or those and the books around them
+    const sees = moneyView(permissions);
+    const priced = sees !== "none";
+    const books = sees === "full";
+    const { view, lines } = toRow(row, all, role, tenantId, h, sees);
+    const money = books ? moneyOf(row, lines, all, role, tenantId, h) : null;
 
-    const canManage = role === "owner" && isOrgAuthorized(orgRole, "contract", ["update"]);
+    const canManage = role === "owner" && isOrgAuthorized(permissions, "contract", ["manage"]);
     const open = row.status !== "closed";
     const proposal = row.status === "draft" && row.clientOrgId !== null && await isOnPortal(db, row.clientOrgId);
-    const canAnswer = role === "client" && proposal && isOrgAuthorized(orgRole, "contract", ["update"]);
+    const canAnswer = role === "client" && proposal && isOrgAuthorized(permissions, "contract", ["manage"]);
     const providesSome = role === "owner" || all.some((line) => line.carrierOrgId === tenantId);
     const visibleLineIds = new Set(lines.map((line) => line.id));
 
     // The client reads what it paid; a provider what it was paid on its lines; the owner all of it
-    const payments = h.payments
+    const payments = !books ? [] : h.payments
         .filter((payment) => payment.contractId === row.id)
         .filter((payment) => role === "owner" || (role === "client" ? payment.leg === "sell" : payment.leg === "buy" && payment.allocationId !== null && visibleLineIds.has(payment.allocationId)))
         .map((payment) => ({
@@ -349,14 +359,17 @@ async function detailOf(db: Db, id: string, tenantId: string, orgRole: OrgRole):
         money,
         payments,
         permissions: {
-            canEdit: canManage && open,
-            canAddLine: canManage && open,
-            canEndLine: open && providesSome && isOrgAuthorized(orgRole, "contract", ["update"]),
-            canMark: open && row.status === "active" && providesSome && isOrgAuthorized(orgRole, "contract", ["update"]),
-            canDispute: open && row.status === "active" && role === "client" && isOrgAuthorized(orgRole, "contract", ["update"]),
-            canRecordPayment: canManage,
+            // The terms and a new truck are set with their day rates: a reader
+            // who cannot see them would send them back blank and wipe them
+            canEdit: canManage && open && priced,
+            canAddLine: canManage && open && priced,
+            canEndLine: open && providesSome && isOrgAuthorized(permissions, "contract", ["manage"]),
+            canMark: open && row.status === "active" && providesSome && isOrgAuthorized(permissions, "rental", ["checkin"]),
+            canDispute: open && row.status === "active" && role === "client" && isOrgAuthorized(permissions, "dispute", ["open"]),
+            canRecordPayment: role === "owner" && books && isOrgAuthorized(permissions, "payment", ["record"]),
             canActivate: canManage && row.status === "draft" && !proposal,
-            canAccept: canAnswer,
+            // Nobody accepts a day rate they were not allowed to read
+            canAccept: canAnswer && priced,
             canDecline: canAnswer,
             canClose: canManage && open,
         },
@@ -372,7 +385,7 @@ export const rentalsRouter = createTRPCRouter({
     list: tenantProcedure
         .input(ListInput)
         .query(async ({ ctx, input }): Promise<PagedResult<RentalRow>> => {
-            let items = (await visibleSet(ctx.db, ctx.tenant.organizationId, input.tab, input.search)).map((entry) => entry.view);
+            let items = (await visibleSet(ctx.db, ctx.tenant.organizationId, input.tab, moneyView(ctx.tenant.permissions), input.search)).map((entry) => entry.view);
             if (input.state) items = items.filter((item) => item.state === input.state);
             items.sort(orderings[input.sort]);
             if (input.dir === "desc") items.reverse();
@@ -385,7 +398,10 @@ export const rentalsRouter = createTRPCRouter({
         .input(z.object({ tab: z.enum(RENTAL_TABS).default("own") }))
         .query(async ({ ctx, input }): Promise<RentalStats> => {
             const tenantId = ctx.tenant.organizationId;
-            const set = await visibleSet(ctx.db, tenantId, input.tab);
+            const sees = moneyView(ctx.tenant.permissions);
+            // The strip is the books: a reader without them gets the counts alone
+            const books = sees === "full";
+            const set = await visibleSet(ctx.db, tenantId, input.tab, sees);
             const byState: RentalStats["byState"] = { draft: 0, proposed: 0, active: 0, exhausted: 0, expired: 0, closed: 0 };
             const attention = { disputed: 0, saidNo: 0, silent: 0 };
             const money = new Map<RentalMoneyLine["currency"], RentalMoneyLine>();
@@ -396,6 +412,7 @@ export const rentalsRouter = createTRPCRouter({
                 attention.disputed += entry.view.attention.disputed;
                 attention.saidNo += entry.view.attention.saidNo;
                 attention.silent += entry.view.attention.silent;
+                if (!books) continue;
                 for (const line of moneyOf(entry.order, entry.lines, entry.all, entry.role, tenantId, entry.h).lines) {
                     const target = money.get(line.currency) ?? { currency: line.currency, billable: 0, projected: null, received: 0, receivable: 0, payable: 0, paid: 0, outstanding: 0 };
                     for (const key of ["billable", "received", "receivable", "payable", "paid", "outstanding"] as const) target[key] = round(target[key] + line[key]);
@@ -408,23 +425,23 @@ export const rentalsRouter = createTRPCRouter({
 
     get: tenantProcedure
         .input(z.object({ id: z.string().nonempty() }))
-        .query(({ ctx, input }) => detailOf(ctx.db, input.id, ctx.tenant.organizationId, ctx.tenant.role)),
+        .query(({ ctx, input }) => detailOf(ctx.db, input.id, ctx.tenant.organizationId, ctx.tenant.permissions)),
 
-    create: authorizedTenantProcedure("contract", ["create"])
+    create: authorizedTenantProcedure("contract", ["manage"])
         .input(CreateRentalSchema)
         .mutation(async ({ ctx, input }) => {
             const { order } = await createRental(ctx.db, actorOf(ctx), input);
             return { id: order.id, ref: order.reference ?? "—" };
         }),
 
-    update: authorizedTenantProcedure("contract", ["update"])
+    update: authorizedTenantProcedure("contract", ["manage"])
         .input(UpdateRentalSchema)
         .mutation(async ({ ctx, input }) => {
             const row = await updateRental(ctx.db, actorOf(ctx), input);
             return { id: row.id, version: row.version };
         }),
 
-    transition: authorizedTenantProcedure("contract", ["update"])
+    transition: authorizedTenantProcedure("contract", ["manage"])
         .input(TransitionContractSchema)
         .mutation(async ({ ctx, input }) => {
             const row = await transitionContract(ctx.db, actorOf(ctx), input);
@@ -432,19 +449,19 @@ export const rentalsRouter = createTRPCRouter({
         }),
 
     lines: createTRPCRouter({
-        add: authorizedTenantProcedure("contract", ["update"])
+        add: authorizedTenantProcedure("contract", ["manage"])
             .input(AddLineSchema)
             .mutation(async ({ ctx, input }) => {
                 const row = await addLine(ctx.db, actorOf(ctx), input);
                 return { id: row.id };
             }),
-        end: authorizedTenantProcedure("contract", ["update"])
+        end: authorizedTenantProcedure("contract", ["manage"])
             .input(EndLineSchema)
             .mutation(async ({ ctx, input }) => {
                 const row = await endLine(ctx.db, actorOf(ctx), input);
                 return { id: row.id, endsOn: row.endsOn };
             }),
-        remove: authorizedTenantProcedure("contract", ["update"])
+        remove: authorizedTenantProcedure("contract", ["manage"])
             .input(z.object({ id: z.string().nonempty() }))
             .mutation(async ({ ctx, input }) => {
                 await removeLine(ctx.db, actorOf(ctx), input.id);
@@ -453,19 +470,19 @@ export const rentalsRouter = createTRPCRouter({
     }),
 
     days: createTRPCRouter({
-        mark: authorizedTenantProcedure("contract", ["update"])
+        mark: authorizedTenantProcedure("rental", ["checkin"])
             .input(MarkDaySchema)
             .mutation(async ({ ctx, input }) => {
                 const row = await markDay(ctx.db, actorOf(ctx), input);
                 return { allocationId: row.allocationId, day: row.day, state: row.state };
             }),
-        dispute: authorizedTenantProcedure("contract", ["update"])
+        dispute: authorizedTenantProcedure("dispute", ["open"])
             .input(DisputeDaySchema)
             .mutation(async ({ ctx, input }) => {
                 const row = await disputeDay(ctx.db, actorOf(ctx), input);
                 return { allocationId: row.allocationId, day: row.day };
             }),
-        settle: authorizedTenantProcedure("contract", ["update"])
+        settle: authorizedTenantProcedure("dispute", ["resolve"])
             .input(SettleDisputeSchema)
             .mutation(async ({ ctx, input }) => {
                 const row = await settleDispute(ctx.db, actorOf(ctx), input);
@@ -474,7 +491,7 @@ export const rentalsRouter = createTRPCRouter({
     }),
 
     payments: createTRPCRouter({
-        record: authorizedTenantProcedure("contract", ["update"])
+        record: authorizedTenantProcedure("payment", ["record"])
             .input(RecordRentalPaymentSchema)
             .mutation(async ({ ctx, input }) => {
                 const row = await recordRentalPayment(ctx.db, actorOf(ctx), input);
@@ -486,6 +503,8 @@ export const rentalsRouter = createTRPCRouter({
                 // The detail cuts the payments by role; this is the owner's full list
                 const { role } = await loadContract(ctx.db, input.contractId, ctx.tenant.organizationId);
                 if (role !== "owner") throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+                // Payments are the books: a member without them reads none
+                if (moneyView(ctx.tenant.permissions) !== "full") return [];
                 return (await loadPayments(ctx.db, input.contractId)).map((payment) => ({ ...payment, amount: Number(payment.amount) }));
             }),
     }),

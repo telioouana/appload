@@ -233,6 +233,10 @@ export function LoadSheet({
     const applied = useRef<{ id: string; sellTotal: string; buyTotal: string } | null>(null)
 
     const { data: options } = useQuery({ ...trpc.movements.formOptions.queryOptions(), enabled: open })
+    // Somebody kept from prices files and edits loads without them: a
+    // contract share still prices its trip on the server
+    const { data: session } = useQuery(trpc.me.session.queryOptions())
+    const seesPrices = session?.permissions.includes("price:read") ?? false
 
     const FormSchema = useMemo(
         () => LoadFormSchema((field: LoadMessageField) => ({ error: t(`errors.${field}`) })),
@@ -387,10 +391,10 @@ export function LoadSheet({
             }
         }
 
-        const sell = carrier ? legInput(values.sellTotal, values.sellCurrency, values.sellFiscalRegime) : null
+        const sell = carrier && seesPrices ? legInput(values.sellTotal, values.sellCurrency, values.sellFiscalRegime) : null
         // A load out for quotes has no price of the owner's yet: the
         // transporters name theirs, and the award writes the one picked
-        const buy = values.execution === "partner" && !asking ? legInput(values.buyTotal, values.buyCurrency, values.buyFiscalRegime) : null
+        const buy = values.execution === "partner" && !asking && seesPrices ? legInput(values.buyTotal, values.buyCurrency, values.buyFiscalRegime) : null
 
         const input: CreateMovementInput = {
             execution: values.execution,
@@ -697,13 +701,13 @@ export function LoadSheet({
                                                 label={t("fields.client-reference")}
                                                 placeholder={t("fields.client-reference-placeholder")}
                                             />
-                                            <LegFields
+                                            {seesPrices && <LegFields
                                                 prefix="sell"
                                                 control={control}
                                                 locked={isPending || locked("sellAmounts")}
                                                 title={t("fields.sell")}
                                                 hint={t("fields.sell-hint")}
-                                            />
+                                            />}
                                         </FieldGroup>
                                     </FieldSet>
                                 )}
@@ -762,7 +766,7 @@ export function LoadSheet({
                                                 />
                                             )}
                                             {/* The transporters name the price on a load out for quotes */}
-                                            {!asking && (
+                                            {!asking && seesPrices && (
                                                 <LegFields
                                                     prefix="buy"
                                                     control={control}

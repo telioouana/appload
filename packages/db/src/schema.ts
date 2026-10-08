@@ -7,6 +7,7 @@ export * from "@workspace/db/fx";
 export * from "@workspace/db/kyc-documents";
 export * from "@workspace/db/notifications";
 export * from "@workspace/db/orders";
+export * from "@workspace/db/permissions";
 export * from "@workspace/db/quotes";
 export * from "@workspace/db/rentals";
 export * from "@workspace/db/rls";

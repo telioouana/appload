@@ -3558,9 +3558,10 @@
                 "invitation-expires": "Expires",
                 "invitation-expired": "Expired",
                 "role": {
-                    "owner": "Owner",
-                    "admin": "Admin",
-                    "member": "Member"
+                    "owner": "CEO",
+                    "admin": "Manager",
+                    "procurement": "Procurement / Sales",
+                    "operations": "Operations"
                 },
                 "invite": "Invite owner",
                 "invite-title": "Invite a portal owner",

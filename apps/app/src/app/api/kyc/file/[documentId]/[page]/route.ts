@@ -4,7 +4,6 @@ import { db } from "@workspace/db/db";
 import { auth } from "@workspace/auth/server";
 import { kycDocument } from "@workspace/db/kyc-documents";
 import { getTenantGates } from "@workspace/trpc/tenant-gate";
-import { isOrgAuthorized } from "@workspace/auth/organization-permissions";
 
 import { denyKycPage as deny, streamKycPage } from "@workspace/domain/kyc/file-proxy";
 import { tenantCanReadKycDocument } from "@workspace/domain/kyc/tenant-access";
@@ -33,7 +32,7 @@ export async function GET(
 
     const tenant = await getTenantGates(db, { userId: session.user.id });
 
-    if (!tenant.ok || !isOrgAuthorized(tenant.role, "kyc", ["read"])) return deny(403);
+    if (!tenant.ok) return deny(403);
 
     const { documentId, page } = await params;
     const index = Number(page);

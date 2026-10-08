@@ -83,27 +83,33 @@ function LegBlock({ title, leg, settledLabel }: { title: string; leg: MoneyLeg; 
     const f = useFormatter()
     const money = useMoney()
 
-    const share = leg.total > 0 ? Math.min(100, (leg.settled / leg.total) * 100) : 0
+    // A reader allowed the price but not the books sees no settlement (projection.ts narrowMoney)
+    const settled = leg.settled
+    const share = settled !== null && leg.total > 0 ? Math.min(100, (settled / leg.total) * 100) : 0
 
     return (
         <div className="bg-muted/40 flex flex-col gap-2.5 rounded-xl px-4 py-3">
             <div className="flex items-start justify-between gap-2">
                 <span className="text-muted-foreground text-xs font-medium">{title}</span>
-                <Badge variant={leg.settlement === "completed" ? "default" : "outline"} className="rounded-full font-normal">
-                    {t(`settlement.${leg.settlement}`)}
-                </Badge>
+                {leg.settlement && (
+                    <Badge variant={leg.settlement === "completed" ? "default" : "outline"} className="rounded-full font-normal">
+                        {t(`settlement.${leg.settlement}`)}
+                    </Badge>
+                )}
             </div>
 
             <span className="text-xl leading-tight font-semibold tracking-tight tabular-nums">
                 {money(leg.total, leg.currency)}
             </span>
 
-            <div className="flex flex-col gap-1">
-                <Progress value={share} className="h-1.5" />
-                <span className="text-muted-foreground text-xs tabular-nums">
-                    {settledLabel}: {money(leg.settled, leg.currency)}
-                </span>
-            </div>
+            {settled !== null && (
+                <div className="flex flex-col gap-1">
+                    <Progress value={share} className="h-1.5" />
+                    <span className="text-muted-foreground text-xs tabular-nums">
+                        {settledLabel}: {money(settled, leg.currency)}
+                    </span>
+                </div>
+            )}
 
             <dl className="flex flex-col gap-1.5">
                 {leg.subtotal !== null && (

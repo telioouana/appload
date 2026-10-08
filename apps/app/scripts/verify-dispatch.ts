@@ -97,7 +97,7 @@ const staff = (userId: string, role: "user" | "manager") => ({
 });
 
 /** A stranger to everything below: an existing portal tenant with no part in it. */
-const STRANGER = { user: "kU9US5NBPjNtS5HsSQBW3ZfEZvj7GQSm", org: "49db92eb-c131-467e-8bfc-fe42a7dcc149" };
+const STRANGER = { user: "seed-portal-stranger", org: "bdc445de-4e50-4b13-beb7-024fadbb22d1" };
 
 const loading = { address: "Nampula, Mozambique", placeId: "ChIJOaE2a7M1xhgRdN3KTEt2F8I", country: "Mozambique", state: "Nampula Province" };
 const offloading = { address: "Maputo, Mozambique", placeId: "ChIJ93KwEyKZ5h4RH3-hOGmXzMg", country: "Mozambique", state: "Maputo" };

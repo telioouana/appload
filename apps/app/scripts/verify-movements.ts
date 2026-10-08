@@ -132,7 +132,7 @@ const as = (userId: string) =>
 
 const A = { user: "FT7QysKKfs5NKuut5i2S8Nhg6ItrwyuR", org: "42655a3f-0bd5-4e46-af29-9c5ee342a8aa" }; // shipper
 const B = { user: "a2R9UNA2NTiEo3FS7DxlwgBFUn8EDNU6", org: "9b7674e5-ea7b-416b-a199-6ca6842da718" }; // carrier, owner
-const BM = { user: "AM6u6fxppa9LEkRiMnMDHyrMpThmNrQy", org: B.org }; // carrier, member
+const BM = { user: "AM6u6fxppa9LEkRiMnMDHyrMpThmNrQy", org: B.org }; // carrier, Operações
 const C = { user: "seed-portal-stranger", org: "bdc445de-4e50-4b13-beb7-024fadbb22d1" }; // stranger: Terceiro Teste Portal, seeded 2026-09-30
 
 /** What a reference looks like once the counters name a load (refs.ts). */
@@ -583,13 +583,11 @@ async function main() {
     let loading = bOwn.permissions.transitions.find((option) => option.to === "loading");
     check("…and loading would start with it unapproved", loading?.flags.includes("PHOTOS_UNAPPROVED") ?? false, loading?.flags);
 
-    await expectError("the member who took it cannot also approve it", () =>
-        bm.documents.approve({ id: photo!.id }), "NOT_ALLOWED");
-
-    await b.documents.approve({ id: photo!.id });
+    // B's colleague is Operações, whose profile answers for the loading papers
+    await bm.documents.approve({ id: photo!.id });
     bOwn = await b.get({ id: accepted.id });
     photo = bOwn.documents.find((document) => document.type === "loading-photo");
-    check("B's owner approves it, and the photo says who did", photo?.approvedAt !== null && Boolean(photo?.approvedByName), photo);
+    check("B's Operações approves it, and the photo says who did", photo?.approvedAt !== null && Boolean(photo?.approvedByName), photo);
     loading = bOwn.permissions.transitions.find((option) => option.to === "loading");
     check("…so loading is no longer a gap", !(loading?.flags.includes("PHOTOS_UNAPPROVED") ?? true), loading?.flags);
     check("…and the trail has the approval on it", bOwn.events.some((event) => event.kind === "document" && event.action === "approved"), bOwn.events.filter((event) => event.kind === "document"));

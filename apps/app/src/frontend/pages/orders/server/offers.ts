@@ -12,6 +12,7 @@ import { notify } from "@workspace/domain/notifications";
 import { carrierSnapshot } from "@workspace/domain/orders/carrier-snapshot";
 import { offerPricingColumns, priceOffer } from "@workspace/domain/orders/commission";
 import { applyTransition } from "@workspace/domain/orders/transition";
+import type { MoneyView } from "@workspace/auth/organization-permissions";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
@@ -33,6 +34,7 @@ import {
     scopeOf,
     sideScope,
     toOfferView,
+    viewOf,
     visibleOffers,
     toTRPCError,
     type Db,
@@ -53,7 +55,7 @@ const OFFER_ORDER = [
 ];
 
 /** One offer in the caller's own money, or NOT_FOUND when it is not theirs to read. */
-async function loadOfferView(db: Db, offerId: string, tenant: TenantScope): Promise<OrderOfferView> {
+async function loadOfferView(db: Db, offerId: string, tenant: TenantScope, view: MoneyView): Promise<OrderOfferView> {
     const [row] = await db
         .select(offerColumns(tenant.orgType))
         .from(orderOffer)
@@ -73,7 +75,7 @@ async function loadOfferView(db: Db, offerId: string, tenant: TenantScope): Prom
         throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
     }
 
-    return toOfferView(row, tenant.organizationId);
+    return toOfferView(row, tenant.organizationId, view);
 }
 
 /**
@@ -128,7 +130,7 @@ export const offersRouter = createTRPCRouter({
                 .where(visibleOffers(row.id, reader))
                 .orderBy(...OFFER_ORDER);
 
-            return rows.map((offer) => toOfferView(offer, tenant.organizationId));
+            return rows.map((offer) => toOfferView(offer, tenant.organizationId, viewOf(ctx.tenant)));
         }),
 
     /**
@@ -246,7 +248,7 @@ export const offersRouter = createTRPCRouter({
                     params: { orderId: row.orderId, carrierName },
                 });
 
-                return await loadOfferView(ctx.db, id, tenant);
+                return await loadOfferView(ctx.db, id, tenant, viewOf(ctx.tenant));
             } catch (error) {
                 throw toTRPCError(error);
             }
@@ -257,7 +259,7 @@ export const offersRouter = createTRPCRouter({
      * untouched: repricing with a zero commission would silently wipe a
      * commission staff had set on the row.
      */
-    update: authorizedTenantProcedure("offer", ["update"])
+    update: authorizedTenantProcedure("offer", ["create"])
         .input(z.object({ offerId: z.string().nonempty(), patch: OfferPatchBaseSchema }))
         .mutation(async ({ ctx, input }): Promise<OrderOfferView> => {
             try {
@@ -321,7 +323,7 @@ export const offersRouter = createTRPCRouter({
                     },
                 });
 
-                return await loadOfferView(ctx.db, updated.id, tenant);
+                return await loadOfferView(ctx.db, updated.id, tenant, viewOf(ctx.tenant));
             } catch (error) {
                 throw toTRPCError(error);
             }
@@ -332,7 +334,7 @@ export const offersRouter = createTRPCRouter({
      * offered, and the request goes back to "requested" — the client is
      * waiting on this carrier again.
      */
-    withdraw: authorizedTenantProcedure("offer", ["update"])
+    withdraw: authorizedTenantProcedure("offer", ["create"])
         .input(z.object({ offerId: z.string().nonempty() }))
         .mutation(async ({ ctx, input }): Promise<{ offerId: string }> => {
             try {
@@ -404,7 +406,7 @@ export const offersRouter = createTRPCRouter({
      * Answering an offer and committing the company to one are two different
      * decisions and must not share a statement.
      */
-    accept: authorizedTenantProcedure("order", ["create"])
+    accept: authorizedTenantProcedure("offer", ["update"])
         .input(AcceptOfferBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ orderId: string; status: string; version: number }> => {
             try {

@@ -420,12 +420,7 @@
                     "description": "O email da conta não se altera aqui. Fale com a Appload se precisar de o mudar"
                 },
                 "role": {
-                    "label": "Função na empresa",
-                    "options": {
-                        "owner": "Responsável",
-                        "admin": "Administrador",
-                        "member": "Membro"
-                    }
+                    "label": "Perfil na empresa"
                 },
                 "save": "Guardar",
                 "success": "Perfil actualizado",
@@ -532,22 +527,19 @@
                 "description": "Quem entra no portal em nome da sua empresa",
                 "columns": {
                     "member": "Pessoa",
-                    "role": "Função",
+                    "role": "Perfil",
                     "joined": "Desde",
                     "actions": "Acções"
                 },
                 "roles": {
-                    "owner": "Responsável",
-                    "admin": "Administrador",
-                    "member": "Membro"
+                    "owner": "CEO",
+                    "admin": "Gestor",
+                    "procurement": "Procurement",
+                    "commercial": "Comercial",
+                    "operations": "Operações"
                 },
                 "you": "Você",
                 "actions": "Acções desta pessoa",
-                "promote": {
-                    "owner": "Tornar responsável",
-                    "admin": "Tornar administrador",
-                    "member": "Tornar membro"
-                },
                 "remove": "Remover do portal",
                 "remove-dialog": {
                     "title": "Remover {name}?",
@@ -555,12 +547,14 @@
                     "cancel": "Cancelar",
                     "confirm": "Remover"
                 },
-                "last-owner": "A empresa tem de ter sempre um responsável",
-                "role-changed": "Função actualizada",
+                "role-changed": "Perfil actualizado",
                 "removed": "Membro removido",
                 "error": "Não foi possível concluir a operação",
                 "empty": "Ainda é a única pessoa da sua empresa no portal",
-                "read-only": "Só o responsável e os administradores podem convidar ou alterar membros"
+                "read-only": "Só o CEO e os gestores podem convidar ou alterar pessoas da equipa",
+                "change-to": "Passar a {profile}",
+                "permissions": "Permissões",
+                "acting": "CEO interino até {date}"
             },
             "invite": {
                 "button": "Convidar colega",
@@ -578,14 +572,16 @@
                         "error": "Indique um email válido"
                     },
                     "role": {
-                        "label": "Função",
-                        "placeholder": "Escolha uma função",
-                        "error": "Escolha uma função"
+                        "label": "Perfil",
+                        "placeholder": "Escolha um perfil",
+                        "error": "Escolha um perfil"
                     }
                 },
                 "roles": {
-                    "admin": "Administrador — gere a empresa e a equipa",
-                    "member": "Membro — trabalha nos pedidos"
+                    "admin": "Gestor — direcção e finanças, gere a equipa abaixo",
+                    "procurement": "Procurement — pede cotações, encomenda e adjudica",
+                    "commercial": "Comercial — responde a cotações e subcontrata",
+                    "operations": "Operações — camiões, motoristas, papéis e estados"
                 },
                 "submit": "Enviar convite",
                 "submitting": "A enviar…",
@@ -603,7 +599,7 @@
                 "description": "Convites enviados que ainda não foram aceites",
                 "columns": {
                     "email": "Email",
-                    "role": "Função",
+                    "role": "Perfil",
                     "expires": "Expira",
                     "actions": "Acções"
                 },
@@ -741,7 +737,91 @@
                     "movements-quote": "Cotou uma carga",
                     "movements-declineRequest": "Recusou cotar uma carga",
                     "movements-award": "Adjudicou uma carga a uma cotação",
-                    "movements-sendConfirmation": "Enviou a confirmação do pedido"
+                    "movements-sendConfirmation": "Enviou a confirmação do pedido",
+                    "team-permissions-set": "Alterou as permissões de um colega",
+                    "team-permissions-revoke": "Desfez uma alteração de permissões",
+                    "team-actingOwner-grant": "Nomeou um CEO interino",
+                    "team-actingOwner-revoke": "Terminou um período de CEO interino",
+                    "team-changeProfile": "Mudou o perfil de um colega",
+                    "team-remove": "Removeu um colega do portal"
+                }
+            },
+            "permissions": {
+                "title": "Permissões",
+                "description": "O que esta pessoa pode fazer no portal",
+                "heading": "Permissões de {name}",
+                "self": "As suas permissões. Só quem está acima de si as pode alterar.",
+                "editable": "Ligue ou desligue cada permissão, de vez ou por um período. Só pode ligar permissões que tem.",
+                "read-only": "Só de leitura: só quem está acima desta pessoa pode alterar as suas permissões.",
+                "saved": "Permissões actualizadas",
+                "failed": "Não foi possível alterar as permissões",
+                "error": "Não foi possível carregar as permissões",
+                "reset": "Repor o perfil",
+                "temporary": "Temporário",
+                "on-for-window": "Ligar neste período",
+                "off-for-window": "Desligar neste período",
+                "until": "até {date}",
+                "upcoming-on": "liga a {date}",
+                "upcoming-off": "desliga a {date}",
+                "hint": {
+                    "default": "do perfil",
+                    "extra": "extra",
+                    "removed": "removida"
+                },
+                "groups": {
+                    "money": "Dinheiro",
+                    "orders": "Pedidos",
+                    "contracts": "Pedidos com várias viagens e alugueres",
+                    "partners": "Parceiros",
+                    "fleet": "Frota e motoristas",
+                    "tools": "Ferramentas",
+                    "company": "Empresa"
+                },
+                "labels": {
+                    "price:read": "Ver preços de pedidos, propostas e cotações",
+                    "finance:read": "Ver indicadores financeiros: custos, margem, resultados, pagamentos",
+                    "payment:record": "Registar pagamentos e custos",
+                    "order:create": "Criar pedidos, pedir cotações, enviar a transportadores",
+                    "offer:create": "Responder a cotações de clientes",
+                    "offer:update": "Aceitar uma proposta, adjudicar, reservar",
+                    "order:update": "Editar pedidos e retirar um pedido antes da reserva",
+                    "order:cancel": "Cancelar um pedido reservado",
+                    "dispatch:assign": "Atribuir camião e motorista, verificação de saída",
+                    "status:change": "Mudar o estado",
+                    "document:upload": "Carregar papéis de carga, fotos e POD",
+                    "document:approve": "Aprovar papéis",
+                    "trip:create": "Viagens na frota própria (sem preço)",
+                    "dispute:open": "Abrir uma disputa",
+                    "dispute:resolve": "Resolver uma disputa",
+                    "contract:manage": "Criar, propor, aceitar e fechar pedidos com várias viagens e alugueres",
+                    "contract:file": "Registar as viagens do dia de uma parte",
+                    "rental:checkin": "Check-ins de aluguer, marcar um dia",
+                    "partner:manage": "Pedir, aceitar e remover transportadores e clientes",
+                    "report:read": "Página de análise e KPIs dos parceiros",
+                    "fleet:manage": "Registar camiões, reboques e motoristas",
+                    "kyc:upload": "Carregar os seus papéis (KYC)",
+                    "thread:read": "Ler as conversas",
+                    "thread:send": "Enviar mensagens",
+                    "export:csv": "Exportar CSV",
+                    "order:pdf": "Enviar e descarregar o PDF do pedido (mostra o preço)",
+                    "organization:update": "Editar o perfil e os papéis da empresa",
+                    "team:manage": "Equipa: convidar, remover, mudar perfil, editar permissões",
+                    "security:manage": "Segurança: acesso do suporte e registo de actividade",
+                    "subscription:read": "Ver o plano"
+                },
+                "acting": {
+                    "title": "CEO interino",
+                    "description": "Por um período, esta pessoa tem todas as permissões do CEO e gere a equipa abaixo do CEO. Nunca edita as suas próprias permissões nem transfere a empresa. Termina sozinho.",
+                    "live": "CEO interino de {from} até {until}",
+                    "upcoming": "Será CEO interino de {from} até {until}",
+                    "grant": "Nomear CEO interino",
+                    "revoke": "Terminar agora"
+                },
+                "window": {
+                    "from": "De",
+                    "until": "Até",
+                    "zone": "Hora de Maputo. Termina sozinho no fim do período.",
+                    "invalid": "O fim tem de ser depois do início e ainda no futuro."
                 }
             }
         },

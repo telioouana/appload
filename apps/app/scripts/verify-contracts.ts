@@ -181,14 +181,14 @@ async function main() {
     check("the strip counts the priced share, committed and drawn", grew.committed === 900_000 && grew.drawn === 450_000 && grew.remaining === 450_000, grew);
 
     // The order's money, read from its trips: the owner owes B the trip, pays half, and the order says so
-    const unpaid = afterOne.money.lines.find((line) => line.currency === "MZN");
+    const unpaid = afterOne.money!.lines.find((line) => line.currency === "MZN");
     check("the order owes its transporter the trip filed", unpaid?.payable === 450_000 && unpaid.paid === 0 && unpaid.outstanding === 450_000, afterOne.money);
-    check("…per share", afterOne.money.byShare.some((share) => share.allocationId === shareB.id && share.outstanding === 450_000), afterOne.money.byShare);
+    check("…per share", afterOne.money!.byShare.some((share) => share.allocationId === shareB.id && share.outstanding === 450_000), afterOne.money!.byShare);
     check("the trip row says it is pending and may be paid from here", afterOne.trips[0]?.settlement === "pending" && afterOne.trips[0]?.canRecordPayment === true, afterOne.trips[0]);
     await loads(A.user).recordPayment({ id: first.id, expectedVersion: (await loads(A.user).get({ id: first.id })).version, leg: "buy", amount: 225_000 });
-    const halfPaid = (await contracts(A.user).get({ id: created.id })).money.lines.find((line) => line.currency === "MZN");
+    const halfPaid = (await contracts(A.user).get({ id: created.id })).money!.lines.find((line) => line.currency === "MZN");
     check("a payment on the trip moves the order's money", halfPaid?.paid === 225_000 && halfPaid.outstanding === 225_000, halfPaid);
-    const asCarrierPaid = (await contracts(B.user).get({ id: created.id })).money.lines.find((line) => line.currency === "MZN");
+    const asCarrierPaid = (await contracts(B.user).get({ id: created.id })).money!.lines.find((line) => line.currency === "MZN");
     check("the transporter reads the same from its side", asCarrierPaid?.received === 225_000 && asCarrierPaid.receivable === 225_000 && asCarrierPaid.committed === 900_000, asCarrierPaid);
     check("the strip totals in meticais at a rate", moneyAfter.total !== null && moneyAfter.total.committed >= mzn(moneyAfter).committed, moneyAfter.total);
 

@@ -32,7 +32,7 @@ const partyOf = (row: MovementRow, scope: MovementScope) =>
  * and its own trucks earn it nothing, so it gets neither "to receive" nor,
  * on its trips, a client.
  */
-export function useMovementColumns({ scope, orgType }: { scope: MovementScope; orgType: OrgType }) {
+export function useMovementColumns({ scope, orgType, seesPrices }: { scope: MovementScope; orgType: OrgType; seesPrices: boolean }) {
     const t = useTranslations("App.loads")
     const f = useFormatter()
     const unitLabel = useUnitLabel()
@@ -223,7 +223,8 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                     )
                 },
             },
-            carrier && {
+            // Somebody kept from prices gets no price column at all, not one of blanks
+            carrier && seesPrices && {
                 id: "receivable",
                 header: t("columns.receivable"),
                 size: 140,
@@ -232,7 +233,7 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                     ? <Money className="text-[13px]" amount={row.original.receivable.total} currency={row.original.receivable.currency} />
                     : <EmptyValue label={t("values.no-price")} />,
             },
-            scope === "orders" && {
+            scope === "orders" && seesPrices && {
                 id: "payable",
                 header: t("columns.payable"),
                 size: 140,
@@ -251,5 +252,5 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
         ]
 
         return columns.filter((column): column is ColumnDef<MovementRow, unknown> => Boolean(column))
-    }, [t, f, unitLabel, scope, orgType])
+    }, [t, f, unitLabel, scope, orgType, seesPrices])
 }

@@ -10,6 +10,7 @@ import { IconCheck, IconMailForward, IconUserPlus, IconX } from "@tabler/icons-r
 
 import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
 import { isAuthorized } from "@workspace/auth/user-permissions"
+import { profileOf } from "@workspace/auth/organization-permissions"
 import { SUBSCRIPTION_PLAN, type SubscriptionPlan } from "@workspace/db/types"
 
 import { Badge } from "@workspace/ui/components/badge"
@@ -140,7 +141,7 @@ export function PortalSection({
                         {access.data.members.map((row) => (
                             <KeyValue key={row.id} label={row.name}>
                                 <Mono>{row.email}</Mono>
-                                <Badge variant="secondary">{t(`role.${roleLabel(row.role)}`)}</Badge>
+                                <Badge variant="secondary">{t(`role.${profileOf(row.role)}`)}</Badge>
                             </KeyValue>
                         ))}
 
@@ -169,9 +170,6 @@ export function PortalSection({
         </div>
     )
 }
-
-/** Better Auth keeps whatever role string it was handed; keep the copy honest. */
-const roleLabel = (role: string) => (role === "owner" || role === "admin" ? role : "member")
 
 // ---------------------------------------------------------------------------
 // Claims

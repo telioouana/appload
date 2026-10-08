@@ -8,7 +8,7 @@ import type { db as Database } from "@workspace/db/db";
 import { driver, truck } from "@workspace/db/fleet";
 import { movement, type Movement } from "@workspace/db/movements";
 import { organization, user } from "@workspace/db/users";
-import { isOrgAuthorized, type OrgRole } from "@workspace/auth/organization-permissions";
+import { isOrgAuthorized, moneyView, type MoneyView, type Permission } from "@workspace/auth/organization-permissions";
 import { loadContract, roleOn, visibleContracts, type ContractRole } from "@workspace/domain/contracts/access";
 import {
     addAllocation,
@@ -269,22 +269,24 @@ async function rigsFor(db: Db, allocations: ContractAllocation[]) {
  * What a trip is worth to whoever is reading, and where its settlement
  * stands: the buy leg on the owner's partner row (what it pays out) and on
  * a row somebody else owns (what the reader is paid or pays), the sell leg
- * on the reader's own row otherwise.
+ * on the reader's own row otherwise. The reader's own permissions narrow
+ * it further: no price reads no total, and the settlement is the books'.
  */
-function tripTotal(row: Movement, tenantId: string): Pick<ContractTripRow, "total" | "currency" | "settlement" | "settled" | "canRecordPayment"> {
+function tripTotal(row: Movement, tenantId: string, view: MoneyView, mayRecord: boolean): Pick<ContractTripRow, "total" | "currency" | "settlement" | "settled" | "canRecordPayment"> {
     const owned = row.organizationId === tenantId;
     const buy = (owned && row.execution === "partner") || !owned;
-    const total = buy ? row.buyTotal : row.sellTotal;
+    const total = view === "none" ? null : buy ? row.buyTotal : row.sellTotal;
+    const books = view === "full" && total !== null;
     return {
         total: total === null ? null : Number(total),
-        currency: buy ? row.buyCurrency : row.sellCurrency,
-        settlement: total === null ? null : buy ? row.buySettlement : row.sellSettlement,
-        settled: total === null ? null : Number(buy ? row.buyPaidAmount : row.sellReceivedAmount),
-        canRecordPayment: owned && total !== null && row.status !== "cancelled",
+        currency: view === "none" ? null : buy ? row.buyCurrency : row.sellCurrency,
+        settlement: books ? buy ? row.buySettlement : row.sellSettlement : null,
+        settled: books ? Number(buy ? row.buyPaidAmount : row.sellReceivedAmount) : null,
+        canRecordPayment: books && mayRecord && owned && row.status !== "cancelled",
     };
 }
 
-async function detailOf(db: Db, id: string, tenantId: string, orgRole: OrgRole): Promise<ContractDetail> {
+async function detailOf(db: Db, id: string, tenantId: string, permissions: ReadonlySet<Permission>): Promise<ContractDetail> {
     const { row, allocations: mine, role } = await loadContract(db, id, tenantId);
     // The owner's whole set decides the state even when the reader sees a slice
     const all = role === "owner" ? mine : await db.select().from(contractAllocation).where(eq(contractAllocation.contractId, row.id));
@@ -302,25 +304,32 @@ async function detailOf(db: Db, id: string, tenantId: string, orgRole: OrgRole):
         .from(movement)
         .where(and(inArray(movement.contractAllocationId, under.map((share) => share.id)), visibleMovements(tenantId)))
         .orderBy(desc(movement.createdAt));
-    const money = foldOrderMoney({
-        role,
-        tenantId,
-        contract: { basis: row.basis, committedQty: row.committedQty, currency: row.currency, sellPrice: row.sellPrice },
-        shares: visible,
-        trips,
-    });
+    // What the reader's own permissions let it see: no price at all, the
+    // prices alone, or the prices and the books the trips keep around them
+    const sees = moneyView(permissions);
+    const priced = sees !== "none";
+    const money = sees === "full"
+        ? foldOrderMoney({
+            role,
+            tenantId,
+            contract: { basis: row.basis, committedQty: row.committedQty, currency: row.currency, sellPrice: row.sellPrice },
+            shares: visible,
+            trips,
+        })
+        : null;
+    const mayRecord = isOrgAuthorized(permissions, "payment", ["record"]);
 
-    const canManage = role === "owner" && isOrgAuthorized(orgRole, "contract", ["update"]);
+    const canManage = role === "owner" && isOrgAuthorized(permissions, "contract", ["manage"]);
     const open = row.status !== "closed";
     // A draft naming a client on the portal is a proposal: the client accepts it
     const proposal = row.status === "draft" && row.clientOrgId !== null && await isOnPortal(db, row.clientOrgId);
-    const canAnswer = role === "client" && proposal && isOrgAuthorized(orgRole, "contract", ["update"]);
+    const canAnswer = role === "client" && proposal && isOrgAuthorized(permissions, "contract", ["manage"]);
 
     return {
         ...view,
         clientReference: role === "carrier" ? null : row.clientReference,
         fiscalRegime: row.fiscalRegime,
-        sellPrice: role === "carrier" ? null : row.sellPrice,
+        sellPrice: role === "carrier" || !priced ? null : row.sellPrice,
         fileUrl: role === "carrier" ? null : row.fileUrl,
         fileName: role === "carrier" ? null : row.fileName,
         notes: role === "owner" ? row.notes : null,
@@ -331,7 +340,7 @@ async function detailOf(db: Db, id: string, tenantId: string, orgRole: OrgRole):
                 ? { id: share.carrierOrgId, name: share.carrierOrgId ? names.get(share.carrierOrgId) ?? null : share.carrierName }
                 : null,
             shareQty: share.shareQty === null ? null : Number(share.shareQty),
-            buyPrice: share.buyPrice,
+            buyPrice: priced ? share.buyPrice : null,
             truck: share.truckId ? rigs.trucks.get(share.truckId) ?? null : null,
             driver: share.driverId ? rigs.drivers.get(share.driverId) ?? null : null,
             truckPlate: share.truckPlate,
@@ -347,19 +356,22 @@ async function detailOf(db: Db, id: string, tenantId: string, orgRole: OrgRole):
             expectedLoadingDate: trip.expectedLoadingDate,
             weight: trip.weight === null ? null : Number(trip.weight),
             weightUnit: trip.weightUnit,
-            ...tripTotal(trip, tenantId),
+            ...tripTotal(trip, tenantId, sees, mayRecord),
             createdAt: trip.createdAt,
         })),
         money,
         permissions: {
-            canEdit: canManage && open,
-            canAllocate: canManage && open,
+            // The terms and the shares are edited with their prices: a reader
+            // who cannot see them would send them back blank and wipe them
+            canEdit: canManage && open && priced,
+            canAllocate: canManage && open && priced,
             canActivate: canManage && row.status === "draft" && !proposal,
-            canAccept: canAnswer,
+            // Nobody accepts a price they were not allowed to read
+            canAccept: canAnswer && priced,
             canDecline: canAnswer,
             canClose: canManage && open,
             canFileTrip: role !== "client" && acceptsTrips(view.state) && visible.length > 0
-                && isOrgAuthorized(orgRole, "trip", ["create"]),
+                && isOrgAuthorized(permissions, "contract", ["file"]),
         },
     };
 }
@@ -396,6 +408,8 @@ export const contractsRouter = createTRPCRouter({
         .input(z.object({ tab: z.enum(CONTRACT_TABS).default("own") }))
         .query(async ({ ctx, input }): Promise<ContractStats> => {
             const tenantId = ctx.tenant.organizationId;
+            // The strip is the books: a reader without them gets the counts alone
+            const books = moneyView(ctx.tenant.permissions) === "full";
             const { rows, byContract, usage, names } = await visibleSet(ctx.db, tenantId, input.tab);
             const byState: ContractStats["byState"] = { draft: 0, proposed: 0, active: 0, exhausted: 0, expired: 0, closed: 0 };
             const lines = new Map<ContractMoneyLine["currency"], ContractMoneyLine>();
@@ -404,7 +418,7 @@ export const contractsRouter = createTRPCRouter({
 
             // Every trip under the tab's standing orders, once, for what has moved on them
             const liveIds = rows.filter((row) => row.status !== "closed").flatMap((row) => (byContract.get(row.id) ?? []).map((share) => share.id));
-            const trips = liveIds.length === 0 ? [] : await ctx.db
+            const trips = liveIds.length === 0 || !books ? [] : await ctx.db
                 .select()
                 .from(movement)
                 .where(and(inArray(movement.contractAllocationId, liveIds), visibleMovements(tenantId)));
@@ -418,7 +432,7 @@ export const contractsRouter = createTRPCRouter({
                 const { view, progress, mine } = toRow(row, all, role, tenantId, usage, names);
                 byState[view.state] += 1;
                 // A closed contract's money is history; the strip is what stands
-                if (row.status === "closed") continue;
+                if (row.status === "closed" || !books) continue;
 
                 const line = lines.get(row.currency) ?? emptyLine(row.currency);
                 for (const { committed, drawn } of moneyOf(row, mine, role, progress)) {
@@ -460,23 +474,23 @@ export const contractsRouter = createTRPCRouter({
 
     get: tenantProcedure
         .input(z.object({ id: z.string().nonempty() }))
-        .query(({ ctx, input }) => detailOf(ctx.db, input.id, ctx.tenant.organizationId, ctx.tenant.role)),
+        .query(({ ctx, input }) => detailOf(ctx.db, input.id, ctx.tenant.organizationId, ctx.tenant.permissions)),
 
-    create: authorizedTenantProcedure("contract", ["create"])
+    create: authorizedTenantProcedure("contract", ["manage"])
         .input(ContractInputSchema)
         .mutation(async ({ ctx, input }) => {
             const row = await createContract(ctx.db, actorOf(ctx), input);
             return { id: row.id, ref: row.reference ?? "—" };
         }),
 
-    update: authorizedTenantProcedure("contract", ["update"])
+    update: authorizedTenantProcedure("contract", ["manage"])
         .input(UpdateContractSchema)
         .mutation(async ({ ctx, input }) => {
             const row = await updateContract(ctx.db, actorOf(ctx), input);
             return { id: row.id, version: row.version };
         }),
 
-    transition: authorizedTenantProcedure("contract", ["update"])
+    transition: authorizedTenantProcedure("contract", ["manage"])
         .input(TransitionContractSchema)
         .mutation(async ({ ctx, input }) => {
             const row = await transitionContract(ctx.db, actorOf(ctx), input);
@@ -484,7 +498,7 @@ export const contractsRouter = createTRPCRouter({
         }),
 
     /** The signed paper: uploaded by the client, only its address is kept here. Null takes it off. */
-    setFile: authorizedTenantProcedure("contract", ["update"])
+    setFile: authorizedTenantProcedure("contract", ["manage"])
         .input(SetContractFileSchema)
         .mutation(async ({ ctx, input }) => {
             // Only a file uploaded against this contract's own folder can be its paper
@@ -515,19 +529,19 @@ export const contractsRouter = createTRPCRouter({
         }),
 
     allocations: createTRPCRouter({
-        add: authorizedTenantProcedure("contract", ["update"])
+        add: authorizedTenantProcedure("contract", ["manage"])
             .input(AddAllocationSchema)
             .mutation(async ({ ctx, input }) => {
                 const row = await addAllocation(ctx.db, actorOf(ctx), input);
                 return { id: row.id };
             }),
-        update: authorizedTenantProcedure("contract", ["update"])
+        update: authorizedTenantProcedure("contract", ["manage"])
             .input(UpdateAllocationSchema)
             .mutation(async ({ ctx, input }) => {
                 const row = await updateAllocation(ctx.db, actorOf(ctx), input);
                 return { id: row.id };
             }),
-        remove: authorizedTenantProcedure("contract", ["update"])
+        remove: authorizedTenantProcedure("contract", ["manage"])
             .input(z.object({ id: z.string().nonempty() }))
             .mutation(async ({ ctx, input }) => {
                 await removeAllocation(ctx.db, actorOf(ctx), input.id);
@@ -535,12 +549,20 @@ export const contractsRouter = createTRPCRouter({
             }),
     }),
 
-    /** What a load filed under a share starts out as — every field an editable default. */
+    /**
+     * What a load filed under a share starts out as — every field an editable
+     * default. A reader who sees no price gets the legs blank; the load's own
+     * create door prices it from the share on the server all the same.
+     */
     tripDefaults: tenantProcedure
         .input(TripDefaultsSchema)
-        .query(({ ctx, input }): Promise<TripDefaults> =>
-            tripDefaultsFor(ctx.db, ctx.tenant.organizationId, input.allocationId, {
+        .query(async ({ ctx, input }): Promise<TripDefaults> => {
+            const defaults = await tripDefaultsFor(ctx.db, ctx.tenant.organizationId, input.allocationId, {
                 weight: input.weight ?? null,
                 weightUnit: input.weightUnit ?? null,
-            })),
+            });
+            return moneyView(ctx.tenant.permissions) === "none"
+                ? { ...defaults, sell: null, buy: null, sellModel: null, buyModel: null }
+                : defaults;
+        }),
 });

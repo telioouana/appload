@@ -126,8 +126,8 @@ export type ContractDetail = ContractRow & {
     version: number;
     allocations: AllocationView[];
     trips: ContractTripRow[];
-    /** The trips' money added up from where the reader stands (domain contracts/money.ts) */
-    money: OrderMoney;
+    /** The trips' money added up from where the reader stands (domain contracts/money.ts); null to a reader without the books */
+    money: OrderMoney | null;
     permissions: ContractPermissions;
 };
 

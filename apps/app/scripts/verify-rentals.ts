@@ -127,7 +127,7 @@ async function main() {
     const line1 = asOwner.lines[0]!;
     const line2 = asOwner.lines[1]!;
     check("every working day so far is billed, on both trucks", line1.billing.billableDays === expectedDays && line2.billing.billableDays === expectedDays && line1.billing.amount === expectedDays * 25_000, { expectedDays, line1: line1.billing });
-    check("the money follows", asOwner.money.lines[0]?.billable === 2 * expectedDays * 25_000 && asOwner.money.lines[0]?.projected === null, asOwner.money.lines[0]);
+    check("the money follows", asOwner.money!.lines[0]?.billable === 2 * expectedDays * 25_000 && asOwner.money!.lines[0]?.projected === null, asOwner.money!.lines[0]);
     check("the list shows the period open", asOwner.endsOn === null && asOwner.periodDays === null);
 
     // The first working day of the period, and a day that is a Sunday is never asked for
@@ -159,9 +159,9 @@ async function main() {
     await as(B.user).rentals.payments.record({ contractId: created.id, leg: "sell", amount: 100_000, currency: "MZN", paidAt: new Date(), reference: "TRF 1" });
     asOwner = await as(B.user).rentals.get({ id: created.id });
     asClient = await as(A.user).rentals.get({ id: created.id });
-    const ownerBillable = asOwner.lines.reduce((sum, line) => sum + line.billing.amount, 0);
-    check("the owner reads what came in and what is still owed", asOwner.money.lines[0]?.received === 100_000 && asOwner.money.lines[0]?.receivable === ownerBillable - 100_000, asOwner.money.lines[0]);
-    check("the client reads the same from its side", asClient.money.lines[0]?.received === 100_000 && asClient.money.lines[0]?.billable === ownerBillable && asClient.payments.length === 1, asClient.money.lines[0]);
+    const ownerBillable = asOwner.lines.reduce((sum, line) => sum + line.billing.amount!, 0);
+    check("the owner reads what came in and what is still owed", asOwner.money!.lines[0]?.received === 100_000 && asOwner.money!.lines[0]?.receivable === ownerBillable - 100_000, asOwner.money!.lines[0]);
+    check("the client reads the same from its side", asClient.money!.lines[0]?.received === 100_000 && asClient.money!.lines[0]?.billable === ownerBillable && asClient.payments.length === 1, asClient.money!.lines[0]);
     check("the client cannot record a payment", (await refusal(() => as(A.user).rentals.payments.record({ contractId: created.id, leg: "sell", amount: 1, currency: "MZN", paidAt: new Date() }))) === "NOT_FOUND");
     check("a correction needs a reference", (await refusal(() => as(B.user).rentals.payments.record({ contractId: created.id, leg: "sell", amount: -1, currency: "MZN", paidAt: new Date() }))) === "CORRECTION_NEEDS_REFERENCE");
 
