@@ -28,9 +28,10 @@ import { analyticsInput, PARTNER_SORTS, type AnalyticsPartnerSort } from "@/fron
  *
  * Money is USD from this company's own leg, converted at each trip's own
  * loading-day rate; a partner whose trips have no rate yet shows a dash
- * rather than a zero.
+ * rather than a zero. A reader without the company's finances (`full` false)
+ * has no dollar column and no dollar order — the server sends neither.
  */
-export function PartnersRanking() {
+export function PartnersRanking({ full }: { full: boolean }) {
     const t = useTranslations("App.analytics")
     const f = useFormatter()
     const trpc = useTRPC()
@@ -67,7 +68,7 @@ export function PartnersRanking() {
                     </SelectTrigger>
 
                     <SelectContent position="popper">
-                        {PARTNER_SORTS.map((option) => (
+                        {PARTNER_SORTS.filter((option) => full || option !== "usd").map((option) => (
                             <SelectItem key={option} value={option}>
                                 {t(`partners.sort.${option}`)}
                             </SelectItem>
@@ -87,7 +88,9 @@ export function PartnersRanking() {
                                 <TableHead className={cn(head, "text-right")}>{t("partners.columns.orders")}</TableHead>
                                 <TableHead className={cn(head, "text-right")}>{t("partners.columns.tons")}</TableHead>
                                 <TableHead className={cn(head, "text-right")}>{t("partners.columns.on-time")}</TableHead>
-                                <TableHead className={cn(head, "text-right")}>{t("partners.columns.usd")}</TableHead>
+                                {full && (
+                                    <TableHead className={cn(head, "text-right")}>{t("partners.columns.usd")}</TableHead>
+                                )}
                                 <TableHead className={cn(head, "text-right")}>{t("partners.columns.share")}</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -105,9 +108,11 @@ export function PartnersRanking() {
                                     <TableCell className="px-2 py-2 text-right tabular-nums">
                                         {percent(row.onTimeRate)}
                                     </TableCell>
-                                    <TableCell className="px-2 py-2 text-right tabular-nums">
-                                        {row.usd === null ? none : f.number(row.usd, { maximumFractionDigits: 0 })}
-                                    </TableCell>
+                                    {full && (
+                                        <TableCell className="px-2 py-2 text-right tabular-nums">
+                                            {row.usd === null ? none : f.number(row.usd, { maximumFractionDigits: 0 })}
+                                        </TableCell>
+                                    )}
                                     <TableCell className="text-muted-foreground px-2 py-2 text-right tabular-nums">
                                         {percent(row.share)}
                                     </TableCell>

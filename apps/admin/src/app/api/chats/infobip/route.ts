@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq, inArray } from "drizzle-orm";
 
-import { db } from "@workspace/db/db";
+// The service role, not the staff one: this runs for every company's
+// loads and nobody is signed in (packages/db/src/schemas/rls.ts)
+import { serviceDb as db } from "@workspace/db/db";
 import { chatConversation, chatMessage, trackingRequest } from "@workspace/db/chats";
 import {
     locationRequestText,
@@ -17,6 +19,7 @@ import { reverseGeocode } from "@workspace/maps/server/reverse-geocode";
 
 import { recordOrderLocation, resolveOrderForConversation } from "@workspace/domain/tracking/locations";
 import { recordMovementLocation, reportMovementDelivery, resolveMovementForConversation, respondMovementRequests } from "@workspace/domain/tracking/movements";
+import { isRentalCheckinPayload, recordRentalAnswer } from "@workspace/domain/rentals/checkin";
 
 /**
  * Infobip webhook: inbound WhatsApp/SMS messages AND delivery reports both
@@ -149,7 +152,12 @@ export async function POST(request: NextRequest) {
                 .set({ lastMessageAt: saved.createdAt })
                 .where(eq(chatConversation.id, conversation.id));
 
-            if (message.kind === "button") {
+            if (message.kind === "button" && isRentalCheckinPayload(message.buttonPayload)) {
+                // Sim or Não to the rental's morning question: filed on the
+                // line's day, believed only when the question went out
+                const filed = await recordRentalAnswer(db, { payload: message.buttonPayload, conversationId: conversation.id });
+                if (!filed) console.warn("[infobip] rental answer not filed:", message.buttonPayload);
+            } else if (message.kind === "button") {
                 // A tap on the template's "share location" button opens the
                 // 24h session window but carries no location yet — answer
                 // with WhatsApp's native location-request so the picker is

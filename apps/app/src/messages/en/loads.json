@@ -64,7 +64,10 @@
         "NO_TRUCK": "No truck",
         "NO_CARRIER": "No transporter",
         "NO_PRICE": "No agreed price",
-        "PHOTOS_UNAPPROVED": "Loading photos not yet approved"
+        "PHOTOS_UNAPPROVED": "Loading photos not yet approved",
+        "CONTRACT_OVER_COMMITTED": "Over the quantity ordered",
+        "CONTRACT_LANE_MISMATCH": "Off the order's lane",
+        "TRUCK_ON_RENTAL": "Truck on a rental"
     },
     "header": {
         "flags": "{count, plural, one {# flag} other {# flags}}"
@@ -88,7 +91,8 @@
         "dates": "Dates",
         "receivable": "To receive",
         "payable": "To pay",
-        "last-ping": "Last position"
+        "last-ping": "Last position",
+        "kind": "Type"
     },
     "values": {
         "own-account": "Own account",
@@ -98,7 +102,16 @@
         "due": "Due {date}",
         "no-due-date": "No due date",
         "no-price": "No price",
-        "no-pings": "No positions"
+        "no-pings": "No positions",
+        "parent-trip": "trip {position} · {ref}",
+        "parent-trip-of": "trip {position} of {of} · {ref}",
+        "progress-of": "{done} of {of}",
+        "any-route": "Any route",
+        "no-site": "Site to be set",
+        "until": "Until {date}",
+        "open-period": "Open-ended",
+        "trucks": "{count, plural, one {# truck} other {# trucks}}",
+        "several-partners": "{count, plural, one {# transporter} other {# transporters}}"
     },
     "tiles": {
         "received": "Offered to you",
@@ -447,7 +460,15 @@
         "unnamed": "Unnamed place",
         "picked": "picked address",
         "off-route-chip": "Off route",
-        "off-route": "The truck last reported from more than 10 km off the planned route."
+        "off-route": "The truck last reported from more than 10 km off the planned route.",
+        "progress": {
+            "covered": "{covered} of {total} km",
+            "remaining": "{km} km to go",
+            "eta": "ETA {time} · {speed} km/h on average",
+            "eta-pending": "ETA after the first hour on the road",
+            "behind": "Behind schedule",
+            "approximate": "As the crow flies: the truck is off the planned route, or no route is known."
+        }
     },
     "thread": {
         "title": "Driver messages",
@@ -510,6 +531,16 @@
     },
     "detail": {
         "meta": "Load",
+        "contract": {
+            "title": "Multi-trip order",
+            "contract": "Order",
+            "with": "With",
+            "own-fleet": "Own fleet",
+            "state": "State",
+            "remaining": "Left on the share",
+            "used-up": "Used up",
+            "open": "Open-ended"
+        },
         "error": "This load could not be opened. It may have been removed, or not be shared with you.",
         "back": "Back to the list",
         "footer": "Filed {created} · updated {updated}",
@@ -557,6 +588,15 @@
             "own-fleet-hint": "A trip on your own trucks",
             "partner": "A partner",
             "partner-hint": "An order another transporter moves"
+        },
+        "contract": {
+            "label": "Multi-trip order",
+            "hint": "File this trip under a multi-trip order: its parties, lane and price fill in as defaults you can change.",
+            "none": "None",
+            "own-fleet": "Own fleet",
+            "option": "{ref} · {counterparty} · {remaining}",
+            "open-share": "no limit",
+            "prefilled": "Filled in from {ref}. Everything can still be changed."
         },
         "sections": {
             "lane": "Lane",
@@ -658,7 +698,17 @@
         "file": "File load",
         "save": "Save changes",
         "saving": "Saving…",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "kind": {
+            "title": "New load",
+            "description": "One trip, or an order that needs several?",
+            "single": "One trip",
+            "single-hint": "One truck, one cargo, one delivery.",
+            "multi": "Several trips",
+            "multi-hint": "A quantity, or a number of trips, over a period. Trucks are filed as they come to load and the order counts down.",
+            "rental": "Truck rental",
+            "rental-hint": "One or more trucks at a client's service for a period, paid by the day. No lane: the diary says which days counted."
+        }
     },
     "toasts": {
         "created": "{ref} filed",
@@ -823,8 +873,13 @@
         "rateLimited": "You have asked for the location several times already. Try again later.",
         "infobipNotConfigured": "WhatsApp is not set up on this environment.",
         "subscriptionRequired": "A plan is needed to track loads.",
-        "quotaExceeded": "This month's plan is used up.",
         "sendFailed": "The request was saved, but the message did not reach the driver.",
+        "moduleDisabled": "This module is switched off in your company. The CEO can switch it on in Settings › Modules.",
         "unknown": "Something went wrong. Try again."
+    },
+    "kinds": {
+        "trip": "Trip",
+        "multi": "Multi-trip",
+        "rental": "Rental"
     }
 }

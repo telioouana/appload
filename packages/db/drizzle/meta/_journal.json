@@ -183,6 +183,83 @@
       "when": 1790766875847,
       "tag": "0025_plate_fks_cascade",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790773659689,
+      "tag": "0026_trust_wall",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1790779557873,
+      "tag": "0027_contracts",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790783536551,
+      "tag": "0028_open_contracts",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790784712976,
+      "tag": "0029_contract_quote_link",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1790797438391,
+      "tag": "0030_support_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790810096606,
+      "tag": "0031_activity_log_org_idx",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790846279639,
+      "tag": "0032_open_period",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790852350266,
+      "tag": "0033_rentals",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1791397547964,
+      "tag": "0034_member_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1791437218609,
+      "tag": "0035_organization_modules",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1791439964869,
+      "tag": "0036_tiers",
+      "breakpoints": true
     }
   ]
 }

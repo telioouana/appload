@@ -282,6 +282,12 @@
                 "duplicatePhone": "Esse telefone já é usado por outra empresa",
                 "notFound": "Não encontrámos essa empresa",
                 "unknown": "Algo correu mal. Tente novamente"
+            },
+            "data-link": "O que a Appload vê dos seus dados",
+            "modules": {
+                "title": "O que a sua empresa usa",
+                "description": "Diga-nos como a sua empresa trabalha, para lhe mostrarmos só o que lhe serve. Pode mudar isto a qualquer altura em Definições › Módulos.",
+                "continue": "Continuar"
             }
         },
         "shell": {
@@ -301,10 +307,10 @@
                     "team": "Equipa",
                     "partners": "Parceiros",
                     "my-transporters": "As minhas transportadoras",
-                    "quotes": "Cotações",
                     "analytics": "Análises"
                 },
-                "new-load": "Nova carga"
+                "new-load": "Nova carga",
+                "data": "Os seus dados"
             },
             "user": {
                 "settings": "Definições",
@@ -386,6 +392,10 @@
                     "empty": "Ainda não registou nenhuma carga",
                     "amount": "Valor"
                 }
+            },
+            "modules-nudge": {
+                "text": "Ainda não escolheu os módulos da sua empresa: ligue só o que usa e o portal fica mais simples.",
+                "cta": "Escolher módulos"
             }
         },
         "settings": {
@@ -395,8 +405,11 @@
             "tabs": {
                 "profile": "Perfil",
                 "company": "Empresa",
+                "modules": "Módulos",
                 "members": "Equipa",
-                "subscription": "Subscrição"
+                "subscription": "Subscrição",
+                "security": "Segurança",
+                "activity": "Actividade"
             },
             "profile": {
                 "title": "O seu perfil",
@@ -417,12 +430,7 @@
                     "description": "O email da conta não se altera aqui. Fale com a Appload se precisar de o mudar"
                 },
                 "role": {
-                    "label": "Função na empresa",
-                    "options": {
-                        "owner": "Responsável",
-                        "admin": "Administrador",
-                        "member": "Membro"
-                    }
+                    "label": "Perfil na empresa"
                 },
                 "save": "Guardar",
                 "success": "Perfil actualizado",
@@ -529,22 +537,19 @@
                 "description": "Quem entra no portal em nome da sua empresa",
                 "columns": {
                     "member": "Pessoa",
-                    "role": "Função",
+                    "role": "Perfil",
                     "joined": "Desde",
                     "actions": "Acções"
                 },
                 "roles": {
-                    "owner": "Responsável",
-                    "admin": "Administrador",
-                    "member": "Membro"
+                    "owner": "CEO",
+                    "admin": "Gestor",
+                    "procurement": "Procurement",
+                    "commercial": "Comercial",
+                    "operations": "Operações"
                 },
                 "you": "Você",
                 "actions": "Acções desta pessoa",
-                "promote": {
-                    "owner": "Tornar responsável",
-                    "admin": "Tornar administrador",
-                    "member": "Tornar membro"
-                },
                 "remove": "Remover do portal",
                 "remove-dialog": {
                     "title": "Remover {name}?",
@@ -552,12 +557,14 @@
                     "cancel": "Cancelar",
                     "confirm": "Remover"
                 },
-                "last-owner": "A empresa tem de ter sempre um responsável",
-                "role-changed": "Função actualizada",
+                "role-changed": "Perfil actualizado",
                 "removed": "Membro removido",
                 "error": "Não foi possível concluir a operação",
                 "empty": "Ainda é a única pessoa da sua empresa no portal",
-                "read-only": "Só o responsável e os administradores podem convidar ou alterar membros"
+                "read-only": "Só o CEO e os gestores podem convidar ou alterar pessoas da equipa",
+                "change-to": "Passar a {profile}",
+                "permissions": "Permissões",
+                "acting": "CEO interino até {date}"
             },
             "invite": {
                 "button": "Convidar colega",
@@ -575,14 +582,16 @@
                         "error": "Indique um email válido"
                     },
                     "role": {
-                        "label": "Função",
-                        "placeholder": "Escolha uma função",
-                        "error": "Escolha uma função"
+                        "label": "Perfil",
+                        "placeholder": "Escolha um perfil",
+                        "error": "Escolha um perfil"
                     }
                 },
                 "roles": {
-                    "admin": "Administrador — gere a empresa e a equipa",
-                    "member": "Membro — trabalha nos pedidos"
+                    "admin": "Gestor — direcção e finanças, gere a equipa abaixo",
+                    "procurement": "Procurement — pede cotações, encomenda e adjudica",
+                    "commercial": "Comercial — responde a cotações e subcontrata",
+                    "operations": "Operações — camiões, motoristas, papéis e estados"
                 },
                 "submit": "Enviar convite",
                 "submitting": "A enviar…",
@@ -600,7 +609,7 @@
                 "description": "Convites enviados que ainda não foram aceites",
                 "columns": {
                     "email": "Email",
-                    "role": "Função",
+                    "role": "Perfil",
                     "expires": "Expira",
                     "actions": "Acções"
                 },
@@ -618,11 +627,14 @@
                 "expired": "A subscrição terminou a {date}",
                 "none": "Ainda sem plano activo — fale connosco para escolher um.",
                 "since": "No portal desde {date}",
-                "tiers": {
-                    "title": "Planos",
+                "offer": {
+                    "title": "O seu plano inclui",
                     "quota": "{quota} movimentos seguidos por mês",
-                    "unlimited": "Movimentos seguidos sem limite",
-                    "current": "Plano actual"
+                    "quota-custom": "Movimentos à medida da empresa",
+                    "users": "{users, plural, one {# utilizador do portal} other {# utilizadores do portal}}",
+                    "users-custom": "Utilizadores à medida da empresa",
+                    "price": "MZN {price} por mês, sem IVA",
+                    "price-custom": "Preço acordado com a Appload"
                 },
                 "contact": {
                     "title": "Quer mudar de plano?",
@@ -630,25 +642,271 @@
                     "button": "Falar com a Appload",
                     "subject": "Appload Enterprise — plano da {organization}"
                 }
+            },
+            "support": {
+                "title": "Acesso do suporte Appload",
+                "description": "Se a equipa da Appload pode ler as cargas desta empresa para ajudar com elas",
+                "loading": "A verificar…",
+                "closed": "Fechado: o suporte da Appload não lê as suas cargas",
+                "open-until": "Aberto até {date}",
+                "granted-by": "Aberto por {name}",
+                "grant": "Abrir ao suporte",
+                "revoke": "Fechar agora",
+                "granted": "Acesso do suporte aberto",
+                "revoked": "Acesso do suporte fechado",
+                "failed": "Não foi possível — tente de novo",
+                "what-they-see": "Enquanto aberto, o suporte da Appload lê as suas cargas, pedidos e lista de parceiros, sem preços. Cada leitura fica no seu registo de actividade. As cargas que a própria Appload transporta ou encomenda são sempre visíveis para ela.",
+                "history": "Histórico",
+                "states": {
+                    "active": "Aberto",
+                    "expired": "Expirado",
+                    "revoked": "Fechado antes do fim"
+                },
+                "dialog": {
+                    "title": "Abrir as suas cargas ao suporte Appload",
+                    "description": "Por tempo limitado, com o motivo registado. Pode fechar de novo a qualquer momento.",
+                    "duration": "Por quanto tempo",
+                    "days": {
+                        "1": "Um dia",
+                        "7": "Uma semana",
+                        "30": "Um mês"
+                    },
+                    "reason": "Motivo",
+                    "reason-placeholder": "ex. Pedido de ajuda com a carga ORD-0012-26 parada na rota",
+                    "cancel": "Cancelar",
+                    "confirm": "Abrir"
+                },
+                "learn-more": "O que a Appload vê, por extenso."
+            },
+            "activity": {
+                "title": "Actividade",
+                "description": "O que foi feito em nome da sua empresa no portal, e cada vez que o suporte da Appload leu as suas cargas",
+                "empty": "Ainda nada registado",
+                "failed": "Não foi possível carregar o registo",
+                "failed-action": "falhou",
+                "support": "Suporte Appload",
+                "more": "Ver anteriores",
+                "since": "Podem faltar acções antigas: antes de 1 de Outubro de 2026 o portal nem sempre as associava à empresa.",
+                "open-load": "Abrir carga",
+                "open-contract": "Abrir pedido",
+                "actions": {
+                    "contracts-create": "Registou um pedido com várias viagens",
+                    "contracts-update": "Editou um pedido com várias viagens",
+                    "contracts-transition": "Mudou o estado de um pedido com várias viagens",
+                    "contracts-setFile": "Anexou o documento assinado de um pedido",
+                    "contracts-allocations-add": "Atribuiu um transportador a um pedido",
+                    "contracts-allocations-update": "Editou a parte de um transportador",
+                    "contracts-allocations-remove": "Removeu um transportador de um pedido",
+                    "drivers-register": "Registou um motorista",
+                    "drivers-update": "Editou um motorista",
+                    "fleet-vehicles-register": "Registou um veículo",
+                    "fleet-vehicles-update": "Editou um veículo",
+                    "fleet-assignDriver": "Atribuiu um motorista a um camião",
+                    "kyc-upload": "Carregou um documento",
+                    "me-changePassword": "Mudou a palavra-passe",
+                    "me-updateCompany": "Editou os dados da empresa",
+                    "me-supportGrants-grant": "Abriu as cargas da empresa ao suporte Appload",
+                    "me-supportGrants-revoke": "Fechou o acesso do suporte Appload",
+                    "movements-create": "Registou uma carga",
+                    "movements-update": "Editou uma carga",
+                    "movements-transition": "Passou uma carga a outra fase",
+                    "movements-convert": "Converteu uma carga",
+                    "movements-offer": "Propôs uma carga a um parceiro",
+                    "movements-respond": "Respondeu a uma proposta",
+                    "movements-withdraw": "Retirou uma proposta",
+                    "movements-recordPayment": "Registou um pagamento",
+                    "movements-requestLocation": "Pediu a posição ao motorista",
+                    "movements-costs-add": "Adicionou um custo",
+                    "movements-costs-remove": "Removeu um custo",
+                    "movements-documents-add": "Anexou um documento a uma carga",
+                    "movements-documents-remove": "Removeu um documento de uma carga",
+                    "orders-create": "Fez um pedido à Appload",
+                    "orders-cancel": "Cancelou um pedido à Appload",
+                    "orders-transition": "Passou um pedido Appload a outra fase",
+                    "orders-documents-add": "Anexou um documento a um pedido",
+                    "orders-offers-create": "Cotou um pedido",
+                    "orders-offers-update": "Corrigiu uma cotação",
+                    "orders-offers-withdraw": "Retirou uma cotação",
+                    "orders-offers-accept": "Aceitou uma cotação",
+                    "orders-offers-decline": "Recusou uma cotação",
+                    "orders-recordLoadingCheck": "Registou a verificação de carga",
+                    "orders-sendRequests": "Pôs um pedido a cotação",
+                    "orders-withdrawRequest": "Retirou um pedido de cotação",
+                    "partners-request": "Pediu ligação a uma empresa",
+                    "partners-respond": "Respondeu a um pedido de ligação",
+                    "partners-withdraw": "Retirou um pedido de ligação",
+                    "partners-remove": "Terminou uma ligação",
+                    "partners-register": "Registou um parceiro",
+                    "quotes-create": "Registou uma cotação",
+                    "quotes-accept": "Aceitou uma cotação",
+                    "quotes-decline": "Recusou uma cotação",
+                    "quotes-withdraw": "Retirou uma cotação",
+                    "threads-send": "Enviou uma mensagem",
+                    "support-loads-view": "leu as cargas da empresa",
+                    "auth-sign_in": "Iniciou sessão",
+                    "auth-sign_out": "Terminou sessão",
+                    "movements-sendRequests": "Pôs uma carga a cotação",
+                    "movements-withdrawRequest": "Retirou um pedido de cotação",
+                    "movements-quote": "Cotou uma carga",
+                    "movements-declineRequest": "Recusou cotar uma carga",
+                    "movements-award": "Adjudicou uma carga a uma cotação",
+                    "movements-sendConfirmation": "Enviou a confirmação do pedido",
+                    "team-permissions-set": "Alterou as permissões de um colega",
+                    "team-permissions-revoke": "Desfez uma alteração de permissões",
+                    "team-actingOwner-grant": "Nomeou um CEO interino",
+                    "team-actingOwner-revoke": "Terminou um período de CEO interino",
+                    "team-changeProfile": "Mudou o perfil de um colega",
+                    "team-remove": "Removeu um colega do portal"
+                }
+            },
+            "permissions": {
+                "title": "Permissões",
+                "description": "O que esta pessoa pode fazer no portal",
+                "heading": "Permissões de {name}",
+                "self": "As suas permissões. Só quem está acima de si as pode alterar.",
+                "editable": "Ligue ou desligue cada permissão, de vez ou por um período. Só pode ligar permissões que tem.",
+                "read-only": "Só de leitura: só quem está acima desta pessoa pode alterar as suas permissões.",
+                "saved": "Permissões actualizadas",
+                "failed": "Não foi possível alterar as permissões",
+                "error": "Não foi possível carregar as permissões",
+                "reset": "Repor o perfil",
+                "temporary": "Temporário",
+                "on-for-window": "Ligar neste período",
+                "off-for-window": "Desligar neste período",
+                "until": "até {date}",
+                "upcoming-on": "liga a {date}",
+                "upcoming-off": "desliga a {date}",
+                "hint": {
+                    "default": "do perfil",
+                    "extra": "extra",
+                    "removed": "removida"
+                },
+                "groups": {
+                    "money": "Dinheiro",
+                    "orders": "Pedidos",
+                    "contracts": "Pedidos com várias viagens e alugueres",
+                    "partners": "Parceiros",
+                    "fleet": "Frota e motoristas",
+                    "tools": "Ferramentas",
+                    "company": "Empresa"
+                },
+                "labels": {
+                    "price:read": "Ver preços de pedidos, propostas e cotações",
+                    "finance:read": "Ver indicadores financeiros: custos, margem, resultados, pagamentos",
+                    "payment:record": "Registar pagamentos e custos",
+                    "order:create": "Criar pedidos, pedir cotações, enviar a transportadores",
+                    "offer:create": "Responder a cotações de clientes",
+                    "offer:update": "Aceitar uma proposta, adjudicar, reservar",
+                    "order:update": "Editar pedidos e retirar um pedido antes da reserva",
+                    "order:cancel": "Cancelar um pedido reservado",
+                    "dispatch:assign": "Atribuir camião e motorista, verificação de saída",
+                    "status:change": "Mudar o estado",
+                    "document:upload": "Carregar papéis de carga, fotos e POD",
+                    "document:approve": "Aprovar papéis",
+                    "trip:create": "Viagens na frota própria (sem preço)",
+                    "dispute:open": "Abrir uma disputa",
+                    "dispute:resolve": "Resolver uma disputa",
+                    "contract:manage": "Criar, propor, aceitar e fechar pedidos com várias viagens e alugueres",
+                    "contract:file": "Registar as viagens do dia de uma parte",
+                    "rental:checkin": "Check-ins de aluguer, marcar um dia",
+                    "partner:manage": "Pedir, aceitar e remover transportadores e clientes",
+                    "report:read": "Página de análise e KPIs dos parceiros",
+                    "fleet:manage": "Registar camiões, reboques e motoristas",
+                    "kyc:upload": "Carregar os seus papéis (KYC)",
+                    "thread:read": "Ler as conversas",
+                    "thread:send": "Enviar mensagens",
+                    "export:csv": "Exportar CSV",
+                    "order:pdf": "Enviar e descarregar o PDF do pedido (mostra o preço)",
+                    "organization:update": "Editar o perfil e os papéis da empresa",
+                    "team:manage": "Equipa: convidar, remover, mudar perfil, editar permissões",
+                    "security:manage": "Segurança: acesso do suporte e registo de actividade",
+                    "subscription:read": "Ver o plano"
+                },
+                "acting": {
+                    "title": "CEO interino",
+                    "description": "Por um período, esta pessoa tem todas as permissões do CEO e gere a equipa abaixo do CEO. Nunca edita as suas próprias permissões nem transfere a empresa. Termina sozinho.",
+                    "live": "CEO interino de {from} até {until}",
+                    "upcoming": "Será CEO interino de {from} até {until}",
+                    "grant": "Nomear CEO interino",
+                    "revoke": "Terminar agora"
+                },
+                "window": {
+                    "from": "De",
+                    "until": "Até",
+                    "zone": "Hora de Maputo. Termina sozinho no fim do período.",
+                    "invalid": "O fim tem de ser depois do início e ainda no futuro."
+                }
+            },
+            "modules": {
+                "title": "Módulos",
+                "description": "O que a sua empresa usa no portal. Um módulo desligado sai do menu e não aceita novos registos; o que já existe fica.",
+                "groups": {
+                    "how": "Como a empresa trabalha",
+                    "uses": "O que usa"
+                },
+                "owner-only": "Só o CEO da empresa altera os módulos.",
+                "acting-owner-hint": "Como CEO interino vê os módulos, mas só o CEO da empresa os altera.",
+                "error": "Não foi possível guardar os módulos. Tente novamente.",
+                "conflict": {
+                    "NOTHING_LEFT_TO_MOVE": "Uma transportadora precisa de frota própria ou de subcontratação; não pode desligar as duas.",
+                    "NOT_APPLICABLE": "Este módulo não existe para o tipo da sua empresa."
+                }
+            }
+        },
+        "modules": {
+            "own-fleet": {
+                "name": "Frota própria",
+                "description": "Os camiões e motoristas da sua empresa, e as viagens que fazem.",
+                "question": "A sua empresa tem camiões próprios?"
+            },
+            "subcontracting": {
+                "name": "Subcontratação",
+                "description": "Passar cargas a outras transportadoras e pedir-lhes cotação.",
+                "question": "A sua empresa passa cargas a outras transportadoras?"
+            },
+            "standing-orders": {
+                "name": "Pedidos com várias viagens",
+                "description": "Pedidos que se cumprem em várias viagens, com o consumo acompanhado.",
+                "question": "A sua empresa trabalha com pedidos de várias viagens?"
+            },
+            "rentals": {
+                "name": "Alugueres",
+                "description": "Camiões ao serviço por um período, pagos ao dia.",
+                "question": "A sua empresa aluga camiões, ou tem camiões alugados?"
+            },
+            "chats": {
+                "name": "Conversas",
+                "description": "Conversas com os motoristas e sobre cada pedido.",
+                "question": "Quer falar com motoristas e parceiros a partir do portal?"
+            },
+            "map": {
+                "name": "Mapa",
+                "description": "Onde estão os camiões em viagem, em tempo real.",
+                "question": "Quer ver os camiões em viagem no mapa?"
+            },
+            "analytics": {
+                "name": "Análises",
+                "description": "Números e relatórios sobre o que a empresa movimentou.",
+                "question": "Quer relatórios sobre o que a empresa movimenta?"
             }
         },
         "plan": {
             "names": {
                 "none": "Sem plano",
                 "starter": "Starter",
-                "business": "Business",
+                "essential": "Essencial",
+                "growth": "Growth",
+                "scale": "Scale",
+                "fleet": "Fleet",
                 "enterprise": "Enterprise"
             },
             "usage": "{used} de {quota} movimentos seguidos em {month}",
             "unlimited": "Movimentos seguidos sem limite",
+            "extra": "{extra, plural, one {# movimento} other {# movimentos}} além do plano este mês, MZN {price} cada — facturados com o mês seguinte.",
             "dialog": {
                 "no-plan": {
                     "title": "A sua empresa ainda não tem plano",
                     "description": "Reservar uma carga e enviá-la para carregamento precisa de um plano activo. O resto do portal — parceiros, frota, pedidos e cotações — continua aberto."
-                },
-                "quota": {
-                    "title": "Movimentos deste mês esgotados",
-                    "description": "O plano da sua empresa já seguiu todos os movimentos deste mês. O limite volta a zero no início do mês seguinte."
                 },
                 "close": "Agora não",
                 "settings": "Ver subscrição",

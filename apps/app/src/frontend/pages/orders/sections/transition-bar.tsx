@@ -22,7 +22,7 @@ import type { OrderDetail, TransitionOption, TransitionOptions } from "@/fronten
 
 /** The plan reason a blocked target carries, or null when it is blocked for anything else. */
 const planReasonOf = (option: TransitionOption): PlanReason | null =>
-    option.blockedReason === "SUBSCRIPTION_REQUIRED" || option.blockedReason === "QUOTA_EXCEEDED"
+    option.blockedReason === "SUBSCRIPTION_REQUIRED"
         ? option.blockedReason
         : null
 
@@ -137,7 +137,6 @@ export function TransitionBar({
             {planReason && (
                 <PlanDialog
                     reason={planReason}
-                    allowance={options.allowance}
                     organizationName={organizationName}
                     onClose={() => setPlanReason(null)}
                 />

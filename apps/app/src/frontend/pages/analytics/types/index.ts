@@ -139,9 +139,21 @@ export type AnalyticsKpiBucket = {
     usd: number | null;
 };
 
+/** The KPI figures that are money: the company's books, only read with `finance:read`. */
+type KpiMoneyKey = "total" | "pricePerTransport" | "costPerKm" | "costPerTon" | "costPerTonKm";
+
+/**
+ * The staff report's figures as the portal hands them out: the same numbers,
+ * with every money figure null for a reader whose permissions stop short of
+ * the company's finances. Punctuality, days and incidents are everybody's.
+ */
+export type AnalyticsKpiFigures = Omit<KpiFigures, KpiMoneyKey | "backload"> & Record<KpiMoneyKey, number | null> & {
+    backload: { kind: KpiFigures["backload"]["kind"]; value: number | null };
+};
+
 export type AnalyticsKpis = {
     period: { preset: AnalyticsPeriod; from: string; to: string };
-    figures: KpiFigures;
+    figures: AnalyticsKpiFigures;
     buckets: AnalyticsKpiBucket[];
 };
 

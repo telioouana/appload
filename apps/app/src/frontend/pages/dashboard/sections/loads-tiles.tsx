@@ -4,6 +4,7 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { IconCircleCheck, IconInbox, IconSearch, IconSteeringWheel, IconTruckDelivery, IconUsersGroup } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
+import { hasModule } from "@workspace/auth/organization-modules"
 
 import { useTRPC } from "@/backend/api/client"
 import { StatTile, type StatTileProps } from "@/frontend/pages/dashboard/components/stat-tile"
@@ -31,8 +32,12 @@ export function LoadsTiles() {
 
     const carrier = session.organization.type === "carrier"
     const count = (stats: typeof orders, section: MovementSection) => stats.bySection[section] ?? 0
+    // The trucks' tiles are the own-fleet module's; the partners' are a
+    // transporter's subcontracting (a client's partners are the product)
+    const ownFleet = hasModule(session.modules, "own-fleet")
+    const partners = !carrier || hasModule(session.modules, "subcontracting")
 
-    const row: Array<StatTileProps & { key: string }> = [
+    const row: Array<(StatTileProps & { key: string }) | false> = [
         carrier
             ? {
                 // Offers wait in My trucks ▸ Procurement, under the Prospect
@@ -53,7 +58,7 @@ export function LoadsTiles() {
                 hint: tiles("confirmed-hint"),
                 href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab: "partners", status: "scheduled" } },
             },
-        {
+        partners && {
             key: "procurement",
             Icon: IconSearch,
             label: tiles("procurement"),
@@ -61,7 +66,7 @@ export function LoadsTiles() {
             hint: tiles("procurement-hint"),
             href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab: "partners" } },
         },
-        {
+        ownFleet && {
             key: "planning",
             Icon: IconSteeringWheel,
             label: t("planning"),
@@ -69,7 +74,7 @@ export function LoadsTiles() {
             hint: t("planning-hint"),
             href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab: "own" } },
         },
-        {
+        ownFleet && {
             key: "own-road",
             Icon: IconTruckDelivery,
             label: t("own-road"),
@@ -77,7 +82,7 @@ export function LoadsTiles() {
             hint: t("own-road-hint"),
             href: { pathname: "/orders/[section]", params: { section: "in-progress" }, query: { tab: "own" } },
         },
-        {
+        partners && {
             key: "partner-road",
             Icon: IconUsersGroup,
             label: t("partner-road"),
@@ -87,9 +92,11 @@ export function LoadsTiles() {
         },
     ]
 
+    const shown = row.filter((tile) => tile !== false)
+
     return (
         <div className="grid grid-cols-2 gap-3 px-2 sm:grid-cols-3 xl:grid-cols-5">
-            {row.map(({ key, ...tile }) => <StatTile key={key} {...tile} />)}
+            {shown.map(({ key, ...tile }) => <StatTile key={key} {...tile} />)}
         </div>
     )
 }

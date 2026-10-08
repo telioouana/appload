@@ -21,7 +21,7 @@ const monthOf = (period: string): Date => new Date(`${period}-01T00:00:00Z`)
  * refused on has to read the same wherever it is shown. Only meaningful
  * while a plan is active — with no plan there is no allowance to spend.
  */
-export function PlanUsage({ allowance }: { allowance: TrackingAllowance }) {
+export function PlanUsage({ allowance, extraPrice }: { allowance: TrackingAllowance; extraPrice: number }) {
     const t = useTranslations("App.plan")
     const f = useFormatter()
 
@@ -40,6 +40,13 @@ export function PlanUsage({ allowance }: { allowance: TrackingAllowance }) {
             </span>
 
             <Progress value={Math.min(100, (allowance.used / allowance.quota) * 100)} />
+
+            {/* Past the allowance the truck still went: what the month's invoice will add */}
+            {allowance.extra > 0 && (
+                <span className="text-sm">
+                    {t("extra", { extra: allowance.extra, price: f.number(extraPrice) })}
+                </span>
+            )}
         </div>
     )
 }

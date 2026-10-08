@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { useSuspenseQuery } from "@tanstack/react-query"
 
 import { useTranslations } from "@workspace/i18n"
+import { moneyView } from "@workspace/auth/organization-permissions"
 
 import { useTRPC } from "@/backend/api/client"
 import { PageHeader } from "@workspace/ui/customs/list/page-header"
@@ -62,9 +63,17 @@ function LoadsPanel({ year }: { year: number }) {
  * The period lives in the URL, read here with the same parser the RSC page
  * prefetched with, so nothing refetches on hydration and a link to a stretch
  * opens on that stretch.
+ *
+ * The company's books — the loads card, the money card, the price chart and
+ * the ranking's dollar column — are only drawn for a reader holding
+ * `finance:read`. The server strips them anyway; hiding the cards is what
+ * keeps a Procurement reader from a page of empty money boxes.
  */
 export function AnalyticsView() {
     const t = useTranslations("App.analytics")
+    const trpc = useTRPC()
+    const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
+    const full = moneyView(session.permissions) === "full"
     const searchParams = useSearchParams()
     const get = useCallback((key: string) => searchParams.get(key), [searchParams])
 
@@ -82,15 +91,17 @@ export function AnalyticsView() {
             {/* The bands are `shrink-0`: in a scrolling flex column a band
                 would otherwise be squeezed to fit instead of scrolling */}
             <div className="container-snap flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pb-1">
-                <div className="shrink-0 px-2">
-                    <CardBoundary
-                        className="mx-0"
-                        fallback={<CardSkeleton className="mx-0 h-[260px]" />}
-                        message={t("error")}
-                    >
-                        <LoadsPanel year={year} />
-                    </CardBoundary>
-                </div>
+                {full && (
+                    <div className="shrink-0 px-2">
+                        <CardBoundary
+                            className="mx-0"
+                            fallback={<CardSkeleton className="mx-0 h-[260px]" />}
+                            message={t("error")}
+                        >
+                            <LoadsPanel year={year} />
+                        </CardBoundary>
+                    </div>
+                )}
 
                 <div className="shrink-0">
                     <CardBoundary fallback={<CardSkeleton className="h-52" />} message={t("error")}>
@@ -98,10 +109,10 @@ export function AnalyticsView() {
                     </CardBoundary>
                 </div>
 
-                <div className="grid shrink-0 gap-4 px-2 xl:grid-cols-3 xl:items-stretch">
+                <div className={`grid shrink-0 gap-4 px-2 xl:items-stretch ${full ? "xl:grid-cols-3" : ""}`}>
                     {/* A grid of one so the chart card fills the taller of the
                         pair; the boundary itself renders no element to span */}
-                    <div className="grid min-w-0 xl:col-span-2">
+                    <div className={`grid min-w-0 ${full ? "xl:col-span-2" : ""}`}>
                         <CardBoundary
                             className="mx-0"
                             fallback={<CardSkeleton className="mx-0 h-[300px] xl:h-[340px]" />}
@@ -111,13 +122,15 @@ export function AnalyticsView() {
                         </CardBoundary>
                     </div>
 
-                    <CardBoundary
-                        className="mx-0"
-                        fallback={<CardSkeleton className="mx-0 h-[300px] xl:h-[340px]" />}
-                        message={t("error")}
-                    >
-                        <MoneyPanel year={year} />
-                    </CardBoundary>
+                    {full && (
+                        <CardBoundary
+                            className="mx-0"
+                            fallback={<CardSkeleton className="mx-0 h-[300px] xl:h-[340px]" />}
+                            message={t("error")}
+                        >
+                            <MoneyPanel year={year} />
+                        </CardBoundary>
+                    )}
                 </div>
 
                 <div className="flex shrink-0 flex-col gap-3.5">
@@ -126,7 +139,7 @@ export function AnalyticsView() {
                     </CardBoundary>
                 </div>
 
-                <div className="grid shrink-0 gap-4 px-2 xl:grid-cols-2 xl:items-stretch">
+                <div className={`grid shrink-0 gap-4 px-2 xl:items-stretch ${full ? "xl:grid-cols-2" : ""}`}>
                     <CardBoundary
                         className="mx-0"
                         fallback={<CardSkeleton className="mx-0 h-[300px] xl:h-[340px]" />}
@@ -135,13 +148,15 @@ export function AnalyticsView() {
                         <TransportsChart />
                     </CardBoundary>
 
-                    <CardBoundary
-                        className="mx-0"
-                        fallback={<CardSkeleton className="mx-0 h-[300px] xl:h-[340px]" />}
-                        message={t("error")}
-                    >
-                        <PriceChart />
-                    </CardBoundary>
+                    {full && (
+                        <CardBoundary
+                            className="mx-0"
+                            fallback={<CardSkeleton className="mx-0 h-[300px] xl:h-[340px]" />}
+                            message={t("error")}
+                        >
+                            <PriceChart />
+                        </CardBoundary>
+                    )}
                 </div>
 
                 <div className="shrink-0 px-2">
@@ -150,7 +165,7 @@ export function AnalyticsView() {
                         fallback={<CardSkeleton className="mx-0 h-[320px]" />}
                         message={t("error")}
                     >
-                        <PartnersRanking />
+                        <PartnersRanking full={full} />
                     </CardBoundary>
                 </div>
             </div>

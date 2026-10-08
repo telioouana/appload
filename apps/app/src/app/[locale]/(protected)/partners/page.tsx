@@ -9,7 +9,7 @@ import { partnerConnection } from "@workspace/db/connections"
 import { getTenantGates } from "@workspace/trpc/tenant-gate"
 
 import { getPathname } from "@/i18n/navigation"
-import { kindForRelation, kindsFor, type OrgType, type PartnerListKind } from "@/frontend/pages/partners/types"
+import { kindForRelation, kindsFor, type Modules, type OrgType, type PartnerListKind } from "@/frontend/pages/partners/types"
 
 type Search = Record<string, string | string[] | undefined>
 
@@ -21,8 +21,12 @@ type Search = Record<string, string | string[] | undefined>
  * direction tiles still name a list, and anything else is the organization's
  * first list.
  */
-async function kindFor(search: Search, organizationId: string, orgType: OrgType): Promise<PartnerListKind> {
-    const fallback = kindsFor(orgType)[0] as PartnerListKind
+async function kindFor(search: Search, organizationId: string, orgType: OrgType, modules: Modules): Promise<PartnerListKind> {
+    const kinds = kindsFor(orgType, modules)
+    const fallback = kinds[0] as PartnerListKind
+    // A list the company has switched off (a carrier's transporters without
+    // subcontracting) lands on the first one rather than on a 404
+    const known = (kind: PartnerListKind) => (kinds.includes(kind) ? kind : fallback)
 
     if (typeof search.id === "string") {
         const [row] = await db
@@ -36,11 +40,11 @@ async function kindFor(search: Search, organizationId: string, orgType: OrgType)
 
         if (!row) return fallback
 
-        return row.status === "pending" ? "requests" : kindForRelation(orgType, row.relation)
+        return row.status === "pending" ? "requests" : known(kindForRelation(orgType, row.relation))
     }
 
     if (search.tab === "requests" || search.direction) return "requests"
-    if (search.tab === "subcontractors" || search.tab === "transporters") return "transporters"
+    if (search.tab === "subcontractors" || search.tab === "transporters") return known("transporters")
     if (search.tab === "clients" && orgType === "carrier") return "clients"
 
     return fallback
@@ -69,7 +73,7 @@ export default async function Partners({ searchParams }: { searchParams: Promise
     const query = Object.fromEntries(Object.entries(search).filter(([key]) => key !== "tab"))
 
     const [kind, locale] = await Promise.all([
-        kindFor(search, tenant.organizationId, tenant.orgType),
+        kindFor(search, tenant.organizationId, tenant.orgType, tenant.modules),
         getLocale(),
     ])
 

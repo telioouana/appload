@@ -562,7 +562,9 @@
                         "companies": "Companies",
                         "drivers": "Drivers",
                         "fleets": "Fleet"
-                    }
+                    },
+                    "subscriptions": "Subscriptions",
+                    "staff": "Staff"
                 }
             },
             "user": {
@@ -575,6 +577,106 @@
                     "system": "System"
                 },
                 "sign-out": "Sign out"
+            }
+        },
+        "staff": {
+            "title": "Staff",
+            "description": "Who works in Appload Admin and what each person can do. A new role applies on their next action.",
+            "name": "Name",
+            "email": "Email",
+            "role": "Role",
+            "you": "You",
+            "empty": "No staff accounts yet. People appear here after their first Google sign-in with an @apploadafrica.com address.",
+            "forbidden": "Only administrators can change staff roles.",
+            "load-failed": "Could not load the staff list",
+            "saved": "{name} is now {role}",
+            "failed": "Could not change the role"
+        },
+        "subscriptions": {
+            "eyebrow": "Management",
+            "title": "Subscriptions",
+            "description": "Every company on a plan, where it stands and what it has used this month. A subscription ends on its expiry date; the row stays as its history.",
+            "search": "Company or NUIT",
+            "clear": "Clear search",
+            "add": "Add subscription",
+            "tabs": {
+                "all": "All",
+                "active": "Active",
+                "expiring": "Expiring soon",
+                "expired": "Expired"
+            },
+            "columns": {
+                "company": "Company",
+                "plan": "Plan",
+                "state": "State",
+                "expires": "Expiry",
+                "usage": "Usage this month",
+                "portal": "Portal",
+                "actions": "Actions"
+            },
+            "plan": {
+                "starter": "Starter",
+                "essential": "Essential",
+                "growth": "Growth",
+                "scale": "Scale",
+                "fleet": "Fleet",
+                "enterprise": "Enterprise"
+            },
+            "state": {
+                "active": "Active",
+                "expiring": "{days, plural, one {Expires tomorrow} other {Expires in # days}}",
+                "expired": "Expired"
+            },
+            "values": {
+                "no-expiry": "No end date",
+                "usage": "{used} of {quota}",
+                "usage-extra": "{used} of {quota} (+{extra} extra)",
+                "unlimited": "{used} (no limit)",
+                "portal-since": "Since {date}",
+                "portal-inactive": "Not on the portal",
+                "open-profile": "Open profile"
+            },
+            "filters": {
+                "any": "Any",
+                "type": "Company type",
+                "plan": "Plan",
+                "type-options": {
+                    "shipper": "Shipper",
+                    "carrier": "Carrier"
+                }
+            },
+            "sort": {
+                "name": "Company",
+                "plan": "Plan",
+                "expires": "Expiry"
+            },
+            "dialog": {
+                "title": "{name}",
+                "new-title": "Add a subscription",
+                "description": "There are no payments here: the plan is agreed commercially and recorded. The company is told of the change.",
+                "company-placeholder": "Find a company without a plan",
+                "no-candidates": "No company matches.",
+                "change-company": "Change",
+                "plan": "Plan",
+                "months": "Months paid",
+                "months-option": "{months, plural, one {# month} other {# months}}",
+                "valid-until": "Valid until {date}",
+                "extends": "Added to the current subscription, which runs to {date}",
+                "end-today": "End today",
+                "save": "Save plan",
+                "saved": "Plan updated",
+                "cancel": "Cancel"
+            },
+            "errors": {
+                "NOT_ALLOWED": "Your role does not allow this.",
+                "NOT_FOUND": "This company no longer exists.",
+                "UNKNOWN": "Something went wrong. Try again."
+            },
+            "data": {
+                "empty": "No subscriptions yet",
+                "empty-description": "Companies appear here once a plan is recorded for them.",
+                "no-results": "No subscriptions match your filters",
+                "error": "Could not load the subscriptions, please try again"
             }
         },
         "settings": {
@@ -1863,7 +1965,7 @@
                     "OFFER_NOT_PENDING": "This offer was already decided.",
                     "NO_OFFERS": "This prospect has no pending offers. Add one first.",
                     "INCOMPLETE_FOR_DISPATCH": "Assign the driver, their phone and the truck before moving to At loading site.",
-                    "PAPERS_MISSING": "The papers of the driver or the rig are not on file. Open their records and file them before the truck leaves.",
+                    "PAPERS_MISSING": "The papers of the driver or the rig are not on file. The truck can still leave, but the order will be flagged until they are filed.",
                     "OFFER_UNPRICED": "This offer has no Appload commission yet. Edit it and set the commission before booking with it.",
                     "MANAGER_REQUIRED": "The loading check found a mismatch. Only a manager can let this load start."
                 },
@@ -1960,6 +2062,7 @@
                         "CARRIER_RISK_HIGH": "High-risk carrier",
                         "CARRIER_RISK_WATCH": "Carrier under observation",
                         "PAPERS_UNREVIEWED": "Dispatched with papers nobody had reviewed yet",
+                        "PAPERS_MISSING": "Dispatched without the driver’s or the rig’s papers on file",
                         "LOADING_MISMATCH": "The truck or the driver at the loading site was not the one dispatched",
                         "LOADING_CHECK_SKIPPED": "Loading started without a completed check"
                     }
@@ -3325,7 +3428,8 @@
                     "drivers": "Drivers",
                     "orders": "Orders",
                     "portal": "Portal",
-                    "activity": "Activity"
+                    "activity": "Activity",
+                    "support": "Support"
                 },
                 "type": {
                     "shipper": "Shipper",
@@ -3370,7 +3474,37 @@
                 "make": "Make and model",
                 "bay-on-trailer": "On the trailer",
                 "operation": "Operation",
-                "vehicle-type": "Type"
+                "vehicle-type": "Type",
+                "support": {
+                    "open": "open",
+                    "closed": "The company has not opened its loads to support",
+                    "closed-hint": "An owner opens the door on the portal, under Settings › Security, for a day, a week or a month. Until then the database returns nothing here.",
+                    "open-until": "Open until {date}",
+                    "granted-by": "Opened by {name}",
+                    "no-loads": "No loads on this company's books",
+                    "load-failed": "The loads could not be read",
+                    "logged": "Every read here is written to the company's own activity log, with your name.",
+                    "status": {
+                        "procurement": "Out for quotes",
+                        "prospect": "Prospect",
+                        "offered": "Offered",
+                        "declined": "Declined",
+                        "scheduled": "Scheduled",
+                        "booked": "Booked",
+                        "at-loading": "At loading site",
+                        "loading": "Loading",
+                        "waiting-documents": "Waiting for documents",
+                        "on-route": "On route",
+                        "stopped": "Stopped",
+                        "issue": "Issue",
+                        "at-border": "At border",
+                        "at-offloading": "At offloading site",
+                        "offloading": "Offloading",
+                        "delivered": "Delivered",
+                        "closed": "Closed",
+                        "cancelled": "Cancelled"
+                    }
+                }
             },
             "edit": {
                 "title": {
@@ -3527,9 +3661,10 @@
                 "invitation-expires": "Expires",
                 "invitation-expired": "Expired",
                 "role": {
-                    "owner": "Owner",
-                    "admin": "Admin",
-                    "member": "Member"
+                    "owner": "CEO",
+                    "admin": "Manager",
+                    "procurement": "Procurement / Sales",
+                    "operations": "Operations"
                 },
                 "invite": "Invite owner",
                 "invite-title": "Invite a portal owner",
@@ -3544,14 +3679,13 @@
                 "plan": "Plan",
                 "plan-none": "No plan",
                 "plan-starter": "Starter",
-                "plan-business": "Business",
+                "plan-essential": "Essential",
+                "plan-growth": "Growth",
+                "plan-scale": "Scale",
+                "plan-fleet": "Fleet",
                 "plan-enterprise": "Enterprise",
                 "expires": "Expiry",
-                "no-expiry": "No end date",
-                "clear-expiry": "Clear the end date",
-                "subscription-save": "Save plan",
-                "subscription-saved": "Plan updated",
-                "subscription-locked": "Only a manager can change the plan.",
+                "manage": "Manage",
                 "usage": "Tracked in {month}: {used} of {quota}",
                 "usage-unlimited": "Tracked in {month}: {used} (no limit)",
                 "usage-none": "No plan — the portal blocks booking and dispatch.",

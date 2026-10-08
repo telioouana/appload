@@ -68,12 +68,13 @@ import {
     STATUS_TABS,
     tabOfScope,
 } from "@/frontend/pages/movements/types";
+import { modulesFor } from "@workspace/auth/organization-modules";
 import { partnersRouter } from "@/frontend/pages/partners/server/procedures";
 import { countForKind, kindsFor, relationForKind } from "@/frontend/pages/partners/types";
 import { searchRouter } from "@/frontend/pages/search/server/procedures";
 import { meRouter } from "@/frontend/pages/settings/server/procedures";
 
-process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
+process.env.DATABASE_URL ??= fs.readFileSync(".env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
 
 const SESSION_ID = "verify-movements";
 const createCaller = createCallerFactory(movementsRouter);
@@ -132,8 +133,8 @@ const as = (userId: string) =>
 
 const A = { user: "FT7QysKKfs5NKuut5i2S8Nhg6ItrwyuR", org: "42655a3f-0bd5-4e46-af29-9c5ee342a8aa" }; // shipper
 const B = { user: "a2R9UNA2NTiEo3FS7DxlwgBFUn8EDNU6", org: "9b7674e5-ea7b-416b-a199-6ca6842da718" }; // carrier, owner
-const BM = { user: "AM6u6fxppa9LEkRiMnMDHyrMpThmNrQy", org: B.org }; // carrier, member
-const C = { user: "kU9US5NBPjNtS5HsSQBW3ZfEZvj7GQSm", org: "49db92eb-c131-467e-8bfc-fe42a7dcc149" }; // stranger
+const BM = { user: "AM6u6fxppa9LEkRiMnMDHyrMpThmNrQy", org: B.org }; // carrier, Operações
+const C = { user: "seed-portal-stranger", org: "bdc445de-4e50-4b13-beb7-024fadbb22d1" }; // stranger: Terceiro Teste Portal, seeded 2026-09-30
 
 /** What a reference looks like once the counters name a load (refs.ts). */
 const ORDER_REF = /^ORD-\d{4}-\d{2}$/;
@@ -545,18 +546,18 @@ async function main() {
 
     console.log("\n— B names its driver and the truck reaches the loading site");
     const phone = "+258840000999";
-    const named = await b.update({ id: accepted.id, expectedVersion: bOwn.version, driverName: "HARNESS Driver", driverPhone: phone, truckPlate: "HAR-001-MP" });
+    const named = await b.update({ id: accepted.id, expectedVersion: bOwn.version, driverName: "HARNESS Driver", driverPhone: phone, truckPlate: "HAR 001 MP" });
     await b.transition({ id: accepted.id, to: "at-loading", expectedVersion: named.version });
 
     aDetail = await a.get({ id: filed.id });
     check("A's order followed B's truck to the loading site", aDetail.status === "at-loading", aDetail.status);
     check("…with a trail line that says it was carried up", aDetail.events.some((event) => event.kind === "system" && event.toStatus === "at-loading"), aDetail.events);
     check("…and still no phone of B's driver", aDetail.driverPhone === null);
-    check("…but it knows which truck is coming", aDetail.driverName === "HARNESS Driver" && aDetail.truckPlate === "HAR-001-MP", { driver: aDetail.driverName, plate: aDetail.truckPlate });
+    check("…but it knows which truck is coming", aDetail.driverName === "HARNESS Driver" && aDetail.truckPlate === "HAR 001 MP", { driver: aDetail.driverName, plate: aDetail.truckPlate });
 
     const aOrderRows = await a.list({ scope: "orders", section: "in-progress" });
     const aOrderRow = aOrderRows.items.find((row) => row.id === filed.id);
-    check("…in its list too", aOrderRow?.truckPlate === "HAR-001-MP", aOrderRow);
+    check("…in its list too", aOrderRow?.truckPlate === "HAR 001 MP", aOrderRow);
 
     const usage = await db
         .select({ org: subscriptionUsage.organizationId, entity: subscriptionUsage.entityId })
@@ -583,13 +584,11 @@ async function main() {
     let loading = bOwn.permissions.transitions.find((option) => option.to === "loading");
     check("…and loading would start with it unapproved", loading?.flags.includes("PHOTOS_UNAPPROVED") ?? false, loading?.flags);
 
-    await expectError("the member who took it cannot also approve it", () =>
-        bm.documents.approve({ id: photo!.id }), "NOT_ALLOWED");
-
-    await b.documents.approve({ id: photo!.id });
+    // B's colleague is Operações, whose profile answers for the loading papers
+    await bm.documents.approve({ id: photo!.id });
     bOwn = await b.get({ id: accepted.id });
     photo = bOwn.documents.find((document) => document.type === "loading-photo");
-    check("B's owner approves it, and the photo says who did", photo?.approvedAt !== null && Boolean(photo?.approvedByName), photo);
+    check("B's Operações approves it, and the photo says who did", photo?.approvedAt !== null && Boolean(photo?.approvedByName), photo);
     loading = bOwn.permissions.transitions.find((option) => option.to === "loading");
     check("…so loading is no longer a gap", !(loading?.flags.includes("PHOTOS_UNAPPROVED") ?? true), loading?.flags);
     check("…and the trail has the approval on it", bOwn.events.some((event) => event.kind === "document" && event.action === "approved"), bOwn.events.filter((event) => event.kind === "document"));
@@ -1305,13 +1304,14 @@ async function roleGate() {
 }
 
 /**
- * §11.3 — an allowance spent to zero stops a truck from starting, and nothing
- * else: a load already in progress stops, resumes and moves on.
+ * §11.3 — an allowance spent to zero stops nothing: a load already in
+ * progress stops, resumes and moves on, and a truck that starts past the
+ * plan goes, counted as an extra for the month's invoice.
  */
 async function quota() {
     const b = as(B.user);
 
-    console.log("\n— §11.3 a spent allowance refuses a start, never a load already in progress");
+    console.log("\n— §11.3 a spent allowance never refuses a start; the extra is counted");
     const running = await ownTrip({ cargoDescription: "HARNESS quota running", driverName: "HARNESS Quota", truckPlate: "HAR-013-MP", status: "at-loading" });
     const waiting = await ownTrip({ cargoDescription: "HARNESS quota waiting", status: "booked" });
 
@@ -1319,7 +1319,7 @@ async function quota() {
         await spendAllowance(B.org);
         await spendAllowance(A.org);
         const allowance = await trackingAllowance(db, B.org);
-        check("B has nothing left to start this month", allowance.remaining === 0, allowance);
+        check("B has nothing left to start this month", allowance.remaining === 0 && allowance.extra === 0, allowance);
 
         let refused = await refusal(() => walk(b, running.id, ["stopped", "at-loading"]));
         check("…yet its truck at the loading site stops and resumes", refused === null, refused);
@@ -1327,11 +1327,19 @@ async function quota() {
         check("…and goes on route to offloading", refused === null && (await stampsOf(running.id)).status === "at-offloading", refused);
 
         const stillBooked = await b.get({ id: waiting.id });
-        await expectError("…while a booked load cannot start", () =>
-            b.transition({ id: waiting.id, to: "at-loading", expectedVersion: stillBooked.version }), "QUOTA_EXCEEDED");
-        // Filed by A: a transporter never files a truck of its own (§3)
-        await expectError("…nor one a client files as already at the loading site", () =>
-            as(A.user).create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS quota filed", status: "at-loading" }), "QUOTA_EXCEEDED");
+        refused = await refusal(() => b.transition({ id: waiting.id, to: "at-loading", expectedVersion: stillBooked.version }));
+        check("…and a booked load still starts", refused === null && (await stampsOf(waiting.id)).status === "at-loading", refused);
+        const extra = await trackingAllowance(db, B.org);
+        check("…counted as one extra movement past the plan", extra.extra === 1 && extra.remaining === 0, extra);
+
+        // Filed by A: a transporter never files a truck of its own (§3). A
+        // already carries one extra — B's start above billed both sides of
+        // that order — so what counts is the one this filing adds
+        const before = await trackingAllowance(db, A.org);
+        const filed = await as(A.user).create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS quota filed", status: "at-loading" });
+        created.push(filed.id);
+        const filedExtra = await trackingAllowance(db, A.org);
+        check("…as does one a client files as already at the loading site", filedExtra.extra === before.extra + 1, { before: before.extra, after: filedExtra.extra });
     } finally {
         await releaseAllowance();
     }
@@ -1634,12 +1642,13 @@ async function receivedOffer() {
     const offered = await a.offer({ id: order.id, expectedVersion: placed.version });
 
     // Through the page's own parser, `?tab=own` and all, so what the URL says
-    // and what the list reads are checked together
+    // and what the list reads are checked together. The harness companies never
+    // switch a module off, so every tab default is the full set's
     const [procurement, prospect, all, orders, rail, stats, ordersStats] = await Promise.all([
-        b.list(movementsListInput("procurement", query({ tab: "own", size: "100" }), "carrier")),
-        b.list(movementsListInput("procurement", query({ tab: "own", status: "prospect", size: "100" }), "carrier")),
-        b.list(movementsListInput("all", query({ size: "100" }), "carrier")),
-        b.list(movementsListInput("all", query({ tab: "partners", size: "100" }), "carrier")),
+        b.list(movementsListInput("procurement", query({ tab: "own", size: "100" }), "carrier", modulesFor("carrier"))),
+        b.list(movementsListInput("procurement", query({ tab: "own", status: "prospect", size: "100" }), "carrier", modulesFor("carrier"))),
+        b.list(movementsListInput("all", query({ size: "100" }), "carrier", modulesFor("carrier"))),
+        b.list(movementsListInput("all", query({ tab: "partners", size: "100" }), "carrier", modulesFor("carrier"))),
         meFor(B.user).railCounts(),
         b.stats({ scope: "trips" }),
         b.stats({ scope: "orders" }),
@@ -1695,7 +1704,7 @@ async function quoteRound() {
     check("B's members were each told once, on the load", toldB.length === await membersOf(B.org) && toldB.every((n) => n.entityId === broadcast.id), told);
 
     console.log("\n— quotes: B reads it as a transporter asked, and only that");
-    const planning = await b.list(movementsListInput("procurement", query({ tab: "own", size: "100" }), "carrier"));
+    const planning = await b.list(movementsListInput("procurement", query({ tab: "own", size: "100" }), "carrier", modulesFor("carrier")));
     const asked = planning.items.find((row) => row.id === broadcast.id);
     check("it sits in B's My trucks ▸ Procurement, marked as a quote request", asked?.role === "executor" && asked.quoteRequested === true, asked);
     check("…and carries no money of A's", asked?.payable === null && asked?.receivable === null, asked);
@@ -1866,7 +1875,7 @@ async function ownTrucksFromClients() {
     const acceptedView = await b.get({ id: accepted.id });
     check("a load B accepted is its own truck, confirmed, under My trucks ▸ Procurement", acceptedView.execution === "own-fleet" && acceptedView.status === "scheduled"
         && sectionOf(acceptedView) === "procurement" && tabOfScope(scopeOf(acceptedView)) === "own", { status: acceptedView.status, section: sectionOf(acceptedView), scope: scopeOf(acceptedView) });
-    const own = await b.list(movementsListInput("procurement", query({ tab: "own", status: "scheduled", size: "100" }), "carrier"));
+    const own = await b.list(movementsListInput("procurement", query({ tab: "own", status: "scheduled", size: "100" }), "carrier", modulesFor("carrier")));
     check("…listed there under Confirmed", own.items.some((row) => row.id === accepted.id), own.items.map((row) => row.ref));
 }
 
@@ -1943,20 +1952,20 @@ async function sectionsAndTabs() {
     }
 
     check("the status param is read only where the section, on that tab, has that tab",
-        movementsListInput("procurement", query({ tab: "partners", status: "declined" }), "carrier").status === "declined"
-        && movementsListInput("procurement", query({ tab: "own", status: "declined" }), "carrier").status === undefined
-        && movementsListInput("procurement", query({ tab: "partners", status: "all" }), "carrier").status === undefined
-        && movementsListInput("procurement", query({ tab: "partners", status: "loading" }), "carrier").status === undefined
-        && movementsListInput("history", query({ tab: "own", status: "closed" }), "carrier").status === "closed"
-        && movementsListInput("history", query({ tab: "own", status: "delivered" }), "carrier").status === undefined);
+        movementsListInput("procurement", query({ tab: "partners", status: "declined" }), "carrier", modulesFor("carrier")).status === "declined"
+        && movementsListInput("procurement", query({ tab: "own", status: "declined" }), "carrier", modulesFor("carrier")).status === undefined
+        && movementsListInput("procurement", query({ tab: "partners", status: "all" }), "carrier", modulesFor("carrier")).status === undefined
+        && movementsListInput("procurement", query({ tab: "partners", status: "loading" }), "carrier", modulesFor("carrier")).status === undefined
+        && movementsListInput("history", query({ tab: "own", status: "closed" }), "carrier", modulesFor("carrier")).status === "closed"
+        && movementsListInput("history", query({ tab: "own", status: "delivered" }), "carrier", modulesFor("carrier")).status === undefined);
     check("the tab param picks the list, whatever the company",
-        movementsListInput("all", query({ tab: "partners" }), "carrier").scope === "orders"
-        && movementsListInput("all", query({ tab: "own" }), "shipper").scope === "trips");
+        movementsListInput("all", query({ tab: "partners" }), "carrier", modulesFor("carrier")).scope === "orders"
+        && movementsListInput("all", query({ tab: "own" }), "shipper", modulesFor("shipper")).scope === "trips");
     check("with no tab, a transporter lands on its own trucks and a client on its transporters",
-        movementsListInput("all", query({}), "carrier").scope === "trips"
-        && movementsListInput("all", query({ tab: "trips" }), "carrier").scope === "trips"
-        && movementsListInput("all", query({}), "shipper").scope === "orders"
-        && movementsListInput("procurement", query({ status: "declined" }), "shipper").status === "declined");
+        movementsListInput("all", query({}), "carrier", modulesFor("carrier")).scope === "trips"
+        && movementsListInput("all", query({ tab: "trips" }), "carrier", modulesFor("carrier")).scope === "trips"
+        && movementsListInput("all", query({}), "shipper", modulesFor("shipper")).scope === "orders"
+        && movementsListInput("procurement", query({ status: "declined" }), "shipper", modulesFor("shipper")).status === "declined");
 }
 
 /**
@@ -2091,7 +2100,8 @@ async function partnerLists() {
         const partners = partnersFor(company.user);
         const stats = await partners.stats();
 
-        for (const kind of kindsFor(orgType)) {
+        // The harness companies never switched a module off, so every list is theirs
+        for (const kind of kindsFor(orgType, modulesFor(orgType))) {
             const list = await partners.list({ kind, pageSize: 100 });
             const relation = relationForKind(orgType, kind);
             const fits = list.items.every((row) => (relation ? row.status === "accepted" && row.relation === relation : row.status === "pending"));

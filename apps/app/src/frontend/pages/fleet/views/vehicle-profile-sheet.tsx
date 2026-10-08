@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { useTRPC } from "@/backend/api/client"
 import { Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
-import { KycBadge, OwnershipBadge, StateBadge } from "@/frontend/pages/fleet/sections/badges"
+import { KycBadge, OwnershipBadge, RentalBadge, StateBadge } from "@/frontend/pages/fleet/sections/badges"
 import { AssignDriverPopover } from "@/frontend/pages/fleet/sections/assign-driver-popover"
 import { EditVehicleDialog } from "@/frontend/pages/fleet/sections/edit-vehicle-dialog"
 import { PapersCard } from "@/frontend/pages/fleet/sections/papers-card"
@@ -204,6 +204,14 @@ function Operation({ profile, verified }: { profile: VehicleProfile; verified: b
         >
             <dl className="flex flex-col gap-2">
                 <KeyValue label={t("columns.state")}><StateBadge state={profile.status} /></KeyValue>
+                {profile.rental && (
+                    <KeyValue label={t("profile.rental")}>
+                        <span className="flex flex-col items-end gap-0.5">
+                            <RentalBadge rental={profile.rental} />
+                            {profile.rental.with && <span className="text-muted-foreground text-xs">{t("values.with", { name: profile.rental.with })}</span>}
+                        </span>
+                    </KeyValue>
+                )}
 
                 {profile.kind === "truck" ? (
                     <KeyValue label={t("profile.driver")}>

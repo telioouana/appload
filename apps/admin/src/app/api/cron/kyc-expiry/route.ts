@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { db } from "@workspace/db/db";
+// The service role, not the staff one: this runs for every company's
+// loads and nobody is signed in (packages/db/src/schemas/rls.ts)
+import { serviceDb as db } from "@workspace/db/db";
 import { authorizeCron } from "@workspace/comms/cron";
 
 import { runExpirySweep } from "@workspace/domain/kyc/expiry";

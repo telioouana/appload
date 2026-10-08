@@ -12,8 +12,9 @@ import { CONNECTION_RELATION, partnerConnection, type ConnectionRelation, type C
 import { notify } from "@workspace/domain/notifications";
 import { isValid, today } from "@workspace/domain/kyc/derive";
 import { CONTRACT_DOC } from "@workspace/domain/kyc/requirements";
+import type { ModuleId } from "@workspace/auth/organization-modules";
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
+import { assertModule, authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
 import { uniqueViolationConstraint } from "@workspace/db/errors";
 import { withinRateLimit } from "@/lib/rate-limit";
@@ -62,12 +63,13 @@ function toAddress(value: Partial<Address> | undefined): Address | null {
 /**
  * The relation a tenant may ask for. A shipper never subcontracts: the
  * relation exists for a carrier hiring another carrier, and the requester is
- * the contractor.
+ * the contractor — and for the carrier it is a module it may have off.
  */
-function assertRelationAllowed(orgType: OrgType, relation: ConnectionRelation) {
-    if (relation === "subcontract" && orgType !== "carrier") {
+function assertRelationAllowed(tenant: { orgType: OrgType; modules: ReadonlySet<ModuleId> }, relation: ConnectionRelation) {
+    if (relation === "subcontract" && tenant.orgType !== "carrier") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "RELATION_NOT_ALLOWED" });
     }
+    if (relation === "subcontract") assertModule(tenant, "subcontracting");
 }
 
 /**
@@ -126,7 +128,7 @@ export const partnersRouter = createTRPCRouter({
             const tenantId = ctx.tenant.organizationId;
             const term = input.query.trim();
 
-            assertRelationAllowed(ctx.tenant.orgType, input.relation);
+            assertRelationAllowed(ctx.tenant, input.relation);
 
             if (term.length < SEARCH_MIN_CHARS) return [];
 
@@ -197,12 +199,12 @@ export const partnersRouter = createTRPCRouter({
      * declined or removed one reopens the same row rather than adding a
      * second.
      */
-    request: authorizedTenantProcedure("partner", ["request"])
+    request: authorizedTenantProcedure("partner", ["manage"])
         .input(ConnectionRequestBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
             const tenantId = ctx.tenant.organizationId;
 
-            assertRelationAllowed(ctx.tenant.orgType, input.relation);
+            assertRelationAllowed(ctx.tenant, input.relation);
 
             if (input.organizationId === tenantId) {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "SELF_CONNECTION" });
@@ -318,7 +320,7 @@ export const partnersRouter = createTRPCRouter({
      * while it is still pending — a second click on a stale list finds
      * nothing to update rather than overwriting an answer.
      */
-    respond: authorizedTenantProcedure("partner", ["respond"])
+    respond: authorizedTenantProcedure("partner", ["manage"])
         .input(z.object({ id: z.string().nonempty(), decision: z.enum(["accept", "decline"]) }))
         .mutation(async ({ ctx, input }): Promise<{ id: string; status: "accepted" | "declined" }> => {
             const tenantId = ctx.tenant.organizationId;
@@ -366,7 +368,7 @@ export const partnersRouter = createTRPCRouter({
      * "removed" rather than deleted: the orders the two ran together hang off
      * both companies, and a later re-request reopens this same row.
      */
-    remove: authorizedTenantProcedure("partner", ["remove"])
+    remove: authorizedTenantProcedure("partner", ["manage"])
         .input(z.object({ id: z.string().nonempty() }))
         .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
             const tenantId = ctx.tenant.organizationId;
@@ -411,7 +413,7 @@ export const partnersRouter = createTRPCRouter({
      * lets either side ask again without the pair carrying a decision it
      * never made.
      */
-    withdraw: authorizedTenantProcedure("partner", ["request"])
+    withdraw: authorizedTenantProcedure("partner", ["manage"])
         .input(z.object({ id: z.string().nonempty() }))
         .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
             const [deleted] = await ctx.db
@@ -434,12 +436,12 @@ export const partnersRouter = createTRPCRouter({
      * account, so the connection is accepted on registration (`accepted_via
      * = registration`) and staff see who registered whom in the metadata.
      */
-    register: authorizedTenantProcedure("partner", ["request"])
+    register: authorizedTenantProcedure("partner", ["manage"])
         .input(RegisterPartnerBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ organizationId: string; connectionId: string; name: string }> => {
             const tenantId = ctx.tenant.organizationId;
 
-            assertRelationAllowed(ctx.tenant.orgType, input.relation);
+            assertRelationAllowed(ctx.tenant, input.relation);
 
             // Unbounded, this mutation writes an organization row per call —
             // and NUIT, phone and email are UNIQUE, so a loop would squat tax
@@ -580,7 +582,7 @@ export const partnersRouter = createTRPCRouter({
         .query(async ({ ctx, input }): Promise<PagedResult<PartnerRow>> => {
             const tenantId = ctx.tenant.organizationId;
 
-            if (!kindsFor(ctx.tenant.orgType).includes(input.kind)) {
+            if (!kindsFor(ctx.tenant.orgType, ctx.tenant.modules).includes(input.kind)) {
                 throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
             }
 

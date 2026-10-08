@@ -9,6 +9,8 @@ import { IconSend, IconUserPlus } from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
 import { authClient } from "@workspace/auth/client";
+import { PROFILE_LEVEL } from "@workspace/auth/organization-permissions";
+import type { OrgType } from "@workspace/trpc/tenant-gate";
 
 import { Button } from "@workspace/ui/components/button";
 import { TextInput } from "@workspace/ui/inputs/text";
@@ -20,8 +22,9 @@ import { FieldGroup } from "@workspace/ui/components/field";
 import { Alert, AlertTitle } from "@workspace/ui/components/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@workspace/ui/components/dialog";
 
-import { InviteMemberSchema, type InviteMemberForm } from "@/backend/schemas/settings";
+import { INVITE_PROFILES, InviteMemberSchema, type InviteMemberForm } from "@/backend/schemas/settings";
 import { invitationsKey } from "@/frontend/pages/settings/hooks/use-organization";
+import { profileKey } from "@/frontend/pages/settings/lib/profiles";
 
 // Better Auth's own codes, narrowed to the two an inviter can act on
 const ERROR_MESSAGE_KEYS: Record<string, "alreadyMember" | "alreadyInvited" | "notAllowed"> = {
@@ -29,6 +32,8 @@ const ERROR_MESSAGE_KEYS: Record<string, "alreadyMember" | "alreadyInvited" | "n
     USER_IS_ALREADY_INVITED_TO_THIS_ORGANIZATION: "alreadyInvited",
     YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_ORGANIZATION: "notAllowed",
     YOU_ARE_NOT_ALLOWED_TO_INVITE_USER_WITH_THIS_ROLE: "notAllowed",
+    // The portal's own level rule (packages/auth server.ts)
+    NOT_ALLOWED: "notAllowed",
 }
 
 /**
@@ -36,16 +41,21 @@ const ERROR_MESSAGE_KEYS: Record<string, "alreadyMember" | "alreadyInvited" | "n
  * invitation row (packages/auth), so it is asked for here rather than left
  * to whatever the invitee types at sign-up.
  *
- * The owner role is deliberately not offered: it is granted by promoting an
- * existing member, which keeps a company from ending up with two people who
- * each think they are the account holder.
+ * CEO is never offered: ownership moves only through Appload staff, which
+ * keeps a company from ending up with two people who each think they are the
+ * account holder. The rest are the profiles below the inviter's own level —
+ * a Gestor invites Procurement and Operações, the CEO a Gestor too.
  */
 export function InviteMemberDialog({
     organizationId,
     organizationName,
+    orgType,
+    viewerLevel,
 }: {
     organizationId: string
     organizationName: string
+    orgType: OrgType
+    viewerLevel: number
 }) {
     const t = useTranslations("App.settings")
     const queryClient = useQueryClient()
@@ -60,7 +70,7 @@ export function InviteMemberDialog({
         defaultValues: {
             name: "",
             email: "",
-            role: "member",
+            role: "operations",
         },
     })
 
@@ -144,8 +154,9 @@ export function InviteMemberDialog({
                             label={t("invite.fields.role.label")}
                             placeholder={t("invite.fields.role.placeholder")}
                         >
-                            <SelectItem value="admin">{t("invite.roles.admin")}</SelectItem>
-                            <SelectItem value="member">{t("invite.roles.member")}</SelectItem>
+                            {INVITE_PROFILES.filter((profile) => PROFILE_LEVEL[profile] < viewerLevel).map((profile) => (
+                                <SelectItem key={profile} value={profile}>{t(`invite.roles.${profileKey(profile, orgType)}`)}</SelectItem>
+                            ))}
                         </SelectInput>
                     </FieldGroup>
                 </form>

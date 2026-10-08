@@ -41,10 +41,25 @@ export const routing = defineRouting({
         "/orders/load/[loadId]": {
             pt: "/pedidos/carga/[loadId]"
         },
+        // A multi-trip order's own page (the `contract` row), beside the sections like a load's
+        "/orders/multi/[orderId]": {
+            pt: "/pedidos/multi/[orderId]"
+        },
+        // A rental's own page (a `contract` on the days basis)
+        "/orders/rental/[orderId]": {
+            pt: "/pedidos/aluguer/[orderId]"
+        },
         // The standing prices the company keeps with Appload, under My
         // company beside the rest of what it owns
         "/quotes": {
             pt: "/cotacoes"
+        },
+        // The standing agreements loads are filed under, and one of them
+        "/contracts": {
+            pt: "/contratos"
+        },
+        "/contracts/[contractId]": {
+            pt: "/contratos/[contractId]"
         },
         // Where Appload's brokerage used to be. Appload is a partner like any
         // other now and its loads are on the Orders page, so every one of
@@ -74,6 +89,9 @@ export const routing = defineRouting({
         },
         "/settings": {
             pt: "/definicoes"
+        },
+        "/data": {
+            pt: "/dados"
         },
         "/onboarding": {
             pt: "/registo-empresa"

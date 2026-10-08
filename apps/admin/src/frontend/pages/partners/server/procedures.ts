@@ -9,6 +9,10 @@ import { chatConversation, chatMessage } from "@workspace/db/chats";
 import { kycDocument } from "@workspace/db/kyc-documents";
 import { CLAIM_STATUS, organizationClaim } from "@workspace/db/connections";
 import { notificationCursor } from "@workspace/db/notifications";
+import { activityLog } from "@workspace/db/activity-log";
+import { movement } from "@workspace/db/movements";
+import { activeGrant } from "@workspace/domain/support/grants";
+import { movementRef } from "@workspace/domain/movements/refs";
 import { KYC_STATUS, OWNERSHIP_STATUS, PARTNER_ORG_TYPE, isPartnerOrgType, type KycStatus, type KycSubjectType, type LoadingBay } from "@workspace/db/types";
 import type { db as Database } from "@workspace/db/db";
 import { brandedEmail, sendEmail } from "@workspace/auth/email";
@@ -1198,8 +1202,18 @@ export const partnersRouter = createTRPCRouter({
             const { metadata, ...profile } = row;
             const representee = representeeOf(metadata);
 
+            // The company's own decision to open its books to support (the
+            // trust wall): read here so the tab can say whether the door is open
+            const grant = await activeGrant(ctx.db, row.id);
+            const [granter] = grant?.grantedBy
+                ? await ctx.db.select({ name: user.name }).from(user).where(eq(user.id, grant.grantedBy)).limit(1)
+                : [];
+
             return {
                 ...profile,
+                supportAccess: grant
+                    ? { reason: grant.reason, expiresAt: grant.expiresAt, grantedByName: granter?.name ?? null }
+                    : null,
                 // The guard above narrowed the reference, not the rest of the
                 // row: the column itself also admits Appload's own type
                 type: row.type,
@@ -1235,6 +1249,49 @@ export const partnersRouter = createTRPCRouter({
                 },
                 recentOrders: recent.map(toRecentOrder),
             };
+        }),
+
+    /**
+     * The company's own loads, for support: reference, stage, lane, cargo
+     * and dates — no money, no other company's rows. The rows come back only
+     * while the company has a live support grant: the query is plain, and
+     * it is the staff role's policy on `movement` that admits them. Every
+     * read goes on the company's own activity log, which is what makes the
+     * grant worth giving.
+     */
+    supportLoads: authorizedProcedure("organizations", ["read"])
+        .input(z.object({ organizationId: z.string().nonempty(), limit: z.number().int().min(1).max(100).default(50) }))
+        .query(async ({ ctx, input }) => {
+            const rows = await ctx.db
+                .select()
+                .from(movement)
+                .where(eq(movement.organizationId, input.organizationId))
+                .orderBy(desc(movement.createdAt))
+                .limit(input.limit);
+
+            await ctx.db.insert(activityLog).values({
+                app: "admin",
+                actorId: ctx.session.user.id,
+                actorName: ctx.session.user.name,
+                sessionId: ctx.session.session.id,
+                organizationId: input.organizationId,
+                action: "support.loads.view",
+                entityType: "organization",
+                entityId: input.organizationId,
+                params: { loads: rows.length },
+                status: "success",
+            });
+
+            return rows.map((row) => ({
+                id: row.id,
+                ref: movementRef(row),
+                status: row.status,
+                origin: row.origin.state ?? row.origin.address,
+                destination: row.destination.state ?? row.destination.address,
+                cargo: row.cargoDescription,
+                expectedLoadingDate: row.expectedLoadingDate,
+                createdAt: row.createdAt,
+            }));
         }),
 
     /** A carrier's trucks, trailers, links and drivers, for the profile tabs. */

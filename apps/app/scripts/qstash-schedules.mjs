@@ -55,6 +55,12 @@ const SCHEDULES = [
         note: "trip location requests, 08:00-09:45 and 17:00-18:45 Maputo",
     },
     {
+        id: "appload-app-rental-checkin",
+        path: "/api/cron/rental-checkin",
+        cron: "CRON_TZ=Africa/Maputo */15 8-9 * * *",
+        note: "the rented trucks' morning check-in (is the truck at the client's service today?), 08:00-09:45 Maputo",
+    },
+    {
         id: "appload-app-notifications",
         path: "/api/cron/notifications",
         cron: "CRON_TZ=Africa/Maputo */30 7-18 * * 1-6",

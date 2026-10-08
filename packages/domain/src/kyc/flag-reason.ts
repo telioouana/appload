@@ -20,6 +20,8 @@ export const FLAG_REASON_CODES = [
     // The rig's papers are on file but nobody has looked at them yet: the
     // truck goes, and the order says so
     "PAPERS_UNREVIEWED",
+    // Dispatched with nothing on file for the driver or a vehicle
+    "PAPERS_MISSING",
     // The loading check found the truck or the driver was not the one the
     // dispatch pack names, or nobody checked before the load started
     "LOADING_MISMATCH",

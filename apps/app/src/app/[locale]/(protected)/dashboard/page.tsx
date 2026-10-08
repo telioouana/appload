@@ -1,7 +1,12 @@
 import { Suspense } from "react"
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
 import { ErrorBoundary } from "react-error-boundary"
 
+import { db } from "@workspace/db/db"
+import { auth } from "@workspace/auth/server"
 import { getTranslations } from "@workspace/i18n/server"
+import { getTenantGates } from "@workspace/trpc/tenant-gate"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
 import { latestLoadsInput, yearInput } from "@/frontend/pages/dashboard/types"
@@ -20,19 +25,31 @@ export async function generateMetadata() {
  * hydrates into its prefetched query instead of asking again, and the page
  * streams card by card behind the boundaries the view puts around them.
  *
- * The tenancy is not read here: every one of these procedures is a
+ * The tenancy is read only for the modules: every one of these procedures is a
  * `tenantProcedure`, so the organization comes from the session on the server
  * side of each call rather than from anything this page could hand down.
  */
 export default async function Dashboard() {
     const t = await getTranslations("App.dashboard")
 
+    // The one thing read of the tenancy here: which modules are on, so a
+    // card the view will not draw is not warmed by a call its module refuses
+    const session = await auth.api.getSession({ headers: await headers() })
+
+    if (!session) redirect("/sign-in")
+
+    const tenant = await getTenantGates(db, { userId: session.user.id })
+
+    if (!tenant.ok) redirect("/onboarding")
+
     prefetch(trpc.me.session.queryOptions())
     prefetch(trpc.analytics.pipeline.queryOptions())
-    prefetch(trpc.map.overview.queryOptions())
-    prefetch(trpc.analytics.monthly.queryOptions(yearInput()))
-    prefetch(trpc.analytics.money.queryOptions(yearInput()))
-    prefetch(trpc.analytics.loads.queryOptions(yearInput()))
+    if (tenant.modules.has("map")) prefetch(trpc.map.overview.queryOptions())
+    if (tenant.modules.has("analytics")) {
+        prefetch(trpc.analytics.monthly.queryOptions(yearInput()))
+        prefetch(trpc.analytics.money.queryOptions(yearInput()))
+        prefetch(trpc.analytics.loads.queryOptions(yearInput()))
+    }
     prefetch(trpc.movements.list.queryOptions(latestLoadsInput("orders")))
     prefetch(trpc.movements.list.queryOptions(latestLoadsInput("trips")))
     prefetch(trpc.movements.stats.queryOptions({ scope: "orders" }))

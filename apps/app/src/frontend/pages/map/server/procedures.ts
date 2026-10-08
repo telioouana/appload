@@ -4,14 +4,16 @@ import { TRPCError } from "@trpc/server";
 
 import { order, type Order } from "@workspace/db/orders";
 import { orderLocation, orderRoute } from "@workspace/db/tracking";
-import { movement, movementLocation } from "@workspace/db/movements";
+import { movement, movementLocation, movementRoute } from "@workspace/db/movements";
 
 import { movementRole } from "@workspace/domain/movements/policy";
 import { fillPlaceLabels } from "@workspace/domain/tracking/place-labels";
+import { dueBy, EN_ROUTE_STATUSES, progressFromRoute, type RouteLike } from "@workspace/domain/tracking/progress";
+import { departures, orderDepartures } from "@workspace/domain/tracking/progress-read";
 import { ON_GOING_STATUSES } from "@workspace/domain/orders/status-groups";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { tenantProcedure } from "@workspace/trpc/tenant";
+import { requireModule, tenantProcedure } from "@workspace/trpc/tenant";
 
 import { computeOrderRoute } from "@workspace/maps/server/routes";
 import { cacheKey, failedRecently, failureKey, GEOCODE_TTL_MS, num, rememberFailure, routeFailures, toRouteDto, trailSource } from "@workspace/maps/server/route-cache";
@@ -55,6 +57,21 @@ type PingRow = {
 
 const NO_PINGS: PingRow[] = [];
 
+/** The pin's progress: where the truck is on its road, only while it is out on it. */
+const toProgress = (
+    status: MapEntity["status"],
+    route: RouteLike | undefined,
+    ping: PingRow | undefined,
+    departedAt: Date | null,
+    dueAt: Date | null,
+): MapEntity["progress"] => {
+    if (!route || !ping || !EN_ROUTE_STATUSES.includes(status)) return null;
+
+    const progress = progressFromRoute(route, { lat: num(ping.latitude), lng: num(ping.longitude), recordedAt: ping.recordedAt }, departedAt, dueAt);
+
+    return { remainingKm: Math.round(progress.remainingMeters / 1000), etaAt: progress.etaAt, behind: progress.behind };
+};
+
 const toPoint = (ping: PingRow): TrailPoint => ({
     id: ping.id,
     lat: num(ping.latitude),
@@ -82,7 +99,7 @@ export const mapRouter = createTRPCRouter({
      * parallel and their newest pings looked up in one DISTINCT ON each,
      * because the client polls this on a timer.
      */
-    overview: tenantProcedure.query(async ({ ctx }): Promise<MapEntity[]> => {
+    overview: requireModule("map").query(async ({ ctx }): Promise<MapEntity[]> => {
         const tenant = scopeOf(ctx.tenant);
         const shipper = tenant.orgType === "shipper";
 
@@ -98,6 +115,7 @@ export const mapRouter = createTRPCRouter({
                     truckPlate: order.truckPlate,
                     loadingAddress: order.loadingAddress,
                     offloadingAddress: order.offloadingAddress,
+                    expectedOffloadingDate: order.expectedOffloadingDate,
                 })
                 .from(order)
                 .where(and(
@@ -190,6 +208,17 @@ export const mapRouter = createTRPCRouter({
         const lastByOrder = new Map(orderPings.map((ping) => [ping.subjectId, labelled(ping, orderLabels)]));
         const lastByTrail = new Map(loadPings.map((ping) => [ping.subjectId, labelled(ping, loadLabels)]));
 
+        // The roads and the departures, for how far along each truck is:
+        // both cached when the truck left, so this never asks Google
+        const [orderRoutes, loadRoutes, orderLeft, loadLeft] = await Promise.all([
+            orderIds.length ? ctx.db.select().from(orderRoute).where(inArray(orderRoute.orderId, orderIds)) : [],
+            trailSubjects.length ? ctx.db.select().from(movementRoute).where(inArray(movementRoute.movementId, trailSubjects)) : [],
+            orderDepartures(ctx.db, orderIds),
+            departures(ctx.db, trailSubjects),
+        ]);
+        const routeByOrder = new Map(orderRoutes.map((row) => [row.orderId, row]));
+        const routeByTrail = new Map(loadRoutes.map((row) => [row.movementId, row]));
+
         const orderEntities: MapEntity[] = orderEntityRows.map((row) => {
             const ping = lastByOrder.get(row.id);
 
@@ -207,6 +236,7 @@ export const mapRouter = createTRPCRouter({
                 driverName: row.driverName,
                 truckPlate: row.truckPlate,
                 lastPosition: ping ? toPoint(ping) : null,
+                progress: toProgress(row.status, routeByOrder.get(row.id), ping, orderLeft.get(row.id) ?? null, dueBy(row.expectedOffloadingDate)),
             };
         });
 
@@ -244,6 +274,10 @@ export const mapRouter = createTRPCRouter({
                 driverName: view.driverName ?? linked?.driverName ?? null,
                 truckPlate: view.truckPlate ?? linked?.truckPlate ?? null,
                 lastPosition: ping ? toPoint(ping) : null,
+                // A linked load's truck is the order's: its road and its departure too
+                progress: linkedOrderPk
+                    ? toProgress(movementTone(row.status), routeByOrder.get(linkedOrderPk), ping, orderLeft.get(linkedOrderPk) ?? null, dueBy(row.expectedDeliveryAt))
+                    : toProgress(movementTone(row.status), routeByTrail.get(trailId), ping, loadLeft.get(trailId) ?? null, dueBy(row.expectedDeliveryAt)),
             };
         });
 

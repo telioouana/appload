@@ -20,7 +20,7 @@ import {
 import { sendMessage, ThreadMessageInputSchema } from "@workspace/domain/threads/send";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, withModule } from "@workspace/trpc/tenant";
 
 import { actorOf } from "@/frontend/pages/orders/server/projection";
 import { withinRateLimit } from "@/lib/rate-limit";
@@ -62,6 +62,7 @@ export const threadsRouter = createTRPCRouter({
         }),
 
     send: authorizedTenantProcedure("thread", ["send"])
+        .use(withModule("chats"))
         .input(ThreadMessageInputSchema.extend(SubjectSchema.shape))
         .mutation(async ({ ctx, input }) => {
             // Per person, not per company: one member's runaway client must

@@ -33,7 +33,7 @@ export const KINDS_BY_FAMILY: Record<KindFamily, NotificationKind[]> = {
     ],
     // Appload's brokerage
     orders: ["order.requested", "order.quoted", "order.booked", "order.status", "order.cancelled", "order.document"],
-    quotes: ["quote.received", "quote.accepted", "quote.declined", "quote.withdrawn"],
+    quotes: ["quote.received", "quote.accepted", "quote.declined", "quote.withdrawn", "contract.proposed", "contract.accepted", "contract.declined"],
     // What the parties of a shipment say to each other, on an order or a load
     messages: ["thread.message"],
     account: ["claim.approved", "member.joined", "subscription.changed"],
@@ -80,6 +80,18 @@ export function icuValues(params: NotificationParams): Record<string, string | n
     );
 }
 
+/** The kinds whose message carries a price. */
+const PRICED_KINDS: readonly NotificationKind[] = ["movement.quoted", "movement.offered"];
+
+/**
+ * A row's params as a reader without `price:read` may see them. The writer
+ * fans one event out to every member, price included; the price is taken out
+ * on the way to the reader, and the slots stay filled so the message still
+ * formats — "quoted — on load …".
+ */
+export const withoutPrice = (kind: NotificationKind, params: NotificationParams): NotificationParams =>
+    PRICED_KINDS.includes(kind) ? { ...params, total: "—", currency: "" } : params;
+
 // ---------------------------------------------------------------------------
 // Paging. One list of allowed sizes governs the URL parser, the server input
 // and the footer's menu; the popover asks for the smallest of them.
@@ -112,6 +124,7 @@ export type NotificationLink =
     | { pathname: "/orders/load/[loadId]"; params: { loadId: string } }
     | { pathname: "/partners"; query: { id: string } }
     | { pathname: "/quotes"; query: { id: string } }
+    | { pathname: "/orders/multi/[orderId]"; params: { orderId: string } }
     | { pathname: "/settings" };
 
 /**
@@ -143,6 +156,10 @@ export function notificationTarget(
         case "quote":
             return entityId
                 ? { link: { pathname: "/quotes", query: { id: entityId } }, path: `/quotes?id=${encodeURIComponent(entityId)}` }
+                : null;
+        case "contract":
+            return entityId
+                ? { link: { pathname: "/orders/multi/[orderId]", params: { orderId: entityId } }, path: `/orders/multi/${encodeURIComponent(entityId)}` }
                 : null;
         case "subscription":
             return { link: { pathname: "/settings" }, path: "/settings" };

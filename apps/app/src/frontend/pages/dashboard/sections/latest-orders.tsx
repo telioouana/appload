@@ -49,7 +49,7 @@ export function LatestOrders() {
                 {/* Both tabs feed this table; "view all" opens the one the
                     company lands on */}
                 <Link
-                    href={{ pathname: "/orders/[section]", params: { section: "all" }, query: { tab: defaultTab(session.organization.type) } }}
+                    href={{ pathname: "/orders/[section]", params: { section: "all" }, query: { tab: defaultTab(session.organization.type, session.modules) } }}
                     className="text-muted-foreground hover:text-foreground flex shrink-0 items-center gap-1.5 text-xs"
                 >
                     {t("view-all")}

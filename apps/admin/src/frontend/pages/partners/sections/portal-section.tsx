@@ -9,27 +9,24 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { IconCheck, IconMailForward, IconUserPlus, IconX } from "@tabler/icons-react"
 
 import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
-import { isAuthorized } from "@workspace/auth/user-permissions"
-import { SUBSCRIPTION_PLAN, type SubscriptionPlan } from "@workspace/db/types"
+import { profileOf } from "@workspace/auth/organization-permissions"
+import type { SubscriptionPlan } from "@workspace/db/types"
 
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import { Label } from "@workspace/ui/components/label"
 import { Spinner } from "@workspace/ui/components/spinner"
 import { Textarea } from "@workspace/ui/components/textarea"
-import { SelectItem } from "@workspace/ui/components/select"
 import { FieldGroup } from "@workspace/ui/components/field"
 import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
 
 import { TextInput } from "@workspace/ui/inputs/text"
-import { DateInput } from "@workspace/ui/inputs/date"
-import { SelectInput } from "@workspace/ui/inputs/select"
 
+import { Link } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
 import { domainErrorCode } from "@workspace/trpc/errors"
 import { Mono } from "@workspace/ui/customs/list/table-cells"
-import { useStaffRole } from "@/frontend/pages/kyc/sections/document-checklist"
 import { DateValue, KeyValue, ProfileCard } from "@/frontend/pages/partners/sections/profile-parts"
 
 const PORTAL_ERROR_CODES = ["ALREADY_DECIDED", "NOT_ALLOWED", "NOT_FOUND", "UNKNOWN"] as const
@@ -43,30 +40,23 @@ const inviteSchema = (t: Translate) => z.object({
     email: z.email({ error: t("errors.email") }),
 })
 
-const subscriptionSchema = z.object({
-    // A select item cannot carry an empty value, so "no plan agreed" rides a
-    // sentinel through the form and becomes null on the way to the mutation
-    plan: z.enum(["none", ...SUBSCRIPTION_PLAN]),
-    // The picker has no "no date" state of its own; the Clear button empties it
-    expiresAt: z.date().optional(),
-})
-
 type InviteValues = z.infer<ReturnType<typeof inviteSchema>>
-type SubscriptionValues = z.infer<typeof subscriptionSchema>
 
 /**
  * The partner's standing on the self-serve portal, as ops sees it: whether
  * anybody signs in for this company, the claims waiting on a decision, who
  * holds an account or an open invitation, and the plan Appload agreed with
- * them. Everything here writes the same rows the portal itself reads.
+ * them. The plan is read here and written on the Subscriptions page.
  */
 export function PortalSection({
     organizationId,
+    name,
     portalActivatedAt,
     subscriptionPlan,
     subscriptionExpiresAt,
 }: {
     organizationId: string
+    name: string
     portalActivatedAt: Date | null
     subscriptionPlan: SubscriptionPlan | null
     subscriptionExpiresAt: Date | null
@@ -101,6 +91,7 @@ export function PortalSection({
 
             <SubscriptionCard
                 organizationId={organizationId}
+                name={name}
                 plan={subscriptionPlan}
                 expiresAt={subscriptionExpiresAt}
             />
@@ -140,7 +131,7 @@ export function PortalSection({
                         {access.data.members.map((row) => (
                             <KeyValue key={row.id} label={row.name}>
                                 <Mono>{row.email}</Mono>
-                                <Badge variant="secondary">{t(`role.${roleLabel(row.role)}`)}</Badge>
+                                <Badge variant="secondary">{t(`role.${profileOf(row.role)}`)}</Badge>
                             </KeyValue>
                         ))}
 
@@ -169,9 +160,6 @@ export function PortalSection({
         </div>
     )
 }
-
-/** Better Auth keeps whatever role string it was handed; keep the copy honest. */
-const roleLabel = (role: string) => (role === "owner" || role === "admin" ? role : "member")
 
 // ---------------------------------------------------------------------------
 // Claims
@@ -419,60 +407,28 @@ function InviteOwnerDialog({
 // Subscription
 // ---------------------------------------------------------------------------
 
+/**
+ * Read-only: the plan is written on the Subscriptions page, this card only
+ * shows what the portal's gate sees for this partner.
+ */
 function SubscriptionCard({
     organizationId,
+    name,
     plan,
     expiresAt,
 }: {
     organizationId: string
+    name: string
     plan: SubscriptionPlan | null
     expiresAt: Date | null
 }) {
     const t = useTranslations("Admin.partners.portal")
     const f = useFormatter()
     const trpc = useTRPC()
-    const queryClient = useQueryClient()
-
-    const role = useStaffRole()
-    const canEdit = isAuthorized(role, "subscription", ["update"])
 
     // What the portal's gate sees for this partner, so ops reads the quota
     // off the same rows it enforces
     const usage = useQuery(trpc.partners.portalUsage.queryOptions({ organizationId }))
-
-    const values = useMemo<SubscriptionValues>(
-        () => ({ plan: plan ?? "none", expiresAt: expiresAt ?? undefined }),
-        [plan, expiresAt],
-    )
-
-    const form = useForm<SubscriptionValues>({ resolver: zodResolver(subscriptionSchema), defaultValues: values })
-    const [error, setError] = useState<PortalErrorCode | null>(null)
-
-    useEffect(() => {
-        form.reset(values)
-    }, [values, form])
-
-    const save = useMutation(trpc.organizations.setSubscription.mutationOptions({
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: trpc.partners.pathKey() }),
-    }))
-
-    const submit = async (next: SubscriptionValues) => {
-        setError(null)
-
-        try {
-            await save.mutateAsync({
-                id: organizationId,
-                plan: next.plan === "none" ? null : next.plan,
-                expiresAt: next.expiresAt ?? null,
-            })
-            toast(t("subscription-saved"))
-        } catch (caught) {
-            setError(domainErrorCode<PortalErrorCode>(caught, PORTAL_ERROR_CODES, "UNKNOWN"))
-        }
-    }
-
-    // A role without the statement reads the plan but cannot touch it
-    const locked = save.isPending || !canEdit
 
     // The allowance's period is a "YYYY-MM" key; its first day is all it takes
     // to name the month in the reader's language
@@ -487,55 +443,24 @@ function SubscriptionCard({
                 : t("usage", { month, used: usage.data.used, quota: usage.data.quota })
 
     return (
-        <ProfileCard title={t("subscription")}>
-            <form
-                id="portal-subscription"
-                onSubmit={(event) => {
-                    event.stopPropagation()
-                    void form.handleSubmit(submit)(event)
-                }}
-            >
-                <FieldGroup className="gap-4">
-                    <SelectInput name="plan" control={form.control} isPending={locked} label={t("plan")}>
-                        <SelectItem value="none">{t("plan-none")}</SelectItem>
-                        {SUBSCRIPTION_PLAN.map((tier) => (
-                            <SelectItem key={tier} value={tier}>{t(`plan-${tier}`)}</SelectItem>
-                        ))}
-                    </SelectInput>
-
-                    <DateInput
-                        name="expiresAt"
-                        control={form.control}
-                        isPending={locked}
-                        label={t("expires")}
-                        placeholder={t("no-expiry")}
-                        description={
-                            canEdit ? (
-                                <button
-                                    type="button"
-                                    className="text-muted-foreground hover:text-foreground cursor-pointer underline underline-offset-2"
-                                    onClick={() => form.setValue("expiresAt", undefined, { shouldDirty: true })}
-                                >
-                                    {t("clear-expiry")}
-                                </button>
-                            ) : undefined
-                        }
-                    />
-                </FieldGroup>
-            </form>
+        <ProfileCard
+            title={t("subscription")}
+            aside={
+                <Link href={{ pathname: "/subscriptions", query: { search: name } }} className="hover:text-foreground underline underline-offset-2">
+                    {t("manage")}
+                </Link>
+            }
+        >
+            <dl className="flex flex-col gap-2">
+                <KeyValue label={t("plan")}>
+                    {plan ? <Badge variant="secondary">{t(`plan-${plan}`)}</Badge> : <span className="text-muted-foreground">{t("plan-none")}</span>}
+                </KeyValue>
+                <KeyValue label={t("expires")}>
+                    <DateValue value={expiresAt} />
+                </KeyValue>
+            </dl>
 
             {usageLine && <p className="text-muted-foreground text-xs">{usageLine}</p>}
-
-            {error && <Alert variant="destructive"><AlertDescription>{t(`errors.${error}`)}</AlertDescription></Alert>}
-
-            {canEdit ? (
-                <Button type="submit" form="portal-subscription" size="sm" className="self-end" disabled={save.isPending}>
-                    {save.isPending ? <Spinner /> : <IconCheck className="size-4" stroke={1.5} />}
-                    {t("subscription-save")}
-                </Button>
-            ) : (
-                <p className="text-muted-foreground text-xs">{t("subscription-locked")}</p>
-            )}
         </ProfileCard>
     )
 }

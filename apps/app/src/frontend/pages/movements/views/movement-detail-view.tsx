@@ -6,6 +6,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 
 import { useTRPC } from "@/backend/api/client"
 import { ApploadOrderPanels } from "@/frontend/pages/movements/sections/appload-panels"
+import { ContractCard } from "@/frontend/pages/movements/sections/contract-card"
 import { CostsCard } from "@/frontend/pages/movements/sections/costs-card"
 import { DisputeBanner } from "@/frontend/pages/movements/sections/dispute-banner"
 import { DocumentsCard } from "@/frontend/pages/movements/sections/documents-card"
@@ -44,7 +45,7 @@ export function MovementDetailView({ loadId }: { loadId: string }) {
     // A shipper's own trucks earn it nothing, so a load with no price on it
     // has no money to show; its running costs are the card below
     const hasMoney = Boolean(load.money.payable || load.money.receivable)
-        || (owner && session.organization.type === "carrier")
+        || (owner && session.organization.type === "carrier" && session.permissions.includes("price:read"))
 
     const appload = load.appload
     // Appload — or a partner on the portal — is still asking this company
@@ -75,6 +76,8 @@ export function MovementDetailView({ loadId }: { loadId: string }) {
                 <div className="container-snap flex min-w-0 flex-col gap-4 lg:min-h-0 lg:overflow-y-auto lg:pb-2">
                     <RouteCard load={load} />
 
+                    {load.contract && <ContractCard contract={load.contract} />}
+
                     {(quotes || load.quoteRequested) && (
                         <QuotesCard
                             load={load}
@@ -92,7 +95,7 @@ export function MovementDetailView({ loadId }: { loadId: string }) {
 
                     {/* Each company's own cost book: the owner's, or the
                         client's on a load moved for it */}
-                    {!candidate && (owner || load.role === "client") && <CostsCard load={load} />}
+                    {!candidate && (owner || load.role === "client") && session.permissions.includes("finance:read") && <CostsCard load={load} />}
 
                     {!candidate && <DocumentsCard load={load} />}
 

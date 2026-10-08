@@ -128,8 +128,26 @@ matching ref clause before the first push, or Vercel will refuse to save
    never run `db:migrate` against it (the generated `ADD COLUMN` /
    `ADD CONSTRAINT` statements are not idempotent), and never run the
    scripts against production. Note the two env files: the scripts read
-   `apps/admin/.env`, drizzle-kit reads `packages/db/.env`.
-3. **Data backfills that a migration needs.** A few migrations add a table
+   `apps/admin/.env`, drizzle-kit reads `packages/db/.env`. Since the
+   trust wall, `packages/db/.env` is the **owner** URL that the live
+   scripts read too, and `apps/admin/.env` is the staff role's (next step).
+3. **The two connection roles** (trust wall, `packages/db/src/schemas/rls.ts`).
+   Roles are cluster-wide, grants are per database, so this runs once
+   against each database as the owner, before migration 0026 (whose
+   policies name the roles). Pick two passwords (letters, digits, `-`,
+   `_`; at least 16), dry-run, then apply:
+
+   ```bash
+   DATABASE_URL=<prod owner url> STAFF_DB_PASSWORD=… SERVICE_DB_PASSWORD=… node packages/db/scripts/create-db-roles.mjs
+   DATABASE_URL=<prod owner url> STAFF_DB_PASSWORD=… SERVICE_DB_PASSWORD=… node packages/db/scripts/create-db-roles.mjs --yes
+   ```
+
+   The admin project's `DATABASE_URL` then becomes the owner URL with the
+   user swapped for `appload_staff.<ref>` and its password, and it gains
+   `SERVICE_DATABASE_URL` the same way with `appload_service.<ref>`. The
+   portal and the website keep the owner URL. Re-running the script is
+   safe; it resets a password only when one is given.
+4. **Data backfills that a migration needs.** A few migrations add a table
    the app then expects to be populated for existing rows; run these right
    after `db:migrate`, before the release deploy:
 
@@ -254,6 +272,12 @@ then push `prod/admin` and the portal back to back.
   and remaps the two legacy values in the same statement: `pro` → `business`,
   `free` → NULL. That remap is the whole data step — nothing else has to be
   touched afterwards.
+- `0036_tiers` — the priced catalog (2026-10-08). Data only: `business` →
+  `growth` (same 50-movement allowance). The six tiers, their MZN prices and
+  users live in `packages/domain/src/subscription.ts`; the column stays
+  plain text, so a future tier is a code change. From this release a spent
+  allowance no longer refuses a dispatch: the movement goes through, shows
+  as "+N extra" on `/subscriptions`, and staff invoice it at MZN 400 each.
 - `0016_movements` — the portal's own loads. The `trip` tables of `0014`
   give way to one `movement` table (a Trip when the company's own fleet
   moves the load, an Order when a partner does, for an agreed price) with
@@ -309,6 +333,96 @@ then push `prod/admin` and the portal back to back.
   transporter's price. Purely additive (new table, FKs on `movement` and
   `organization`); the two new notification kinds are text. Dev got it from
   `db:push`.
+- `0025_plate_fks_cascade` — the three plate FKs on `order` follow a
+  renamed plate (`ON UPDATE cascade`), so `normalize-plates.mjs` can
+  respell a fleet row without touching every order. Drops and re-adds
+  the constraints; no data step.
+- `0026_trust_wall` — row security on every table that holds a company's
+  own loads: `movement` and its ten child tables, `partner_connection`,
+  `thread` and its three. Policies for the `appload_staff` role (a row
+  only when Appload is client or carrier on the load; a thread only on an
+  order; no connection at all) and for `appload_service` (every row of
+  the four tracking tables). Nothing changes for the owner role the
+  portal runs on. **The roles must exist first**: §1 step 3 below. Dev got
+  it from `node packages/db/scripts/migrate.mjs` (run from packages/db)
+  once the roles existed.
+- `0027_contracts` — the contracts module: `contract` (a company's standing
+  agreement: basis, period, committed quantity, currency, the client half and
+  its price model as jsonb) and `contract_allocation` (one share per carrier
+  or own fleet, with its own price model and a pinned rig); `movement` and
+  `order` gain a nullable `contract_allocation_id` (the order's is a plain
+  id, copied by the Appload link). Purely additive; fulfilment is never
+  stored. Both tables carry the trust-wall policies (staff read a contract
+  only when Appload owns it or is its client). Dev got it from
+  `node packages/db/scripts/migrate.mjs`.
+- `0028_open_contracts` — a contract or a share may be open-ended:
+  `committed_qty` and `share_qty` become nullable (null = no ceiling, drawn
+  down while there is cargo and never used up); the two CHECKs allow null.
+  Dev got it from `node packages/db/scripts/migrate.mjs`.
+- `0029_contract_quote_link` — `contract.legacy_quote_id` (unique, nullable):
+  the standing quote a contract was carried over from. **Data step after
+  it:** the quotes page is retired and each `quote` row becomes an
+  open-ended contract (its lane, its validity, its total as a per-trip
+  price; accepted → active, standing → a proposal the client accepts,
+  the rest closed). Dry-run first, then write:
+
+  ```bash
+  DATABASE_URL=<prod owner url> node packages/db/scripts/migrate-quotes-to-contracts.mjs
+  DATABASE_URL=<prod owner url> node packages/db/scripts/migrate-quotes-to-contracts.mjs --yes
+  ```
+
+  Idempotent (a quote with a contract is skipped). Dev had no quote rows
+  left after its rebuild, so it ran there as a dry run only.
+- `0030_support_access` — `support_access_grant`: a company's own decision
+  to open its books to Appload support for a day, a week or a month, with a
+  reason (Settings › Security on the portal). The staff policies on
+  `movement`, `contract` and `partner_connection` are recreated with one
+  more clause: a live grant on the row's own company admits it. Purely
+  additive; nothing changes for the portal's owner connection. Dev got it
+  from `node packages/db/scripts/migrate.mjs`.
+- `0033_rentals` — rentals: `contract_allocation` loses the one-share-per-carrier
+  rule for lines that pin a truck (one line per truck per order, `ends_on` for
+  a truck that leaves early); new `rental_day` (how a day counts, the
+  client's dispute, the driver's answer), `rental_checkin_request` (the
+  morning question's chain) and `contract_payment` (money against a rental).
+  Staff policies through the line/order; the two check-in tables are
+  **service-role** tables too (the webhook files the answer):
+  `grant select, insert, update on rental_day, rental_checkin_request to appload_service;`
+  — or re-run `create-db-roles.mjs --yes`. Then: create the `rental_checkin`
+  WhatsApp template in Infobip (docs/infobip-templates.md) and set
+  `INFOBIP_RENTAL_TEMPLATE` on the portal and admin projects; add the
+  `appload-app-rental-checkin` QStash schedule (`qstash-schedules.mjs`).
+  Dev got the migration from `node packages/db/scripts/migrate.mjs`.
+- `0034_member_permissions` — portal access by permission: new
+  `member_permission` (one member's permission switched on or off against
+  their profile, for good or for a window, and the CEO's temporary
+  acting-CEO lift; never deleted, a lapsed row simply stops counting).
+  `member.role` defaults to `operations`, and the migration renames every
+  `member` / pending invitation role `member` → `operations`: those people
+  stop seeing prices on release day — tell the companies, or their CEO
+  re-roles them in Settings › Team. Profiles are `owner` (CEO), `admin`
+  (Gestor), `procurement` (Comercial to a transporter), `operations`.
+  The admin app's staff role needs nothing new (default privileges cover the
+  table). Dev got it from `node packages/db/scripts/migrate.mjs`.
+- `0035_organization_modules` — company modules: `organization.disabled_modules`
+  (jsonb list of module ids the company switched off; null = never
+  configured, every module on, so existing companies see no change). The
+  real CEO sets it in Settings › Modules (an acting CEO cannot); a new
+  company answers the module questions right after registering. Nothing
+  else to do on release. Dev got it from `node packages/db/scripts/migrate.mjs`.
+- `0032_open_period` — `contract.ends_on` becomes nullable (null = the
+  order runs as long as the cargo lasts; it never expires on its own) and the
+  period CHECK allows it. Dev got it from `node packages/db/scripts/migrate.mjs`.
+- **No migration — reference series (stage/34):** a multi-trip order (the
+  `contract` row) is numbered from the company's **ORD** counter from now
+  on, like any order; the `CON` kind is no longer minted (rows that carry a
+  CON reference keep it). `migrate-quotes-to-contracts.mjs` mints ORD too.
+- `0031_activity_log_org_idx` — index on `activity_log (organization_id,
+  created_at desc)` for the company's own record (portal Settings ›
+  Activity). With it, the portal stamps every request-log row with the
+  tenant the gate resolved instead of the session cookie's organization:
+  rows written before this release carry no company and do not show on
+  the page (it says so). Dev got it from `node packages/db/scripts/migrate.mjs`.
 
 The shared **dev** database got all nine from the idempotent scripts
 instead — `node packages/db/scripts/create-portal-tables.mjs`,
@@ -341,6 +455,9 @@ Same rule as every other table: scripts on dev, `db:migrate` on production,
      subdomains of one apex domain.
    - `KYC_ENFORCEMENT`: `warn` to launch, `block` once partners' documents
      are loaded.
+   - `DATABASE_URL` is the **staff** role's URL and `SERVICE_DATABASE_URL`
+     the service role's (§1 step 3) — never the owner's: on the owner, row
+     security does not apply and the trust wall is off.
 
 ### The portal's projects
 
@@ -360,8 +477,10 @@ comes from:
   `QSTASH_NEXT_SIGNING_KEY`, `CRON_SECRET`, `GOOGLE_MAPS_API_KEY`,
   `RESEND_API_KEY`, `EMAIL_FROM`, `KYC_ENFORCEMENT`,
   `NEXT_PUBLIC_GOOGLE_SHEETS_AUTH_MODE`, `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID`.
-  `DATABASE_URL` and `BETTER_AUTH_SECRET` **must** be byte-for-byte the
-  admin's — one database, one auth instance, one cookie signature. The rest
+  `BETTER_AUTH_SECRET` **must** be byte-for-byte the admin's — one auth
+  instance, one cookie signature. `DATABASE_URL` names the same database
+  but **not** the same role: the portal connects as the owner
+  (`postgres.<ref>`), the admin as `appload_staff.<ref>` (§1 step 3). The rest
   are identical only because both apps talk to the same accounts; a
   mismatch there makes the two apps behave differently rather than break.
 - **The portal's own:**
@@ -568,7 +687,7 @@ admin, **Portal** section.
    - or **Invite owner** (name + email) — sends the Better Auth invitation,
      whose link is `NEXT_PUBLIC_PORTAL_URL/accept-invitation/<id>`; they
      sign up with that exact address.
-2. **Set the plan** in the same section: tier (`starter`, `business`,
+2. **Set the plan** in the same section: tier (`starter`, `essential`, `growth`, `scale`, `fleet`,
    `enterprise`) and an expiry date. Manager and up. "No plan" is a valid
    state, not a broken one — see below.
 3. The owner signs in and connects the company to its counterparties

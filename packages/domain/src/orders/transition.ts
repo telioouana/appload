@@ -8,7 +8,7 @@ import { isAuthorized } from "@workspace/auth/user-permissions";
 
 import type { Actor } from "@workspace/domain/orders/actor";
 import { syncApploadLinks } from "@workspace/domain/appload/link";
-import { guardOrderGate } from "@workspace/domain/kyc/order-gate";
+import { guardOrderGate, type GateFlagPatch } from "@workspace/domain/kyc/order-gate";
 import { FOLLOW_UP_STATUSES, startConversation } from "@workspace/domain/tracking/conversations";
 import { offerAcceptable } from "@workspace/domain/orders/booking-readiness";
 import { deriveOrderFields } from "@workspace/domain/orders/derive";
@@ -467,11 +467,12 @@ export async function applyTransition(
 
     // Driver and truck are optional at booking — a trip is committed
     // weeks before the rig that will run it is known — and mandatory
-    // the moment it is dispatched to the loading site. So are their
-    // papers (D6): unlike the verification gate below, which warns or
-    // blocks depending on the mode, a rig with nothing on file is
-    // refused outright in every mode. The papers are part of the
-    // payload the move commits, not a risk somebody may accept.
+    // the moment it is dispatched to the loading site. Their papers are
+    // flagged, never blocked (Claire, 2026-10-02): the truck goes and the
+    // order says who left without them. The portal still refuses on its
+    // own door before reaching here.
+    let papersFlag: GateFlagPatch | null = null;
+
     if (isDispatchMove(current.status, input.to)) {
         const readiness = await loadDispatchReadiness(ctx.db, current);
 
@@ -479,10 +480,14 @@ export async function applyTransition(
             throw new TRPCError({ code: "BAD_REQUEST", message: "INCOMPLETE_FOR_DISPATCH" });
         }
         if (readiness.papers.length > 0) {
-            // The message is all that travels: the dialogs name the subject
-            // and the paper from the gaps `transitionOptions` (admin) and
-            // `kyc.rigPapers` (portal) already gave them
-            throw new TRPCError({ code: "BAD_REQUEST", message: "PAPERS_MISSING" });
+            const reason = `PAPERS_MISSING: ${readiness.papers.map((gap) => gap.label).join(", ")}`;
+
+            papersFlag = {
+                flaggedForReview: true,
+                flagReason: input.note?.trim() ? `${reason} — ${input.note.trim()}` : reason,
+                flaggedAt: new Date(),
+                flaggedBy: ctx.actor.userId,
+            };
         }
     }
 
@@ -519,7 +524,7 @@ export async function applyTransition(
     // carry one yet, and the driver and the rig at dispatch, which is
     // the first moment they exist. Later transitions move an order
     // that was already gated on both.
-    const { flagPatch: gateFlag } = booked
+    const { flagPatch: verificationFlag } = booked
         ? await guardOrderGate(
             ctx.db,
             { carrierId: booked.offer.carrierId },
@@ -540,6 +545,10 @@ export async function applyTransition(
                 { note: input.note },
             )
             : { flagPatch: null };
+
+    // A verification flag names the wider gap; missing papers stand in
+    // only when the rig is otherwise clean
+    const gateFlag = verificationFlag ?? papersFlag;
 
     const resumeStatus =
         current.status === "stopped" || current.status === "issue"

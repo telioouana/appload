@@ -4,6 +4,8 @@ import { registerActivityCatalog } from "@workspace/trpc/activity-log"
 import { activityCatalog } from "../activity-catalog"
 import { analyticsCatalog } from "@/frontend/pages/analytics/server/activity"
 import { analyticsRouter } from "@/frontend/pages/analytics/server/procedures"
+import { contractsCatalog } from "@/frontend/pages/contracts/server/activity"
+import { contractsRouter } from "@/frontend/pages/contracts/server/procedures"
 import { driversCatalog } from "@/frontend/pages/drivers/server/activity"
 import { driversRouter } from "@/frontend/pages/drivers/server/procedures"
 import { fleetCatalog } from "@/frontend/pages/fleet/server/activity"
@@ -20,12 +22,13 @@ import { ordersCatalog } from "@/frontend/pages/orders/server/activity"
 import { ordersRouter } from "@/frontend/pages/orders/server/procedures"
 import { partnersCatalog } from "@/frontend/pages/partners/server/activity"
 import { partnersRouter } from "@/frontend/pages/partners/server/procedures"
-import { quotesCatalog } from "@/frontend/pages/quotes/server/activity"
-import { quotesRouter } from "@/frontend/pages/quotes/server/procedures"
+import { rentalsCatalog } from "@/frontend/pages/rentals/server/activity"
+import { rentalsRouter } from "@/frontend/pages/rentals/server/procedures"
 import { searchRouter } from "@/frontend/pages/search/server/procedures"
 import { threadsCatalog } from "@/frontend/pages/threads/server/activity"
 import { threadsRouter } from "@/frontend/pages/threads/server/procedures"
 import { meRouter } from "@/frontend/pages/settings/server/procedures"
+import { teamCatalog, teamRouter } from "@/frontend/pages/settings/server/team"
 
 // Module scope: runs on every cold start before any request is handled, so
 // mutation log rows get their enriched params from the first request on.
@@ -34,6 +37,7 @@ import { meRouter } from "@/frontend/pages/settings/server/procedures"
 registerActivityCatalog({
     ...activityCatalog,
     ...analyticsCatalog,
+    ...contractsCatalog,
     ...driversCatalog,
     ...fleetCatalog,
     ...mapCatalog,
@@ -41,12 +45,14 @@ registerActivityCatalog({
     ...notificationsCatalog,
     ...ordersCatalog,
     ...partnersCatalog,
-    ...quotesCatalog,
+    ...rentalsCatalog,
+    ...teamCatalog,
     ...threadsCatalog,
 });
 
 export const appRouter = createTRPCRouter({
     analytics: analyticsRouter,
+    contracts: contractsRouter,
     drivers: driversRouter,
     fleet: fleetRouter,
     kyc: kycRouter,
@@ -57,8 +63,9 @@ export const appRouter = createTRPCRouter({
     onboarding: onboardingRouter,
     orders: ordersRouter,
     partners: partnersRouter,
-    quotes: quotesRouter,
+    rentals: rentalsRouter,
     search: searchRouter,
+    team: teamRouter,
     threads: threadsRouter,
 });
 

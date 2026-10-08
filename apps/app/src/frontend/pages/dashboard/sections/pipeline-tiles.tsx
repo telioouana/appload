@@ -31,7 +31,7 @@ export function PipelineTiles() {
     const shipper = session.organization.type === "shipper"
     // Appload's loads are the company's own: each tile opens the section of
     // the Orders page that holds them, on the tab this company lands on
-    const tab = defaultTab(session.organization.type)
+    const tab = defaultTab(session.organization.type, session.modules)
     const { attention } = data
 
     const onTheRoad: StatTileProps & { key: string } = {

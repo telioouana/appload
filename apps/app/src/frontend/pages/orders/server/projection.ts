@@ -16,6 +16,7 @@ import { ON_GOING_STATUSES } from "@workspace/domain/orders/status-groups";
 import { OrderError } from "@workspace/domain/orders/errors";
 
 import { foreignKeyViolationConstraint } from "@workspace/db/errors";
+import { moneyView, type MoneyView } from "@workspace/auth/organization-permissions";
 import type {
     Currency,
     OrderMoney,
@@ -43,6 +44,14 @@ export const scopeOf = (tenant: TenantScope): TenantScope => ({
     organizationId: tenant.organizationId,
     orgType: tenant.orgType,
 });
+
+/**
+ * How much of the money this PERSON may read, from their own permissions
+ * (`ctx.tenant.permissions`). The side of the deal decides which leg is
+ * theirs; this only ever narrows it further — an Operações member reads no
+ * figure at all. Handed to the money builders below next to the scope.
+ */
+export const viewOf = (tenant: { permissions: ReadonlySet<string> }): MoneyView => moneyView(tenant.permissions);
 
 /**
  * A procedure whose whole meaning belongs to one side of the deal (only a
@@ -296,17 +305,18 @@ type MoneyRow = {
  * The carrier columns hold the price of the carrier that WON the order, so a
  * reader who is not a party to it gets no figure at all. These two mappers
  * are the only place money enters a portal response, which is why the check
- * lives here rather than in each caller.
+ * lives here rather than in each caller. The same goes for a reader whose own
+ * permissions hold no `price:read`: their company's deal, and still no figure.
  */
 const NO_MONEY = { total: null, currency: "MZN" } as const;
 
-export const toMoney = (row: MoneyRow): OrderMoney =>
-    row.isMine
+export const toMoney = (row: MoneyRow, view: MoneyView): OrderMoney =>
+    row.isMine && view !== "none"
         ? { total: toNumber(row.moneyTotal), currency: row.moneyCurrency ?? "MZN" }
         : { ...NO_MONEY };
 
-export const toMoneyDetail = (row: MoneyRow): OrderMoneyDetail =>
-    row.isMine
+export const toMoneyDetail = (row: MoneyRow, view: MoneyView): OrderMoneyDetail =>
+    row.isMine && view !== "none"
         ? {
             subtotal: toNumber(row.moneySubtotal),
             vat: toNumber(row.moneyVAT),
@@ -362,13 +372,17 @@ export type OfferProjectionRow = {
     offerTotal: string | null;
 };
 
-export const toOfferView = (row: OfferProjectionRow, tenantId: string): OrderOfferView => ({
+/** An offer's amounts, or none for a reader without `price:read`. */
+export const offerAmount = (value: string | null, view: MoneyView): number | null =>
+    view === "none" ? null : toNumber(value);
+
+export const toOfferView = (row: OfferProjectionRow, tenantId: string, view: MoneyView): OrderOfferView => ({
     id: row.id,
     carrierName: row.carrierName,
     status: row.status,
-    subtotal: toNumber(row.offerSubtotal),
-    vat: toNumber(row.offerVAT),
-    total: toNumber(row.offerTotal),
+    subtotal: offerAmount(row.offerSubtotal, view),
+    vat: offerAmount(row.offerVAT, view),
+    total: offerAmount(row.offerTotal, view),
     currency: row.currency,
     fiscalRegime: row.fiscalRegime,
     includesGit: row.includesGit,

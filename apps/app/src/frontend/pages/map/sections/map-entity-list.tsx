@@ -102,6 +102,18 @@ export function MapEntityList({
                                     ? t("list.last-seen", { ago: f.relativeTime(entity.lastPosition.recordedAt, now) })
                                     : t("list.no-location")}
                             </span>
+
+                            {entity.progress && (
+                                <span className="flex items-center gap-1.5 text-[11px] tabular-nums">
+                                    <span className={entity.progress.behind ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}>
+                                        {t("progress.remaining", { km: f.number(entity.progress.remainingKm) })}
+                                        {entity.progress.etaAt && ` · ${t("progress.eta", { time: f.dateTime(entity.progress.etaAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) })}`}
+                                    </span>
+                                    {entity.progress.behind && (
+                                        <span className="rounded-full bg-red-500/10 px-1.5 py-px text-[10px] leading-4 text-red-600 dark:text-red-400">{t("progress.behind")}</span>
+                                    )}
+                                </span>
+                            )}
                         </button>
                     )
                 })}

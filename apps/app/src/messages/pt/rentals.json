@@ -1,0 +1,315 @@
+{
+    "metadata": "Alugueres",
+    "title": "Alugueres",
+    "description": {
+        "shipper": "Camiões ao serviço da sua empresa por um período, pagos ao dia: quais, desde quando, e quanto já se deve.",
+        "carrier": "Os seus camiões alugados a clientes, e os que lhe foram pedidos, com os dias já contados."
+    },
+    "search": {
+        "placeholder": "Pesquisar por referência, cliente, empresa ou matrícula",
+        "clear": "Limpar a pesquisa"
+    },
+    "add": {
+        "trigger": "Novo aluguer"
+    },
+    "tabs": {
+        "own": "Meus",
+        "partners": "De parceiros"
+    },
+    "columns": {
+        "reference": "Aluguer",
+        "counterparty": "Com",
+        "trucks": "Camiões",
+        "period": "Período",
+        "days": "Dias",
+        "billable": "A facturar",
+        "state": "Estado"
+    },
+    "sort": {
+        "newest": "Mais recentes primeiro",
+        "period": "Data de início",
+        "reference": "Referência"
+    },
+    "filters": {
+        "all": "Todos"
+    },
+    "tiles": {
+        "active": "Em curso",
+        "active-hint": "Camiões ao serviço agora",
+        "attention": "Precisam de atenção",
+        "attention-hint": "Dias contestados, ou um motorista que disse não hoje",
+        "draft": "Rascunhos",
+        "draft-hint": "Ainda não activados"
+    },
+    "money": {
+        "spend": "Despesa com alugueres",
+        "revenue": "Receita de alugueres",
+        "billable": "A facturar até hoje",
+        "received": "Recebido",
+        "receivable": "Por receber",
+        "paid": "Pago",
+        "outstanding": "Em dívida",
+        "empty": "Ainda não há alugueres com preço aqui"
+    },
+    "states": {
+        "draft": "Rascunho",
+        "proposed": "Proposta",
+        "active": "Em curso",
+        "exhausted": "Esgotado",
+        "expired": "Terminado",
+        "closed": "Fechado"
+    },
+    "role": {
+        "owner": "Seu",
+        "client": "É o cliente",
+        "carrier": "Camião seu"
+    },
+    "day-states": {
+        "worked": "Trabalhou",
+        "standby": "Parado à disposição",
+        "stopped": "Parado (avaria ou falta)",
+        "off": "Sem serviço"
+    },
+    "values": {
+        "since": "Desde {date} · enquanto for preciso",
+        "own-fleet": "Frota própria",
+        "own-account": "Conta própria",
+        "no-client": "Sem cliente",
+        "typed": "Fora do portal",
+        "no-end": "Sem data de fim",
+        "no-site": "Local a definir",
+        "trucks": "{count, plural, one {# camião} other {# camiões}}",
+        "days": "{count, plural, one {# dia} other {# dias}}",
+        "days-of": "{billable} de {total} dias",
+        "days-open": "{billable} dias até hoje",
+        "per-day": "{amount} por dia",
+        "standby-rate": "{amount} por dia parado",
+        "calendar": "dias de calendário",
+        "working": "dias úteis (seg–sáb)",
+        "today-yes": "Hoje: ao serviço",
+        "today-no": "Hoje: motorista disse não",
+        "today-silent": "Hoje: sem resposta",
+        "disputed": "{count, plural, one {# dia contestado} other {# dias contestados}}",
+        "ended": "Saiu a {date}"
+    },
+    "data": {
+        "empty": "Ainda não há alugueres",
+        "empty-description": {
+            "shipper": "Um ou mais camiões ao seu serviço por um período, pagos ao dia. Registe o aluguer e o pedido vai contando os dias.",
+            "carrier": "Registe aqui os camiões que aluga a clientes. Os alugueres que os seus clientes lhe pedem aparecem em De parceiros."
+        },
+        "no-results": "Nenhum aluguer corresponde a estes filtros",
+        "error": "Não foi possível carregar os alugueres"
+    },
+    "form": {
+        "new-title": "Novo aluguer",
+        "edit-title": "Editar {ref}",
+        "description": "Camiões ao serviço de um cliente por um período, pagos ao dia. Todo o período conta, salvo os dias marcados no diário.",
+        "sections": {
+            "client": "Cliente",
+            "trucks": "Camiões",
+            "site": "Onde trabalham",
+            "period": "Período",
+            "price": "Preço por dia",
+            "notes": "Notas"
+        },
+        "fields": {
+            "client": "Cliente",
+            "client-name": "Nome do cliente",
+            "client-reference": "Referência do cliente",
+            "site": "Local de trabalho",
+            "starts-on": "De",
+            "ends-on": "Até",
+            "no-end": "Sem data de fim",
+            "no-end-hint": "O aluguer dura enquanto o cliente precisar; fecha-se quando acabar.",
+            "rate": "Tarifa por dia",
+            "billable-days": "Dias que contam",
+            "calendar": "Todos os dias",
+            "working": "Dias úteis (seg–sáb)",
+            "standby-rate": "Tarifa de dia parado (opcional)",
+            "standby-hint": "Um dia em que o camião esteve disponível mas não foi usado. Sem tarifa própria, conta ao preço cheio.",
+            "currency": "Moeda",
+            "fiscal-regime": "Regime fiscal",
+            "notes": "Notas"
+        },
+        "lines": {
+            "title": "Camiões",
+            "add": "Adicionar camião",
+            "remove": "Remover",
+            "provider": "Quem fornece",
+            "own-fleet": "A minha frota",
+            "typed": "Transportador fora do portal",
+            "carrier-name": "Nome do transportador",
+            "truck": "Camião",
+            "truck-none": "Escolha um camião",
+            "driver": "Motorista",
+            "driver-none": "Sem motorista",
+            "truck-plate": "Matrícula",
+            "buy-rate": "O que paga ao transportador, por dia",
+            "empty": "Adicione pelo menos um camião."
+        },
+        "picker": {
+            "none": "Ninguém",
+            "typed": "Escrever um nome"
+        },
+        "errors": {
+            "date": "Escolha uma data.",
+            "period": "A data de fim é anterior à de início.",
+            "rate": "Indique a tarifa por dia.",
+            "truck": "Escolha um camião ou escreva a matrícula.",
+            "name": "Escreva o nome.",
+            "lines": "Adicione pelo menos um camião."
+        },
+        "submit": "Guardar aluguer",
+        "cancel": "Cancelar",
+        "saving": "A guardar…"
+    },
+    "detail": {
+        "meta": "Aluguer",
+        "error": "Não foi possível carregar este aluguer",
+        "terms": "Termos",
+        "trucks": "Camiões",
+        "diary": "Diário",
+        "money": "Valores",
+        "payments": "Pagamentos",
+        "file": "Documento assinado",
+        "notes": "Notas",
+        "progress": "{billable} dias facturáveis até hoje",
+        "progress-of": "dia {today} de {total} · {billable} facturáveis",
+        "fields": {
+            "rate": "Tarifa por dia",
+            "billable-days": "Dias que contam",
+            "standby-rate": "Dia parado",
+            "site": "Local de trabalho",
+            "period": "Período",
+            "client": "Cliente",
+            "owner": "Titular",
+            "client-reference": "Referência do cliente",
+            "currency": "Moeda",
+            "fiscal-regime": "Regime fiscal",
+            "trucks": "Camiões"
+        },
+        "actions": {
+            "edit": "Editar",
+            "activate": "Activar",
+            "accept": "Aceitar",
+            "decline": "Recusar",
+            "close": "Fechar aluguer",
+            "close-confirm": "Fechar este aluguer? Os dias deixam de contar a partir de hoje.",
+            "add-line": "Adicionar camião",
+            "end-line": "Terminar",
+            "end-line-confirm": "O camião {plate} sai do aluguer no fim de {date}. Os dias deixam de contar a partir daí.",
+            "remove-line": "Remover camião",
+            "record-payment": "Registar pagamento",
+            "upload": "Carregar o documento assinado",
+            "replace": "Substituir",
+            "remove-file": "Remover",
+            "remove-line-confirm": "Remover {plate} deste aluguer? A linha ainda não tem dias marcados."
+        },
+        "line-columns": {
+            "truck": "Camião",
+            "driver": "Motorista",
+            "provider": "Fornece",
+            "days": "Dias",
+            "today": "Hoje",
+            "amount": "A facturar"
+        },
+        "diary-help": {
+            "provider": "Clique num dia para dizer como contou. Sem marca, o dia conta por inteiro.",
+            "client": "Clique num dia para o contestar. O transportador vê a contestação e responde.",
+            "reader": "Sem marca, o dia conta por inteiro."
+        },
+        "legend": {
+            "worked": "Trabalhou",
+            "standby": "Parado à disposição",
+            "stopped": "Parado",
+            "off": "Sem serviço",
+            "disputed": "Contestado",
+            "silent": "Sem resposta",
+            "future": "Ainda não chegou"
+        },
+        "day": {
+            "title": "{date}",
+            "state": "Como contou",
+            "note": "Nota",
+            "answer-yes": "O motorista disse que estava ao serviço.",
+            "answer-no": "O motorista disse que não estava ao serviço.",
+            "disputed-by-client": "O cliente contesta este dia{note, select, none {} other {: {note}}}",
+            "dispute": "Contestar este dia",
+            "dispute-note": "Porquê",
+            "withdraw": "Retirar a contestação",
+            "accept": "Aceitar: o dia não conta",
+            "save": "Guardar",
+            "cancel": "Cancelar"
+        },
+        "money-rows": {
+            "billable": "A facturar até hoje",
+            "projected": "Até ao fim do período",
+            "received": "Recebido",
+            "receivable": "Por receber",
+            "payable": "A pagar aos transportadores",
+            "paid": "Pago",
+            "outstanding": "Em dívida",
+            "per-line": "Por camião",
+            "per-month": "Por mês",
+            "month": "Mês",
+            "days": "Dias",
+            "amount": "Valor",
+            "open": "sem data de fim"
+        },
+        "payment-form": {
+            "title": "Registar pagamento",
+            "description": "Dinheiro que entrou ou saiu neste aluguer.",
+            "leg": "Sentido",
+            "sell": "Recebido do cliente",
+            "buy": "Pago ao transportador",
+            "line": "Camião",
+            "whole": "Todo o aluguer",
+            "amount": "Valor",
+            "paid-at": "Data",
+            "reference": "Referência",
+            "correction-hint": "Um valor negativo corrige um pagamento anterior e precisa de referência.",
+            "submit": "Registar",
+            "cancel": "Cancelar"
+        },
+        "no-lines": "Ainda não há camiões neste aluguer.",
+        "no-payments": "Ainda não há pagamentos registados.",
+        "no-file": "Ainda não foi carregada a cópia assinada do acordo.",
+        "footer": "Criado {created} · actualizado {updated}",
+        "diary-nav": {
+            "prev": "Mês anterior",
+            "next": "Mês seguinte"
+        }
+    },
+    "errors": {
+        "NOT_FOUND": "Este aluguer não existe, ou a sua empresa não faz parte dele.",
+        "NOT_ALLOWED": "O seu perfil não pode fazer isso.",
+        "VERSION_CONFLICT": "Alguém alterou este aluguer entretanto. Recarregue e tente de novo.",
+        "CONTRACT_CLOSED": "Este aluguer está fechado.",
+        "CLIENT_MUST_ACCEPT": "É o cliente que aceita este aluguer; fica em curso quando o fizer.",
+        "PERIOD_INVERTED": "A data de fim é anterior à de início.",
+        "PRICE_MODEL_BASIS_MISMATCH": "Um aluguer tem um preço por dia.",
+        "LINE_NEEDS_TRUCK": "Cada linha precisa de um camião ou de uma matrícula.",
+        "TRUCK_ON_RENTAL": "Esse camião já está noutro aluguer nesse período.",
+        "LINE_HAS_LOG": "Este camião já tem dias no diário; termine a linha em vez de a remover.",
+        "DAY_IN_FUTURE": "Esse dia ainda não chegou.",
+        "DAY_OUT_OF_PERIOD": "Esse dia está fora do período do aluguer.",
+        "NOT_THE_PROVIDER": "Só quem fornece o camião pode marcar os seus dias.",
+        "NOT_THE_CLIENT": "Só o cliente pode contestar um dia.",
+        "AMOUNT_REQUIRED": "Indique um valor diferente de zero.",
+        "CORRECTION_NEEDS_REFERENCE": "Uma correcção precisa de referência.",
+        "LINE_REQUIRED": "Um pagamento a um transportador diz-se por camião.",
+        "CLIENT_IS_SELF": "Uma empresa não pode ser cliente de si própria.",
+        "CARRIER_IS_SELF": "Um camião seu regista-se como frota própria.",
+        "APPLOAD_NOT_A_CLIENT": "A Appload transporta cargas; não as encomenda.",
+        "NOT_CONNECTED": "Essa empresa não está ligada à sua.",
+        "OWN_FLEET_HAS_NO_BUY_PRICE": "A sua frota não tem preço de compra; o preço do aluguer é o que o cliente paga.",
+        "RIG_NOT_ON_ALLOCATION": "Só se fixa um camião ou motorista a uma empresa que está no portal.",
+        "TRUCK_NOT_REGISTERED": "Esse camião não está registado nessa empresa.",
+        "DRIVER_NOT_REGISTERED": "Esse motorista não está registado nessa empresa.",
+        "ALLOCATION_EXISTS": "Esse camião já está neste aluguer.",
+        "ALLOCATION_HAS_TRIPS": "Há viagens registadas sob esta linha.",
+        "INVALID_STATUS": "Essa mudança não é possível a partir do estado actual do aluguer.",
+        "UNKNOWN": "Algo correu mal. Tente de novo."
+    }
+}

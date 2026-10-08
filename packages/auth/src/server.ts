@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js"
@@ -11,9 +11,34 @@ import { member as memberSchema } from "@workspace/db/schema";
 import { SUBSCRIPTION_PLAN } from "@workspace/db/subscriptions";
 import { brandedEmail, sendEmail } from "@workspace/auth/email";
 import { admin as userAdmin, manager, uac, user } from "@workspace/auth/user-permissions";
-import { admin as orgAdmin, oac, owner, member } from "@workspace/auth/organization-permissions";
+import { ORG_ROLES, PROFILE_LEVEL, isProfile, oac, profileOf, type Profile } from "@workspace/auth/organization-permissions";
+import { memberAccess } from "@workspace/auth/member-access";
 
 export const STAFF_EMAIL_DOMAIN = "apploadafrica.com";
+
+/**
+ * The portal's team rules on Better Auth's invitation endpoints, which the
+ * client calls directly: the person sending or taking back an invitation
+ * needs a live `team:manage` in that company, and the profile it carries
+ * must sit below their own level (3 while acting CEO). Nobody is ever
+ * invited as CEO — ownership moves only through Appload staff. The plugin's
+ * own role check (ORG_ROLES) only knows the stored profile, so without this
+ * a Gestor whose `team:manage` was removed could still invite, and could
+ * invite another Gestor.
+ */
+async function assertMayInvite(userId: string, organizationId: string, profile: Profile) {
+    const [row] = await db
+        .select({ id: memberSchema.id, role: memberSchema.role })
+        .from(memberSchema)
+        .where(and(eq(memberSchema.userId, userId), eq(memberSchema.organizationId, organizationId)))
+        .limit(1);
+
+    const access = row ? await memberAccess(db, row) : null;
+
+    if (!access || profile === "owner" || !access.permissions.has("team:manage") || access.level <= PROFILE_LEVEL[profile]) {
+        throw new APIError("FORBIDDEN", { code: "NOT_ALLOWED", message: "NOT_ALLOWED" });
+    }
+}
 
 // Without this, Better Auth silently falls back to http://localhost:3000 as
 // its base URL and every OAuth callback and trusted-origin check breaks in
@@ -424,10 +449,24 @@ export const auth = betterAuth({
             // requires a verified address
             requireEmailVerificationOnInvitation: true,
             ac: oac,
-            roles: {
-                owner,
-                admin: orgAdmin,
-                member
+            roles: ORG_ROLES,
+            organizationHooks: {
+                beforeCreateInvitation: async ({ invitation, inviter, organization }) => {
+                    // One profile per invitation, spelled exactly; the plugin
+                    // would also take a comma-separated list
+                    const role = invitation.role.trim();
+
+                    if (!isProfile(role)) {
+                        throw new APIError("FORBIDDEN", { code: "NOT_ALLOWED", message: "NOT_ALLOWED" });
+                    }
+
+                    await assertMayInvite(inviter.id, organization.id, role);
+                },
+                // A legacy `member` invitation reads as the Operações it
+                // became, so it can still be taken back
+                beforeCancelInvitation: async ({ invitation, cancelledBy, organization }) => {
+                    await assertMayInvite(cancelledBy.id, organization.id, profileOf(invitation.role));
+                },
             },
             schema: {
                 organization: {

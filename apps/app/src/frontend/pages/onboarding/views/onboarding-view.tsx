@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { useTranslations } from "@workspace/i18n";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { authClient } from "@workspace/auth/client";
 
 import { Badge } from "@workspace/ui/components/badge";
@@ -13,14 +13,16 @@ import { Skeleton } from "@workspace/ui/components/skeleton";
 
 import { useTRPC } from "@/backend/api/client";
 import { NuitStep } from "@/frontend/pages/onboarding/sections/nuit-step";
+import { ModulesStep } from "@/frontend/pages/onboarding/sections/modules-step";
 import { CreateCompanyForm } from "@/frontend/pages/onboarding/sections/create-company-form";
 import { AlreadyClaimedCard, ClaimCard, PendingClaimCard } from "@/frontend/pages/onboarding/sections/claim-cards";
 import type { NuitLookup } from "@/frontend/pages/onboarding/server/procedures";
 
 /**
  * Everything between a verified account and a tenant: find the company by
- * NUIT, then register it or ask to own it. The company type is never asked
- * for — it is the account's own, chosen at sign-up.
+ * NUIT, then register it or ask to own it, then say which modules it uses.
+ * The company type is never asked for — it is the account's own, chosen at
+ * sign-up.
  */
 export function OnboardingView() {
     const t = useTranslations("App.onboarding")
@@ -29,6 +31,8 @@ export function OnboardingView() {
     const router = useRouter()
 
     const [found, setFound] = useState<{ nuit: string; result: NuitLookup } | null>(null)
+    // The company just registered or approved, waiting on its modules
+    const [setup, setSetup] = useState<string | null>(null)
 
     const { data: status, isPending, isError, refetch } = useQuery(trpc.onboarding.status.queryOptions())
 
@@ -70,7 +74,9 @@ export function OnboardingView() {
                 </Badge>
             </div>
 
-            {status.pendingClaim ? (
+            {setup !== null ? (
+                <ModulesStep orgType={status.user.type} onDone={() => enter(setup)} />
+            ) : status.pendingClaim ? (
                 <PendingClaimCard
                     organizationName={status.pendingClaim.organizationName}
                     createdAt={status.pendingClaim.createdAt}
@@ -81,7 +87,7 @@ export function OnboardingView() {
                 <CreateCompanyForm
                     nuit={found.nuit}
                     onBack={() => setFound(null)}
-                    onRegistered={enter}
+                    onRegistered={setSetup}
                 />
             ) : found.result.hasMembers ? (
                 <AlreadyClaimedCard
@@ -93,7 +99,7 @@ export function OnboardingView() {
                     organization={found.result.organization}
                     emailMatches={found.result.emailMatches}
                     onBack={() => setFound(null)}
-                    onApproved={enter}
+                    onApproved={setSetup}
                     // A queued claim becomes the pending card above, which
                     // the status query is what knows about
                     onQueued={() => {
@@ -116,6 +122,12 @@ export function OnboardingView() {
                 >
                     {t("sign-out")}
                 </button>
+            </p>
+
+            <p className="text-center text-sm">
+                <Link href="/data" className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline">
+                    {t("data-link")}
+                </Link>
             </p>
         </div>
     )

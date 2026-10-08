@@ -562,7 +562,9 @@
                         "companies": "Empresas",
                         "drivers": "Motoristas",
                         "fleets": "Frotas"
-                    }
+                    },
+                    "subscriptions": "Subscrições",
+                    "staff": "Equipa"
                 }
             },
             "user": {
@@ -575,6 +577,106 @@
                     "system": "Sistema"
                 },
                 "sign-out": "Terminar sessão"
+            }
+        },
+        "staff": {
+            "title": "Equipa",
+            "description": "Quem trabalha no Appload Admin e o que cada pessoa pode fazer. Uma nova função aplica-se na próxima ação da pessoa.",
+            "name": "Nome",
+            "email": "Email",
+            "role": "Função",
+            "you": "Você",
+            "empty": "Ainda não há contas da equipa. As pessoas aparecem aqui depois do primeiro início de sessão com Google num endereço @apploadafrica.com.",
+            "forbidden": "Só os administradores podem mudar as funções da equipa.",
+            "load-failed": "Não foi possível carregar a equipa",
+            "saved": "{name} é agora {role}",
+            "failed": "Não foi possível mudar a função"
+        },
+        "subscriptions": {
+            "eyebrow": "Gestão",
+            "title": "Subscrições",
+            "description": "Todas as empresas com plano, em que ponto estão e o que usaram este mês. Uma subscrição termina na data de fim; a linha fica como histórico.",
+            "search": "Empresa ou NUIT",
+            "clear": "Limpar pesquisa",
+            "add": "Adicionar subscrição",
+            "tabs": {
+                "all": "Todas",
+                "active": "Activas",
+                "expiring": "A expirar",
+                "expired": "Expiradas"
+            },
+            "columns": {
+                "company": "Empresa",
+                "plan": "Plano",
+                "state": "Estado",
+                "expires": "Validade",
+                "usage": "Uso este mês",
+                "portal": "Portal",
+                "actions": "Acções"
+            },
+            "plan": {
+                "starter": "Starter",
+                "essential": "Essencial",
+                "growth": "Growth",
+                "scale": "Scale",
+                "fleet": "Fleet",
+                "enterprise": "Enterprise"
+            },
+            "state": {
+                "active": "Activa",
+                "expiring": "{days, plural, one {Expira amanhã} other {Expira em # dias}}",
+                "expired": "Expirada"
+            },
+            "values": {
+                "no-expiry": "Sem data de fim",
+                "usage": "{used} de {quota}",
+                "usage-extra": "{used} de {quota} (+{extra} extra)",
+                "unlimited": "{used} (sem limite)",
+                "portal-since": "Desde {date}",
+                "portal-inactive": "Fora do portal",
+                "open-profile": "Abrir perfil"
+            },
+            "filters": {
+                "any": "Qualquer",
+                "type": "Tipo de empresa",
+                "plan": "Plano",
+                "type-options": {
+                    "shipper": "Cliente",
+                    "carrier": "Transportador"
+                }
+            },
+            "sort": {
+                "name": "Empresa",
+                "plan": "Plano",
+                "expires": "Validade"
+            },
+            "dialog": {
+                "title": "{name}",
+                "new-title": "Adicionar uma subscrição",
+                "description": "Não há pagamentos aqui: o plano é acordado comercialmente e registado. A empresa é avisada da alteração.",
+                "company-placeholder": "Procurar uma empresa sem plano",
+                "no-candidates": "Nenhuma empresa corresponde.",
+                "change-company": "Mudar",
+                "plan": "Plano",
+                "months": "Meses pagos",
+                "months-option": "{months, plural, one {# mês} other {# meses}}",
+                "valid-until": "Válido até {date}",
+                "extends": "Somado à subscrição actual, que vai até {date}",
+                "end-today": "Terminar hoje",
+                "save": "Guardar plano",
+                "saved": "Plano actualizado",
+                "cancel": "Cancelar"
+            },
+            "errors": {
+                "NOT_ALLOWED": "A sua função não permite isto.",
+                "NOT_FOUND": "Esta empresa já não existe.",
+                "UNKNOWN": "Algo correu mal. Tente de novo."
+            },
+            "data": {
+                "empty": "Ainda sem subscrições",
+                "empty-description": "As empresas aparecem aqui assim que lhes é registado um plano.",
+                "no-results": "Nenhuma subscrição corresponde aos filtros",
+                "error": "Não foi possível carregar as subscrições, tente de novo"
             }
         },
         "settings": {
@@ -1863,7 +1965,7 @@
                     "OFFER_NOT_PENDING": "Esta oferta já foi decidida.",
                     "NO_OFFERS": "Este pedido em prospectiva não tem ofertas pendentes. Adicione uma primeiro.",
                     "INCOMPLETE_FOR_DISPATCH": "Atribua o motorista, o contacto dele e o camião antes de mover para \"No local de carregamento\".",
-                    "PAPERS_MISSING": "Faltam documentos do motorista ou do camião. Abra os registos e submeta-os antes de o camião sair.",
+                    "PAPERS_MISSING": "Faltam documentos do motorista ou do camião. O camião pode sair, mas a ordem fica sinalizada até serem submetidos.",
                     "OFFER_UNPRICED": "Esta oferta ainda não tem a comissão da Appload. Edite-a e defina a comissão antes de confirmar com ela.",
                     "MANAGER_REQUIRED": "A verificação de carga encontrou uma divergência. Só um gestor pode deixar esta carga começar."
                 },
@@ -1960,6 +2062,7 @@
                         "CARRIER_RISK_HIGH": "Transportador de alto risco",
                         "CARRIER_RISK_WATCH": "Transportador em observação",
                         "PAPERS_UNREVIEWED": "Despachado com documentos que ainda ninguém tinha revisto",
+                        "PAPERS_MISSING": "Despachado sem os documentos do motorista ou do camião",
                         "LOADING_MISMATCH": "O camião ou o motorista no local de carregamento não era o despachado",
                         "LOADING_CHECK_SKIPPED": "O carregamento começou sem conferência concluída"
                     }
@@ -3325,7 +3428,8 @@
                     "drivers": "Motoristas",
                     "orders": "Ordens",
                     "portal": "Portal",
-                    "activity": "Actividade"
+                    "activity": "Actividade",
+                    "support": "Suporte"
                 },
                 "type": {
                     "shipper": "Cliente",
@@ -3370,7 +3474,37 @@
                 "make": "Marca e modelo",
                 "bay-on-trailer": "No reboque",
                 "operation": "Operação",
-                "vehicle-type": "Tipo"
+                "vehicle-type": "Tipo",
+                "support": {
+                    "open": "aberto",
+                    "closed": "A empresa não abriu as suas cargas ao suporte",
+                    "closed-hint": "Um responsável abre a porta no portal, em Definições › Segurança, por um dia, uma semana ou um mês. Até lá a base de dados não devolve nada aqui.",
+                    "open-until": "Aberto até {date}",
+                    "granted-by": "Aberto por {name}",
+                    "no-loads": "Sem cargas nos livros desta empresa",
+                    "load-failed": "Não foi possível ler as cargas",
+                    "logged": "Cada leitura aqui fica no registo de actividade da própria empresa, com o seu nome.",
+                    "status": {
+                        "procurement": "Em cotação",
+                        "prospect": "Prospectiva",
+                        "offered": "Proposta",
+                        "declined": "Recusada",
+                        "scheduled": "Agendada",
+                        "booked": "Confirmada",
+                        "at-loading": "No local de carregamento",
+                        "loading": "Em carregamento",
+                        "waiting-documents": "À espera de documentos",
+                        "on-route": "Em trânsito",
+                        "stopped": "Parada",
+                        "issue": "Com problema",
+                        "at-border": "Na fronteira",
+                        "at-offloading": "No local de descarregamento",
+                        "offloading": "Em descarregamento",
+                        "delivered": "Entregue",
+                        "closed": "Fechada",
+                        "cancelled": "Cancelada"
+                    }
+                }
             },
             "edit": {
                 "title": {
@@ -3527,9 +3661,10 @@
                 "invitation-expires": "Expira",
                 "invitation-expired": "Expirado",
                 "role": {
-                    "owner": "Proprietário",
-                    "admin": "Administrador",
-                    "member": "Utilizador"
+                    "owner": "CEO",
+                    "admin": "Gestor",
+                    "procurement": "Procurement / Comercial",
+                    "operations": "Operações"
                 },
                 "invite": "Convidar proprietário",
                 "invite-title": "Convidar um proprietário do portal",
@@ -3544,14 +3679,13 @@
                 "plan": "Plano",
                 "plan-none": "Sem plano",
                 "plan-starter": "Starter",
-                "plan-business": "Business",
+                "plan-essential": "Essencial",
+                "plan-growth": "Growth",
+                "plan-scale": "Scale",
+                "plan-fleet": "Fleet",
                 "plan-enterprise": "Enterprise",
                 "expires": "Validade",
-                "no-expiry": "Sem data de fim",
-                "clear-expiry": "Retirar a data de fim",
-                "subscription-save": "Guardar plano",
-                "subscription-saved": "Plano actualizado",
-                "subscription-locked": "Só um gestor pode alterar o plano.",
+                "manage": "Gerir",
                 "usage": "Seguidos em {month}: {used} de {quota}",
                 "usage-unlimited": "Seguidos em {month}: {used} (sem limite)",
                 "usage-none": "Sem plano — o portal não deixa reservar nem despachar.",

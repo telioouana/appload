@@ -1254,13 +1254,14 @@ export const orderRouter = createTRPCRouter({
                 // Keyed on the requirement, not on the target: an admin
                 // reversal back to booked does not accept an offer, and
                 // must not be blocked for lacking one
-                const blockedReason: "NO_OFFERS" | "INCOMPLETE_FOR_DISPATCH" | "PAPERS_MISSING" | "DISPUTE_OPEN" | "MANAGER_REQUIRED" | null =
+                // Missing papers only flag the order, so they are not here:
+                // the dialog warns from `dispatch.missingPapers` instead
+                const blockedReason: "NO_OFFERS" | "INCOMPLETE_FOR_DISPATCH" | "DISPUTE_OPEN" | "MANAGER_REQUIRED" | null =
                     requirements.includes("offer") && row.pendingOffers === 0 ? "NO_OFFERS"
                         : dispatching && dispatching.fields.length > 0 ? "INCOMPLETE_FOR_DISPATCH"
-                            : dispatching && dispatching.papers.length > 0 ? "PAPERS_MISSING"
-                                : loadingMove?.blocked === "MANAGER_REQUIRED" ? "MANAGER_REQUIRED"
-                                    : to === "completed" && disputeBlocked ? "DISPUTE_OPEN"
-                                        : null;
+                            : loadingMove?.blocked === "MANAGER_REQUIRED" ? "MANAGER_REQUIRED"
+                                : to === "completed" && disputeBlocked ? "DISPUTE_OPEN"
+                                    : null;
 
                 return {
                     to,

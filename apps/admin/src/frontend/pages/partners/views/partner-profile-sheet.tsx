@@ -19,6 +19,7 @@ import { initials, Mono, PlateChip } from "@workspace/ui/customs/list/table-cell
 import { DocumentChecklist } from "@/frontend/pages/kyc/sections/document-checklist"
 import { StandingMenu } from "@/frontend/pages/partners/sections/standing-menu"
 import { PortalSection } from "@/frontend/pages/partners/sections/portal-section"
+import { SupportTab } from "@/frontend/pages/partners/sections/support-tab"
 import { EditPartnerDialog, emptyLocation } from "@/frontend/pages/partners/sections/edit-partner-dialog"
 import { ContractChip, KycBadge, OwnershipBadge, RiskBadge } from "@/frontend/pages/partners/sections/badges"
 import {
@@ -240,6 +241,7 @@ function OrganizationPanel({ id, tab, onTab, onClose }: PanelProps) {
         { value: "drivers" as const, label: t("profile.tabs.drivers"), count: profile.fleet.drivers },
         { value: "orders", label: t("profile.tabs.orders"), count: profile.performance.totalOrders },
         { value: "portal", label: t("profile.tabs.portal") },
+        { value: "support", label: t("profile.tabs.support"), count: profile.supportAccess ? t("profile.support.open") : undefined },
         { value: "activity", label: t("profile.tabs.activity") },
     ]
 
@@ -299,11 +301,13 @@ function OrganizationPanel({ id, tab, onTab, onClose }: PanelProps) {
             {tab === "portal" && (
                 <PortalSection
                     organizationId={profile.id}
+                    name={profile.name}
                     portalActivatedAt={profile.portalActivatedAt}
                     subscriptionPlan={profile.subscriptionPlan}
                     subscriptionExpiresAt={profile.subscriptionExpiresAt}
                 />
             )}
+            {tab === "support" && <SupportTab profile={profile} />}
             {tab === "activity" && (
                 <ActivityTab
                     subjectType="organization"

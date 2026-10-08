@@ -282,6 +282,12 @@
                 "duplicatePhone": "That phone is already used by another company",
                 "notFound": "We could not find that company",
                 "unknown": "Something went wrong. Please try again"
+            },
+            "data-link": "What Appload sees of your data",
+            "modules": {
+                "title": "What your company uses",
+                "description": "Tell us how your company works, so we show only what serves you. You can change this at any time in Settings › Modules.",
+                "continue": "Continue"
             }
         },
         "shell": {
@@ -301,10 +307,10 @@
                     "team": "Team",
                     "partners": "Partners",
                     "my-transporters": "My transporters",
-                    "quotes": "Quotes",
                     "analytics": "Analytics"
                 },
-                "new-load": "New load"
+                "new-load": "New load",
+                "data": "Your data"
             },
             "user": {
                 "settings": "Settings",
@@ -386,6 +392,10 @@
                     "empty": "You have not filed any loads yet",
                     "amount": "Amount"
                 }
+            },
+            "modules-nudge": {
+                "text": "You have not chosen your company's modules yet: switch on only what you use and the portal gets simpler.",
+                "cta": "Choose modules"
             }
         },
         "settings": {
@@ -395,8 +405,11 @@
             "tabs": {
                 "profile": "Profile",
                 "company": "Company",
+                "modules": "Modules",
                 "members": "Team",
-                "subscription": "Subscription"
+                "subscription": "Subscription",
+                "security": "Security",
+                "activity": "Activity"
             },
             "profile": {
                 "title": "Your profile",
@@ -417,12 +430,7 @@
                     "description": "The account email is not changed here. Contact Appload if you need it moved"
                 },
                 "role": {
-                    "label": "Role in the company",
-                    "options": {
-                        "owner": "Owner",
-                        "admin": "Admin",
-                        "member": "Member"
-                    }
+                    "label": "Profile in the company"
                 },
                 "save": "Save",
                 "success": "Profile updated",
@@ -529,22 +537,19 @@
                 "description": "Who signs in to the portal for your company",
                 "columns": {
                     "member": "Person",
-                    "role": "Role",
+                    "role": "Profile",
                     "joined": "Since",
                     "actions": "Actions"
                 },
                 "roles": {
-                    "owner": "Owner",
-                    "admin": "Admin",
-                    "member": "Member"
+                    "owner": "CEO",
+                    "admin": "Manager",
+                    "procurement": "Procurement",
+                    "commercial": "Sales",
+                    "operations": "Operations"
                 },
                 "you": "You",
                 "actions": "Actions for this person",
-                "promote": {
-                    "owner": "Make owner",
-                    "admin": "Make admin",
-                    "member": "Make member"
-                },
                 "remove": "Remove from the portal",
                 "remove-dialog": {
                     "title": "Remove {name}?",
@@ -552,12 +557,14 @@
                     "cancel": "Cancel",
                     "confirm": "Remove"
                 },
-                "last-owner": "The company must always have one owner",
-                "role-changed": "Role updated",
+                "role-changed": "Profile updated",
                 "removed": "Member removed",
                 "error": "That could not be completed",
                 "empty": "You are still the only person from your company on the portal",
-                "read-only": "Only the owner and admins can invite or change members"
+                "read-only": "Only the CEO and managers can invite or change people on the team",
+                "change-to": "Make {profile}",
+                "permissions": "Permissions",
+                "acting": "Acting CEO until {date}"
             },
             "invite": {
                 "button": "Invite a colleague",
@@ -575,14 +582,16 @@
                         "error": "Enter a valid email"
                     },
                     "role": {
-                        "label": "Role",
-                        "placeholder": "Choose a role",
-                        "error": "Choose a role"
+                        "label": "Profile",
+                        "placeholder": "Choose a profile",
+                        "error": "Choose a profile"
                     }
                 },
                 "roles": {
-                    "admin": "Admin — runs the company and the team",
-                    "member": "Member — works on the orders"
+                    "admin": "Manager — direction and finance, runs the team below",
+                    "procurement": "Procurement — requests quotes, orders and awards",
+                    "commercial": "Sales — answers quotes and subcontracts",
+                    "operations": "Operations — trucks, drivers, papers and status"
                 },
                 "submit": "Send invitation",
                 "submitting": "Sending…",
@@ -600,7 +609,7 @@
                 "description": "Invitations sent that have not been accepted yet",
                 "columns": {
                     "email": "Email",
-                    "role": "Role",
+                    "role": "Profile",
                     "expires": "Expires",
                     "actions": "Actions"
                 },
@@ -618,11 +627,14 @@
                 "expired": "The subscription ended on {date}",
                 "none": "No active plan yet — talk to us to choose one.",
                 "since": "On the portal since {date}",
-                "tiers": {
-                    "title": "Plans",
+                "offer": {
+                    "title": "Your plan includes",
                     "quota": "{quota} tracked movements a month",
-                    "unlimited": "Unlimited tracked movements",
-                    "current": "Current plan"
+                    "quota-custom": "Movements to suit the company",
+                    "users": "{users, plural, one {# portal user} other {# portal users}}",
+                    "users-custom": "Users to suit the company",
+                    "price": "MZN {price} a month, before IVA",
+                    "price-custom": "Price agreed with Appload"
                 },
                 "contact": {
                     "title": "Want to change plan?",
@@ -630,25 +642,271 @@
                     "button": "Talk to Appload",
                     "subject": "Appload Enterprise — {organization} plan"
                 }
+            },
+            "support": {
+                "title": "Appload support access",
+                "description": "Whether Appload's team may read this company's loads to help with them",
+                "loading": "Checking…",
+                "closed": "Closed: Appload support cannot read your loads",
+                "open-until": "Open until {date}",
+                "granted-by": "Opened by {name}",
+                "grant": "Open for support",
+                "revoke": "Close now",
+                "granted": "Support access opened",
+                "revoked": "Support access closed",
+                "failed": "That did not go through — try again",
+                "what-they-see": "While open, Appload support reads your own loads, orders and partner list, without prices. Every read is written to your activity log. Loads Appload itself carries or orders are always visible to it.",
+                "history": "History",
+                "states": {
+                    "active": "Open",
+                    "expired": "Expired",
+                    "revoked": "Closed early"
+                },
+                "dialog": {
+                    "title": "Open your loads to Appload support",
+                    "description": "For a limited time, with the reason on record. You can close it again at any moment.",
+                    "duration": "For how long",
+                    "days": {
+                        "1": "One day",
+                        "7": "One week",
+                        "30": "One month"
+                    },
+                    "reason": "Reason",
+                    "reason-placeholder": "e.g. Ticket about load ORD-0012-26 stuck on route",
+                    "cancel": "Cancel",
+                    "confirm": "Open"
+                },
+                "learn-more": "What Appload sees, in full."
+            },
+            "activity": {
+                "title": "Activity",
+                "description": "What was done in your company's name on the portal, and every time Appload support read your loads",
+                "empty": "Nothing recorded yet",
+                "failed": "The record could not be loaded",
+                "failed-action": "failed",
+                "support": "Appload support",
+                "more": "Show earlier",
+                "since": "Older actions may be missing: before 1 October 2026 the portal did not always file them under the company.",
+                "open-load": "Open load",
+                "open-contract": "Open order",
+                "actions": {
+                    "contracts-create": "Filed a multi-trip order",
+                    "contracts-update": "Edited a multi-trip order",
+                    "contracts-transition": "Changed a multi-trip order's status",
+                    "contracts-setFile": "Attached an order's signed document",
+                    "contracts-allocations-add": "Allocated a transporter to an order",
+                    "contracts-allocations-update": "Edited a transporter's share",
+                    "contracts-allocations-remove": "Removed a transporter from an order",
+                    "drivers-register": "Registered a driver",
+                    "drivers-update": "Edited a driver",
+                    "fleet-vehicles-register": "Registered a vehicle",
+                    "fleet-vehicles-update": "Edited a vehicle",
+                    "fleet-assignDriver": "Assigned a driver to a truck",
+                    "kyc-upload": "Uploaded a document",
+                    "me-changePassword": "Changed their password",
+                    "me-updateCompany": "Edited the company's details",
+                    "me-supportGrants-grant": "Opened the company's loads to Appload support",
+                    "me-supportGrants-revoke": "Closed Appload support's access",
+                    "movements-create": "Filed a load",
+                    "movements-update": "Edited a load",
+                    "movements-transition": "Moved a load to a new stage",
+                    "movements-convert": "Converted a load",
+                    "movements-offer": "Offered a load to a partner",
+                    "movements-respond": "Answered an offer",
+                    "movements-withdraw": "Withdrew an offer",
+                    "movements-recordPayment": "Recorded a payment",
+                    "movements-requestLocation": "Asked the driver for a position",
+                    "movements-costs-add": "Added a cost",
+                    "movements-costs-remove": "Removed a cost",
+                    "movements-documents-add": "Attached a document to a load",
+                    "movements-documents-remove": "Removed a document from a load",
+                    "orders-create": "Placed an Appload order",
+                    "orders-cancel": "Cancelled an Appload order",
+                    "orders-transition": "Moved an Appload order",
+                    "orders-documents-add": "Attached a document to an order",
+                    "orders-offers-create": "Quoted on an order",
+                    "orders-offers-update": "Corrected a quote",
+                    "orders-offers-withdraw": "Withdrew a quote",
+                    "orders-offers-accept": "Accepted a quote",
+                    "orders-offers-decline": "Declined a quote",
+                    "orders-recordLoadingCheck": "Recorded the loading check",
+                    "orders-sendRequests": "Sent an order out for quotes",
+                    "orders-withdrawRequest": "Withdrew a request for quotes",
+                    "partners-request": "Asked a company to connect",
+                    "partners-respond": "Answered a connection request",
+                    "partners-withdraw": "Withdrew a connection request",
+                    "partners-remove": "Ended a connection",
+                    "partners-register": "Registered a partner",
+                    "quotes-create": "Filed a quote",
+                    "quotes-accept": "Accepted a quote",
+                    "quotes-decline": "Declined a quote",
+                    "quotes-withdraw": "Withdrew a quote",
+                    "threads-send": "Sent a message",
+                    "support-loads-view": "read the company's loads",
+                    "auth-sign_in": "Signed in",
+                    "auth-sign_out": "Signed out",
+                    "movements-sendRequests": "Sent a load out for quotes",
+                    "movements-withdrawRequest": "Withdrew a request for quotes",
+                    "movements-quote": "Quoted on a load",
+                    "movements-declineRequest": "Declined to quote on a load",
+                    "movements-award": "Awarded a load to a quote",
+                    "movements-sendConfirmation": "Sent the order confirmation",
+                    "team-permissions-set": "Changed the permissions of a colleague",
+                    "team-permissions-revoke": "Undid a permission change",
+                    "team-actingOwner-grant": "Made somebody acting CEO",
+                    "team-actingOwner-revoke": "Ended an acting-CEO period",
+                    "team-changeProfile": "Changed the profile of a colleague",
+                    "team-remove": "Removed a colleague from the portal"
+                }
+            },
+            "permissions": {
+                "title": "Permissions",
+                "description": "What this person can do on the portal",
+                "heading": "Permissions of {name}",
+                "self": "Your permissions. Only the people above you can change them.",
+                "editable": "Switch each permission on or off, for good or for a period. You can only switch on permissions you hold.",
+                "read-only": "Read only: only the people above this person can change their permissions.",
+                "saved": "Permissions updated",
+                "failed": "The permissions could not be changed",
+                "error": "The permissions could not be loaded",
+                "reset": "Back to the profile",
+                "temporary": "Temporary",
+                "on-for-window": "Switch on for this period",
+                "off-for-window": "Switch off for this period",
+                "until": "until {date}",
+                "upcoming-on": "on from {date}",
+                "upcoming-off": "off from {date}",
+                "hint": {
+                    "default": "from the profile",
+                    "extra": "extra",
+                    "removed": "removed"
+                },
+                "groups": {
+                    "money": "Money",
+                    "orders": "Orders",
+                    "contracts": "Multi-trip orders and rentals",
+                    "partners": "Partners",
+                    "fleet": "Fleet and drivers",
+                    "tools": "Tools",
+                    "company": "Company"
+                },
+                "labels": {
+                    "price:read": "See prices on orders, offers and quotes",
+                    "finance:read": "See financial indicators: costs, margin, P&L, payments",
+                    "payment:record": "Record payments and costs",
+                    "order:create": "Create orders, request quotes, send to transporters",
+                    "offer:create": "Answer client quotes",
+                    "offer:update": "Accept an offer, award, book",
+                    "order:update": "Edit orders and withdraw one before booking",
+                    "order:cancel": "Cancel a booked order",
+                    "dispatch:assign": "Assign truck and driver, dispatch check",
+                    "status:change": "Change status",
+                    "document:upload": "Upload loading papers, cargo photos and POD",
+                    "document:approve": "Approve papers",
+                    "trip:create": "Trips on the own fleet (no price)",
+                    "dispute:open": "Open a dispute",
+                    "dispute:resolve": "Resolve a dispute",
+                    "contract:manage": "Create, propose, accept and close multi-trip orders and rentals",
+                    "contract:file": "File the daily trips of a share",
+                    "rental:checkin": "Rental check-ins, mark a day",
+                    "partner:manage": "Request, accept and remove transporters and clients",
+                    "report:read": "Analytics page and partner KPIs",
+                    "fleet:manage": "Register trucks, trailers and drivers",
+                    "kyc:upload": "Upload their papers (KYC)",
+                    "thread:read": "Read chats",
+                    "thread:send": "Send messages",
+                    "export:csv": "Export CSV",
+                    "order:pdf": "Send and download the order PDF (shows the price)",
+                    "organization:update": "Edit the company profile and papers",
+                    "team:manage": "Team: invite, remove, change profile, edit permissions",
+                    "security:manage": "Security: support access and activity log",
+                    "subscription:read": "See the plan"
+                },
+                "acting": {
+                    "title": "Acting CEO",
+                    "description": "For a period, this person holds every CEO permission and runs the team below the CEO. They never edit their own permissions or transfer the company. It ends on its own.",
+                    "live": "Acting CEO from {from} until {until}",
+                    "upcoming": "Will be acting CEO from {from} until {until}",
+                    "grant": "Make acting CEO",
+                    "revoke": "End now"
+                },
+                "window": {
+                    "from": "From",
+                    "until": "Until",
+                    "zone": "Maputo time. Ends on its own when the period is over.",
+                    "invalid": "The end has to be after the start and still in the future."
+                }
+            },
+            "modules": {
+                "title": "Modules",
+                "description": "What your company uses on the portal. A module switched off leaves the menu and takes no new records; what already exists stays.",
+                "groups": {
+                    "how": "How the company works",
+                    "uses": "What it uses"
+                },
+                "owner-only": "Only the company's CEO changes the modules.",
+                "acting-owner-hint": "As acting CEO you see the modules, but only the company's CEO changes them.",
+                "error": "The modules could not be saved. Try again.",
+                "conflict": {
+                    "NOTHING_LEFT_TO_MOVE": "A transporter needs its own fleet or subcontracting; both cannot be off.",
+                    "NOT_APPLICABLE": "This module does not exist for your kind of company."
+                }
+            }
+        },
+        "modules": {
+            "own-fleet": {
+                "name": "Own fleet",
+                "description": "Your company's trucks and drivers, and the trips they make.",
+                "question": "Does your company run its own trucks?"
+            },
+            "subcontracting": {
+                "name": "Subcontracting",
+                "description": "Passing loads to other transporters and asking them for quotes.",
+                "question": "Does your company pass loads to other transporters?"
+            },
+            "standing-orders": {
+                "name": "Multi-trip orders",
+                "description": "Orders fulfilled over several trips, with what is used up tracked.",
+                "question": "Does your company work with multi-trip orders?"
+            },
+            "rentals": {
+                "name": "Rentals",
+                "description": "Trucks on service for a period, paid by the day.",
+                "question": "Does your company rent trucks out, or rent them in?"
+            },
+            "chats": {
+                "name": "Chats",
+                "description": "Conversations with drivers and about each order.",
+                "question": "Do you want to talk to drivers and partners from the portal?"
+            },
+            "map": {
+                "name": "Map",
+                "description": "Where the trucks on the road are, live.",
+                "question": "Do you want to see the trucks on the road on a map?"
+            },
+            "analytics": {
+                "name": "Analytics",
+                "description": "Figures and reports on what the company has moved.",
+                "question": "Do you want reports on what the company moves?"
             }
         },
         "plan": {
             "names": {
                 "none": "No plan",
                 "starter": "Starter",
-                "business": "Business",
+                "essential": "Essential",
+                "growth": "Growth",
+                "scale": "Scale",
+                "fleet": "Fleet",
                 "enterprise": "Enterprise"
             },
             "usage": "{used} of {quota} tracked movements in {month}",
             "unlimited": "Unlimited tracked movements",
+            "extra": "{extra, plural, one {# movement} other {# movements}} beyond the plan this month, MZN {price} each — invoiced with the next month.",
             "dialog": {
                 "no-plan": {
                     "title": "Your company has no plan yet",
                     "description": "Booking a load and sending it to loading needs an active plan. The rest of the portal — partners, fleet, requests and quotes — stays open."
-                },
-                "quota": {
-                    "title": "This month's movements are used up",
-                    "description": "Your company has already tracked every movement its plan allows this month. The allowance starts again at the beginning of next month."
                 },
                 "close": "Not now",
                 "settings": "See subscription",

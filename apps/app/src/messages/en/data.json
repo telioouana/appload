@@ -1,0 +1,31 @@
+{
+    "metadata": "Your data",
+    "title": "What Appload sees of your data",
+    "intro": "Appload Enterprise is run by Appload, which also brokers loads. This page says, in plain words, what our team can and cannot see of your company's work on the portal, and how you control it.",
+    "back": "Back to the portal",
+    "sections": {
+        "marketplace": {
+            "title": "Loads with Appload",
+            "body": "When your company orders a load from Appload, or carries one for it, Appload is a party to that load: our team sees it in full — the lane, the dates, the driver and truck, the documents and the price agreed with Appload — because that is the job."
+        },
+        "own": {
+            "title": "Your own loads",
+            "body": "The loads you file for your own clients, hand to your own partners or move with your own fleet are not Appload's business. The database itself refuses our staff's connection on those rows: not the loads, not their costs, documents or positions, not your partner list, not your multi-trip orders, not your conversations. This is enforced by Postgres row security, not by a promise in the app."
+        },
+        "support": {
+            "title": "Support access",
+            "body": "If you need help with a load, an owner or admin of your company can open your loads to Appload support for a day, a week or a month, with the reason on record, under Settings › Security. While it is open our team reads your own loads, orders and partner list, without prices, and only those. You can close it at any time.",
+            "link": "Open Settings › Security"
+        },
+        "log": {
+            "title": "What is logged",
+            "body": "Every action a member takes in your company's name, and every read our support makes under an open grant, is written to your record under Settings › Activity, with who and when.",
+            "link": "Open Settings › Activity"
+        },
+        "papers": {
+            "title": "Verification papers",
+            "body": "Company, driver and vehicle documents are reviewed by Appload staff by design: that is what verification is. Only those — not the loads those drivers and vehicles move."
+        }
+    },
+    "contact": "Questions about this page: {email}"
+}

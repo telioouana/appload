@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useForm, useWatch, type Control } from "react-hook-form"
 import { useQuery } from "@tanstack/react-query"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -10,6 +10,7 @@ import { useTranslations } from "@workspace/i18n"
 import { CATEGORIES, CURRENCY, FISCAL_REGIME, WEIGHT_UNIT, isApploadOrg } from "@workspace/db/types"
 import { VAT_RATE } from "@workspace/domain/orders/commission"
 import type { TrackingAllowance } from "@workspace/domain/subscription"
+import { hasModule } from "@workspace/auth/organization-modules"
 import { DEFAULT_PHONE_COUNTRY, fromE164, toE164 } from "@workspace/ui/lib/phone"
 
 import { cn } from "@workspace/ui/lib/utils"
@@ -56,7 +57,7 @@ import type {
 } from "@/frontend/pages/movements/types"
 
 export type LoadSheetMode =
-    | { kind: "create"; execution: MovementExecution }
+    | { kind: "create"; execution: MovementExecution; contractAllocationId?: string | null }
     | { kind: "edit"; load: MovementDetail }
 
 // The calendar opens at the start of last year: loads are often filed after
@@ -114,6 +115,7 @@ function defaultsFor(mode: LoadSheetMode): LoadForm {
             buyInvoiceNumber: "",
             notes: "",
             requestQuotes: true,
+            contractAllocationId: mode.contractAllocationId ?? NONE,
         }
     }
 
@@ -158,6 +160,8 @@ function defaultsFor(mode: LoadSheetMode): LoadForm {
         notes: load.notes ?? "",
         // Asking is done from the load's page once it exists
         requestQuotes: false,
+        // The share a load was filed under is set at filing, not edited
+        contractAllocationId: NONE,
     }
 }
 
@@ -215,6 +219,7 @@ export function LoadSheet({
 }) {
     const t = useTranslations("App.loads.form")
     const tl = useTranslations("App.loads")
+    const tc = useTranslations("App.contracts")
     const tv = useTranslations("App.orders")
     const trpc = useTRPC()
     const router = useRouter()
@@ -224,8 +229,17 @@ export function LoadSheet({
 
     const [error, setError] = useState<MovementErrorMessage | null>(null)
     const [planReason, setPlanReason] = useState<PlanReason | null>(null)
+    // The contract defaults last written into the form, so a price typed over
+    // one is told apart from one that should follow the weight
+    const applied = useRef<{ id: string; sellTotal: string; buyTotal: string } | null>(null)
 
     const { data: options } = useQuery({ ...trpc.movements.formOptions.queryOptions(), enabled: open })
+    // Somebody kept from prices files and edits loads without them: a
+    // contract share still prices its trip on the server
+    const { data: session } = useQuery(trpc.me.session.queryOptions())
+    const seesPrices = session?.permissions.includes("price:read") ?? false
+    // A client without its own fleet is not offered that shape: the sheet opens on a partner's load and stays there
+    const ownShape = session ? hasModule(session.modules, "own-fleet") : true
 
     const FormSchema = useMemo(
         () => LoadFormSchema((field: LoadMessageField) => ({ error: t(`errors.${field}`) })),
@@ -242,7 +256,10 @@ export function LoadSheet({
     // A reopened sheet starts from the load as it is now, not where it was left
     const modeKey = mode.kind === "create" ? `create:${mode.execution}` : `edit:${mode.load.id}:${mode.load.version}`
     useEffect(() => {
-        if (open) reset(defaultsFor(mode))
+        if (open) {
+            applied.current = null
+            reset(defaultsFor(mode))
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, modeKey, reset])
 
@@ -267,6 +284,62 @@ export function LoadSheet({
     const locked = (group: EditableGroup) => editable !== null && !editable.includes(group)
 
     const partners = options?.partners ?? []
+
+    // Filed under a contract share: the share's parties, rig, lane and prices
+    // land in the form as defaults the moment it is picked, and the trip's
+    // price follows the weight typed. What was typed by hand stays typed —
+    // a contract price is never a ceiling (contracts/prefill.ts)
+    const [contractAllocationId, weight] = useWatch({ control, name: ["contractAllocationId", "weight"] })
+    const shares = options?.allocations ?? []
+    const shareLocked = !editing && contractAllocationId !== NONE
+    const weightNumber = weight.trim() === "" ? undefined : Number(weight)
+    const { data: share } = useQuery({
+        ...trpc.contracts.tripDefaults.queryOptions({
+            allocationId: contractAllocationId,
+            weight: weightNumber !== undefined && Number.isFinite(weightNumber) ? weightNumber : undefined,
+            weightUnit,
+        }),
+        enabled: open && shareLocked,
+    })
+
+    // Applied only once the pickers have their options: a select handed a
+    // value it has no item for yet drops it the moment its items arrive
+    useEffect(() => {
+        if (!share || !options || !open) return
+        const previous = applied.current
+        const fresh = previous?.id !== share.allocationId
+        const price = (leg: { total: number } | null) => leg ? String(leg.total) : ""
+        const sellTotal = price(share.sell)
+        const buyTotal = price(share.buy)
+
+        if (fresh) {
+            setValue("execution", share.execution)
+            setValue("clientOrgId", share.clientOrgId ?? (share.clientName ? TYPED : NONE))
+            setValue("clientName", share.clientOrgId ? "" : share.clientName ?? "")
+            setValue("clientReference", share.clientReference ?? "")
+            setValue("carrierOrgId", share.carrierOrgId ?? (share.carrierName ? TYPED : NONE))
+            setValue("carrierName", share.carrierOrgId ? "" : share.carrierName ?? "")
+            setValue("driverId", share.driverId ?? NONE)
+            setValue("truckId", share.truckId ?? (share.truckPlate ? TYPED : NONE))
+            setValue("truckPlate", share.truckId ? "" : share.truckPlate ?? "")
+            if (share.origin && !getValues("origin").placeId) setValue("origin", share.origin)
+            if (share.destination && !getValues("destination").placeId) setValue("destination", share.destination)
+            if (share.sell) {
+                setValue("sellCurrency", share.sell.currency)
+                if (share.sell.fiscalRegime) setValue("sellFiscalRegime", share.sell.fiscalRegime)
+            }
+            if (share.buy) {
+                setValue("buyCurrency", share.buy.currency)
+                if (share.buy.fiscalRegime) setValue("buyFiscalRegime", share.buy.fiscalRegime)
+            }
+            // The price is the contract's; nobody is asked to quote it
+            setValue("requestQuotes", false)
+        }
+
+        if (fresh || getValues("sellTotal") === previous.sellTotal) setValue("sellTotal", sellTotal)
+        if (fresh || getValues("buyTotal") === previous.buyTotal) setValue("buyTotal", buyTotal)
+        applied.current = { id: share.allocationId, sellTotal, buyTotal }
+    }, [share, options, open, setValue, getValues])
     // Appload is pinned in front of the connections by the server, and is a
     // transporter as far as this picker is concerned: anything that is not a
     // client can be handed the load
@@ -321,10 +394,10 @@ export function LoadSheet({
             }
         }
 
-        const sell = carrier ? legInput(values.sellTotal, values.sellCurrency, values.sellFiscalRegime) : null
+        const sell = carrier && seesPrices ? legInput(values.sellTotal, values.sellCurrency, values.sellFiscalRegime) : null
         // A load out for quotes has no price of the owner's yet: the
         // transporters name theirs, and the award writes the one picked
-        const buy = values.execution === "partner" && !asking ? legInput(values.buyTotal, values.buyCurrency, values.buyFiscalRegime) : null
+        const buy = values.execution === "partner" && !asking && seesPrices ? legInput(values.buyTotal, values.buyCurrency, values.buyFiscalRegime) : null
 
         const input: CreateMovementInput = {
             execution: values.execution,
@@ -349,6 +422,7 @@ export function LoadSheet({
             ...(sell && { sell }),
             ...(buy && { buy }),
             notes: values.notes.trim() || undefined,
+            ...(values.contractAllocationId !== NONE && { contractAllocationId: values.contractAllocationId }),
         }
 
         create.mutate(input, {
@@ -465,7 +539,7 @@ export function LoadSheet({
                             }}
                         >
                             <FieldGroup className="gap-7">
-                                {!editing && !carrier && (
+                                {!editing && !carrier && ownShape && (
                                     <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("shape.label")}>
                                         {(["own-fleet", "partner"] as const).map((value) => {
                                             const active = execution === value
@@ -477,7 +551,7 @@ export function LoadSheet({
                                                     type="button"
                                                     role="radio"
                                                     aria-checked={active}
-                                                    disabled={isPending}
+                                                    disabled={isPending || shareLocked}
                                                     onClick={() => setValue("execution", value, { shouldDirty: true })}
                                                     className={cn(
                                                         "flex cursor-pointer items-start gap-2.5 rounded-2xl border px-3.5 py-3 text-left text-sm transition-colors disabled:cursor-default disabled:opacity-50",
@@ -493,6 +567,28 @@ export function LoadSheet({
                                             )
                                         })}
                                     </div>
+                                )}
+
+                                {/* A load under a contract: the share picked fills the rest in */}
+                                {!editing && shares.length > 0 && (
+                                    <SelectInput
+                                        name="contractAllocationId"
+                                        control={control}
+                                        isPending={isPending}
+                                        label={t("contract.label")}
+                                        description={share ? t("contract.prefilled", { ref: share.contractReference ?? "—" }) : t("contract.hint")}
+                                    >
+                                        <SelectItem value={NONE}>{t("contract.none")}</SelectItem>
+                                        {shares.map((row) => (
+                                            <SelectItem key={row.id} value={row.id}>
+                                                {t("contract.option", {
+                                                    ref: row.contractReference,
+                                                    counterparty: row.counterparty ?? t("contract.own-fleet"),
+                                                    remaining: row.remaining === null ? t("contract.open-share") : tc(`unit.${row.unit}`, { count: row.remaining }),
+                                                })}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectInput>
                                 )}
 
                                 <FieldSet>
@@ -608,13 +704,13 @@ export function LoadSheet({
                                                 label={t("fields.client-reference")}
                                                 placeholder={t("fields.client-reference-placeholder")}
                                             />
-                                            <LegFields
+                                            {seesPrices && <LegFields
                                                 prefix="sell"
                                                 control={control}
                                                 locked={isPending || locked("sellAmounts")}
                                                 title={t("fields.sell")}
                                                 hint={t("fields.sell-hint")}
-                                            />
+                                            />}
                                         </FieldGroup>
                                     </FieldSet>
                                 )}
@@ -673,7 +769,7 @@ export function LoadSheet({
                                                 />
                                             )}
                                             {/* The transporters name the price on a load out for quotes */}
-                                            {!asking && (
+                                            {!asking && seesPrices && (
                                                 <LegFields
                                                     prefix="buy"
                                                     control={control}
@@ -779,7 +875,6 @@ export function LoadSheet({
             {planReason && (
                 <PlanDialog
                     reason={planReason}
-                    allowance={allowance}
                     organizationName={organizationName}
                     onClose={() => setPlanReason(null)}
                 />

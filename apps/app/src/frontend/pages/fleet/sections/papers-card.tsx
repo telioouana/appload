@@ -49,7 +49,8 @@ export function PapersCard({
     const [openSlot, setOpenSlot] = useState<KycDocumentType | null>(null)
 
     const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
-    const canUpload = isOrgAuthorized(session.role, "kyc", ["upload"])
+    const canUpload = isOrgAuthorized(session.permissions, "kyc", ["upload"])
+        && (subjectType !== "organization" || isOrgAuthorized(session.permissions, "organization", ["update"]))
 
     const query = useQuery(trpc.kyc.documents.queryOptions({ subjectType, subjectId }))
 

@@ -7,6 +7,7 @@ import { notification, NOTIFICATION_KIND } from "@workspace/db/notifications";
 
 import { materializeOrderEvents } from "@workspace/domain/notifications/materialize";
 
+import { can } from "@workspace/auth/organization-permissions";
 import { createTRPCRouter } from "@workspace/trpc/init";
 import { tenantProcedure } from "@workspace/trpc/tenant";
 
@@ -15,6 +16,7 @@ import {
     PAGE_SIZES,
     type NotificationRow,
     type PagedResult,
+    withoutPrice,
 } from "@/frontend/pages/notifications/types";
 
 /** How many rows one click may mark at a time — a page of the longest list. */
@@ -44,6 +46,9 @@ export const notificationsRouter = createTRPCRouter({
      * The scope is the reader and their organization, never anything from
      * the input: a row is one person's copy of an event, and a member who
      * moves company keeps reading only what happened where they are now.
+     *
+     * A quote or an offer is written to every member with its price; a
+     * reader without `price:read` gets the row with the price taken out.
      */
     list: tenantProcedure
         .input(NotificationsInput)
@@ -67,8 +72,10 @@ export const notificationsRouter = createTRPCRouter({
                     .where(where),
             ]);
 
+            const prices = can(ctx.tenant.permissions, "price:read");
+
             return {
-                items: rows,
+                items: prices ? rows : rows.map((row) => ({ ...row, params: withoutPrice(row.kind, row.params) })),
                 total: counted?.value ?? 0,
                 page: input.page,
                 pageSize: input.pageSize,

@@ -127,7 +127,6 @@
         "notAllowed": "You do not have permission to do this.",
         "notFound": "This order could not be found.",
         "subscriptionRequired": "Your company has no active plan. Talk to us to activate one.",
-        "quotaExceeded": "This month's tracked movements are all used up. The allowance starts again at the beginning of next month.",
         "noteRequired": "This change needs an explanation.",
         "podRequired": "This change needs the proof of delivery attached.",
         "evidenceRequired": "This change needs a document attached.",

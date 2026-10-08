@@ -4,11 +4,13 @@ import { boolean, check, doublePrecision, index, integer, jsonb, numeric, pgTabl
 // Direct module imports, never the schema barrel: going through it would pull
 // in modules that depend on this one and crash at runtime (TDZ)
 import { TRACKING_CHANNEL, TRACKING_SLOT, TRACKING_STATUS, chatConversation, chatMessage } from "@workspace/db/chats";
+import { contractAllocation } from "@workspace/db/contracts";
 import { driver, link, trailer, truck } from "@workspace/db/fleet";
 import { Location, categoriesEnum, currencyEnum, fiscalRegimeEnum, order, paymentStatusEnum, routeTypeEnum, weightUnitEnum } from "@workspace/db/orders";
 import { LOCATION_SOURCE, ROUTE_SOURCE } from "@workspace/db/tracking";
 import { DISPUTE_REASON, REFERENCE_KIND } from "@workspace/db/types";
 import { organization, user } from "@workspace/db/users";
+import { servicePolicy, staffPolicy, supportGranted, throughMovement } from "@workspace/db/rls";
 
 /**
  * Who actually moves the load — the whole difference between what the portal
@@ -226,6 +228,11 @@ export const movement = pgTable(
         buyPaidAmount: numeric("buy_paid_amount", { precision: 14, scale: 2 }),
         buySettledAt: timestamp("buy_settled_at"),
 
+        // The contract share this load draws down, when it is filed under one
+        // (schemas/contracts.ts). Set null with the share: the load stays, it
+        // just stops counting against anything
+        contractAllocationId: text("contract_allocation_id").references(() => contractAllocation.id, { onDelete: "set null" }),
+
         notes: text("notes"),
         // Optimistic lock, the same handshake the order row uses: two members
         // of one company editing the same load from two tabs
@@ -244,6 +251,8 @@ export const movement = pgTable(
         index("movement_client_status_idx").on(table.clientOrgId, table.status),
         // The rows of one Appload order, read on every mirror pass
         index("movement_order_idx").on(table.orderId),
+        // Fulfilment is summed over these rows every time it is asked
+        index("movement_contract_allocation_idx").on(table.contractAllocationId).where(sql`${table.contractAllocationId} is not null`),
         // One live row per company per order: a second candidate row for the
         // same carrier would make the mirror ambiguous. Cancelled rows are
         // outside it — a carrier that lost a round and is asked again gets a
@@ -282,6 +291,11 @@ export const movement = pgTable(
         // A figure without its currency cannot be added to anything
         check("movement_sell_currency_ck", sql`${table.sellTotal} is null or ${table.sellCurrency} is not null`),
         check("movement_buy_currency_ck", sql`${table.buyTotal} is null or ${table.buyCurrency} is not null`),
+        // The trust wall (rls.ts): Appload staff see a load only when Appload
+        // is a party on it. Every child table below reaches the tenant
+        // through this row, so the rule is written once, here
+        staffPolicy("movement", sql`${table.clientOrgId} = 'appload' or ${table.carrierOrgId} = 'appload' or ${supportGranted(table.organizationId)}`),
+        servicePolicy("movement"),
     ],
 );
 
@@ -343,6 +357,7 @@ export const movementRequest = pgTable(
         // What has been asked of this company, and every round it is still in
         index("movement_request_carrier_status_idx").on(table.carrierOrgId, table.status),
         check("movement_request_quote_currency_ck", sql`${table.quoteTotal} is null or ${table.quoteCurrency} is not null`),
+        staffPolicy("movement_request", throughMovement(table.movementId)),
     ],
 );
 
@@ -399,7 +414,10 @@ export const movementRoute = pgTable("movement_route", {
     durationSeconds: integer("duration_seconds"),
     source: text("source", { enum: ROUTE_SOURCE }).notNull(),
     computedAt: timestamp("computed_at").defaultNow().notNull(),
-});
+}, (table) => [
+    staffPolicy("movement_route", throughMovement(table.movementId)),
+    servicePolicy("movement_route"),
+]);
 
 export type MovementRoute = typeof movementRoute.$inferSelect;
 export type CreateMovementRoute = typeof movementRoute.$inferInsert;
@@ -445,6 +463,8 @@ export const movementLocation = pgTable(
     (table) => [
         index("movement_location_movement_recorded_idx").on(table.movementId, table.recordedAt),
         check("movement_location_latlng_ck", sql`latitude between -90 and 90 and longitude between -180 and 180`),
+        staffPolicy("movement_location", throughMovement(table.movementId)),
+        servicePolicy("movement_location"),
     ],
 );
 
@@ -494,6 +514,8 @@ export const movementTrackingRequest = pgTable(
             table.attempt,
         ),
         index("movement_tracking_request_external_idx").on(table.externalId),
+        staffPolicy("movement_tracking_request", throughMovement(table.movementId)),
+        servicePolicy("movement_tracking_request"),
     ],
 );
 
@@ -509,7 +531,7 @@ export type CreateMovementTrackingRequest = typeof movementTrackingRequest.$infe
  * "off-route" the truck that answered from beyond the planned route's
  * corridor.
  */
-export const TRACKING_ALERT_ISSUE = ["no-location", "short-distance", "picked-address", "off-route"] as const;
+export const TRACKING_ALERT_ISSUE = ["no-location", "short-distance", "picked-address", "off-route", "falling-behind"] as const;
 export type TrackingAlertIssue = (typeof TRACKING_ALERT_ISSUE)[number];
 
 /**
@@ -543,6 +565,7 @@ export const movementTrackingAlert = pgTable(
     },
     (table) => [
         uniqueIndex("movement_tracking_alert_slot_uidx").on(table.movementId, table.slotDate, table.slot),
+        staffPolicy("movement_tracking_alert", throughMovement(table.movementId)),
     ],
 );
 
@@ -606,6 +629,7 @@ export const movementCost = pgTable(
     (table) => [
         index("movement_cost_movement_idx").on(table.movementId, table.incurredAt),
         check("movement_cost_amount_ck", sql`${table.amount} >= 0`),
+        staffPolicy("movement_cost", throughMovement(table.movementId)),
     ],
 );
 
@@ -668,7 +692,10 @@ export const movementDocument = pgTable(
         deletedBy: text("deleted_by").references(() => user.id, { onDelete: "set null" }),
         createdAt: timestamp("created_at").defaultNow().notNull(),
     },
-    (table) => [index("movement_document_movement_idx").on(table.movementId, table.createdAt)],
+    (table) => [
+        index("movement_document_movement_idx").on(table.movementId, table.createdAt),
+        staffPolicy("movement_document", throughMovement(table.movementId)),
+    ],
 );
 
 export type MovementDocument = typeof movementDocument.$inferSelect;
@@ -717,7 +744,10 @@ export const movementEvent = pgTable(
         metadata: jsonb("metadata"),
         createdAt: timestamp("created_at").defaultNow().notNull(),
     },
-    (table) => [index("movement_event_movement_idx").on(table.movementId, table.createdAt)],
+    (table) => [
+        index("movement_event_movement_idx").on(table.movementId, table.createdAt),
+        staffPolicy("movement_event", throughMovement(table.movementId)),
+    ],
 );
 
 export type MovementEvent = typeof movementEvent.$inferSelect;
@@ -771,7 +801,10 @@ export const movementDispute = pgTable(
             .$onUpdate(() => /* @__PURE__ */ new Date())
             .notNull(),
     },
-    (table) => [index("movement_dispute_movement_idx").on(table.movementId)],
+    (table) => [
+        index("movement_dispute_movement_idx").on(table.movementId),
+        staffPolicy("movement_dispute", throughMovement(table.movementId)),
+    ],
 );
 
 export type MovementDispute = typeof movementDispute.$inferSelect;
@@ -802,6 +835,7 @@ export const movementDisputeRow = pgTable(
     (table) => [
         primaryKey({ columns: [table.disputeId, table.movementId] }),
         uniqueIndex("movement_dispute_row_open_uidx").on(table.movementId).where(sql`${table.open}`),
+        staffPolicy("movement_dispute_row", throughMovement(table.movementId)),
     ],
 );
 

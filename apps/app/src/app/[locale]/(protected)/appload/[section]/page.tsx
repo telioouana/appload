@@ -50,7 +50,7 @@ export default async function ApploadSectionPage({ params }: { params: Promise<{
     // trucks, a client on the transporters moving for it — which is where an
     // Appload load sits for each of them
     redirect(getPathname({
-        href: { pathname: "/orders/[section]", params: { section: target }, query: { tab: defaultTab(tenant.orgType) } },
+        href: { pathname: "/orders/[section]", params: { section: target }, query: { tab: defaultTab(tenant.orgType, tenant.modules) } },
         locale,
     }))
 }

@@ -65,7 +65,7 @@ import { createCallerFactory } from "@workspace/trpc/init";
 // catalogs at module scope, which is what puts `loadingCheck` on the log row
 import { appRouter } from "@/backend/api/routers/_app";
 
-process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
+process.env.DATABASE_URL ??= fs.readFileSync(".env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
 
 const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36).padStart(2, "0")}`;
 // Scoped to the run, so two harnesses can never clear each other's trail
@@ -97,7 +97,7 @@ const staff = (userId: string, role: "user" | "manager") => ({
 });
 
 /** A stranger to everything below: an existing portal tenant with no part in it. */
-const STRANGER = { user: "kU9US5NBPjNtS5HsSQBW3ZfEZvj7GQSm", org: "49db92eb-c131-467e-8bfc-fe42a7dcc149" };
+const STRANGER = { user: "seed-portal-stranger", org: "bdc445de-4e50-4b13-beb7-024fadbb22d1" };
 
 const loading = { address: "Nampula, Mozambique", placeId: "ChIJOaE2a7M1xhgRdN3KTEt2F8I", country: "Mozambique", state: "Nampula Province" };
 const offloading = { address: "Maputo, Mozambique", placeId: "ChIJ93KwEyKZ5h4RH3-hOGmXzMg", country: "Mozambique", state: "Maputo" };
@@ -185,7 +185,7 @@ async function makeCompany(kind: "shipper" | "carrier", label: string) {
         slug: `harness-dispatch-${suffix}`,
         createdAt: new Date(),
         // Booking and dispatching both spend a plan's monthly allowance
-        subscriptionPlan: "business",
+        subscriptionPlan: "growth",
         nuit: `${digits.slice(0, 8)}${kind === "shipper" ? 1 : 2}`,
         type: kind,
         status: "active",

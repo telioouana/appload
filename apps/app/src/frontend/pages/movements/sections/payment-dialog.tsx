@@ -113,7 +113,7 @@ export function PaymentDialog({ load, onClose }: { load: MovementDetail; onClose
                         {current && (
                             <p className="text-muted-foreground text-xs tabular-nums">
                                 {t("progress", {
-                                    settled: money(current.settled, current.currency),
+                                    settled: money(current.settled ?? 0, current.currency),
                                     total: money(current.total, current.currency),
                                 })}
                             </p>

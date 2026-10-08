@@ -141,6 +141,36 @@ Tap "Send location" below to share your current location for load {orderId} (tru
   location — or any typed reply — flips the open tracking requests to
   `responded`, which stops further attempts.
 
+## 3. Rental check-in template — is the truck at the client's service today?
+
+Sent once per working morning (08:00 Maputo window, up to 3 WhatsApp
+attempts, no SMS) to the driver of every truck on an active rental
+(`packages/domain/src/rentals/checkin.ts`). The two quick replies post back
+`rental-yes:<line>:<day>` / `rental-no:<line>:<day>`; the webhook files the
+answer on that day of the rental's log (a *no* becomes an off day the
+transporter may correct).
+
+| Field | Value |
+| --- | --- |
+| Suggested name | `appload_rental_checkin` |
+| Category | UTILITY |
+| Structure | Body + 2 quick reply buttons (Sim / Não) |
+| Body placeholders | Exactly 4, positional |
+| Languages | Register the same name in `pt_PT` and `en` |
+
+| Placeholder | Value sent by code | Example |
+| --- | --- | --- |
+| `{{1}}` | Driver name | `João Macuácua` |
+| `{{2}}` | Truck plate | `AEL-467-MC` |
+| `{{3}}` | The client (company name, else the typed name) | `Cliente Teste` |
+| `{{4}}` | The site (the rental's one place, state level) | `Moatize` |
+
+Portuguese: *Bom dia {{1}}. O camião {{2}} está hoje ao serviço de {{3}} em {{4}}? Responda Sim ou Não.* — buttons **Sim**, **Não**.
+English: *Good morning {{1}}. Is truck {{2}} at {{3}}'s service in {{4}} today? Answer Yes or No.* — buttons **Yes**, **No**.
+
+Register it with `node apps/admin/scripts/infobip-templates.mjs --apply` (it
+creates both), then set `INFOBIP_RENTAL_TEMPLATE` (below).
+
 ## After registration: env vars
 
 Both values must match the Infobip portal **exactly**, or the send fails with
@@ -149,6 +179,7 @@ a 400:
 ```
 INFOBIP_TRACKING_TEMPLATE=appload_tracking_location_request
 INFOBIP_TRACKING_TEMPLATE_LANGUAGE=pt_PT
+INFOBIP_RENTAL_TEMPLATE=appload_rental_checkin
 ```
 
 Note: the code defaults the language to `pt` when the env var is unset, but

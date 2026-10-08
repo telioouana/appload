@@ -4,6 +4,7 @@ import { IconTruck, IconUsersGroup } from "@tabler/icons-react"
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 
 import { useTranslations } from "@workspace/i18n"
+import { hasModule } from "@workspace/auth/organization-modules"
 
 import { cn } from "@workspace/ui/lib/utils"
 import { PageHeader } from "@workspace/ui/customs/list/page-header"
@@ -32,6 +33,11 @@ export function MovementsHeaderView({ scope, section }: { scope: MovementScope; 
 
     const orgType = session.organization.type
     const statsOf = (value: MovementScope) => (value === "trips" ? trips : orders).data
+    // A client without its own fleet has only the one side; a transporter
+    // keeps both, as offers land on its own trucks' tab either way
+    const scopes = orgType === "shipper" && !hasModule(session.modules, "own-fleet")
+        ? MOVEMENT_SCOPES.filter((value) => value !== "trips")
+        : MOVEMENT_SCOPES
 
     return (
         <PageHeader
@@ -48,7 +54,7 @@ export function MovementsHeaderView({ scope, section }: { scope: MovementScope; 
                 // this is a pair of links like the fleet's kinds: each is
                 // addressable, and a shared URL opens the side the sender saw
                 <div role="tablist" className="bg-muted mt-2 flex w-fit gap-0.5 rounded-full p-1">
-                    {MOVEMENT_SCOPES.map((value) => {
+                    {scopes.map((value) => {
                         const active = value === scope
                         const Icon = value === "trips" ? IconTruck : IconUsersGroup
                         const count = statsOf(value)?.bySection[section]

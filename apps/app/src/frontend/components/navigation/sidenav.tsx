@@ -12,7 +12,6 @@ import {
     IconCalendarCheck,
     IconChartHistogram,
     IconChecks,
-    IconFileInvoice,
     IconGavel,
     IconHistory,
     IconLayoutDashboard,
@@ -22,6 +21,7 @@ import {
     IconMessages,
     IconPlus,
     IconSearch,
+    IconShieldCheck,
     IconTruck,
     IconTruckDelivery,
     IconUsers,
@@ -29,6 +29,7 @@ import {
 } from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
+import { hasModule, type ModuleId } from "@workspace/auth/organization-modules";
 import { Link, usePathname } from "@/i18n/navigation";
 
 import { Button } from "@workspace/ui/components/button";
@@ -126,20 +127,26 @@ const ORDER_ICONS: Record<MovementSection, Icon> = {
  */
 export function Sidenav({
     orgType,
+    modules: initialModules,
     ...props
-}: React.ComponentProps<typeof Sidebar> & { orgType: "shipper" | "carrier" }) {
+}: React.ComponentProps<typeof Sidebar> & { orgType: "shipper" | "carrier"; modules: ModuleId[] }) {
     const t = useTranslations("App.shell.sidebar")
     const tl = useTranslations("App.loads.sections")
     const g = useTranslations("General")
     const pathname = usePathname()
     const params = useParams<Record<string, string | string[]>>()
     const searchParams = useSearchParams()
+    const trpc = useTRPC()
+    const { data: session } = useQuery(trpc.me.session.queryOptions())
+    // The layout's modules draw the first paint without a flash; once the
+    // session is in, its copy wins, so a switch the CEO flips in Settings
+    // takes the row away without a navigation
+    const modules = session?.modules ?? initialModules
     // A section row keeps the tab the reader is on — My trucks or the
     // partners' — and only falls back to the company's default when the URL
     // names none, so browsing one side never bounces back to the other
     const urlTab = searchParams.get("tab")
-    const tab: MovementTab = (MOVEMENT_TABS as readonly string[]).includes(urlTab ?? "") ? (urlTab as MovementTab) : defaultTab(orgType)
-    const trpc = useTRPC()
+    const tab: MovementTab = (MOVEMENT_TABS as readonly string[]).includes(urlTab ?? "") ? (urlTab as MovementTab) : defaultTab(orgType, modules)
     const { setOpenMobile } = useSidebar()
 
     const { open: openNewLoad } = useNewLoad()
@@ -161,9 +168,19 @@ export function Sidenav({
     // the bell leaves that kind out of its own count — otherwise one message
     // would be two numbers, cleared by two different actions
     const { data: unread } = useQuery(trpc.notifications.unreadCount.queryOptions(undefined, { refetchInterval: UNREAD_POLL_MS }))
-    const { data: chats } = useQuery(trpc.threads.unread.queryOptions(undefined, { refetchInterval: UNREAD_POLL_MS }))
 
     const carrier = orgType === "carrier"
+    // A module the company switched off has no row here; what it already
+    // holds is still reached from the lists and the pages that link it
+    const on = (id: ModuleId) => hasModule(modules, id)
+    // Somebody who can file nothing new is not offered the button (new-load-sheet.tsx asks the same)
+    const may = (permission: string) => session?.permissions.includes(permission as never) ?? false
+    const mayFile = (may("order:create") && (!carrier || on("subcontracting")))
+        || (may("contract:manage") && (on("standing-orders") || on("rentals")))
+        || (!carrier && may("trip:create") && on("own-fleet"))
+
+    const showChats = on("chats") && may("thread:read")
+    const { data: chats } = useQuery({ ...trpc.threads.unread.queryOptions(undefined, { refetchInterval: UNREAD_POLL_MS }), enabled: showChats })
 
     const report: NavEntry[] = [
         {
@@ -173,7 +190,10 @@ export function Sidenav({
             match: "/dashboard",
             path: "/dashboard",
         },
-        { Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", path: "/analytics" },
+        // The reports are report:read's; the entry waits for the session rather than flashing
+        ...(on("analytics") && session?.permissions.includes("report:read")
+            ? [{ Icon: IconChartHistogram, name: t("company.analytics"), match: "/analytics", path: "/analytics" } satisfies NavEntry]
+            : []),
     ]
 
     // A badge is the two tabs' counts added: a section's number is what waits
@@ -200,20 +220,23 @@ export function Sidenav({
                 // (My trucks), turned down by one and waiting to be placed
                 // again (partners), or an Appload offer still to decide —
                 // all of it procurement work; held by a dispute on either side
+                // and a multi-trip order or rental a transporter proposed, waiting on this company's yes
                 badge: section === "procurement"
-                    ? sum(counts?.received, counts?.declined, counts?.offersToReview)
+                    ? sum(counts?.received, counts?.declined, counts?.offersToReview, counts?.proposals)
                     : section === "booked" ? counts?.toDispatch
                         : section === "disputes" ? sum(counts?.disputes.trips, counts?.disputes.orders) : undefined,
             })),
         },
-        { Icon: IconMap2, name: t("work.map"), match: "/map", path: "/map" },
-        {
-            Icon: IconMessages,
-            name: t("work.chats"),
-            match: "/chats",
-            path: "/chats",
-            badge: chats?.total,
-        },
+        ...(on("map") ? [{ Icon: IconMap2, name: t("work.map"), match: "/map", path: "/map" } satisfies NavEntry] : []),
+        ...(showChats
+            ? [{
+                Icon: IconMessages,
+                name: t("work.chats"),
+                match: "/chats",
+                path: "/chats",
+                badge: chats?.total,
+            } satisfies NavEntry]
+            : []),
         {
             Icon: IconBell,
             name: t("work.notifications"),
@@ -237,19 +260,21 @@ export function Sidenav({
             path: { pathname: "/partners/[kind]", params: { kind: carrier ? "clients" : "transporters" } },
             badge: counts?.partners,
         },
-        // The standing prices the company keeps with Appload; the loads they
-        // turn into live on the Orders page like any other
-        { Icon: IconFileInvoice, name: t("company.quotes"), match: "/quotes", path: "/quotes" },
-        {
-            // Every company may keep a fleet: a carrier's is what it sells, a
-            // shipper's moves its own goods between its own sites. One row;
-            // trucks, trailers and links are the pills on the page
-            Icon: IconTruck,
-            name: t("company.fleet"),
-            match: "/fleet",
-            path: { pathname: "/fleet/[kind]", params: { kind: "trucks" } },
-        },
-        { Icon: IconUsers, name: t("company.drivers"), match: "/drivers", path: "/drivers" },
+        // Every company may keep a fleet: a carrier's is what it sells, a
+        // shipper's moves its own goods between its own sites. One row;
+        // trucks, trailers and links are the pills on the page. Both rows
+        // are the own-fleet module's
+        ...(on("own-fleet")
+            ? [
+                {
+                    Icon: IconTruck,
+                    name: t("company.fleet"),
+                    match: "/fleet",
+                    path: { pathname: "/fleet/[kind]", params: { kind: "trucks" } },
+                } satisfies NavEntry,
+                { Icon: IconUsers, name: t("company.drivers"), match: "/drivers", path: "/drivers" } satisfies NavEntry,
+            ]
+            : []),
         // The people who sign in for the company, which is the members tab
         // of the settings page rather than a page of its own
         { Icon: IconUsersGroup, name: t("company.team"), match: "/settings", path: { pathname: "/settings", query: { tab: "members" } } },
@@ -380,14 +405,14 @@ export function Sidenav({
                             {/* Always opens on a partner's load: a transporter's own
                                 trucks come from its clients' orders, and a client picks
                                 the shape inside the sheet */}
-                            <SidebarMenuItem>
+                            {mayFile && <SidebarMenuItem>
                                 <SidebarMenuButton asChild tooltip={t("new-load")}>
                                     <Button onClick={() => openNewLoad("partner")}>
                                         <IconPlus />
                                         {t("new-load")}
                                     </Button>
                                 </SidebarMenuButton>
-                            </SidebarMenuItem>
+                            </SidebarMenuItem>}
                             {renderEntries(ops)}
                         </SidebarMenu>
                     </SidebarGroupContent>
@@ -406,6 +431,16 @@ export function Sidenav({
             </SidebarContent>
 
             <SidebarFooter>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild size="sm" className="text-muted-foreground">
+                            <Link href="/data">
+                                <IconShieldCheck stroke={1.5} />
+                                <span>{t("data")}</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
