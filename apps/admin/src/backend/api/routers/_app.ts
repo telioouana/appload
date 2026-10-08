@@ -16,6 +16,7 @@ import { ordersRouter } from "@/frontend/pages/orders/server/procedures";
 import { partnersRouter } from "@/frontend/pages/partners/server/procedures";
 import { disputesRouter } from "@/frontend/pages/disputes/server/procedures";
 import { settingsRouter } from "@/frontend/pages/settings/server/procedures";
+import { subscriptionsRouter } from "@/frontend/pages/subscriptions/server/procedures";
 import { documentsRouter } from "@/frontend/pages/order/server/documents-procedures";
 import { offersRouter } from "@/frontend/pages/order/server/offers-procedures";
 
@@ -39,6 +40,7 @@ export const appRouter = createTRPCRouter({
     organizations: organizationsRouter,
     partners: partnersRouter,
     settings: settingsRouter,
+    subscriptions: subscriptionsRouter,
     threads: threadsRouter,
 });
 

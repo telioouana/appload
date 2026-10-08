@@ -73,6 +73,12 @@ export const routing = defineRouting({
         "/carriers/fleets": {
             pt: "/transportadores/frotas"
         },
+        "/subscriptions": {
+            pt: "/subscricoes"
+        },
+        "/staff": {
+            pt: "/equipa"
+        },
         "/settings": {
             pt: "/definicoes"
         }

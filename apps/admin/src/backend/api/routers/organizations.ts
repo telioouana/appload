@@ -10,6 +10,7 @@ import { notify } from "@workspace/domain/notifications";
 
 import { uniqueViolationConstraint } from "@workspace/db/errors";
 import { RegisterOrganizationBaseSchema, UpdateOrganizationBaseSchema } from "@/backend/schemas/register-organization";
+import { extendedExpiry } from "@/frontend/pages/subscriptions/types";
 
 export type OrganizationType = "shipper" | "carrier";
 
@@ -210,13 +211,26 @@ export const organizationsRouter = createTRPCRouter({
         .input(z.object({
             id: z.string().nonempty(),
             plan: z.enum(SUBSCRIPTION_PLAN).nullable(),
-            // Null is an open-ended subscription, not an expired one
-            expiresAt: z.date().nullable(),
+            // Plans are paid by the month and never open-ended: the months
+            // paid for extend the current expiry, 0 ends the subscription now
+            months: z.number().int().min(0).max(24),
         }))
         .mutation(async ({ ctx, input }) => {
+            const now = new Date();
+            const current = await ctx.db
+                .select({ expiresAt: organization.subscriptionExpiresAt })
+                .from(organization)
+                .where(eq(organization.id, input.id))
+                .limit(1)
+                .then((rows) => rows[0]);
+
+            if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
+
+            const expiresAt = input.months === 0 ? now : extendedExpiry(current.expiresAt, input.months, now);
+
             const [updated] = await ctx.db
                 .update(organization)
-                .set({ subscriptionPlan: input.plan, subscriptionExpiresAt: input.expiresAt })
+                .set({ subscriptionPlan: input.plan, subscriptionExpiresAt: expiresAt })
                 .where(eq(organization.id, input.id))
                 .returning({
                     id: organization.id,

@@ -3,7 +3,8 @@
 import Image from "next/image"
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { type Icon, IconBox, IconBuilding, IconBuildingFactory2, IconBuildingWarehouse, IconChartHistogram, IconChecks, IconDeviceDesktopAnalytics, IconGavel, IconHistory, IconLayoutDashboard, IconList, IconLock, IconLockOpen, IconMap2, IconMessages, IconPlus, IconTruck, IconTruckDelivery, IconUsers } from "@tabler/icons-react";
+import { type Icon, IconBox, IconBuilding, IconBuildingFactory2, IconBuildingWarehouse, IconChartHistogram, IconChecks, IconDeviceDesktopAnalytics, IconGavel, IconHistory, IconLayoutDashboard, IconLicense, IconList, IconLock, IconLockOpen, IconMap2, IconMessages, IconPlus, IconTruck, IconTruckDelivery, IconUserShield, IconUsers } from "@tabler/icons-react";
+import { isAuthorized } from "@workspace/auth/user-permissions";
 
 import { routing } from "@/i18n/routing";
 import { useTranslations } from "@workspace/i18n";
@@ -18,6 +19,7 @@ import { NAV_ITEM_CLASSES, NAV_SECTION_LABEL_CLASSES } from "@workspace/ui/lib/n
 import { useTRPC } from "@/backend/api/client";
 import { CreateOrderView } from "@/frontend/pages/order/views/create-order-view";
 import { useCreateOrder } from "@/frontend/pages/order/hooks/use-create-order";
+import { useStaffRole } from "@/frontend/pages/kyc/sections/document-checklist";
 
 import { NavPending } from "@workspace/ui/customs/nav/nav-pending";
 import { NavUser } from "./nav-user";
@@ -73,6 +75,7 @@ export function Sidenav({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { setOpenMobile } = useSidebar()
 
     const { onOpenChange } = useCreateOrder()
+    const canManageStaff = isAuthorized(useStaffRole(), "user", ["set-role"])
 
     // On a phone the nav is a sheet laid over the page, so following a link
     // has to dismiss it — otherwise it sits on top of what it just opened.
@@ -179,6 +182,13 @@ export function Sidenav({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 }
             ]
         },
+        {
+            Icon: IconLicense,
+            name: t("content.management.subscriptions"),
+            path: "/subscriptions",
+        },
+        // Admin-only: the page would only tell anyone else they cannot use it
+        ...(canManageStaff ? [{ Icon: IconUserShield, name: t("content.management.staff"), path: "/staff" as const }] : []),
     ]
 
     const renderEntries = (entries: NavEntry[]) => entries.map((item) => {

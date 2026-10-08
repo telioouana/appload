@@ -301,6 +301,7 @@ function OrganizationPanel({ id, tab, onTab, onClose }: PanelProps) {
             {tab === "portal" && (
                 <PortalSection
                     organizationId={profile.id}
+                    name={profile.name}
                     portalActivatedAt={profile.portalActivatedAt}
                     subscriptionPlan={profile.subscriptionPlan}
                     subscriptionExpiresAt={profile.subscriptionExpiresAt}
