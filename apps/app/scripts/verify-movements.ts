@@ -1332,11 +1332,14 @@ async function quota() {
         const extra = await trackingAllowance(db, B.org);
         check("…counted as one extra movement past the plan", extra.extra === 1 && extra.remaining === 0, extra);
 
-        // Filed by A: a transporter never files a truck of its own (§3)
+        // Filed by A: a transporter never files a truck of its own (§3). A
+        // already carries one extra — B's start above billed both sides of
+        // that order — so what counts is the one this filing adds
+        const before = await trackingAllowance(db, A.org);
         const filed = await as(A.user).create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS quota filed", status: "at-loading" });
         created.push(filed.id);
         const filedExtra = await trackingAllowance(db, A.org);
-        check("…as does one a client files as already at the loading site", filedExtra.extra === 1, filedExtra);
+        check("…as does one a client files as already at the loading site", filedExtra.extra === before.extra + 1, { before: before.extra, after: filedExtra.extra });
     } finally {
         await releaseAllowance();
     }
