@@ -625,7 +625,8 @@
             "state": {
                 "active": "Active",
                 "expiring": "{days, plural, one {Expires tomorrow} other {Expires in # days}}",
-                "expired": "Expired"
+                "expired": "Expired",
+                "cancelled": "Cancelled"
             },
             "values": {
                 "no-expiry": "No end date",
@@ -661,10 +662,21 @@
                 "months": "Months paid",
                 "months-option": "{months, plural, one {# month} other {# months}}",
                 "valid-until": "Valid until {date}",
-                "extends": "Added to the current subscription, which runs to {date}",
-                "end-today": "End today",
-                "save": "Save plan",
-                "saved": "Plan updated",
+                "change-hint": "Takes effect now; the end date stays {date}.",
+                "change-hint-moved": "Takes effect now. What is left of {from} is worth the same amount of {to}, so the end date moves to {date}.",
+                "change-hint-expired": "Takes effect now. The subscription has run out: renew it to give it an end date.",
+                "change-plan": "Change plan",
+                "renew": "Renew",
+                "renew-uncancel": "Renewing also clears the cancellation.",
+                "cancel-hint": "The plan keeps running until {date}, then ends; it is not listed as expiring.",
+                "cancel-subscription": "Cancel subscription",
+                "cancelled-on": "Cancelled on {date}. The plan runs until {until}, then ends.",
+                "start": "Start subscription",
+                "started": "Subscription started",
+                "changed": "Plan changed",
+                "renewed": "Subscription renewed",
+                "cancelled": "Subscription cancelled",
+                "close": "Close",
                 "cancel": "Cancel"
             },
             "errors": {
@@ -3972,7 +3984,7 @@
         "organizations": {
             "register": "Registered organization {name}",
             "update": "Updated {name} ({changedFields})",
-            "setSubscription": "Put {name} on the {plan} plan (expiry {expiresAt})"
+            "setSubscription": "{action, select, renew {Renewed {name}'s {plan} plan to {expiresAt}} cancel {Cancelled {name}'s {plan} plan, ending {expiresAt}} change {Moved {name} to the {plan} plan (expiry {expiresAt})} other {Put {name} on the {plan} plan (expiry {expiresAt})}}"
         },
         "partners": {
             "decideClaim": "Marked portal access request {claimId} as {decision}",

@@ -1,4 +1,4 @@
-import { SUBSCRIPTION_PLAN, type SubscriptionPlan } from "@workspace/db/types"
+import { PLAN_PRICE, SUBSCRIPTION_PLAN, type SubscriptionPlan } from "@workspace/db/types"
 
 // ---------------------------------------------------------------------------
 // Vocabulary shared by the URL parser, the server procedure and the toolbar.
@@ -43,6 +43,21 @@ export function extendedExpiry(current: Date | null, months: number, now: Date =
     return end
 }
 
+/**
+ * When a plan changed today runs out: what is left of the current one is
+ * worth `left × price(from)`, and that buys `÷ price(to)` of the new tier —
+ * an upgrade ends sooner, a downgrade later, nothing is invoiced. The end
+ * date stays when nothing is left to convert, or when either price is agreed
+ * per customer.
+ */
+export function changedExpiry(current: Date | null, from: SubscriptionPlan, to: SubscriptionPlan, now: Date = new Date()): Date | null {
+    const fromPrice = PLAN_PRICE[from]
+    const toPrice = PLAN_PRICE[to]
+    if (!current || current <= now || fromPrice === null || toPrice === null) return current
+
+    return new Date(now.getTime() + ((current.getTime() - now.getTime()) * fromPrice) / toPrice)
+}
+
 export type SubscriptionRow = {
     id: string
     name: string
@@ -50,6 +65,8 @@ export type SubscriptionRow = {
     type: "shipper" | "carrier"
     plan: SubscriptionPlan
     expiresAt: Date | null
+    /** Set once staff cancel: the plan runs to expiresAt and is not renewed */
+    cancelledAt: Date | null
     portalActivatedAt: Date | null
     /** Tracked movements billed this month */
     used: number

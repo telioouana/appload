@@ -625,7 +625,8 @@
             "state": {
                 "active": "Activa",
                 "expiring": "{days, plural, one {Expira amanhã} other {Expira em # dias}}",
-                "expired": "Expirada"
+                "expired": "Expirada",
+                "cancelled": "Cancelada"
             },
             "values": {
                 "no-expiry": "Sem data de fim",
@@ -661,10 +662,21 @@
                 "months": "Meses pagos",
                 "months-option": "{months, plural, one {# mês} other {# meses}}",
                 "valid-until": "Válido até {date}",
-                "extends": "Somado à subscrição actual, que vai até {date}",
-                "end-today": "Terminar hoje",
-                "save": "Guardar plano",
-                "saved": "Plano actualizado",
+                "change-hint": "Aplica-se já; a data de fim mantém-se a {date}.",
+                "change-hint-moved": "Aplica-se já. O que resta do {from} vale o mesmo em {to}, pelo que a data de fim passa a {date}.",
+                "change-hint-expired": "Aplica-se já. A subscrição terminou: renove-a para lhe dar uma data de fim.",
+                "change-plan": "Mudar plano",
+                "renew": "Renovar",
+                "renew-uncancel": "Renovar também anula o cancelamento.",
+                "cancel-hint": "O plano continua até {date} e termina depois; não aparece como a expirar.",
+                "cancel-subscription": "Cancelar subscrição",
+                "cancelled-on": "Cancelada a {date}. O plano continua até {until} e termina depois.",
+                "start": "Iniciar subscrição",
+                "started": "Subscrição iniciada",
+                "changed": "Plano alterado",
+                "renewed": "Subscrição renovada",
+                "cancelled": "Subscrição cancelada",
+                "close": "Fechar",
                 "cancel": "Cancelar"
             },
             "errors": {
@@ -3972,7 +3984,7 @@
         "organizations": {
             "register": "Registou a organização {name}",
             "update": "Actualizou {name} ({changedFields})",
-            "setSubscription": "Colocou {name} no plano {plan} (validade {expiresAt})"
+            "setSubscription": "{action, select, renew {Renovou o plano {plan} de {name} até {expiresAt}} cancel {Cancelou o plano {plan} de {name}, que termina a {expiresAt}} change {Mudou {name} para o plano {plan} (validade {expiresAt})} other {Colocou {name} no plano {plan} (validade {expiresAt})}}"
         },
         "partners": {
             "decideClaim": "Marcou o pedido de acesso ao portal {claimId} como {decision}",

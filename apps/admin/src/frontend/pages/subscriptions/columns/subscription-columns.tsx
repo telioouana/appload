@@ -16,27 +16,33 @@ import { EXPIRING_WINDOW_DAYS, type SubscriptionRow, type SubscriptionState } fr
 
 const DAY = 86_400_000
 
+/** The badge's vocabulary: the tabs' states plus "cancelled" for a plan running out on purpose. */
+type BadgeState = SubscriptionState | "cancelled"
+
 /** Where a row stands today, and how many days it has left when that matters. */
-export function stateOf(row: SubscriptionRow, now: Date): { state: SubscriptionState; days: number } {
+export function stateOf(row: SubscriptionRow, now: Date): { state: BadgeState; days: number } {
     if (!row.expiresAt) return { state: "active", days: Infinity }
 
     const days = Math.ceil((row.expiresAt.getTime() - now.getTime()) / DAY)
     if (days <= 0) return { state: "expired", days }
+    if (row.cancelledAt) return { state: "cancelled", days }
     if (days <= EXPIRING_WINDOW_DAYS) return { state: "expiring", days }
 
     return { state: "active", days }
 }
 
-const STATE_CLASSES: Record<SubscriptionState, string> = {
+const STATE_CLASSES: Record<BadgeState, string> = {
     active: "bg-[var(--status-verified-bg)] text-[var(--status-verified-text)]",
     expiring: "bg-[var(--status-expired-bg)] text-[var(--status-expired-text)]",
     expired: "bg-[var(--status-rejected-bg)] text-[var(--status-rejected-text)]",
+    cancelled: "bg-muted text-muted-foreground",
 }
 
 export function StateBadge({ row, now }: { row: SubscriptionRow; now: Date }) {
     const t = useTranslations("Admin.subscriptions.state")
     const { state, days } = stateOf(row, now)
 
+    // The end date a cancelled plan runs to is the row's own Expires column
     return (
         <Badge variant="outline" className={cn("rounded-full border-none", STATE_CLASSES[state])}>
             {state === "expiring" ? t("expiring", { days }) : t(state)}

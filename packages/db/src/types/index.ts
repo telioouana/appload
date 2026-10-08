@@ -67,6 +67,14 @@ export type ThreadSubject = (typeof THREAD_SUBJECT)[number]
 // usage table.
 export const SUBSCRIPTION_PLAN = ["starter", "essential", "growth", "scale", "fleet", "enterprise"] as const
 
+/**
+ * The price in MZN a month before IVA (commercial table of 2026-10-08), null =
+ * agreed per customer. Declared here rather than with the rest of the table in
+ * @workspace/domain/subscription so the admin's dialog, a client component,
+ * can show what a plan change does to the end date without server code.
+ */
+export const PLAN_PRICE: Record<(typeof SUBSCRIPTION_PLAN)[number], number | null> = { starter: 4000, essential: 11000, growth: 17500, scale: 30000, fleet: 40000, enterprise: null }
+
 export type SubscriptionPlan = (typeof SUBSCRIPTION_PLAN)[number]
 
 // Partner verification. Every KYC vocabulary is text + TS const, never a pg

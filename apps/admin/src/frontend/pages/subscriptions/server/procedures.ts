@@ -44,7 +44,8 @@ function stateConditions(now: Date) {
 
     const active = or(isNull(organization.subscriptionExpiresAt), gt(organization.subscriptionExpiresAt, now))!;
     const expired = lte(organization.subscriptionExpiresAt, now);
-    const expiring = and(gt(organization.subscriptionExpiresAt, now), lte(organization.subscriptionExpiresAt, horizon))!;
+    // A cancelled subscription is not chased: it runs out on purpose
+    const expiring = and(isNull(organization.subscriptionCancelledAt), gt(organization.subscriptionExpiresAt, now), lte(organization.subscriptionExpiresAt, horizon))!;
 
     return { active, expiring, expired };
 }
@@ -111,6 +112,7 @@ export const subscriptionsRouter = createTRPCRouter({
                         type: organization.type,
                         plan: organization.subscriptionPlan,
                         expiresAt: organization.subscriptionExpiresAt,
+                        cancelledAt: organization.subscriptionCancelledAt,
                         portalActivatedAt: organization.portalActivatedAt,
                         used: sql<number>`coalesce(${usage.used}, 0)`.mapWith(Number),
                     })

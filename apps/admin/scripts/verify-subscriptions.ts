@@ -3,32 +3,40 @@
  * member on the STAFF database role against the SHARED DEV DATABASE: only
  * organizations with a plan are listed, the tab counts add up, each state
  * tab holds what it says, and the picker offers only companies without one.
- * Read-only — nothing is written.
+ * Read-only unless `--write`, which also exercises the four subscription
+ * actions (change, renew, cancel, renew again) on Terceiro Teste Portal and
+ * puts the row back as it was, notifications included.
  *
  * Run from apps/admin:
- *   NODE_OPTIONS=--conditions=react-server pnpm dlx tsx scripts/verify-subscriptions.ts
+ *   NODE_OPTIONS=--conditions=react-server pnpm dlx tsx scripts/verify-subscriptions.ts [--write]
  */
 import fs from "node:fs";
 
-import { sql } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 
 import { createDb } from "@workspace/db/db";
+import { notification } from "@workspace/db/notifications";
+import { organization } from "@workspace/db/users";
 import { createCallerFactory } from "@workspace/trpc/init";
 import { getStaffGates } from "@workspace/trpc/staff-gate";
 import { getTenantGates } from "@workspace/trpc/tenant-gate";
 
+import { organizationsRouter } from "@/backend/api/routers/organizations";
 import { subscriptionsRouter } from "@/frontend/pages/subscriptions/server/procedures";
+import { changedExpiry, extendedExpiry } from "@/frontend/pages/subscriptions/types";
 
 const envValue = (env: string, name: string) => env.match(new RegExp(`^${name}=(.+)$`, "m"))?.[1]?.trim();
 const STAFF_URL = envValue(fs.readFileSync(".env", "utf8"), "DATABASE_URL");
-if (!STAFF_URL?.includes("appload_staff.")) throw new Error("apps/admin/.env must carry the appload_staff DATABASE_URL");
+const OWNER_URL = envValue(fs.readFileSync("../app/.env", "utf8"), "DATABASE_URL");
+if (!STAFF_URL?.includes("appload_staff.") || !OWNER_URL) throw new Error("apps/admin/.env must carry the appload_staff DATABASE_URL, apps/app/.env the owner's");
 
 process.env.DATABASE_URL ??= STAFF_URL;
 
 const staff = createDb(STAFF_URL);
 const STAFF_USER = "lFKSwK7GvBkvHjTmn3S1u8P3lvzdBx1X"; // Telio Ouana, appload/user
+const TEST_ORG = "bdc445de-4e50-4b13-beb7-024fadbb22d1"; // Terceiro Teste Portal, seeded 2026-09-30
 
-const subscriptions = createCallerFactory(subscriptionsRouter)({
+const context = {
     authApi: undefined as never,
     session: { user: { id: STAFF_USER, name: "harness" }, session: { id: "verify-subscriptions", userId: STAFF_USER } } as never,
     db: staff,
@@ -37,7 +45,9 @@ const subscriptions = createCallerFactory(subscriptionsRouter)({
     waitUntil: undefined,
     staffGates: (id: string) => getStaffGates(staff, { userId: id }),
     tenantGates: (id: string) => getTenantGates(staff, { userId: id }),
-});
+};
+const subscriptions = createCallerFactory(subscriptionsRouter)(context);
+const organizations = createCallerFactory(organizationsRouter)(context);
 
 let failures = 0;
 function check(name: string, ok: boolean, detail?: unknown) {
@@ -92,7 +102,60 @@ async function main() {
     const none = await subscriptions.candidates({ search: first?.name ?? "zzz" });
     check("a listed company is not offered again", !none.some((row) => row.id === first?.id), none.map((row) => row.name));
 
+    if (process.argv.includes("--write")) await writes();
+
     console.log(failures === 0 ? "\nall checks passed" : `\n${failures} check(s) failed`);
+}
+
+/** The four actions on the test tenant, then the row and its notifications as they were. */
+async function writes() {
+    const owner = createDb(OWNER_URL!);
+    const started = new Date();
+    const read = async () => {
+        const row = await owner.select({ plan: organization.subscriptionPlan, expiresAt: organization.subscriptionExpiresAt, cancelledAt: organization.subscriptionCancelledAt })
+            .from(organization).where(eq(organization.id, TEST_ORG)).then((rows) => rows[0]);
+        if (!row?.plan || !row.expiresAt) throw new Error("Terceiro Teste Portal must carry a plan with an end date");
+        return { ...row, plan: row.plan, expiresAt: row.expiresAt };
+    };
+    const original = await read();
+    const otherPlan = original.plan === "starter" ? "essential" : "starter";
+
+    try {
+        await organizations.setSubscription({ action: "change", id: TEST_ORG, plan: otherPlan });
+        const changed = await read();
+        // The server's "now" is a few seconds off this one; the conversion moves the end date by hours or months
+        const expectedChange = changedExpiry(original.expiresAt, original.plan, otherPlan)!;
+        check("change swaps the tier and converts what is left into time on it", changed.plan === otherPlan && Math.abs(changed.expiresAt.getTime() - expectedChange.getTime()) < 60_000 && changed.expiresAt.getTime() !== original.expiresAt.getTime(), { changed, expectedChange });
+
+        await organizations.setSubscription({ action: "renew", id: TEST_ORG, months: 2 });
+        const renewed = await read();
+        check("renew adds the months to the current end date", renewed.expiresAt.getTime() === extendedExpiry(changed.expiresAt, 2).getTime() && renewed.plan === otherPlan, { renewed, expected: extendedExpiry(changed.expiresAt, 2) });
+
+        await organizations.setSubscription({ action: "cancel", id: TEST_ORG });
+        const cancelled = await read();
+        check("cancel marks the row and keeps the paid end date", cancelled.cancelledAt !== null && cancelled.expiresAt.getTime() === renewed.expiresAt.getTime() && cancelled.plan === otherPlan, cancelled);
+        const listed = await subscriptions.list({ dir: "asc", pageSize: 100, search: "Terceiro" });
+        check("the list carries the cancellation", listed.items.some((row) => row.id === TEST_ORG && row.cancelledAt !== null && row.quota !== 0), listed.items.map((row) => [row.name, row.cancelledAt, row.quota]));
+        const expiring = await subscriptions.list({ dir: "asc", pageSize: 100, status: "expiring", search: "Terceiro" });
+        check("a cancelled row is not chased as expiring", !expiring.items.some((row) => row.id === TEST_ORG));
+
+        await organizations.setSubscription({ action: "renew", id: TEST_ORG, months: 1 });
+        const again = await read();
+        check("renewing a cancelled row clears the cancellation", again.cancelledAt === null && again.expiresAt.getTime() === extendedExpiry(renewed.expiresAt, 1).getTime(), again);
+
+        const notices = await owner.select({ params: notification.params }).from(notification)
+            .where(and(eq(notification.organizationId, TEST_ORG), eq(notification.kind, "subscription.changed"), gte(notification.createdAt, started)));
+        const actions = notices.map((row) => (row.params as { action?: string }).action).sort();
+        check("each action notified the company once, naming itself", actions.join(",") === "cancel,change,renew,renew", actions);
+    } finally {
+        await owner.update(organization)
+            .set({ subscriptionPlan: original.plan, subscriptionExpiresAt: original.expiresAt, subscriptionCancelledAt: original.cancelledAt })
+            .where(eq(organization.id, TEST_ORG));
+        await owner.delete(notification)
+            .where(and(eq(notification.organizationId, TEST_ORG), eq(notification.kind, "subscription.changed"), gte(notification.createdAt, started)));
+        const restored = await read();
+        check("the test tenant is back as it was", restored.plan === original.plan && restored.expiresAt.getTime() === original.expiresAt.getTime() && restored.cancelledAt === original.cancelledAt, { restored, original });
+    }
     process.exit(failures === 0 ? 0 : 1);
 }
 

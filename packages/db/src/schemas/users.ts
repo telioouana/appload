@@ -111,6 +111,9 @@ export const organization = pgTable(
         // (@workspace/domain/subscription). Written by Drizzle only, never a
         // Better Auth additional field
         subscriptionExpiresAt: timestamp("subscription_expires_at"),
+        // Set when staff cancel: the plan runs to subscriptionExpiresAt and is
+        // not chased for renewal. Cleared by a renewal
+        subscriptionCancelledAt: timestamp("subscription_cancelled_at"),
         // Set when the organization's first owner joins the partner portal;
         // null means it exists in the database but nobody uses the portal yet
         portalActivatedAt: timestamp("portal_activated_at"),
