@@ -298,6 +298,7 @@ export const activityCatalog: ActivityCatalog = {
             input?.id ? { type: "organization", id: String(input.id) } : null,
         params: (input, output?: { name: string; plan: string | null; expiresAt: Date | null }) => ({
             name: output?.name ?? "",
+            action: input?.action ?? "",
             // A null plan is "no plan agreed", which the log names rather
             // than leaving blank
             plan: output?.plan ?? input?.plan ?? "none",

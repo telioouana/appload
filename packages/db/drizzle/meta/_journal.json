@@ -260,6 +260,13 @@
       "when": 1791439964869,
       "tag": "0036_tiers",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1791450002504,
+      "tag": "0037_subscription_cancelled",
+      "breakpoints": true
     }
   ]
 }

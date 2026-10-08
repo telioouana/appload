@@ -6,7 +6,7 @@ import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { IconCheck } from "@tabler/icons-react"
+import { IconCheck, IconRefresh } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 import { SUBSCRIPTION_PLAN } from "@workspace/db/types"
@@ -24,7 +24,7 @@ import { SelectInput } from "@workspace/ui/inputs/select"
 import { useTRPC } from "@/backend/api/client"
 import { domainErrorCode } from "@workspace/trpc/errors"
 import { IdentityCell, initials } from "@workspace/ui/customs/list/table-cells"
-import { extendedExpiry, MONTH_OPTIONS, type SubscriptionRow } from "@/frontend/pages/subscriptions/types"
+import { changedExpiry, extendedExpiry, MONTH_OPTIONS, type SubscriptionRow } from "@/frontend/pages/subscriptions/types"
 
 const ERROR_CODES = ["NOT_ALLOWED", "NOT_FOUND", "UNKNOWN"] as const
 type ErrorCode = (typeof ERROR_CODES)[number]
@@ -45,11 +45,12 @@ type Candidate = { id: string; name: string; logo: string | null; type: string }
 export type DialogSubject = SubscriptionRow | "new" | null
 
 /**
- * The one place a plan is written. Plans are paid by the month, never
- * open-ended: the reader picks the tier and how many months were paid, and
- * the server counts them from whatever is left of the current subscription.
- * A subscription never loses its plan from here: it ends by its expiry
- * ("End today"), so the row stays on the page as history.
+ * The one place a plan is written, as explicit actions so nothing happens by
+ * accident: a new company gets its first plan and months; an existing one
+ * changes tier (now, the end date stays), renews (paid months added to the
+ * end date) or cancels (runs to the paid end date, then ends). Plans are paid
+ * by the month, never open-ended, and a subscription never loses its plan
+ * from here, so the row stays on the page as history.
  */
 export function SubscriptionDialog({ subject, onOpenChange }: { subject: DialogSubject; onOpenChange: (open: boolean) => void }) {
     const t = useTranslations("Admin.subscriptions")
@@ -87,30 +88,42 @@ export function SubscriptionDialog({ subject, onOpenChange }: { subject: DialogS
         onOpenChange(false)
     }
 
-    const organizationId = row?.id ?? candidate?.id ?? null
+    type Action = Parameters<typeof save.mutateAsync>[0]
 
-    const write = async (plan: Values["plan"], months: number) => {
-        if (!organizationId) return
+    const write = async (action: Action, done: "started" | "changed" | "renewed" | "cancelled") => {
         setError(null)
 
         try {
-            await save.mutateAsync({ id: organizationId, plan, months })
-            toast(t("dialog.saved"))
+            await save.mutateAsync(action)
+            toast(t(`dialog.${done}`))
             close()
         } catch (caught) {
             setError(domainErrorCode<ErrorCode>(caught, ERROR_CODES, "UNKNOWN"))
         }
     }
 
-    const submit = (next: Values) => write(next.plan, Number(next.months))
+    const start = (next: Values) => {
+        if (!candidate) return
+        return write({ action: "start", id: candidate.id, plan: next.plan, months: Number(next.months) }, "started")
+    }
 
-    const subjectName = row?.name ?? candidate?.name
-
-    // The same arithmetic the server applies, shown before the save; a
-    // current subscription with time left is extended, not restarted
+    const plan = form.watch("plan")
     const months = Number(form.watch("months"))
-    const running = row?.expiresAt && row.expiresAt > new Date() ? row.expiresAt : null
     const date = (value: Date) => f.dateTime(value, { day: "2-digit", month: "long", year: "numeric" })
+
+    // The same arithmetic the server applies, shown before the save: a
+    // renewal counts from the current end date while that is still ahead
+    const running = row?.expiresAt && row.expiresAt > new Date() ? row.expiresAt : null
+    const renewedUntil = date(extendedExpiry(running, months))
+    // What is left of the current tier, as time on the picked one; null when
+    // the end date would not move (same tier, nothing left, or a price agreed
+    // per customer)
+    const movedTo = row && running && plan !== row.plan ? changedExpiry(running, row.plan, plan) : null
+    const changeHint = !running
+        ? t("dialog.change-hint-expired")
+        : row && movedTo && movedTo.getTime() !== running.getTime()
+            ? t("dialog.change-hint-moved", { from: t(`plan.${row.plan}`), to: t(`plan.${plan}`), date: date(movedTo) })
+            : t("dialog.change-hint", { date: date(running) })
 
     return (
         <Dialog open={subject !== null} onOpenChange={(next) => { if (!save.isPending && !next) close() }}>
@@ -133,58 +146,123 @@ export function SubscriptionDialog({ subject, onOpenChange }: { subject: DialogS
                         : <CandidatePicker onPick={setCandidate} />
                 )}
 
-                <form
-                    id="subscription-form"
-                    onSubmit={(event) => {
-                        event.stopPropagation()
-                        void form.handleSubmit(submit)(event)
-                    }}
-                >
-                    <FieldGroup className="gap-4">
-                        <SelectInput name="plan" control={form.control} isPending={save.isPending} label={t("dialog.plan")}>
-                            {SUBSCRIPTION_PLAN.map((tier) => (
-                                <SelectItem key={tier} value={tier}>{t(`plan.${tier}`)}</SelectItem>
-                            ))}
-                        </SelectInput>
+                {subject === "new" ? (
+                    <form
+                        id="subscription-form"
+                        onSubmit={(event) => {
+                            event.stopPropagation()
+                            void form.handleSubmit(start)(event)
+                        }}
+                    >
+                        <FieldGroup className="gap-4">
+                            <SelectInput name="plan" control={form.control} isPending={save.isPending} label={t("dialog.plan")}>
+                                {SUBSCRIPTION_PLAN.map((tier) => (
+                                    <SelectItem key={tier} value={tier}>{t(`plan.${tier}`)}</SelectItem>
+                                ))}
+                            </SelectInput>
 
-                        <SelectInput
-                            name="months"
-                            control={form.control}
-                            isPending={save.isPending}
-                            label={t("dialog.months")}
-                            description={
-                                <span className="flex flex-col gap-1">
-                                    <span>{t("dialog.valid-until", { date: date(extendedExpiry(running, months)) })}</span>
-                                    {running && <span>{t("dialog.extends", { date: date(running) })}</span>}
-                                    {running && (
-                                        <button
-                                            type="button"
-                                            className="text-muted-foreground hover:text-foreground cursor-pointer self-start underline underline-offset-2"
-                                            onClick={() => void write(form.getValues("plan"), 0)}
-                                        >
-                                            {t("dialog.end-today")}
-                                        </button>
+                            <SelectInput
+                                name="months"
+                                control={form.control}
+                                isPending={save.isPending}
+                                label={t("dialog.months")}
+                                description={t("dialog.valid-until", { date: renewedUntil })}
+                            >
+                                {MONTH_VALUES.map((value) => (
+                                    <SelectItem key={value} value={value}>{t("dialog.months-option", { months: Number(value) })}</SelectItem>
+                                ))}
+                            </SelectInput>
+                        </FieldGroup>
+                    </form>
+                ) : row && (
+                    <FieldGroup className="gap-6">
+                        <div className="flex flex-col gap-2">
+                            <SelectInput
+                                name="plan"
+                                control={form.control}
+                                isPending={save.isPending}
+                                label={t("dialog.plan")}
+                                description={changeHint}
+                            >
+                                {SUBSCRIPTION_PLAN.map((tier) => (
+                                    <SelectItem key={tier} value={tier}>{t(`plan.${tier}`)}</SelectItem>
+                                ))}
+                            </SelectInput>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="self-end"
+                                disabled={save.isPending || plan === row.plan}
+                                onClick={() => void write({ action: "change", id: row.id, plan }, "changed")}
+                            >
+                                {t("dialog.change-plan")}
+                            </Button>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <SelectInput
+                                name="months"
+                                control={form.control}
+                                isPending={save.isPending}
+                                label={t("dialog.months")}
+                                description={
+                                    <span className="flex flex-col gap-1">
+                                        <span>{t("dialog.valid-until", { date: renewedUntil })}</span>
+                                        {row.cancelledAt && <span>{t("dialog.renew-uncancel")}</span>}
+                                    </span>
+                                }
+                            >
+                                {MONTH_VALUES.map((value) => (
+                                    <SelectItem key={value} value={value}>{t("dialog.months-option", { months: Number(value) })}</SelectItem>
+                                ))}
+                            </SelectInput>
+                            <Button
+                                type="button"
+                                size="sm"
+                                className="self-end"
+                                disabled={save.isPending}
+                                onClick={() => void write({ action: "renew", id: row.id, months }, "renewed")}
+                            >
+                                <IconRefresh className="size-4" stroke={1.5} />
+                                {t("dialog.renew")}
+                            </Button>
+                        </div>
+
+                        {running && (
+                            <p className="text-muted-foreground text-[13px]">
+                                {row.cancelledAt
+                                    ? t("dialog.cancelled-on", { date: date(row.cancelledAt), until: date(running) })
+                                    : (
+                                        <>
+                                            {t("dialog.cancel-hint", { date: date(running) })}{" "}
+                                            <button
+                                                type="button"
+                                                className="hover:text-foreground cursor-pointer underline underline-offset-2"
+                                                disabled={save.isPending}
+                                                onClick={() => void write({ action: "cancel", id: row.id }, "cancelled")}
+                                            >
+                                                {t("dialog.cancel-subscription")}
+                                            </button>
+                                        </>
                                     )}
-                                </span>
-                            }
-                        >
-                            {MONTH_VALUES.map((value) => (
-                                <SelectItem key={value} value={value}>{t("dialog.months-option", { months: Number(value) })}</SelectItem>
-                            ))}
-                        </SelectInput>
+                            </p>
+                        )}
                     </FieldGroup>
-                </form>
+                )}
 
                 {error && <Alert variant="destructive"><AlertDescription>{t(`errors.${error}`)}</AlertDescription></Alert>}
 
                 <DialogFooter className="gap-2">
                     <Button type="button" variant="outline" onClick={close} disabled={save.isPending}>
-                        {t("dialog.cancel")}
+                        {row ? t("dialog.close") : t("dialog.cancel")}
                     </Button>
-                    <Button type="submit" form="subscription-form" disabled={save.isPending || !subjectName}>
-                        {save.isPending ? <Spinner /> : <IconCheck className="size-4" stroke={1.5} />}
-                        {t("dialog.save")}
-                    </Button>
+                    {subject === "new" && (
+                        <Button type="submit" form="subscription-form" disabled={save.isPending || !candidate}>
+                            {save.isPending ? <Spinner /> : <IconCheck className="size-4" stroke={1.5} />}
+                            {t("dialog.start")}
+                        </Button>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>

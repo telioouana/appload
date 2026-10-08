@@ -10,7 +10,7 @@ import { notify } from "@workspace/domain/notifications";
 
 import { uniqueViolationConstraint } from "@workspace/db/errors";
 import { RegisterOrganizationBaseSchema, UpdateOrganizationBaseSchema } from "@/backend/schemas/register-organization";
-import { extendedExpiry } from "@/frontend/pages/subscriptions/types";
+import { changedExpiry, extendedExpiry } from "@/frontend/pages/subscriptions/types";
 
 export type OrganizationType = "shipper" | "carrier";
 
@@ -207,18 +207,25 @@ export const organizationsRouter = createTRPCRouter({
      * Null is no plan agreed yet — everything else stays open to them.
      * Supervisory — a plan is a commercial decision, not day-to-day ops.
      */
+    /**
+     * The one place a plan is written, as four explicit actions so nothing
+     * happens by accident: `start` a company's first plan, `change` the tier
+     * (now; what is left of the old one buys its worth of the new, see
+     * changedExpiry), `renew` by adding paid months to the end
+     * date, `cancel` so it runs to the paid end date and is not chased again.
+     * Plans are paid by the month and never open-ended from here.
+     */
     setSubscription: authorizedProcedure("subscription", ["update"])
-        .input(z.object({
-            id: z.string().nonempty(),
-            plan: z.enum(SUBSCRIPTION_PLAN).nullable(),
-            // Plans are paid by the month and never open-ended: the months
-            // paid for extend the current expiry, 0 ends the subscription now
-            months: z.number().int().min(0).max(24),
-        }))
+        .input(z.discriminatedUnion("action", [
+            z.object({ action: z.literal("start"), id: z.string().nonempty(), plan: z.enum(SUBSCRIPTION_PLAN), months: z.number().int().min(1).max(24) }),
+            z.object({ action: z.literal("change"), id: z.string().nonempty(), plan: z.enum(SUBSCRIPTION_PLAN) }),
+            z.object({ action: z.literal("renew"), id: z.string().nonempty(), months: z.number().int().min(1).max(24) }),
+            z.object({ action: z.literal("cancel"), id: z.string().nonempty() }),
+        ]))
         .mutation(async ({ ctx, input }) => {
             const now = new Date();
             const current = await ctx.db
-                .select({ expiresAt: organization.subscriptionExpiresAt })
+                .select({ plan: organization.subscriptionPlan, expiresAt: organization.subscriptionExpiresAt })
                 .from(organization)
                 .where(eq(organization.id, input.id))
                 .limit(1)
@@ -226,17 +233,26 @@ export const organizationsRouter = createTRPCRouter({
 
             if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
 
-            const expiresAt = input.months === 0 ? now : extendedExpiry(current.expiresAt, input.months, now);
+            const patch = input.action === "start"
+                ? { subscriptionPlan: input.plan, subscriptionExpiresAt: extendedExpiry(null, input.months, now), subscriptionCancelledAt: null }
+                : input.action === "change"
+                    ? { subscriptionPlan: input.plan, subscriptionExpiresAt: current.plan ? changedExpiry(current.expiresAt, current.plan, input.plan, now) : current.expiresAt }
+                    : input.action === "renew"
+                        ? { subscriptionExpiresAt: extendedExpiry(current.expiresAt, input.months, now), subscriptionCancelledAt: null }
+                        // An open-ended subscription has no paid period to run
+                        // out: the month in use is honoured, then it ends
+                        : { subscriptionCancelledAt: now, subscriptionExpiresAt: current.expiresAt ?? new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59) };
 
             const [updated] = await ctx.db
                 .update(organization)
-                .set({ subscriptionPlan: input.plan, subscriptionExpiresAt: expiresAt })
+                .set(patch)
                 .where(eq(organization.id, input.id))
                 .returning({
                     id: organization.id,
                     name: organization.name,
                     plan: organization.subscriptionPlan,
                     expiresAt: organization.subscriptionExpiresAt,
+                    cancelledAt: organization.subscriptionCancelledAt,
                 });
 
             if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "NOT_FOUND" });
@@ -249,7 +265,7 @@ export const organizationsRouter = createTRPCRouter({
                 // The plan lives on the portal's settings page, which is where
                 // both the row and its email send the reader
                 entityType: "subscription",
-                params: { plan: updated.plan ?? "none" },
+                params: { plan: updated.plan ?? "none", action: input.action },
                 email: true,
             });
 
