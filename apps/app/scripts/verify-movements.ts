@@ -68,6 +68,7 @@ import {
     STATUS_TABS,
     tabOfScope,
 } from "@/frontend/pages/movements/types";
+import { modulesFor } from "@workspace/auth/organization-modules";
 import { partnersRouter } from "@/frontend/pages/partners/server/procedures";
 import { countForKind, kindsFor, relationForKind } from "@/frontend/pages/partners/types";
 import { searchRouter } from "@/frontend/pages/search/server/procedures";
@@ -1632,12 +1633,13 @@ async function receivedOffer() {
     const offered = await a.offer({ id: order.id, expectedVersion: placed.version });
 
     // Through the page's own parser, `?tab=own` and all, so what the URL says
-    // and what the list reads are checked together
+    // and what the list reads are checked together. The harness companies never
+    // switch a module off, so every tab default is the full set's
     const [procurement, prospect, all, orders, rail, stats, ordersStats] = await Promise.all([
-        b.list(movementsListInput("procurement", query({ tab: "own", size: "100" }), "carrier")),
-        b.list(movementsListInput("procurement", query({ tab: "own", status: "prospect", size: "100" }), "carrier")),
-        b.list(movementsListInput("all", query({ size: "100" }), "carrier")),
-        b.list(movementsListInput("all", query({ tab: "partners", size: "100" }), "carrier")),
+        b.list(movementsListInput("procurement", query({ tab: "own", size: "100" }), "carrier", modulesFor("carrier"))),
+        b.list(movementsListInput("procurement", query({ tab: "own", status: "prospect", size: "100" }), "carrier", modulesFor("carrier"))),
+        b.list(movementsListInput("all", query({ size: "100" }), "carrier", modulesFor("carrier"))),
+        b.list(movementsListInput("all", query({ tab: "partners", size: "100" }), "carrier", modulesFor("carrier"))),
         meFor(B.user).railCounts(),
         b.stats({ scope: "trips" }),
         b.stats({ scope: "orders" }),
@@ -1693,7 +1695,7 @@ async function quoteRound() {
     check("B's members were each told once, on the load", toldB.length === await membersOf(B.org) && toldB.every((n) => n.entityId === broadcast.id), told);
 
     console.log("\n— quotes: B reads it as a transporter asked, and only that");
-    const planning = await b.list(movementsListInput("procurement", query({ tab: "own", size: "100" }), "carrier"));
+    const planning = await b.list(movementsListInput("procurement", query({ tab: "own", size: "100" }), "carrier", modulesFor("carrier")));
     const asked = planning.items.find((row) => row.id === broadcast.id);
     check("it sits in B's My trucks ▸ Procurement, marked as a quote request", asked?.role === "executor" && asked.quoteRequested === true, asked);
     check("…and carries no money of A's", asked?.payable === null && asked?.receivable === null, asked);
@@ -1864,7 +1866,7 @@ async function ownTrucksFromClients() {
     const acceptedView = await b.get({ id: accepted.id });
     check("a load B accepted is its own truck, confirmed, under My trucks ▸ Procurement", acceptedView.execution === "own-fleet" && acceptedView.status === "scheduled"
         && sectionOf(acceptedView) === "procurement" && tabOfScope(scopeOf(acceptedView)) === "own", { status: acceptedView.status, section: sectionOf(acceptedView), scope: scopeOf(acceptedView) });
-    const own = await b.list(movementsListInput("procurement", query({ tab: "own", status: "scheduled", size: "100" }), "carrier"));
+    const own = await b.list(movementsListInput("procurement", query({ tab: "own", status: "scheduled", size: "100" }), "carrier", modulesFor("carrier")));
     check("…listed there under Confirmed", own.items.some((row) => row.id === accepted.id), own.items.map((row) => row.ref));
 }
 
@@ -1941,20 +1943,20 @@ async function sectionsAndTabs() {
     }
 
     check("the status param is read only where the section, on that tab, has that tab",
-        movementsListInput("procurement", query({ tab: "partners", status: "declined" }), "carrier").status === "declined"
-        && movementsListInput("procurement", query({ tab: "own", status: "declined" }), "carrier").status === undefined
-        && movementsListInput("procurement", query({ tab: "partners", status: "all" }), "carrier").status === undefined
-        && movementsListInput("procurement", query({ tab: "partners", status: "loading" }), "carrier").status === undefined
-        && movementsListInput("history", query({ tab: "own", status: "closed" }), "carrier").status === "closed"
-        && movementsListInput("history", query({ tab: "own", status: "delivered" }), "carrier").status === undefined);
+        movementsListInput("procurement", query({ tab: "partners", status: "declined" }), "carrier", modulesFor("carrier")).status === "declined"
+        && movementsListInput("procurement", query({ tab: "own", status: "declined" }), "carrier", modulesFor("carrier")).status === undefined
+        && movementsListInput("procurement", query({ tab: "partners", status: "all" }), "carrier", modulesFor("carrier")).status === undefined
+        && movementsListInput("procurement", query({ tab: "partners", status: "loading" }), "carrier", modulesFor("carrier")).status === undefined
+        && movementsListInput("history", query({ tab: "own", status: "closed" }), "carrier", modulesFor("carrier")).status === "closed"
+        && movementsListInput("history", query({ tab: "own", status: "delivered" }), "carrier", modulesFor("carrier")).status === undefined);
     check("the tab param picks the list, whatever the company",
-        movementsListInput("all", query({ tab: "partners" }), "carrier").scope === "orders"
-        && movementsListInput("all", query({ tab: "own" }), "shipper").scope === "trips");
+        movementsListInput("all", query({ tab: "partners" }), "carrier", modulesFor("carrier")).scope === "orders"
+        && movementsListInput("all", query({ tab: "own" }), "shipper", modulesFor("shipper")).scope === "trips");
     check("with no tab, a transporter lands on its own trucks and a client on its transporters",
-        movementsListInput("all", query({}), "carrier").scope === "trips"
-        && movementsListInput("all", query({ tab: "trips" }), "carrier").scope === "trips"
-        && movementsListInput("all", query({}), "shipper").scope === "orders"
-        && movementsListInput("procurement", query({ status: "declined" }), "shipper").status === "declined");
+        movementsListInput("all", query({}), "carrier", modulesFor("carrier")).scope === "trips"
+        && movementsListInput("all", query({ tab: "trips" }), "carrier", modulesFor("carrier")).scope === "trips"
+        && movementsListInput("all", query({}), "shipper", modulesFor("shipper")).scope === "orders"
+        && movementsListInput("procurement", query({ status: "declined" }), "shipper", modulesFor("shipper")).status === "declined");
 }
 
 /**
@@ -2089,7 +2091,8 @@ async function partnerLists() {
         const partners = partnersFor(company.user);
         const stats = await partners.stats();
 
-        for (const kind of kindsFor(orgType)) {
+        // The harness companies never switched a module off, so every list is theirs
+        for (const kind of kindsFor(orgType, modulesFor(orgType))) {
             const list = await partners.list({ kind, pageSize: 100 });
             const relation = relationForKind(orgType, kind);
             const fits = list.items.every((row) => (relation ? row.status === "accepted" && row.relation === relation : row.status === "pending"));

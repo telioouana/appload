@@ -22,6 +22,7 @@ import { organization, user } from "@workspace/db/users";
 import { APPLOAD_ORG_ID, APPLOAD_ORG_NAME, isApploadOrg } from "@workspace/db/types";
 
 import { brandedEmail, sendEmail } from "@workspace/auth/email";
+import type { ModuleId } from "@workspace/auth/organization-modules";
 import { can, moneyView, type MoneyView, type Permission } from "@workspace/auth/organization-permissions";
 import {
     locationRequestText,
@@ -65,7 +66,7 @@ import { num, toRouteDto, trailSource } from "@workspace/maps/server/route-cache
 import type { OrderRouteDto, TrailPoint } from "@workspace/maps/types";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
+import { assertModule, authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 
 import { contractSummaryFor, openShares } from "@/frontend/pages/contracts/server/projection";
 import { mergePage, standingCounts, standingOrders, windowFor } from "@/frontend/pages/movements/server/standing-orders";
@@ -186,6 +187,14 @@ function assertCan(permissions: ReadonlySet<Permission>, permission: Permission)
     if (!can(permissions, permission)) {
         throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
     }
+}
+
+/**
+ * Passing a load to a transporter is the product for a client; for a
+ * transporter it is the subcontracting module, which it may have off.
+ */
+function assertMayPlace(tenant: { orgType: OrgType; modules: ReadonlySet<ModuleId> }): void {
+    if (tenant.orgType === "carrier") assertModule(tenant, "subcontracting");
 }
 
 // Escape LIKE wildcards so what the user typed matches literally
@@ -639,7 +648,12 @@ function assertConfirmationUrl(url: string, movementId: string) {
     }
 }
 
-async function detailOf(db: Db, row: Movement, tenantId: string, permissions: ReadonlySet<Permission>, orgType: OrgType): Promise<MovementDetail> {
+async function detailOf(
+    db: Db,
+    row: Movement,
+    reader: { organizationId: string; permissions: ReadonlySet<Permission>; orgType: OrgType; modules: ReadonlySet<ModuleId> },
+): Promise<MovementDetail> {
+    const { organizationId: tenantId, permissions, orgType, modules } = reader;
     const role = roleOf(row, tenantId);
     const owner = role === "owner";
     const candidate = isCandidate(row, role, tenantId);
@@ -694,6 +708,7 @@ async function detailOf(db: Db, row: Movement, tenantId: string, permissions: Re
         unapprovedPhotos: photosWaiting,
         permissions,
         orgType,
+        modules,
     });
 }
 
@@ -970,6 +985,9 @@ export const movementsRouter = createTRPCRouter({
         const tenantId = ctx.tenant.organizationId;
         const other = sql<string>`case when ${partnerConnection.requesterOrgId} = ${tenantId} then ${partnerConnection.targetOrgId} else ${partnerConnection.requesterOrgId} end`;
 
+        // No Fleet module, nothing of its own to pick from — the form offers partners only
+        const ownFleet = ctx.tenant.modules.has("own-fleet");
+
         const [partners, drivers, trucks] = await Promise.all([
             ctx.db
                 .select({
@@ -985,17 +1003,21 @@ export const movementsRouter = createTRPCRouter({
                     or(eq(partnerConnection.requesterOrgId, tenantId), eq(partnerConnection.targetOrgId, tenantId)),
                 ))
                 .orderBy(asc(organization.name)),
-            ctx.db
-                .select({ id: driver.id, name: user.name, phone: user.phoneNumber })
-                .from(driver)
-                .innerJoin(user, eq(user.id, driver.userId))
-                .where(eq(driver.carrierId, tenantId))
-                .orderBy(asc(user.name)),
-            ctx.db
-                .select({ id: truck.id, plate: truck.regPlate })
-                .from(truck)
-                .where(eq(truck.carrierId, tenantId))
-                .orderBy(asc(truck.regPlate)),
+            ownFleet
+                ? ctx.db
+                    .select({ id: driver.id, name: user.name, phone: user.phoneNumber })
+                    .from(driver)
+                    .innerJoin(user, eq(user.id, driver.userId))
+                    .where(eq(driver.carrierId, tenantId))
+                    .orderBy(asc(user.name))
+                : Promise.resolve([]),
+            ownFleet
+                ? ctx.db
+                    .select({ id: truck.id, plate: truck.regPlate })
+                    .from(truck)
+                    .where(eq(truck.carrierId, tenantId))
+                    .orderBy(asc(truck.regPlate))
+                : Promise.resolve([]),
         ]);
 
         return {
@@ -1024,7 +1046,7 @@ export const movementsRouter = createTRPCRouter({
         .input(z.object({ id: z.string().nonempty() }))
         .query(async ({ ctx, input }): Promise<MovementDetail> => {
             const { row } = await loadVisible(ctx.db, input.id, ctx.tenant.organizationId);
-            return detailOf(ctx.db, row, ctx.tenant.organizationId, ctx.tenant.permissions, ctx.tenant.orgType);
+            return detailOf(ctx.db, row, ctx.tenant);
         }),
 
     /**
@@ -1087,6 +1109,11 @@ export const movementsRouter = createTRPCRouter({
             if (!partner && ctx.tenant.orgType === "carrier" && !share) {
                 throw new TRPCError({ code: "FORBIDDEN", message: "OWN_TRIPS_COME_FROM_CLIENTS" });
             }
+
+            // Its own truck is the Fleet module; passing the load on, for a
+            // transporter, the subcontracting one
+            if (partner) assertMayPlace(ctx.tenant);
+            else assertModule(ctx.tenant, "own-fleet");
 
             if (!partner && (input.carrierOrgId || input.carrierName || input.buy)) {
                 throw new TRPCError({ code: "BAD_REQUEST", message: "OWN_FLEET_HAS_NO_CARRIER" });
@@ -1320,6 +1347,7 @@ export const movementsRouter = createTRPCRouter({
         .input(SendRequestsBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string; version: number; sent: number; skipped: number }> => {
             assertCan(ctx.tenant.permissions, "order:create");
+            assertMayPlace(ctx.tenant);
 
             const result = await sendMovementRequests(ctx.db, actorOf(ctx.tenant), input);
 
@@ -1634,6 +1662,7 @@ export const movementsRouter = createTRPCRouter({
         .input(OfferMovementBaseSchema)
         .mutation(async ({ ctx, input }): Promise<{ id: string; version: number }> => {
             assertCan(ctx.tenant.permissions, "order:create");
+            assertMayPlace(ctx.tenant);
 
             const row = await loadOwn(ctx.db, input.id, ctx.tenant.organizationId);
 
@@ -1680,6 +1709,9 @@ export const movementsRouter = createTRPCRouter({
             if (input.to === "own-fleet" && ctx.tenant.orgType === "carrier") {
                 throw new TRPCError({ code: "FORBIDDEN", message: "OWN_TRIPS_COME_FROM_CLIENTS" });
             }
+
+            if (input.to === "partner") assertMayPlace(ctx.tenant);
+            else assertModule(ctx.tenant, "own-fleet");
 
             const updated = await convertMovement(ctx.db, actorOf(ctx.tenant), input);
 

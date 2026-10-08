@@ -11,7 +11,7 @@ import type { KycStatus, KycSubjectType, LoadingBay, OwnershipStatus } from "@wo
 import type { db as Database } from "@workspace/db/db";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, tenantProcedure, withModule } from "@workspace/trpc/tenant";
 
 import { docProgress, today, type CurrentDoc } from "@workspace/domain/kyc/derive";
 import { activeRentalOf } from "@workspace/domain/rentals/apply";
@@ -66,7 +66,8 @@ const vehicleKind = z.enum(VEHICLE_KIND);
  * between its own sites. The rows are scoped to the tenant either way, which
  * is what actually protects them.
  */
-const fleetProcedure = authorizedTenantProcedure("fleet", ["manage"]);
+// Writing to the fleet is the Fleet module; reading it never is
+const fleetProcedure = authorizedTenantProcedure("fleet", ["manage"]).use(withModule("own-fleet"));
 
 // Escape LIKE wildcards so user input matches literally
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");

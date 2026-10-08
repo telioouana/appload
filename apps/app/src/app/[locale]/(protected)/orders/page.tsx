@@ -28,7 +28,7 @@ export default async function Orders() {
     const locale = await getLocale()
 
     redirect(getPathname({
-        href: { pathname: "/orders/[section]", params: { section: DEFAULT_SECTION }, query: { tab: defaultTab(tenant.orgType) } },
+        href: { pathname: "/orders/[section]", params: { section: DEFAULT_SECTION }, query: { tab: defaultTab(tenant.orgType, tenant.modules) } },
         locale,
     }))
 }

@@ -25,6 +25,7 @@
         "./email": "./src/email.ts",
         "./organization-permissions": "./src/permissions/org.permissions.ts",
         "./member-access": "./src/permissions/member-access.ts",
-        "./user-permissions": "./src/permissions/user.permissions.ts"
+        "./user-permissions": "./src/permissions/user.permissions.ts",
+        "./organization-modules": "./src/permissions/modules.ts"
     }
 }

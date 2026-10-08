@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { IconBuilding, IconHistory, IconRosetteDiscountCheck, IconShieldLock, IconUser, IconUsers } from "@tabler/icons-react";
+import { IconAdjustmentsHorizontal, IconBuilding, IconHistory, IconRosetteDiscountCheck, IconShieldLock, IconUser, IconUsers } from "@tabler/icons-react";
 
 import { useTranslations } from "@workspace/i18n";
 
@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/componen
 import { useTRPC } from "@/backend/api/client";
 import { PapersCard } from "@/frontend/pages/fleet/sections/papers-card";
 import { CompanyCard } from "@/frontend/pages/settings/components/company-card";
+import { ModulesCard } from "@/frontend/pages/settings/components/modules-card";
 import { ProfileCard } from "@/frontend/pages/settings/components/profile-card";
 import { PasswordCard } from "@/frontend/pages/settings/components/password-card";
 import { MembersTable } from "@/frontend/pages/settings/components/members-table";
@@ -46,7 +47,7 @@ export function SettingsView() {
     const { data } = useSuspenseQuery(trpc.me.session.queryOptions())
 
     const tab = searchParams.get("tab")
-    const initialTab = tab === "company" || tab === "members" || tab === "subscription" || tab === "security" || tab === "activity" ? tab : "profile"
+    const initialTab = tab === "company" || tab === "modules" || tab === "members" || tab === "subscription" || tab === "security" || tab === "activity" ? tab : "profile"
 
     // What the reader may do here is their live permissions, the same set
     // the server checks — never their profile's name
@@ -74,6 +75,10 @@ export function SettingsView() {
                     <TabsTrigger value="company">
                         <IconBuilding />
                         {t("tabs.company")}
+                    </TabsTrigger>
+                    <TabsTrigger value="modules">
+                        <IconAdjustmentsHorizontal />
+                        {t("tabs.modules")}
                     </TabsTrigger>
                     <TabsTrigger value="members">
                         <IconUsers />
@@ -115,6 +120,15 @@ export function SettingsView() {
                         subjectId={data.organization.id}
                         title={tPapers("company-title")}
                         className="bg-card"
+                    />
+                </TabsContent>
+
+                <TabsContent value="modules" className="flex flex-col gap-4">
+                    <ModulesCard
+                        orgType={data.organization.type}
+                        modules={data.modules}
+                        canEdit={data.role === "owner" && !data.actingOwner}
+                        actingOwner={data.actingOwner}
                     />
                 </TabsContent>
 

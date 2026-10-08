@@ -19,6 +19,7 @@ import type { MovementFlag, TransitionBlocker } from "@workspace/domain/movement
 import type { ContractSummary, OpenShare } from "@/frontend/pages/contracts/server/projection";
 import type { ContractState } from "@workspace/domain/contracts/state";
 import type { OrderStatusKey } from "@workspace/ui/customs/badge/status-badge";
+import { hasModule } from "@workspace/auth/organization-modules";
 
 export type {
     CostTotal,
@@ -69,7 +70,8 @@ export type MovementTab = (typeof MOVEMENT_TABS)[number];
  * decided — the layout's redirect, the server prefetch and the client query
  * all ask here.
  */
-export const defaultTab = (orgType: OrgType): MovementTab => (orgType === "carrier" ? "own" : "partners");
+export const defaultTab = (orgType: OrgType, modules: ReadonlySet<string> | readonly string[]): MovementTab =>
+    (orgType === "carrier" && hasModule(modules, "own-fleet") ? "own" : "partners");
 
 export const scopeOfTab = (tab: MovementTab): MovementScope => (tab === "partners" ? "orders" : "trips");
 export const tabOfScope = (scope: MovementScope): MovementTab => (scope === "orders" ? "partners" : "own");
@@ -639,8 +641,8 @@ const flag = (value: string | null) => (value === "1" ? (true as const) : undefi
  * tab (`?tab=own | partners`, the company's own default when absent) says
  * which list, and is sent on as the scope it reads.
  */
-export const movementsListInput = (section: MovementSection, get: Get, orgType: OrgType) => {
-    const scope = scopeOfTab(oneOf(get("tab"), MOVEMENT_TABS) ?? defaultTab(orgType));
+export const movementsListInput = (section: MovementSection, get: Get, orgType: OrgType, modules: ReadonlySet<string> | readonly string[]) => {
+    const scope = scopeOfTab(oneOf(get("tab"), MOVEMENT_TABS) ?? defaultTab(orgType, modules));
 
     return {
         scope,

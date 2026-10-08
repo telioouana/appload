@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { IconCalendarTime, IconTruck, IconPackages } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
+import { hasModule, type ModuleId } from "@workspace/auth/organization-modules"
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@workspace/ui/components/sheet"
 
@@ -40,10 +41,16 @@ function ArmedSheet() {
     if (!session) return null
 
     const has = (permission: string) => session.permissions.includes(permission as never)
+    const on = (id: ModuleId) => hasModule(session.modules, id)
+    const carrier = session.organization.type === "carrier"
     // A trip on its own trucks is a client's to file by hand; placing one with
-    // a partner is order:create, a standing order or rental contract:manage
-    const ownTrips = session.organization.type === "shipper" && has("trip:create")
-    const kinds = KINDS.filter(({ value }) => value === "single" ? has("order:create") || ownTrips : has("contract:manage"))
+    // a partner is order:create (a transporter's subcontracting), a standing
+    // order or rental contract:manage — each behind its module
+    const ownTrips = !carrier && has("trip:create") && on("own-fleet")
+    const partnerLoads = has("order:create") && (!carrier || on("subcontracting"))
+    const kinds = KINDS.filter(({ value }) =>
+        value === "single" ? partnerLoads || ownTrips
+            : has("contract:manage") && on(value === "multi" ? "standing-orders" : "rentals"))
 
     if (kind === null) {
         return <KindChooser open={isOpen} kinds={kinds} onChoose={choose} onClose={close} />
@@ -59,7 +66,7 @@ function ArmedSheet() {
 
     return (
         <LoadSheet
-            mode={{ kind: "create", execution: execution === "partner" && !has("order:create") && !contractAllocationId ? "own-fleet" : execution, contractAllocationId }}
+            mode={{ kind: "create", execution: execution === "partner" && !partnerLoads && !contractAllocationId && ownTrips ? "own-fleet" : execution, contractAllocationId }}
             orgType={session.organization.type}
             allowance={session.allowance}
             organizationName={session.organization.name}

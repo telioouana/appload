@@ -23,8 +23,9 @@ import { conditionCount } from "@workspace/domain/orders/predicates";
 import { pendingOfferCount } from "@workspace/domain/orders/transition";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, ownerProcedure, tenantProcedure } from "@workspace/trpc/tenant";
 import type { Permission } from "@workspace/auth/organization-permissions";
+import { DisabledModulesSchema, moduleConflict, type ModuleId } from "@workspace/auth/organization-modules";
 import type { OrgStatus, OrgType, TenantPlan, TenantRole } from "@workspace/trpc/tenant-gate";
 
 import { activeGrant, grantHistory, grantSupport, revokeSupport } from "@workspace/domain/support/grants";
@@ -79,6 +80,10 @@ export type MeSession = {
     actingOwner: boolean;
     /** Live permissions, profile defaults with this member's changes applied */
     permissions: Permission[];
+    /** The modules the company has on; what it may switch is `modulesFor(type)` */
+    modules: ModuleId[];
+    /** False until the CEO answered the module questions once (null column) */
+    modulesConfigured: boolean;
     plan: TenantPlan;
     /** This month's tracked movements against what the plan allows */
     allowance: TrackingAllowance;
@@ -186,11 +191,36 @@ export const meRouter = createTRPCRouter({
             level: ctx.tenant.level,
             actingOwner: ctx.tenant.actingOwner,
             permissions: [...ctx.tenant.permissions],
+            modules: [...ctx.tenant.modules],
+            modulesConfigured: ctx.tenant.modulesConfigured,
             plan: ctx.tenant.plan,
             allowance,
             tiers: TIERS,
         };
     }),
+
+    /**
+     * Which modules the company switches off — the real CEO's alone
+     * (`ownerProcedure`): an acting CEO runs the company for a while, but
+     * does not reshape it. The whole OFF list travels every time, so the
+     * row is always exactly what the CEO last saw.
+     */
+    setModules: ownerProcedure
+        .input(z.object({ disabled: DisabledModulesSchema }))
+        .mutation(async ({ ctx, input }): Promise<{ organizationId: string; disabled: ModuleId[] }> => {
+            const conflict = moduleConflict(ctx.tenant.orgType, input.disabled);
+
+            if (conflict) throw new TRPCError({ code: "BAD_REQUEST", message: conflict });
+
+            const disabled = [...new Set(input.disabled)];
+
+            await ctx.db
+                .update(organization)
+                .set({ disabledModules: disabled })
+                .where(eq(organization.id, ctx.tenant.organizationId));
+
+            return { organizationId: ctx.tenant.organizationId, disabled };
+        }),
 
     /**
      * The rail's badges in one small read. Each counts rows the page its

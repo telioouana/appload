@@ -20,7 +20,7 @@ import { disputeDay, loadLog, markDay, settleDispute } from "@workspace/domain/r
 import { loadPayments, recordRentalPayment } from "@workspace/domain/rentals/payments";
 import { isOnPortal } from "@workspace/domain/movements/link";
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, tenantProcedure, withModule } from "@workspace/trpc/tenant";
 
 import {
     AddLineSchema,
@@ -428,6 +428,7 @@ export const rentalsRouter = createTRPCRouter({
         .query(({ ctx, input }) => detailOf(ctx.db, input.id, ctx.tenant.organizationId, ctx.tenant.permissions)),
 
     create: authorizedTenantProcedure("contract", ["manage"])
+        .use(withModule("rentals"))
         .input(CreateRentalSchema)
         .mutation(async ({ ctx, input }) => {
             const { order } = await createRental(ctx.db, actorOf(ctx), input);

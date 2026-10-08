@@ -126,6 +126,10 @@ export const organization = pgTable(
         phoneNumber: text("phone_number").notNull().unique(),
         billingAddress: jsonb("billing_address").$type<Address>(),
         physicalAddress: jsonb("physical_address").$type<Address>(),
+        // The portal modules this company switched OFF (ids from
+        // @workspace/auth/organization-modules). Null = never configured, so
+        // everything is on; written by the real CEO only (me.setModules)
+        disabledModules: jsonb("disabled_modules").$type<string[]>(),
 
         // Verification state. Distinct from `status` above, which is the
         // account lifecycle: an organization can be `active` and still

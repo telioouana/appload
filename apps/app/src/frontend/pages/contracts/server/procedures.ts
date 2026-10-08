@@ -28,7 +28,7 @@ import { isOnPortal } from "@workspace/domain/movements/link";
 import { movementRef } from "@workspace/domain/movements/refs";
 import { contractFilePath } from "@workspace/edgestore/path";
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, tenantProcedure, withModule } from "@workspace/trpc/tenant";
 
 import {
     AddAllocationSchema,
@@ -477,6 +477,7 @@ export const contractsRouter = createTRPCRouter({
         .query(({ ctx, input }) => detailOf(ctx.db, input.id, ctx.tenant.organizationId, ctx.tenant.permissions)),
 
     create: authorizedTenantProcedure("contract", ["manage"])
+        .use(withModule("standing-orders"))
         .input(ContractInputSchema)
         .mutation(async ({ ctx, input }) => {
             const row = await createContract(ctx.db, actorOf(ctx), input);

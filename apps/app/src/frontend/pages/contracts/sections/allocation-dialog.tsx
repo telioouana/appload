@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 
 import { useTranslations } from "@workspace/i18n"
+import { hasModule } from "@workspace/auth/organization-modules"
 
 import { Button } from "@workspace/ui/components/button"
 import { Spinner } from "@workspace/ui/components/spinner"
@@ -52,9 +53,9 @@ export type AllocationDialogMode =
 
 const positive = (value: string) => Number.isFinite(Number(value)) && Number(value) > 0 && Number(value) <= 1e9
 
-function defaultsFor(mode: AllocationDialogMode): AllocationForm {
+function defaultsFor(mode: AllocationDialogMode, ownFleet: boolean): AllocationForm {
     if (mode.kind === "create") {
-        return { who: OWN, carrierName: "", openShare: false, shareQty: "", buyPrice: EMPTY_PRICE, truckId: NONE, driverId: NONE, truckPlate: "", notes: "" }
+        return { who: ownFleet ? OWN : TYPED, carrierName: "", openShare: false, shareQty: "", buyPrice: EMPTY_PRICE, truckId: NONE, driverId: NONE, truckPlate: "", notes: "" }
     }
 
     const { allocation } = mode
@@ -93,6 +94,9 @@ export function AllocationDialog({ mode, onClose }: { mode: AllocationDialogMode
     const isPending = addAllocation.isPending || updateAllocation.isPending
 
     const { data: options } = useQuery(trpc.movements.formOptions.queryOptions())
+    // Without the own-fleet module a share is always a transporter's
+    const { data: session } = useQuery(trpc.me.session.queryOptions())
+    const ownFleet = session ? hasModule(session.modules, "own-fleet") : true
     // Appload is pinned in front by the server, and is a transporter as far
     // as a share is concerned: anything that is not a client can move it
     const carriers = (options?.partners ?? []).filter((row) => row.type !== "shipper")
@@ -122,7 +126,7 @@ export function AllocationDialog({ mode, onClose }: { mode: AllocationDialogMode
 
     const form = useForm<AllocationForm>({
         resolver: zodResolver(FormSchema),
-        defaultValues: defaultsFor(mode),
+        defaultValues: defaultsFor(mode, ownFleet),
     })
 
     const [who, openShare] = useWatch({ control: form.control, name: ["who", "openShare"] })
@@ -159,7 +163,7 @@ export function AllocationDialog({ mode, onClose }: { mode: AllocationDialogMode
                 <form id="allocation-form" onSubmit={form.handleSubmit(onSubmit)}>
                     <FieldGroup className="gap-4">
                         <SelectInput control={form.control} name="who" isPending={isPending} label={t("allocation-form.fields.carrier")}>
-                            <SelectItem value={OWN}>{t("allocation-form.fields.own-fleet")}</SelectItem>
+                            {ownFleet && <SelectItem value={OWN}>{t("allocation-form.fields.own-fleet")}</SelectItem>}
                             {carriers.map((row) => (
                                 <SelectItem key={row.id} value={row.id}>{row.name}</SelectItem>
                             ))}

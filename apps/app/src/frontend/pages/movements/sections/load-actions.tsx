@@ -35,6 +35,7 @@ import {
 } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
+import { hasModule } from "@workspace/auth/organization-modules"
 import { Link } from "@/i18n/navigation"
 
 import { Button } from "@workspace/ui/components/button"
@@ -139,6 +140,9 @@ export function LoadActions({
         enabled: appload?.role === "orderer",
     })
     const cancelWithAppload = appload?.role === "orderer" && Boolean(order?.permissions.canCancel)
+    // The chats module off: no door to a conversation from here (the page itself is gone too)
+    const { data: session } = useQuery(trpc.me.session.queryOptions())
+    const chats = session ? hasModule(session.modules, "chats") : false
 
     const [open, setOpen] = useState<Open>(null)
     // Set when a menu item opens a dialog or the sheet: the menu must not
@@ -263,7 +267,7 @@ export function LoadActions({
 
                 {/* The conversations this load has, both of them on the Chats
                     page: the driver on WhatsApp, and the other company */}
-                {(permissions.canReadThread || chatSubject) && (
+                {chats && (permissions.canReadThread || chatSubject) && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button size="sm" variant="outline">

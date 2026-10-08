@@ -398,6 +398,12 @@ then push `prod/admin` and the portal back to back.
   (Gestor), `procurement` (Comercial to a transporter), `operations`.
   The admin app's staff role needs nothing new (default privileges cover the
   table). Dev got it from `node packages/db/scripts/migrate.mjs`.
+- `0035_organization_modules` — company modules: `organization.disabled_modules`
+  (jsonb list of module ids the company switched off; null = never
+  configured, every module on, so existing companies see no change). The
+  real CEO sets it in Settings › Modules (an acting CEO cannot); a new
+  company answers the module questions right after registering. Nothing
+  else to do on release. Dev got it from `node packages/db/scripts/migrate.mjs`.
 - `0032_open_period` — `contract.ends_on` becomes nullable (null = the
   order runs as long as the cargo lasts; it never expires on its own) and the
   period CHECK allows it. Dev got it from `node packages/db/scripts/migrate.mjs`.

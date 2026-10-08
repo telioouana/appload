@@ -1,6 +1,7 @@
 import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
 
 import { effectiveAccess, profileOf, type Permission, type Profile } from "@workspace/auth/organization-permissions";
+import { enabledModules, type ModuleId } from "@workspace/auth/organization-modules";
 import { memberPermission } from "@workspace/db/permissions";
 import { member, organization, user } from "@workspace/db/users";
 import { isPartnerOrgType, type PartnerOrgType } from "@workspace/db/types";
@@ -52,6 +53,10 @@ export type TenantGates =
         actingOwner: boolean;
         /** The profile's defaults with this member's live changes applied */
         permissions: ReadonlySet<Permission>;
+        /** The modules the company has on (@workspace/auth/organization-modules) */
+        modules: ReadonlySet<ModuleId>;
+        /** False until the CEO has answered the module questions once */
+        modulesConfigured: boolean;
         emailVerified: boolean;
         plan: TenantPlan;
     }
@@ -67,6 +72,8 @@ export type TenantGates =
         level?: undefined;
         actingOwner?: undefined;
         permissions: ReadonlySet<Permission>;
+        modules: ReadonlySet<ModuleId>;
+        modulesConfigured?: undefined;
         emailVerified: boolean;
         plan: TenantPlan;
     };
@@ -74,6 +81,8 @@ export type TenantGates =
 const NO_PLAN: TenantPlan = { plan: null, expiresAt: null, active: false, quota: 0 };
 
 const NO_PERMISSIONS: ReadonlySet<Permission> = new Set();
+
+const NO_MODULES: ReadonlySet<ModuleId> = new Set();
 
 /**
  * Reads the actor's account and its single membership live from the database.
@@ -111,6 +120,7 @@ export async function getTenantGates(
                 orgStatus: organization.status,
                 plan: organization.subscriptionPlan,
                 expiresAt: organization.subscriptionExpiresAt,
+                disabledModules: organization.disabledModules,
             })
             .from(member)
             .innerJoin(organization, eq(organization.id, member.organizationId))
@@ -173,7 +183,7 @@ export async function getTenantGates(
         plan,
     };
 
-    const deny = (reason: TenantReason): TenantGates => ({ ok: false, reason, ...resolved, permissions: NO_PERMISSIONS });
+    const deny = (reason: TenantReason): TenantGates => ({ ok: false, reason, ...resolved, permissions: NO_PERMISSIONS, modules: NO_MODULES });
 
     // The portal is partner-only: staff and driver accounts are rejected
     // before anything else is looked at
@@ -202,6 +212,10 @@ export async function getTenantGates(
         level: access!.level,
         actingOwner: access!.actingOwner,
         permissions: access!.permissions,
+        // From the same organization read: null means the company never
+        // answered, so every module it can have is on
+        modules: enabledModules(membership.orgType, membership.disabledModules),
+        modulesConfigured: membership.disabledModules !== null,
         emailVerified,
         plan,
     };

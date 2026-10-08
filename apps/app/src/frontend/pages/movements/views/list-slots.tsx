@@ -58,7 +58,7 @@ const tenantOrgType = cache(async () => {
 
     if (!tenant.ok) redirect("/onboarding")
 
-    return tenant.orgType
+    return { orgType: tenant.orgType, modules: tenant.modules }
 })
 
 /**
@@ -72,20 +72,25 @@ const tenantOrgType = cache(async () => {
 async function inputOrRedirect(section: MovementSection, searchParams: SearchParams["searchParams"]) {
     const search = await searchParams
     const get = getterOf(search)
-    const orgType = await tenantOrgType()
+    const { orgType, modules } = await tenantOrgType()
     const tab = get("tab")
 
-    if (tab === null || !(MOVEMENT_TABS as readonly string[]).includes(tab)) {
+    // A client without its own fleet has no My trucks tab: `?tab=own` is sent
+    // to its transporters' like a tab that does not exist (a transporter keeps
+    // both — offers land on its own side whether or not it runs trucks)
+    const noOwn = orgType === "shipper" && !modules.has("own-fleet") && tab === "own"
+
+    if (tab === null || noOwn || !(MOVEMENT_TABS as readonly string[]).includes(tab)) {
         const locale = await getLocale()
         const kept = Object.fromEntries(Object.entries(search).filter((entry): entry is [string, string] => typeof entry[1] === "string"))
 
         redirect(getPathname({
-            href: { pathname: "/orders/[section]", params: { section }, query: { ...kept, tab: defaultTab(orgType) } },
+            href: { pathname: "/orders/[section]", params: { section }, query: { ...kept, tab: defaultTab(orgType, modules) } },
             locale,
         }))
     }
 
-    return movementsListInput(section, get, orgType)
+    return movementsListInput(section, get, orgType, modules)
 }
 
 export async function movementsListMetadata({ params }: SectionParams) {

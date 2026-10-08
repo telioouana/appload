@@ -8,6 +8,7 @@ import { z } from "zod"
 import { IconPlus, IconTrash } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
+import { hasModule } from "@workspace/auth/organization-modules"
 
 import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 import {
@@ -216,6 +217,9 @@ export function AddLineDialog({ rental, onClose }: { rental: RentalDetail; onClo
     const [error, setError] = useState<RentalErrorCode | null>(null)
 
     const { data: options } = useQuery(trpc.movements.formOptions.queryOptions())
+    // Without the own-fleet module another truck is always a transporter's
+    const { data: session } = useQuery(trpc.me.session.queryOptions())
+    const ownFleet = session ? hasModule(session.modules, "own-fleet") : true
     const carriers = (options?.partners ?? []).filter((row) => row.type !== "shipper")
 
     const FormSchema = useMemo(() => z
@@ -234,7 +238,7 @@ export function AddLineDialog({ rental, onClose }: { rental: RentalDetail; onClo
 
     const form = useForm<LineForm>({
         resolver: zodResolver(FormSchema),
-        defaultValues: { who: OWN, carrierName: "", truckId: NONE, driverId: NONE, truckPlate: "", buyRate: "" },
+        defaultValues: { who: ownFleet ? OWN : TYPED, carrierName: "", truckId: NONE, driverId: NONE, truckPlate: "", buyRate: "" },
     })
 
     const who = useWatch({ control: form.control, name: "who" })
@@ -270,7 +274,7 @@ export function AddLineDialog({ rental, onClose }: { rental: RentalDetail; onClo
                 <form id="rental-line-form" onSubmit={form.handleSubmit(onSubmit)}>
                     <FieldGroup className="gap-4">
                         <SelectInput control={form.control} name="who" isPending={isPending} label={t("form.lines.provider")}>
-                            <SelectItem value={OWN}>{t("form.lines.own-fleet")}</SelectItem>
+                            {ownFleet && <SelectItem value={OWN}>{t("form.lines.own-fleet")}</SelectItem>}
                             {carriers.map((row) => (
                                 <SelectItem key={row.id} value={row.id}>{row.name}</SelectItem>
                             ))}

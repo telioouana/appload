@@ -1,7 +1,12 @@
 import { Suspense } from "react"
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
 import { ErrorBoundary } from "react-error-boundary"
 
+import { db } from "@workspace/db/db"
+import { auth } from "@workspace/auth/server"
 import { getTranslations } from "@workspace/i18n/server"
+import { getTenantGates } from "@workspace/trpc/tenant-gate"
 
 import { HydrateClient, prefetch, trpc } from "@/backend/api/server"
 import { ListError } from "@workspace/ui/customs/list/list-fallbacks"
@@ -20,6 +25,15 @@ export default async function AnalyticsPage({
 }: {
     searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
+    // The analytics module off: the page is not there, the way its rail row is not
+    const session = await auth.api.getSession({ headers: await headers() })
+
+    if (!session) redirect("/sign-in")
+
+    const tenant = await getTenantGates(db, { userId: session.user.id })
+
+    if (!tenant.ok || !tenant.modules.has("analytics")) redirect("/dashboard")
+
     const search = await searchParams
     const t = await getTranslations("App.analytics")
 

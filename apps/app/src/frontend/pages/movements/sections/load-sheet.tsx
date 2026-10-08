@@ -10,6 +10,7 @@ import { useTranslations } from "@workspace/i18n"
 import { CATEGORIES, CURRENCY, FISCAL_REGIME, WEIGHT_UNIT, isApploadOrg } from "@workspace/db/types"
 import { VAT_RATE } from "@workspace/domain/orders/commission"
 import type { TrackingAllowance } from "@workspace/domain/subscription"
+import { hasModule } from "@workspace/auth/organization-modules"
 import { DEFAULT_PHONE_COUNTRY, fromE164, toE164 } from "@workspace/ui/lib/phone"
 
 import { cn } from "@workspace/ui/lib/utils"
@@ -237,6 +238,8 @@ export function LoadSheet({
     // contract share still prices its trip on the server
     const { data: session } = useQuery(trpc.me.session.queryOptions())
     const seesPrices = session?.permissions.includes("price:read") ?? false
+    // A client without its own fleet is not offered that shape: the sheet opens on a partner's load and stays there
+    const ownShape = session ? hasModule(session.modules, "own-fleet") : true
 
     const FormSchema = useMemo(
         () => LoadFormSchema((field: LoadMessageField) => ({ error: t(`errors.${field}`) })),
@@ -536,7 +539,7 @@ export function LoadSheet({
                             }}
                         >
                             <FieldGroup className="gap-7">
-                                {!editing && !carrier && (
+                                {!editing && !carrier && ownShape && (
                                     <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("shape.label")}>
                                         {(["own-fleet", "partner"] as const).map((value) => {
                                             const active = execution === value

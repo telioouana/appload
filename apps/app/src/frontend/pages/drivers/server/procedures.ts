@@ -11,7 +11,7 @@ import type { KycStatus } from "@workspace/db/types";
 import type { db as Database } from "@workspace/db/db";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, tenantProcedure, withModule } from "@workspace/trpc/tenant";
 
 import { normalizePhone } from "@workspace/comms/phone";
 import { docProgress, today } from "@workspace/domain/kyc/derive";
@@ -52,7 +52,8 @@ export type DriverOption = {
  * shipper running its own trucks — so the writes need the `fleet` role
  * statement and nothing about the organization's type, the same as vehicles.
  */
-const fleetProcedure = authorizedTenantProcedure("fleet", ["manage"]);
+// Writing to the fleet is the Fleet module; reading it never is
+const fleetProcedure = authorizedTenantProcedure("fleet", ["manage"]).use(withModule("own-fleet"));
 
 // Escape LIKE wildcards so user input matches literally
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");

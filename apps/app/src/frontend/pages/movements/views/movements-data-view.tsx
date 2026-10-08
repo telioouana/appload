@@ -62,7 +62,7 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
 
     // The same builder the server prefetch used, so the first page hydrates
     // straight into this query instead of refetching; it reads the tab too
-    const input = movementsListInput(section, get, orgType)
+    const input = movementsListInput(section, get, orgType, session.modules)
 
     const { data } = useSuspenseQuery(trpc.movements.list.queryOptions(input))
     const { data: stats } = useSuspenseQuery(trpc.movements.stats.queryOptions({ scope }))

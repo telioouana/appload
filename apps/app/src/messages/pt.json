@@ -283,7 +283,12 @@
                 "notFound": "Não encontrámos essa empresa",
                 "unknown": "Algo correu mal. Tente novamente"
             },
-            "data-link": "O que a Appload vê dos seus dados"
+            "data-link": "O que a Appload vê dos seus dados",
+            "modules": {
+                "title": "O que a sua empresa usa",
+                "description": "Diga-nos como a sua empresa trabalha, para lhe mostrarmos só o que lhe serve. Pode mudar isto a qualquer altura em Definições › Módulos.",
+                "continue": "Continuar"
+            }
         },
         "shell": {
             "sidebar": {
@@ -387,6 +392,10 @@
                     "empty": "Ainda não registou nenhuma carga",
                     "amount": "Valor"
                 }
+            },
+            "modules-nudge": {
+                "text": "Ainda não escolheu os módulos da sua empresa: ligue só o que usa e o portal fica mais simples.",
+                "cta": "Escolher módulos"
             }
         },
         "settings": {
@@ -396,6 +405,7 @@
             "tabs": {
                 "profile": "Perfil",
                 "company": "Empresa",
+                "modules": "Módulos",
                 "members": "Equipa",
                 "subscription": "Subscrição",
                 "security": "Segurança",
@@ -823,6 +833,58 @@
                     "zone": "Hora de Maputo. Termina sozinho no fim do período.",
                     "invalid": "O fim tem de ser depois do início e ainda no futuro."
                 }
+            },
+            "modules": {
+                "title": "Módulos",
+                "description": "O que a sua empresa usa no portal. Um módulo desligado sai do menu e não aceita novos registos; o que já existe fica.",
+                "groups": {
+                    "how": "Como a empresa trabalha",
+                    "uses": "O que usa"
+                },
+                "owner-only": "Só o CEO da empresa altera os módulos.",
+                "acting-owner-hint": "Como CEO interino vê os módulos, mas só o CEO da empresa os altera.",
+                "error": "Não foi possível guardar os módulos. Tente novamente.",
+                "conflict": {
+                    "NOTHING_LEFT_TO_MOVE": "Uma transportadora precisa de frota própria ou de subcontratação; não pode desligar as duas.",
+                    "NOT_APPLICABLE": "Este módulo não existe para o tipo da sua empresa."
+                }
+            }
+        },
+        "modules": {
+            "own-fleet": {
+                "name": "Frota própria",
+                "description": "Os camiões e motoristas da sua empresa, e as viagens que fazem.",
+                "question": "A sua empresa tem camiões próprios?"
+            },
+            "subcontracting": {
+                "name": "Subcontratação",
+                "description": "Passar cargas a outras transportadoras e pedir-lhes cotação.",
+                "question": "A sua empresa passa cargas a outras transportadoras?"
+            },
+            "standing-orders": {
+                "name": "Pedidos com várias viagens",
+                "description": "Pedidos que se cumprem em várias viagens, com o consumo acompanhado.",
+                "question": "A sua empresa trabalha com pedidos de várias viagens?"
+            },
+            "rentals": {
+                "name": "Alugueres",
+                "description": "Camiões ao serviço por um período, pagos ao dia.",
+                "question": "A sua empresa aluga camiões, ou tem camiões alugados?"
+            },
+            "chats": {
+                "name": "Conversas",
+                "description": "Conversas com os motoristas e sobre cada pedido.",
+                "question": "Quer falar com motoristas e parceiros a partir do portal?"
+            },
+            "map": {
+                "name": "Mapa",
+                "description": "Onde estão os camiões em viagem, em tempo real.",
+                "question": "Quer ver os camiões em viagem no mapa?"
+            },
+            "analytics": {
+                "name": "Análises",
+                "description": "Números e relatórios sobre o que a empresa movimentou.",
+                "question": "Quer relatórios sobre o que a empresa movimenta?"
             }
         },
         "plan": {

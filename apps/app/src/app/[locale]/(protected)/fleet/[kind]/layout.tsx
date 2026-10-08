@@ -48,7 +48,7 @@ export default async function Layout({
 
     const tenant = await getTenantGates(db, { userId: session.user.id })
 
-    if (!tenant.ok) notFound()
+    if (!tenant.ok || !tenant.modules.has("own-fleet")) notFound()
 
     return <ListPageShell header={header} stats={stats} data={data} />
 }

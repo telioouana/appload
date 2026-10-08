@@ -54,6 +54,7 @@ export function TripsCard({ contract }: { contract: ContractDetail }) {
                 "all",
                 (key) => (key === "contract" ? contract.id : null),
                 session.organization.type,
+                session.modules,
             )
             const items = await queryClient.fetchQuery(trpc.movements.export.queryOptions(input))
             downloadLoadsCsv(`loads-${contract.ref}`, items)

@@ -53,6 +53,15 @@ export const activityCatalog: ActivityCatalog = {
             changedPhysicalAddress: Boolean(input?.physicalAddress?.placeId),
         }),
     },
+    // Reshaping the company's product is the CEO's alone; the ids switched
+    // off are the whole of what changed
+    "me.setModules": {
+        entity: (_input, output?: { organizationId?: string }) =>
+            output?.organizationId ? { type: "organization", id: output.organizationId } : null,
+        params: (input) => ({
+            disabled: Array.isArray(input?.disabled) ? (input.disabled as unknown[]).map(String).join(",") : "",
+        }),
+    },
     // Opening and closing the door to Appload support is exactly what the
     // company's own activity log is for: the reason goes on the row
     "me.supportGrants.grant": {

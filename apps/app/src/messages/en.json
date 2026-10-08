@@ -283,7 +283,12 @@
                 "notFound": "We could not find that company",
                 "unknown": "Something went wrong. Please try again"
             },
-            "data-link": "What Appload sees of your data"
+            "data-link": "What Appload sees of your data",
+            "modules": {
+                "title": "What your company uses",
+                "description": "Tell us how your company works, so we show only what serves you. You can change this at any time in Settings › Modules.",
+                "continue": "Continue"
+            }
         },
         "shell": {
             "sidebar": {
@@ -387,6 +392,10 @@
                     "empty": "You have not filed any loads yet",
                     "amount": "Amount"
                 }
+            },
+            "modules-nudge": {
+                "text": "You have not chosen your company's modules yet: switch on only what you use and the portal gets simpler.",
+                "cta": "Choose modules"
             }
         },
         "settings": {
@@ -396,6 +405,7 @@
             "tabs": {
                 "profile": "Profile",
                 "company": "Company",
+                "modules": "Modules",
                 "members": "Team",
                 "subscription": "Subscription",
                 "security": "Security",
@@ -823,6 +833,58 @@
                     "zone": "Maputo time. Ends on its own when the period is over.",
                     "invalid": "The end has to be after the start and still in the future."
                 }
+            },
+            "modules": {
+                "title": "Modules",
+                "description": "What your company uses on the portal. A module switched off leaves the menu and takes no new records; what already exists stays.",
+                "groups": {
+                    "how": "How the company works",
+                    "uses": "What it uses"
+                },
+                "owner-only": "Only the company's CEO changes the modules.",
+                "acting-owner-hint": "As acting CEO you see the modules, but only the company's CEO changes them.",
+                "error": "The modules could not be saved. Try again.",
+                "conflict": {
+                    "NOTHING_LEFT_TO_MOVE": "A transporter needs its own fleet or subcontracting; both cannot be off.",
+                    "NOT_APPLICABLE": "This module does not exist for your kind of company."
+                }
+            }
+        },
+        "modules": {
+            "own-fleet": {
+                "name": "Own fleet",
+                "description": "Your company's trucks and drivers, and the trips they make.",
+                "question": "Does your company run its own trucks?"
+            },
+            "subcontracting": {
+                "name": "Subcontracting",
+                "description": "Passing loads to other transporters and asking them for quotes.",
+                "question": "Does your company pass loads to other transporters?"
+            },
+            "standing-orders": {
+                "name": "Multi-trip orders",
+                "description": "Orders fulfilled over several trips, with what is used up tracked.",
+                "question": "Does your company work with multi-trip orders?"
+            },
+            "rentals": {
+                "name": "Rentals",
+                "description": "Trucks on service for a period, paid by the day.",
+                "question": "Does your company rent trucks out, or rent them in?"
+            },
+            "chats": {
+                "name": "Chats",
+                "description": "Conversations with drivers and about each order.",
+                "question": "Do you want to talk to drivers and partners from the portal?"
+            },
+            "map": {
+                "name": "Map",
+                "description": "Where the trucks on the road are, live.",
+                "question": "Do you want to see the trucks on the road on a map?"
+            },
+            "analytics": {
+                "name": "Analytics",
+                "description": "Figures and reports on what the company has moved.",
+                "question": "Do you want reports on what the company moves?"
             }
         },
         "plan": {

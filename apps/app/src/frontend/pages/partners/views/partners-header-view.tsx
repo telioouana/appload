@@ -41,7 +41,7 @@ export function PartnersHeaderView({ kind }: { kind: PartnerListKind }) {
                     placeholder: t("search.placeholder"),
                     clearLabel: t("search.clear"),
                 }}
-                below={<PartnersTabs orgType={orgType} kind={kind} stats={stats} />}
+                below={<PartnersTabs orgType={orgType} modules={session.modules} kind={kind} stats={stats} />}
                 actions={
                     <Button onClick={() => setAdding(true)}>
                         <IconPlus className="size-4" stroke={1.5} />
@@ -54,7 +54,8 @@ export function PartnersHeaderView({ kind }: { kind: PartnerListKind }) {
                 requests list holds both, so it starts on the first */}
             <AddPartnerDialog
                 orgType={orgType}
-                initialRelation={relationForKind(orgType, kind) ?? (relationsFor(orgType)[0] as ConnectionRelation)}
+                modules={session.modules}
+                initialRelation={relationForKind(orgType, kind) ?? (relationsFor(orgType, session.modules)[0] as ConnectionRelation)}
                 open={adding}
                 onOpenChange={setAdding}
             />

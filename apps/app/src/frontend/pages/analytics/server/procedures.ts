@@ -15,7 +15,7 @@ import { ON_GOING_STATUSES, OUTSTANDING_STATUSES, PENDING_POD_STATUSES } from "@
 import { pendingOfferCount } from "@workspace/domain/orders/transition";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
+import { authorizedTenantProcedure, requireModule, tenantProcedure, withModule } from "@workspace/trpc/tenant";
 
 import { anyRequest, myRequest, orderScope, scopeOf, viewOf, visibleOrders, type TenantScope } from "@/frontend/pages/orders/server/projection";
 import { loadNames, projectMoney, type CostRow } from "@/frontend/pages/movements/server/projection";
@@ -273,7 +273,7 @@ export const analyticsRouter = createTRPCRouter({
      * scoped by `order.year`, the same period every orders page uses, so the
      * bars agree with the lists behind them.
      */
-    monthly: tenantProcedure
+    monthly: requireModule("analytics")
         .input(YearInput)
         .query(async ({ ctx, input }): Promise<AnalyticsMonthly> => {
             const tenant = kpiTenant(scopeOf(ctx.tenant));
@@ -317,6 +317,7 @@ export const analyticsRouter = createTRPCRouter({
      * added together, and the other side's leg is never selected at all.
      */
     money: authorizedTenantProcedure("report", ["read"])
+        .use(withModule("analytics"))
         .input(YearInput)
         .query(async ({ ctx, input }): Promise<AnalyticsMoney> => {
             const tenant = scopeOf(ctx.tenant);
@@ -428,6 +429,7 @@ export const analyticsRouter = createTRPCRouter({
      * left out of it, which is what `comparable` says.
      */
     loads: authorizedTenantProcedure("report", ["read"])
+        .use(withModule("analytics"))
         .input(YearInput)
         .query(async ({ ctx, input }): Promise<AnalyticsLoads> => {
             const tenantId = ctx.tenant.organizationId;
@@ -562,6 +564,7 @@ export const analyticsRouter = createTRPCRouter({
      * up in USD without mixing two years of exchange rate into one number.
      */
     kpis: authorizedTenantProcedure("report", ["read"])
+        .use(withModule("analytics"))
         .input(PeriodInput)
         .query(async ({ ctx, input }): Promise<AnalyticsKpis> => {
             const tenant = kpiTenant(scopeOf(ctx.tenant));
@@ -651,6 +654,7 @@ export const analyticsRouter = createTRPCRouter({
      * altogether, shares included.
      */
     partners: authorizedTenantProcedure("report", ["read"])
+        .use(withModule("analytics"))
         .input(PartnersInput)
         .query(async ({ ctx, input }): Promise<AnalyticsPartners> => {
             const tenant = kpiTenant(scopeOf(ctx.tenant));

@@ -27,6 +27,7 @@ import { order } from "@workspace/db/orders";
 import { isApploadOrg } from "@workspace/db/types";
 import { organization, user } from "@workspace/db/users";
 
+import { type ModuleId } from "@workspace/auth/organization-modules";
 import { can as hasPermission, moneyView as moneyViewOf, type MoneyView, type Permission } from "@workspace/auth/organization-permissions";
 import { LIVE_REQUEST_STATUSES, terminalMovementId } from "@workspace/domain/movements/link";
 import { costTotals, exVat, legSettled, margin } from "@workspace/domain/movements/money";
@@ -926,6 +927,8 @@ type DetailExtras = {
     permissions: ReadonlySet<Permission>;
     /** What kind of company is reading: a transporter's own trucks come from its clients' orders */
     orgType: OrgType;
+    /** The modules the reader's company has on: a door in a module that is off draws no button */
+    modules: ReadonlySet<ModuleId>;
 };
 
 /** A reader who may not see prices is not told whether one is missing either. */
@@ -1211,6 +1214,9 @@ function permissionsFor(
     // A round still open is the load being asked about, the same as an offer
     // in front of a partner (apply.ts reads it the same way)
     const roundOpen = extras.openRequests > 0;
+    // Passing a load to a transporter is the product for a client; for a
+    // transporter it is the subcontracting module (procedures.ts assertMayPlace)
+    const mayPlace = extras.orgType !== "carrier" || extras.modules.has("subcontracting");
     const shape = {
         execution: row.execution,
         status: row.status,
@@ -1247,14 +1253,14 @@ function permissionsFor(
         // Appload is offered a load the same way any partner on the portal is;
         // the router sends that one through the link door instead
         canOffer: partner && !linked && extras.executorOnPortal
-            && (row.status === "procurement" || row.status === "declined") && can("order:create"),
+            && (row.status === "procurement" || row.status === "declined") && can("order:create") && mayPlace,
         // A linked row sits at "offered" too (the order's own prospect stage):
         // it is cancelled with Appload, never withdrawn from here
         canWithdraw: !apploadLinked && row.status === "offered" && can("order:create"),
         // Asking transporters for a price is placing the load, the role an
         // offer takes; Appload is asked through the offer door instead
         canSendRequests: partner && !linked && !apploadLinked && !isApploadOrg(row.carrierOrgId)
-            && (row.status === "procurement" || row.status === "prospect" || row.status === "declined") && can("order:create"),
+            && (row.status === "procurement" || row.status === "prospect" || row.status === "declined") && can("order:create") && mayPlace,
         canAward: partner && !linked && !apploadLinked && row.status === "prospect" && can("offer:update"),
         canRespond: false,
         canQuote: false,
@@ -1263,9 +1269,10 @@ function permissionsFor(
         // clients' orders by accepting them (procedures.ts create, convert)
         canConvert: can("order:create") && !apploadLinked && (
             partner
-                ? extras.orgType !== "carrier" && !linked
+                ? extras.orgType !== "carrier" && extras.modules.has("own-fleet") && !linked
                     && (row.status === "procurement" || row.status === "prospect" || row.status === "declined")
-                : row.status === "procurement" || row.status === "prospect" || row.status === "scheduled" || row.status === "booked"
+                : mayPlace
+                    && (row.status === "procurement" || row.status === "prospect" || row.status === "scheduled" || row.status === "booked")
         ),
         canManageCosts: !isTerminal(row.status) && can("payment:record"),
         canManageDocuments: can("document:upload"),
@@ -1282,7 +1289,7 @@ function permissionsFor(
         // was said to it, and a linked order's driver belongs to the executor
         // Only a conversation this row's own asking stamped is readable, so
         // the card is offered on that, not on a typed number
-        canReadThread: !linked && !apploadLinked && Boolean(row.conversationId) && can("thread:read"),
+        canReadThread: !linked && !apploadLinked && Boolean(row.conversationId) && can("thread:read") && extras.modules.has("chats"),
         canOpenDispute: none.canOpenDispute,
     };
 }

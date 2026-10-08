@@ -1,10 +1,11 @@
-import { TRPCError } from "@trpc/server";
+import { experimental_standaloneMiddleware, TRPCError } from "@trpc/server";
 
 import {
     isOrgAuthorized,
     type OrgAction,
     type OrgResource,
 } from "@workspace/auth/organization-permissions";
+import type { ModuleId } from "@workspace/auth/organization-modules";
 
 import { protectedProcedure } from "@workspace/trpc/init";
 
@@ -57,6 +58,41 @@ export const authorizedTenantProcedure = <R extends OrgResource>(
         }
         return next();
     });
+
+/**
+ * The company switched this module off: the door that would create rows in
+ * it stays shut. Reads and the receiving side never call this — switching a
+ * module off hides its entry points, never its data.
+ */
+export const assertModule = (tenant: { modules: ReadonlySet<ModuleId> }, id: ModuleId): void => {
+    if (!tenant.modules.has(id)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "MODULE_DISABLED" });
+    }
+};
+
+/** Middleware form of `assertModule`, to chain onto any tenant builder: `.use(withModule(id))`. */
+export const withModule = (id: ModuleId) =>
+    experimental_standaloneMiddleware<{ ctx: { tenant: { modules: ReadonlySet<ModuleId> } } }>().create(
+        ({ ctx, next }) => {
+            assertModule(ctx.tenant, id);
+            return next();
+        },
+    );
+
+/** Whole-procedure form of `assertModule`, for a door that is all one module's. */
+export const requireModule = (id: ModuleId) => tenantProcedure.use(withModule(id));
+
+/**
+ * The real CEO only. An acting CEO keeps their own profile (`role` is never
+ * "owner" for them), so the first test already leaves them out; the second
+ * says so for the reader.
+ */
+export const ownerProcedure = tenantProcedure.use(({ ctx, next }) => {
+    if (ctx.tenant.role !== "owner" || ctx.tenant.actingOwner) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "NOT_ALLOWED" });
+    }
+    return next();
+});
 
 /**
  * Pre-membership procedure: a partner account that is not banned and has a

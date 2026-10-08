@@ -13,7 +13,7 @@ import { departures, orderDepartures } from "@workspace/domain/tracking/progress
 import { ON_GOING_STATUSES } from "@workspace/domain/orders/status-groups";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { tenantProcedure } from "@workspace/trpc/tenant";
+import { requireModule, tenantProcedure } from "@workspace/trpc/tenant";
 
 import { computeOrderRoute } from "@workspace/maps/server/routes";
 import { cacheKey, failedRecently, failureKey, GEOCODE_TTL_MS, num, rememberFailure, routeFailures, toRouteDto, trailSource } from "@workspace/maps/server/route-cache";
@@ -99,7 +99,7 @@ export const mapRouter = createTRPCRouter({
      * parallel and their newest pings looked up in one DISTINCT ON each,
      * because the client polls this on a timer.
      */
-    overview: tenantProcedure.query(async ({ ctx }): Promise<MapEntity[]> => {
+    overview: requireModule("map").query(async ({ ctx }): Promise<MapEntity[]> => {
         const tenant = scopeOf(ctx.tenant);
         const shipper = tenant.orgType === "shipper";
 
