@@ -272,6 +272,12 @@ then push `prod/admin` and the portal back to back.
   and remaps the two legacy values in the same statement: `pro` → `business`,
   `free` → NULL. That remap is the whole data step — nothing else has to be
   touched afterwards.
+- `0036_tiers` — the priced catalog (2026-10-08). Data only: `business` →
+  `growth` (same 50-movement allowance). The six tiers, their MZN prices and
+  users live in `packages/domain/src/subscription.ts`; the column stays
+  plain text, so a future tier is a code change. From this release a spent
+  allowance no longer refuses a dispatch: the movement goes through, shows
+  as "+N extra" on `/subscriptions`, and staff invoice it at MZN 400 each.
 - `0016_movements` — the portal's own loads. The `trip` tables of `0014`
   give way to one `movement` table (a Trip when the company's own fleet
   moves the load, an Order when a partner does, for an agreed price) with
@@ -681,7 +687,7 @@ admin, **Portal** section.
    - or **Invite owner** (name + email) — sends the Better Auth invitation,
      whose link is `NEXT_PUBLIC_PORTAL_URL/accept-invitation/<id>`; they
      sign up with that exact address.
-2. **Set the plan** in the same section: tier (`starter`, `business`,
+2. **Set the plan** in the same section: tier (`starter`, `essential`, `growth`, `scale`, `fleet`,
    `enterprise`) and an expiry date. Manager and up. "No plan" is a valid
    state, not a broken one — see below.
 3. The owner signs in and connects the company to its counterparties

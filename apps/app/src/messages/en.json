@@ -627,11 +627,14 @@
                 "expired": "The subscription ended on {date}",
                 "none": "No active plan yet — talk to us to choose one.",
                 "since": "On the portal since {date}",
-                "tiers": {
-                    "title": "Plans",
+                "offer": {
+                    "title": "Your plan includes",
                     "quota": "{quota} tracked movements a month",
-                    "unlimited": "Unlimited tracked movements",
-                    "current": "Current plan"
+                    "quota-custom": "Movements to suit the company",
+                    "users": "{users, plural, one {# portal user} other {# portal users}}",
+                    "users-custom": "Users to suit the company",
+                    "price": "MZN {price} a month, IVA included",
+                    "price-custom": "Price agreed with Appload"
                 },
                 "contact": {
                     "title": "Want to change plan?",
@@ -891,19 +894,19 @@
             "names": {
                 "none": "No plan",
                 "starter": "Starter",
-                "business": "Business",
+                "essential": "Essential",
+                "growth": "Growth",
+                "scale": "Scale",
+                "fleet": "Fleet",
                 "enterprise": "Enterprise"
             },
             "usage": "{used} of {quota} tracked movements in {month}",
             "unlimited": "Unlimited tracked movements",
+            "extra": "{extra, plural, one {# movement} other {# movements}} beyond the plan this month, MZN {price} each — invoiced with the next month.",
             "dialog": {
                 "no-plan": {
                     "title": "Your company has no plan yet",
                     "description": "Booking a load and sending it to loading needs an active plan. The rest of the portal — partners, fleet, requests and quotes — stays open."
-                },
-                "quota": {
-                    "title": "This month's movements are used up",
-                    "description": "Your company has already tracked every movement its plan allows this month. The allowance starts again at the beginning of next month."
                 },
                 "close": "Not now",
                 "settings": "See subscription",

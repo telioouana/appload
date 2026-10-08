@@ -65,7 +65,7 @@ export type ThreadSubject = (typeof THREAD_SUBJECT)[number]
 // modules would reference each other and crash at runtime (TDZ). Consumers
 // read it from @workspace/db/subscriptions, which re-exports it next to the
 // usage table.
-export const SUBSCRIPTION_PLAN = ["starter", "business", "enterprise"] as const
+export const SUBSCRIPTION_PLAN = ["starter", "essential", "growth", "scale", "fleet", "enterprise"] as const
 
 export type SubscriptionPlan = (typeof SUBSCRIPTION_PLAN)[number]
 

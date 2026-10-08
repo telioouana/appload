@@ -12,8 +12,10 @@ import { organization, user } from "@workspace/db/users";
 import { AddressSchema, type Address } from "@workspace/db/types";
 
 import {
+    EXTRA_TRIP_PRICE,
+    PLAN_PRICE,
     PLAN_QUOTA,
-    SUBSCRIPTION_PLAN,
+    PLAN_USERS,
     trackingAllowance,
     type SubscriptionPlan,
     type TrackingAllowance,
@@ -87,14 +89,11 @@ export type MeSession = {
     plan: TenantPlan;
     /** This month's tracked movements against what the plan allows */
     allowance: TrackingAllowance;
-    /** Every tier and its monthly allowance, so the plan screens can list them */
-    tiers: Array<{ plan: SubscriptionPlan; quota: number | null }>;
+    /** What the company's plan includes (null = agreed per customer); null without a plan. The catalog lives in a module the browser cannot load (it reads the database), so it travels as data */
+    offer: { quota: number | null; users: number | null; price: number | null } | null;
+    /** MZN for each movement past the allowance */
+    extraPrice: number;
 };
-
-// The catalog lives in a module the browser cannot load (it reads the
-// database), so the tiers travel to the client as data rather than as an
-// import
-const TIERS = SUBSCRIPTION_PLAN.map((plan) => ({ plan, quota: PLAN_QUOTA[plan] }));
 
 /**
  * The violated constraint name when the error (or its cause) is a postgres
@@ -195,7 +194,8 @@ export const meRouter = createTRPCRouter({
             modulesConfigured: ctx.tenant.modulesConfigured,
             plan: ctx.tenant.plan,
             allowance,
-            tiers: TIERS,
+            offer: allowance.plan ? { quota: PLAN_QUOTA[allowance.plan], users: PLAN_USERS[allowance.plan], price: PLAN_PRICE[allowance.plan] } : null,
+            extraPrice: EXTRA_TRIP_PRICE,
         };
     }),
 

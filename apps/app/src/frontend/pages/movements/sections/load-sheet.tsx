@@ -875,7 +875,6 @@ export function LoadSheet({
             {planReason && (
                 <PlanDialog
                     reason={planReason}
-                    allowance={allowance}
                     organizationName={organizationName}
                     onClose={() => setPlanReason(null)}
                 />

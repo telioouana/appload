@@ -873,7 +873,6 @@
         "rateLimited": "Já pediu a localização várias vezes. Tente mais tarde.",
         "infobipNotConfigured": "O WhatsApp não está configurado neste ambiente.",
         "subscriptionRequired": "É necessário um plano para acompanhar cargas.",
-        "quotaExceeded": "O plano deste mês já foi usado.",
         "sendFailed": "O pedido foi guardado, mas a mensagem não chegou ao motorista.",
         "moduleDisabled": "Este módulo está desligado na sua empresa. O CEO pode ligá-lo em Definições › Módulos.",
         "unknown": "Algo correu mal. Tente novamente."

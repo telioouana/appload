@@ -1304,13 +1304,14 @@ async function roleGate() {
 }
 
 /**
- * §11.3 — an allowance spent to zero stops a truck from starting, and nothing
- * else: a load already in progress stops, resumes and moves on.
+ * §11.3 — an allowance spent to zero stops nothing: a load already in
+ * progress stops, resumes and moves on, and a truck that starts past the
+ * plan goes, counted as an extra for the month's invoice.
  */
 async function quota() {
     const b = as(B.user);
 
-    console.log("\n— §11.3 a spent allowance refuses a start, never a load already in progress");
+    console.log("\n— §11.3 a spent allowance never refuses a start; the extra is counted");
     const running = await ownTrip({ cargoDescription: "HARNESS quota running", driverName: "HARNESS Quota", truckPlate: "HAR-013-MP", status: "at-loading" });
     const waiting = await ownTrip({ cargoDescription: "HARNESS quota waiting", status: "booked" });
 
@@ -1318,7 +1319,7 @@ async function quota() {
         await spendAllowance(B.org);
         await spendAllowance(A.org);
         const allowance = await trackingAllowance(db, B.org);
-        check("B has nothing left to start this month", allowance.remaining === 0, allowance);
+        check("B has nothing left to start this month", allowance.remaining === 0 && allowance.extra === 0, allowance);
 
         let refused = await refusal(() => walk(b, running.id, ["stopped", "at-loading"]));
         check("…yet its truck at the loading site stops and resumes", refused === null, refused);
@@ -1326,11 +1327,16 @@ async function quota() {
         check("…and goes on route to offloading", refused === null && (await stampsOf(running.id)).status === "at-offloading", refused);
 
         const stillBooked = await b.get({ id: waiting.id });
-        await expectError("…while a booked load cannot start", () =>
-            b.transition({ id: waiting.id, to: "at-loading", expectedVersion: stillBooked.version }), "QUOTA_EXCEEDED");
+        refused = await refusal(() => b.transition({ id: waiting.id, to: "at-loading", expectedVersion: stillBooked.version }));
+        check("…and a booked load still starts", refused === null && (await stampsOf(waiting.id)).status === "at-loading", refused);
+        const extra = await trackingAllowance(db, B.org);
+        check("…counted as one extra movement past the plan", extra.extra === 1 && extra.remaining === 0, extra);
+
         // Filed by A: a transporter never files a truck of its own (§3)
-        await expectError("…nor one a client files as already at the loading site", () =>
-            as(A.user).create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS quota filed", status: "at-loading" }), "QUOTA_EXCEEDED");
+        const filed = await as(A.user).create({ execution: "own-fleet", origin, destination, cargoDescription: "HARNESS quota filed", status: "at-loading" });
+        created.push(filed.id);
+        const filedExtra = await trackingAllowance(db, A.org);
+        check("…as does one a client files as already at the loading site", filedExtra.extra === 1, filedExtra);
     } finally {
         await releaseAllowance();
     }

@@ -189,7 +189,7 @@ async function makeCompany(kind: "shipper" | "carrier", label: string, slot: num
         slug: `harness-appload-${suffix}`,
         createdAt: new Date(),
         // Handing a load over and booking one both spend a plan's allowance
-        subscriptionPlan: "business",
+        subscriptionPlan: "growth",
         // The portal is where these companies answer: without it no linked
         // row is ever opened for them (D5)
         portalActivatedAt: new Date(),

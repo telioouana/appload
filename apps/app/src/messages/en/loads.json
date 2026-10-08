@@ -873,7 +873,6 @@
         "rateLimited": "You have asked for the location several times already. Try again later.",
         "infobipNotConfigured": "WhatsApp is not set up on this environment.",
         "subscriptionRequired": "A plan is needed to track loads.",
-        "quotaExceeded": "This month's plan is used up.",
         "sendFailed": "The request was saved, but the message did not reach the driver.",
         "moduleDisabled": "This module is switched off in your company. The CEO can switch it on in Settings › Modules.",
         "unknown": "Something went wrong. Try again."

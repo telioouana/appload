@@ -106,7 +106,7 @@
         "movement-dispute-opened": "{named, select, true {{organizationName} opened a dispute on load {ref} ({origin} → {destination}) over {reason, select, theft {theft} loss {a loss} damage {damage} other {something else}}.} other {A company on load {ref} ({origin} → {destination}) opened a dispute over {reason, select, theft {theft} loss {a loss} damage {damage} other {something else}}.}}",
         "movement-dispute-resolved": "{named, select, true {{organizationName} resolved the dispute on load {ref} ({origin} → {destination}).} other {A company on load {ref} ({origin} → {destination}) resolved the dispute.}}",
         "thread-message": "{attachments, plural, =0 {{senderName} wrote on {reference}: {preview}} one {{senderName} sent a file on {reference}.} other {{senderName} sent # files on {reference}.}}",
-        "subscription-changed": "{plan, select, starter{Your company moved to the Starter plan.} business{Your company moved to the Business plan.} enterprise{Your company moved to the Enterprise plan.} other{Your company has no active plan.}}"
+        "subscription-changed": "{plan, select, starter{Your company moved to the Starter plan.} essential{Your company moved to the Essential plan.} growth{Your company moved to the Growth plan.} scale{Your company moved to the Scale plan.} fleet{Your company moved to the Fleet plan.} enterprise{Your company moved to the Enterprise plan.} other{Your company has no active plan.}}"
     },
     "email": {
         "subject": "Appload — {title}",

@@ -4,7 +4,6 @@ import { IconCheck, IconMail } from "@tabler/icons-react";
 
 import { useFormatter, useTranslations } from "@workspace/i18n";
 
-import { cn } from "@workspace/ui/lib/utils";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
@@ -19,18 +18,21 @@ const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "comercial@apploa
 
 /**
  * The company's plan, what it has used of this month's tracked movements,
- * the tiers it could be on, and the way to ask for a change. `allowance` is
+ * what the plan includes, and the way to ask for a change (the full catalog
+ * is the website's). `allowance` is
  * the live verdict (plan and expiry together) — an expired subscription
  * reads as no plan everywhere the gate is applied, so it must read that way
  * here too.
  */
 export function SubscriptionCard({
     allowance,
-    tiers,
+    offer,
+    extraPrice,
     organization,
 }: {
     allowance: MeSession["allowance"]
-    tiers: MeSession["tiers"]
+    offer: MeSession["offer"]
+    extraPrice: MeSession["extraPrice"]
     organization: MeSession["organization"]
 }) {
     const t = useTranslations("App.settings")
@@ -75,7 +77,7 @@ export function SubscriptionCard({
                     {/* An expired plan already says so in red above; only a
                         company that never had one needs the invitation */}
                     {allowance.active
-                        ? <PlanUsage allowance={allowance} />
+                        ? <PlanUsage allowance={allowance} extraPrice={extraPrice} />
                         : allowance.plan === null && (
                             <span className="text-muted-foreground text-sm">{t("subscription.none")}</span>
                         )}
@@ -89,34 +91,33 @@ export function SubscriptionCard({
                     )}
                 </div>
 
-                <div className="grid gap-2">
-                    <h3 className="text-sm font-semibold tracking-tight">{t("subscription.tiers.title")}</h3>
-                    <ul className="grid gap-2">
-                        {tiers.map((tier) => {
-                            const current = allowance.active && tier.plan === allowance.plan
-
-                            return (
-                                <li
-                                    key={tier.plan}
-                                    className={cn(
-                                        "flex flex-wrap items-center gap-2 text-sm",
-                                        current ? "font-medium" : "text-muted-foreground",
-                                    )}
-                                >
-                                    {current && <IconCheck className="size-4 shrink-0" stroke={1.5} />}
-                                    <span>{tPlan(`names.${tier.plan}`)}</span>
-                                    <span aria-hidden>·</span>
-                                    <span>
-                                        {tier.quota === null
-                                            ? t("subscription.tiers.unlimited")
-                                            : t("subscription.tiers.quota", { quota: tier.quota })}
-                                    </span>
-                                    {current && <Badge variant="outline">{t("subscription.tiers.current")}</Badge>}
-                                </li>
-                            )
-                        })}
-                    </ul>
-                </div>
+                {/* What the plan includes; the full catalog is the website's,
+                    not the portal's */}
+                {allowance.active && offer && (
+                    <div className="grid gap-2">
+                        <h3 className="text-sm font-semibold tracking-tight">{t("subscription.offer.title")}</h3>
+                        <ul className="text-muted-foreground grid gap-1 text-sm">
+                            <li className="flex items-center gap-2">
+                                <IconCheck className="size-4 shrink-0" stroke={1.5} />
+                                {offer.quota === null
+                                    ? t("subscription.offer.quota-custom")
+                                    : t("subscription.offer.quota", { quota: offer.quota })}
+                            </li>
+                            <li className="flex items-center gap-2">
+                                <IconCheck className="size-4 shrink-0" stroke={1.5} />
+                                {offer.users === null
+                                    ? t("subscription.offer.users-custom")
+                                    : t("subscription.offer.users", { users: offer.users })}
+                            </li>
+                            <li className="flex items-center gap-2">
+                                <IconCheck className="size-4 shrink-0" stroke={1.5} />
+                                {offer.price === null
+                                    ? t("subscription.offer.price-custom")
+                                    : t("subscription.offer.price", { price: f.number(offer.price) })}
+                            </li>
+                        </ul>
+                    </div>
+                )}
 
                 <div className="bg-muted/40 grid gap-2 rounded-2xl p-4">
                     <span className="text-sm font-medium">{t("subscription.contact.title")}</span>

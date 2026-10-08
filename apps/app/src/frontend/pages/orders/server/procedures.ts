@@ -832,9 +832,7 @@ export const ordersRouter = createTRPCRouter({
                                 : loadingMove?.blocked ?? (
                                     to === gated && allowance !== null && !allowance.active
                                         ? "SUBSCRIPTION_REQUIRED" as const
-                                        : to === gated && allowance !== null && allowance.remaining === 0
-                                            ? "QUOTA_EXCEEDED" as const
-                                            : null);
+                                        : null);
 
                 // Both dispatch refusals stay openable (the bar lets them
                 // through): the dispatch dialog is what fills the rig in, and

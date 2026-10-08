@@ -82,7 +82,7 @@ for (const company of COMPANIES) {
             nuit: company.nuit,
             email: company.email,
             phoneNumber: company.phoneNumber,
-            subscriptionPlan: "business",
+            subscriptionPlan: "growth",
             portalActivatedAt: new Date(),
             ...(company.type === "carrier" && { kycStatus: "verified" as const }),
         })

@@ -185,7 +185,7 @@ async function makeCompany(kind: "shipper" | "carrier", label: string) {
         slug: `harness-dispatch-${suffix}`,
         createdAt: new Date(),
         // Booking and dispatching both spend a plan's monthly allowance
-        subscriptionPlan: "business",
+        subscriptionPlan: "growth",
         nuit: `${digits.slice(0, 8)}${kind === "shipper" ? 1 : 2}`,
         type: kind,
         status: "active",
