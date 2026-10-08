@@ -294,7 +294,7 @@ There is **no free plan**. Plans are named tiers that differ only by how many **
 
 ```ts
 export { SUBSCRIPTION_PLAN, type SubscriptionPlan } from "@workspace/db/subscriptions";   // ["starter", "essential", "growth", "scale", "fleet", "enterprise"]
-/** The commercial table (2026-10-08): tracked movements a month (null = unlimited), MZN a month, IVA included (null = per customer), users shown to the tenant (null = per customer; not enforced). */
+/** The commercial table (2026-10-08): tracked movements a month (null = unlimited), MZN a month before IVA (null = per customer), users shown to the tenant (null = per customer; not enforced). */
 export const PLAN_QUOTA: Record<SubscriptionPlan, number | null> = { starter: 10, essential: 30, growth: 50, scale: 100, fleet: 200, enterprise: null };
 export const PLAN_PRICE: Record<SubscriptionPlan, number | null> = { starter: 4000, essential: 11000, growth: 17500, scale: 30000, fleet: 40000, enterprise: null };
 export const PLAN_USERS: Record<SubscriptionPlan, number | null> = { starter: 2, essential: 3, growth: 5, scale: 8, fleet: 12, enterprise: null };

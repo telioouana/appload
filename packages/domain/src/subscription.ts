@@ -9,7 +9,7 @@ export { SUBSCRIPTION_PLAN, type SubscriptionPlan } from "@workspace/db/subscrip
 
 /**
  * The commercial table (2026-10-08), one line per figure. Tracked movements
- * per calendar month, null = unlimited; the price in MZN a month, IVA included,
+ * per calendar month, null = unlimited; the price in MZN a month before IVA,
  * and the users a tier is sold with, both null = agreed per customer (the users
  * are shown to the tenant, not enforced on invitations).
  */
@@ -17,7 +17,7 @@ export const PLAN_QUOTA: Record<SubscriptionPlan, number | null> = { starter: 10
 export const PLAN_PRICE: Record<SubscriptionPlan, number | null> = { starter: 4000, essential: 11000, growth: 17500, scale: 30000, fleet: 40000, enterprise: null };
 export const PLAN_USERS: Record<SubscriptionPlan, number | null> = { starter: 2, essential: 3, growth: 5, scale: 8, fleet: 12, enterprise: null };
 
-/** What one movement past the month's allowance costs, MZN, IVA included; invoiced by staff. */
+/** What one movement past the month's allowance costs, MZN before IVA; invoiced by staff. */
 export const EXTRA_TRIP_PRICE = 400;
 
 /**

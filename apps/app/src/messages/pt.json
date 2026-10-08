@@ -633,7 +633,7 @@
                     "quota-custom": "Movimentos à medida da empresa",
                     "users": "{users, plural, one {# utilizador do portal} other {# utilizadores do portal}}",
                     "users-custom": "Utilizadores à medida da empresa",
-                    "price": "MZN {price} por mês, IVA incluído",
+                    "price": "MZN {price} por mês, sem IVA",
                     "price-custom": "Preço acordado com a Appload"
                 },
                 "contact": {

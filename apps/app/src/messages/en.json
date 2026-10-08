@@ -633,7 +633,7 @@
                     "quota-custom": "Movements to suit the company",
                     "users": "{users, plural, one {# portal user} other {# portal users}}",
                     "users-custom": "Users to suit the company",
-                    "price": "MZN {price} a month, IVA included",
+                    "price": "MZN {price} a month, before IVA",
                     "price-custom": "Price agreed with Appload"
                 },
                 "contact": {
