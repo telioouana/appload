@@ -147,6 +147,17 @@ matching ref clause before the first push, or Vercel will refuse to save
    `SERVICE_DATABASE_URL` the same way with `appload_service.<ref>`. The
    portal and the website keep the owner URL. Re-running the script is
    safe; it resets a password only when one is given.
+
+   **On a database that is still before `0033_rentals`, run it twice around
+   the migration** (learned on the 2026-10-09 release): the script creates
+   the roles first and then refuses to grant until every service table
+   exists, and two of them (`rental_day`, `rental_checkin_request`) only
+   arrive with 0033. So: roles (creates them, stops at the check) →
+   `db:migrate` → roles again (the grants). A role with no grants fails
+   every admin page with "Failed to get session". And after changing either
+   URL in Vercel, **redeploy**: a running deployment keeps the old values,
+   and the symptom is `password authentication failed for user
+   "appload_staff"` in the project's runtime logs.
 4. **Data backfills that a migration needs.** A few migrations add a table
    the app then expects to be populated for existing rows; run these right
    after `db:migrate`, before the release deploy:
