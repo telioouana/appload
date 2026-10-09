@@ -278,6 +278,12 @@ then push `prod/admin` and the portal back to back.
   plain text, so a future tier is a code change. From this release a spent
   allowance no longer refuses a dispatch: the movement goes through, shows
   as "+N extra" on `/subscriptions`, and staff invoice it at MZN 400 each.
+- `0037_subscription_cancelled` — `organization.subscription_cancelled_at`
+  (2026-10-08): a cancelled plan runs to its paid end date and is left out
+  of the Expiring tab; a renewal clears the mark. The same file backfills
+  `action: "change"` onto older `subscription.changed` notices, whose
+  message now selects on the action (start, change, renew, cancel). Nothing
+  else to do on release.
 - `0016_movements` — the portal's own loads. The `trip` tables of `0014`
   give way to one `movement` table (a Trip when the company's own fleet
   moves the load, an Order when a partner does, for an agreed price) with
