@@ -15,6 +15,7 @@ import {
 } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
+import { hasModule } from "@workspace/auth/organization-modules"
 
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@workspace/ui/components/empty"
 import { Skeleton } from "@workspace/ui/components/skeleton"
@@ -103,8 +104,13 @@ export function NeedsAHand() {
     const shipper = session.organization.type === "shipper"
     // The Appload rows land in the company's own sections, on the tab it
     // lands on — a transporter its own trucks, a client its transporters'
-    const tab = defaultTab(session.organization.type)
+    const tab = defaultTab(session.organization.type, session.modules)
     const { attention } = data
+    // The trucks' row is the own-fleet module's; the partners' rows are a
+    // transporter's subcontracting (a client's partners are the product).
+    // Offers received and connection requests are never gated: receiving is not a module
+    const ownFleet = hasModule(session.modules, "own-fleet")
+    const placing = shipper || hasModule(session.modules, "subcontracting")
 
     const orders: QueueItem[] = shipper
         ? [
@@ -159,28 +165,34 @@ export function NeedsAHand() {
             href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab: "own", status: "prospect" } },
             tone: "warn",
         },
-        {
-            key: "declined",
-            Icon: IconRepeat,
-            label: t("queue.declined"),
-            count: rail.isError ? 0 : rail.data?.declined,
-            href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab: "partners", status: "declined" } },
-            tone: "warn",
-        },
-        {
-            key: "silent-trips",
-            Icon: IconMapPinExclamation,
-            label: t("queue.silent-trips"),
-            count: ownTrips.silent,
-            href: { pathname: "/orders/[section]", params: { section: "in-progress" }, query: { tab: "own", silent: "1" } },
-        },
-        {
-            key: "silent-orders",
-            Icon: IconMapPinExclamation,
-            label: t("queue.silent-orders"),
-            count: ownOrders.silent,
-            href: { pathname: "/orders/[section]", params: { section: "in-progress" }, query: { tab: "partners", silent: "1" } },
-        },
+        ...(placing
+            ? [{
+                key: "declined",
+                Icon: IconRepeat,
+                label: t("queue.declined"),
+                count: rail.isError ? 0 : rail.data?.declined,
+                href: { pathname: "/orders/[section]", params: { section: "procurement" }, query: { tab: "partners", status: "declined" } },
+                tone: "warn",
+            } satisfies QueueItem]
+            : []),
+        ...(ownFleet
+            ? [{
+                key: "silent-trips",
+                Icon: IconMapPinExclamation,
+                label: t("queue.silent-trips"),
+                count: ownTrips.silent,
+                href: { pathname: "/orders/[section]", params: { section: "in-progress" }, query: { tab: "own", silent: "1" } },
+            } satisfies QueueItem]
+            : []),
+        ...(placing
+            ? [{
+                key: "silent-orders",
+                Icon: IconMapPinExclamation,
+                label: t("queue.silent-orders"),
+                count: ownOrders.silent,
+                href: { pathname: "/orders/[section]", params: { section: "in-progress" }, query: { tab: "partners", silent: "1" } },
+            } satisfies QueueItem]
+            : []),
     ]
 
     const rows: QueueItem[] = [

@@ -22,7 +22,7 @@ import { CONNECTION_MESSAGE_MAX } from "@/backend/schemas/partner"
 import { KycBadge } from "@/frontend/pages/partners/sections/badges"
 import { RegisterPartnerForm } from "@/frontend/pages/partners/sections/register-partner-form"
 import { usePartnerMutations } from "@/frontend/pages/partners/hooks/use-partner-mutations"
-import { partnerKind, relationsFor, SEARCH_MIN_CHARS, type OrgType, type PartnerCandidate } from "@/frontend/pages/partners/types"
+import { partnerKind, relationsFor, SEARCH_MIN_CHARS, type Modules, type OrgType, type PartnerCandidate } from "@/frontend/pages/partners/types"
 
 /**
  * How a partner gets onto the page. Two steps, in the order that keeps the
@@ -32,11 +32,13 @@ import { partnerKind, relationsFor, SEARCH_MIN_CHARS, type OrgType, type Partner
  */
 export function AddPartnerDialog({
     orgType,
+    modules,
     initialRelation,
     open,
     onOpenChange,
 }: {
     orgType: OrgType
+    modules: Modules
     /** The relation the pills start on; a carrier can still switch */
     initialRelation: ConnectionRelation
     open: boolean
@@ -47,7 +49,7 @@ export function AddPartnerDialog({
             <DialogContent className="sm:max-w-xl">
                 {/* Mounted only while open, so a reopened dialog starts at the
                     search step rather than where it was left */}
-                {open && <AddPartnerFlow orgType={orgType} initialRelation={initialRelation} onDone={() => onOpenChange(false)} />}
+                {open && <AddPartnerFlow orgType={orgType} modules={modules} initialRelation={initialRelation} onDone={() => onOpenChange(false)} />}
             </DialogContent>
         </Dialog>
     )
@@ -55,16 +57,18 @@ export function AddPartnerDialog({
 
 function AddPartnerFlow({
     orgType,
+    modules,
     initialRelation,
     onDone,
 }: {
     orgType: OrgType
+    modules: Modules
     initialRelation: ConnectionRelation
     onDone: () => void
 }) {
     const t = useTranslations("App.partners")
 
-    const relations = relationsFor(orgType)
+    const relations = relationsFor(orgType, modules)
     const [relation, setRelation] = useState<ConnectionRelation>(initialRelation)
     const [step, setStep] = useState<"search" | "register">("search")
 

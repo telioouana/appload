@@ -127,7 +127,6 @@
         "notAllowed": "Não tem permissão para fazer isto.",
         "notFound": "Não foi possível encontrar este pedido.",
         "subscriptionRequired": "A sua empresa não tem um plano activo. Fale connosco para activar um.",
-        "quotaExceeded": "Os movimentos seguidos deste mês já foram todos usados. O limite volta a zero no início do mês seguinte.",
         "noteRequired": "Esta alteração precisa de uma explicação.",
         "podRequired": "Esta alteração precisa do comprovativo de entrega anexado.",
         "evidenceRequired": "Esta alteração precisa de um documento anexado.",

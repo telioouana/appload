@@ -5,6 +5,7 @@ import { sql } from "drizzle-orm";
 // in modules that depend on this one and crash at runtime (TDZ)
 import { organization, user } from "@workspace/db/users";
 import { THREAD_SUBJECT } from "@workspace/db/types";
+import { staffPolicy, throughThread } from "@workspace/db/rls";
 
 /**
  * In-app conversations between the parties of one shipment.
@@ -35,6 +36,9 @@ export const thread = pgTable(
     (table) => [
         // One thread per shipment, which is what makes ensureThread an upsert
         uniqueIndex("thread_subject_uidx").on(table.subjectType, table.subjectId),
+        // The trust wall (rls.ts): staff are a side of an order's conversation
+        // and never of a load's (threads/access.ts says the same in app code)
+        staffPolicy("thread", sql`${table.subjectType} = 'order'`),
     ],
 );
 
@@ -69,6 +73,7 @@ export const threadParticipant = pgTable(
             .where(sql`${table.staff}`),
         // "every thread this organization is in", the unread query's entry
         index("thread_participant_org_idx").on(table.organizationId),
+        staffPolicy("thread_participant", throughThread(table.threadId)),
     ],
 );
 
@@ -90,6 +95,7 @@ export const threadRead = pgTable(
     },
     (table) => [
         primaryKey({ columns: [table.threadId, table.userId] }),
+        staffPolicy("thread_read", throughThread(table.threadId)),
     ],
 );
 
@@ -127,6 +133,7 @@ export const threadMessage = pgTable(
             "thread_message_content_chk",
             sql`length(${table.body}) > 0 or jsonb_array_length(${table.attachments}) > 0`,
         ),
+        staffPolicy("thread_message", throughThread(table.threadId)),
     ],
 );
 

@@ -8,6 +8,10 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 import { EmptyValue } from "@workspace/ui/customs/list/empty-value"
 import { Mono, PlateChip } from "@workspace/ui/customs/list/table-cells"
 
+import { Link } from "@/i18n/navigation"
+
+import { ContractRoleChip, ContractStateChip, useUnitLabel } from "@/frontend/pages/contracts/sections/badges"
+import { RentalRoleChip, RentalStateChip } from "@/frontend/pages/rentals/sections/badges"
 import { AttentionMarks, InDisputeChip, LaneCell, LastPingCell, LoadDate, Money, MovementStatusChip, OffRouteChip, QuotesChip, RoleChip } from "@/frontend/pages/movements/components/badges"
 import { isInProgress, type MovementRow, type MovementScope, type OrgType } from "@/frontend/pages/movements/types"
 
@@ -28,9 +32,10 @@ const partyOf = (row: MovementRow, scope: MovementScope) =>
  * and its own trucks earn it nothing, so it gets neither "to receive" nor,
  * on its trips, a client.
  */
-export function useMovementColumns({ scope, orgType }: { scope: MovementScope; orgType: OrgType }) {
+export function useMovementColumns({ scope, orgType, seesPrices }: { scope: MovementScope; orgType: OrgType; seesPrices: boolean }) {
     const t = useTranslations("App.loads")
     const f = useFormatter()
+    const unitLabel = useUnitLabel()
 
     return useMemo<ColumnDef<MovementRow, unknown>[]>(() => {
         const carrier = orgType === "carrier"
@@ -48,11 +53,51 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                 // shows that order's id only where it has no name of its own
                 // (movementRef); the detail page still carries both
                 cell: ({ row }) => (
-                    <span className="flex min-w-0 items-center gap-1.5">
-                        <Mono className="font-medium">{row.original.ref}</Mono>
-                        <AttentionMarks flags={row.original.flags} silent={row.original.silent} />
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                        <span className="flex min-w-0 items-center gap-1.5">
+                            <Mono className="font-medium">{row.original.ref}</Mono>
+                            <AttentionMarks flags={row.original.flags} silent={row.original.silent} />
+                        </span>
+                        {/* A trip of a multi-trip order says which, and opens the order */}
+                        {row.original.parent && (
+                            <Link
+                                href={{ pathname: "/orders/multi/[orderId]", params: { orderId: row.original.parent.id } }}
+                                onClick={(event) => event.stopPropagation()}
+                                className="text-muted-foreground hover:text-foreground w-fit truncate text-[11px] underline-offset-4 hover:underline"
+                            >
+                                {row.original.parent.position === null
+                                    ? row.original.parent.ref
+                                    : row.original.parent.of !== null
+                                        ? t("values.parent-trip-of", { position: row.original.parent.position, of: row.original.parent.of, ref: row.original.parent.ref })
+                                        : t("values.parent-trip", { position: row.original.parent.position, ref: row.original.parent.ref })}
+                            </Link>
+                        )}
                     </span>
                 ),
+            },
+            {
+                id: "kind",
+                header: t("columns.kind"),
+                size: 150,
+                meta: { label: t("columns.kind") },
+                // A standing order says how far along it is under its kind: trips
+                // or tons drawn down, billable days so far
+                cell: ({ row }) => {
+                    const { kind, order } = row.original
+
+                    return (
+                        <span className="flex min-w-0 flex-col gap-0.5">
+                            <span className="truncate text-[13px]">{t(`kinds.${kind}`)}</span>
+                            {order && (
+                                <span className="text-muted-foreground truncate text-xs tabular-nums">
+                                    {order.of === null
+                                        ? unitLabel(order.unit, order.done)
+                                        : t("values.progress-of", { done: unitLabel(order.unit, order.done), of: unitLabel(order.unit, order.of) })}
+                                </span>
+                            )}
+                        </span>
+                    )
+                },
             },
             {
                 id: "status",
@@ -63,14 +108,25 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                 meta: { label: t("columns.status") },
                 cell: ({ row }) => (
                     <span className="flex min-w-0 items-center gap-1.5">
-                        <MovementStatusChip status={row.original.status} quoteRequested={row.original.quoteRequested} />
+                        {row.original.order === null
+                            ? <MovementStatusChip status={row.original.status} quoteRequested={row.original.quoteRequested} />
+                            : row.original.kind === "rental"
+                                ? <RentalStateChip state={row.original.order.state} />
+                                : <ContractStateChip state={row.original.order.state} />}
                         {/* A round out for quotes says how many came back, right here */}
                         {row.original.quotes && row.original.quotes.asked > 0 && (
                             <QuotesChip loadId={row.original.id} quotes={row.original.quotes} />
                         )}
                         {row.original.inDispute && <InDisputeChip />}
                         {row.original.offRoute && <OffRouteChip />}
-                        <RoleChip role={row.original.role} />
+                        {/* A standing order's role is read in its own words: a trip's "offered to you" is not a transporter's share */}
+                        {row.original.order === null
+                            ? <RoleChip role={row.original.role} />
+                            : row.original.role === "owner"
+                                ? null
+                                : row.original.kind === "rental"
+                                    ? <RentalRoleChip role={row.original.role === "executor" ? "carrier" : "client"} />
+                                    : <ContractRoleChip role={row.original.role === "executor" ? "carrier" : "client"} />}
                     </span>
                 ),
             },
@@ -79,7 +135,14 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                 header: t("columns.lane"),
                 size: 240,
                 meta: { label: t("columns.lane") },
-                cell: ({ row }) => <LaneCell origin={row.original.origin} destination={row.original.destination} />,
+                // A multi-trip order may run on any route, a rental works on one site
+                cell: ({ row }) => row.original.kind === "trip"
+                    ? <LaneCell origin={row.original.origin} destination={row.original.destination} />
+                    : !row.original.origin.address
+                        ? <EmptyValue label={t(row.original.kind === "rental" ? "values.no-site" : "values.any-route")} />
+                        : row.original.kind === "rental"
+                            ? <span className="truncate text-[13px]">{row.original.origin.address}</span>
+                            : <LaneCell origin={row.original.origin} destination={row.original.destination} />,
             },
             (scope === "orders" || carrier) && {
                 id: "party",
@@ -88,6 +151,11 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                 meta: { label: partyHeader },
                 cell: ({ row }) => {
                     const party = partyOf(row.original, scope)
+
+                    // Several transporters on one standing order read as a count
+                    if (party && party.id === null && party.name === null && row.original.order) {
+                        return <span className="truncate text-[13px]">{t("values.several-partners", { count: row.original.order.providers })}</span>
+                    }
 
                     return party?.name
                         ? <span className="truncate text-[13px]">{party.name}</span>
@@ -100,8 +168,10 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                 size: 190,
                 meta: { label: t("columns.rig") },
                 cell: ({ row }) => {
-                    const { driverName, truckPlate } = row.original
+                    const { driverName, truckPlate, order } = row.original
 
+                    // A rental's trucks, by count when there are several
+                    if (order && order.trucks > 1) return <span className="truncate text-[13px]">{t("values.trucks", { count: order.trucks })}</span>
                     if (!driverName && !truckPlate) return <EmptyValue label={t("values.no-rig")} />
 
                     return (
@@ -118,7 +188,21 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                 size: 160,
                 meta: { label: t("columns.dates"), sortKey: "loading" },
                 cell: ({ row }) => {
-                    const { status, expectedLoadingDate, startedAt, expectedDeliveryAt, deliveredAt } = row.original
+                    const { status, expectedLoadingDate, startedAt, expectedDeliveryAt, deliveredAt, order } = row.original
+
+                    // A standing order's period: from its start, to its end or for as long as it is needed
+                    if (order) {
+                        return (
+                            <div className="flex min-w-0 flex-col gap-0.5">
+                                <LoadDate value={expectedLoadingDate} empty={t("values.no-date")} />
+                                <span className="text-muted-foreground truncate text-xs">
+                                    {expectedDeliveryAt
+                                        ? t("values.until", { date: f.dateTime(expectedDeliveryAt, { dateStyle: "medium" }) })
+                                        : t("values.open-period")}
+                                </span>
+                            </div>
+                        )
+                    }
 
                     if (status === "delivered" || status === "closed") {
                         return <LoadDate value={deliveredAt} empty={t("values.no-date")} />
@@ -139,7 +223,8 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                     )
                 },
             },
-            carrier && {
+            // Somebody kept from prices gets no price column at all, not one of blanks
+            carrier && seesPrices && {
                 id: "receivable",
                 header: t("columns.receivable"),
                 size: 140,
@@ -148,7 +233,7 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
                     ? <Money className="text-[13px]" amount={row.original.receivable.total} currency={row.original.receivable.currency} />
                     : <EmptyValue label={t("values.no-price")} />,
             },
-            scope === "orders" && {
+            scope === "orders" && seesPrices && {
                 id: "payable",
                 header: t("columns.payable"),
                 size: 140,
@@ -167,5 +252,5 @@ export function useMovementColumns({ scope, orgType }: { scope: MovementScope; o
         ]
 
         return columns.filter((column): column is ColumnDef<MovementRow, unknown> => Boolean(column))
-    }, [t, f, scope, orgType])
+    }, [t, f, unitLabel, scope, orgType, seesPrices])
 }

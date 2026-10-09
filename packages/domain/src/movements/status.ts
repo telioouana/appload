@@ -185,7 +185,18 @@ export function ownerTargets(shape: MovementShape): MovementStatus[] {
 }
 
 /** What a load is missing. Never a refusal — see the header. */
-export const MOVEMENT_FLAGS = ["NO_DRIVER", "NO_TRUCK", "NO_CARRIER", "NO_PRICE", "PHOTOS_UNAPPROVED"] as const;
+export const MOVEMENT_FLAGS = [
+    "NO_DRIVER",
+    "NO_TRUCK",
+    "NO_CARRIER",
+    "NO_PRICE",
+    "PHOTOS_UNAPPROVED",
+    // Filed under a contract share that is used up, or off the contract's lane (contracts/prefill.ts)
+    "CONTRACT_OVER_COMMITTED",
+    "CONTRACT_LANE_MISMATCH",
+    // The truck named is on an active rental today (rentals/apply.ts activeRentalOf)
+    "TRUCK_ON_RENTAL",
+] as const;
 export type MovementFlag = (typeof MOVEMENT_FLAGS)[number];
 
 /** Why a move that is on the table cannot be taken at all, in the order they are reported. */

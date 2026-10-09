@@ -111,6 +111,9 @@ export const organization = pgTable(
         // (@workspace/domain/subscription). Written by Drizzle only, never a
         // Better Auth additional field
         subscriptionExpiresAt: timestamp("subscription_expires_at"),
+        // Set when staff cancel: the plan runs to subscriptionExpiresAt and is
+        // not chased for renewal. Cleared by a renewal
+        subscriptionCancelledAt: timestamp("subscription_cancelled_at"),
         // Set when the organization's first owner joins the partner portal;
         // null means it exists in the database but nobody uses the portal yet
         portalActivatedAt: timestamp("portal_activated_at"),
@@ -126,6 +129,10 @@ export const organization = pgTable(
         phoneNumber: text("phone_number").notNull().unique(),
         billingAddress: jsonb("billing_address").$type<Address>(),
         physicalAddress: jsonb("physical_address").$type<Address>(),
+        // The portal modules this company switched OFF (ids from
+        // @workspace/auth/organization-modules). Null = never configured, so
+        // everything is on; written by the real CEO only (me.setModules)
+        disabledModules: jsonb("disabled_modules").$type<string[]>(),
 
         // Verification state. Distinct from `status` above, which is the
         // account lifecycle: an organization can be `active` and still
@@ -182,7 +189,7 @@ export const member = pgTable(
         userId: text("user_id")
             .notNull()
             .references(() => user.id, { onDelete: "cascade" }),
-        role: text("role").default("member").notNull(),
+        role: text("role").default("operations").notNull(),
         createdAt: timestamp("created_at").notNull(),
     },
     (table) => [

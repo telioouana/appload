@@ -43,7 +43,7 @@ export default async function Layout({
 
     return (
         <SidebarProvider className="h-svh">
-            <Sidenav orgType={tenant.orgType} />
+            <Sidenav orgType={tenant.orgType} modules={[...tenant.modules]} />
             {/* The inset variant adds m-2 around this main area; the flex chain
                 absorbs it so children sized h-full stay within the viewport */}
             <SidebarInset className="min-h-0">
@@ -69,7 +69,7 @@ export default async function Layout({
             </SidebarInset>
 
             {/* ⌘K search, one instance for the whole portal */}
-            <CommandPalette orgType={tenant.orgType} />
+            <CommandPalette orgType={tenant.orgType} modules={[...tenant.modules]} />
         </SidebarProvider>
     )
 }

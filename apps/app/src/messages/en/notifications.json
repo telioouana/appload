@@ -10,7 +10,7 @@
     "families": {
         "connections": "Partners",
         "orders": "Appload orders",
-        "quotes": "Quotes",
+        "quotes": "Proposed orders",
         "loads": "Your loads",
         "messages": "Messages",
         "account": "Account"
@@ -53,6 +53,9 @@
         "quote-accepted": "Quote accepted",
         "quote-declined": "Quote declined",
         "quote-withdrawn": "Quote withdrawn",
+        "contract-proposed": "Order proposed",
+        "contract-accepted": "Order accepted",
+        "contract-declined": "Order declined",
         "movement-requested": "Quote requested",
         "movement-quoted": "Quote received",
         "movement-offered": "Load offered",
@@ -86,6 +89,9 @@
         "quote-accepted": "{clientName} accepted your quote and order {orderId} was created.",
         "quote-declined": "A quote of yours was declined.",
         "quote-withdrawn": "{carrierName} withdrew the quote they had sent you.",
+        "contract-proposed": "{organizationName} proposed you multi-trip order {ref}. Open it to accept or decline.",
+        "contract-accepted": "{organizationName} accepted order {ref}; it is active.",
+        "contract-declined": "{organizationName} declined order {ref}.",
         "movement-requested": "{organizationName} asks you for a quote on load {ref}: {origin} → {destination}.",
         "movement-quoted": "{organizationName} quoted {total} {currency} on load {ref}.",
         "movement-offered": "{organizationName} offered you load {ref}: {origin} → {destination}, for {total} {currency}.",
@@ -95,12 +101,12 @@
         "movement-delivered": "Load {ref} arrived in {destination}.",
         "movement-cancelled": "Load {ref} ({origin} → {destination}) was cancelled.",
         "movement-withdrawn": "{organizationName} withdrew load {ref} ({origin} → {destination}); it is no longer on offer to you.",
-        "movement-location-alert": "{issue, select, noLocation{{driverName} sent no location for load {ref} this round.} shortDistance{{driverName} moved less than 20 km since the last position on load {ref}.} pickedAddress{{driverName} sent a chosen address instead of the live position on load {ref}.} offRoute{{driverName} reported a position more than 10 km off the planned route on load {ref}.} other{{driverName} did not send a valid position for load {ref}.}}{streak, plural, =1 {} =2 {{audience, select, client{ Second round in a row — the transporter was told too.} other{ Second round in a row — the client was told too.}}} other {{audience, select, client{ {streak} rounds in a row — the transporter was told too.} other{ {streak} rounds in a row — the client was told too.}}}}",
+        "movement-location-alert": "{issue, select, noLocation{{driverName} sent no location for load {ref} this round.} shortDistance{{driverName} moved less than 20 km since the last position on load {ref}.} pickedAddress{{driverName} sent a chosen address instead of the live position on load {ref}.} offRoute{{driverName} reported a position more than 10 km off the planned route on load {ref}.} fallingBehind{At its pace so far, {driverName} delivers load {ref} after the agreed date.} other{{driverName} did not send a valid position for load {ref}.}}{streak, plural, =1 {} =2 {{audience, select, client{ Second round in a row — the transporter was told too.} other{ Second round in a row — the client was told too.}}} other {{audience, select, client{ {streak} rounds in a row — the transporter was told too.} other{ {streak} rounds in a row — the client was told too.}}}}",
         "movement-document": "{type, select, pod {A proof of delivery} cmr {A CMR} invoice {An invoice} receipt {A receipt} other {A document}} was added to load {ref}.",
         "movement-dispute-opened": "{named, select, true {{organizationName} opened a dispute on load {ref} ({origin} → {destination}) over {reason, select, theft {theft} loss {a loss} damage {damage} other {something else}}.} other {A company on load {ref} ({origin} → {destination}) opened a dispute over {reason, select, theft {theft} loss {a loss} damage {damage} other {something else}}.}}",
         "movement-dispute-resolved": "{named, select, true {{organizationName} resolved the dispute on load {ref} ({origin} → {destination}).} other {A company on load {ref} ({origin} → {destination}) resolved the dispute.}}",
         "thread-message": "{attachments, plural, =0 {{senderName} wrote on {reference}: {preview}} one {{senderName} sent a file on {reference}.} other {{senderName} sent # files on {reference}.}}",
-        "subscription-changed": "{plan, select, starter{Your company moved to the Starter plan.} business{Your company moved to the Business plan.} enterprise{Your company moved to the Enterprise plan.} other{Your company has no active plan.}}"
+        "subscription-changed": "{action, select, renew{Your company's {plan, select, starter{Starter} essential{Essential} growth{Growth} scale{Scale} fleet{Fleet} enterprise{Enterprise} other{}} plan was renewed. The new end date is in Settings.} cancel{Your company's {plan, select, starter{Starter} essential{Essential} growth{Growth} scale{Scale} fleet{Fleet} enterprise{Enterprise} other{}} plan was cancelled. It keeps running until the end date in Settings, then ends.} other{{plan, select, starter{Your company moved to the Starter plan.} essential{Your company moved to the Essential plan.} growth{Your company moved to the Growth plan.} scale{Your company moved to the Scale plan.} fleet{Your company moved to the Fleet plan.} enterprise{Your company moved to the Enterprise plan.} other{Your company has no active plan.}}}}"
     },
     "email": {
         "subject": "Appload — {title}",

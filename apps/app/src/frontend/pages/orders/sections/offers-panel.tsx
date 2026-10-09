@@ -130,7 +130,6 @@ export function OffersPanel({
             {planReason && (
                 <PlanDialog
                     reason={planReason}
-                    allowance={allowance}
                     organizationName={organizationName}
                     onClose={() => setPlanReason(null)}
                 />

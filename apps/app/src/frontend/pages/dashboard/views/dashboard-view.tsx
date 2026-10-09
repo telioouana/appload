@@ -1,11 +1,17 @@
 "use client"
 
 import { useSuspenseQuery } from "@tanstack/react-query"
+import { IconAdjustments } from "@tabler/icons-react"
 
 import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
+import { moneyView } from "@workspace/auth/organization-permissions"
+import { hasModule, type ModuleId } from "@workspace/auth/organization-modules"
 
+import { Alert, AlertDescription } from "@workspace/ui/components/alert"
 import { Badge } from "@workspace/ui/components/badge"
+import { cn } from "@workspace/ui/lib/utils"
 
+import { Link } from "@/i18n/navigation"
 import { useTRPC } from "@/backend/api/client"
 
 import { LatestOrders } from "@/frontend/pages/dashboard/sections/latest-orders"
@@ -47,6 +53,15 @@ export function DashboardView() {
     const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
 
     const { plan } = session
+    // The year's books are the company's finances: a reader without
+    // `finance:read` is not shown two empty money cards
+    const full = moneyView(session.permissions) === "full"
+    // A card belongs to a module: the map to `map`, the year's charts to
+    // `analytics`, the trucks' tile to `own-fleet` — switched off, it is gone
+    const on = (id: ModuleId) => hasModule(session.modules, id)
+    const analytics = on("analytics")
+    // The CEO who has never said what the company uses is asked once, here
+    const nudge = session.role === "owner" && !session.actingOwner && !session.modulesConfigured
 
     return (
         <>
@@ -68,6 +83,18 @@ export function DashboardView() {
                 <p className="text-muted-foreground text-sm">
                     {t("description", { date: f.dateTime(now, { dateStyle: "full" }) })}
                 </p>
+
+                {nudge && (
+                    <Alert>
+                        <IconAdjustments className="size-4" stroke={1.5} />
+                        <AlertDescription>
+                            {t("modules-nudge.text")}{" "}
+                            <Link href={{ pathname: "/settings", query: { tab: "modules" } }} className="text-foreground font-medium underline underline-offset-4">
+                                {t("modules-nudge.cta")}
+                            </Link>
+                        </AlertDescription>
+                    </Alert>
+                )}
             </header>
 
             {/* The bands are `shrink-0`: in a scrolling flex column a band would
@@ -81,14 +108,16 @@ export function DashboardView() {
 
                 {/* Where the loads are, beside what they need: two thirds to the
                     map, one to the queue and the trips it does not cover */}
-                <div className="grid shrink-0 gap-4 px-2 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)] xl:items-stretch">
-                    <CardBoundary
-                        className="mx-0"
-                        fallback={<CardSkeleton className="mx-0 h-[320px] lg:h-[486px]" />}
-                        message={t("error")}
-                    >
-                        <OnTheRoad />
-                    </CardBoundary>
+                <div className={cn("grid shrink-0 gap-4 px-2 xl:items-stretch", on("map") && "xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]")}>
+                    {on("map") && (
+                        <CardBoundary
+                            className="mx-0"
+                            fallback={<CardSkeleton className="mx-0 h-[320px] lg:h-[486px]" />}
+                            message={t("error")}
+                        >
+                            <OnTheRoad />
+                        </CardBoundary>
+                    )}
 
                     <div className="flex min-w-0 flex-col gap-4">
                         <CardBoundary
@@ -99,25 +128,29 @@ export function DashboardView() {
                             <NeedsAHand />
                         </CardBoundary>
 
-                        <CardBoundary
-                            className="mx-0"
-                            fallback={<CardSkeleton className="mx-0 h-[124px]" />}
-                            message={t("error")}
-                        >
-                            <TripsTile />
-                        </CardBoundary>
+                        {on("own-fleet") && (
+                            <CardBoundary
+                                className="mx-0"
+                                fallback={<CardSkeleton className="mx-0 h-[124px]" />}
+                                message={t("error")}
+                            >
+                                <TripsTile />
+                            </CardBoundary>
+                        )}
                     </div>
                 </div>
 
-                <div className="shrink-0 px-2">
-                    <CardBoundary
-                        className="mx-0"
-                        fallback={<CardSkeleton className="mx-0 h-[220px]" />}
-                        message={t("error")}
-                    >
-                        <YearLoads />
-                    </CardBoundary>
-                </div>
+                {full && analytics && (
+                    <div className="shrink-0 px-2">
+                        <CardBoundary
+                            className="mx-0"
+                            fallback={<CardSkeleton className="mx-0 h-[220px]" />}
+                            message={t("error")}
+                        >
+                            <YearLoads />
+                        </CardBoundary>
+                    </div>
+                )}
 
                 {/* The loads Appload brokers are the company's own now, so
                     their counts sit with the rest rather than under a name */}
@@ -127,27 +160,31 @@ export function DashboardView() {
                     </CardBoundary>
                 </div>
 
-                <div className="grid shrink-0 gap-4 px-2 xl:grid-cols-3 xl:items-stretch">
-                    {/* A grid of one so the chart card fills the taller of the
-                        pair; the boundary itself renders no element to span */}
-                    <div className="grid min-w-0 xl:col-span-2">
-                        <CardBoundary
-                            className="mx-0"
-                            fallback={<CardSkeleton className="mx-0 h-[300px] xl:h-[340px]" />}
-                            message={t("error")}
-                        >
-                            <MonthlyOrders />
-                        </CardBoundary>
-                    </div>
+                {analytics && (
+                    <div className={`grid shrink-0 gap-4 px-2 xl:items-stretch ${full ? "xl:grid-cols-3" : ""}`}>
+                        {/* A grid of one so the chart card fills the taller of the
+                            pair; the boundary itself renders no element to span */}
+                        <div className={`grid min-w-0 ${full ? "xl:col-span-2" : ""}`}>
+                            <CardBoundary
+                                className="mx-0"
+                                fallback={<CardSkeleton className="mx-0 h-[300px] xl:h-[340px]" />}
+                                message={t("error")}
+                            >
+                                <MonthlyOrders />
+                            </CardBoundary>
+                        </div>
 
-                    <CardBoundary
-                        className="mx-0"
-                        fallback={<CardSkeleton className="mx-0 h-[300px] xl:h-[340px]" />}
-                        message={t("error")}
-                    >
-                        <YearMoney />
-                    </CardBoundary>
-                </div>
+                        {full && (
+                            <CardBoundary
+                                className="mx-0"
+                                fallback={<CardSkeleton className="mx-0 h-[300px] xl:h-[340px]" />}
+                                message={t("error")}
+                            >
+                                <YearMoney />
+                            </CardBoundary>
+                        )}
+                    </div>
+                )}
 
                 <div className="shrink-0 px-2">
                     <CardBoundary

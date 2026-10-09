@@ -11,8 +11,7 @@ import type { KycStatus } from "@workspace/db/types";
 import type { db as Database } from "@workspace/db/db";
 
 import { createTRPCRouter } from "@workspace/trpc/init";
-import { authorizedTenantProcedure, tenantProcedure } from "@workspace/trpc/tenant";
-import type { OrgAction } from "@workspace/auth/organization-permissions";
+import { authorizedTenantProcedure, tenantProcedure, withModule } from "@workspace/trpc/tenant";
 
 import { normalizePhone } from "@workspace/comms/phone";
 import { docProgress, today } from "@workspace/domain/kyc/derive";
@@ -53,7 +52,8 @@ export type DriverOption = {
  * shipper running its own trucks — so the writes need the `fleet` role
  * statement and nothing about the organization's type, the same as vehicles.
  */
-const fleetProcedure = (actions: OrgAction<"fleet">[]) => authorizedTenantProcedure("fleet", actions);
+// Writing to the fleet is the Fleet module; reading it never is
+const fleetProcedure = authorizedTenantProcedure("fleet", ["manage"]).use(withModule("own-fleet"));
 
 // Escape LIKE wildcards so user input matches literally
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
@@ -231,7 +231,7 @@ export const driversRouter = createTRPCRouter({
      * phone number. `@appload.invalid` is a reserved TLD: nothing can ever be
      * delivered to it, and Admin already flags the pattern as a placeholder.
      */
-    register: fleetProcedure(["create"])
+    register: fleetProcedure
         .input(RegisterDriverBaseSchema)
         .mutation(async ({ ctx, input }): Promise<DriverOption> => {
             const email = input.email ?? `driver-${input.phoneNumber.replace(/\D/g, "")}@appload.invalid`;
@@ -316,7 +316,7 @@ export const driversRouter = createTRPCRouter({
      * whoever asked. A wrong real address is a staff correction, not a
      * carrier one.
      */
-    update: fleetProcedure(["update"])
+    update: fleetProcedure
         .input(z.object({ id: z.string().nonempty(), patch: DriverPatch }))
         .mutation(async ({ ctx, input }): Promise<{ id: string }> => {
             const [current] = await ctx.db

@@ -25,7 +25,7 @@ Decisions confirmed with Claire (2026-09-09):
 |---|---|
 | Commission on portal deals | **None.** Portal offers are priced with `commissionTotal = 0`; client price = carrier price with the existing VAT rules. Staff can still re-price in Admin. |
 | Onboarding | **Self-serve + staff approval.** Unknown NUIT → organization created at sign-up. Known NUIT with no members → claim approved by staff in Admin; auto-approved when the verified sign-up email equals the organization's email on file. |
-| Subscription | **Named tiers by monthly tracked movements** (revised 2026-09-10, see §4.1): no free plan; staff set the tier (starter/business/enterprise) and an expiry in Admin; the portal blocks booking, dispatch and trips when there is no active plan or the month's allowance is used up. No payments. |
+| Subscription | **Named tiers by monthly tracked movements** (revised 2026-09-10, see §4.1): no free plan; staff set the tier (starter / essential / growth / scale / fleet / enterprise, priced in §4.1) and an expiry in Admin; the portal blocks booking, dispatch and trips only when there is no active plan — movements past the month's allowance go through and are invoiced as extras. No payments. |
 | KYC | **Review stays in Admin.** Partners file their own papers from the portal — the company's own documents, its drivers and its vehicles — and the signed contract is uploaded by Appload after signature (see `appload-partner-design.md` §7b). |
 
 Architectural decisions taken in this plan (rationale inline):
@@ -293,9 +293,13 @@ There is **no free plan**. Plans are named tiers that differ only by how many **
 **Catalog** — `packages/domain/src/subscription.ts` (package export `./subscription`; Drizzle + `@trpc/server` only, no React):
 
 ```ts
-export { SUBSCRIPTION_PLAN, type SubscriptionPlan } from "@workspace/db/subscriptions";   // ["starter", "business", "enterprise"]
-/** Tracked movements per calendar month; null = unlimited. PLACEHOLDER figures until the commercial terms are final — one line each to change. */
-export const PLAN_QUOTA: Record<SubscriptionPlan, number | null> = { starter: 10, business: 50, enterprise: null };
+export { SUBSCRIPTION_PLAN, type SubscriptionPlan } from "@workspace/db/subscriptions";   // ["starter", "essential", "growth", "scale", "fleet", "enterprise"]
+/** The commercial table (2026-10-08): tracked movements a month (null = unlimited), MZN a month before IVA (null = per customer), users shown to the tenant (null = per customer; not enforced). */
+export const PLAN_QUOTA: Record<SubscriptionPlan, number | null> = { starter: 10, essential: 30, growth: 50, scale: 100, fleet: 200, enterprise: null };
+export const PLAN_PRICE: Record<SubscriptionPlan, number | null> = { starter: 4000, essential: 11000, growth: 17500, scale: 30000, fleet: 40000, enterprise: null };
+export const PLAN_USERS: Record<SubscriptionPlan, number | null> = { starter: 2, essential: 3, growth: 5, scale: 8, fleet: 12, enterprise: null };
+/** What one movement past the allowance costs; invoiced by staff. The gate never refuses a spent allowance (2026-10-08): `trackingAllowance.extra` counts them. */
+export const EXTRA_TRIP_PRICE = 400;
 export const TRACKING_TIME_ZONE = "Africa/Maputo";
 /** "YYYY-MM" of the instant in Africa/Maputo — the month a movement is billed to. */
 export function periodKey(at?: Date): string;
@@ -355,14 +359,14 @@ Better Auth (`packages/auth/src/server.ts`): the organization additional field `
 **Tenant gate** — `TenantPlan` becomes `{ plan: SubscriptionPlan | null; expiresAt: Date | null; active: boolean; quota: number | null }` (`quota` = `PLAN_QUOTA[plan]` when active, `0` otherwise; the gate does not count usage — one more query per request is not worth it). `proProcedure` is deleted from `packages/trpc/src/tenant.ts`. `me.session` adds `allowance: TrackingAllowance`.
 
 **Portal UI**:
-- Settings › Subscription card: plan name (or "No plan yet"), expiry or "expired on", a usage line with a bar — "12 of 50 tracked movements in September 2026" (unlimited → "Unlimited tracked movements") — "on the portal since", and the contact block. The feature list becomes the tier list from the catalog (name + monthly allowance), marking the current tier.
+- Settings › Subscription card: plan name (or "No plan yet"), expiry or "expired on", a usage line with a bar — "12 of 50 tracked movements in September 2026" (unlimited → "Unlimited tracked movements"), "+N extra" past the plan — "on the portal since", what the plan includes (movements, users, price; `me.session.offer`) and the contact block. No tier list: the catalog is shown on the website (Claire, 2026-10-08).
 - Dashboard badge: the plan name, or "No plan" (secondary variant) when null or expired.
 - The orders `UpgradeDialog` and the quotes `UpgradeCard` are replaced by one `PlanDialog` (`apps/app/src/components/plan-dialog.tsx`) taking `reason: "SUBSCRIPTION_REQUIRED" | "QUOTA_EXCEEDED"` and the allowance, with the contact CTA and a link to settings. It opens (a) pre-emptively when the shipper clicks Accept on an offer or a standing quote, or the carrier clicks Dispatch, and the allowance is not ok (from `me.session.allowance` / `transitionOptions`), and (b) whenever `offers.accept`, `quotes.accept` or `orders.transition` answers with one of the two codes. New order, send requests, quote on a request, new standing quote and analytics no longer consult any plan: the `isPro` props and the dialogs behind them go away.
-- Messages (pt is the source of truth, en mirrors it): remove the `free`/`pro` keys; add plan names (`none`, `starter`, `business`, `enterprise`), the usage/unlimited lines, the dialog copy and the two error messages.
+- Messages (pt is the source of truth, en mirrors it): remove the `free`/`pro` keys; add plan names (`none` + the six tiers), the usage/unlimited/extra lines, the dialog copy and the `SUBSCRIPTION_REQUIRED` message (`QUOTA_EXCEEDED` was retired 2026-10-08 — extras are invoiced, never refused).
 
 **Admin**:
-- `organizations.setSubscription` input `plan: z.enum(SUBSCRIPTION_PLAN).nullable()`; the `subscription.changed` notification carries `{ plan: updated.plan ?? "none" }`.
-- Portal section plan editor: select with "No plan" + the three tiers, expiry as today; below it "Tracked this month: 12 of 50" (or unlimited / no plan) read from a new `partners.portalUsage({ organizationId })` query (`organizations: ["read"]`) that returns `trackingAllowance` — ops sees exactly what the portal enforces.
+- `organizations.setSubscription` input `plan: z.enum(SUBSCRIPTION_PLAN).nullable()` + `months` (0–24; plans are monthly, never open-ended — the months paid extend the current expiry while it is ahead, 0 = "End today"; `extendedExpiry` in `apps/admin/src/frontend/pages/subscriptions/types.ts`, decided 2026-10-08); the `subscription.changed` notification carries `{ plan: updated.plan ?? "none" }`.
+- Portal section plan editor: select with "No plan" + the six tiers, expiry as today (since the `/subscriptions` page, the Portal section is read-only and links there); below it "Tracked this month: 12 of 50" (or unlimited / no plan) read from a new `partners.portalUsage({ organizationId })` query (`organizations: ["read"]`) that returns `trackingAllowance` — ops sees exactly what the portal enforces.
 - Admin messages pt/en for the new options, the usage line and the `none` plan in the `subscription.changed` notification copy.
 
 This section is the contract for M4.5 (subscription v2); §2.4, the §4 decisions row and the §5 "Pro-gated" rule are superseded by it.
@@ -554,7 +558,7 @@ M0 rules: extraction is a **pure move plus parameterization** — no logic edits
 | M2 | Partners & connections | search/lookup/register/request/respond/list/profile + UI + notifications wiring | M1 | Built 2026-09-10 (`0f327ae`) |
 | M3 | Fleet & drivers (carrier) | vehicles; drivers (server-side account creation, optional email → placeholder) | M1 | Built 2026-09-10 (`0f327ae`) |
 | M4 | Orders, requests, offers, quotes | (a) list/detail/projections; (b) create + requests + offers + booking door; (c) transitions + documents; (d) quotes | M2, M3 | Built 2026-09-10 (`6d1a88e`) |
-| M4.5 | Subscription v2 | catalog + `subscription_usage` + counting/gates in the domain door; portal plan dialog, subscription card and dashboard badge; Admin plan editor + usage line (§4.1) | M1, M4 | Built 2026-09-10 (`87f356e`); quota figures still placeholders |
+| M4.5 | Subscription v2 | catalog + `subscription_usage` + counting/gates in the domain door; portal plan dialog, subscription card and dashboard badge; Admin plan editor + usage line (§4.1) | M1, M4 | Built 2026-09-10 (`87f356e`); six priced tiers + overage 2026-10-08 (`0036_tiers`) |
 | M5 | Trips & tracking | (a) trip CRUD + UI; (b) cron + Infobip; (c) Admin webhook attribution; (d) maps | M2 | Built 2026-09-10 (`6357657`) |
 | M6 | Notifications center | bell/popover/page, materializer, email outbox cron; wire kinds from M2–M5 | M2–M5 | Built 2026-09-10 (`36106db`) |
 | M7 | Analytics | pipeline/monthly/money/kpis/partners + views | M4, M5 | Built 2026-09-10 (`ac761a3`) |

@@ -70,7 +70,8 @@ export const MOVEMENT_ERROR_KEYS = {
     INFOBIP_NOT_CONFIGURED: "infobipNotConfigured",
     // The plan gate in front of everything that starts tracking
     SUBSCRIPTION_REQUIRED: "subscriptionRequired",
-    QUOTA_EXCEEDED: "quotaExceeded",
+    // The company switched the module this door creates in off
+    MODULE_DISABLED: "moduleDisabled",
     UNKNOWN: "unknown",
 } as const
 

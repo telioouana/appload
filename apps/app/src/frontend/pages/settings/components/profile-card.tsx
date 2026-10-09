@@ -23,6 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@work
 
 import { useTRPC } from "@/backend/api/client";
 import { ProfileSchema } from "@/backend/schemas/settings";
+import type { ProfileKey } from "@/frontend/pages/settings/lib/profiles";
 import type { MeSession } from "@/frontend/pages/settings/server/procedures";
 
 // Avatars go through the order-document bucket under an `avatars/<user id>`
@@ -36,7 +37,7 @@ const AVATAR_MAX_SIZE = 2 * 1024 * 1024
  * Auth (`updateUser`) — there is no tenant data here, so no procedure of our
  * own stands between the form and the account.
  */
-export function ProfileCard({ user, role }: { user: MeSession["user"]; role: MeSession["role"] }) {
+export function ProfileCard({ user, role }: { user: MeSession["user"]; role: ProfileKey }) {
     const t = useTranslations("App.settings")
     const trpc = useTRPC()
     const queryClient = useQueryClient()
@@ -158,7 +159,7 @@ export function ProfileCard({ user, role }: { user: MeSession["user"]; role: MeS
                                 <div className="grid gap-1">
                                     <span className="text-sm font-medium">{t("profile.role.label")}</span>
                                     <div>
-                                        <Badge variant="outline">{t(`profile.role.options.${role}`)}</Badge>
+                                        <Badge variant="outline">{t(`members.roles.${role}`)}</Badge>
                                     </div>
                                 </div>
 

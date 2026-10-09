@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { IconMapPinShare, IconRouteOff } from "@tabler/icons-react"
+import { IconClockExclamation, IconMapPinShare, IconRouteOff } from "@tabler/icons-react"
 
 import { useFormatter, useTranslations } from "@workspace/i18n"
 
@@ -20,7 +20,9 @@ import type { MovementDetail } from "@/frontend/pages/movements/types"
  * Where the truck has reported from, from the moment it reaches the loading
  * site until it is delivered. A load handed to a partner on the portal is
  * tracked by that partner — its driver is asked once, by the company that
- * employs them — and the positions show here as they arrive.
+ * employs them — and the positions show here as they arrive. While the truck
+ * is on the road the card also says how far along it is and when it arrives
+ * at the pace it has kept, off the newest position and the cached route.
  */
 export function TrackingCard({ load }: { load: MovementDetail }) {
     const t = useTranslations("App.loads.tracking")
@@ -31,9 +33,12 @@ export function TrackingCard({ load }: { load: MovementDetail }) {
 
     // The same polling query the map draws from, so the list and the line
     // can never show a different last position
-    const { data: points = [] } = useQuery(
+    const { data: trail } = useQuery(
         trpc.movements.trail.queryOptions({ id: load.id }, { refetchInterval: TRAIL_POLL_MS }),
     )
+    const points = trail?.points ?? []
+    const progress = trail?.progress ?? null
+    const km = (meters: number) => f.number(Math.round(meters / 1000))
 
     return (
         <SectionCard
@@ -62,6 +67,35 @@ export function TrackingCard({ load }: { load: MovementDetail }) {
                 <span className="text-muted-foreground text-[13px]">{t("last")}</span>
                 <LastPingCell ping={load.lastPing} />
             </div>
+
+            {progress && (
+                <div className="bg-muted/40 flex flex-col gap-2 rounded-xl px-4 py-3 text-[13px]">
+                    <div className="flex items-center justify-between gap-4">
+                        <span className="tabular-nums">{t("progress.covered", { covered: km(progress.coveredMeters), total: km(progress.totalMeters) })}</span>
+                        {progress.behind && (
+                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-500/10 px-2 py-px text-[11px] leading-4 text-red-600 dark:text-red-400">
+                                <IconClockExclamation className="size-3" stroke={1.5} />
+                                {t("progress.behind")}
+                            </span>
+                        )}
+                    </div>
+                    <div className="bg-muted h-1.5 overflow-hidden rounded-full">
+                        <div
+                            className={progress.behind ? "h-full bg-red-500" : "bg-primary h-full"}
+                            style={{ width: `${progress.totalMeters > 0 ? Math.min(100, (progress.coveredMeters / progress.totalMeters) * 100) : 0}%` }}
+                        />
+                    </div>
+                    <div className="text-muted-foreground flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs tabular-nums">
+                        <span>{t("progress.remaining", { km: km(progress.remainingMeters) })}</span>
+                        <span>
+                            {progress.etaAt && progress.avgKmh !== null
+                                ? t("progress.eta", { time: f.dateTime(progress.etaAt, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }), speed: f.number(progress.avgKmh) })
+                                : t("progress.eta-pending")}
+                        </span>
+                    </div>
+                    {progress.approximate && <p className="text-muted-foreground text-xs">{t("progress.approximate")}</p>}
+                </div>
+            )}
 
             {load.isLinked && <p className="text-muted-foreground text-xs">{t("linked")}</p>}
             {!load.trackingEnabled && <p className="text-muted-foreground text-xs">{t("disabled")}</p>}

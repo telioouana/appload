@@ -7,7 +7,7 @@ import { useFormatter, useTranslations } from "@workspace/i18n"
 
 import { Dash, IdentityCell, initials, Mono, PlateChip, ProgressCell, StackCell } from "@workspace/ui/customs/list/table-cells"
 import { RowActions } from "@/frontend/pages/fleet/sections/row-actions"
-import { KycBadge, OwnershipBadge, StateBadge } from "@/frontend/pages/fleet/sections/badges"
+import { KycBadge, OwnershipBadge, RentalBadge, StateBadge } from "@/frontend/pages/fleet/sections/badges"
 import { withVerification } from "@/frontend/pages/fleet/hooks/use-verified-fleet"
 import type { VehicleKind, VehicleRow } from "@/frontend/pages/fleet/types"
 
@@ -89,7 +89,12 @@ export function useVehicleColumns({
             header: t("columns.state"),
             size: 130,
             meta: { label: t("columns.state") },
-            cell: ({ row }) => <StateBadge state={row.original.status} />,
+            cell: ({ row }) => (
+                <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+                    <StateBadge state={row.original.status} />
+                    {row.original.rental && <RentalBadge rental={row.original.rental} />}
+                </span>
+            ),
         },
         {
             id: "status",

@@ -174,7 +174,6 @@ export function QuotesCard({
             {planReason && (
                 <PlanDialog
                     reason={planReason}
-                    allowance={allowance}
                     organizationName={organizationName}
                     onClose={() => setPlanReason(null)}
                 />

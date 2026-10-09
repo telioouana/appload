@@ -10,7 +10,7 @@
     "families": {
         "connections": "Parceiros",
         "orders": "Pedidos Appload",
-        "quotes": "Cotações",
+        "quotes": "Pedidos propostos",
         "loads": "As suas cargas",
         "messages": "Mensagens",
         "account": "Conta"
@@ -53,6 +53,9 @@
         "quote-accepted": "Cotação aceite",
         "quote-declined": "Cotação recusada",
         "quote-withdrawn": "Cotação retirada",
+        "contract-proposed": "Pedido proposto",
+        "contract-accepted": "Pedido aceite",
+        "contract-declined": "Pedido recusado",
         "movement-requested": "Cotação pedida",
         "movement-quoted": "Cotação recebida",
         "movement-offered": "Carga oferecida",
@@ -86,6 +89,9 @@
         "quote-accepted": "{clientName} aceitou a sua cotação e o pedido {orderId} foi criado.",
         "quote-declined": "Uma cotação sua foi recusada.",
         "quote-withdrawn": "{carrierName} retirou a cotação que lhe tinha enviado.",
+        "contract-proposed": "{organizationName} propôs-lhe o pedido com várias viagens {ref}. Abra-o para aceitar ou recusar.",
+        "contract-accepted": "{organizationName} aceitou o pedido {ref}; está activo.",
+        "contract-declined": "{organizationName} recusou o pedido {ref}.",
         "movement-requested": "{organizationName} pede-lhe uma cotação para a carga {ref}: {origin} → {destination}.",
         "movement-quoted": "{organizationName} cotou {total} {currency} na carga {ref}.",
         "movement-offered": "{organizationName} ofereceu-lhe a carga {ref}: {origin} → {destination}, por {total} {currency}.",
@@ -95,12 +101,12 @@
         "movement-delivered": "A carga {ref} chegou a {destination}.",
         "movement-cancelled": "A carga {ref} ({origin} → {destination}) foi cancelada.",
         "movement-withdrawn": "{organizationName} retirou a carga {ref} ({origin} → {destination}); já não está em oferta para si.",
-        "movement-location-alert": "{issue, select, noLocation{{driverName} não enviou a localização da carga {ref} nesta ronda.} shortDistance{{driverName} avançou menos de 20 km desde a última posição na carga {ref}.} pickedAddress{{driverName} enviou um endereço escolhido em vez da posição real na carga {ref}.} offRoute{{driverName} reportou uma posição a mais de 10 km da rota planeada na carga {ref}.} other{{driverName} não enviou uma posição válida na carga {ref}.}}{streak, plural, =1 {} =2 {{audience, select, client{ Segunda ronda seguida — o transportador também foi avisado.} other{ Segunda ronda seguida — o cliente também foi avisado.}}} other {{audience, select, client{ São já {streak} rondas seguidas — o transportador também foi avisado.} other{ São já {streak} rondas seguidas — o cliente também foi avisado.}}}}",
+        "movement-location-alert": "{issue, select, noLocation{{driverName} não enviou a localização da carga {ref} nesta ronda.} shortDistance{{driverName} avançou menos de 20 km desde a última posição na carga {ref}.} pickedAddress{{driverName} enviou um endereço escolhido em vez da posição real na carga {ref}.} offRoute{{driverName} reportou uma posição a mais de 10 km da rota planeada na carga {ref}.} fallingBehind{Ao ritmo que leva, {driverName} entrega a carga {ref} depois da data combinada.} other{{driverName} não enviou uma posição válida na carga {ref}.}}{streak, plural, =1 {} =2 {{audience, select, client{ Segunda ronda seguida — o transportador também foi avisado.} other{ Segunda ronda seguida — o cliente também foi avisado.}}} other {{audience, select, client{ São já {streak} rondas seguidas — o transportador também foi avisado.} other{ São já {streak} rondas seguidas — o cliente também foi avisado.}}}}",
         "movement-document": "{type, select, pod {Um comprovativo de entrega} cmr {Um CMR} invoice {Uma fatura} receipt {Um recibo} other {Um documento}} foi adicionado à carga {ref}.",
         "movement-dispute-opened": "{named, select, true {{organizationName} abriu uma disputa na carga {ref} ({origin} → {destination}) por {reason, select, theft {roubo} loss {perda} damage {dano} other {outro motivo}}.} other {Uma empresa na carga {ref} ({origin} → {destination}) abriu uma disputa por {reason, select, theft {roubo} loss {perda} damage {dano} other {outro motivo}}.}}",
         "movement-dispute-resolved": "{named, select, true {{organizationName} resolveu a disputa na carga {ref} ({origin} → {destination}).} other {Uma empresa na carga {ref} ({origin} → {destination}) resolveu a disputa.}}",
         "thread-message": "{attachments, plural, =0 {{senderName} escreveu em {reference}: {preview}} one {{senderName} enviou um ficheiro em {reference}.} other {{senderName} enviou # ficheiros em {reference}.}}",
-        "subscription-changed": "{plan, select, starter{A sua empresa passou para o plano Starter.} business{A sua empresa passou para o plano Business.} enterprise{A sua empresa passou para o plano Enterprise.} other{A sua empresa ficou sem plano activo.}}"
+        "subscription-changed": "{action, select, renew{O plano {plan, select, starter{Starter} essential{Essencial} growth{Growth} scale{Scale} fleet{Fleet} enterprise{Enterprise} other{}} da sua empresa foi renovado. A nova data de fim está nas Definições.} cancel{O plano {plan, select, starter{Starter} essential{Essencial} growth{Growth} scale{Scale} fleet{Fleet} enterprise{Enterprise} other{}} da sua empresa foi cancelado. Continua até à data de fim nas Definições e termina depois.} other{{plan, select, starter{A sua empresa passou para o plano Starter.} essential{A sua empresa passou para o plano Essencial.} growth{A sua empresa passou para o plano Growth.} scale{A sua empresa passou para o plano Scale.} fleet{A sua empresa passou para o plano Fleet.} enterprise{A sua empresa passou para o plano Enterprise.} other{A sua empresa ficou sem plano activo.}}}}"
     },
     "email": {
         "subject": "Appload — {title}",

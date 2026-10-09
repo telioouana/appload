@@ -3,14 +3,16 @@ import { and, asc, eq, inArray, isNotNull, lt, ne, sql } from "drizzle-orm";
 
 import { db } from "@workspace/db/db";
 import { notification, notificationCursor } from "@workspace/db/notifications";
-import { organization, user } from "@workspace/db/users";
+import { member, organization, user } from "@workspace/db/users";
 import { APPLOAD_ORG_ID } from "@workspace/db/types";
 
 import { isEmailConfigured, sendEmail } from "@workspace/auth/email";
+import { memberAccess } from "@workspace/auth/member-access";
+import { can } from "@workspace/auth/organization-permissions";
 import { authorizeCron } from "@workspace/comms/cron";
 import { materializeOrderEvents } from "@workspace/domain/notifications/materialize";
 
-import { notificationTarget } from "@/frontend/pages/notifications/types";
+import { notificationTarget, withoutPrice } from "@/frontend/pages/notifications/types";
 import { renderNotificationEmail } from "@/lib/notification-email";
 
 // Organizations read per run. The ceiling is the 60 s function budget, not
@@ -103,9 +105,14 @@ async function sweepOutbox(): Promise<{ emailed: number; failed: number; skipped
             entityType: notification.entityType,
             entityId: notification.entityId,
             recipient: user.email,
+            memberId: member.id,
+            memberRole: member.role,
         })
         .from(notification)
         .innerJoin(user, eq(user.id, notification.userId))
+        // The recipient's membership where the event happened: what they
+        // may read of it is their own permissions there
+        .leftJoin(member, and(eq(member.userId, notification.userId), eq(member.organizationId, notification.organizationId)))
         .where(and(eq(notification.emailState, "pending"), lt(notification.emailAttempts, MAX_ATTEMPTS)))
         .orderBy(asc(notification.createdAt))
         .limit(EMAIL_BATCH);
@@ -140,6 +147,16 @@ async function sweepOutbox(): Promise<{ emailed: number; failed: number; skipped
     let emailed = 0;
     let failed = 0;
 
+    // Whether each recipient may read a price, asked once per member a run
+    const prices = new Map<string, Promise<boolean>>();
+    const readsPrices = (memberId: string, role: string | null) => {
+        if (!prices.has(memberId)) {
+            prices.set(memberId, memberAccess(db, { id: memberId, role })
+                .then((access) => can(access.permissions, "price:read")));
+        }
+        return prices.get(memberId)!;
+    };
+
     for (const row of waiting) {
         const attempts = attemptsById.get(row.id);
 
@@ -147,9 +164,14 @@ async function sweepOutbox(): Promise<{ emailed: number; failed: number; skipped
         if (attempts === undefined) continue;
 
         try {
+            // One email, one reader: the price a quote or an offer carries
+            // goes to someone holding `price:read` and to nobody else — a
+            // recipient no longer a member reads it without one
+            const priced = row.memberId !== null && await readsPrices(row.memberId, row.memberRole);
+
             const { subject, html } = renderNotificationEmail({
                 kind: row.kind,
-                params: row.params,
+                params: priced ? row.params : withoutPrice(row.kind, row.params),
                 // The same table the in-app row is linked from, so the button
                 // in the inbox and the button in the email land on one page
                 href: notificationTarget(row.entityType, row.entityId)?.path ?? null,

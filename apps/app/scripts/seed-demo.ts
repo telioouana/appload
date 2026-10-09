@@ -64,6 +64,10 @@ import {
     sheetSync,
     type Location,
 } from "@workspace/db/orders";
+import { contract, contractAllocation } from "@workspace/db/contracts";
+import { rentalCheckinRequest } from "@workspace/db/rentals";
+import { periodDays } from "@workspace/domain/rentals/billing";
+import { recordRentalAnswer } from "@workspace/domain/rentals/checkin";
 import { subscriptionUsage } from "@workspace/db/subscriptions";
 import { thread, threadMessage, threadParticipant, threadRead } from "@workspace/db/threads";
 import { orderLocation, orderRoute } from "@workspace/db/tracking";
@@ -92,7 +96,7 @@ import { appRouter } from "@/backend/api/routers/_app";
 
 import { computeOrderRoute } from "@workspace/maps/server/routes";
 
-process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
+process.env.DATABASE_URL ??= fs.readFileSync(".env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
 process.env.GOOGLE_MAPS_API_KEY ??= fs.readFileSync("../admin/.env", "utf8").match(/^GOOGLE_MAPS_API_KEY=(.+)$/m)?.[1]?.trim();
 
 const WRITE = process.argv.includes("--yes");
@@ -101,6 +105,8 @@ const RESET = process.argv.includes("--reset");
 const MORE = process.argv.includes("--more-on-route");
 /** Puts alerts on trucks the seed already has on the road: off its route, and silent */
 const ALERTS = process.argv.includes("--alerts");
+/** Adds a rental to a seed that is already there: two of A.S.M.'s trucks at the client's service */
+const RENTALS = process.argv.includes("--rentals");
 
 const MANIFEST = fileURLToPath(new URL("./seed-demo.manifest.json", import.meta.url));
 
@@ -209,9 +215,13 @@ type Manifest = {
     orderIds: string[];
     movements: string[];
     kycDocs: string[];
+    /** Absent on manifests from before the contracts module */
+    contracts?: string[];
+    /** Trucks the seed registered for the demo (the rental's second truck); absent before rentals */
+    trucks?: string[];
 };
 
-const made: Manifest = { sessionId: SESSION_ID, orders: [], orderIds: [], movements: [], kycDocs: [] };
+const made: Manifest = { sessionId: SESSION_ID, orders: [], orderIds: [], movements: [], kycDocs: [], contracts: [] };
 
 function saveManifest() {
     fs.writeFileSync(MANIFEST, JSON.stringify(made, null, 2));
@@ -1245,12 +1255,16 @@ async function moreOnRoute() {
         console.log(`  ${o.orderId}  ${cargo.description}, on the road ${lane.from.state} → ${lane.to.state}`);
     }
 
-    const own: [Lane, string, number, number][] = [
-        [L.beiMap, "Entrega Maputo, 16 t", 0.4, 2],
-        [L.chiXai, "Entrega Xai-Xai, 20 t", 0.65, 1],
+    // Lane, cargo, how far along, days on the road, days until the delivery
+    // date — the last one left three days ago with a fifth of the road behind
+    // it and is due today, so it reads "behind schedule" and the round alerts
+    const own: [Lane, string, number, number, number][] = [
+        [L.beiMap, "Entrega Maputo, 16 t", 0.4, 2, 2],
+        [L.chiXai, "Entrega Xai-Xai, 20 t", 0.65, 1, 2],
+        [L.nacBei, "Entrega Beira, 24 t", 0.2, 3, 0],
     ];
 
-    for (const [lane, description, progress, days] of own) {
+    for (const [lane, description, progress, days, due] of own) {
         const trip = await as(CTP.user).movements.create({
             execution: "own-fleet",
             status: "booked",
@@ -1262,7 +1276,7 @@ async function moreOnRoute() {
             weight: Number(description.match(/(\d+) t/)![1]),
             weightUnit: "ton",
             expectedLoadingDate: daysFromNow(-days),
-            expectedDeliveryAt: daysFromNow(2),
+            expectedDeliveryAt: daysFromNow(due),
             driverName: "Motorista Teste",
             driverPhone: DRIVER_PHONE,
             truckPlate: "AAA 123 MC",
@@ -1321,6 +1335,153 @@ async function alerts() {
     console.log(`  ${clientSilent.reference}  silent since yesterday`);
 }
 
+// ---------------------------------------------------------------------------
+// Contracts: the standing agreements the loads above could have been filed under
+// ---------------------------------------------------------------------------
+
+/**
+ * Two contracts, one each way. The client's tonnage contract on the
+ * Maputo–Beira lane is split between A.S.M. (on the portal) and a typed
+ * transporter, and trips under each share draw it down: a delivered one, one
+ * on the road, one still a draft. A.S.M.'s own per-trip contract with the
+ * client is moved by its own fleet, one trip delivered. Every trip goes
+ * through the real doors with the share's defaults, so the pages show what
+ * a user would have got.
+ */
+async function demoContracts() {
+    console.log("\n— contracts (Cliente Teste Portal ↔ A.S.M. Transportes)");
+
+    const s = as(CTP.user);
+    const c = as(ASM.user);
+
+    // a. The client's tonnage contract, split two ways
+    const tonnage = await s.contracts.create({
+        basis: "weight",
+        origin: P.maputo,
+        destination: P.beira,
+        startsOn: isoDay(daysFromNow(-20)),
+        endsOn: isoDay(daysFromNow(70)),
+        committedQty: 2_000,
+        currency: "MZN",
+        fiscalRegime: "normal",
+        clientReference: "CT-2026-MAP-BEI",
+        notes: "Cimento a granel, Maputo → Beira, 2 000 t no trimestre.",
+    });
+    made.contracts?.push(tonnage.id);
+    const asmShare = await s.contracts.allocations.add({ contractId: tonnage.id, carrierOrgId: ASM.org, shareQty: 1_200, buyPrice: { model: "per-ton", rate: 1_500 } });
+    const lalgyShare = await s.contracts.allocations.add({ contractId: tonnage.id, carrierName: "Transportes Lalgy", shareQty: 800, buyPrice: { model: "per-ton", rate: 1_400 } });
+    await s.contracts.transition({ id: tonnage.id, to: "active", expectedVersion: 1 });
+    console.log(`  ${tonnage.ref}  2 000 t Maputo → Beira, split 1 200 / 800`);
+
+    // Under the typed transporter's share the client runs the whole trip itself
+    const delivered = await s.movements.create({
+        execution: "partner",
+        status: "booked",
+        contractAllocationId: lalgyShare.id,
+        origin: P.maputo,
+        destination: P.beira,
+        route: "national",
+        cargoDescription: "Cimento a granel, 30 t",
+        category: "construction",
+        weight: 30,
+        weightUnit: "ton",
+        expectedLoadingDate: daysFromNow(-12),
+        expectedDeliveryAt: daysFromNow(-9),
+        driverName: "Amade Lalgy",
+        driverPhone: DRIVER_PHONE,
+        truckPlate: "ACD 221 MP",
+    });
+    made.movements.push(delivered.id);
+    await walkLoad(CTP.user, delivered.id, ["at-loading", "loading", "on-route", "at-offloading", "offloading", "delivered"]);
+    await copyMovementRoute(delivered.id, L.beiMap);
+    await backdateMovement(delivered.id, 12, 10);
+    console.log(`  ${delivered.ref}  30 t under the typed share, delivered`);
+
+    const rolling = await s.movements.create({
+        execution: "partner",
+        status: "booked",
+        contractAllocationId: lalgyShare.id,
+        origin: P.maputo,
+        destination: P.beira,
+        route: "national",
+        cargoDescription: "Cimento a granel, 32 t",
+        category: "construction",
+        weight: 32,
+        weightUnit: "ton",
+        expectedLoadingDate: daysFromNow(-1),
+        expectedDeliveryAt: daysFromNow(2),
+        driverName: "Amade Lalgy",
+        driverPhone: DRIVER_PHONE,
+        truckPlate: "ACD 221 MP",
+    });
+    made.movements.push(rolling.id);
+    await walkLoad(CTP.user, rolling.id, ["at-loading", "loading", "on-route"]);
+    await copyMovementRoute(rolling.id, L.beiMap);
+    await pingMovement(rolling.id, L.beiMap, 0.4, 3);
+    await backdateMovement(rolling.id, 1, 6);
+    console.log(`  ${rolling.ref}  32 t under the typed share, on the road`);
+
+    // Under A.S.M.'s share the trip is filed and waits to be offered
+    const planned = await s.movements.create({
+        execution: "partner",
+        status: "procurement",
+        contractAllocationId: asmShare.id,
+        origin: P.maputo,
+        destination: P.beira,
+        route: "national",
+        cargoDescription: "Cimento a granel, 30 t",
+        category: "construction",
+        weight: 30,
+        weightUnit: "ton",
+        expectedLoadingDate: daysFromNow(5),
+    });
+    made.movements.push(planned.id);
+    console.log(`  ${planned.ref}  30 t under A.S.M.'s share, to be offered`);
+
+    // b. A.S.M.'s own per-trip contract with the client, its own fleet
+    const perTrip = await c.contracts.create({
+        basis: "trips",
+        clientOrgId: CTP.org,
+        origin: P.beira,
+        destination: P.maputo,
+        startsOn: isoDay(daysFromNow(-40)),
+        endsOn: isoDay(daysFromNow(50)),
+        committedQty: 12,
+        currency: "MZN",
+        fiscalRegime: "normal",
+        sellPrice: { model: "per-trip", rate: 48_000 },
+        notes: "Retornos Beira → Maputo, 12 viagens.",
+    });
+    made.contracts?.push(perTrip.id);
+    const ownShare = await c.contracts.allocations.add({ contractId: perTrip.id, shareQty: 12, truckId: RIG.truckId, driverId: RIG.driverId });
+    await c.contracts.transition({ id: perTrip.id, to: "active", expectedVersion: 1 });
+    console.log(`  ${perTrip.ref}  12 trips Beira → Maputo, own fleet`);
+
+    const ownTrip = await c.movements.create({
+        execution: "own-fleet",
+        status: "booked",
+        contractAllocationId: ownShare.id,
+        origin: P.beira,
+        destination: P.maputo,
+        route: "national",
+        cargoDescription: "Retorno, 28 t",
+        category: "construction",
+        weight: 28,
+        weightUnit: "ton",
+        expectedLoadingDate: daysFromNow(-6),
+        expectedDeliveryAt: daysFromNow(-4),
+    });
+    made.movements.push(ownTrip.id);
+    await walkLoad(ASM.user, ownTrip.id, ["at-loading", "loading", "on-route", "at-offloading", "offloading", "delivered"]);
+    await copyMovementRoute(ownTrip.id, L.beiMap);
+    await backdateMovement(ownTrip.id, 6, 8);
+    console.log(`  ${ownTrip.ref}  own-fleet trip under the per-trip contract, delivered`);
+}
+
+/** A Date as the contract doors take a day: "YYYY-MM-DD" in local time. */
+const isoDay = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
 async function hushTracking() {
     console.log("\n— taking the demo's trucks off the tracking crons");
 
@@ -1359,6 +1520,67 @@ async function hushTracking() {
 // --reset: everything the last run wrote, in FK order
 // ---------------------------------------------------------------------------
 
+/**
+ * A rental: A.S.M. puts two trucks at the client's service on a Matola site
+ * for thirty days, from a fortnight ago — working days at 25 000 MZN a day,
+ * standby at 12 000. The client accepted the proposal; A.S.M. marked one
+ * day stopped and one standby, the client disputes a day on the second
+ * truck, the driver answered Sim yesterday, and a first payment came in.
+ * The second truck is registered here, so the trips keep the first one.
+ */
+async function demoRentals() {
+    console.log("\n— rental (A.S.M. Transportes → Cliente Teste Portal)");
+
+    const c = as(ASM.user);
+    const s = as(CTP.user);
+
+    const [second] = await db
+        .insert(truck)
+        .values({ carrierId: ASM.org, regPlate: "AAB 456 MC", brand: "Scania", model: "R450", year: 2021, type: "articulated", vin: `DEMO-RENTAL-${SESSION_ID}` })
+        .returning({ id: truck.id });
+    made.trucks?.push(second!.id);
+
+    const startsOn = isoDay(daysFromNow(-14));
+    const rental = await c.rentals.create({
+        clientOrgId: CTP.org,
+        clientReference: "ALG-2026-10",
+        site: P.maputo,
+        startsOn,
+        endsOn: isoDay(daysFromNow(16)),
+        currency: "MZN",
+        fiscalRegime: "normal",
+        sellPrice: { model: "per-day", rate: 25_000, billableDays: "working", standbyRate: 12_000 },
+        notes: "Dois camiões na obra, trinta dias; dias úteis de segunda a sábado.",
+        lines: [
+            { truckId: RIG.truckId, driverId: RIG.driverId },
+            { truckId: second!.id },
+        ],
+    });
+    made.contracts?.push(rental.id);
+
+    const proposed = await s.rentals.get({ id: rental.id });
+    await s.rentals.transition({ id: rental.id, to: "active", expectedVersion: proposed.version });
+
+    const detail = await c.rentals.get({ id: rental.id });
+    const [first, other] = detail.lines;
+    const today = isoDay(daysFromNow(0));
+    const days = periodDays(startsOn, today, "working").filter((day) => day < today);
+
+    // The diary: a breakdown, a day on standby, a day the client says the truck never came
+    await c.rentals.days.mark({ allocationId: first!.id, day: days[2]!, state: "stopped", note: "Avaria na caixa de velocidades" });
+    await c.rentals.days.mark({ allocationId: other!.id, day: days[5]!, state: "standby" });
+    await s.rentals.days.dispute({ allocationId: other!.id, day: days[7]!, note: "O camião não apareceu na obra" });
+
+    // Yesterday's morning question, answered Sim — the request row is what makes the answer believed
+    const yesterday = days.at(-1)!;
+    await db.insert(rentalCheckinRequest).values({ allocationId: first!.id, day: yesterday, attempt: 1, channel: "whatsapp", status: "sent", scheduledFor: daysFromNow(-1) });
+    await recordRentalAnswer(db, { payload: `rental-yes:${first!.id}:${yesterday}`, conversationId: null });
+
+    await c.rentals.payments.record({ contractId: rental.id, allocationId: null, leg: "sell", amount: 150_000, currency: "MZN", paidAt: daysFromNow(-3), reference: "TRF 4471" });
+
+    console.log(`  ${rental.ref}  ${detail.lines.length} trucks from ${startsOn}, ${days.length} working days so far, one stopped, one standby, one disputed, 150 000 MZN received`);
+}
+
 async function reset() {
     if (!fs.existsSync(MANIFEST)) {
         console.log("nothing to reset: no manifest");
@@ -1386,6 +1608,17 @@ async function reset() {
         }
         await db.update(movement).set({ executionMovementId: null }).where(inArray(movement.id, loads));
         await db.delete(movement).where(inArray(movement.id, loads));
+    }
+
+    // The loads are gone; the contracts they drew down go after them (a
+    // rental's diary, check-ins and payments cascade off its lines and itself)
+    if (manifest.contracts && manifest.contracts.length > 0) {
+        await db.delete(contractAllocation).where(inArray(contractAllocation.contractId, manifest.contracts));
+        await db.delete(contract).where(inArray(contract.id, manifest.contracts));
+    }
+
+    if (manifest.trucks && manifest.trucks.length > 0) {
+        await db.delete(truck).where(inArray(truck.id, manifest.trucks));
     }
 
     if (manifest.orderIds.length > 0) {
@@ -1445,11 +1678,14 @@ async function main() {
         return;
     }
 
-    if (MORE || ALERTS) {
-        if (!fs.existsSync(MANIFEST)) throw new Error("--more-on-route and --alerts add to a seed: run --yes first");
+    if (MORE || ALERTS || RENTALS) {
+        if (!fs.existsSync(MANIFEST)) throw new Error("--more-on-route, --alerts and --rentals add to a seed: run --yes first");
         Object.assign(made, JSON.parse(fs.readFileSync(MANIFEST, "utf8")));
+        made.contracts ??= [];
+        made.trucks ??= [];
         if (MORE) await moreOnRoute();
         if (ALERTS) await alerts();
+        if (RENTALS) await demoRentals();
         await hushTracking();
         await Promise.allSettled(logged.splice(0));
         saveManifest();
@@ -1484,12 +1720,14 @@ async function main() {
     await verifyCarrier();
     await apploadOrders();
     await portalLoads();
+    await demoContracts();
+    await demoRentals();
     await hushTracking();
 
     await Promise.allSettled(logged.splice(0));
     saveManifest();
 
-    console.log(`\nseeded ${made.orders.length} orders and ${made.movements.length} loads — manifest at ${MANIFEST}`);
+    console.log(`\nseeded ${made.orders.length} orders, ${made.movements.length} loads and ${made.contracts?.length ?? 0} contracts — manifest at ${MANIFEST}`);
 }
 
 main()

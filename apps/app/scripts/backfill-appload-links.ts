@@ -30,7 +30,7 @@ import { syncApploadLinks } from "@workspace/domain/appload/link";
 import { mirrorStatus } from "@workspace/domain/movements/mirror";
 import { needsOrderReference } from "@workspace/domain/movements/refs";
 
-process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
+process.env.DATABASE_URL ??= fs.readFileSync(".env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
 
 const WRITE = process.argv.includes("--yes");
 

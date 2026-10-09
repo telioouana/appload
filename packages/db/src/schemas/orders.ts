@@ -223,6 +223,11 @@ export const order = pgTable(
         // Where the order came from: Admin ops, or a portal tenant on either
         // side of the deal
         source: text("source", { enum: ORDER_SOURCE }).default("admin").notNull(),
+        // The contract share a tenant filed this brokered load under, copied
+        // from its movement by appload/link.ts. A plain id, no FK: contracts.ts
+        // imports this module for its enums, and a reference back would be a
+        // cycle (the TDZ crash the barrel comment above describes)
+        contractAllocationId: text("contract_allocation_id"),
 
         createdBy: text("created_by").references(() => user.id),
         createdAt: timestamp("created_at").defaultNow().notNull(),

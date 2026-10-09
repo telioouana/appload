@@ -5,7 +5,7 @@ import { useTranslations } from "@workspace/i18n"
 import { cn } from "@workspace/ui/lib/utils"
 
 import { Link } from "@/i18n/navigation"
-import { countForKind, kindsFor, type OrgType, type PartnerListKind, type PartnerStats } from "@/frontend/pages/partners/types"
+import { countForKind, kindsFor, type Modules, type OrgType, type PartnerListKind, type PartnerStats } from "@/frontend/pages/partners/types"
 
 /**
  * The organization's lists, under the title rather than inside the list card:
@@ -14,12 +14,12 @@ import { countForKind, kindsFor, type OrgType, type PartnerListKind, type Partne
  * addressable, and following one starts the list clean instead of carrying
  * the page, the open profile or a direction into it.
  */
-export function PartnersTabs({ orgType, kind, stats }: { orgType: OrgType; kind: PartnerListKind; stats: PartnerStats }) {
+export function PartnersTabs({ orgType, modules, kind, stats }: { orgType: OrgType; modules: Modules; kind: PartnerListKind; stats: PartnerStats }) {
     const t = useTranslations("App.partners.tabs")
 
     return (
         <div className="bg-muted mt-2 flex w-fit gap-0.5 rounded-full p-1">
-            {kindsFor(orgType).map((value) => {
+            {kindsFor(orgType, modules).map((value) => {
                 const active = value === kind
 
                 return (

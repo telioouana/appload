@@ -25,7 +25,7 @@ import { db } from "@workspace/db/db";
 import { order } from "@workspace/db/orders";
 import { account, member, organization, user } from "@workspace/db/users";
 
-process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
+process.env.DATABASE_URL ??= fs.readFileSync(".env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
 
 const database = decodeURIComponent(new URL(process.env.DATABASE_URL).pathname.slice(1));
 
@@ -47,7 +47,7 @@ const COMPANIES = [
         phoneNumber: "+258840000001",
         people: [
             { id: "FT7QysKKfs5NKuut5i2S8Nhg6ItrwyuR", name: "Cliente Teste", email: "delivered+portal-shipper@resend.dev", role: "owner" as const },
-            { id: "seed-portal-shipper-colleague", name: "Cliente Colega", email: "delivered+portal-shipper-colleague@resend.dev", role: "member" as const },
+            { id: "seed-portal-shipper-colleague", name: "Cliente Colega", email: "delivered+portal-shipper-colleague@resend.dev", role: "operations" as const },
         ],
     },
     {
@@ -60,7 +60,7 @@ const COMPANIES = [
         phoneNumber: "+258840000002",
         people: [
             { id: "a2R9UNA2NTiEo3FS7DxlwgBFUn8EDNU6", name: "A.S.M. Transportes", email: "delivered+portal-carrier@resend.dev", role: "owner" as const },
-            { id: "AM6u6fxppa9LEkRiMnMDHyrMpThmNrQy", name: "A.S.M. Colega", email: "delivered+portal-colleague@resend.dev", role: "member" as const },
+            { id: "AM6u6fxppa9LEkRiMnMDHyrMpThmNrQy", name: "A.S.M. Colega", email: "delivered+portal-colleague@resend.dev", role: "operations" as const },
         ],
     },
 ];
@@ -82,7 +82,7 @@ for (const company of COMPANIES) {
             nuit: company.nuit,
             email: company.email,
             phoneNumber: company.phoneNumber,
-            subscriptionPlan: "business",
+            subscriptionPlan: "growth",
             portalActivatedAt: new Date(),
             ...(company.type === "carrier" && { kycStatus: "verified" as const }),
         })

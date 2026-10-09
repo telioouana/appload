@@ -64,7 +64,10 @@
         "NO_TRUCK": "Sem camião",
         "NO_CARRIER": "Sem transportador",
         "NO_PRICE": "Sem preço acordado",
-        "PHOTOS_UNAPPROVED": "Fotos de carregamento por aprovar"
+        "PHOTOS_UNAPPROVED": "Fotos de carregamento por aprovar",
+        "CONTRACT_OVER_COMMITTED": "Acima da quantidade pedida",
+        "CONTRACT_LANE_MISMATCH": "Fora da rota do pedido",
+        "TRUCK_ON_RENTAL": "Camião em aluguer"
     },
     "header": {
         "flags": "{count, plural, one {# alerta} other {# alertas}}"
@@ -88,7 +91,8 @@
         "dates": "Datas",
         "receivable": "A receber",
         "payable": "A pagar",
-        "last-ping": "Última posição"
+        "last-ping": "Última posição",
+        "kind": "Tipo"
     },
     "values": {
         "own-account": "Conta própria",
@@ -98,7 +102,16 @@
         "due": "Prevista {date}",
         "no-due-date": "Sem data prevista",
         "no-price": "Sem preço",
-        "no-pings": "Sem posições"
+        "no-pings": "Sem posições",
+        "parent-trip": "viagem {position} · {ref}",
+        "parent-trip-of": "viagem {position} de {of} · {ref}",
+        "progress-of": "{done} de {of}",
+        "any-route": "Qualquer rota",
+        "no-site": "Local a definir",
+        "until": "Até {date}",
+        "open-period": "Em aberto",
+        "trucks": "{count, plural, one {# camião} other {# camiões}}",
+        "several-partners": "{count, plural, one {# transportador} other {# transportadores}}"
     },
     "tiles": {
         "received": "Oferecidas a si",
@@ -447,7 +460,15 @@
         "unnamed": "Local sem nome",
         "picked": "endereço escolhido",
         "off-route-chip": "Fora da rota",
-        "off-route": "O camião reportou a última posição a mais de 10 km da rota planeada."
+        "off-route": "O camião reportou a última posição a mais de 10 km da rota planeada.",
+        "progress": {
+            "covered": "{covered} de {total} km",
+            "remaining": "Faltam {km} km",
+            "eta": "Chegada prevista {time} · {speed} km/h em média",
+            "eta-pending": "Previsão de chegada após a primeira hora em estrada",
+            "behind": "Atrasado",
+            "approximate": "Em linha recta: o camião está fora da rota planeada, ou não há rota conhecida."
+        }
     },
     "thread": {
         "title": "Mensagens com o motorista",
@@ -510,6 +531,16 @@
     },
     "detail": {
         "meta": "Carga",
+        "contract": {
+            "title": "Pedido com várias viagens",
+            "contract": "Pedido",
+            "with": "Com",
+            "own-fleet": "Frota própria",
+            "state": "Estado",
+            "remaining": "Por consumir na parte",
+            "used-up": "Esgotada",
+            "open": "Em aberto"
+        },
         "error": "Não foi possível abrir esta carga. Pode ter sido removida, ou não estar partilhada consigo.",
         "back": "Voltar à lista",
         "footer": "Registada a {created} · atualizada a {updated}",
@@ -557,6 +588,15 @@
             "own-fleet-hint": "Uma viagem dos seus camiões",
             "partner": "Um parceiro",
             "partner-hint": "Um pedido que outro transportador faz"
+        },
+        "contract": {
+            "label": "Pedido com várias viagens",
+            "hint": "Registe esta viagem sob um pedido com várias viagens: as partes, a rota e o preço preenchem-se como valores por defeito que pode alterar.",
+            "none": "Nenhum",
+            "own-fleet": "Frota própria",
+            "option": "{ref} · {counterparty} · {remaining}",
+            "open-share": "sem limite",
+            "prefilled": "Preenchido a partir de {ref}. Tudo pode ainda ser alterado."
         },
         "sections": {
             "lane": "Rota",
@@ -658,7 +698,17 @@
         "file": "Registar carga",
         "save": "Guardar alterações",
         "saving": "A guardar…",
-        "cancel": "Cancelar"
+        "cancel": "Cancelar",
+        "kind": {
+            "title": "Nova carga",
+            "description": "Uma viagem, ou um pedido que precisa de várias?",
+            "single": "Uma viagem",
+            "single-hint": "Um camião, uma carga, uma entrega.",
+            "multi": "Várias viagens",
+            "multi-hint": "Uma quantidade, ou um número de viagens, ao longo de um período. Os camiões vão sendo registados à medida que carregam e o pedido vai sendo consumido.",
+            "rental": "Aluguer de camião",
+            "rental-hint": "Um ou mais camiões ao serviço de um cliente por um período, pagos ao dia. Sem rota: o diário diz que dias contaram."
+        }
     },
     "toasts": {
         "created": "{ref} registada",
@@ -823,8 +873,13 @@
         "rateLimited": "Já pediu a localização várias vezes. Tente mais tarde.",
         "infobipNotConfigured": "O WhatsApp não está configurado neste ambiente.",
         "subscriptionRequired": "É necessário um plano para acompanhar cargas.",
-        "quotaExceeded": "O plano deste mês já foi usado.",
         "sendFailed": "O pedido foi guardado, mas a mensagem não chegou ao motorista.",
+        "moduleDisabled": "Este módulo está desligado na sua empresa. O CEO pode ligá-lo em Definições › Módulos.",
         "unknown": "Algo correu mal. Tente novamente."
+    },
+    "kinds": {
+        "trip": "Viagem",
+        "multi": "Várias viagens",
+        "rental": "Aluguer"
     }
 }

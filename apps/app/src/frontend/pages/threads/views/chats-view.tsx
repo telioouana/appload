@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { IconMessage } from "@tabler/icons-react"
 
 import { useFormatter, useNow, useTranslations } from "@workspace/i18n"
+import { hasModule } from "@workspace/auth/organization-modules"
 
 import { THREAD_SUBJECT, type ThreadSubject } from "@workspace/db/types"
 
@@ -69,10 +70,16 @@ export function ChatsView() {
     const [driverId, setDriverId] = useState<string | null>(() => params.get("c"))
     const [mode, setMode] = useState<Mode>(() => params.get("c") ? "drivers" : "orders")
 
-    const threads = useQuery(trpc.threads.list.queryOptions(undefined, { refetchInterval: THREADS_POLL_MS }))
-    const drivers = useQuery(trpc.movements.threadList.queryOptions(undefined, { refetchInterval: DRIVERS_POLL_MS }))
-
     const onDrivers = mode === "drivers"
+
+    // The drivers' side is the own-fleet module's: without it the switch is
+    // gone and the page is the parties' list — a `?c=` link to a driver a
+    // trip already had still opens, as existing rows always do
+    const { data: session } = useQuery(trpc.me.session.queryOptions())
+    const ownFleet = session ? hasModule(session.modules, "own-fleet") : true
+
+    const threads = useQuery(trpc.threads.list.queryOptions(undefined, { refetchInterval: THREADS_POLL_MS }))
+    const drivers = useQuery({ ...trpc.movements.threadList.queryOptions(undefined, { refetchInterval: DRIVERS_POLL_MS }), enabled: ownFleet || onDrivers })
 
     const selectSubject = (next: Subject) => {
         setSubject(next)
@@ -96,17 +103,19 @@ export function ChatsView() {
 
             <div className="bg-card relative flex min-h-0 flex-1 overflow-hidden rounded-3xl border">
                 <aside className="flex w-80 shrink-0 flex-col border-r">
-                    <div className="p-3">
-                        <Tabs value={mode} onValueChange={(value) => setMode(value as Mode)}>
-                            <TabsList className="h-8 w-full">
-                                {MODES.map((option) => (
-                                    <TabsTrigger key={option} value={option} className="text-xs">
-                                        {t(`modes.${option}`)}
-                                    </TabsTrigger>
-                                ))}
-                            </TabsList>
-                        </Tabs>
-                    </div>
+                    {ownFleet && (
+                        <div className="p-3">
+                            <Tabs value={mode} onValueChange={(value) => setMode(value as Mode)}>
+                                <TabsList className="h-8 w-full">
+                                    {MODES.map((option) => (
+                                        <TabsTrigger key={option} value={option} className="text-xs">
+                                            {t(`modes.${option}`)}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
+                        </div>
+                    )}
 
                     <div className="flex-1 overflow-y-auto">
                         {loading ? (

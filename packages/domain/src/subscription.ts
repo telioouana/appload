@@ -6,12 +6,20 @@ import { subscriptionUsage, type SubscriptionPlan, type UsageEntity } from "@wor
 import { organization } from "@workspace/db/users";
 
 export { SUBSCRIPTION_PLAN, type SubscriptionPlan } from "@workspace/db/subscriptions";
+export { PLAN_PRICE } from "@workspace/db/types";
 
 /**
- * Tracked movements per calendar month; null = unlimited. PLACEHOLDER figures
- * until the commercial terms are final — one line each to change.
+ * The commercial table (2026-10-08), one line per figure. Tracked movements
+ * per calendar month, null = unlimited; the price in MZN a month before IVA
+ * (PLAN_PRICE, kept in @workspace/db/types for client components), and the
+ * users a tier is sold with, both null = agreed per customer (the users are
+ * shown to the tenant, not enforced on invitations).
  */
-export const PLAN_QUOTA: Record<SubscriptionPlan, number | null> = { starter: 10, business: 50, enterprise: null };
+export const PLAN_QUOTA: Record<SubscriptionPlan, number | null> = { starter: 10, essential: 30, growth: 50, scale: 100, fleet: 200, enterprise: null };
+export const PLAN_USERS: Record<SubscriptionPlan, number | null> = { starter: 2, essential: 3, growth: 5, scale: 8, fleet: 12, enterprise: null };
+
+/** What one movement past the month's allowance costs, MZN before IVA; invoiced by staff. */
+export const EXTRA_TRIP_PRICE = 400;
 
 /**
  * The allowance is a business month, not a UTC one: a dispatch at 01:00 on the
@@ -54,6 +62,8 @@ export type TrackingAllowance = {
     quota: number | null;
     /** What is left of `quota`, never negative; null = unlimited */
     remaining: number | null;
+    /** Movements past `quota` this month, each billed at EXTRA_TRIP_PRICE; 0 while unlimited */
+    extra: number;
 };
 
 /**
@@ -102,13 +112,16 @@ export async function trackingAllowance(
         used,
         quota,
         remaining: quota === null ? null : Math.max(quota - used, 0),
+        extra: quota === null ? 0 : Math.max(used - quota, 0),
     };
 }
 
 /**
- * The gate in front of everything that starts tracking. Throws the two codes
- * the apps render as an "activate your plan" prompt; returns the allowance so
- * the caller can report what is left without asking again.
+ * The gate in front of everything that starts tracking. Only a company with
+ * no active plan is refused — the code the apps render as an "activate your
+ * plan" prompt. A spent allowance never stops a truck: the movement goes
+ * through, counts as an extra and is invoiced. Returns the allowance so the
+ * caller can report what is left without asking again.
  */
 export async function assertTrackingAllowance(
     db: typeof Database,
@@ -119,10 +132,6 @@ export async function assertTrackingAllowance(
 
     if (!allowance.active) {
         throw new TRPCError({ code: "FORBIDDEN", message: "SUBSCRIPTION_REQUIRED" });
-    }
-
-    if (allowance.remaining === 0) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "QUOTA_EXCEEDED" });
     }
 
     return allowance;

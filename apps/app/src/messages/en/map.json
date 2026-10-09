@@ -16,6 +16,11 @@
         "last-seen": "Seen {ago}",
         "toggle": "Movements"
     },
+    "progress": {
+        "remaining": "{km} km to go",
+        "eta": "ETA {time}",
+        "behind": "Behind"
+    },
     "views": {
         "map": "Map",
         "table": "Table"

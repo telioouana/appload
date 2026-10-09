@@ -5,6 +5,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { IconBuilding, IconPackage, IconSearch, IconSteeringWheel, IconTruck, IconUsersGroup } from "@tabler/icons-react"
 
 import { useTranslations } from "@workspace/i18n"
+import { hasModule, type ModuleId } from "@workspace/auth/organization-modules"
 
 import { Kbd } from "@workspace/ui/components/kbd"
 import { Spinner } from "@workspace/ui/components/spinner"
@@ -40,12 +41,14 @@ type PaletteLink =
  * comes from the layout, like the rail's, rather than from a session query
  * observed above the pages' hydration.
  */
-export function CommandPalette({ orgType }: { orgType: "shipper" | "carrier" }) {
+export function CommandPalette({ orgType, modules }: { orgType: "shipper" | "carrier"; modules: ModuleId[] }) {
     const t = useTranslations("App.search")
     const trpc = useTRPC()
     const router = useRouter()
 
     const carrier = orgType === "carrier"
+    // A switched-off module keeps its rows (a hit still opens its page) but offers no search of its own
+    const on = (id: ModuleId) => hasModule(modules, id)
 
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState("")
@@ -196,10 +199,13 @@ export function CommandPalette({ orgType }: { orgType: "shipper" | "carrier" }) 
                         <CommandGroup heading={t("groups.actions")}>
                             {/* The Orders page's two tabs: the company's own trucks,
                                 and what its partners move for it */}
-                            <CommandItem value="search-own" onSelect={() => go({ pathname: "/orders/[section]", params: { section: "all" }, query: { tab: "own", search: term } })} className="gap-3">
-                                <IconPackage className="size-4" stroke={1.5} />
-                                {t("actions.own")}
-                            </CommandItem>
+                            {/* A client without its own fleet has no My trucks tab; a transporter keeps it for the offers it receives */}
+                            {(carrier || on("own-fleet")) && (
+                                <CommandItem value="search-own" onSelect={() => go({ pathname: "/orders/[section]", params: { section: "all" }, query: { tab: "own", search: term } })} className="gap-3">
+                                    <IconPackage className="size-4" stroke={1.5} />
+                                    {t("actions.own")}
+                                </CommandItem>
+                            )}
                             <CommandItem value="search-orders" onSelect={() => go({ pathname: "/orders/[section]", params: { section: "all" }, query: { tab: "partners", search: term } })} className="gap-3">
                                 <IconUsersGroup className="size-4" stroke={1.5} />
                                 {t(carrier ? "actions.orders-partners" : "actions.orders-transporters")}
@@ -209,20 +215,24 @@ export function CommandPalette({ orgType }: { orgType: "shipper" | "carrier" }) 
                                 <IconBuilding className="size-4" stroke={1.5} />
                                 {t("actions.partners")}
                             </CommandItem>
-                            {carrier && (
+                            {carrier && on("subcontracting") && (
                                 <CommandItem value="search-transporters" onSelect={() => go({ pathname: "/partners/[kind]", params: { kind: "transporters" }, query: { search: term } })} className="gap-3">
                                     <IconTruck className="size-4" stroke={1.5} />
                                     {t("actions.transporters")}
                                 </CommandItem>
                             )}
-                            <CommandItem value="search-drivers" onSelect={() => go({ pathname: "/drivers", query: { search: term } })} className="gap-3">
-                                <IconSteeringWheel className="size-4" stroke={1.5} />
-                                {t("actions.drivers")}
-                            </CommandItem>
-                            <CommandItem value="search-fleet" onSelect={() => go({ pathname: "/fleet/[kind]", params: { kind: "trucks" }, query: { search: term } })} className="gap-3">
-                                <IconSearch className="size-4" stroke={1.5} />
-                                {t("actions.fleet")}
-                            </CommandItem>
+                            {on("own-fleet") && (
+                                <>
+                                    <CommandItem value="search-drivers" onSelect={() => go({ pathname: "/drivers", query: { search: term } })} className="gap-3">
+                                        <IconSteeringWheel className="size-4" stroke={1.5} />
+                                        {t("actions.drivers")}
+                                    </CommandItem>
+                                    <CommandItem value="search-fleet" onSelect={() => go({ pathname: "/fleet/[kind]", params: { kind: "trucks" }, query: { search: term } })} className="gap-3">
+                                        <IconSearch className="size-4" stroke={1.5} />
+                                        {t("actions.fleet")}
+                                    </CommandItem>
+                                </>
+                            )}
                         </CommandGroup>
                     )}
                 </CommandList>

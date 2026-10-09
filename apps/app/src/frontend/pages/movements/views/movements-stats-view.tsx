@@ -26,6 +26,9 @@ export function MovementsStatsView({ scope, section }: { scope: MovementScope; s
     const { data: session } = useSuspenseQuery(trpc.me.session.queryOptions())
     const { data: cashflow } = useSuspenseQuery(trpc.movements.cashflow.queryOptions({ scope, section }))
 
+    // What came in, went out and was made is the books (the server sends no lines without it)
+    if (!session.permissions.includes("finance:read")) return null
+
     const shipper = session.organization.type === "shipper"
     // My trucks: an own-fleet load pays no transporter, so nothing is ever to pay there
     const fleet = scope === "trips"

@@ -62,18 +62,23 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
 
     // The same builder the server prefetch used, so the first page hydrates
     // straight into this query instead of refetching; it reads the tab too
-    const input = movementsListInput(section, get, orgType)
+    const input = movementsListInput(section, get, orgType, session.modules)
 
     const { data } = useSuspenseQuery(trpc.movements.list.queryOptions(input))
     const { data: stats } = useSuspenseQuery(trpc.movements.stats.queryOptions({ scope }))
     const isRefreshing = useIsFetching({ queryKey: trpc.movements.list.pathKey() }) > 0
 
+    // A row opens its own page: the load's, or the standing order's
     const onOpen = useCallback(
-        (row: MovementRow) => router.push({ pathname: "/orders/load/[loadId]", params: { loadId: row.id } }),
+        (row: MovementRow) => router.push(
+            row.kind === "multi" ? { pathname: "/orders/multi/[orderId]", params: { orderId: row.id } }
+                : row.kind === "rental" ? { pathname: "/orders/rental/[orderId]", params: { orderId: row.id } }
+                    : { pathname: "/orders/load/[loadId]", params: { loadId: row.id } },
+        ),
         [router],
     )
 
-    const columns = useMovementColumns({ scope, orgType })
+    const columns = useMovementColumns({ scope, orgType, seesPrices: session.permissions.includes("price:read") })
     const table = useDataTable({
         columns,
         data: data.items,
@@ -126,7 +131,8 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
                 filterCount={chips.length}
                 activeFilters={chips}
                 filters={<MovementFilters stats={stats} />}
-                onExport={exportRows}
+                // The file is a copy of the books leaving the portal: export:csv only
+                onExport={session.permissions.includes("export:csv") ? exportRows : undefined}
                 isExporting={isExporting}
                 sort={{
                     defaultValue: DEFAULT_SORT,
@@ -149,9 +155,9 @@ export function MovementsDataView({ scope, section }: { scope: MovementScope; se
                             ? t("data.empty-disputes")
                             : t(`data.empty-description.${ownTripsFromClients ? "trips-carrier" : scope}`),
                         filtered: t("data.no-results"),
-                        action: ownTripsFromClients
+                        action: ownTripsFromClients || !session.permissions.includes(scope === "trips" ? "trip:create" : "order:create")
                             ? undefined
-                            : <Button onClick={() => openNewLoad(scope === "trips" ? "own-fleet" : "partner")}>{t(`actions.new.${scope}`)}</Button>,
+                            : <Button onClick={() => openNewLoad(scope === "trips" ? "own-fleet" : "partner", { kind: "single" })}>{t(`actions.new.${scope}`)}</Button>,
                     }}
                 />
             </div>

@@ -46,6 +46,7 @@ function env(key) {
 }
 
 const templateName = env("INFOBIP_TRACKING_TEMPLATE") ?? "appload_tracking_location_request";
+const rentalTemplateName = env("INFOBIP_RENTAL_TEMPLATE") ?? "appload_rental_checkin";
 
 /**
  * Source of truth for the template copy. Placeholders are positional:
@@ -78,6 +79,33 @@ const TEMPLATES = [
                 examples: ["João Macuácua", "APPL021.26", "AEL-467-MC", "Maputo", "Tete"],
             },
             buttons: [{ type: "QUICK_REPLY", text: "Share location" }],
+        },
+    },
+    // The rented truck's morning question (packages/domain/src/rentals/checkin.ts):
+    // {{1}} = driver name, {{2}} = truck plate, {{3}} = the client, {{4}} = the site.
+    // The two quick replies post back "rental-yes:<line>:<day>" / "rental-no:<line>:<day>"
+    {
+        name: rentalTemplateName,
+        language: "pt_PT",
+        category: "UTILITY",
+        structure: {
+            body: {
+                text: "Bom dia {{1}}. O camião {{2}} está hoje ao serviço de {{3}} em {{4}}? Responda Sim ou Não.",
+                examples: ["João Macuácua", "AEL-467-MC", "Cliente Teste", "Moatize"],
+            },
+            buttons: [{ type: "QUICK_REPLY", text: "Sim" }, { type: "QUICK_REPLY", text: "Não" }],
+        },
+    },
+    {
+        name: rentalTemplateName,
+        language: "en",
+        category: "UTILITY",
+        structure: {
+            body: {
+                text: "Good morning {{1}}. Is truck {{2}} at {{3}}'s service in {{4}} today? Answer Yes or No.",
+                examples: ["João Macuácua", "AEL-467-MC", "Cliente Teste", "Moatize"],
+            },
+            buttons: [{ type: "QUICK_REPLY", text: "Yes" }, { type: "QUICK_REPLY", text: "No" }],
         },
     },
 ];
@@ -202,5 +230,5 @@ console.table(report);
 if (!apply) {
     console.log("\ndry run — pass --apply to register the missing templates");
 } else {
-    console.log(`\nonce approved, set INFOBIP_TRACKING_TEMPLATE=${templateName} and INFOBIP_TRACKING_TEMPLATE_LANGUAGE to the language you want drivers to receive (pt_PT or en)`);
+    console.log(`\nonce approved, set INFOBIP_TRACKING_TEMPLATE=${templateName}, INFOBIP_RENTAL_TEMPLATE=${rentalTemplateName} and INFOBIP_TRACKING_TEMPLATE_LANGUAGE to the language you want drivers to receive (pt_PT or en)`);
 }

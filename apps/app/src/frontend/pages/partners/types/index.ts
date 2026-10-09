@@ -1,9 +1,14 @@
 import type { Address, KycStatus, OrderStatus } from "@workspace/db/types";
 import type { ConnectionRelation, ConnectionStatus, ConnectionVia } from "@workspace/db/connections";
 
+import { hasModule } from "@workspace/auth/organization-modules";
+
 import { PARTNER_RELATIONS } from "@/backend/schemas/partner";
 
 export type OrgType = "shipper" | "carrier";
+
+/** The company's live modules, as the gate (a Set) or the session (an array) carries them. */
+export type Modules = ReadonlySet<string> | readonly string[];
 
 /** Which side asked: "outgoing" is a request this tenant sent. */
 export const CONNECTION_DIRECTIONS = ["incoming", "outgoing"] as const;
@@ -19,9 +24,15 @@ export type ConnectionDirection = (typeof CONNECTION_DIRECTIONS)[number];
 export const PARTNER_LIST_KINDS = ["clients", "transporters", "requests"] as const;
 export type PartnerListKind = (typeof PARTNER_LIST_KINDS)[number];
 
-/** The lists an organization type has; the first is where `/partners` lands. */
-export const kindsFor = (orgType: OrgType): PartnerListKind[] =>
-    orgType === "carrier" ? ["clients", "transporters", "requests"] : ["transporters", "requests"];
+/**
+ * The lists an organization type has; the first is where `/partners` lands.
+ * A carrier with subcontracting off has no transporters list to open — the
+ * rows it already has stay reachable through requests and profiles.
+ */
+export const kindsFor = (orgType: OrgType, modules: Modules): PartnerListKind[] =>
+    orgType === "carrier"
+        ? hasModule(modules, "subcontracting") ? ["clients", "transporters", "requests"] : ["clients", "requests"]
+        : ["transporters", "requests"];
 
 /** The list a route segment names, or null for anything else. */
 export const kindFromSlug = (slug: string): PartnerListKind | null =>
@@ -58,9 +69,9 @@ export type PartnerKind = "client" | "transporter";
 export const partnerKind = (orgType: OrgType, relation: ConnectionRelation): PartnerKind =>
     kindForRelation(orgType, relation) === "clients" ? "client" : "transporter";
 
-/** Which relations this organization type may ask for. */
-export const relationsFor = (orgType: OrgType): ConnectionRelation[] =>
-    orgType === "carrier" ? [...PARTNER_RELATIONS] : ["client-carrier"];
+/** Which relations this organization type may ask for; subcontracting is a carrier's module. */
+export const relationsFor = (orgType: OrgType, modules: Modules): ConnectionRelation[] =>
+    orgType === "carrier" && hasModule(modules, "subcontracting") ? [...PARTNER_RELATIONS] : ["client-carrier"];
 
 export const PAGE_SIZES = [25, 50, 100] as const;
 export const DEFAULT_PAGE_SIZE = 25;

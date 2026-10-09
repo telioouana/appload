@@ -245,18 +245,24 @@ export function TransitionDialog({
                             <Alert variant="destructive">
                                 <AlertDescription className="flex flex-col gap-1">
                                     <span>{t(`errors.${selected?.blockedReason ?? "UNKNOWN"}`)}</span>
+                                </AlertDescription>
+                            </Alert>
+                        )}
 
-                                    {/* Which subject owes which paper — the
-                                        operator has to know whose record to
-                                        open, not merely that something is
-                                        missing */}
-                                    {selected?.blockedReason === "PAPERS_MISSING" && (
-                                        <span className="text-xs">
-                                            {(selected.dispatch?.missingPapers ?? [])
-                                                .map((gap) => `${gap.label}: ${gap.needs.map((type) => tDoc(type)).join(` ${t("papersOr")} `)}`)
-                                                .join(" · ")}
-                                        </span>
-                                    )}
+                        {/* Missing papers flag the order, never block it.
+                            Which subject owes which paper — the operator has
+                            to know whose record to open, not merely that
+                            something is missing */}
+                        {!blocked && (selected?.dispatch?.missingPapers.length ?? 0) > 0 && (
+                            <Alert>
+                                <IconAlertTriangle />
+                                <AlertDescription className="flex flex-col gap-1">
+                                    <span>{t("errors.PAPERS_MISSING")}</span>
+                                    <span className="text-xs">
+                                        {(selected?.dispatch?.missingPapers ?? [])
+                                            .map((gap) => `${gap.label}: ${gap.needs.map((type) => tDoc(type)).join(` ${t("papersOr")} `)}`)
+                                            .join(" · ")}
+                                    </span>
                                 </AlertDescription>
                             </Alert>
                         )}

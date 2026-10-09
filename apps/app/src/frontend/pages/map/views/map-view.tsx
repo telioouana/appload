@@ -148,7 +148,7 @@ export function MapView() {
     ))
 
     const trail = useMemo<TrailPoint[]>(
-        () => (selectedEntity && (isOrder ? orderTrail.data : loadTrail.data)) || [],
+        () => (selectedEntity && (isOrder ? orderTrail.data : loadTrail.data?.points)) || [],
         [selectedEntity, isOrder, orderTrail.data, loadTrail.data],
     )
 

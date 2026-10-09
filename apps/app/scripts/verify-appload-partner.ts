@@ -84,7 +84,7 @@ import { createCallerFactory } from "@workspace/trpc/init";
 // catalogs at module scope, exactly as a cold start does
 import { appRouter } from "@/backend/api/routers/_app";
 
-process.env.DATABASE_URL ??= fs.readFileSync("../admin/.env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
+process.env.DATABASE_URL ??= fs.readFileSync(".env", "utf8").match(/^DATABASE_URL=(.+)$/m)![1]!.trim();
 
 const RUN = `${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36).padStart(2, "0")}`;
 // Scoped to the run, so two harnesses can never clear each other's trail
@@ -189,7 +189,7 @@ async function makeCompany(kind: "shipper" | "carrier", label: string, slot: num
         slug: `harness-appload-${suffix}`,
         createdAt: new Date(),
         // Handing a load over and booking one both spend a plan's allowance
-        subscriptionPlan: "business",
+        subscriptionPlan: "growth",
         // The portal is where these companies answer: without it no linked
         // row is ever opened for them (D5)
         portalActivatedAt: new Date(),
@@ -455,7 +455,7 @@ async function seedGuard() {
         id: membershipId,
         organizationId: APPLOAD_ORG_ID,
         userId: intruder,
-        role: "member",
+        role: "operations",
         createdAt: new Date(),
     });
     madeMembers.push(membershipId);

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq, inArray, lt, or } from "drizzle-orm";
 
-import { db } from "@workspace/db/db";
+// The service role, not the staff one: this runs for every company's
+// loads and nobody is signed in (packages/db/src/schemas/rls.ts)
+import { serviceDb as db } from "@workspace/db/db";
 import { order, sheetSync } from "@workspace/db/orders";
 import { authorizeCron } from "@workspace/comms/cron";
 

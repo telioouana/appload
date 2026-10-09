@@ -4,6 +4,7 @@ import { boolean, check, index, pgTable, text, timestamp, uniqueIndex } from "dr
 // Direct module imports, never the schema barrel: going through it would pull
 // in modules that depend on this one and crash at runtime (TDZ)
 import { organization, user } from "@workspace/db/users";
+import { staffPolicy, supportGranted } from "@workspace/db/rls";
 
 /** What the two organizations are to each other — see `partnerConnection.relation`. */
 export const CONNECTION_RELATION = ["client-carrier", "subcontract"] as const;
@@ -71,6 +72,12 @@ export const partnerConnection = pgTable(
         index("partner_connection_target_status_idx").on(table.targetOrgId, table.status),
         index("partner_connection_requester_status_idx").on(table.requesterOrgId, table.status),
         check("partner_connection_distinct_ck", sql`${table.requesterOrgId} <> ${table.targetOrgId}`),
+        // The trust wall (rls.ts): who a company works with is its client
+        // list. Appload has no connection rows, so staff see none
+        staffPolicy(
+            "partner_connection",
+            sql`${table.requesterOrgId} = 'appload' or ${table.targetOrgId} = 'appload' or ${supportGranted(table.requesterOrgId)} or ${supportGranted(table.targetOrgId)}`,
+        ),
     ],
 );
 

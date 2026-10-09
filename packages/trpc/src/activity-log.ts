@@ -58,6 +58,12 @@ export async function recordRequestActivity(opts: {
     output: unknown; // undefined when !ok or for queries
     errorCode?: string; // TRPCError code
     errorMessage?: string; // domain code, e.g. "TRUCK_NOT_REGISTERED"
+    /**
+     * The company the row belongs to, as the tenant gate resolved it. The
+     * session cookie's activeOrganizationId is never trusted for tenancy in
+     * the portal and is often null, so it is only the admin's fallback.
+     */
+    organizationId?: string | null;
 }) {
     const { session } = opts;
     const base = {
@@ -65,7 +71,7 @@ export async function recordRequestActivity(opts: {
         actorId: session.user.id,
         actorName: session.user.name,
         sessionId: session.session.id,
-        organizationId: session.session.activeOrganizationId ?? null,
+        organizationId: opts.organizationId ?? session.session.activeOrganizationId ?? null,
         ipAddress: session.session.ipAddress ?? null,
         userAgent: session.session.userAgent ?? null,
         city: session.session.city ?? null,

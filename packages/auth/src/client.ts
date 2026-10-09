@@ -3,7 +3,7 @@ import { adminClient, inferAdditionalFields, inferOrgAdditionalFields, organizat
 
 import { auth } from "@workspace/auth/server";
 import { admin as userAdmin, manager, uac, user } from "@workspace/auth/user-permissions";
-import { admin as orgAdmin, oac, owner, member } from "@workspace/auth/organization-permissions";
+import { ORG_ROLES, oac } from "@workspace/auth/organization-permissions";
 
 export const authClient = createAuthClient({
     plugins: [
@@ -19,11 +19,7 @@ export const authClient = createAuthClient({
         organizationClient({
             organizationLimit: 1,
             ac: oac,
-            roles: {
-                owner,
-                admin: orgAdmin,
-                member
-            },
+            roles: ORG_ROLES,
             schema: inferOrgAdditionalFields<typeof auth>(),
         }),
         twoFactorClient({
